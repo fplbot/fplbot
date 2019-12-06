@@ -1,4 +1,6 @@
+using System;
 using FplBot.ConsoleApps.Clients;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,17 +19,18 @@ namespace FplBot.ConsoleApps
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.AddJsonFile("appsettings.Local.json", optional: true);
+                    c.AddEnvironmentVariables();
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddTransient<IFplClient, FplClient>();
-                    services.AddSlackbot(o =>
-                        {
-                            o.Slackbot_SlackApiKey_SlackApp = "xoxp-10330912275-14635153942-862337698804-1c242dba642c54d3bb46525d90fded60";
-                            o.Slackbot_SlackApiKey_BotUser = "xoxb-10330912275-864534450279-WPZRdEtdMsyPFE2ztnWBupQg";
-                        })
+                    services.AddSlackbot(hostContext.Configuration)
 
                         .AddPublisher<SlackPublisher>()
-                        //.AddPublisher<LoggerPublisher>()
+                        .AddPublisher<LoggerPublisher>()
                         .AddHandler<FplCommandHandler>();
 
                 })
