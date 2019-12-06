@@ -1,0 +1,9 @@
+build:
+  docker:
+    fplbot: /source/fplbot.consoleapp/Dockerfile
+
+run:
+  worker:
+    command:
+      - dotnet ./fplbot.consoleapp.dll
+    image: fplbot
