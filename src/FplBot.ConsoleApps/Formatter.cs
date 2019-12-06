@@ -16,12 +16,13 @@ namespace FplBot.ConsoleApps
 
             var currentGw = bootstrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
 
+            
             sb.Append($":star: *Resultater etter GW {currentGw}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. *{player.TeamName}* - {player.TotalPoints} {arrow} https://fantasy.premierleague.com/entry/{player.Id}/event/{currentGw} \n");
+                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Id}/event/{currentGw}|{player.TeamName}> - {player.TotalPoints} {arrow} \n");
             }
 
             return sb.ToString();
