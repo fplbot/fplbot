@@ -1,9 +1,9 @@
 build:
   docker:
-    fplbot: /source/fplbot.consoleapp/Dockerfile
+    fplbot: /src/Heroku.Dockerfile
 
 run:
   worker:
     command:
-      - dotnet ./fplbot.consoleapp.dll
+      - dotnet ./FplBot.ConsoleApps.dll
     image: fplbot
