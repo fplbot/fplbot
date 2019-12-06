@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
 WORKDIR /app
 # Copy csproj and restore as distinct layers
-COPY FplBot.sln FplBot.sln
+COPY LOL.sln FplBot.sln
 RUN echo "hi"
 RUN ls -al -R /app
 
