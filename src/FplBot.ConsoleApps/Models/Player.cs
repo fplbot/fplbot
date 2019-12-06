@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
 
 namespace FplBot.ConsoleApps.Models
 {
-    public class Player
+    public class PlayerStats
     {
         public IEnumerable<GameWeek> Current { get; set; }
     }

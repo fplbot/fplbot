@@ -21,11 +21,9 @@ namespace FplBot.ConsoleApps.Clients
             _httpClient = new HttpClient(gzipMessageHandler); ;
         }
 
-        public async Task<string> GetPlayerData(string playerId)
+        public async Task<PlayerStats> GetPlayerData(string playerId)
         {
-            var playerTask = Get<Player>($"https://fantasy.premierleague.com/entry/{playerId}/history");
-
-            var player = await playerTask;
+            return await Get<PlayerStats>($"https://fantasy.premierleague.com/entry/{playerId}/history");
         }
 
         public async Task<string> GetStandings(string leagueId)
