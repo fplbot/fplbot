@@ -40,7 +40,7 @@ namespace FplBot.ConsoleApps.Models
 
             if (rankDiff > 0)
             {
-                emojiString.Append($":chart_with_upwards_trend: ({rankDiff}) ");
+                emojiString.Append($":chart_with_upwards_trend: (+{rankDiff}) ");
             }
 
             if (player.Rank == numPlayers)
