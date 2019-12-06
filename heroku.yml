@@ -1,4 +1,6 @@
 build:
+  command: 
+    - ls -al -R
   docker:
     fplbot: /Heroku.Dockerfile
 
