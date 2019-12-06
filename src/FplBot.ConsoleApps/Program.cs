@@ -21,8 +21,8 @@ namespace FplBot.ConsoleApps
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(c =>
                 {
-                    c.AddJsonFile("appsettings.Local.json", optional: true);
                     c.AddEnvironmentVariables();
+                    c.AddJsonFile("appsettings.Local.json", optional: true);
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
