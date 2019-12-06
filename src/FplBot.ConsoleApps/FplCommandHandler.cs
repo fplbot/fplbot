@@ -23,7 +23,6 @@ namespace FplBot.ConsoleApps
 
             foreach (var p in _publishers)
             {
-
                 await p.Publish(new Notification
                 {
                     BotName = "fpl",
@@ -37,7 +36,6 @@ namespace FplBot.ConsoleApps
 
         public bool ShouldHandle(SlackMessage message)
         {
-            return true;
             return message.MentionsBot && message.Text.Contains("fpl");
         }
     }

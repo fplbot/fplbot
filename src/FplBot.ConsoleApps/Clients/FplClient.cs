@@ -35,9 +35,7 @@ namespace FplBot.ConsoleApps.Clients
             var scoreBoard = await scoreBoardTask;
             var bootStrap = await bootstrapTask;
 
-            var currentGw = bootStrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
-
-            return $":star: *Resultater etter GW {currentGw}* :star: \n\n{scoreBoard}";
+            return Formatter.GetStandings(scoreBoard, bootStrap);
         }
 
         private async Task<T> Get<T>(string url)
