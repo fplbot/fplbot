@@ -1,6 +1,8 @@
 ﻿using FplBot.ConsoleApps.Models;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -10,29 +12,46 @@ namespace FplBot.ConsoleApps.Clients
     {
         private readonly HttpClient _httpClient;
 
-        public FplClient(HttpClient httpClient)
+        public FplClient()
         {
-            _httpClient = httpClient;
+            var gzipMessageHandler = new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
+            };
+            _httpClient = new HttpClient(gzipMessageHandler); ;
         }
 
-        public async Task<ScoreBoard> GetScoreBoard(string leagueId)
+        public async Task<string> GetStandings(string leagueId)
+        {
+
+            var scoreBoardTask = Get<ScoreBoard>($"https://fantasy.premierleague.com/api/leagues-classic/{leagueId}/standings/");
+            var bootstrapTask = Get<Bootstrap>("https://fantasy.premierleague.com/api/bootstrap-static/");
+
+            var scoreBoard = await scoreBoardTask;
+            var bootStrap = await bootstrapTask;
+
+            var currentGw = bootStrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
+
+            return $":star: Resultater etter GW {currentGw} :star: \n\n{scoreBoard}";
+        }
+
+        private async Task<T> Get<T>(string url)
         {
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://fantasy.premierleague.com/api/leagues-classic/{leagueId}/standings/"),
+                RequestUri = new Uri(url)
             };
             request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
             request.Headers.Add("User-Agent", "Lol");
             var response = await _httpClient.SendAsync(request);
-            var test = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<ScoreBoard>(test);
+            var result = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
             return result;
         }
     }
 
     public interface IFplClient
     {
-        Task<ScoreBoard> GetScoreBoard(string leagueId);
+        Task<string> GetStandings(string leagueId);
     }
 }
