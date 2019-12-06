@@ -21,8 +21,8 @@ namespace fplbot.consoleapp
                 await p.Publish(new Notification
                 {
                     BotName = "fpl",
-                    Channel = "#testss",
-                    Msg = "fpl pong",
+                    Channel = "#fplbot",
+                    Msg = $"fpl pong: {message.Text}",
                     IconEmoji = ":santa:"
                 });
             }
