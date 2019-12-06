@@ -1,11 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using fplbot.consoleapp.Clients;
+using FplBot.ConsoleApps.Clients;
 using Newtonsoft.Json;
 using Slackbot.Net.Handlers;
 using Slackbot.Net.Publishers;
 using SlackConnector.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FplBot.ConsoleApps
 {

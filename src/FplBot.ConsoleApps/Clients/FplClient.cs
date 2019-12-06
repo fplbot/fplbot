@@ -1,8 +1,8 @@
-﻿using System;
+﻿using FplBot.ConsoleApps.Models;
+using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using fplbot.consoleapp.Models;
-using Newtonsoft.Json;
 
 namespace FplBot.ConsoleApps.Clients
 {
