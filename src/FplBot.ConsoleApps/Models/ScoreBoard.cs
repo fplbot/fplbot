@@ -18,10 +18,33 @@ namespace FplBot.ConsoleApps.Models
 
             foreach (var player in sortedByRank)
             {
-                sb.Append($"{player.Rank}. - {player.TeamName} ({player.TotalPoints})\n");
+                var arrow = GetRankChangeEmoji(player);
+                sb.Append($"{player.Rank}. - {player.TeamName} ({player.TotalPoints}) {arrow}\n");
             }
 
             return sb.ToString();
+        }
+
+        private static string GetRankChangeEmoji(Player player)
+        {
+            var rankDiff = player.LastRank - player.Rank;
+            
+            if (rankDiff == 0)
+            {
+                return ":caps:";
+            }
+
+            if (rankDiff < 0)
+            {
+                return ":alv:";
+            }
+
+            if (rankDiff > 0)
+            {
+                return ":knut:";
+            }
+
+            return null;
         }
     }
 

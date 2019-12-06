@@ -21,6 +21,11 @@ namespace FplBot.ConsoleApps.Clients
             _httpClient = new HttpClient(gzipMessageHandler); ;
         }
 
+        public async Task<PlayerStats> GetPlayerData(string playerId)
+        {
+            return await Get<PlayerStats>($"https://fantasy.premierleague.com/entry/{playerId}/history");
+        }
+
         public async Task<string> GetStandings(string leagueId)
         {
 
