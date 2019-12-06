@@ -1,10 +1,6 @@
-setup:
-  command: 
-    - ls -al -R
-    
 build:
   docker:
-    fplbot: /Heroku.Dockerfile
+    fplbot: /src/Heroku.Dockerfile
 
 run:
   worker:
