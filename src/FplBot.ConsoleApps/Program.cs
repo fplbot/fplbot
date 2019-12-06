@@ -28,6 +28,7 @@ namespace FplBot.ConsoleApps
 
                         .AddPublisher<SlackPublisher>()
                         //.AddPublisher<LoggerPublisher>()
+                        .AddHandler<FplPlayerCommandHandler>()
                         .AddHandler<FplCommandHandler>();
 
                 })

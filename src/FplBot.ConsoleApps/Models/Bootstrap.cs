@@ -1,12 +1,15 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Collections.Generic;
+using System.Text;
 
 namespace FplBot.ConsoleApps.Models
 {
     public class Bootstrap
     {
         public IEnumerable<Event> Events { get; set; }
+
+        public IEnumerable<Element> Elements { get; set; }
     }
 
     public class Event
@@ -15,5 +18,18 @@ namespace FplBot.ConsoleApps.Models
         public string Name { get; set; }
         [JsonProperty("is_current")]
         public bool IsCurrent { get; set; }
+    }
+
+    public class Element
+    {
+        [JsonProperty("first_name")]
+        public string FirstName { get; set; }
+        [JsonProperty("second_name")]
+        public string LastName { get; set; }
+
+        public override string ToString()
+        {
+            return $"{FirstName} {LastName}";
+        }
     }
 }
