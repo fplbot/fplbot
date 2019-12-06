@@ -19,8 +19,8 @@ namespace FplBot.ConsoleApps
                 {
                     services.AddSlackbot(o =>
                         {
-                            o.Slackbot_SlackApiKey_SlackApp = "xoxp-10330912275-14635153942-862684278373-678f47af34c54dbd617c2ef5bbfcafca";
-                            o.Slackbot_SlackApiKey_BotUser = "xoxb-10330912275-864534450279-wOCTMvNmS5IPDCpeJ2Z8lM7a";
+                            o.Slackbot_SlackApiKey_SlackApp = "xoxp-10330912275-14635153942-862337698804-1c242dba642c54d3bb46525d90fded60";
+                            o.Slackbot_SlackApiKey_BotUser = "xoxb-10330912275-864534450279-WPZRdEtdMsyPFE2ztnWBupQg";
                         })
 
                         .AddPublisher<SlackPublisher>()
