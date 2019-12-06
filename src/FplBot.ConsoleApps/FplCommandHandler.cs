@@ -1,5 +1,4 @@
 using FplBot.ConsoleApps.Clients;
-using Newtonsoft.Json;
 using Slackbot.Net.Handlers;
 using Slackbot.Net.Publishers;
 using SlackConnector.Models;
@@ -20,7 +19,7 @@ namespace FplBot.ConsoleApps
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var hest = await _fplClient.GetScoreBoard("579157");
+            var standings = await _fplClient.GetStandings("579157");
 
             foreach (var p in _publishers)
             {
@@ -29,7 +28,7 @@ namespace FplBot.ConsoleApps
                 {
                     BotName = "fpl",
                     Channel = "#fplbot",
-                    Msg = JsonConvert.SerializeObject(hest),
+                    Msg = standings,
                     IconEmoji = ":santa:"
                 });
             }

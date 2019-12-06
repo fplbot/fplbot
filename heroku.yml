@@ -1,6 +1,6 @@
 build:
   docker:
-    fplbot: Heroku.Dockerfile
+    fplbot: /Heroku.Dockerfile
 
 run:
   worker:
