@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
-namespace fplbot.consoleapp.Models
+namespace FplBot.ConsoleApps.Models
 {
     public class ScoreBoard
     {
