@@ -37,7 +37,7 @@ namespace FplBot.ConsoleApps.Clients
 
             var currentGw = bootStrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
 
-            return $":star: Resultater etter GW {currentGw} :star: \n\n{scoreBoard}";
+            return $":star: *Resultater etter GW {currentGw}* :star: \n\n{scoreBoard}";
         }
 
         private async Task<T> Get<T>(string url)

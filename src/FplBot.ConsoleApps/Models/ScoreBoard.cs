@@ -16,35 +16,39 @@ namespace FplBot.ConsoleApps.Models
 
             var sortedByRank = Standings.Results.OrderBy(x => x.Rank);
 
+            var numPlayers = Standings.Results.Count();
+
             foreach (var player in sortedByRank)
             {
-                var arrow = GetRankChangeEmoji(player);
-                sb.Append($"{player.Rank}. - {player.TeamName} ({player.TotalPoints}) {arrow}\n");
+                var arrow = GetRankChangeEmoji(player, numPlayers);
+                sb.Append($"{player.Rank}. *{player.TeamName}* - {player.TotalPoints} {arrow}\n");
             }
 
             return sb.ToString();
         }
 
-        private static string GetRankChangeEmoji(Player player)
+        private static string GetRankChangeEmoji(Player player, int numPlayers)
         {
             var rankDiff = player.LastRank - player.Rank;
-            
-            if (rankDiff == 0)
-            {
-                return ":caps:";
-            }
+
+            var emojiString = new StringBuilder();
 
             if (rankDiff < 0)
             {
-                return ":alv:";
+                emojiString.Append($":chart_with_downwards_trend: ({rankDiff}) ");
             }
 
             if (rankDiff > 0)
             {
-                return ":knut:";
+                emojiString.Append($":chart_with_upwards_trend: (+{rankDiff}) ");
             }
 
-            return null;
+            if (player.Rank == numPlayers)
+            {
+                emojiString.Append(":rip:");
+            }
+
+            return emojiString.ToString();
         }
     }
 
