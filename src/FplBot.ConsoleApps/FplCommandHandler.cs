@@ -4,7 +4,7 @@ using Slackbot.Net.Handlers;
 using Slackbot.Net.Publishers;
 using SlackConnector.Models;
 
-namespace fplbot.consoleapp
+namespace FplBot.ConsoleApps
 {
     public class FplCommandHandler : IHandleMessages
     {
