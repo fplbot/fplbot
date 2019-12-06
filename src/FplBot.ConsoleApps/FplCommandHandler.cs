@@ -28,8 +28,7 @@ namespace FplBot.ConsoleApps
                 {
                     BotName = "fpl",
                     Channel = "#fplbot",
-                    Msg = standings,
-                    IconEmoji = ":santa:"
+                    Msg = standings
                 });
             }
 
