@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.ConsoleApps", "FplBot.ConsoleApps\FplBot.ConsoleApps.csproj", "{418B7658-E90E-452E-B0B0-C5C7645BAE64}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Tests", "FplBot.Tests\FplBot.Tests.csproj", "{0DB12843-588F-4B7B-837C-1D8D12683751}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Build", "..\build\FplBot.Build.csproj", "{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +22,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -30,5 +36,17 @@ Global
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x64.Build.0 = Release|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x86.ActiveCfg = Release|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x86.Build.0 = Release|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|x64.Build.0 = Debug|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|x86.Build.0 = Debug|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x64.ActiveCfg = Release|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x64.Build.0 = Release|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x86.ActiveCfg = Release|Any CPU
+		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
