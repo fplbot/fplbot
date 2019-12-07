@@ -20,6 +20,7 @@ namespace FplBot.Tests
         {
             var client = new FplClient();
             var standings = await client.GetStandings("579157");
+            _logger.WriteLine(standings);
             Assert.NotEmpty(standings);
         }
     }
