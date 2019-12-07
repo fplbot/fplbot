@@ -1,13 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Hosting;
-using Slackbot.Net.Publishers;
-using Slackbot.Net.Publishers.Slack;
+using Slackbot.Net.Workers.Publishers.Logger;
+using Slackbot.Net.Workers.Publishers.Slack;
 
 namespace FplBot.ConsoleApps
 {
@@ -29,8 +26,7 @@ namespace FplBot.ConsoleApps
                 {
                     services.AddTransient<IFplClient, FplClient>();
                     services.Decorate<IFplClient, TryCatchFplClient>();
-                    services.AddSlackbot(hostContext.Configuration)
-
+                    services.AddSlackbotWorker(hostContext.Configuration)
                         .AddPublisher<SlackPublisher>()
                         .AddPublisher<LoggerPublisher>()
                         .AddHandler<FplCommandHandler>();
