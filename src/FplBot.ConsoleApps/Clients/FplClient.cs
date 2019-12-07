@@ -48,14 +48,14 @@ namespace FplBot.ConsoleApps.Clients
             request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
             request.Headers.Add("User-Agent", "Lol");
             var response = await _httpClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
+            var body = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode || string.IsNullOrEmpty(body) || !body.StartsWith("{"))
             {
-                var body = await response.Content.ReadAsStringAsync();
                 throw new FplApiException($"FPL er litt uenig. Status {response.StatusCode} - {body}");    
             }
-
             
-            var result = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
+            var result = JsonConvert.DeserializeObject<T>(body);
             return result;
         }
     }
