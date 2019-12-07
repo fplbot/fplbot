@@ -6,7 +6,7 @@ COPY FplBot.sln ./FplBot.sln
 
 COPY /FplBot.ConsoleApps/FplBot.ConsoleApps.csproj ./FplBot.ConsoleApps/FplBot.ConsoleApps.csproj
 
-RUN dotnet restore FplBot.sln
+RUN dotnet restore FplBot.ConsoleApps
 
 # Copy everything else and build
 COPY . ./
