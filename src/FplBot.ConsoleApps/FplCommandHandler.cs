@@ -26,7 +26,7 @@ namespace FplBot.ConsoleApps
                 await p.Publish(new Notification
                 {
                     BotName = "fpl",
-                    Channel = "#fplbot",
+                    Channel = message.ChatHub.Id,
                     Msg = standings
                 });
             }
