@@ -18,7 +18,7 @@ namespace FplBot.Tests
         [Fact]
         public async Task GetStandings()
         {
-            var client = new FplClient();
+            var client = new TryCatchFplClient(new FplClient());
             var standings = await client.GetStandings("579157");
             _logger.WriteLine(standings);
             Assert.NotEmpty(standings);

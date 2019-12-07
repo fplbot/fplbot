@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ namespace FplBot.ConsoleApps
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddTransient<IFplClient, FplClient>();
+                    services.Decorate<IFplClient, TryCatchFplClient>();
                     services.AddSlackbot(hostContext.Configuration)
 
                         .AddPublisher<SlackPublisher>()
