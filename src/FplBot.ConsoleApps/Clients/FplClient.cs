@@ -38,6 +38,20 @@ namespace FplBot.ConsoleApps.Clients
             return Formatter.GetStandings(scoreBoard, bootStrap);
         }
 
+        public async Task<string> GetAllFplDataForPlayer(string name)
+        {
+            var bootstrapTask = Get<Bootstrap>("https://fantasy.premierleague.com/api/bootstrap-static/");
+
+            var bootStrap = await bootstrapTask;
+
+            name = name.ToLower();
+
+            var matchingPlayers = bootStrap.Elements
+                .Where((p) => p.FirstName.ToLower().Contains(name) || p.LastName.ToLower().Contains(name));
+
+            return matchingPlayers.Any() ? string.Join("\n", matchingPlayers) : "";
+        }
+
         private async Task<T> Get<T>(string url)
         {
             var request = new HttpRequestMessage
@@ -63,5 +77,6 @@ namespace FplBot.ConsoleApps.Clients
     public interface IFplClient
     {
         Task<string> GetStandings(string leagueId);
+        Task<string> GetAllFplDataForPlayer(string name);
     }
 }
