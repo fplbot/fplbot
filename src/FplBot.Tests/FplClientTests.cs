@@ -49,6 +49,7 @@ namespace FplBot.Tests
         
         [Theory]
         [InlineData("@fplbot player salah")]
+        [InlineData("<@UREFQD887> player salah")]
         public async Task GetPlayerHandler(string input)
         {
             var client = new FplPlayerCommandHandler(new[] {new DummyPublisher(_logger)}, new FplClient());
@@ -59,6 +60,21 @@ namespace FplBot.Tests
             });
             
             Assert.Equal("Mohamed Salah", playerData.HandledMessage);
+        }
+        
+        [Theory]
+        [InlineData("@fplbot player nonexistantplayer")]
+        [InlineData("<@UREFQD887> player nonexistantplayer")]
+        public async Task GetPlayerHandlerNonPlayer(string input)
+        {
+            var client = new FplPlayerCommandHandler(new[] {new DummyPublisher(_logger)}, new FplClient());
+            var playerData = await client.Handle(new SlackMessage
+            {
+                Text = input,
+                ChatHub = new SlackChatHub()
+            });
+            
+            Assert.Equal("Not found", playerData.HandledMessage);
         }
     }
 

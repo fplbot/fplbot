@@ -24,6 +24,7 @@ namespace FplBot.ConsoleApps
             var replacements = new[]{
                 new {Find="@fplbot", Replace=""},
                 new {Find="player", Replace=""},
+                new {Find="<@UREFQD887>", Replace=""} // @fplbot-userid
             };
 
             var name = message.Text;
@@ -35,15 +36,24 @@ namespace FplBot.ConsoleApps
 
             var matchingPlayers = await _fplClient.GetAllFplDataForPlayer(name);
 
+            var textToSend = matchingPlayers;
+            if (string.IsNullOrEmpty(matchingPlayers))
+                textToSend = $"Fant ikke {name}";
+            
             foreach (var p in _publishers)
             {
                 await p.Publish(new Notification
                 {
                     Recipient = message.ChatHub.Id,
-                    Msg = matchingPlayers
+                    Msg = textToSend
                 });
             }
 
+            if (string.IsNullOrEmpty(matchingPlayers))
+            {
+                return new HandleResponse("Not found");
+ 
+            }
             return new HandleResponse(matchingPlayers);
         }
 
