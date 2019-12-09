@@ -14,21 +14,19 @@ namespace FplBot.ConsoleApps.Clients
 
         public async Task<string> GetAllFplDataForPlayer(string name)
         {
-            try
-            {
-                return await _client.GetAllFplDataForPlayer(name);
-            }
-            catch (Exception e)
-            {
-                return $"Oops: {e.Message}";
-            }
+            return await TryCatch(() =>_client.GetAllFplDataForPlayer(name));
         }
 
         public async Task<string> GetStandings(string leagueId)
         {
+            return await TryCatch(() =>_client.GetStandings(leagueId));
+        }
+
+        private async Task<string> TryCatch(Func<Task<string>> a)
+        {
             try
             {
-                return await _client.GetStandings(leagueId);
+                return await a();
             }
             catch (Exception e)
             {
