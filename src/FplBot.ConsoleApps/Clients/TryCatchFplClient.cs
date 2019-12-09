@@ -12,6 +12,18 @@ namespace FplBot.ConsoleApps.Clients
             _client = client;
         }
 
+        public async Task<string> GetAllFplDataForPlayer(string name)
+        {
+            try
+            {
+                return await _client.GetAllFplDataForPlayer(name);
+            }
+            catch (Exception e)
+            {
+                return $"Oops: {e.Message}";
+            }
+        }
+
         public async Task<string> GetStandings(string leagueId)
         {
             try
