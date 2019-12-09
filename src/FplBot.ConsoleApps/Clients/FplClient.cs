@@ -35,9 +35,7 @@ namespace FplBot.ConsoleApps.Clients
             var scoreBoard = await scoreBoardTask;
             var bootStrap = await bootstrapTask;
 
-            var currentGw = bootStrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
-
-            return $":star: *Resultater etter GW {currentGw}* :star: \n\n{scoreBoard}";
+            return Formatter.GetStandings(scoreBoard, bootStrap);
         }
 
         public async Task<string> GetAllFplDataForPlayer(string name)
@@ -64,7 +62,14 @@ namespace FplBot.ConsoleApps.Clients
             request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
             request.Headers.Add("User-Agent", "Lol");
             var response = await _httpClient.SendAsync(request);
-            var result = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
+            var body = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode || string.IsNullOrEmpty(body) || !body.StartsWith("{"))
+            {
+                throw new FplApiException($"FPL er litt uenig. Status {response.StatusCode} - {body}");    
+            }
+            
+            var result = JsonConvert.DeserializeObject<T>(body);
             return result;
         }
     }

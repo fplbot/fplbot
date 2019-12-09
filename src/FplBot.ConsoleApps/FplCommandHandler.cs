@@ -1,9 +1,10 @@
+using System;
 using FplBot.ConsoleApps.Clients;
-using Slackbot.Net.Handlers;
-using Slackbot.Net.Publishers;
 using SlackConnector.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Slackbot.Net.Workers.Handlers;
+using Slackbot.Net.Workers.Publishers;
 
 namespace FplBot.ConsoleApps
 {
@@ -17,17 +18,21 @@ namespace FplBot.ConsoleApps
             _publishers = publishers;
             _fplClient = fplClient;
         }
+
+        public Tuple<string, string> GetHelpDescription()
+        {
+            return new Tuple<string, string>("fpl", "Henter stillingen fra Blank-liga");
+        }
+
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var standings = await _fplClient.GetStandings("579157");
 
             foreach (var p in _publishers)
             {
-
                 await p.Publish(new Notification
                 {
-                    BotName = "fpl",
-                    Channel = "#fplbot",
+                    Recipient = message.ChatHub.Id,
                     Msg = standings
                 });
             }
@@ -37,8 +42,9 @@ namespace FplBot.ConsoleApps
 
         public bool ShouldHandle(SlackMessage message)
         {
-            return true;
             return message.MentionsBot && message.Text.Contains("fpl");
         }
+
+        public bool ShouldShowInHelp => true;
     }
 }

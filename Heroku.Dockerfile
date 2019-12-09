@@ -4,6 +4,8 @@ WORKDIR /app
 # Copy csproj and restore as distinct layers
 COPY src/FplBot.sln FplBot.sln
 COPY /src/FplBot.ConsoleApps/FplBot.ConsoleApps.csproj FplBot.ConsoleApps/FplBot.ConsoleApps.csproj
+COPY /src/FplBot.Tests/FplBot.Tests.csproj FplBot.Tests/FplBot.Tests.csproj
+
 RUN dotnet restore FplBot.sln
 
 # Copy everything else
