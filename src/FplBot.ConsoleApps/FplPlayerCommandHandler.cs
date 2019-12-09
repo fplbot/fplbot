@@ -2,6 +2,7 @@ using System;
 using FplBot.ConsoleApps.Clients;
 using SlackConnector.Models;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
@@ -25,11 +26,11 @@ namespace FplBot.ConsoleApps
                 new {Find="player", Replace=""},
             };
 
-            var name = "";
+            var name = message.Text;
 
             foreach (var set in replacements)
             {
-                name = message.Text.Replace(set.Find, set.Replace).Trim();
+                name = name.Replace(set.Find, set.Replace).Trim();
             }
 
             var matchingPlayers = await _fplClient.GetAllFplDataForPlayer(name);
@@ -43,7 +44,7 @@ namespace FplBot.ConsoleApps
                 });
             }
 
-            return new HandleResponse("OK");
+            return new HandleResponse(matchingPlayers);
         }
 
         public bool ShouldHandle(SlackMessage message)
