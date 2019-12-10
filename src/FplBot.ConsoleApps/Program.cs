@@ -25,7 +25,7 @@ namespace FplBot.ConsoleApps
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-
+                    services.AddTransient<FplClientHttpClientHandler>();
                     services.AddHttpClient<IFplClient, FplClient>().ConfigurePrimaryHttpMessageHandler<FplClientHttpClientHandler>();
                     services.Decorate<IFplClient, TryCatchFplClient>();
                     services.AddSlackbotWorker(hostContext.Configuration)
