@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using System;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -12,13 +11,9 @@ namespace FplBot.ConsoleApps.Clients
     {
         private readonly HttpClient _httpClient;
 
-        public FplClient()
+        public FplClient(HttpClient httpClient)
         {
-            var gzipMessageHandler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip
-            };
-            _httpClient = new HttpClient(gzipMessageHandler); ;
+            _httpClient = httpClient;
         }
 
         public async Task<PlayerStats> GetPlayerData(string playerId)

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FplBot.ConsoleApps.Clients;
+using FplBot.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,12 +17,12 @@ namespace FplBot.Tests
         [Fact]
         public async Task GetStandings()
         {
-            var client = new FplClient();
+            var client = Factory.CreateClient();
             var standings = await client.GetStandings("579157");
             _logger.WriteLine(standings);
             Assert.NotEmpty(standings);
         }
-        
+
         [Theory]
         [InlineData("salah")]
         [InlineData("mané")]
@@ -37,7 +37,7 @@ namespace FplBot.Tests
         [InlineData("alisson")]
         public async Task GetPlayer(string input)
         {
-            var client = new FplClient();
+            var client = Factory.CreateClient();
             var playerData = await client.GetAllFplDataForPlayer(input);
             _logger.WriteLine(playerData);
             Assert.NotEmpty(playerData);

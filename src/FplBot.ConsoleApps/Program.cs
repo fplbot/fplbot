@@ -1,3 +1,4 @@
+using System.Net;
 using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +25,8 @@ namespace FplBot.ConsoleApps
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddTransient<IFplClient, FplClient>();
+
+                    services.AddHttpClient<IFplClient, FplClient>().ConfigurePrimaryHttpMessageHandler<FplClientHttpClientHandler>();
                     services.Decorate<IFplClient, TryCatchFplClient>();
                     services.AddSlackbotWorker(hostContext.Configuration)
                         .AddPublisher<SlackPublisher>()
