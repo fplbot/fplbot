@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -90,8 +91,19 @@ namespace FplBot.ConsoleApps.Clients
                 }
             };
 
-            var response = await _httpClient.SendAsync(request);
-            return string.Join(", ", response.Headers.GetValues("Set-Cookie").Select(x => x.Split(';').First()));
+            var cookieJar = new CookieContainer();
+            var handler = new HttpClientHandler
+            {
+                CookieContainer = cookieJar,
+                UseCookies = true,
+                UseDefaultCredentials = false
+            };          
+            var httpClient = new HttpClient(handler);
+            var response = await httpClient.SendAsync(request);
+
+            var cookies = cookieJar.GetCookies(new Uri("https://users.premierleague.com"));
+            return string.Join("; ", cookies);
+
         }
     }
 }
