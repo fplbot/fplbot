@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Threading.Tasks;
 using FplBot.ConsoleApps;
 using FplBot.ConsoleApps.Clients;
@@ -22,7 +23,7 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> fpl")]
         public async Task GetPlayerHandler(string input)
         {
-            var client = CreateHandler();
+            var client = Factory.CreateFplHandler();
             var playerData = await client.Handle(new SlackMessage
             {
                 Text = input,
@@ -30,11 +31,6 @@ namespace FplBot.Tests
             });
             
             Assert.Equal("OK", playerData.HandledMessage);
-        }
-        
-        private static FplCommandHandler CreateHandler()
-        {
-            return new FplCommandHandler(new[] { new DummyPublisher() }, new FplClient());
         }
     }
 }
