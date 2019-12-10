@@ -18,14 +18,14 @@ namespace FplBot.ConsoleApps.Clients
 
         public async Task<PlayerStats> GetPlayerData(string playerId)
         {
-            return await Get<PlayerStats>($"https://fantasy.premierleague.com/entry/{playerId}/history");
+            return await Get<PlayerStats>($"/entry/{playerId}/history");
         }
 
         public async Task<string> GetStandings(string leagueId)
         {
 
-            var scoreBoardTask = Get<ScoreBoard>($"https://fantasy.premierleague.com/api/leagues-classic/{leagueId}/standings/");
-            var bootstrapTask = Get<Bootstrap>("https://fantasy.premierleague.com/api/bootstrap-static/");
+            var scoreBoardTask = Get<ScoreBoard>($"/api/leagues-classic/{leagueId}/standings/");
+            var bootstrapTask = Get<Bootstrap>("/api/bootstrap-static/");
 
             var scoreBoard = await scoreBoardTask;
             var bootStrap = await bootstrapTask;
@@ -35,7 +35,7 @@ namespace FplBot.ConsoleApps.Clients
 
         public async Task<string> GetAllFplDataForPlayer(string name)
         {
-            var bootstrapTask = Get<Bootstrap>("https://fantasy.premierleague.com/api/bootstrap-static/");
+            var bootstrapTask = Get<Bootstrap>("/api/bootstrap-static/");
 
             var bootStrap = await bootstrapTask;
 
@@ -52,10 +52,9 @@ namespace FplBot.ConsoleApps.Clients
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(url)
+                RequestUri = new Uri(url, UriKind.Relative)
             };
-            request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
-            request.Headers.Add("User-Agent", "Lol");
+           
             var response = await _httpClient.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -67,11 +66,5 @@ namespace FplBot.ConsoleApps.Clients
             var result = JsonConvert.DeserializeObject<T>(body);
             return result;
         }
-    }
-
-    public interface IFplClient
-    {
-        Task<string> GetStandings(string leagueId);
-        Task<string> GetAllFplDataForPlayer(string name);
     }
 }

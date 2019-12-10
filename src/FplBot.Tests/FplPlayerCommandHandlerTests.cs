@@ -1,7 +1,4 @@
-using System.Net.Http;
 using System.Threading.Tasks;
-using FplBot.ConsoleApps;
-using FplBot.ConsoleApps.Clients;
 using FplBot.Tests.Helpers;
 using SlackConnector.Models;
 using Xunit;

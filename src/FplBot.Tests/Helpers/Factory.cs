@@ -8,7 +8,11 @@ namespace FplBot.Tests.Helpers
     {
         public static FplClient CreateClient()
         {
-            return new FplClient(new HttpClient(new FplClientHttpClientHandler()));
+            var handler = new HttpClientHandler();
+            FplClientOptionsConfigurator.ConfigurePrimaryHandler(handler);
+            var httpClient = new HttpClient(handler);
+            FplClientOptionsConfigurator.SetupFplClient(httpClient);
+            return new FplClient(httpClient);
         }
 
         public static FplCommandHandler CreateFplHandler()
