@@ -54,8 +54,7 @@ namespace FplBot.ConsoleApps.Clients
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url, UriKind.Relative)
             };
-            request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
-            request.Headers.Add("User-Agent", "Lol");
+           
             var response = await _httpClient.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
 
