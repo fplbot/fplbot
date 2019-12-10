@@ -1,6 +1,7 @@
 ﻿using FplBot.ConsoleApps.Models;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -54,6 +55,9 @@ namespace FplBot.ConsoleApps.Clients
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url, UriKind.Relative)
             };
+
+            var sessionCookie = await GetSessionCookie();
+            request.Headers.Add("Cookie", sessionCookie);
            
             var response = await _httpClient.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
@@ -65,6 +69,29 @@ namespace FplBot.ConsoleApps.Clients
             
             var result = JsonConvert.DeserializeObject<T>(body);
             return result;
+        }
+
+        private async Task<string> GetSessionCookie()
+        {
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri("https://users.premierleague.com/accounts/login/", UriKind.Absolute),
+                Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["login"] = "ls@blank.no",
+                    ["password"] = "***",
+                    ["app"] = "plfpl-web",
+                    ["redirect_uri"] = "https://fantasy.premierleague.com/"
+                }),
+                Headers = {
+                    { "Origin", "https://fantasy.premierleague.com" },
+                    { "Referer", "https://fantasy.premierleague.com/" }
+                }
+            };
+
+            var response = await _httpClient.SendAsync(request);
+            return string.Join(", ", response.Headers.GetValues("Set-Cookie").Select(x => x.Split(';').First()));
         }
     }
 }
