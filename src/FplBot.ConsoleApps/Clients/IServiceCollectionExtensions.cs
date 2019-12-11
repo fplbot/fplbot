@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+    
 
 namespace FplBot.ConsoleApps.Clients
 {
@@ -10,6 +11,8 @@ namespace FplBot.ConsoleApps.Clients
             services.AddHttpClient<IFplClient, FplClient>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<CookieFetcher>();
+            services.AddDistributedMemoryCache();
+            services.AddSingleton<CookieCache>();
             services.AddSingleton<FplHttpHandler>();
             services.Configure<FplApiClientOptions>(config);
             services.Decorate<IFplClient, TryCatchFplClient>();

@@ -4,22 +4,46 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using FplBot.ConsoleApps;
 using FplBot.ConsoleApps.Clients;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FplBot.ConsoleApps
 {
     public class CookieFetcher
     {
+        private readonly CookieCache _cache;
+        private readonly ILogger<CookieFetcher> _logger;
         private readonly FplApiClientOptions _options;
 
-        public CookieFetcher(IOptions<FplApiClientOptions> options)
+        public CookieFetcher(IOptions<FplApiClientOptions> options, CookieCache cache, ILogger<CookieFetcher> logger)
         {
+            _cache = cache;
+            _logger = logger;
             _options = options.Value;
             _options.Validate(); 
         }
         
         public async Task<string> GetSessionCookie()
+        {
+            var cookieFromCache = await _cache.GetAsync();
+            
+            if (string.IsNullOrEmpty(cookieFromCache))
+            {
+                _logger.LogWarning("Cache miss. Re-authenticating.");
+                var cookies = await Authenticate();
+                
+                var sessionCookieExpiry = cookies.First(c => c.Name == "sessionid").Expires;
+                var cookieString = string.Join("; ", cookies);
+                await _cache.SetAsync(cookieString, sessionCookieExpiry);
+                return cookieString;
+            }
+            _logger.LogWarning("Cache hit");
+            return cookieFromCache;
+        }
+
+        private async Task<List<Cookie>> Authenticate()
         {
             var request = new HttpRequestMessage
             {
@@ -32,34 +56,32 @@ namespace FplBot.ConsoleApps
                     ["app"] = "plfpl-web",
                     ["redirect_uri"] = "https://fantasy.premierleague.com/"
                 }),
-                Headers = {
-                    { "Origin", "https://fantasy.premierleague.com" },
-                    { "Referer", "https://fantasy.premierleague.com" }
+                Headers =
+                {
+                    {"Origin", "https://fantasy.premierleague.com"},
+                    {"Referer", "https://fantasy.premierleague.com"}
                 }
             };
-            
+
             var cookieJar = new CookieContainer();
             var handler = new HttpClientHandler
             {
                 CookieContainer = cookieJar,
                 UseCookies = true,
                 UseDefaultCredentials = false
-            };          
+            };
             var httpClient = new HttpClient(handler);
             var response = await httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                throw new FplApiException($"Could not authenticate!");
+                throw new FplApiException($"Could not authenticate! Status code : {response.StatusCode}");
             }
 
             var usersCookies = cookieJar.GetAllCookies();
             
             VerifyAuthCookies(usersCookies, "sessionid", "pl_profile", "csrftoken");
 
-            var allCookies = new List<Cookie>();
-            allCookies.AddRange(usersCookies);
-
-            return string.Join("; ", allCookies);
+            return usersCookies;
         }
 
         private static void VerifyAuthCookies(List<Cookie> usersCookies, params string[] cookieNames)
