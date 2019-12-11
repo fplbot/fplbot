@@ -15,11 +15,7 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
             
             var services = new ServiceCollection();
-            services.AddHttpClient<IFplClient, FplClient>();
-            services.AddSingleton<FplHttpHandler>();
-            services.Configure<FplApiClientOptions>(configuration.GetSection("fpl"));
-            
-            services.ConfigureOptions<FplClientOptionsConfigurator>();
+            services.AddFplApiClient(configuration.GetSection("fpl"));
             var provider = services.BuildServiceProvider();
             return provider.GetService<IFplClient>();
         }
