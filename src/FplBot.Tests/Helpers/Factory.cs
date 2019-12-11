@@ -11,6 +11,8 @@ namespace FplBot.Tests.Helpers
         {
             var config = new ConfigurationBuilder();
             config.AddJsonFile("appsettings.Local.json");
+            config.AddEnvironmentVariables();
+            
             var configuration = config.Build();
             
             var services = new ServiceCollection();
