@@ -9,8 +9,7 @@ Requirements: .NET Core 3.1 SDK: https://dotnet.microsoft.com/download/dotnet-co
 ..or using docker:
 - see `/src/buildimage.sh` and `runcontainer.sh` using the .NET Core docker images
 
-Local dev time configuration:
-    
+*Configuration*   
 Add a appsettings.Local.json file (is in gitignore) with contents:
 
 ``` 
@@ -34,6 +33,11 @@ export Slackbot_SlackApiKey_BotUser=token2
 export fpl__login=username
 export fpl__password=pwd 
 ```
+
+*Build scripts*   
+The project is using [Nuke](http://www.nuke.build/) to run the build.   
+Install: `$ dotnet tool install Nuke.GlobalTool -g`   
+Run: `$ nuke`   
 
 
 
