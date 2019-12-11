@@ -1,3 +1,4 @@
+using System;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
@@ -25,7 +26,7 @@ namespace FplBot.Build
         public static int Main () => Execute<TheNukeBuild>(x => x.Pack);
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-        readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+        readonly Configuration Configuration = Configuration.Release;
 
         [Solution] readonly Solution Solution;
         [GitRepository] readonly GitRepository GitRepository;
@@ -68,17 +69,32 @@ namespace FplBot.Build
                     .EnableNoRestore()
                     .EnableNoBuild());
             });
+
+        string FplClient = "Fpl.Client";
+        string Version = "0.1.0";
         
         Target Pack => _ => _
-            .DependsOn(Test)
+            .DependsOn(Build)
             .Executes(() =>
             {
                 DotNetPack(_ => _
-                    .SetProject(Solution.GetProject("Fpl.Client"))
+                    .SetProject(Solution.GetProject(FplClient))
                     .SetConfiguration(Configuration)
+                    .SetVersion(Version)
+                    .SetOutputDirectory("./releases")
                     .EnableNoRestore()
                     .EnableNoBuild());
             });
+
+        Target PublishFplClient => _ => _
+            .DependsOn(Pack)
+            .Executes(() =>
+            {
+                DotNetNuGetPush(_ => _
+                    .SetTargetPath($"./releases/{FplClient}.{Version}.nupkg")
+                    .SetSource("https://api.nuget.org/v3/index.json")
+                    .SetApiKey(Environment.GetEnvironmentVariable("NUGET_API_KEY")));
+            });        
 
     }
 }
