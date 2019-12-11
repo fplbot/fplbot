@@ -1,9 +1,10 @@
+using FplBot.ConsoleApps.Handlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Workers.Publishers.Logger;
 using Slackbot.Net.Workers.Publishers.Slack;
 
-namespace FplBot.ConsoleApps.Clients
+namespace FplBot.ConsoleApps
 {
     public static class IFplBotServiceCollectionExtensions
     {

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FplBot.ConsoleApps;
+using FplBot.ConsoleApps.Handlers;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Workers.Handlers;
 using SlackConnector.Models;

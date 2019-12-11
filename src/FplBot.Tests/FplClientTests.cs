@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Fpl.Client;
-using FplBot.ConsoleApps;
+using FplBot.ConsoleApps.Handlers;
 using FplBot.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;

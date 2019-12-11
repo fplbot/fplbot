@@ -1,7 +1,7 @@
 using System.Linq;
 using Fpl.Client;
 using Fpl.Client.Clients;
-using FplBot.ConsoleApps.Clients;
+using FplBot.ConsoleApps;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

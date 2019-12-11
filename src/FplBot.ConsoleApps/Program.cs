@@ -1,5 +1,4 @@
 using Fpl.Client.Clients;
-using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

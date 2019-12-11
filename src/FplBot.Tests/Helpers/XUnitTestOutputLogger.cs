@@ -1,5 +1,4 @@
 using System;
-using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 

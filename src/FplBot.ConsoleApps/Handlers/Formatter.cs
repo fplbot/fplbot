@@ -2,7 +2,7 @@
 using System.Text;
 using Fpl.Client.Models;
 
-namespace FplBot.ConsoleApps
+namespace FplBot.ConsoleApps.Handlers
 {
     public class Formatter
     {

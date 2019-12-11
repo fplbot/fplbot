@@ -1,13 +1,12 @@
 using System;
-using FplBot.ConsoleApps.Clients;
-using SlackConnector.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
+using SlackConnector.Models;
 
-namespace FplBot.ConsoleApps
+namespace FplBot.ConsoleApps.Handlers
 {
     public class FplCommandHandler : IHandleMessages
     {
