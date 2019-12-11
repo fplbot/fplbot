@@ -22,7 +22,7 @@ namespace FplBot.Build
         ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
         ///   - Microsoft VSCode           https://nuke.build/vscode
 
-        public static int Main () => Execute<TheNukeBuild>(x => x.Test);
+        public static int Main () => Execute<TheNukeBuild>(x => x.Pack);
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
         readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
@@ -64,6 +64,17 @@ namespace FplBot.Build
             {
                 DotNetTest(_ => _
                     .SetProjectFile(Solution)
+                    .SetConfiguration(Configuration)
+                    .EnableNoRestore()
+                    .EnableNoBuild());
+            });
+        
+        Target Pack => _ => _
+            .DependsOn(Test)
+            .Executes(() =>
+            {
+                DotNetPack(_ => _
+                    .SetProject(Solution.GetProject("Fpl.Client"))
                     .SetConfiguration(Configuration)
                     .EnableNoRestore()
                     .EnableNoBuild());
