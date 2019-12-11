@@ -68,6 +68,20 @@ namespace FplBot.Tests
             
             Assert.Contains(player, playerData.HandledMessage, StringComparison.InvariantCultureIgnoreCase);
         }
+        
+        [Theory]
+        [InlineData("@fplbot player son")]
+        public async Task GetMultipleResponse(string input)
+        {
+            var playerData = await _client.Handle(new SlackMessage
+            {
+                Text = input,
+                ChatHub = new SlackChatHub()
+            });
+            
+            Assert.Contains("Carl Jenkinson", playerData.HandledMessage);
+            Assert.Contains("Harry Wilson", playerData.HandledMessage);
+        }
 
        
     }

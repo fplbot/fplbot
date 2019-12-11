@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client;
+using Fpl.Client.Models;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 using SlackConnector.Models;
@@ -21,34 +22,23 @@ namespace FplBot.ConsoleApps.Handlers
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var replacements = new[]{
-                new {Find="@fplbot", Replace=""},
-                new {Find="player", Replace=""},
-                new {Find="<@UREFQD887>", Replace=""} // @fplbot-userid
-            };
-
-            var name = message.Text;
-
-            foreach (var set in replacements)
-            {
-                name = name.Replace(set.Find, set.Replace).Trim();
-            }
-            name = name.ToLower();
+            var name = ParsePlayerFromInput(message);
 
             var bootStrap = await _fplClient.GetBootstrap();
 
-            var matchingPlayers = bootStrap.Elements.Where((p) => p.FirstName.ToLower().Contains(name) || p.LastName.ToLower().Contains(name));
-
+            var matchingElement = FindMatchingPlayer(bootStrap, name);
+            
             var textToSend = "";
-            if (!matchingPlayers.Any())
+            if (!matchingElement.Any())
             {
                 textToSend = $"Fant ikke {name}";
             }
             else
             {
-                textToSend = matchingPlayers.Any() ? string.Join("\n", matchingPlayers) : "";
+                textToSend = string.Join("\n", matchingElement);
             }
-            
+
+
             foreach (var p in _publishers)
             {
                 await p.Publish(new Notification
@@ -64,6 +54,31 @@ namespace FplBot.ConsoleApps.Handlers
  
             }
             return new HandleResponse(textToSend);
+        }
+
+        private static IEnumerable<Element> FindMatchingPlayer(Bootstrap bootStrap, string name)
+        {
+            return bootStrap.Elements.Where((p) => p.FirstName.ToLower().Contains(name) || p.LastName.ToLower().Contains(name));
+        }
+
+        private static string ParsePlayerFromInput(SlackMessage message)
+        {
+            var replacements = new[]
+            {
+                new {Find = "@fplbot", Replace = ""},
+                new {Find = "player", Replace = ""},
+                new {Find = "<@UREFQD887>", Replace = ""} // @fplbot-userid
+            };
+
+            var name = message.Text;
+
+            foreach (var set in replacements)
+            {
+                name = name.Replace(set.Find, set.Replace).Trim();
+            }
+
+            name = name.ToLower();
+            return name;
         }
 
         public bool ShouldHandle(SlackMessage message)
