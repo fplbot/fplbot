@@ -1,16 +1,19 @@
 using System;
 using System.Threading.Tasks;
 using Fpl.Client.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Fpl.Client.Clients
 {
     public class TryCatchFplClient : IFplClient
     {
         private readonly IFplClient _client;
+        private readonly ILogger<TryCatchFplClient> _logger;
 
-        public TryCatchFplClient(IFplClient client)
+        public TryCatchFplClient(IFplClient client, ILogger<TryCatchFplClient> logger)
         {
             _client = client;
+            _logger = logger;
         }
 
         public async Task<PlayerStats> GetPlayerData(string playerId)
@@ -36,6 +39,7 @@ namespace Fpl.Client.Clients
             }
             catch (Exception e)
             {
+                _logger.LogError(e, e.Message);
                 return null;
             }
         }
