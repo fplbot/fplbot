@@ -15,7 +15,6 @@ namespace Fpl.Client.Clients
             services.AddSingleton<CookieCache>();
             services.AddSingleton<FplHttpHandler>();
             services.Configure<FplApiClientOptions>(config);
-            services.Decorate<IFplClient, TryCatchFplClient>();
             return services;
         }
     }
