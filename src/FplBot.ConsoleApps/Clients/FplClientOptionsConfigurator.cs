@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
@@ -11,6 +12,13 @@ namespace FplBot.ConsoleApps
 {
     public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFactoryOptions>
     {
+        private readonly FplHttpHandler _fplHttphandler;
+
+        public FplClientOptionsConfigurator(FplHttpHandler fplHttphandler)
+        {
+            _fplHttphandler = fplHttphandler;
+        }
+        
         public void Configure(HttpClientFactoryOptions options)
         {
             
@@ -21,14 +29,11 @@ namespace FplBot.ConsoleApps
             if (name is nameof(IFplClient))
             {
                 options.HttpClientActions.Add(SetupFplClient);
-                options.HttpMessageHandlerBuilderActions.Add(b => ConfigurePrimaryHandler(b.PrimaryHandler as HttpClientHandler));
+                options.HttpMessageHandlerBuilderActions.Add(b =>
+                {
+                    b.PrimaryHandler = _fplHttphandler;
+                });
             }
-        }
-
-        public static void ConfigurePrimaryHandler(HttpClientHandler handler)
-        {
-            handler.AutomaticDecompression = DecompressionMethods.GZip;
-            handler.SslProtocols = SslProtocols.Tls12;       
         }
 
         public static void SetupFplClient(HttpClient client)

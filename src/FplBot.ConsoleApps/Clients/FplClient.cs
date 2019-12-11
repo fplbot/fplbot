@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Flurl.Util;
 
 namespace FplBot.ConsoleApps.Clients
 {
@@ -56,9 +57,6 @@ namespace FplBot.ConsoleApps.Clients
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url, UriKind.Relative)
             };
-
-            var sessionCookie = await GetSessionCookie();
-            request.Headers.Add("Cookie", sessionCookie);
            
             var response = await _httpClient.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
@@ -70,40 +68,6 @@ namespace FplBot.ConsoleApps.Clients
             
             var result = JsonConvert.DeserializeObject<T>(body);
             return result;
-        }
-
-        private async Task<string> GetSessionCookie()
-        {
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri("https://users.premierleague.com/accounts/login/", UriKind.Absolute),
-                Content = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["login"] = "ls@blank.no",
-                    ["password"] = "***",
-                    ["app"] = "plfpl-web",
-                    ["redirect_uri"] = "https://fantasy.premierleague.com/"
-                }),
-                Headers = {
-                    { "Origin", "https://fantasy.premierleague.com" },
-                    { "Referer", "https://fantasy.premierleague.com/" }
-                }
-            };
-
-            var cookieJar = new CookieContainer();
-            var handler = new HttpClientHandler
-            {
-                CookieContainer = cookieJar,
-                UseCookies = true,
-                UseDefaultCredentials = false
-            };          
-            var httpClient = new HttpClient(handler);
-            var response = await httpClient.SendAsync(request);
-
-            var cookies = cookieJar.GetCookies(new Uri("https://users.premierleague.com"));
-            return string.Join("; ", cookies);
-
         }
     }
 }

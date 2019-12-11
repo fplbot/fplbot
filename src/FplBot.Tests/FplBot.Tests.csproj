@@ -17,4 +17,11 @@
       <ProjectReference Include="..\FplBot.ConsoleApps\FplBot.ConsoleApps.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="appsettings.Local.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

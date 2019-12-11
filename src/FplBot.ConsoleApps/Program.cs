@@ -27,6 +27,8 @@ namespace FplBot.ConsoleApps
                 {
                     services.AddHttpClient<IFplClient, FplClient>();
                     services.ConfigureOptions<FplClientOptionsConfigurator>();
+                    services.AddSingleton<FplHttpHandler>();
+                    services.Configure<FplApiClientOptions>(hostContext.Configuration.GetSection("fpl"));
                     services.Decorate<IFplClient, TryCatchFplClient>();
                     services.AddSlackbotWorker(hostContext.Configuration)
                         .AddPublisher<SlackPublisher>()
