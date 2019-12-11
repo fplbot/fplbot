@@ -32,10 +32,9 @@ namespace FplBot.Build
         [GitRepository] readonly GitRepository GitRepository;
 
         AbsolutePath SourceDirectory => RootDirectory / "src";
-        AbsolutePath OutputDirectory => RootDirectory / "output";
+        AbsolutePath OutputDirectory => RootDirectory / "releases";
 
         Target Clean => _ => _
-            .Before(Restore)
             .Executes(() =>
             {
                 SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
@@ -43,6 +42,7 @@ namespace FplBot.Build
             });
 
         Target Restore => _ => _
+            .DependsOn(Clean)
             .Executes(() =>
             {
                 DotNetRestore(_ => _
@@ -71,17 +71,17 @@ namespace FplBot.Build
             });
 
         string FplClient = "Fpl.Client";
-        string Version = "0.1.0";
+        string Version = "0.2.0";
         
         Target Pack => _ => _
-            .DependsOn(Build)
+            .DependsOn(Test)
             .Executes(() =>
             {
                 DotNetPack(_ => _
                     .SetProject(Solution.GetProject(FplClient))
                     .SetConfiguration(Configuration)
                     .SetVersion(Version)
-                    .SetOutputDirectory("./releases")
+                    .SetOutputDirectory(OutputDirectory)
                     .EnableNoRestore()
                     .EnableNoBuild());
             });
@@ -91,7 +91,7 @@ namespace FplBot.Build
             .Executes(() =>
             {
                 DotNetNuGetPush(_ => _
-                    .SetTargetPath($"./releases/{FplClient}.{Version}.nupkg")
+                    .SetTargetPath($"./{OutputDirectory}/{FplClient}.{Version}.nupkg")
                     .SetSource("https://api.nuget.org/v3/index.json")
                     .SetApiKey(Environment.GetEnvironmentVariable("NUGET_API_KEY")));
             });        
