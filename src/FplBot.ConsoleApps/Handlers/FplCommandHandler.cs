@@ -26,9 +26,7 @@ namespace FplBot.ConsoleApps.Handlers
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var scoreboard = await _fplClient.GetScoreBoard("579157");
-            var bootstrap = await _fplClient.GetBootstrap();
-            var standings = Formatter.GetStandings(scoreboard, bootstrap);
+            var standings = await GetStandings();
 
             foreach (var p in _publishers)
             {
@@ -40,6 +38,21 @@ namespace FplBot.ConsoleApps.Handlers
             }
 
             return new HandleResponse(standings);
+        }
+
+        private async Task<string> GetStandings()
+        {
+            try
+            {
+                var scoreboard = await _fplClient.GetScoreBoard("579157");
+                var bootstrap = await _fplClient.GetBootstrap();
+                var standings = Formatter.GetStandings(scoreboard, bootstrap);
+                return standings;
+            }
+            catch (Exception e)
+            {
+                return $"Oops: {e.Message}";
+            }
         }
 
         public bool ShouldHandle(SlackMessage message)
