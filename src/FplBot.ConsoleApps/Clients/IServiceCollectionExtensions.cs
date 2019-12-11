@@ -10,6 +10,7 @@ namespace FplBot.ConsoleApps.Clients
         {
             services.AddHttpClient<IFplClient, FplClient>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
+            services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();
             services.AddDistributedMemoryCache();
             services.AddSingleton<CookieCache>();
