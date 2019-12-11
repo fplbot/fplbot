@@ -5,11 +5,11 @@ using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
 {
-    public class TestLogger<T> : ILogger<T>, IDisposable
+    public class XUnitTestOutputLogger<T> : ILogger<T>, IDisposable
     {
         private readonly ITestOutputHelper _helper;
 
-        public TestLogger(ITestOutputHelper helper = null)
+        public XUnitTestOutputLogger(ITestOutputHelper helper = null)
         {
             _helper = helper;
         }

@@ -26,12 +26,7 @@ namespace FplBot.ConsoleApps
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddFplApiClient(hostContext.Configuration.GetSection("fpl"));
-                    services.AddSlackbotWorker(hostContext.Configuration)
-                        .AddPublisher<SlackPublisher>()
-                        .AddHandler<FplPlayerCommandHandler>()
-                        .AddPublisher<LoggerPublisher>()
-                        .AddHandler<FplCommandHandler>();
-
+                    services.AddFplBot(hostContext.Configuration);
                 })
                 .ConfigureLogging((context, configLogging) =>
                 {

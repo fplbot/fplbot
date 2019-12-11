@@ -37,7 +37,7 @@ namespace FplBot.ConsoleApps
                 });
             }
 
-            return new HandleResponse("OK");
+            return new HandleResponse(standings);
         }
 
         public bool ShouldHandle(SlackMessage message)

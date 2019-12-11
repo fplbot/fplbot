@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.ConsoleApps.Clients
 {
-    public static class IServiceCollectionExtensions
+    public static class IFplApiClientServiceCollectionExtensions
     {
         public static IServiceCollection AddFplApiClient(this IServiceCollection services, IConfiguration config)
         {

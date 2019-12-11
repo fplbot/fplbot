@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FplBot.ConsoleApps.Clients;
 using FplBot.Tests.Helpers;
@@ -17,13 +18,11 @@ namespace FplBot.Tests
             _client = Factory.CreateClient(logger);
         }
         
-        
         [Fact]
         public async Task GetStandings()
         {
             var standings = await _client.GetStandings("579157");
-            _logger.WriteLine(standings);
-            Assert.NotEmpty(standings);
+            Assert.StartsWith(":star:", standings);
         }
 
         [Theory]
@@ -41,8 +40,7 @@ namespace FplBot.Tests
         public async Task GetPlayer(string input)
         {
             var playerData = await _client.GetAllFplDataForPlayer(input);
-            _logger.WriteLine(playerData);
-            Assert.NotEmpty(playerData);
+            Assert.Contains(input, playerData, StringComparison.InvariantCultureIgnoreCase);
         }
         
         // Check 

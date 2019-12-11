@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
+using FplBot.ConsoleApps;
 using FplBot.Tests.Helpers;
+using Slackbot.Net.Workers.Handlers;
 using SlackConnector.Models;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,11 +10,11 @@ namespace FplBot.Tests
 {
     public class FplPlayerCommandHandlerTests
     {
-        private readonly ITestOutputHelper _logger;
+        private readonly IHandleMessages _client;
 
         public FplPlayerCommandHandlerTests(ITestOutputHelper logger)
         {
-            _logger = logger;
+            _client = Factory.GetHandler<FplPlayerCommandHandler>(logger);
         }
         
         [Theory]
@@ -20,8 +22,7 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> player salah")]
         public async Task GetPlayerHandler(string input)
         {
-            var client = Factory.CreatePlayerHandler();
-            var playerData = await client.Handle(new SlackMessage
+            var playerData = await _client.Handle(new SlackMessage
             {
                 Text = input,
                 ChatHub = new SlackChatHub()
@@ -35,8 +36,7 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> player nonexistantplayer")]
         public async Task GetPlayerHandlerNonPlayer(string input)
         {
-            var client = Factory.CreatePlayerHandler();
-            var playerData = await client.Handle(new SlackMessage
+            var playerData = await _client.Handle(new SlackMessage
             {
                 Text = input,
                 ChatHub = new SlackChatHub()
