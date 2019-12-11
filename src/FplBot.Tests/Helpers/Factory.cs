@@ -10,26 +10,8 @@ namespace FplBot.Tests.Helpers
         public static IFplClient CreateClient()
         {
             var config = new ConfigurationBuilder();
-            
-            // either create the appsettings.Local.json file with contents:
-            /*
-             * {
-             *   "fpl" : {
-             *     "login" : "username",
-             *     "password : "pwd"
-             *   }
-             * }
-             */
             config.AddJsonFile("appsettings.Local.json", optional:true);
-            
-            /* Or: Add environment variables (double underscores mimic nested props in the json config):
-             *
-             * export fpl__login=username
-             * export fpl__password=pwd 
-             * 
-             */
             config.AddEnvironmentVariables();
-            
             var configuration = config.Build();
             
             var services = new ServiceCollection();
