@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FplBot.ConsoleApps.Handlers;
 using FplBot.Tests.Helpers;
@@ -32,17 +33,40 @@ namespace FplBot.Tests
         }
 
         [Theory]
-        [InlineData("@fplbot player nonexistantplayer")]
-        [InlineData("<@UREFQD887> player nonexistantplayer")]
-        public async Task GetPlayerHandlerNonPlayer(string input)
+        [InlineData("@fplbot player ", "nonexistant")]
+        [InlineData("<@UREFQD887> player ", "nonexistant")]
+        public async Task GetPlayerHandlerNonPlayer(string input, string player)
         {
             var playerData = await _client.Handle(new SlackMessage
             {
-                Text = input,
+                Text = $"{input}{player}",
                 ChatHub = new SlackChatHub()
             });
             
-            Assert.Equal("Not found", playerData.HandledMessage);
+            Assert.Equal("Fant ikke nonexistant", playerData.HandledMessage);
+        }
+        
+        [Theory]
+        [InlineData("@fplbot player ", "salah")]
+        [InlineData("@fplbot player ", "mané")]
+        [InlineData("@fplbot player ", "firmino")]
+        [InlineData("@fplbot player ", "henderson")]
+        [InlineData("@fplbot player ", "wijnaldum")]
+        [InlineData("@fplbot player ", "tavares")]
+        [InlineData("@fplbot player ", "robertson")]
+        [InlineData("@fplbot player ", "van dijk")]
+        [InlineData("@fplbot player ", "matip")]
+        [InlineData("@fplbot player ", "trent")]
+        [InlineData("@fplbot player ", "alisson")]
+        public async Task GetPlayer(string input, string player)
+        {
+            var playerData = await _client.Handle(new SlackMessage
+            {
+                Text = $"{input}{player}",
+                ChatHub = new SlackChatHub()
+            });
+            
+            Assert.Contains(player, playerData.HandledMessage, StringComparison.InvariantCultureIgnoreCase);
         }
 
        

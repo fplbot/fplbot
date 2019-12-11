@@ -32,20 +32,6 @@ namespace Fpl.Client
             return await Get<Bootstrap>("/api/bootstrap-static/");
         }
 
-        public async Task<string> GetAllFplDataForPlayer(string name)
-        {
-            var bootstrapTask = Get<Bootstrap>("/api/bootstrap-static/");
-
-            var bootStrap = await bootstrapTask;
-
-            name = name.ToLower();
-
-            var matchingPlayers = bootStrap.Elements
-                .Where((p) => p.FirstName.ToLower().Contains(name) || p.LastName.ToLower().Contains(name));
-
-            return matchingPlayers.Any() ? string.Join("\n", matchingPlayers) : "";
-        }
-
         private async Task<T> Get<T>(string url)
         {
             var request = new HttpRequestMessage

@@ -28,12 +28,6 @@ namespace Fpl.Client.Clients
             return await TryCatch(() =>_client.GetBootstrap());
         }
 
-        public async Task<string> GetAllFplDataForPlayer(string name)
-        {
-            return await TryCatch(() =>_client.GetAllFplDataForPlayer(name));
-        }
-      
-
         private async Task<T> TryCatch<T>(Func<Task<T>> a) where T:class
         {
             try

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client;
 using Slackbot.Net.Workers.Handlers;
@@ -32,12 +33,21 @@ namespace FplBot.ConsoleApps.Handlers
             {
                 name = name.Replace(set.Find, set.Replace).Trim();
             }
+            name = name.ToLower();
 
-            var matchingPlayers = await _fplClient.GetAllFplDataForPlayer(name);
+            var bootStrap = await _fplClient.GetBootstrap();
 
-            var textToSend = matchingPlayers;
-            if (string.IsNullOrEmpty(matchingPlayers))
+            var matchingPlayers = bootStrap.Elements.Where((p) => p.FirstName.ToLower().Contains(name) || p.LastName.ToLower().Contains(name));
+
+            var textToSend = "";
+            if (!matchingPlayers.Any())
+            {
                 textToSend = $"Fant ikke {name}";
+            }
+            else
+            {
+                textToSend = matchingPlayers.Any() ? string.Join("\n", matchingPlayers) : "";
+            }
             
             foreach (var p in _publishers)
             {
@@ -48,12 +58,12 @@ namespace FplBot.ConsoleApps.Handlers
                 });
             }
 
-            if (string.IsNullOrEmpty(matchingPlayers))
+            if (string.IsNullOrEmpty(textToSend))
             {
                 return new HandleResponse("Not found");
  
             }
-            return new HandleResponse(matchingPlayers);
+            return new HandleResponse(textToSend);
         }
 
         public bool ShouldHandle(SlackMessage message)

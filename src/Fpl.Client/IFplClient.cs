@@ -8,6 +8,5 @@ namespace Fpl.Client
         Task<PlayerStats> GetPlayerData(string playerId);
         Task<ScoreBoard> GetScoreBoard(string leagueId);
         Task<Bootstrap> GetBootstrap();
-        Task<string> GetAllFplDataForPlayer(string name);
     }
 }
