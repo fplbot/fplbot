@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using FplBot.ConsoleApps.Clients;
 using FplBot.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,17 +9,19 @@ namespace FplBot.Tests
     public class FplClientTests
     {
         private readonly ITestOutputHelper _logger;
+        private IFplClient _client;
 
         public FplClientTests(ITestOutputHelper logger)
         {
             _logger = logger;
+            _client = Factory.CreateClient(logger);
         }
+        
         
         [Fact]
         public async Task GetStandings()
         {
-            var client = Factory.CreateClient();
-            var standings = await client.GetStandings("579157");
+            var standings = await _client.GetStandings("579157");
             _logger.WriteLine(standings);
             Assert.NotEmpty(standings);
         }
@@ -37,10 +40,17 @@ namespace FplBot.Tests
         [InlineData("alisson")]
         public async Task GetPlayer(string input)
         {
-            var client = Factory.CreateClient();
-            var playerData = await client.GetAllFplDataForPlayer(input);
+            var playerData = await _client.GetAllFplDataForPlayer(input);
             _logger.WriteLine(playerData);
             Assert.NotEmpty(playerData);
+        }
+        
+        // Check 
+        [Fact]
+        public async Task CacheTest()
+        {
+            await _client.GetStandings("579157");
+            await _client.GetStandings("579157");
         }
     }
 }
