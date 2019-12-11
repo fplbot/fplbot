@@ -1,6 +1,4 @@
-using FplBot.ConsoleApps.Clients;
-
-namespace FplBot.ConsoleApps
+namespace Fpl.Client.Clients
 {
     public class FplApiClientOptions
     {

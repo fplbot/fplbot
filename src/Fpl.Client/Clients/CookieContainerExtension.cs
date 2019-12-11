@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
 
-namespace FplBot.ConsoleApps.Clients
+namespace Fpl.Client.Clients
 {
     public static class CookieContainerExtension
     {

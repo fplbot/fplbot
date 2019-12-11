@@ -1,5 +1,6 @@
 using System.Linq;
-using FplBot.ConsoleApps;
+using Fpl.Client;
+using Fpl.Client.Clients;
 using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,6 +1,6 @@
 using System;
 
-namespace FplBot.ConsoleApps.Clients
+namespace Fpl.Client.Clients
 {
     internal class FplApiException : Exception
     {

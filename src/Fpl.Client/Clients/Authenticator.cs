@@ -4,10 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Options;
 
-namespace FplBot.ConsoleApps
+namespace Fpl.Client.Clients
 {
     public class Authenticator
     {

@@ -2,7 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.ConsoleApps
+namespace Fpl.Client.Clients
 {
     public class CookieFetcher
     {

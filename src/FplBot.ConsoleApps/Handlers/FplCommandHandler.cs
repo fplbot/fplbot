@@ -3,6 +3,7 @@ using FplBot.ConsoleApps.Clients;
 using SlackConnector.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Fpl.Client;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 
@@ -26,7 +27,9 @@ namespace FplBot.ConsoleApps
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var standings = await _fplClient.GetStandings("579157");
+            var scoreboard = await _fplClient.GetScoreBoard("579157");
+            var bootstrap = await _fplClient.GetBootstrap();
+            var standings = Formatter.GetStandings(scoreboard, bootstrap);
 
             foreach (var p in _publishers)
             {

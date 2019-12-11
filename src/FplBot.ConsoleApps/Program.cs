@@ -1,11 +1,8 @@
-using System.Net;
+using Fpl.Client.Clients;
 using FplBot.ConsoleApps.Clients;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Workers.Publishers.Logger;
-using Slackbot.Net.Workers.Publishers.Slack;
 
 namespace FplBot.ConsoleApps
 {

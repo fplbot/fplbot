@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-    
 
-namespace FplBot.ConsoleApps.Clients
+namespace Fpl.Client.Clients
 {
     public static class IFplApiClientServiceCollectionExtensions
     {

@@ -1,14 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
-using System.Security.Authentication;
-using FplBot.ConsoleApps.Clients;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 
-namespace FplBot.ConsoleApps
+namespace Fpl.Client.Clients
 {
     public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFactoryOptions>
     {

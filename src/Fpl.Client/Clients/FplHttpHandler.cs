@@ -2,9 +2,8 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
-namespace FplBot.ConsoleApps
+namespace Fpl.Client.Clients
 {
     public class FplHttpHandler : HttpClientHandler
     {

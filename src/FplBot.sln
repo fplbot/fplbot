@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Tests", "FplBot.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Build", "..\build\FplBot.Build.csproj", "{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Client", "Fpl.Client\Fpl.Client.csproj", "{76C6B8FB-F47B-45BA-894C-A58D48D98D56}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,17 @@ Global
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x64.Build.0 = Release|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x86.ActiveCfg = Release|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x86.Build.0 = Release|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|x64.Build.0 = Debug|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|x86.Build.0 = Debug|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Release|x64.ActiveCfg = Release|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Release|x64.Build.0 = Release|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Release|x86.ActiveCfg = Release|Any CPU
+		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

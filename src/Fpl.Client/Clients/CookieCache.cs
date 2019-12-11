@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace FplBot.ConsoleApps
+namespace Fpl.Client.Clients
 {
     public class CookieCache
     {

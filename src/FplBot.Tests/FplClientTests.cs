@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using FplBot.ConsoleApps.Clients;
+using Fpl.Client;
+using FplBot.ConsoleApps;
 using FplBot.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
@@ -21,7 +22,9 @@ namespace FplBot.Tests
         [Fact]
         public async Task GetStandings()
         {
-            var standings = await _client.GetStandings("579157");
+            var scoreboard = await _client.GetScoreBoard("579157");
+            var bootstrap = await _client.GetBootstrap();
+            var standings = Formatter.GetStandings(scoreboard, bootstrap);
             Assert.StartsWith(":star:", standings);
         }
 
@@ -47,8 +50,8 @@ namespace FplBot.Tests
         [Fact]
         public async Task CacheTest()
         {
-            await _client.GetStandings("579157");
-            await _client.GetStandings("579157");
+            await _client.GetBootstrap();
+            await _client.GetBootstrap();
         }
     }
 }

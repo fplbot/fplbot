@@ -1,6 +1,6 @@
-﻿using FplBot.ConsoleApps.Models;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
+using Fpl.Client.Models;
 
 namespace FplBot.ConsoleApps
 {

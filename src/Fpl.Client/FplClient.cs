@@ -1,11 +1,12 @@
-﻿using FplBot.ConsoleApps.Models;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Fpl.Client.Clients;
+using Fpl.Client.Models;
+using Newtonsoft.Json;
 
-namespace FplBot.ConsoleApps.Clients
+namespace Fpl.Client
 {
     public class FplClient : IFplClient
     {
@@ -21,16 +22,14 @@ namespace FplBot.ConsoleApps.Clients
             return await Get<PlayerStats>($"/entry/{playerId}/history");
         }
 
-        public async Task<string> GetStandings(string leagueId)
+        public async Task<ScoreBoard> GetScoreBoard(string leagueId)
         {
-
-            var scoreBoardTask = Get<ScoreBoard>($"/api/leagues-classic/{leagueId}/standings/");
-            var bootstrapTask = Get<Bootstrap>("/api/bootstrap-static/");
-
-            var scoreBoard = await scoreBoardTask;
-            var bootStrap = await bootstrapTask;
-
-            return Formatter.GetStandings(scoreBoard, bootStrap);
+            return await Get<ScoreBoard>($"/api/leagues-classic/{leagueId}/standings/");
+        }
+        
+        public async Task<Bootstrap> GetBootstrap()
+        {
+            return await Get<Bootstrap>("/api/bootstrap-static/");
         }
 
         public async Task<string> GetAllFplDataForPlayer(string name)
