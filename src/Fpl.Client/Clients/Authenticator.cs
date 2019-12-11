@@ -15,6 +15,7 @@ namespace Fpl.Client.Clients
         public Authenticator(IOptions<FplApiClientOptions> options)
         {
             _options = options.Value;
+            _options.Validate();
         }
         
         public async Task<List<Cookie>> Authenticate()
