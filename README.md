@@ -17,7 +17,7 @@ Add a appsettings.Local.json file (is in gitignore) with contents:
 {
   "Slackbot_SlackApiKey_SlackApp": "token1",
   "Slackbot_SlackApiKey_BotUser": "token2",
-  
+  h
   "fpl" : {
     "login" : "username",
     "password : "pwd"
@@ -38,5 +38,7 @@ export fpl__password=pwd
 
 
 # Hosting
-The Blank instance is hosted in Heroku as a docker container. See `heroku.yml` for details.
-Heroku project: https://dashboard.heroku.com/apps/blank-fplbot/
+The Blank instance:
+
+* Heroku: https://dashboard.heroku.com/apps/blank-fplbot/
+* Slack-app: https://api.slack.com/apps/AREFP62B1
