@@ -13,18 +13,18 @@ namespace FplBot.ConsoleApps.Handlers
     public class FplPlayerCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
-        private readonly IPlayerClient _globalSettingsClient;
+        private readonly IPlayerClient _playerClient;
 
-        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient globalSettingsClient)
+        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient)
         {
             _publishers = publishers;
-            _globalSettingsClient = globalSettingsClient;
+            _playerClient = playerClient;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var name = ParsePlayerFromInput(message);
 
-            var allPlayers = await _globalSettingsClient.GetAllPlayers();
+            var allPlayers = await _playerClient.GetAllPlayers();
 
             var matchingPlayers = FindMatchingPlayer(allPlayers, name);
             
