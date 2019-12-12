@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +22,7 @@ namespace Fpl.Client.Clients
 
         public void Configure(string name, HttpClientFactoryOptions options)
         {
-            if (name is nameof(IFplClient))
+            if (IsOneOf(name))
             {
                 options.HttpClientActions.Add(SetupFplClient);
                 options.HttpMessageHandlerBuilderActions.Add(b =>
@@ -29,6 +30,17 @@ namespace Fpl.Client.Clients
                     b.PrimaryHandler = _fplHttphandler;
                 });
             }
+        }
+
+        private static bool IsOneOf(string name)
+        {
+            return name is nameof(IEntryClient) ||
+                   name is nameof(IEntryHistoryClient) ||
+                   name is nameof(IFixtureClient) ||
+                   name is nameof(IGameweekClient) ||
+                   name is nameof(IGlobalSettingsClient) ||
+                   name is nameof(ILeagueClient) ||
+                   name is nameof(IPlayerClient);
         }
 
         public static void SetupFplClient(HttpClient client)

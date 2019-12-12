@@ -1,6 +1,8 @@
 using System.Linq;
 using Fpl.Client;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
+using Fpl.Client.Infra;
 using FplBot.ConsoleApps;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +15,9 @@ namespace FplBot.Tests.Helpers
 {
     public static class Factory
     {
-        public static IFplClient CreateClient(ITestOutputHelper logger = null)
+        public static T Create<T>(ITestOutputHelper logger = null)
         {
-            return BuildServiceProvider(logger).GetService<IFplClient>();
+            return BuildServiceProvider(logger).GetService<T>();
         }
 
         public static IHandleMessages GetHandler<T>(ITestOutputHelper logger)
