@@ -39,6 +39,7 @@ namespace Fpl.Client.Clients
                    name is nameof(IFixtureClient) ||
                    name is nameof(IGameweekClient) ||
                    name is nameof(ILeagueClient) ||
+                   name is nameof(ITeamsClient) ||
                    name is nameof(IPlayerClient);
         }
 
