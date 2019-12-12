@@ -15,6 +15,7 @@ namespace Fpl.Client.Infra
             services.AddHttpClient<IGameweekClient, GameweekClient>();
             services.AddHttpClient<ILeagueClient, LeagueClient>();
             services.AddHttpClient<IPlayerClient, PlayerClient>();
+            services.AddHttpClient<ITeamsClient, TeamsClient>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();

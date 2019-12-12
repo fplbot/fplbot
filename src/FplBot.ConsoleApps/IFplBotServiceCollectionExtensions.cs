@@ -14,7 +14,8 @@ namespace FplBot.ConsoleApps
                 .AddPublisher<SlackPublisher>()
                 .AddPublisher<LoggerPublisher>()
                 .AddHandler<FplPlayerCommandHandler>()
-                .AddHandler<FplCommandHandler>();
+                .AddHandler<FplCommandHandler>()
+                .AddHandler<FplNextGameweekCommandHandler>();
             return services;
         }
     }
