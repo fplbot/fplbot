@@ -13,7 +13,6 @@ namespace Fpl.Client.Infra
             services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>();
             services.AddHttpClient<IFixtureClient, FixtureClient>();
             services.AddHttpClient<IGameweekClient, GameweekClient>();
-            services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>();
             services.AddHttpClient<ILeagueClient, LeagueClient>();
             services.AddHttpClient<IPlayerClient, PlayerClient>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();

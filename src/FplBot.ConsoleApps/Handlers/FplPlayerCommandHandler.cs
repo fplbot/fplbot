@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Workers.Handlers;
@@ -14,9 +13,9 @@ namespace FplBot.ConsoleApps.Handlers
     public class FplPlayerCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
-        private readonly IGlobalSettingsClient _globalSettingsClient;
+        private readonly IPlayerClient _globalSettingsClient;
 
-        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IGlobalSettingsClient globalSettingsClient)
+        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient globalSettingsClient)
         {
             _publishers = publishers;
             _globalSettingsClient = globalSettingsClient;
@@ -25,9 +24,9 @@ namespace FplBot.ConsoleApps.Handlers
         {
             var name = ParsePlayerFromInput(message);
 
-            var bootStrap = await _globalSettingsClient.GetGlobalSettings();
+            var allPlayers = await _globalSettingsClient.GetAllPlayers();
 
-            var matchingPlayers = FindMatchingPlayer(bootStrap.Players, name);
+            var matchingPlayers = FindMatchingPlayer(allPlayers, name);
             
             var textToSend = "";
             if (!matchingPlayers.Any())

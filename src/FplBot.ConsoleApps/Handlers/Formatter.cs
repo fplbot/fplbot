@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Fpl.Client.Models;
 
@@ -6,15 +7,15 @@ namespace FplBot.ConsoleApps.Handlers
 {
     public class Formatter
     {
-        public static string GetStandings(ClassicLeague scoreBoard, GlobalSettings bootstrap)
+        public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
         {
             var sb = new StringBuilder();
 
-            var sortedByRank = scoreBoard.Standings.Entries.OrderBy(x => x.Rank);
+            var sortedByRank = league.Standings.Entries.OrderBy(x => x.Rank);
 
-            var numPlayers = scoreBoard.Standings.Entries.Count();
+            var numPlayers = league.Standings.Entries.Count();
 
-            var currentGw = bootstrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
+            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
 
             
             sb.Append($":star: *Resultater etter GW {currentGw}* :star: \n\n");

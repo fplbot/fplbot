@@ -10,12 +10,12 @@ namespace FplBot.Tests
     public class FplClientTests
     {
         private readonly ILeagueClient _leagueClient;
-        private readonly IGlobalSettingsClient _globalSettingsClient;
+        private readonly IGameweekClient _gameweekClient;
 
         public FplClientTests(ITestOutputHelper logger)
         {
             _leagueClient = Factory.Create<ILeagueClient>(logger);
-            _globalSettingsClient = Factory.Create<IGlobalSettingsClient>(logger);
+            _gameweekClient = Factory.Create<IGameweekClient>(logger);
         }
         
         [Fact]
@@ -26,18 +26,17 @@ namespace FplBot.Tests
         }
         
         [Fact]
-        public async Task GetGlobalSettings()
+        public async Task GetGameweeks()
         {
-            var bootstrap = await _globalSettingsClient.GetGlobalSettings();
-            Assert.NotEmpty(bootstrap.Players);
-            Assert.NotEmpty(bootstrap.Events);
+            var gameweeks = await _gameweekClient.GetGameweeks();
+            Assert.NotEmpty(gameweeks);
         }
         
         [Fact]
         public async Task CacheTest()
         {
-            await _globalSettingsClient.GetGlobalSettings();
-            await _globalSettingsClient.GetGlobalSettings();
+            await _gameweekClient.GetGameweeks();
+            await _gameweekClient.GetGameweeks();
         }
     }
 }

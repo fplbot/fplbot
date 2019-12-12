@@ -22,7 +22,7 @@ namespace Fpl.Client
 
             var data = JsonConvert.DeserializeObject<GlobalSettings>(json);
 
-            return data.Events;
+            return data.Gameweeks;
         }
     }
 }

@@ -12,13 +12,13 @@ namespace FplBot.ConsoleApps.Handlers
     public class FplCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
-        private readonly IGlobalSettingsClient _globalSettingsClient;
+        private readonly IGameweekClient _gameweekClient;
         private readonly ILeagueClient _leagueClient;
 
-        public FplCommandHandler(IEnumerable<IPublisher> publishers, IGlobalSettingsClient globalSettingsClient, ILeagueClient leagueClient)
+        public FplCommandHandler(IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient)
         {
             _publishers = publishers;
-            _globalSettingsClient = globalSettingsClient;
+            _gameweekClient = gameweekClient;
             _leagueClient = leagueClient;
         }
 
@@ -47,9 +47,9 @@ namespace FplBot.ConsoleApps.Handlers
         {
             try
             {
-                var scoreboard = await _leagueClient.GetClassicLeague(579157);
-                var bootstrap = await _globalSettingsClient.GetGlobalSettings();
-                var standings = Formatter.GetStandings(scoreboard, bootstrap);
+                var league = await _leagueClient.GetClassicLeague(579157);
+                var gameweeks = await _gameweekClient.GetGameweeks();
+                var standings = Formatter.GetStandings(league, gameweeks);
                 return standings;
             }
             catch (Exception e)

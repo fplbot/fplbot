@@ -12,7 +12,7 @@ namespace Fpl.Client.Models
         public ICollection<Player> Players { get; set; }
 
         [JsonProperty("events")]
-        public ICollection<Gameweek> Events { get; set; }
+        public ICollection<Gameweek> Gameweeks { get; set; }
 
         [JsonProperty("element_types")]
         public ICollection<PlayerType> PlayerTypes { get; set; }
