@@ -15,40 +15,18 @@ namespace Fpl.Client
             _client = client;
         }
 
-        public async Task<ClassicLeague> GetClassicLeague(int leagueId, int page = 1)
+        public async Task<ClassicLeague> GetClassicLeague(int leagueId)
         {
-           var url = ClassicLeagueUrlFor(leagueId, page);
-
-            var json = await _client.GetStringAsync(url);
-
+            var json = await _client.GetStringAsync($"/api/leagues-classic/{leagueId}/standings/");
+            
             return JsonConvert.DeserializeObject<ClassicLeague>(json);
         }
 
-        public async Task<HeadToHeadLeague> GetHeadToHeadLeague(int leagueId, int page = 1)
+        public async Task<HeadToHeadLeague> GetHeadToHeadLeague(int leagueId)
         {
-           var url = HeadToHeadLeagueUrlFor(leagueId, page);
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync($"/api/leagues-h2h/{leagueId}/standings/");
 
             return JsonConvert.DeserializeObject<HeadToHeadLeague>(json);
-        }
-
-        private static string ClassicLeagueUrlFor(int leagueId, int? page)
-        {
-            var baseUrl = $"http://fantasy.premierleague.com/api/leagues-classic/{leagueId}/standings/";
-
-            var suffix = $"?page_new_entries={page ?? 1}&page_standings={page ?? 1}";
-
-            return $"{baseUrl}{suffix}";
-        }
-
-        private static string HeadToHeadLeagueUrlFor(int leagueId, int? page)
-        {
-            var baseUrl = $"http://fantasy.premierleague.com/api/leagues-h2h/{leagueId}/standings/";
-
-            var suffix = $"?page_new_entries={page ?? 1}&page_standings={page ?? 1}";
-
-            return $"{baseUrl}{suffix}";
         }
     }
 }

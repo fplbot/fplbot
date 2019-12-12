@@ -18,9 +18,7 @@ namespace Fpl.Client
 
         public async Task<ICollection<Player>> GetAllPlayers()
         {
-           const string url = "/api/bootstrap-static/";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync("/api/bootstrap-static/");
 
             var data = JsonConvert.DeserializeObject<GlobalSettings>(json);
 
@@ -29,16 +27,9 @@ namespace Fpl.Client
 
         public async Task<PlayerSummary> GetPlayer(int playerId)
         {
-           var url = PlayerSummaryUrlFor(playerId);
-
-            var json = await _client.GetStringAsync(url);
-
+            var json = await _client.GetStringAsync($"/api/element-summary/{playerId}/");
+            
             return JsonConvert.DeserializeObject<PlayerSummary>(json);
-        }
-
-        private static string PlayerSummaryUrlFor(int playerId)
-        {
-            return $"http://fantasy.premierleague.com/api/element-summary/{playerId}/";
         }
     }
 }

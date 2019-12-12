@@ -18,9 +18,7 @@ namespace Fpl.Client
 
         public async Task<ICollection<Gameweek>> GetGameweeks()
         {
-           const string url = "/api/bootstrap-static/";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync("/api/bootstrap-static/");
 
             var data = JsonConvert.DeserializeObject<GlobalSettings>(json);
 

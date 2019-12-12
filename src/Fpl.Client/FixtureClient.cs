@@ -18,18 +18,14 @@ namespace Fpl.Client
 
         public async Task<ICollection<Fixture>> GetFixtures()
         {
-           const string url = "/api/fixtures/";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync("/api/fixtures/");
 
             return JsonConvert.DeserializeObject<ICollection<Fixture>>(json);
         }
 
         public async Task<ICollection<Fixture>> GetFixturesByGameweek(int id)
         {
-           var url = $"/api/fixtures/?event={id}";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync($"/api/fixtures/?event={id}");
 
             return JsonConvert.DeserializeObject<ICollection<Fixture>>(json);
         }

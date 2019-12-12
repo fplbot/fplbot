@@ -17,16 +17,9 @@ namespace Fpl.Client
 
         public async Task<EntryHistory> GetHistory(int teamId)
         {
-           var url = HistoryUrlFor(teamId);
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync($"/api/entry/{teamId}/history/");
 
             return JsonConvert.DeserializeObject<EntryHistory>(json);
-        }
-
-        private static string HistoryUrlFor(int teamId)
-        {
-            return $"/api/entry/{teamId}/history/";
         }
     }
 }

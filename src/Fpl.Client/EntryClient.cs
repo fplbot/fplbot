@@ -17,18 +17,14 @@ namespace Fpl.Client
 
         public async Task<BasicEntry> Get(int teamId)
         {
-           var url = $"/api/entry/{teamId}/";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync($"/api/entry/{teamId}/");
 
             return JsonConvert.DeserializeObject<BasicEntry>(json);
         }
 
         public async Task<EntryPicks> GetPicks(int teamId, int gameweek)
         {
-           var url = $"/api/entry/{teamId}/event/{gameweek}/picks/";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync($"/api/entry/{teamId}/event/{gameweek}/picks/");
 
             return JsonConvert.DeserializeObject<EntryPicks>(json);
         }

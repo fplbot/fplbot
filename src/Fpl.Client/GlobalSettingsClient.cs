@@ -17,9 +17,7 @@ namespace Fpl.Client
 
         public async Task<GlobalSettings> GetGlobalSettings()
         {
-           const string url = "/api/bootstrap-static/";
-
-            var json = await _client.GetStringAsync(url);
+            var json = await _client.GetStringAsync("/api/bootstrap-static/");
 
             return JsonConvert.DeserializeObject<GlobalSettings>(json);
         }
