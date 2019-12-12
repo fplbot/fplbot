@@ -1,4 +1,5 @@
 using Fpl.Client.Clients;
+using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

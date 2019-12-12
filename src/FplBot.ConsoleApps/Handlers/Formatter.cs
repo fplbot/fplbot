@@ -6,13 +6,13 @@ namespace FplBot.ConsoleApps.Handlers
 {
     public class Formatter
     {
-        public static string GetStandings(ScoreBoard scoreBoard, Bootstrap bootstrap)
+        public static string GetStandings(ClassicLeague scoreBoard, GlobalSettings bootstrap)
         {
             var sb = new StringBuilder();
 
-            var sortedByRank = scoreBoard.Standings.Results.OrderBy(x => x.Rank);
+            var sortedByRank = scoreBoard.Standings.Entries.OrderBy(x => x.Rank);
 
-            var numPlayers = scoreBoard.Standings.Results.Count();
+            var numPlayers = scoreBoard.Standings.Entries.Count();
 
             var currentGw = bootstrap.Events.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
 
@@ -22,13 +22,13 @@ namespace FplBot.ConsoleApps.Handlers
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Id}/event/{currentGw}|{player.TeamName}> - {player.TotalPoints} {arrow} \n");
+                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Id}/event/{currentGw}|{player.EntryName}> - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
         }
 
-        private static string GetRankChangeEmoji(Player player, int numPlayers)
+        private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers)
         {
             var rankDiff = player.LastRank - player.Rank;
 

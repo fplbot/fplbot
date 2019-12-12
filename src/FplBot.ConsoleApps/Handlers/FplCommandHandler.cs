@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client;
+using Fpl.Client.Abstractions;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 using SlackConnector.Models;
@@ -11,12 +12,14 @@ namespace FplBot.ConsoleApps.Handlers
     public class FplCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
-        private readonly IFplClient _fplClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
+        private readonly ILeagueClient _leagueClient;
 
-        public FplCommandHandler(IEnumerable<IPublisher> publishers, IFplClient fplClient)
+        public FplCommandHandler(IEnumerable<IPublisher> publishers, IGlobalSettingsClient globalSettingsClient, ILeagueClient leagueClient)
         {
             _publishers = publishers;
-            _fplClient = fplClient;
+            _globalSettingsClient = globalSettingsClient;
+            _leagueClient = leagueClient;
         }
 
         public Tuple<string, string> GetHelpDescription()
@@ -44,8 +47,8 @@ namespace FplBot.ConsoleApps.Handlers
         {
             try
             {
-                var scoreboard = await _fplClient.GetScoreBoard("579157");
-                var bootstrap = await _fplClient.GetBootstrap();
+                var scoreboard = await _leagueClient.GetClassicLeague(579157);
+                var bootstrap = await _globalSettingsClient.GetGlobalSettings();
                 var standings = Formatter.GetStandings(scoreboard, bootstrap);
                 return standings;
             }

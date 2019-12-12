@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
@@ -13,29 +14,30 @@ namespace FplBot.ConsoleApps.Handlers
     public class FplPlayerCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
-        private readonly IFplClient _fplClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IFplClient fplClient)
+        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IGlobalSettingsClient globalSettingsClient)
         {
             _publishers = publishers;
-            _fplClient = fplClient;
+            _globalSettingsClient = globalSettingsClient;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var name = ParsePlayerFromInput(message);
 
-            var bootStrap = await _fplClient.GetBootstrap();
+            var bootStrap = await _globalSettingsClient.GetGlobalSettings();
 
-            var matchingElement = FindMatchingPlayer(bootStrap, name);
+            var matchingPlayers = FindMatchingPlayer(bootStrap.Players, name);
             
             var textToSend = "";
-            if (!matchingElement.Any())
+            if (!matchingPlayers.Any())
             {
                 textToSend = $"Fant ikke {name}";
             }
             else
             {
-                textToSend = string.Join("\n", matchingElement);
+                var names = matchingPlayers.Select(p => $"{p.FirstName} {p.SecondName}");
+                textToSend = string.Join("\n", names);
             }
 
 
@@ -56,9 +58,9 @@ namespace FplBot.ConsoleApps.Handlers
             return new HandleResponse(textToSend);
         }
 
-        private static IEnumerable<Element> FindMatchingPlayer(Bootstrap bootStrap, string name)
+        private static IEnumerable<Player> FindMatchingPlayer(IEnumerable<Player> players, string name)
         {
-            return bootStrap.Elements.Where((p) => p.FirstName.ToLower().Contains(name) || p.LastName.ToLower().Contains(name));
+            return players.Where((p) => p.FirstName.ToLower().Contains(name) || p.SecondName.ToLower().Contains(name));
         }
 
         private static string ParsePlayerFromInput(SlackMessage message)

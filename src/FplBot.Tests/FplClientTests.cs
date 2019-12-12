@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Fpl.Client;
+using Fpl.Client.Abstractions;
 using FplBot.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,33 +9,35 @@ namespace FplBot.Tests
 {
     public class FplClientTests
     {
-        private IFplClient _client;
+        private readonly ILeagueClient _leagueClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
         public FplClientTests(ITestOutputHelper logger)
         {
-            _client = Factory.CreateClient(logger);
+            _leagueClient = Factory.Create<ILeagueClient>(logger);
+            _globalSettingsClient = Factory.Create<IGlobalSettingsClient>(logger);
         }
         
         [Fact]
-        public async Task GetScoreBoard()
+        public async Task GetClassicLeague()
         {
-            var scoreboard = await _client.GetScoreBoard("579157");
-            Assert.NotEmpty(scoreboard.Standings.Results);
+            var scoreboard = await _leagueClient.GetClassicLeague(579157);
+            Assert.NotEmpty(scoreboard.Standings.Entries);
         }
         
         [Fact]
-        public async Task GetBootstrap()
+        public async Task GetGlobalSettings()
         {
-            var bootstrap = await _client.GetBootstrap();
-            Assert.NotEmpty(bootstrap.Elements);
+            var bootstrap = await _globalSettingsClient.GetGlobalSettings();
+            Assert.NotEmpty(bootstrap.Players);
             Assert.NotEmpty(bootstrap.Events);
         }
         
         [Fact]
         public async Task CacheTest()
         {
-            await _client.GetBootstrap();
-            await _client.GetBootstrap();
+            await _globalSettingsClient.GetGlobalSettings();
+            await _globalSettingsClient.GetGlobalSettings();
         }
     }
 }
