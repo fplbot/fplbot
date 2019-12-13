@@ -16,14 +16,7 @@ namespace Fpl.Client.Clients
 
         public async Task<string> GetAsync()
         {
-            var entry = await _cache.GetStringAsync(AuthCookieCacheKey);
-
-            if (entry != null)
-            {
-                return entry;
-            }
-
-            return null;
+            return await _cache.GetStringAsync(AuthCookieCacheKey);
         }
 
         public async Task SetAsync(string cookie, DateTime cookieExpiration)
@@ -36,13 +29,6 @@ namespace Fpl.Client.Clients
             };
 
             await _cache.SetStringAsync(AuthCookieCacheKey, cookie, entryOptions);
-        }
-
-        public Task DeleteAsync(string clientName)
-        {
-            if (clientName is null) throw new ArgumentNullException(nameof(clientName));
-
-            return _cache.RemoveAsync(AuthCookieCacheKey);
         }
     }
 }
