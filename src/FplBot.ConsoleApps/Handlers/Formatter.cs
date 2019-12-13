@@ -68,7 +68,8 @@ namespace FplBot.ConsoleApps.Handlers
 
             sb.Append($"Points: {player.TotalPoints}\n");
 
-            sb.Append($"Cost: {player.NowCost}\n");
+            var costAsString = player.NowCost.ToString();
+            sb.Append($"Cost: {costAsString.Insert(costAsString.Length - 1, ".")}\n");
 
             sb.Append($"Goals: {player.GoalsScored}\n");
 
