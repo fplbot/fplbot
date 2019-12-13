@@ -28,7 +28,7 @@ namespace FplBot.ConsoleApps.Handlers
 
         public Tuple<string, string> GetHelpDescription()
         {
-            return new Tuple<string, string>("nextgw", "Henter neste gameweek");
+            return new Tuple<string, string>("next", "Henter neste gameweek");
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)
@@ -91,7 +91,7 @@ namespace FplBot.ConsoleApps.Handlers
 
         public bool ShouldHandle(SlackMessage message)
         {
-            return message.MentionsBot && message.Text.Contains("nextgw");
+            return message.MentionsBot && message.Text.Contains("next");
         }
 
         public bool ShouldShowInHelp => true;
