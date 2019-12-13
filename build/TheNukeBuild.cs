@@ -71,7 +71,7 @@ namespace FplBot.Build
             });
 
         string FplClient = "Fpl.Client";
-        string Version = "0.2.0";
+        string Version = "0.3.0";
         
         Target Pack => _ => _
             .DependsOn(Test)
@@ -91,7 +91,7 @@ namespace FplBot.Build
             .Executes(() =>
             {
                 DotNetNuGetPush(_ => _
-                    .SetTargetPath($"./{OutputDirectory}/{FplClient}.{Version}.nupkg")
+                    .SetTargetPath($"{OutputDirectory}/{FplClient}.{Version}.nupkg")
                     .SetSource("https://api.nuget.org/v3/index.json")
                     .SetApiKey(Environment.GetEnvironmentVariable("NUGET_API_KEY")));
             });        
