@@ -54,18 +54,28 @@ namespace FplBot.ConsoleApps.Handlers
 
         private static string TextToSend(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams)
         {
-            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>\nDeadline: {ConvertToNorwegianTimeZone(gameweek.Deadline)}";
-            foreach (var fixture in fixtures)
+            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
+            textToSend += $"\nDeadline: {ConvertToNorwegianTimeZone(gameweek.Deadline).ToString("yyyy-MM-hh HH:mm")}\n";
+            
+            var groupedByDay = fixtures.GroupBy(f => f.KickOffTime);
+
+            foreach (var group in groupedByDay)
             {
-                var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
-                var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
-                textToSend += $"\n• {homeTeam.ShortName}-{awayTeam.ShortName}";
+                textToSend += $"\n{ConvertToNorwegianTimeZone(group.Key.Value).ToString("ddd HH:mm")}";
+                foreach (var fixture in group)
+                {
+                    var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
+                    var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
+                    textToSend += $"\n• {homeTeam.ShortName}-{awayTeam.ShortName}";
+                }
+
+                textToSend += "\n";
             }
 
             return textToSend;
         }
         
-        private static string ConvertToNorwegianTimeZone(DateTime dateToConvertTime)
+        private static DateTime ConvertToNorwegianTimeZone(DateTime dateToConvertTime)
         {
             var timeZoneId = @"Europe/Oslo";
 
@@ -76,8 +86,7 @@ namespace FplBot.ConsoleApps.Handlers
 
             var norwegianZoneId = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
 
-            var date = TimeZoneInfo.ConvertTime(dateToConvertTime, norwegianZoneId);
-            return date.ToString("yyyy-MM-hh HH:mm");
+            return TimeZoneInfo.ConvertTime(dateToConvertTime, norwegianZoneId);
         }
 
         public bool ShouldHandle(SlackMessage message)
