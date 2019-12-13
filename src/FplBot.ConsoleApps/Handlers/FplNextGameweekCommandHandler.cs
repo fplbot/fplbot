@@ -55,7 +55,7 @@ namespace FplBot.ConsoleApps.Handlers
         private static string TextToSend(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams)
         {
             var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
-            textToSend += $"\nDeadline: {ConvertToNorwegianTimeZone(gameweek.Deadline).ToString("yyyy-MM-hh HH:mm")}\n";
+            textToSend += $"\nDeadline: {ConvertToNorwegianTimeZone(gameweek.Deadline).ToString("yyyy-MM-dd HH:mm")}\n";
             
             var groupedByDay = fixtures.GroupBy(f => f.KickOffTime);
 
