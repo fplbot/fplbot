@@ -107,7 +107,7 @@ namespace FplBot.ConsoleApps.Handlers
             foreach (var player in players)
             {
                 var text = player.News == "" ? $"Chance of playing next round: {player.ChanceOfPlayingNextRound}%" : player.News;
-                sb.Append($"{player.FirstName} {player.SecondName} - {text} (Owned by {player.OwnershipPercentage}%)\n");
+                sb.Append($"*{player.FirstName} {player.SecondName}* - {text} (_Owned by {player.OwnershipPercentage}%_)\n");
             }
 
             return sb.ToString();
