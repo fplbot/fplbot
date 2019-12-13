@@ -35,7 +35,12 @@ export fpl__password=pwd
 ```
 
 *Build scripts*   
-The project is using [Nuke](http://www.nuke.build/) to run the build.   
+The project is using [Nuke](http://www.nuke.build/) to setup builds.
+
+It can be run via the build scripts: `/build/build.sh` or `/build/build.ps1`   
+
+or using the Nuke CLI:    
+
 Install: `$ dotnet tool install Nuke.GlobalTool -g`   
 Run: `$ nuke`   
 

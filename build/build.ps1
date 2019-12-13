@@ -13,8 +13,8 @@ $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
 # CONFIGURATION
 ###########################################################################
 
-$BuildProjectFile = "$PSScriptRoot\..\..\build\FplBot.Build.csproj"
-$TempDirectory = "$PSScriptRoot\..\..\.tmp"
+$BuildProjectFile = "$PSScriptRoot\FplBot.Build.csproj"
+$TempDirectory = "$PSScriptRoot\..\.tmp"
 
 $DotNetGlobalFile = "$PSScriptRoot\..\..\global.json"
 $DotNetInstallUrl = "https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1"
