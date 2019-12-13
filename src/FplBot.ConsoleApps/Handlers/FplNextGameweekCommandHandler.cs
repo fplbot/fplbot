@@ -57,16 +57,17 @@ namespace FplBot.ConsoleApps.Handlers
             var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
             textToSend += $"\nDeadline: {ConvertToNorwegianTimeZone(gameweek.Deadline).ToString("yyyy-MM-dd HH:mm")}\n";
             
-            var groupedByDay = fixtures.GroupBy(f => f.KickOffTime);
+            var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
 
             foreach (var group in groupedByDay)
             {
-                textToSend += $"\n{ConvertToNorwegianTimeZone(group.Key.Value).ToString("ddd HH:mm")}";
+                textToSend += $"\n{ConvertToNorwegianTimeZone(group.Key).ToString("dddd")}";
                 foreach (var fixture in group)
                 {
                     var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
                     var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
-                    textToSend += $"\n• {homeTeam.ShortName}-{awayTeam.ShortName}";
+                    var fixtureKickOffTime = ConvertToNorwegianTimeZone(fixture.KickOffTime.Value);
+                    textToSend += $"\n•{fixtureKickOffTime.ToString("HH:mm")} {homeTeam.ShortName}-{awayTeam.ShortName}";
                 }
 
                 textToSend += "\n";
