@@ -97,5 +97,20 @@ namespace FplBot.ConsoleApps.Handlers
                 return $":warning: {text} \n";
             }
         }
+
+        public static string GetInjuredPlayers(IEnumerable<Player> players)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append($":helmet_with_white_cross: *Injured players*\n");
+
+            foreach (var player in players)
+            {
+                var text = player.News == "" ? $"Chance of playing next round: {player.ChanceOfPlayingNextRound}%" : player.News;
+                sb.Append($"{player.FirstName} {player.SecondName} - {text} (Owned by {player.OwnershipPercentage}%)\n");
+            }
+
+            return sb.ToString();
+        }
     }
 }
