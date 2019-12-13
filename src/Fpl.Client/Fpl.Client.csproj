@@ -3,6 +3,9 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <RootNamespace>Fpl.Client</RootNamespace>
+        <PackageIconUrl>images/fpl.png</PackageIconUrl>
+        <PackageIcon>fpl.png</PackageIcon>
+
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,6 +14,13 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
       <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.1.1" />
       <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="images/fpl.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>
