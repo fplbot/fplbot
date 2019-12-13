@@ -29,7 +29,7 @@ namespace FplBot.Tests
                 ChatHub = new SlackChatHub()
             });
             
-            Assert.Equal("Mohamed Salah", playerData.HandledMessage);
+            Assert.Contains("Mohamed Salah", playerData.HandledMessage);
         }
 
         [Theory]

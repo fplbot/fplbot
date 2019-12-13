@@ -52,5 +52,50 @@ namespace FplBot.ConsoleApps.Handlers
 
             return emojiString.ToString();
         }
+
+        public static string GetPlayer(Player player, ICollection<Team> teams)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append($":male_mage: *{player.FirstName} {player.SecondName}*\n");
+
+            var team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
+
+            if (team != null)
+            {
+                sb.Append(GetTeamData(team));
+            }
+
+            sb.Append($"Points: {player.TotalPoints}\n");
+
+            sb.Append($"Cost: {player.NowCost}\n");
+
+            sb.Append($"Goals: {player.GoalsScored}\n");
+
+            sb.Append($"Assists: {player.Assists}\n");
+
+
+            sb.Append(GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News));
+
+            return sb.ToString();
+        }
+
+        public static string GetTeamData(Team team)
+        {
+            return $"Team: {team.Name}\n";
+        }
+
+        public static string GetChanceOfPlayingWarningIfRelevant(string chanceOfPlaying, string news)
+        {
+            if (chanceOfPlaying == "100" || chanceOfPlaying == null)
+            {
+                return "";
+            }
+            else
+            {
+                var text = news == "" ? $"Chance of playing next round: {chanceOfPlaying}%" : news;
+                return $":warning: {text} \n";
+            }
+        }
     }
 }

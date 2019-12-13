@@ -14,11 +14,13 @@ namespace FplBot.ConsoleApps.Handlers
     {
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IPlayerClient _playerClient;
+        private readonly ITeamsClient _teamsClient;
 
-        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient)
+        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient , ITeamsClient teamsClient)
         {
             _publishers = publishers;
             _playerClient = playerClient;
+            _teamsClient = teamsClient;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
@@ -35,8 +37,10 @@ namespace FplBot.ConsoleApps.Handlers
             }
             else
             {
-                var names = matchingPlayers.Select(p => $"{p.FirstName} {p.SecondName}");
-                textToSend = string.Join("\n", names);
+                var teams = await _teamsClient.GetAllTeams();
+                var players = matchingPlayers.Select(p => Formatter.GetPlayer(p, teams));
+
+                textToSend = string.Join("\n\n", players);
             }
 
 
@@ -59,7 +63,7 @@ namespace FplBot.ConsoleApps.Handlers
 
         private static IEnumerable<Player> FindMatchingPlayer(IEnumerable<Player> players, string name)
         {
-            return players.Where((p) => p.FirstName.ToLower().Contains(name) || p.SecondName.ToLower().Contains(name));
+            return players.Where((p) => p.FirstName.ToLower().Contains(name) || p.SecondName.ToLower().Contains(name) || p.WebName.ToLower().Contains(name));
         }
 
         private static string ParsePlayerFromInput(SlackMessage message)
