@@ -8,17 +8,17 @@ using Xunit.Abstractions;
 
 namespace FplBot.Tests
 {
-    public class FplNextGwHandlerTests
+    public class FplInjuryCommandHandlerTests
     {
         private readonly IHandleMessages _client;
 
-        public FplNextGwHandlerTests(ITestOutputHelper logger)
+        public FplInjuryCommandHandlerTests(ITestOutputHelper logger)
         {
-            _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
+            _client = Factory.GetHandler<FplInjuryCommandHandler>(logger);
         }
-        
+
         [Theory]
-        [InlineData("@fplbot nextgw")]
+        [InlineData("@fplbot injuries")]
         public async Task GetPlayerHandler(string input)
         {
             var playerData = await _client.Handle(new SlackMessage
@@ -26,7 +26,7 @@ namespace FplBot.Tests
                 Text = input,
                 ChatHub = new SlackChatHub()
             });
-            
+
             Assert.NotEmpty(playerData.HandledMessage);
         }
     }
