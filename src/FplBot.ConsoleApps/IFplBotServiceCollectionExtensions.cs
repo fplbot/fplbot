@@ -16,7 +16,8 @@ namespace FplBot.ConsoleApps
                 .AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
-                .AddHandler<FplInjuryCommandHandler>();
+                .AddHandler<FplInjuryCommandHandler>()
+                .AddHandler<FplCaptainCommandHandler>();
             return services;
         }
     }
