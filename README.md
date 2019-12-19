@@ -45,7 +45,6 @@ Install: `$ dotnet tool install Nuke.GlobalTool -g`
 Run: `$ nuke`   
 
 
-
 # Hosting
 The Blank instance:
 
