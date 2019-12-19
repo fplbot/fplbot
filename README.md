@@ -53,13 +53,16 @@ The Blank instance:
 
 # Artifacts
 
-### <img src="https://raw.githubusercontent.com/fplbot/fplbot/fbde22a8f0093ed3a91c972841bbb7ef7eaf90b6/src/Fpl.Client/images/fpl.png" height="14" width="14" > `Fpl.Client`
+### Fpl.Client
+
+<img src="https://raw.githubusercontent.com/fplbot/fplbot/fbde22a8f0093ed3a91c972841bbb7ef7eaf90b6/src/Fpl.Client/images/fpl.png" height="25" width="25" align="left">&nbsp; A .NET Standard 2.0 library for integration to the Fantasy Premier League APIs
 
 ![Nuget](https://img.shields.io/nuget/v/Fpl.Client?style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/dt/Fpl.Client?style=for-the-badge)
 
 
-A separate library for integration to the Fantasy Premier League APIs
+
+
 
 
 
