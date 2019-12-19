@@ -51,5 +51,18 @@ The Blank instance:
 * Heroku: https://dashboard.heroku.com/apps/blank-fplbot/
 * Slack-app: https://api.slack.com/apps/AREFP62B1
 
+# Artifacts
+
+### <img src="https://raw.githubusercontent.com/fplbot/fplbot/fbde22a8f0093ed3a91c972841bbb7ef7eaf90b6/src/Fpl.Client/images/fpl.png" height="14" width="14" > `Fpl.Client`
+
+![Nuget](https://img.shields.io/nuget/v/Fpl.Client?style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/dt/Fpl.Client?style=for-the-badge)
+
+
+A separate library for integration to the Fantasy Premier League APIs
+
+
+
+<hr>
 
 _FplBot is a [Blank.no](https://blank.no) project_
