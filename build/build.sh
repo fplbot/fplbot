@@ -12,9 +12,9 @@ SCRIPT_DIR=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 BUILD_PROJECT_FILE="$SCRIPT_DIR/FplBot.Build.csproj"
 TEMP_DIRECTORY="$SCRIPT_DIR/../.tmp"
 
-DOTNET_GLOBAL_FILE="$SCRIPT_DIR/../../global.json"
+DOTNET_GLOBAL_FILE="$SCRIPT_DIR/../global.json"
 DOTNET_INSTALL_URL="https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.sh"
-DOTNET_CHANNEL="Current"
+DOTNET_CHANNEL="LTS"
 
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1

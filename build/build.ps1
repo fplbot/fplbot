@@ -16,9 +16,9 @@ $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
 $BuildProjectFile = "$PSScriptRoot\FplBot.Build.csproj"
 $TempDirectory = "$PSScriptRoot\..\.tmp"
 
-$DotNetGlobalFile = "$PSScriptRoot\..\..\global.json"
+$DotNetGlobalFile = "$PSScriptRoot\..\global.json"
 $DotNetInstallUrl = "https://raw.githubusercontent.com/dotnet/cli/master/scripts/obtain/dotnet-install.ps1"
-$DotNetChannel = "Current"
+$DotNetChannel = "LTS"
 
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = 1
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = 1

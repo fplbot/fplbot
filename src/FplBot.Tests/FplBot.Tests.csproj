@@ -17,8 +17,8 @@
       <ProjectReference Include="..\FplBot.ConsoleApps\FplBot.ConsoleApps.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Include="appsettings.Local.json">
+    <ItemGroup Condition="Exists('appsettings.Local.json')">
+      <Content Include="appsettings.Local.json" >
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </Content>

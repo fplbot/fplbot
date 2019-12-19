@@ -10,6 +10,11 @@ jobs:
       - uses: actions/checkout@v1
       - name: Run './build/build.sh '
         run: ./build/build.sh 
+        env:
+            Slackbot_SlackApiKey_SlackApp: ${{ secrets.Slackbot_SlackApiKey_SlackApp }}
+            Slackbot_SlackApiKey_BotUser: ${{ secrets.Slackbot_SlackApiKey_BotUser }}
+            fpl__login: ${{ secrets.fpl__login }}
+            fpl__password: ${{ secrets.fpl__password }}
   windows-latest:
     name: windows-latest
     runs-on: windows-latest
@@ -17,3 +22,8 @@ jobs:
       - uses: actions/checkout@v1
       - name: Run 'powershell .\build\build.ps1 '
         run: powershell .\build\build.ps1 
+        env:
+            Slackbot_SlackApiKey_SlackApp: ${{ secrets.Slackbot_SlackApiKey_SlackApp }}
+            Slackbot_SlackApiKey_BotUser: ${{ secrets.Slackbot_SlackApiKey_BotUser }}
+            fpl__login: ${{ secrets.fpl__login }}
+            fpl__password: ${{ secrets.fpl__password }}

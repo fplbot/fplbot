@@ -14,7 +14,21 @@ namespace FplBot.Build
 {
     [CheckBuildProjectConfigurations]
     [UnsetVisualStudioEnvironmentVariables]
-    [GitHubActions("CI", GitHubActionsImage.Ubuntu1604, GitHubActionsImage.WindowsLatest, On = new[] {GitHubActionsTrigger.Push})]
+    [GitHubActions("CI", 
+        GitHubActionsImage.Ubuntu1604, 
+        GitHubActionsImage.WindowsLatest, 
+        On = new[]
+        {
+            GitHubActionsTrigger.Push,
+            
+        },
+        ImportSecrets = new []
+        {
+            "Slackbot_SlackApiKey_SlackApp",
+            "Slackbot_SlackApiKey_BotUser",
+            "fpl__login",
+            "fpl__password"
+        })]
     class TheNukeBuild : NukeBuild
     {
         /// Support plugins are available for:
