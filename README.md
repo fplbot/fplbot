@@ -1,7 +1,7 @@
 # FPL bot
 A slackbot for Blank FPL league
 
-[![Build](https://github.com/blankoslo/fplbot/workflows/CI/badge.svg)](https://github.com/blankoslo/fplbot/actions)
+[![Build](https://github.com/fplbot/fplbot/workflows/CI/badge.svg)](https://github.com/fplbot/fplbot/actions)
 
 # Contributing
 Requirements: .NET Core 3.1 SDK: https://dotnet.microsoft.com/download/dotnet-core/3.1
@@ -51,3 +51,6 @@ The Blank instance:
 
 * Heroku: https://dashboard.heroku.com/apps/blank-fplbot/
 * Slack-app: https://api.slack.com/apps/AREFP62B1
+
+
+_FplBot is a [Blank.no](https://blank.no) project_
