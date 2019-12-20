@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - 'master'
 
 jobs:
   ubuntu-16_04:
