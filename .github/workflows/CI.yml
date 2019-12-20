@@ -8,11 +8,9 @@ jobs:
     runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v1
-      - name: Run './build/build.sh '
-        run: ./build/build.sh 
+      - name: Run './build/build.sh Pack BuildDockerImage'
+        run: ./build/build.sh Pack BuildDockerImage
         env:
-            Slackbot_SlackApiKey_SlackApp: ${{ secrets.Slackbot_SlackApiKey_SlackApp }}
-            Slackbot_SlackApiKey_BotUser: ${{ secrets.Slackbot_SlackApiKey_BotUser }}
             fpl__login: ${{ secrets.fpl__login }}
             fpl__password: ${{ secrets.fpl__password }}
   windows-latest:
@@ -20,10 +18,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Run 'powershell .\build\build.ps1 '
-        run: powershell .\build\build.ps1 
+      - name: Run 'powershell .\build\build.ps1 Pack BuildDockerImage'
+        run: powershell .\build\build.ps1 Pack BuildDockerImage
         env:
-            Slackbot_SlackApiKey_SlackApp: ${{ secrets.Slackbot_SlackApiKey_SlackApp }}
-            Slackbot_SlackApiKey_BotUser: ${{ secrets.Slackbot_SlackApiKey_BotUser }}
             fpl__login: ${{ secrets.fpl__login }}
             fpl__password: ${{ secrets.fpl__password }}

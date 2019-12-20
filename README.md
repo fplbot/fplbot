@@ -60,9 +60,43 @@ The Blank instance:
 ![Nuget](https://img.shields.io/nuget/v/Fpl.Client?style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/dt/Fpl.Client?style=for-the-badge)
 
+Install:
+```
+$ dotnet add package Fpl.Client
+```
 
+Register via DI providing credentials to a user of the fantasy premier league:
+```csharp
+services.AddFplApiClient(c =>
+{
+    c.Login = "youremail@premierleague.com";
+    c.Password = "yourpassword@premierleague.com"
+});
+```
 
+Or if you have the credentials in any other registered .NET Core configuration provider:
+```csharp
+services.AddFplApiClient(hostContext.Configuration);
+```
 
+### Fplbot docker image
+
+[![dockeri.co](https://dockeri.co/image/fplbot/fplbot)](https://hub.docker.com/r/fplbot/fplbot)
+
+Install:
+```
+ docker pull fplbot/fplbot:latest
+```
+
+Run:
+```
+ docker run --rm \
+ -e fpl__login=$fpl__login \
+ -e fpl__password=$fpl__password \
+ -e Slackbot_SlackApiKey_SlackApp=$Slackbot_SlackApiKey_SlackApp \
+ -e Slackbot_SlackApiKey_BotUser=$Slackbot_SlackApiKey_BotUser \
+ fplbot/fplbot
+ ```
 
 
 
