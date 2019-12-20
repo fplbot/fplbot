@@ -99,6 +99,14 @@ Run:
  ```
 
 
+# Slack app setup
+
+* Create a Slack app
+* Provide the following scopes:
+  * `chat:write:bot` ("Send messages as fplbot")
+* Add a bot user, which will lead to the `bot` scope being added:
+  * `bot` ("Add the ability for people to direct message or mention @fplbot")
+
 
 <hr>
 
