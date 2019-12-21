@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 using SlackConnector.Models;
@@ -14,15 +15,16 @@ namespace FplBot.ConsoleApps.Handlers
 {
     public class FplCaptainCommandHandler : IHandleMessages
     {
-
+        private readonly IOptions<FplbotOptions> _options;
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IGameweekClient _gameweekClient;
         private readonly IEntryClient _entryClient;
         private readonly IPlayerClient _playerClient;
         private readonly ILeagueClient _leagueClient;
 
-        public FplCaptainCommandHandler(IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient)
+        public FplCaptainCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient)
         {
+            _options = options;
             _publishers = publishers;
             _gameweekClient = gameweekClient;
             _playerClient = playerClient;
@@ -86,7 +88,7 @@ namespace FplBot.ConsoleApps.Handlers
         {
             try
             {
-                var league = await _leagueClient.GetClassicLeague(579157);
+                var league = await _leagueClient.GetClassicLeague(_options.Value.LeagueId);
                 var players = await _playerClient.GetAllPlayers();
 
                 var sb = new StringBuilder();
