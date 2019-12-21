@@ -95,6 +95,7 @@ Run:
  -e fpl__password=$fpl__password \
  -e Slackbot_SlackApiKey_SlackApp=$Slackbot_SlackApiKey_SlackApp \
  -e Slackbot_SlackApiKey_BotUser=$Slackbot_SlackApiKey_BotUser \
+ -e leagueId=89903 \  # optional: which FPL league the `fpl` command should fetch data for. Defaults to the Blank league
  fplbot/fplbot
  ```
 
