@@ -7,6 +7,7 @@ using FplBot.ConsoleApps;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Workers.Connections;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 using Xunit.Abstractions;
@@ -38,11 +39,10 @@ namespace FplBot.Tests.Helpers
             services.AddFplBot(configuration);
             
             services.ReplacePublishersWithDebugPublisher(logger);
-
+            services.Replace<BotDetails>(new BotDetails { Id = "UREFQD887", Name = "fplbot"});
 
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             var provider = services.BuildServiceProvider();
-            
             return provider;
         }
         
@@ -56,6 +56,17 @@ namespace FplBot.Tests.Helpers
             }
 
             services.AddSingleton<IPublisher, XUnitTestoutPublisher>(s => new XUnitTestoutPublisher(logger));
+        }
+        
+        private static void Replace<T>(this ServiceCollection services, T replacement) where T : class
+        {
+            var serviceDescriptors = services.Where(descriptor => descriptor.ServiceType == typeof(T)).ToList();
+            foreach (var service in serviceDescriptors)
+            {
+                var t = services.Remove(service);
+            }
+
+            services.AddSingleton<T>(s => replacement);
         }
     }
 }

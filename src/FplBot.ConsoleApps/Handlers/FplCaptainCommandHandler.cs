@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Workers.Connections;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 using SlackConnector.Models;
@@ -21,8 +22,9 @@ namespace FplBot.ConsoleApps.Handlers
         private readonly IEntryClient _entryClient;
         private readonly IPlayerClient _playerClient;
         private readonly ILeagueClient _leagueClient;
+        private readonly BotDetails _botDetails;
 
-        public FplCaptainCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient)
+        public FplCaptainCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, BotDetails botDetails)
         {
             _options = options;
             _publishers = publishers;
@@ -30,6 +32,7 @@ namespace FplBot.ConsoleApps.Handlers
             _playerClient = playerClient;
             _entryClient = entryClient;
             _leagueClient = leagueClient;
+            _botDetails = botDetails;
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)
@@ -55,7 +58,7 @@ namespace FplBot.ConsoleApps.Handlers
             var replacements = new[]
             {
                 new {Find = "@fplbot", Replace = ""},
-                new {Find = "<@UREFQD887>", Replace = ""}, // @fplbot-userid
+                new {Find = $"<@{_botDetails.Id}>", Replace = ""}, // @fplbot-userid
                 new {Find = "captains", Replace = ""}
             };
 
