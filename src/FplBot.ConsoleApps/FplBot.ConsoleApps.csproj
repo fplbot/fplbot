@@ -9,7 +9,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.0" />
     <PackageReference Include="Scrutor" Version="3.1.0" />
-    <PackageReference Include="Slackbot.Net" Version="1.0.1-beta006" />
+    <PackageReference Include="Slackbot.Net" Version="1.0.1-beta007" />
   </ItemGroup>
 
   <ItemGroup>

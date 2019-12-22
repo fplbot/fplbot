@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Slackbot.Net.Workers.Connections;
 using Slackbot.Net.Workers.Handlers;
 using Slackbot.Net.Workers.Publishers;
 using SlackConnector.Models;
@@ -15,12 +16,14 @@ namespace FplBot.ConsoleApps.Handlers
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
+        private readonly BotDetails _botDetails;
 
-        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient , ITeamsClient teamsClient)
+        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient , ITeamsClient teamsClient, BotDetails botDetails)
         {
             _publishers = publishers;
             _playerClient = playerClient;
             _teamsClient = teamsClient;
+            _botDetails = botDetails;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
@@ -66,13 +69,13 @@ namespace FplBot.ConsoleApps.Handlers
             return players.Where((p) => p.FirstName.ToLower().Contains(name) || p.SecondName.ToLower().Contains(name) || p.WebName.ToLower().Contains(name));
         }
 
-        private static string ParsePlayerFromInput(SlackMessage message)
+        private string ParsePlayerFromInput(SlackMessage message)
         {
             var replacements = new[]
             {
                 new {Find = "@fplbot", Replace = ""},
                 new {Find = "player", Replace = ""},
-                new {Find = "<@UREFQD887>", Replace = ""} // @fplbot-userid
+                new {Find = $"<@{_botDetails.Id}>", Replace = ""} // @fplbot-userid
             };
 
             var name = message.Text;
