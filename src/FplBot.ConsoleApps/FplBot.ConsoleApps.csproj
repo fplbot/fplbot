@@ -8,7 +8,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.0" />
-    <PackageReference Include="Slackbot.Net" Version="1.0.1-beta007" />
+    <PackageReference Include="Slackbot.Net" Version="1.0.1-beta008" />
   </ItemGroup>
 
   <ItemGroup>

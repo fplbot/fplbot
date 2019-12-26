@@ -14,9 +14,7 @@ Add a appsettings.Local.json file (is in gitignore) with contents:
 
 ``` 
 {
-  "Slackbot_SlackApiKey_SlackApp": "token1",
-  "Slackbot_SlackApiKey_BotUser": "token2",
-  h
+  "Slackbot_SlackApiKey_BotUser": "token",  
   "fpl" : {
     "login" : "username",
     "password : "pwd"
@@ -28,8 +26,7 @@ Add a appsettings.Local.json file (is in gitignore) with contents:
 Or: Add environment variables (double underscores mimic nested props in the json config):
 
 ```
-export Slackbot_SlackApiKey_SlackApp=token1
-export Slackbot_SlackApiKey_BotUser=token2
+export Slackbot_SlackApiKey_BotUser=token
 export fpl__login=username
 export fpl__password=pwd 
 ```
@@ -91,10 +88,9 @@ Install:
 Run:
 ```
  docker run --rm \
- -e fpl__login=$fpl__login \
- -e fpl__password=$fpl__password \
- -e Slackbot_SlackApiKey_SlackApp=$Slackbot_SlackApiKey_SlackApp \
- -e Slackbot_SlackApiKey_BotUser=$Slackbot_SlackApiKey_BotUser \
+ -e fpl__login=username \
+ -e fpl__password=password \
+ -e Slackbot_SlackApiKey_BotUser=token \
  -e leagueId=89903 \  # optional: which FPL league the `fpl` command should fetch data for. Defaults to the Blank league
  fplbot/fplbot
  ```
