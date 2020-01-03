@@ -6,7 +6,6 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Publishers;
-using Slackbot.Net.Connections;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
