@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Options;
-using Slackbot.Net.Workers.Handlers;
-using Slackbot.Net.Workers.Publishers;
-using SlackConnector.Models;
+using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Publishers;
 
 namespace FplBot.ConsoleApps.Handlers
 {

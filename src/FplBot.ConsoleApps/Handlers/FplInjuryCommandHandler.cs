@@ -4,9 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Workers.Handlers;
-using Slackbot.Net.Workers.Publishers;
-using SlackConnector.Models;
+using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Publishers;
 
 namespace FplBot.ConsoleApps.Handlers
 {
@@ -15,7 +14,7 @@ namespace FplBot.ConsoleApps.Handlers
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IPlayerClient _playerClient;
 
-        public FplInjuryCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient, ITeamsClient teamsClient)
+        public FplInjuryCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient)
         {
             _publishers = publishers;
             _playerClient = playerClient;

@@ -1,15 +1,13 @@
 using System.Linq;
-using Fpl.Client;
-using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using FplBot.ConsoleApps;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Workers.Connections;
-using Slackbot.Net.Workers.Handlers;
-using Slackbot.Net.Workers.Publishers;
+using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Connections;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers

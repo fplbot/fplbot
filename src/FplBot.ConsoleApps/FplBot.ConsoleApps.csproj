@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -8,7 +8,9 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.0" />
-    <PackageReference Include="Slackbot.Net" Version="1.0.1-beta008" />
+    <PackageReference Include="Slackbot.Net" Version="1.0.1-beta014" />
+    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Logger" Version="1.0.1-beta014" />
+    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Slack" Version="1.0.1-beta014" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using FplBot.ConsoleApps.Handlers;
 using FplBot.Tests.Helpers;
-using Slackbot.Net.Workers.Handlers;
-using SlackConnector.Models;
+using Slackbot.Net.Abstractions.Handlers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -25,7 +24,7 @@ namespace FplBot.Tests
             var playerData = await _client.Handle(new SlackMessage
             {
                 Text = input,
-                ChatHub = new SlackChatHub()
+                ChatHub = new ChatHub()
             });
             
             Assert.StartsWith(":star:", playerData.HandledMessage);

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using Slackbot.Net.Workers.Publishers;
+using Slackbot.Net.Abstractions.Publishers;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers

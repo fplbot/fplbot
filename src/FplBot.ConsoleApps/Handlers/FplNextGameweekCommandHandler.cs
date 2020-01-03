@@ -5,9 +5,8 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Workers.Handlers;
-using Slackbot.Net.Workers.Publishers;
-using SlackConnector.Models;
+using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Publishers;
 
 namespace FplBot.ConsoleApps.Handlers
 {

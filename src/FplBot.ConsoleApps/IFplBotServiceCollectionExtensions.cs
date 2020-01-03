@@ -2,8 +2,9 @@ using FplBot.ConsoleApps.Handlers;
 using FplBot.ConsoleApps.RecurringActions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Slackbot.Net.Workers.Publishers.Logger;
-using Slackbot.Net.Workers.Publishers.Slack;
+using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.Publishers.Logger;
+using Slackbot.Net.Extensions.Publishers.Slack;
 
 namespace FplBot.ConsoleApps
 {
@@ -19,7 +20,9 @@ namespace FplBot.ConsoleApps
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
                 .AddHandler<FplCaptainCommandHandler>()
-                .AddRecurring<NextGameweekRecurringAction>();
+                
+                .AddRecurring<NextGameweekRecurringAction>()
+                .BuildRecurrers();
             
             services.Configure<FplbotOptions>(config);
 
