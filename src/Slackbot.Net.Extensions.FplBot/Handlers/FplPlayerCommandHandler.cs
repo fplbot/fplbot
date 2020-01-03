@@ -8,7 +8,7 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Connections;
 
-namespace FplBot.ConsoleApps.Handlers
+namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     public class FplPlayerCommandHandler : IHandleMessages
     {

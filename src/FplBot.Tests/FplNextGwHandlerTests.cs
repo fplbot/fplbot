@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using FplBot.ConsoleApps.Handlers;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Extensions.FplBot.Handlers;
 using Xunit;
 using Xunit.Abstractions;
 

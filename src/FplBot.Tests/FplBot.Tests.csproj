@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -15,10 +15,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\FplBot.ConsoleApps\FplBot.ConsoleApps.csproj" />
+      <ProjectReference Include="..\Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="Exists('appsettings.Local.json')">
-      <Content Include="appsettings.Local.json" >
+      <Content Include="appsettings.Local.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </Content>

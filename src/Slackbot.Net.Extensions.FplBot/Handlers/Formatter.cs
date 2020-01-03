@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using Fpl.Client.Models;
 
-namespace FplBot.ConsoleApps.Handlers
+namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     public class Formatter
     {

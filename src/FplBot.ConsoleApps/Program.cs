@@ -1,8 +1,12 @@
 using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.Publishers.Logger;
+using Slackbot.Net.Extensions.Publishers.Slack;
 
 namespace FplBot.ConsoleApps
 {
@@ -22,8 +26,11 @@ namespace FplBot.ConsoleApps
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddFplApiClient(hostContext.Configuration.GetSection("fpl"));
-                    services.AddFplBot(hostContext.Configuration);
+                    //services.AddFplApiClient(hostContext.Configuration.GetSection("fpl"));
+                    services.AddSlackbotWorker(hostContext.Configuration)
+                        .AddPublisher<SlackPublisher>()
+                        .AddPublisher<LoggerPublisher>()
+                        .AddFplBot(hostContext.Configuration.GetSection("fpl"));
                 })
                 .ConfigureLogging((context, configLogging) =>
                 {

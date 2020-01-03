@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Connections;
 using Xunit.Abstractions;
@@ -33,8 +34,12 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            services.AddFplApiClient(configuration.GetSection("fpl"));
-            services.AddFplBot(configuration);
+            var configurationSection = configuration.GetSection("fpl");
+            services.AddSlackbotWorker(configuration).AddFplBot(o =>
+            {
+                o.Login = configurationSection["Login"];
+                o.Password = configurationSection["Password"];
+            });
             
             services.ReplacePublishersWithDebugPublisher(logger);
             services.Replace<BotDetails>(new BotDetails { Id = "UREFQD887", Name = "fplbot"});

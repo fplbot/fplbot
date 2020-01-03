@@ -6,6 +6,7 @@ COPY FplBot.sln ./FplBot.sln
 
 COPY /FplBot.ConsoleApps/FplBot.ConsoleApps.csproj ./FplBot.ConsoleApps/FplBot.ConsoleApps.csproj
 COPY /Fpl.Client/Fpl.Client.csproj ./Fpl.Client/Fpl.Client.csproj
+COPY /Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj ./Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj
 
 
 RUN dotnet restore FplBot.ConsoleApps
