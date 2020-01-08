@@ -106,7 +106,7 @@ namespace FplBot.Build
         string FplClientVersion = "0.3.1";
         
         string FplBotSlackExtension = "Slackbot.Net.Extensions.FplBot";
-        string FplBotSlackExtensionVersion = "0.3.2";
+        string FplBotSlackExtensionVersion = "0.3.3";
         
         Target Pack => _ => _
             .DependsOn(Test)
@@ -119,14 +119,13 @@ namespace FplBot.Build
                     .SetOutputDirectory(OutputDirectory)
                     .EnableNoRestore()
                     .EnableNoBuild());
-                
+
                 DotNetPack(_ => _
-                    .SetProject(Solution.GetProject(FplBotSlackExtension))
+                    .SetProject($"{SourceDirectory}/{FplBotSlackExtension}/{FplBotSlackExtension}.Release.csproj")
                     .SetConfiguration(Configuration)
                     .SetVersion(FplBotSlackExtensionVersion)
-                    .SetOutputDirectory(OutputDirectory)
-                    .EnableNoRestore()
-                    .EnableNoBuild());
+                    .SetOutputDirectory(OutputDirectory));
+
             });
 
         Target PublishFplClient => _ => _

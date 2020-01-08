@@ -3,9 +3,6 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <RootNamespace>Slackbot.Net.Extensions.FplBot</RootNamespace>
-
-        <PackageIconUrl>images/slack.png</PackageIconUrl>
-        <PackageIcon>slack.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,12 +13,4 @@
     <ItemGroup>
      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-        <None Include="images/slack.png">
-            <Pack>True</Pack>
-            <PackagePath></PackagePath>
-        </None>
-    </ItemGroup>
-
 </Project>
