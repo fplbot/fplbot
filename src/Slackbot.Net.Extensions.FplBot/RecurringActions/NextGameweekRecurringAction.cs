@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Extensions.FplBot.Handlers;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -15,15 +16,17 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
         private readonly IEnumerable<IPublisher> _publishers;
+        private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ILogger<NextGameweekRecurringAction> _logger;
         private const string EveryMinuteCron = "0 */1 * * * *";
         private Gameweek _storedCurrent;
 
-        public NextGameweekRecurringAction(IOptions<FplbotOptions> options, IGameweekClient gwClient, IEnumerable<IPublisher> publishers, ILogger<NextGameweekRecurringAction> logger)
+        public NextGameweekRecurringAction(IOptions<FplbotOptions> options, IGameweekClient gwClient, IEnumerable<IPublisher> publishers, ICaptainsByGameWeek captainsByGameweek, ILogger<NextGameweekRecurringAction> logger)
         {
             _options = options;
             _gwClient = gwClient;
             _publishers = publishers;
+            _captainsByGameweek = captainsByGameweek;
             _logger = logger;
         }
 
@@ -47,12 +50,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             
             if (fetchedCurrent.Id >_storedCurrent.Id)
             {
+                var captains = await _captainsByGameweek.GetCaptainsByGameWeek(fetchedCurrent.Id);
                 foreach (var p in _publishers)
                 {
                     await p.Publish(new Notification
                     {
                         Recipient = _options.Value.Channel,
-                        Msg = $"Gameweek {fetchedCurrent.Id}!"
+                        Msg = $"Gameweek {fetchedCurrent.Id}! \n {captains}"
                     });
                 }
             }
