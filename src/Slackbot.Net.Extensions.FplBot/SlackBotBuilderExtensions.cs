@@ -22,7 +22,7 @@ namespace Slackbot.Net.Abstractions.Hosting
                 o.Login = opts.Login;
                 o.Password = opts.Password;
             });
-            
+            builder.Services.AddSingleton<ICaptainsByGameWeek,CaptainsByGameWeek>();
             builder.AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
@@ -37,6 +37,7 @@ namespace Slackbot.Net.Abstractions.Hosting
         {
             builder.Services.Configure<FplbotOptions>(config);
             builder.Services.AddFplApiClient(config);
+            builder.Services.AddSingleton<ICaptainsByGameWeek,CaptainsByGameWeek>();
             builder.AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
