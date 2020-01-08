@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers

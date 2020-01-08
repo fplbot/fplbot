@@ -10,7 +10,7 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />      
-      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="1.0.1-beta015" />
+      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="1.0.1" />
     </ItemGroup>
 
     <ItemGroup>
