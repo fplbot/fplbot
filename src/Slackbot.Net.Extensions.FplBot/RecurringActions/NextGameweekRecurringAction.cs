@@ -7,11 +7,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
-    public class NextGameweekRecurringAction : IRecurringAction
+    internal class NextGameweekRecurringAction : IRecurringAction
     {
         private readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;

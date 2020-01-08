@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
-    public interface ICaptainsByGameWeek
+    internal interface ICaptainsByGameWeek
     {
         Task<string> GetCaptainsByGameWeek(int gameweek);
     }

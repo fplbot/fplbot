@@ -103,9 +103,10 @@ namespace FplBot.Build
             });
 
         string FplClient = "Fpl.Client";
-        string Version = "0.3.1";
+        string FplClientVersion = "0.3.1";
         
         string FplBotSlackExtension = "Slackbot.Net.Extensions.FplBot";
+        string FplBotSlackExtensionVersion = "0.3.2";
         
         Target Pack => _ => _
             .DependsOn(Test)
@@ -114,7 +115,7 @@ namespace FplBot.Build
                 DotNetPack(_ => _
                     .SetProject(Solution.GetProject(FplClient))
                     .SetConfiguration(Configuration)
-                    .SetVersion(Version)
+                    .SetVersion(FplClientVersion)
                     .SetOutputDirectory(OutputDirectory)
                     .EnableNoRestore()
                     .EnableNoBuild());
@@ -122,7 +123,7 @@ namespace FplBot.Build
                 DotNetPack(_ => _
                     .SetProject(Solution.GetProject(FplBotSlackExtension))
                     .SetConfiguration(Configuration)
-                    .SetVersion(Version)
+                    .SetVersion(FplBotSlackExtensionVersion)
                     .SetOutputDirectory(OutputDirectory)
                     .EnableNoRestore()
                     .EnableNoBuild());
@@ -133,7 +134,7 @@ namespace FplBot.Build
             .Executes(() =>
             {
                 DotNetNuGetPush(_ => _
-                    .SetTargetPath($"{OutputDirectory}/{FplClient}.{Version}.nupkg")
+                    .SetTargetPath($"{OutputDirectory}/{FplClient}.{FplClientVersion}.nupkg")
                     .SetSource("https://api.nuget.org/v3/index.json")
                     .SetApiKey(Environment.GetEnvironmentVariable("NUGET_API_KEY")));
             });
@@ -143,7 +144,7 @@ namespace FplBot.Build
             .Executes(() =>
             {
                 DotNetNuGetPush(_ => _
-                    .SetTargetPath($"{OutputDirectory}/{FplBotSlackExtension}.{Version}.nupkg")
+                    .SetTargetPath($"{OutputDirectory}/{FplBotSlackExtension}.{FplBotSlackExtensionVersion}.nupkg")
                     .SetSource("https://api.nuget.org/v3/index.json")
                     .SetApiKey(Environment.GetEnvironmentVariable("NUGET_API_KEY")));
             });

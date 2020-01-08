@@ -6,10 +6,11 @@ using Fpl.Client.Abstractions;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplCaptainCommandHandler : IHandleMessages
+    internal class FplCaptainCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IGameweekClient _gameweekClient;

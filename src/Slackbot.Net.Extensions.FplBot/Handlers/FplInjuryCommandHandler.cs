@@ -11,7 +11,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplInjuryCommandHandler : IHandleMessages
+    internal class FplInjuryCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IPlayerClient _playerClient;

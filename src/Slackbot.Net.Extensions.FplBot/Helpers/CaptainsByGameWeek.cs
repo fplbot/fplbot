@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {

@@ -5,7 +5,7 @@ using Fpl.Client.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    public class Formatter
+    internal class Formatter
     {
         public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
         {

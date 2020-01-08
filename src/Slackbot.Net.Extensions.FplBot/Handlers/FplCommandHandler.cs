@@ -10,7 +10,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplCommandHandler : IHandleMessages
+    internal class FplCommandHandler : IHandleMessages
     {
         private readonly IOptions<FplbotOptions> _options;
         private readonly IEnumerable<IPublisher> _publishers;

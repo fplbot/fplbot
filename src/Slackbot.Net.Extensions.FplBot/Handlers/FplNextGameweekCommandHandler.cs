@@ -11,7 +11,7 @@ using Slackbot.Net.Abstractions.Publishers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplNextGameweekCommandHandler : IHandleMessages
+    internal class FplNextGameweekCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IGameweekClient _gameweekClient;

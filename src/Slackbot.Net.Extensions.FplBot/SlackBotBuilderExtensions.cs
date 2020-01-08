@@ -3,6 +3,7 @@ using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Extensions.FplBot;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 
@@ -22,30 +23,28 @@ namespace Slackbot.Net.Abstractions.Hosting
                 o.Login = opts.Login;
                 o.Password = opts.Password;
             });
-            builder.Services.AddSingleton<ICaptainsByGameWeek,CaptainsByGameWeek>();
-            builder.AddHandler<FplPlayerCommandHandler>()
-                .AddHandler<FplCommandHandler>()
-                .AddHandler<FplNextGameweekCommandHandler>()
-                .AddHandler<FplInjuryCommandHandler>()
-                .AddHandler<FplCaptainCommandHandler>()
-                .AddRecurring<NextGameweekRecurringAction>();
-            
+            builder.AddCommon();
+
             return builder;
         }
-        
+
         public static ISlackbotWorkerBuilder AddFplBot(this ISlackbotWorkerBuilder builder, IConfiguration config)
         {
             builder.Services.Configure<FplbotOptions>(config);
             builder.Services.AddFplApiClient(config);
-            builder.Services.AddSingleton<ICaptainsByGameWeek,CaptainsByGameWeek>();
+            builder.AddCommon();
+            return builder;
+        }
+
+        private static void AddCommon(this ISlackbotWorkerBuilder builder)
+        {
+            builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             builder.AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
                 .AddHandler<FplCaptainCommandHandler>()
                 .AddRecurring<NextGameweekRecurringAction>();
-            
-            return builder;
         }
     }
 }

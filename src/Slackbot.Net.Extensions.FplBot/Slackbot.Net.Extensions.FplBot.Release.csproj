@@ -11,10 +11,10 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
       <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="1.0.1" />
+      <PackageReference Include="Fpl.Client" Version="0.3.1" />
     </ItemGroup>
 
     <ItemGroup>
-     <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
     </ItemGroup>
 
     <ItemGroup>
