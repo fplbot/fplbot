@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Handlers;
+using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 
 // ReSharper disable once CheckNamespace

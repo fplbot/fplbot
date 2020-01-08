@@ -6,7 +6,7 @@ using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {
