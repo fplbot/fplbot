@@ -28,7 +28,7 @@ namespace FplBot.WebApi.Controllers
         [HttpGet("install")]
         public IActionResult Install()
         {
-            return Redirect($"https://slack.com/oauth/v2/authorize?scope=bot,chat:write:bot&client_id={CLIENT_ID}");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={CLIENT_ID}");
         }
 
         [HttpGet("authorize")]
