@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
-using Slackbot.Net.SlackClients.Http.Models.Responses.OAuthAccess;
+using StackExchange.Redis;
 
 namespace FplBot.WebApi.Controllers
 {
@@ -16,13 +15,16 @@ namespace FplBot.WebApi.Controllers
 
         private readonly ILogger<OAuthController> _logger;
         private readonly ISlackOAuthAccessClient _oAuthAccessClient;
+        private readonly ConnectionMultiplexer _redis;
 
-        private static readonly string CLIENT_ID = "10330912275.864533206375";
+        private static readonly string CLIENT_ID = Environment.GetEnvironmentVariable("CLIENT_ID");
+        private static readonly string CLIENT_SECRET = Environment.GetEnvironmentVariable("CLIENT_SECRET");
 
-        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient)
+        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ConnectionMultiplexer redis)
         {
             _logger = logger;
             _oAuthAccessClient = oAuthAccessClient;
+            _redis = redis;
         }
 
         [HttpGet("install")]
@@ -36,26 +38,14 @@ namespace FplBot.WebApi.Controllers
         {
             var response = await _oAuthAccessClient.OAuthAccess(new OauthAccessRequest
             {
-                ClientId = CLIENT_ID, ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET"), Code = code, SingleChannel = true
+                ClientId = CLIENT_ID, ClientSecret = CLIENT_SECRET, Code = code, SingleChannel = true
             });
-
-            Store.Responses.Add(response.Team_Id, response);
+            IDatabase db = _redis.GetDatabase();
+            db.HashSet(response.Team_Id, "TeamName", response.Team_Name);
+            db.HashSet(response.Team_Id, "Scope", response.Scope);
+            db.HashSet(response.Team_Id, "AccessToken", response.AccessToken);
 
             return Ok();
         }
-        
-        [HttpGet("log")]
-        public void Log()
-        {
-            foreach (var responses in Store.Responses)
-            {
-                _logger.LogInformation($"{responses.Key} - {responses.Value.Bot.Bot_User_Id}");
-            }
-        }
-    }
-
-    public static class Store
-    {
-        public static Dictionary<string, OAuthAccessResponse> Responses = new Dictionary<string, OAuthAccessResponse>();
     }
 }
