@@ -32,6 +32,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         public async Task Process()
         {
+            _logger.LogInformation($"Channel: {_options.Value.Channel} & League: {_options.Value.LeagueId}");
+
             var gameweeks = await _gwClient.GetGameweeks();
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
             if (_storedCurrent == null)
