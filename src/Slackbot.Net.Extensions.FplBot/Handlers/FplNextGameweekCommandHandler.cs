@@ -38,7 +38,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var users = await _slackClient.UsersList();
-            var user = users.Members.SingleOrDefault(x => x.Id == message.User.Id);
+            var user = users.Members.SingleOrDefault(x => x.Id == message.User?.Id);
             var userTzOffset = user?.Tz_Offset ?? 0;
 
             var gameweeks = await _gameweekClient.GetGameweeks();
