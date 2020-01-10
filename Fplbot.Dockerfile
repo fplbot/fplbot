@@ -9,6 +9,7 @@ COPY /src/FplBot.WebApi/FplBot.WebApi.csproj FplBot.WebApi/FplBot.WebApi.csproj
 COPY /src/Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj
 
 COPY /src/FplBot.Tests/FplBot.Tests.csproj FplBot.Tests/FplBot.Tests.csproj
+COPY /src/FplBot.WebApi.Tests/FplBot.WebApi.Tests.csproj FplBot.WebApi.Tests/FplBot.WebApi.Tests.csproj
 
 RUN dotnet restore FplBot.sln
 
