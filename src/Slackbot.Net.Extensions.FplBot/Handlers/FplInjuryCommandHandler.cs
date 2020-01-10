@@ -64,7 +64,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public Tuple<string, string> GetHelpDescription()
         {
-            return new Tuple<string, string>("injuries", "Henter spillere med skader eid av 5%<");
+            return new Tuple<string, string>("injuries", "See injuried players owned by more than 5 %");
         }
 
         public bool ShouldShowInHelp => true;

@@ -27,7 +27,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public Tuple<string, string> GetHelpDescription()
         {
-            return new Tuple<string, string>("fpl", "Henter stillingen fra liga");
+            return new Tuple<string, string>("fpl", "Get current league standings");
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)

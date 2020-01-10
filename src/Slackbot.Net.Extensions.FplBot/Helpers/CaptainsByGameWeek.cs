@@ -14,13 +14,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         private readonly IEntryClient _entryClient;
         private readonly IPlayerClient _playerClient;
         private readonly ILeagueClient _leagueClient;
-        
-        public CaptainsByGameWeek(IOptions<FplbotOptions> options, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient)
+        private readonly IChipsPlayed _chipsPlayed;
+
+        public CaptainsByGameWeek(IOptions<FplbotOptions> options, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, IChipsPlayed chipsPlayed)
         {
             _options = options;
             _entryClient = entryClient;
             _playerClient = playerClient;
             _leagueClient = leagueClient;
+            _chipsPlayed = chipsPlayed;
         }
         
         public async Task<string> GetCaptainsByGameWeek(int gameweek)
@@ -37,10 +39,21 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 foreach (var team in league.Standings.Entries)
                 {
                     var entry = await _entryClient.GetPicks(team.Entry, gameweek);
+
+                    var hasUsedTrippleCaptainForGameWeek = await _chipsPlayed.GetHasUsedTrippleCaptainForGameWeek(gameweek, team.Entry);
+
                     var captainPick = entry.Picks.SingleOrDefault(pick => pick.IsCaptain);
                     var captain = players.SingleOrDefault(player => player.Id == captainPick.PlayerId);
 
-                    sb.Append($"*{team.EntryName}* - {captain.FirstName} {captain.SecondName}\n");
+                    var viceCaptainPick = entry.Picks.SingleOrDefault(pick => pick.IsViceCaptain);
+                    var viceCaptain = players.SingleOrDefault(player => player.Id == viceCaptainPick.PlayerId);
+
+                    sb.Append($"*{team.EntryName}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
+                    if (hasUsedTrippleCaptainForGameWeek)
+                    {
+                        sb.Append("TRIPPLECAPPED!! :rocket::rocket::rocket::rocket:");
+                    }
+                    sb.Append("\n");
                 }
 
                 return sb.ToString();

@@ -33,7 +33,7 @@ namespace Fpl.Client.Clients
                 if (domain.StartsWith("."))
                     domain = domain.Substring(1);
 
-                var address = string.Format("https://{0}/", domain);
+                var address = $"https://{domain}/";
 
                 if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out uri) == false)
                     continue;

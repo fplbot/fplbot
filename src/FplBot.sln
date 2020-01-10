@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Client", "Fpl.Client\Fp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slackbot.Net.Extensions.FplBot", "Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.WebApi", "FplBot.WebApi\FplBot.WebApi.csproj", "{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,5 +78,17 @@ Global
 		{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}.Release|x64.Build.0 = Release|Any CPU
 		{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}.Release|x86.ActiveCfg = Release|Any CPU
 		{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}.Release|x86.Build.0 = Release|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Debug|x64.Build.0 = Debug|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Debug|x86.Build.0 = Debug|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Release|x64.ActiveCfg = Release|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Release|x64.Build.0 = Release|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Release|x86.ActiveCfg = Release|Any CPU
+		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
