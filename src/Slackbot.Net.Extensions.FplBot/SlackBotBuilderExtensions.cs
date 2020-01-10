@@ -40,6 +40,7 @@ namespace Slackbot.Net.Abstractions.Hosting
         private static void AddCommon(this ISlackbotWorkerBuilder builder)
         {
             builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
+            builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
             builder.AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
