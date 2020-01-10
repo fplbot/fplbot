@@ -23,7 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Id}/event/{currentGw}|{player.EntryName}> - {player.Total} {arrow} \n");
+                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Entry}/event/{currentGw}|{player.EntryName}> - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
