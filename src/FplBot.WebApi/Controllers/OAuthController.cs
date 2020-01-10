@@ -43,6 +43,15 @@ namespace FplBot.WebApi.Controllers
 
             return Ok();
         }
+        
+        [HttpGet("log")]
+        public void Log()
+        {
+            foreach (var responses in Store.Responses)
+            {
+                _logger.LogInformation($"{responses.Key} - {responses.Value.Bot.Bot_User_Id}");
+            }
+        }
     }
 
     public static class Store
