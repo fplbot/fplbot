@@ -42,11 +42,14 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
             builder.Services.AddSingleton<ITeamValue, TeamValue>();
+            builder.Services.AddSingleton<IMessageHelper, MessageHelper>();
+            builder.Services.AddSingleton<IGameweekHelper, GameweekHelper>();
             builder.AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
                 .AddHandler<FplCaptainCommandHandler>()
+                .AddHandler<FplTransfersCommandHandler>()
                 .AddRecurring<NextGameweekRecurringAction>();
         }
     }
