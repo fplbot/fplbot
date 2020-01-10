@@ -29,7 +29,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var gameWeek = await GetGameweek(message);
 
-            var messageToSend = gameWeek.HasValue ? await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value) : "Ugyldig gameweek :grimacing:";
+            var messageToSend = gameWeek.HasValue ? await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value) : "Invalid gameweek :grimacing:";
 
             foreach (var p in _publishers)
             {
@@ -81,7 +81,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public Tuple<string, string> GetHelpDescription()
         {
-            return new Tuple<string, string>("captains {GW/''}", "Henter kapteinsvalg for liga");
+            return new Tuple<string, string>("captains {GW/''}", "Display captain picks in the league");
         }
 
         public bool ShouldHandle(SlackMessage message)

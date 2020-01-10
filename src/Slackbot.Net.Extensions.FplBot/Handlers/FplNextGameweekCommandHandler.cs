@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public Tuple<string, string> GetHelpDescription()
         {
-            return new Tuple<string, string>("next", "Henter neste gameweek");
+            return new Tuple<string, string>("next", "Displays the fixtures for next gameweek");
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)
