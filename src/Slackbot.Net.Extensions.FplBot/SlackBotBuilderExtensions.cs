@@ -41,6 +41,7 @@ namespace Slackbot.Net.Abstractions.Hosting
         {
             builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
+            builder.Services.AddSingleton<ITeamValue, TeamValue>();
             builder.AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
