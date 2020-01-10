@@ -11,6 +11,10 @@ namespace FplBot.WebApi
 {
     public class Startup
     {
+
+        private static readonly string REDIS_SERVER = Environment.GetEnvironmentVariable("REDIS_SERVER");
+        private static readonly string REDIS_USERNAME = Environment.GetEnvironmentVariable("REDIS_USERNAME");
+        private static readonly string REDIS_PASSWORD = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -23,7 +27,7 @@ namespace FplBot.WebApi
         {
             services.AddControllers();
             services.AddSlackbotOauthAccessClient();
-            services.AddSingleton<ConnectionMultiplexer>(ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_URL")));
+            services.AddSingleton<ConnectionMultiplexer>(ConnectionMultiplexer.Connect($"{REDIS_SERVER}, name={REDIS_USERNAME}, password={REDIS_PASSWORD}"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
