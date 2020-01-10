@@ -20,6 +20,8 @@ namespace FplBot.WebApi
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
+                    webBuilder.UseUrls($"http://*:{port}");
                     webBuilder.UseStartup<Startup>();
                 });
     }
