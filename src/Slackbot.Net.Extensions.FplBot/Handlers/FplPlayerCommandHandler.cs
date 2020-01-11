@@ -8,22 +8,26 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplPlayerCommandHandler : IHandleMessages
     {
-        private readonly IEnumerable<IPublisher> _publishers;
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
+        private readonly ISlackClient _slackClient;
+
+
         private readonly BotDetails _botDetails;
 
-        public FplPlayerCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient , ITeamsClient teamsClient, BotDetails botDetails)
+        public FplPlayerCommandHandler(ISlackClient slackClient, IPlayerClient playerClient , ITeamsClient teamsClient, BotDetails botDetails)
         {
-            _publishers = publishers;
             _playerClient = playerClient;
             _teamsClient = teamsClient;
             _botDetails = botDetails;
+            _slackClient = slackClient;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
@@ -33,35 +37,27 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var matchingPlayers = FindMatchingPlayer(allPlayers, name);
             
-            var textToSend = "";
             if (!matchingPlayers.Any())
             {
-                textToSend = $"Fant ikke {name}";
-            }
-            else
-            {
-                var teams = await _teamsClient.GetAllTeams();
-                var players = matchingPlayers.Select(p => Formatter.GetPlayer(p, teams));
-
-                textToSend = string.Join("\n\n", players);
-            }
-
-
-            foreach (var p in _publishers)
-            {
-                await p.Publish(new Notification
+                await _slackClient.ChatPostMessage(new ChatPostMessageRequest
                 {
-                    Recipient = message.ChatHub.Id,
-                    Msg = textToSend
+                    Channel = message.ChatHub.Id,
+                    Text = $"Fant ikke {name}"
+                });
+                return new HandleResponse($"Found no matching player for {name}");
+            }
+            
+            var teams = await _teamsClient.GetAllTeams();
+            foreach(var p in matchingPlayers)
+            {
+                await _slackClient.ChatPostMessage(new ChatPostMessageRequest
+                {
+                    Channel = message.ChatHub.Id,
+                    Blocks = Formatter.GetPlayerCard(p, teams)
                 });
             }
-
-            if (string.IsNullOrEmpty(textToSend))
-            {
-                return new HandleResponse("Not found");
- 
-            }
-            return new HandleResponse(textToSend);
+            
+            return new HandleResponse($"Found matching players for {name}");
         }
 
         private static IEnumerable<Player> FindMatchingPlayer(IEnumerable<Player> players, string name)

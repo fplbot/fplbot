@@ -5,7 +5,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
     internal interface ITeamValue
     {
-        Task<Dictionary<int, float>> GetTeamValuePerGameWeek(int teamCode);
-        Task<Dictionary<int, float>> GetValueInBankPerGameWeek(int teamCode);
+        Task<Dictionary<int, double>> GetTeamValuePerGameWeek(int teamCode);
+        Task<Dictionary<int, double>> GetValueInBankPerGameWeek(int teamCode);
     }
 }

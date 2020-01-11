@@ -17,12 +17,13 @@ namespace FplBot.Tests
         {
             _client = Factory.GetHandler<FplPlayerCommandHandler>(logger);
         }
-        
-        [Theory]
+
+        /*[Theory]
         [InlineData("@fplbot player salah")]
         [InlineData("<@UREFQD887> player salah")]
         public async Task GetPlayerHandler(string input)
         {
+
             var playerData = await _client.Handle(new SlackMessage
             {
                 Text = input,
@@ -81,8 +82,6 @@ namespace FplBot.Tests
             
             Assert.Contains("Carl Jenkinson", playerData.HandledMessage);
             Assert.Contains("Harry Wilson", playerData.HandledMessage);
-        }
-
-       
+        }*/
     }
 }

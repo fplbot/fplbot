@@ -16,30 +16,30 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             _historyClient = historyClient;
         }
 
-        public async Task<Dictionary<int, float>> GetTeamValuePerGameWeek(int teamCode)
+        public async Task<Dictionary<int, double>> GetTeamValuePerGameWeek(int teamCode)
         {
             var entryHistory = await _historyClient.GetHistory(teamCode);
 
 
-            var teamValueMap = new Dictionary<int, float>();
+            var teamValueMap = new Dictionary<int, double>();
             foreach (var entry in entryHistory.GameweekHistory)
             {
 
-                teamValueMap.Add(entry.Event, entry.Value / 10);
+                teamValueMap.Add(entry.Event, entry.Value / 10.0);
             }
 
             return teamValueMap;
         }
 
-        public async Task<Dictionary<int, float>> GetValueInBankPerGameWeek(int teamCode)
+        public async Task<Dictionary<int, double>> GetValueInBankPerGameWeek(int teamCode)
         {
             var entryHistory = await _historyClient.GetHistory(teamCode);
 
-            var bankValueMap = new Dictionary<int, float>();
+            var bankValueMap = new Dictionary<int, double>();
             foreach (var entry in entryHistory.GameweekHistory)
             {
 
-                bankValueMap.Add(entry.Event, entry.Bank / 10);
+                bankValueMap.Add(entry.Event, entry.Bank / 10.0);
             }
 
             return bankValueMap;
