@@ -7,29 +7,28 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplCaptainCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisher> _publishers;
-        private readonly IGameweekClient _gameweekClient;
         private readonly ICaptainsByGameWeek _captainsByGameWeek;
-        private readonly BotDetails _botDetails;
+        private readonly IGameweekHelper _gameweekHelper;
 
-        public FplCaptainCommandHandler(IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ICaptainsByGameWeek captainsByGameWeek,  BotDetails botDetails)
+        public FplCaptainCommandHandler(IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ICaptainsByGameWeek captainsByGameWeek,  IGameweekHelper gameweekHelper)
         {
             _publishers = publishers;
-            _gameweekClient = gameweekClient;
             _captainsByGameWeek = captainsByGameWeek;
-            _botDetails = botDetails;
+            _gameweekHelper = gameweekHelper;
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var gameWeek = await GetGameweek(message);
+            var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, "captains {gw}");
 
-            var messageToSend = gameWeek.HasValue ? await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value) : "Ugyldig gameweek :grimacing:";
+            var messageToSend = gameWeek.HasValue ? await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value) : "Invalid gameweek :grimacing:";
 
             foreach (var p in _publishers)
             {
@@ -43,52 +42,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse(messageToSend);
         }
 
-        private async Task<int?> GetGameweek(SlackMessage message)
-        {
-            var replacements = new[]
-            {
-                new {Find = "@fplbot", Replace = ""},
-                new {Find = $"<@{_botDetails.Id}>", Replace = ""}, // @fplbot-userid
-                new {Find = "captains", Replace = ""}
-            };
-
-            var name = message.Text;
-
-            foreach (var set in replacements)
-            {
-                name = name.Replace(set.Find, set.Replace).Trim();
-            }
-
-            if (name != "")
-            {
-                try
-                {
-                    return int.Parse(name);
-                }
-                catch (FormatException)
-                {
-                    return null;
-                }
-            }
-
-            var gameweeks = await _gameweekClient.GetGameweeks();
-            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
-
-            return currentGw;
-        }
-
- 
-
-        public Tuple<string, string> GetHelpDescription()
-        {
-            return new Tuple<string, string>("captains {GW/''}", "Henter kapteinsvalg for liga");
-        }
-
-        public bool ShouldHandle(SlackMessage message)
-        {
-            return message.MentionsBot && message.Text.Contains("captains");
-        }
-
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("captains {GW/''}", "Display captain picks in the league");
+        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("captains");
         public bool ShouldShowInHelp => true;
     }
 }

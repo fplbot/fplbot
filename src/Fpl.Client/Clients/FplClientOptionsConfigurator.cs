@@ -40,7 +40,8 @@ namespace Fpl.Client.Clients
                    name is nameof(IGameweekClient) ||
                    name is nameof(ILeagueClient) ||
                    name is nameof(ITeamsClient) ||
-                   name is nameof(IPlayerClient);
+                   name is nameof(IPlayerClient) ||
+                   name is nameof(ITransfersClient);
         }
 
         public static void SetupFplClient(HttpClient client)

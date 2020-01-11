@@ -5,7 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="1.0.5" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="1.0.6" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
   </ItemGroup>
 
 

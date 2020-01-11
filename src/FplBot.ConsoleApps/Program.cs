@@ -27,7 +27,8 @@ namespace FplBot.ConsoleApps
                     services.AddSlackbotWorker(hostContext.Configuration)
                         .AddPublisher<SlackPublisher>()
                         .AddPublisher<LoggerPublisher>()
-                        .AddFplBot(hostContext.Configuration.GetSection("fpl"));
+                        .AddFplBot(hostContext.Configuration.GetSection("fpl"))
+                        .BuildRecurrers();
                 })
                 .ConfigureLogging((context, configLogging) =>
                 {

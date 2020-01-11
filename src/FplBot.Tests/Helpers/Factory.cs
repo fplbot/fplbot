@@ -1,4 +1,5 @@
 using System.Linq;
+using FakeItEasy;
 using Fpl.Client.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,8 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Connections;
+using Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
@@ -41,11 +44,16 @@ namespace FplBot.Tests.Helpers
             
             services.ReplacePublishersWithDebugPublisher(logger);
             services.Replace<BotDetails>(new BotDetails { Id = "UREFQD887", Name = "fplbot"});
+            SlackClient = A.Fake<ISlackClient>();
+            
+            services.Replace<ISlackClient>(SlackClient);
 
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             var provider = services.BuildServiceProvider();
             return provider;
         }
+        
+        public static ISlackClient SlackClient { get; set; }
         
         // remove live slack integration and replace with debugging publishers
         private static void ReplacePublishersWithDebugPublisher(this ServiceCollection services, ITestOutputHelper logger)

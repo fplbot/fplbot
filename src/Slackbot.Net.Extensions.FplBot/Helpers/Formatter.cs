@@ -19,12 +19,12 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
 
             
-            sb.Append($":star: *Resultater etter GW {currentGw}* :star: \n\n");
+            sb.Append($":star: *Results after GW {currentGw}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Id}/event/{currentGw}|{player.EntryName}> - {player.Total} {arrow} \n");
+                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Entry}/event/{currentGw}|{player.EntryName}> - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();

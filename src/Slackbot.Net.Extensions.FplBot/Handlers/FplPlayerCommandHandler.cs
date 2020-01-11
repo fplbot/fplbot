@@ -92,7 +92,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public Tuple<string, string> GetHelpDescription()
         {
-            return new Tuple<string, string>("player {navn}", "Henter info om spiller som matcher navn");
+            return new Tuple<string, string>("player {name}", "Display info about the player");
         }
 
         public bool ShouldShowInHelp => true;

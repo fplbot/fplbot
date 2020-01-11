@@ -1,14 +1,14 @@
 build:
   docker:
-    fplbot: /Fplbot.Dockerfile
-    fplbot-webapi: /FplbotWebApi.Dockerfile
+    fplbot-local: /Fplbot.Dockerfile
+    fplbot-local-webapi: /FplbotWebApi.Dockerfile
 
 run:
   worker:
     command:
       - dotnet ./FplBot.ConsoleApps.dll
-    image: fplbot
+    image: fplbot-local
   web:
     command:
       - dotnet ./FplBot.WebApi.dll
-    image: fplbot-webapi
+    image: fplbot-local-webapi

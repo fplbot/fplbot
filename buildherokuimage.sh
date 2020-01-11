@@ -1,1 +1,1 @@
-docker build --rm -t fplbot:heroku -f Heroku.Dockerfile .
+docker build --rm -t fplbot:heroku -f Fplbot.Dockerfile .

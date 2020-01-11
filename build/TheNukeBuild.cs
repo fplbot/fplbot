@@ -55,10 +55,10 @@ namespace FplBot.Build
         ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
         ///   - Microsoft VSCode           https://nuke.build/vscode
 
-        public static int Main () => Execute<TheNukeBuild>(x => x.Pack);
+        public static int Main () => Execute<TheNukeBuild>(x => x.PackFplClient);
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-        readonly Configuration Configuration = Configuration.Release;
+        readonly Configuration Configuration = Configuration.Debug;
 
         [Solution] readonly Solution Solution;
         [GitRepository] readonly GitRepository GitRepository;
@@ -96,7 +96,7 @@ namespace FplBot.Build
             .Executes(() =>
             {
                 DotNetTest(_ => _
-                    .SetProjectFile(Solution)
+                    .SetProjectFile(Solution.GetProject("FplBot.Tests"))
                     .SetConfiguration(Configuration)
                     .EnableNoRestore()
                     .EnableNoBuild());
@@ -108,7 +108,7 @@ namespace FplBot.Build
         string FplBotSlackExtension = "Slackbot.Net.Extensions.FplBot";
         string FplBotSlackExtensionVersion = "0.3.3";
         
-        Target Pack => _ => _
+        Target PackFplClient => _ => _
             .DependsOn(Test)
             .Executes(() =>
             {
@@ -119,17 +119,21 @@ namespace FplBot.Build
                     .SetOutputDirectory(OutputDirectory)
                     .EnableNoRestore()
                     .EnableNoBuild());
-
+            });
+        
+        Target PackExtension => _ => _
+            .DependsOn(Test)
+            .Executes(() =>
+            {
                 DotNetPack(_ => _
                     .SetProject($"{SourceDirectory}/{FplBotSlackExtension}/{FplBotSlackExtension}.Release.csproj")
                     .SetConfiguration(Configuration)
                     .SetVersion(FplBotSlackExtensionVersion)
                     .SetOutputDirectory(OutputDirectory));
-
             });
 
         Target PublishFplClient => _ => _
-            .DependsOn(Pack)
+            .DependsOn(PackFplClient)
             .Executes(() =>
             {
                 DotNetNuGetPush(_ => _
@@ -139,7 +143,7 @@ namespace FplBot.Build
             });
         
         Target PublishSlackbotExtension => _ => _
-            .DependsOn(Pack)
+            .DependsOn(PackExtension)
             .Executes(() =>
             {
                 DotNetNuGetPush(_ => _
