@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using Fpl.Client.Models;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -75,8 +76,12 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             sb.Append($"Assists: {player.Assists}\n");
 
-
-            sb.Append(GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News));
+            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
+            if (chanceOfPlaying != null)
+            {
+                sb.Append(chanceOfPlaying);
+                sb.Append("\n");
+            }
 
             return sb.ToString();
         }
@@ -90,13 +95,10 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             if (chanceOfPlaying == "100" || chanceOfPlaying == null)
             {
-                return "";
+                return null;
             }
-            else
-            {
-                var text = news == "" ? $"Chance of playing next round: {chanceOfPlaying}%" : news;
-                return $":warning: {text} \n";
-            }
+            var text = news == "" ? $"Chance of playing next round: {chanceOfPlaying}%" : news;
+            return $":warning: {text} \n";
         }
 
         public static string GetInjuredPlayers(IEnumerable<Player> players)
@@ -112,6 +114,84 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
 
             return sb.ToString();
+        }
+
+        public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams) {
+
+            List<IBlock> playerCard = new List<IBlock>();
+
+            playerCard.Add(new SectionBlock
+            {
+                text = new Text
+                {
+                    type = "mrkdwn",
+                    text = $"*{player.FirstName} {player.SecondName}*"
+                }
+            });
+
+            playerCard.Add(new ImageBlock
+            {
+                image_url = $"https://platform-static-files.s3.amazonaws.com/premierleague/photos/players/110x140/p{player.Code}.png",
+                title = new Text
+                {
+                    text = $"{player.SecondName}.png"
+                },
+                alt_text = $"{player.FirstName} {player.SecondName}"
+            });
+
+            var team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
+            var teamName = team != null ? team.Name : "";
+
+            Text[] fields =
+            {
+                new Text
+                {
+                    type = "mrkdwn",
+                    text = $"*Team*: {teamName}"
+                },
+                new Text
+                {
+                    type = "mrkdwn",
+                    text = $"*Points*: {player.TotalPoints}"
+                },
+                new Text
+                {
+                    type = "mrkdwn",
+                    text = $"*Cost*: {player.NowCost / 10.0}"
+                },
+                new Text
+                {
+                    type = "mrkdwn",
+                    text = $"*Goals*: {player.GoalsScored}"
+                },
+                new Text
+                {
+                    type = "mrkdwn",
+                    text = $"*Assists*: {player.Assists}"
+                }
+            };
+
+            playerCard.Add(new SectionBlock
+            {
+                fields = fields
+            });
+
+            playerCard.Add(new DividerBlock { });
+
+            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
+            if (chanceOfPlaying != null)
+            {
+                playerCard.Add(new SectionBlock
+                {
+                    text = new Text
+                    {
+                        type = "mrkdwn",
+                        text = chanceOfPlaying
+                    }
+                });
+            }
+
+            return playerCard.ToArray();
         }
     }
 }
