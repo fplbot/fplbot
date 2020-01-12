@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Run './build/build.sh PackFplClient BuildDockerImage'
-        run: ./build/build.sh Pack BuildDockerImage
+        run: ./build/build.sh PackFplClient BuildDockerImage
         env:
             fpl__login: ${{ secrets.fpl__login }}
             fpl__password: ${{ secrets.fpl__password }}
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Run 'powershell .\build\build.ps1 PackFplClient BuildDockerImage'
-        run: powershell .\build\build.ps1 Pack BuildDockerImage
+        run: powershell .\build\build.ps1 PackFplClient BuildDockerImage
         env:
             fpl__login: ${{ secrets.fpl__login }}
             fpl__password: ${{ secrets.fpl__password }}
