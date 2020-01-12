@@ -57,7 +57,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 });
             }
             
-            return new HandleResponse($"Found matching players for {name}");
+            return new HandleResponse($"Found matching player(s) for {name}");
         }
 
         private static IEnumerable<Player> FindMatchingPlayer(IEnumerable<Player> players, string name)

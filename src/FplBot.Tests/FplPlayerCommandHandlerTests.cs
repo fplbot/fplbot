@@ -18,7 +18,7 @@ namespace FplBot.Tests
             _client = Factory.GetHandler<FplPlayerCommandHandler>(logger);
         }
 
-        /*[Theory]
+        [Theory]
         [InlineData("@fplbot player salah")]
         [InlineData("<@UREFQD887> player salah")]
         public async Task GetPlayerHandler(string input)
@@ -30,7 +30,7 @@ namespace FplBot.Tests
                 ChatHub = new ChatHub()
             });
             
-            Assert.Contains("Mohamed Salah", playerData.HandledMessage);
+            Assert.Contains("Found matching player(s) for salah", playerData.HandledMessage);
         }
 
         [Theory]
@@ -44,7 +44,7 @@ namespace FplBot.Tests
                 ChatHub = new ChatHub()
             });
             
-            Assert.Equal("Fant ikke nonexistant", playerData.HandledMessage);
+            Assert.Equal("Found no matching player for nonexistant", playerData.HandledMessage);
         }
         
         [Theory]
@@ -80,8 +80,7 @@ namespace FplBot.Tests
                 ChatHub = new ChatHub()
             });
             
-            Assert.Contains("Carl Jenkinson", playerData.HandledMessage);
-            Assert.Contains("Harry Wilson", playerData.HandledMessage);
-        }*/
+            Assert.Contains("Found matching player(s) for son", playerData.HandledMessage);
+        }
     }
 }
