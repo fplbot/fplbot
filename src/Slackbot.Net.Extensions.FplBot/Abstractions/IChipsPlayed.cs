@@ -4,6 +4,6 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
     internal interface IChipsPlayed
     {
-        Task<bool> GetHasUsedTrippleCaptainForGameWeek(int gameweek, int teamCode);
+        Task<bool> GetHasUsedTripleCaptainForGameWeek(int gameweek, int teamCode);
     }
 }
