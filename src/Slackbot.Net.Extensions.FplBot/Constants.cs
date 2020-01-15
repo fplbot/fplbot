@@ -2,8 +2,6 @@
 {
     internal static class Constants
     {
-        public const string FplBotName = "fplbot";
-
         public static class ChipNames
         {
             public const string TripleCaptain = "3xc";

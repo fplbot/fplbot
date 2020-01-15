@@ -30,7 +30,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return result.Count > 1 ? result[1].Value : null;
         }
 
-        private string BotPattern => $"(?:@{Constants.FplBotName}|<@{_botDetails.Id}>)";
+        private string BotPattern => $"(?:@{_botDetails.Name}|<@{_botDetails.Id}>)";
     }
 
     internal interface IMessageHelper
