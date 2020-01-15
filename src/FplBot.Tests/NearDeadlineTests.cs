@@ -58,5 +58,21 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
         }
+        
+        [Fact]
+        public void WhenAnotherHourTheSameDayButSameMinute()
+        {
+            _deadlineChecker.NowUtc = new DateTime(2005, 5, 25, 20, 0, 0);
+            var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
+            Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
+        }
+
+        [Fact]
+        public void WhenTheDayAfterButMinute()
+        {
+            _deadlineChecker.NowUtc = new DateTime(2005, 5, 26, 19, 0, 0);
+            var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
+            Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
+        }
     }
 }

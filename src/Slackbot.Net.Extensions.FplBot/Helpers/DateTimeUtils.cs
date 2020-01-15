@@ -7,7 +7,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         public bool IsWithinMinutesToDate(int minutes, DateTime dateUtc)
         {
             var threshold = dateUtc.Subtract(TimeSpan.FromMinutes(minutes));
-            return NowUtc >= threshold && NowUtc.Minute == dateUtc.Minute;
+            return NowUtc >= threshold && NowUtc < dateUtc && NowUtc.Minute == dateUtc.Minute;
         }
 
         public DateTime NowUtc { get; set; } = DateTime.UtcNow;
