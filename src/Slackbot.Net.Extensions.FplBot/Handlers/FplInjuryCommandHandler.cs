@@ -58,7 +58,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("injuries");
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("injuries", "See injuried players owned by more than 5 %");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("injuries", "See injured players owned by more than 5 %");
         public bool ShouldShowInHelp => true;
     }
 
