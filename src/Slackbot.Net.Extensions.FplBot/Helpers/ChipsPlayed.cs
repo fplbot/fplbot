@@ -1,18 +1,12 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class ChipsPlayed : IChipsPlayed
     {
-        private static string trippleCapChipName = "3xc";
-        private static string wildcardChipName = "wildcard";
-        private static string freeHitChipName = "freehit";
-        private static string benchBoostChipName = "bboost";
-
-
         private readonly IEntryHistoryClient _historyClient;
 
         public ChipsPlayed(IEntryHistoryClient historyClient)
@@ -20,16 +14,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             _historyClient = historyClient;
         }
 
-        public async Task<bool> GetHasUsedTrippleCaptainForGameWeek(int gameweek, int teamCode)
+        public async Task<bool> GetHasUsedTripleCaptainForGameWeek(int gameweek, int teamCode)
         {
             var entryHistory = await _historyClient.GetHistory(teamCode);
 
-            var trippleCapChip = entryHistory.Chips.FirstOrDefault(chip => chip.Name == trippleCapChipName);
-            if (trippleCapChip == null)
+            var tripleCapChip = entryHistory.Chips.FirstOrDefault(chip => chip.Name == Constants.ChipNames.TripleCaptain);
+            if (tripleCapChip == null)
             {
                 return false;
             }
-            return trippleCapChip.Event == gameweek;
+            return tripleCapChip.Event == gameweek;
         }
     }
 }

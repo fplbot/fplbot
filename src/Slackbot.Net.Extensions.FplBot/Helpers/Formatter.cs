@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using Fpl.Client.Models;
+using Slackbot.Net.Extensions.FplBot.Extensions;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
-using Fpl.Client.Models;
-using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    internal class Formatter
+    internal static class Formatter
     {
         public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
         {
@@ -14,17 +16,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             var sortedByRank = league.Standings.Entries.OrderBy(x => x.Rank);
 
-            var numPlayers = league.Standings.Entries.Count();
+            var numPlayers = league.Standings.Entries.Count;
 
-            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id.ToString() ?? "?";
-
+            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
             
             sb.Append($":star: *Results after GW {currentGw}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. <https://fantasy.premierleague.com/entry/{player.Entry}/event/{currentGw}|{player.EntryName}> - {player.Total} {arrow} \n");
+                sb.Append($"{player.Rank}. {player.GetEntryLink(currentGw)} - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
@@ -69,8 +70,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             sb.Append($"Points: {player.TotalPoints}\n");
 
-            var costAsString = player.NowCost.ToString();
-            sb.Append($"Cost: {costAsString.Insert(costAsString.Length - 1, ".")}\n");
+            sb.Append($"Cost: {FormatCurrency(player.NowCost)}\n");
 
             sb.Append($"Goals: {player.GoalsScored}\n");
 
@@ -157,7 +157,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 new Text
                 {
                     type = "mrkdwn",
-                    text = $"*Cost*: {player.NowCost / 10.0}"
+                    text = $"*Cost*: {FormatCurrency(player.NowCost)}"
                 },
                 new Text
                 {
@@ -193,5 +193,12 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             return playerCard.ToArray();
         }
+
+        public static string FormatCurrency(int amount)
+        {
+            return (amount / 10.0).ToString("£0.0", CultureInfo.InvariantCulture);
+        }
+
     }
+
 }

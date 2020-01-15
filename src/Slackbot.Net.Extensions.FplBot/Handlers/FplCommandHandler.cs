@@ -25,11 +25,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _leagueClient = leagueClient;
         }
 
-        public Tuple<string, string> GetHelpDescription()
-        {
-            return new Tuple<string, string>("fpl", "Get current league standings");
-        }
-
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var standings = await GetStandings();
@@ -50,9 +45,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             try
             {
-                var league = await _leagueClient.GetClassicLeague(_options.Value.LeagueId);
-                var gameweeks = await _gameweekClient.GetGameweeks();
-                var standings = Formatter.GetStandings(league, gameweeks);
+                var leagueTask = _leagueClient.GetClassicLeague(_options.Value.LeagueId);
+                var gameweeksTask = _gameweekClient.GetGameweeks();
+                var standings = Formatter.GetStandings(await leagueTask, await gameweeksTask);
                 return standings;
             }
             catch (Exception e)
@@ -61,11 +56,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        public bool ShouldHandle(SlackMessage message)
-        {
-            return message.MentionsBot && message.Text.Contains("fpl");
-        }
-
+        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("fpl");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("fpl", "Get current league standings");
         public bool ShouldShowInHelp => true;
     }
 }

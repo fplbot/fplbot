@@ -20,7 +20,7 @@ namespace FplBot.Tests
         [Theory]
         [InlineData("@fplbot fpl")]
         [InlineData("<@UREFQD887> fpl")]
-        public async Task GetPlayerHandler(string input)
+        public async Task GetStandings(string input)
         {
             var playerData = await _client.Handle(new SlackMessage
             {

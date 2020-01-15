@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Abstractions.Handlers;
@@ -10,6 +5,10 @@ using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.SlackClients.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -30,21 +29,21 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsclient = teamsclient;
         }
 
-        public Tuple<string, string> GetHelpDescription()
-        {
-            return new Tuple<string, string>("next", "Displays the fixtures for next gameweek");
-        }
-
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var users = await _slackClient.UsersList();
-            var user = users.Members.FirstOrDefault(x => x.Id == message.User?.Id);
-            var userTzOffset = user?.Tz_Offset ?? 0;
+            var usersTask = _slackClient.UsersList();
+            var gameweeksTask = _gameweekClient.GetGameweeks();
+            var teamsTask = _teamsclient.GetAllTeams();
+            
+            var users = await usersTask;
+            var gameweeks = await gameweeksTask;
+            var teams = await teamsTask;
 
-            var gameweeks = await _gameweekClient.GetGameweeks();
             var nextGw = gameweeks.First(gw => gw.IsNext);
             var fixtures = await _fixtureClient.GetFixturesByGameweek(nextGw.Id);
-            var teams = await _teamsclient.GetAllTeams();
+
+            var user = users.Members.FirstOrDefault(x => x.Id == message.User?.Id);
+            var userTzOffset = user?.Tz_Offset ?? 0;
 
             var textToSend = TextToSend(nextGw, fixtures, teams, userTzOffset);
 
@@ -69,7 +68,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             foreach (var group in groupedByDay)
             {
-                textToSend += $"\n{@group.Key.WithOffset(tzOffset):dddd}";
+                textToSend += $"\n{group.Key.WithOffset(tzOffset):dddd}";
                 foreach (var fixture in group)
                 {
                     var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
@@ -83,14 +82,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             return textToSend;
         }
-        
-       
 
-        public bool ShouldHandle(SlackMessage message)
-        {
-            return message.MentionsBot && message.Text.Contains("next");
-        }
-
+        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("next");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("next", "Displays the fixtures for next gameweek");
         public bool ShouldShowInHelp => true;
     }
 }
