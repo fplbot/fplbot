@@ -45,7 +45,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline, next.Deadline))
             {
                 _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline} minutes to deadline");
-                await Publish(next);
+                await Publish($"<!channel> Gameweek {next.Id} deadline in 1 hour!");
             }
             else
             {
@@ -53,13 +53,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             }
         }
         
-        private async Task Publish(Gameweek next)
+        private async Task Publish(string msg)
         {
             foreach (var p in _publishers)
             {
                 await p.Publish(new Notification
                 {
-                    Msg = $"Gameweek {next.Id} deadline in 1 hour!",
+                    Msg = msg,
                     Recipient = _options.Value.Channel
                 });
             }
