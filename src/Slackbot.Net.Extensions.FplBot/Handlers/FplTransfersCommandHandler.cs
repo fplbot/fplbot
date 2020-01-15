@@ -52,50 +52,14 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var players = await playersTask;
             var gw = await gameweekTask;
 
-            var entryTasks = league.Standings.Entries
-                .ToDictionary(entry => entry.Entry, entry => new
-                {
-                    TransferTask = _transfersClient.GetTransfers(entry.Entry),
-                    PickTask = _entryClient.GetPicks(entry.Entry, gw.Value)
-                });
-
-            var entryTransfers = new List<EntryTransfer>();
-            foreach (var entry in league.Standings.Entries)
-            {
-                entryTransfers.AddRange((await entryTasks[entry.Entry].TransferTask).Where(x => x.Event == gw).Select(x => new EntryTransfer
-                {
-                    EntryId = x.Entry,
-                    PlayerTransferredOut = GetPlayerName(players, x.ElementOut),
-                    PlayerTransferredIn = GetPlayerName(players, x.ElementIn),
-                    SoldFor = x.ElementOutCost,
-                    BoughtFor = x.ElementInCost
-                }));
-            }
-
             var sb = new StringBuilder();
             sb.Append($"Transfers made for gameweek {gw}:\n\n");
 
-            foreach (var entry in league.Standings.Entries.OrderBy(x => x.Rank))
-            {
-                sb.Append($"{entry.GetEntryLink(gw)} ");
-                var transfersDoneByEntry = entryTransfers.Where(x => x.EntryId == entry.Entry).ToArray();
-                if (transfersDoneByEntry.Any())
-                {
-                    var picks = await entryTasks[entry.Entry].PickTask;
-                    var transferCost = picks.EventEntryHistory.EventTransfersCost;
-                    var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
-                    var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : wildcardPlayed ? " (:fire:wildcard:fire:)" : "";
-                    sb.Append($"transferred{transferCostString}:\n");
-                    foreach (var entryTransfer in transfersDoneByEntry)
-                    {
-                        sb.Append($"   {entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
-                    }
-                }
-                else
-                {
-                    sb.Append("made no transfers :shrug:\n");
-                }
-            }
+            await Task.WhenAll(league.Standings.Entries
+                .OrderBy(x => x.Rank)
+                .Select(entry => GetTransfersTextForEntry(entry, gw.Value, players))
+                .ToArray()
+                .ForEach(async task => sb.Append(await task)));
 
             var messageToSend = sb.ToString();
 
@@ -111,9 +75,42 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse(messageToSend);
         }
 
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("transfers {GW/''}", "Displays each team's transfers");
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("transfers");
-        public bool ShouldShowInHelp => true;
+        private async Task<string> GetTransfersTextForEntry(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players)
+        {
+            var transfersTask = _transfersClient.GetTransfers(entry.Entry);
+            var picksTask = _entryClient.GetPicks(entry.Entry, gameweek);
+
+            var transfers = (await transfersTask).Where(x => x.Event == gameweek).Select(x => new
+            {
+                EntryId = x.Entry,
+                PlayerTransferredOut = GetPlayerName(players, x.ElementOut),
+                PlayerTransferredIn = GetPlayerName(players, x.ElementIn),
+                SoldFor = x.ElementOutCost,
+                BoughtFor = x.ElementInCost
+            }).ToArray();
+
+            var sb = new StringBuilder();
+
+            sb.Append($"{entry.GetEntryLink(gameweek)} ");
+            if (transfers.Any())
+            {
+                var picks = await picksTask;
+                var transferCost = picks.EventEntryHistory.EventTransfersCost;
+                var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
+                var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : wildcardPlayed ? " (:fire:wildcard:fire:)" : "";
+                sb.Append($"transferred{transferCostString}:\n");
+                foreach (var entryTransfer in transfers)
+                {
+                    sb.Append($"   {entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                }
+            }
+            else
+            {
+                sb.Append("made no transfers :shrug:\n");
+            }
+
+            return sb.ToString();
+        }
 
         private static string GetPlayerName(IEnumerable<Player> players, int playerId)
         {
@@ -121,13 +118,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player != null ? $"{player.FirstName} {player.SecondName}" : "";
         }
 
-        private class EntryTransfer
-        {
-            public int EntryId { get; set; }
-            public string PlayerTransferredOut { get; set; }
-            public string PlayerTransferredIn { get; set; }
-            public int SoldFor { get; set; }
-            public int BoughtFor { get; set; }
-        }
+        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("transfers");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("transfers {GW/''}", "Displays each team's transfers");
+        public bool ShouldShowInHelp => true;
     }
 }
