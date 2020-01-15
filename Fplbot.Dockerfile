@@ -25,4 +25,3 @@ RUN dotnet publish FplBot.ConsoleApps/FplBot.ConsoleApps.csproj -c Release -o /a
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1
 WORKDIR /fplbot
 COPY --from=build-env /app/out/fplbot . 
-FROM fplbot/fplbot 
