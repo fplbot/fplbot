@@ -48,26 +48,41 @@ namespace FplBot.Tests
         }
         
         [Theory]
-        [InlineData("@fplbot player ", "salah")]
-        [InlineData("@fplbot player ", "mané")]
-        [InlineData("@fplbot player ", "firmino")]
-        [InlineData("@fplbot player ", "henderson")]
-        [InlineData("@fplbot player ", "wijnaldum")]
-        [InlineData("@fplbot player ", "tavares")]
-        [InlineData("@fplbot player ", "robertson")]
-        [InlineData("@fplbot player ", "van dijk")]
-        [InlineData("@fplbot player ", "matip")]
-        [InlineData("@fplbot player ", "trent")]
-        [InlineData("@fplbot player ", "alisson")]
-        public async Task GetPlayer(string input, string player)
+        [InlineData("Mohamed Salah", "Mohamed Salah")]
+        [InlineData("mohamed salah", "Mohamed Salah")]
+        [InlineData("mohamed", "Mohamed Salah")]
+        [InlineData("salah", "Mohamed Salah")]
+        [InlineData("salha", "Mohamed Salah")]
+        [InlineData("sala", "Mohamed Salah")]
+        [InlineData("slaha", "Mohamed Salah")]
+        [InlineData("Sadio Mané", "Sadio Mané")]
+        [InlineData("Sadio Mane", "Sadio Mané")]
+        [InlineData("Sadio", "Sadio Mané")]
+        [InlineData("mané", "Sadio Mané")]
+        [InlineData("Jimenez", "Raúl Jiménez")]
+        [InlineData("Aguero", "Sergio Agüero")]
+        [InlineData("firmino", "Roberto Firmino")]
+        [InlineData("henderson", "Dean Henderson")]
+        [InlineData("wijnaldum", "Georginio Wijnaldum")]
+        [InlineData("tavares", "Fabio Henrique Tavares")]
+        [InlineData("robertson", "Andrew Robertson")]
+        [InlineData("van dijk", "Virgil van Dijk")]
+        [InlineData("vandijk", "Virgil van Dijk")]
+        [InlineData("matip", "Joel Matip")]
+        [InlineData("trent", "Trent Alexander-Arnold")]
+        [InlineData("alisson", "Alisson Ramses Becker")]
+        [InlineData("Chicharito", "Javier Hernández Balcázar")]
+        [InlineData("kdb", "Kevin De Bruyne")]
+        [InlineData("taa", "Trent Alexander-Arnold")]
+        public async Task GetPlayer(string input, string expectedPlayer)
         {
             var playerData = await _client.Handle(new SlackMessage
             {
-                Text = $"{input}{player}",
+                Text = $"@fplbot player {input}",
                 ChatHub = new ChatHub()
             });
             
-            Assert.Contains(player, playerData.HandledMessage, StringComparison.InvariantCultureIgnoreCase);
+            Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.HandledMessage);
         }
         
         [Theory]

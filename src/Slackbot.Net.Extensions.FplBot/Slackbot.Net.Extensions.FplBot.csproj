@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
       <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="1.0.1" />
       <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="1.0.1" />
     </ItemGroup>
