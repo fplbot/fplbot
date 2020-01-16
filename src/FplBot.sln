@@ -17,6 +17,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.WebApi", "FplBot.Web
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.WebApi.Tests", "FplBot.WebApi.Tests\FplBot.WebApi.Tests.csproj", "{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E-772F-4E70-BD50-1121343BA7D7}"
+ProjectSection(SolutionItems) = preProject
+	..\heroku.yml = ..\heroku.yml
+	..\Fplbot.Dockerfile = ..\Fplbot.Dockerfile
+	..\FplbotWebApi.Dockerfile = ..\FplbotWebApi.Dockerfile
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,5 +111,8 @@ Global
 		{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}.Release|x64.Build.0 = Release|Any CPU
 		{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}.Release|x86.ActiveCfg = Release|Any CPU
 		{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B} = {F7DA770E-772F-4E70-BD50-1121343BA7D7}
 	EndGlobalSection
 EndGlobal
