@@ -30,7 +30,7 @@ namespace FplBot.Tests
                 ChatHub = new ChatHub()
             });
             
-            Assert.Contains("Found matching player(s) for salah", playerData.HandledMessage);
+            Assert.Contains("Found matching player for salah", playerData.HandledMessage);
         }
 
         [Theory]
@@ -44,7 +44,7 @@ namespace FplBot.Tests
                 ChatHub = new ChatHub()
             });
             
-            Assert.Equal("Found no matching player for nonexistant", playerData.HandledMessage);
+            Assert.Equal("Found no matching player for nonexistant: ", playerData.HandledMessage);
         }
         
         [Theory]
@@ -70,6 +70,7 @@ namespace FplBot.Tests
         [InlineData("vandijk", "Virgil van Dijk")]
         [InlineData("matip", "Joel Matip")]
         [InlineData("trent", "Trent Alexander-Arnold")]
+        [InlineData("son", "Heung-Min Son")]
         [InlineData("alisson", "Alisson Ramses Becker")]
         [InlineData("Chicharito", "Javier Hernández Balcázar")]
         [InlineData("kdb", "Kevin De Bruyne")]
@@ -83,19 +84,6 @@ namespace FplBot.Tests
             });
             
             Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.HandledMessage);
-        }
-        
-        [Theory]
-        [InlineData("@fplbot player son")]
-        public async Task GetMultipleResponse(string input)
-        {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub()
-            });
-            
-            Assert.Contains("Found matching player(s) for son", playerData.HandledMessage);
         }
     }
 }
