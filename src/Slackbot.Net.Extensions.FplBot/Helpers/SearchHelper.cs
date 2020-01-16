@@ -20,13 +20,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 searchResultsForProps.Add(new SearchResultWithPri<T>(x.Pri, Find(collection, input, x.Prop)));
             });
 
-            var perfectMatch = searchResultsForProps.FirstOrDefault(x => x.SearchResult.LevenshteinDistance == 0);
+            var searchResultsForPropsOrderedByPri = searchResultsForProps.OrderBy(x => x.Pri).ToArray();
+
+            var perfectMatch = searchResultsForPropsOrderedByPri.FirstOrDefault(x => x.SearchResult.LevenshteinDistance == 0);
             if (perfectMatch != null)
             {
                 return perfectMatch.SearchResult;
             }
             
-            foreach (var searchResult in searchResultsForProps.OrderBy(x => x.Pri).ToArray())
+            foreach (var searchResult in searchResultsForPropsOrderedByPri)
             {
                 if (searchResult.SearchResult.LevenshteinDistance <= LevenshteinDistanceThreshold)
                 {
