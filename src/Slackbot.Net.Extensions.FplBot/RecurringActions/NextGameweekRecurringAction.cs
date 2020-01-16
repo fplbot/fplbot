@@ -17,16 +17,18 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly IGameweekClient _gwClient;
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly ICaptainsByGameWeek _captainsByGameweek;
+        private readonly ITransfersByGameWeek _transfersByGameweek;
         private readonly ILogger<NextGameweekRecurringAction> _logger;
         private const string EveryMinuteCron = "0 */1 * * * *";
         private Gameweek _storedCurrent;
 
-        public NextGameweekRecurringAction(IOptions<FplbotOptions> options, IGameweekClient gwClient, IEnumerable<IPublisher> publishers, ICaptainsByGameWeek captainsByGameweek, ILogger<NextGameweekRecurringAction> logger)
+        public NextGameweekRecurringAction(IOptions<FplbotOptions> options, IGameweekClient gwClient, IEnumerable<IPublisher> publishers, ICaptainsByGameWeek captainsByGameweek, ITransfersByGameWeek transfersByGameweek, ILogger<NextGameweekRecurringAction> logger)
         {
             _options = options;
             _gwClient = gwClient;
             _publishers = publishers;
             _captainsByGameweek = captainsByGameweek;
+            _transfersByGameweek = transfersByGameweek;
             _logger = logger;
         }
 
@@ -52,18 +54,28 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             
             if (fetchedCurrent.Id >_storedCurrent.Id)
             {
+                await Publish($"Gameweek {fetchedCurrent.Id}!");
+
                 var captains = await _captainsByGameweek.GetCaptainsByGameWeek(fetchedCurrent.Id);
-                foreach (var p in _publishers)
-                {
-                    await p.Publish(new Notification
-                    {
-                        Recipient = _options.Value.Channel,
-                        Msg = $"Gameweek {fetchedCurrent.Id}! \n {captains}"
-                    });
-                }
+                await Publish(captains);
+                
+                var transfers = await _transfersByGameweek.GetTransfersByGameweek(fetchedCurrent.Id);
+                await Publish(transfers);
             }
 
             _storedCurrent = fetchedCurrent;
+        }
+
+        private async Task Publish(string msg)
+        {
+            foreach (var p in _publishers)
+            {
+                await p.Publish(new Notification
+                {
+                    Recipient = _options.Value.Channel,
+                    Msg = msg
+                });
+            }
         }
 
         public string Cron => EveryMinuteCron;
