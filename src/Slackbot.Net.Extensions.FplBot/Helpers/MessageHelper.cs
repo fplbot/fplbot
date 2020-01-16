@@ -20,7 +20,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         
         public string ExtractArgs(string messageText, string pattern)
         {
-            return FindMatch(messageText, $"{BotPattern} {pattern.Replace("{args}", "(.+?)$")}");
+            return FindMatch(messageText, $"{BotPattern} {pattern.Replace("{args}", "(.+)?")}");
         }
 
         private static string FindMatch(string input, string regexPattern)
