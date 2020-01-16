@@ -15,7 +15,6 @@ namespace Fpl.Client.Clients
             _authenticator = authenticator;
             _cache = cache;
             _logger = logger;
-        
         }
         
         public async Task<string> GetSessionCookie()
@@ -24,7 +23,7 @@ namespace Fpl.Client.Clients
             
             if (string.IsNullOrEmpty(cookieFromCache))
             {
-                _logger.LogWarning("Cache miss. Re-authenticating.");
+                _logger.LogInformation("Cache miss. Re-authenticating.");
                 var cookies = await _authenticator.Authenticate();
                 
                 var sessionCookieExpiry = cookies.First(c => c.Name == "sessionid").Expires;
@@ -32,7 +31,7 @@ namespace Fpl.Client.Clients
                 await _cache.SetAsync(cookieString, sessionCookieExpiry);
                 return cookieString;
             }
-            _logger.LogWarning("Cache hit");
+            _logger.LogDebug("Cache hit");
             return cookieFromCache;
         }
     }
