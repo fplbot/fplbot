@@ -42,8 +42,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse(messageToSend);
         }
 
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("captains {GW/''}", "Display captain picks in the league");
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("captains");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("captains {GW/''}", "Display captain picks in the league");
         public bool ShouldShowInHelp => true;
     }
 }

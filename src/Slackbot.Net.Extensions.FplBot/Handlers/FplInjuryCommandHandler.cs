@@ -49,7 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)
         {
-            return players.Where((p) => p.OwnershipPercentage > 5 && IsInjured(p));
+            return players.Where(p => p.OwnershipPercentage > 5 && IsInjured(p));
         }
 
         private static bool IsInjured(Player player)
@@ -57,16 +57,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
         }
 
-        public bool ShouldHandle(SlackMessage message)
-        {
-            return message.MentionsBot && message.Text.Contains("injuries");
-        }
-
-        public Tuple<string, string> GetHelpDescription()
-        {
-            return new Tuple<string, string>("injuries", "See injuried players owned by more than 5 %");
-        }
-
+        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("injuries");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("injuries", "See injured players owned by more than 5 %");
         public bool ShouldShowInHelp => true;
     }
 

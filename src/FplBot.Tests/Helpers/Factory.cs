@@ -26,7 +26,7 @@ namespace FplBot.Tests.Helpers
             var allHandlers = BuildServiceProvider(logger).GetServices<IHandleMessages>();
             return allHandlers.First(h => h is T);
         }
-
+        
         private static ServiceProvider BuildServiceProvider(ITestOutputHelper logger)
         {
             var config = new ConfigurationBuilder();
