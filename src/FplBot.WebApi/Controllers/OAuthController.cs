@@ -43,7 +43,7 @@ namespace FplBot.WebApi.Controllers
             IDatabase db = _redis.GetDatabase();
             db.HashSet(response.Team_Id, "TeamName", response.Team_Name);
             db.HashSet(response.Team_Id, "Scope", response.Scope);
-            db.HashSet(response.Team_Id, "AccessToken", response.AccessToken);
+            db.HashSet(response.Team_Id, "AccessToken", response.Access_Token);
 
             return Ok();
         }

@@ -43,7 +43,9 @@ namespace FplBot.Tests.Helpers
             });
             
             services.ReplacePublishersWithDebugPublisher(logger);
-            services.Replace<BotDetails>(new BotDetails { Id = "UREFQD887", Name = "fplbot"});
+            var getConnectionDetails = A.Fake<IGetConnectionDetails>();
+            A.CallTo(() => getConnectionDetails.GetConnectionBotDetails()).Returns(new BotDetails {Id = "UREFQD887", Name = "fplbot"});
+            services.Replace<IGetConnectionDetails>(getConnectionDetails);
             SlackClient = A.Fake<ISlackClient>();
             
             services.Replace<ISlackClient>(SlackClient);
