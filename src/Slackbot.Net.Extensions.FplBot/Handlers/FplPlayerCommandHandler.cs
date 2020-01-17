@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
@@ -19,17 +20,20 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly ITeamsClient _teamsClient;
         private readonly IMessageHelper _messageHelper;
         private readonly ISlackClient _slackClient;
+        private readonly FplbotOptions _fplbotOptions;
 
         public FplPlayerCommandHandler(
             ISlackClient slackClient, 
             IPlayerClient playerClient, 
             ITeamsClient teamsClient, 
-            IMessageHelper messageHelper)
+            IMessageHelper messageHelper,
+            IOptions<FplbotOptions> options)
         {
             _playerClient = playerClient;
             _teamsClient = teamsClient;
             _messageHelper = messageHelper;
             _slackClient = slackClient;
+            _fplbotOptions = options.Value;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
@@ -62,30 +66,68 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse($"Found matching player for {name}: " + playerName);
         }
 
-        private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
+        private Player FindMostPopularMatchingPlayer(Player[] players, string name)
         {
-            var mostPopularMatchingPlayer = SearchHelper.Find(
-                players, 
-                name, 
-                x => $"{x.FirstName} {x.SecondName}",
-                x => x.SecondName, 
-                x => x.FirstName,
-                x => x.WebName);
-
-            if (mostPopularMatchingPlayer == null || mostPopularMatchingPlayer.LevenshteinDistance > 1 && name.Length < 4)
+            var matchingNickName = _fplbotOptions.NickNames.FirstOrDefault(x => x.NickName == name);
+            if (matchingNickName != null)
             {
-                var matchingAbbreviatedPlayer = SearchHelper.Find(
-                    players, 
-                    name,
-                    x => $"{x.FirstName} {x.SecondName}".Abbreviated());
-
-                if (matchingAbbreviatedPlayer.LevenshteinDistance == 0)
-                {
-                    mostPopularMatchingPlayer = matchingAbbreviatedPlayer;
-                }
+                name = matchingNickName.RealName;
             }
 
-            return mostPopularMatchingPlayer?.Item;
+            var bestMatchInRegularSearch = SearchHelper.Find(
+                players, 
+                name, 
+                x => $"{x.FirstName} {x.SecondName}".Searchable(),
+                x => x.SecondName.Searchable(), 
+                x => x.FirstName.Searchable(),
+                x => x.WebName.Searchable());
+
+            if (IsGoodEnoughMatch(name, bestMatchInRegularSearch))
+            {
+                return bestMatchInRegularSearch.Item;
+            }
+
+            var bestMatchInSplitSecondNameSearch = SearchHelper.Find(
+                players,
+                name,
+                x => x.SecondName.Replace("-", " ").Split(" ").Searchable());
+
+            if (IsGoodEnoughMatch(name, bestMatchInSplitSecondNameSearch))
+            {
+                return bestMatchInSplitSecondNameSearch.Item;
+            }
+
+            var bestMatchInSplitFirstNameSearch = SearchHelper.Find(
+                players,
+                name,
+                x => x.FirstName.Replace("-", " ").Split(" ").Searchable());
+
+            if (IsGoodEnoughMatch(name, bestMatchInSplitFirstNameSearch))
+            {
+                return bestMatchInSplitFirstNameSearch.Item;
+            }
+
+            var bestMatchInAbbreviationSearch = SearchHelper.Find(
+                players, 
+                name,
+                x => $"{x.FirstName} {x.SecondName}".Abbreviated().Searchable());
+
+            if (IsPerfectMatch(bestMatchInAbbreviationSearch))
+            {
+                return bestMatchInAbbreviationSearch.Item;
+            }
+
+            return bestMatchInRegularSearch?.Item;
+        }
+
+        private static bool IsGoodEnoughMatch(string name, SearchResult<Player> mostPopularMatchingPlayer)
+        {
+            return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance < 2 && name.Length > 3;
+        }
+
+        private static bool IsPerfectMatch(SearchResult<Player> mostPopularMatchingPlayer)
+        {
+            return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance == 0;
         }
 
         private string ParsePlayerFromInput(SlackMessage message)

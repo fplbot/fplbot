@@ -75,6 +75,14 @@ namespace FplBot.Tests
         [InlineData("Chicharito", "Javier Hernández Balcázar")]
         [InlineData("kdb", "Kevin De Bruyne")]
         [InlineData("taa", "Trent Alexander-Arnold")]
+        [InlineData("dijk", "Virgil van Dijk")]
+        [InlineData("becker", "Alisson Ramses Becker")]
+        [InlineData("Heung", "Heung-Min Son")]
+        [InlineData("Alexander", "Alexander Tettey")]
+        [InlineData("Arnold", "Trent Alexander-Arnold")]
+        [InlineData("Lord", "John Lundstram")]
+        [InlineData("Kun", "Sergio Agüero")]
+        [InlineData("Kun Agüero", "Sergio Agüero")]
         public async Task GetPlayer(string input, string expectedPlayer)
         {
             var playerData = await _client.Handle(new SlackMessage
