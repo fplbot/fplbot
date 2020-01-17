@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -37,41 +38,59 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var name = ParsePlayerFromInput(message);
 
-            var allPlayers = await allPlayersTask;
-            var matchingPlayers = FindMatchingPlayer(allPlayers, name).ToArray();
-            
-            if (!matchingPlayers.Any())
+            var allPlayers = (await allPlayersTask).OrderByDescending(player => player.OwnershipPercentage);
+            var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
+
+            if (mostPopularMatchingPlayer == null)
             {
                 await _slackClient.ChatPostMessage(new ChatPostMessageRequest
                 {
                     Channel = message.ChatHub.Id,
                     Text = $"Couldn't find {name}"
                 });
-                return new HandleResponse($"Found no matching player for {name}");
+                return new HandleResponse($"Found no matching player for {name}: ");
             }
 
+            var playerName = $"{mostPopularMatchingPlayer.FirstName} {mostPopularMatchingPlayer.SecondName}";
             var teams = await teamsTask;
-            foreach (var p in matchingPlayers)
+            await _slackClient.ChatPostMessage(new ChatPostMessageRequest
             {
-                await _slackClient.ChatPostMessage(new ChatPostMessageRequest
-                {
-                    Channel = message.ChatHub.Id,
-                    Blocks = Formatter.GetPlayerCard(p, teams)
-                });
-            }
+                Channel = message.ChatHub.Id,
+                Blocks = Formatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
+            });
             
-            return new HandleResponse($"Found matching player(s) for {name}");
+            return new HandleResponse($"Found matching player for {name}: " + playerName);
         }
 
-        private static IEnumerable<Player> FindMatchingPlayer(IEnumerable<Player> players, string name)
+        private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
         {
-            return players.Where(p => p.FirstName.ToLower().Contains(name) || p.SecondName.ToLower().Contains(name) || p.WebName.ToLower().Contains(name));
+            var mostPopularMatchingPlayer = SearchHelper.Find(
+                players, 
+                name, 
+                x => $"{x.FirstName} {x.SecondName}",
+                x => x.SecondName, 
+                x => x.FirstName,
+                x => x.WebName);
+
+            if (mostPopularMatchingPlayer == null || mostPopularMatchingPlayer.LevenshteinDistance > 1 && name.Length < 4)
+            {
+                var matchingAbbreviatedPlayer = SearchHelper.Find(
+                    players, 
+                    name,
+                    x => $"{x.FirstName} {x.SecondName}".Abbreviated());
+
+                if (matchingAbbreviatedPlayer.LevenshteinDistance == 0)
+                {
+                    mostPopularMatchingPlayer = matchingAbbreviatedPlayer;
+                }
+            }
+
+            return mostPopularMatchingPlayer?.Item;
         }
 
         private string ParsePlayerFromInput(SlackMessage message)
         {
-            var name = _messageHelper.ExtractArgs(message.Text, "player {args}");
-            return name?.ToLower();
+            return _messageHelper.ExtractArgs(message.Text, "player {args}");
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");
