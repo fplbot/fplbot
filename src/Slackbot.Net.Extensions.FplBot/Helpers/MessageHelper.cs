@@ -5,11 +5,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class MessageHelper : IMessageHelper
     {
-        private readonly BotDetails _botDetails;
+        private readonly IGetConnectionDetails _connectionDetailsFetcher;
 
-        public MessageHelper(BotDetails botDetails)
+        public MessageHelper(IGetConnectionDetails connectionDetailsFetcher)
         {
-            _botDetails = botDetails;
+            _connectionDetailsFetcher = connectionDetailsFetcher;
         }
 
         public int? ExtractGameweek(string messageText, string pattern)
@@ -30,7 +30,21 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return result.Count > 1 ? result[1].Value : null;
         }
 
-        private string BotPattern => $"(?:@{_botDetails.Name}|<@{_botDetails.Id}>)";
+        private string _botPattern;
+
+        private string BotPattern
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_botPattern))
+                {
+                    var botDetails = _connectionDetailsFetcher.GetConnectionBotDetails();
+                    _botPattern = $"(?:@{botDetails.Name}|<@{botDetails.Id}>)";
+                }
+
+                return _botPattern;
+            }
+        }
     }
 
     internal interface IMessageHelper
