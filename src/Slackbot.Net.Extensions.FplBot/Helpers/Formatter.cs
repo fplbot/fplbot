@@ -33,6 +33,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers)
         {
+            if (player.LastRank == 0)
+            {
+                return ":wave: (joined this gameweek)";
+            }
+
             var rankDiff = player.LastRank - player.Rank;
 
             var emojiString = new StringBuilder();

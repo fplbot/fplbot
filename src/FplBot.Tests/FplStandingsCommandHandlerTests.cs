@@ -8,18 +8,18 @@ using Xunit.Abstractions;
 
 namespace FplBot.Tests
 {
-    public class FplCommandHandlerTests
+    public class FplStandingsCommandHandlerTests
     {
         private readonly IHandleMessages _client;
 
-        public FplCommandHandlerTests(ITestOutputHelper logger)
+        public FplStandingsCommandHandlerTests(ITestOutputHelper logger)
         {
-            _client = Factory.GetHandler<FplCommandHandler>(logger);
+            _client = Factory.GetHandler<FplStandingsCommandHandler>(logger);
         }
         
         [Theory]
-        [InlineData("@fplbot fpl")]
-        [InlineData("<@UREFQD887> fpl")]
+        [InlineData("@fplbot standings")]
+        [InlineData("<@UREFQD887> standings")]
         public async Task GetStandings(string input)
         {
             var playerData = await _client.Handle(new SlackMessage
