@@ -1,9 +1,8 @@
-using System;
-using System.Threading.Tasks;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Handlers;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 

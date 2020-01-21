@@ -44,7 +44,6 @@ namespace FplBot.Tests.Helpers
             {
                 o.Login = configurationSection["Login"];
                 o.Password = configurationSection["Password"];
-                o.NickNames = configurationSection.GetSection("NickNames").Get<List<PlayerNickName>>();
             });
 
             services.ReplacePublishersWithDebugPublisher(logger);

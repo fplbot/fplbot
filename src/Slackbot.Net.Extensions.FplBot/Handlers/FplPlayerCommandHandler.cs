@@ -2,15 +2,13 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -20,20 +18,17 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly ITeamsClient _teamsClient;
         private readonly IMessageHelper _messageHelper;
         private readonly ISlackClient _slackClient;
-        private readonly FplbotOptions _fplbotOptions;
 
         public FplPlayerCommandHandler(
             ISlackClient slackClient, 
             IPlayerClient playerClient, 
             ITeamsClient teamsClient, 
-            IMessageHelper messageHelper,
-            IOptions<FplbotOptions> options)
+            IMessageHelper messageHelper)
         {
             _playerClient = playerClient;
             _teamsClient = teamsClient;
             _messageHelper = messageHelper;
             _slackClient = slackClient;
-            _fplbotOptions = options.Value;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
@@ -66,13 +61,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse($"Found matching player for {name}: " + playerName);
         }
 
-        private Player FindMostPopularMatchingPlayer(Player[] players, string name)
+        private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
         {
-            var matchingNickName = _fplbotOptions.NickNames.FirstOrDefault(x => x.NickName == name);
-            if (matchingNickName != null)
-            {
-                name = matchingNickName.RealName;
-            }
+            name = PlayerNickNames.NickNameToRealNameMap[name] ?? name;
 
             var bestMatchInRegularSearch = SearchHelper.Find(
                 players, 
