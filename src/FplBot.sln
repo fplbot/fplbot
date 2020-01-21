@@ -1,28 +1,28 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.ConsoleApps", "FplBot.ConsoleApps\FplBot.ConsoleApps.csproj", "{418B7658-E90E-452E-B0B0-C5C7645BAE64}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.ConsoleApps", "FplBot.ConsoleApps\FplBot.ConsoleApps.csproj", "{418B7658-E90E-452E-B0B0-C5C7645BAE64}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Tests", "FplBot.Tests\FplBot.Tests.csproj", "{0DB12843-588F-4B7B-837C-1D8D12683751}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Tests", "FplBot.Tests\FplBot.Tests.csproj", "{0DB12843-588F-4B7B-837C-1D8D12683751}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Build", "..\build\FplBot.Build.csproj", "{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Client", "Fpl.Client\Fpl.Client.csproj", "{76C6B8FB-F47B-45BA-894C-A58D48D98D56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Client", "Fpl.Client\Fpl.Client.csproj", "{76C6B8FB-F47B-45BA-894C-A58D48D98D56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slackbot.Net.Extensions.FplBot", "Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slackbot.Net.Extensions.FplBot", "Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.WebApi", "FplBot.WebApi\FplBot.WebApi.csproj", "{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi", "FplBot.WebApi\FplBot.WebApi.csproj", "{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.WebApi.Tests", "FplBot.WebApi.Tests\FplBot.WebApi.Tests.csproj", "{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi.Tests", "FplBot.WebApi.Tests\FplBot.WebApi.Tests.csproj", "{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E-772F-4E70-BD50-1121343BA7D7}"
-ProjectSection(SolutionItems) = preProject
-	..\heroku.yml = ..\heroku.yml
-	..\Fplbot.Dockerfile = ..\Fplbot.Dockerfile
-	..\FplbotWebApi.Dockerfile = ..\FplbotWebApi.Dockerfile
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		..\Fplbot.Dockerfile = ..\Fplbot.Dockerfile
+		..\FplbotWebApi.Dockerfile = ..\FplbotWebApi.Dockerfile
+		..\heroku.yml = ..\heroku.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,12 +33,7 @@ Global
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -63,6 +58,16 @@ Global
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x64.Build.0 = Release|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x86.ActiveCfg = Release|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Release|x86.Build.0 = Release|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|x64.Build.0 = Debug|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Debug|x86.Build.0 = Debug|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|x64.ActiveCfg = Release|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|x64.Build.0 = Release|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|x86.ActiveCfg = Release|Any CPU
+		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}.Release|x86.Build.0 = Release|Any CPU
 		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76C6B8FB-F47B-45BA-894C-A58D48D98D56}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -112,7 +117,13 @@ Global
 		{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}.Release|x86.ActiveCfg = Release|Any CPU
 		{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B} = {F7DA770E-772F-4E70-BD50-1121343BA7D7}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}
 	EndGlobalSection
 EndGlobal

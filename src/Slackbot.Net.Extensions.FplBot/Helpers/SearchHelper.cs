@@ -10,7 +10,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
     {
         private const int LevenshteinDistanceThreshold = 3;
 
-        public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, params Func<T, string>[] searchProperties)
+        public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
         {
             var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new {Pri = idx, Prop = prop}).ToArray();
             
@@ -39,7 +39,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return null;
         }
 
-        public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, Func<T, string> searchProperty)
+        public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, Func<T, ISearchableProperty> searchProperties)
         {
             var normalizedInput = input.ToLower();
 
@@ -50,17 +50,20 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             foreach (var item in collection)
             {
-                var termToMatchAgainst = searchProperty(item).ToLower();
-                if (termToMatchAgainst == normalizedInput)
+                foreach (var searchProperty in searchProperties(item).AsStrings)
                 {
-                    return new SearchResult<T>(item, 0);
+                    var termToMatchAgainst = searchProperty.ToLower();
+                    if (termToMatchAgainst == normalizedInput)
+                    {
+                        return new SearchResult<T>(item, 0);
+                    }
+
+                    var distance = lev.DistanceFrom(termToMatchAgainst);
+                    if (distance >= lowestDistance) continue;
+
+                    lowestDistance = distance;
+                    currentWinner = item;
                 }
-
-                var distance = lev.DistanceFrom(termToMatchAgainst);
-                if (distance >= lowestDistance) continue;
-
-                lowestDistance = distance;
-                currentWinner = item;
             }
 
             return new SearchResult<T>(currentWinner, lowestDistance);
@@ -88,6 +91,42 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             Item = item;
             LevenshteinDistance = levenshteinDistance;
+        }
+    }
+
+    internal interface ISearchableProperty
+    {
+        string[] AsStrings { get; }
+    }
+
+    internal class SearchableProperty : ISearchableProperty
+    {
+        private readonly string _property;
+        public SearchableProperty(string property)
+        {
+            _property = property;
+        }
+        public string[] AsStrings => new[] { _property };
+    }
+
+    internal class SearchablePropertyCollection : ISearchableProperty
+    {
+        public SearchablePropertyCollection(string[] properties)
+        {
+            AsStrings = properties;
+        }
+        public string[] AsStrings { get; }
+    }
+
+    internal static class SearchablePropertyExtensions
+    {
+        public static ISearchableProperty Searchable(this string s)
+        {
+            return new SearchableProperty(s);
+        }
+        public static ISearchableProperty Searchable(this string[] s)
+        {
+            return new SearchablePropertyCollection(s);
         }
     }
 }
