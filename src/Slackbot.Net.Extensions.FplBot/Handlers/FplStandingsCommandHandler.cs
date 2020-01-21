@@ -10,14 +10,14 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplCommandHandler : IHandleMessages
+    internal class FplStandingsCommandHandler : IHandleMessages
     {
         private readonly IOptions<FplbotOptions> _options;
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILeagueClient _leagueClient;
 
-        public FplCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient)
+        public FplStandingsCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient)
         {
             _options = options;
             _publishers = publishers;
@@ -56,8 +56,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("fpl");
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("fpl", "Get current league standings");
+        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("standings");
+        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("standings", "Get current league standings");
         public bool ShouldShowInHelp => true;
     }
 }

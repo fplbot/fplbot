@@ -47,7 +47,7 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<IGameweekHelper, GameweekHelper>();
             builder.Services.AddSingleton<DateTimeUtils>();
             builder.AddHandler<FplPlayerCommandHandler>()
-                .AddHandler<FplCommandHandler>()
+                .AddHandler<FplStandingsCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
                 .AddHandler<FplCaptainCommandHandler>()
