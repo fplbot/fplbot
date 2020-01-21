@@ -1,5 +1,4 @@
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
@@ -34,22 +33,44 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         public async Task Process()
         {
             var gweeks = await _gwClient.GetGameweeks();
-            var next = gweeks.FirstOrDefault(gw => gw.IsNext);
             
+            var current = gweeks.FirstOrDefault(gw => gw.IsCurrent);
+            
+            
+            if (current == null)
+            {
+                _logger.LogDebug($"No current gameweek");
+                return;
+            }
+
+            if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline, current.Deadline))
+            {
+                _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline} minutes to current (gw{current.Id}) deadline");
+                await Publish($"<!channel> Gameweek {current.Id} deadline in 1 hour!");
+                return;
+            }
+            
+            var next = gweeks.FirstOrDefault(gw => gw.IsNext);
+
             if (next == null)
             {
                 _logger.LogDebug($"No next gameweek");
                 return;
             }
-
+            
             if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline, next.Deadline))
             {
-                _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline} minutes to deadline");
+                _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline} minutes to next (gw{next.Id}) deadline");
                 await Publish($"<!channel> Gameweek {next.Id} deadline in 1 hour!");
             }
+            
             else
             {
-                _logger.LogDebug($">{_minutesBeforeDeadline} minutes to deadline.\nNowUtc: {_dateTimeUtils.NowUtc}\nDeadline:{next.Deadline}\nNo notification.");
+                _logger.LogDebug($"Not {_minutesBeforeDeadline} minutes to deadline.\n" +
+                                 $"NowUtc: {_dateTimeUtils.NowUtc}\n" + 
+                                 $"Deadline current:{current.Deadline}\n" +
+                                 $"Deadline next:{next.Deadline}\n" +
+                                 $"No notification.");
             }
         }
         
