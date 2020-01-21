@@ -63,7 +63,10 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
         {
-            name = PlayerNickNames.NickNameToRealNameMap[name] ?? name;
+            if (PlayerNickNames.NickNameToRealNameMap.ContainsKey(name))
+            {
+                name = PlayerNickNames.NickNameToRealNameMap[name];
+            }
 
             var bestMatchInRegularSearch = SearchHelper.Find(
                 players, 
