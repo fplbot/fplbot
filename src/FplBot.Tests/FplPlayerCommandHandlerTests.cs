@@ -92,7 +92,8 @@ namespace FplBot.Tests
             {
                 Text = $"@fplbot player {input}",
                 ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
+                Bot = Factory.MockBot,
+                Team = new TeamDetails()
             });
             
             Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.HandledMessage);
