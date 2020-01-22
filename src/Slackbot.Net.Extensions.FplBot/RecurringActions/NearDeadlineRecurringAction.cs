@@ -70,7 +70,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             
             else
             {
-                await Publish("TEST");
                 _logger.LogDebug($"Not {_minutesBeforeDeadline} minutes to deadline.\n" +
                                  $"NowUtc: {_dateTimeUtils.NowUtc}\n" + 
                                  $"Deadline current:{current.Deadline}\n" +

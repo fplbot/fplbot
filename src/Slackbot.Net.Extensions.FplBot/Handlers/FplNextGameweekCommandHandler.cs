@@ -9,21 +9,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Dynamic;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplNextGameweekCommandHandler : IHandleMessages
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
-        private readonly ISlackClient _slackClient;
+        private readonly ISlackClientService _slackClientBuilder;
         private readonly IGameweekClient _gameweekClient;
         private readonly IFixtureClient _fixtureClient;
         private readonly ITeamsClient _teamsclient;
 
-        public FplNextGameweekCommandHandler(IEnumerable<IPublisherBuilder> publishers, ISlackClient slackClient, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient)
+        public FplNextGameweekCommandHandler(IEnumerable<IPublisherBuilder> publishers, ISlackClientService slackClientBuilder, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient)
         {
             _publishers = publishers;
-            _slackClient = slackClient;
+            _slackClientBuilder = slackClientBuilder;
             _gameweekClient = gameweekClient;
             _fixtureClient = fixtureClient;
             _teamsclient = teamsclient;
@@ -31,7 +32,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var usersTask = _slackClient.UsersList();
+            var slackClient = await _slackClientBuilder.CreateClient(message.Team.Id);
+            var usersTask = slackClient.UsersList();
             var gameweeksTask = _gameweekClient.GetGameweeks();
             var teamsTask = _teamsclient.GetAllTeams();
             

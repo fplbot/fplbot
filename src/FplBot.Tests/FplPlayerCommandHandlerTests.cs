@@ -27,7 +27,8 @@ namespace FplBot.Tests
             {
                 Text = input,
                 ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
+                Bot = Factory.MockBot,
+                Team = new TeamDetails()
             });
             
             Assert.Contains("Found matching player for salah", playerData.HandledMessage);
@@ -42,7 +43,8 @@ namespace FplBot.Tests
             {
                 Text = $"{input}{player}",
                 ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
+                Bot = Factory.MockBot,
+                Team = new TeamDetails()
             });
             
             Assert.Equal("Found no matching player for nonexistant: ", playerData.HandledMessage);

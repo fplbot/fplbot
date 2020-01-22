@@ -26,11 +26,6 @@ namespace FplBot.ConsoleApps
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddSlackHttpClient(c =>
-                    {
-                        var slackToken = hostContext.Configuration.GetValue<string>(nameof(SlackOptions.Slackbot_SlackApiKey_BotUser));
-                        c.BotToken = slackToken;
-                    });
                     services.AddSlackbotWorker(hostContext.Configuration)
                         .AddSlackPublisher()
                         .AddLoggerPublisher()

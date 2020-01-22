@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Dynamic;
 using Slackbot.Net.SlackClients.Http;
 using Xunit.Abstractions;
 
@@ -43,8 +44,10 @@ namespace FplBot.Tests.Helpers
 
             services.ReplacePublishersWithDebugPublisher(logger);
             SlackClient = A.Fake<ISlackClient>();
-            
-            services.Replace<ISlackClient>(SlackClient);
+
+            var slackClientServiceMock = A.Fake<ISlackClientService>();
+            A.CallTo(() => slackClientServiceMock.CreateClient(A<string>.Ignored)).Returns(SlackClient);
+            services.Replace<ISlackClientService>(slackClientServiceMock);
 
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             var provider = services.BuildServiceProvider();
