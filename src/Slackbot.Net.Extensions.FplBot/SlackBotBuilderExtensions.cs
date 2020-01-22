@@ -40,7 +40,8 @@ namespace Slackbot.Net.Abstractions.Hosting
         private static void AddCommon(this ISlackbotWorkerBuilder builder)
         {
             builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
-            builder.Services.AddSingleton<ITransfersByGameWeek,TransfersByGameWeek>();
+            builder.Services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
+            builder.Services.AddSingleton<IGoalsDuringGameweek, GoalsDuringGameweek>();
             builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
             builder.Services.AddSingleton<ITeamValue, TeamValue>();
             builder.Services.AddSingleton<IMessageHelper, MessageHelper>();
@@ -53,7 +54,8 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddHandler<FplCaptainCommandHandler>()
                 .AddHandler<FplTransfersCommandHandler>()
                 .AddRecurring<NextGameweekRecurringAction>()
-                .AddRecurring<NearDeadlineRecurringAction>();
+                .AddRecurring<NearDeadlineRecurringAction>()
+                .AddRecurring<GoalMonitorRecurringAction>();
         }
     }
 }

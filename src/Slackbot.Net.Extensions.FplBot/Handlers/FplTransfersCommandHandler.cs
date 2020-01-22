@@ -31,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, "transfers {gw}");
-            var messageToSend = await _transfersClient.GetTransfersByGameweek(gameweek);
+            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek);
             
             foreach (var p in _publishers)
             {

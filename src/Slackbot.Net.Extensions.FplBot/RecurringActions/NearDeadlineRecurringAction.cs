@@ -18,7 +18,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly IEnumerable<IPublisher> _publishers;
         private readonly ILogger<NearDeadlineRecurringAction> _logger;
         private readonly int _minutesBeforeDeadline;
-        private const string EveryMinuteCron = "0 */1 * * * *";
 
         public NearDeadlineRecurringAction(IOptions<FplbotOptions> options, IGameweekClient gwClient, DateTimeUtils dateTimeUtils, IEnumerable<IPublisher> publishers, ILogger<NearDeadlineRecurringAction> logger)
         {
@@ -86,6 +85,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             }
         }
 
-        public string Cron => EveryMinuteCron;
+        public string Cron => Constants.CronPatterns.EveryMinute;
     }
 }
