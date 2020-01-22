@@ -26,7 +26,9 @@ namespace FplBot.Tests
             var playerData = await _client.Handle(new SlackMessage
             {
                 Text = input,
-                ChatHub = new ChatHub()
+                ChatHub = new ChatHub(),
+                Bot = Factory.MockBot,
+                Team = new TeamDetails()
             });
             
             Assert.Contains("Found matching player for salah", playerData.HandledMessage);
@@ -40,7 +42,9 @@ namespace FplBot.Tests
             var playerData = await _client.Handle(new SlackMessage
             {
                 Text = $"{input}{player}",
-                ChatHub = new ChatHub()
+                ChatHub = new ChatHub(),
+                Bot = Factory.MockBot,
+                Team = new TeamDetails()
             });
             
             Assert.Equal("Found no matching player for nonexistant: ", playerData.HandledMessage);
@@ -87,7 +91,9 @@ namespace FplBot.Tests
             var playerData = await _client.Handle(new SlackMessage
             {
                 Text = $"@fplbot player {input}",
-                ChatHub = new ChatHub()
+                ChatHub = new ChatHub(),
+                Bot = Factory.MockBot,
+                Team = new TeamDetails()
             });
             
             Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.HandledMessage);

@@ -13,10 +13,10 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplInjuryCommandHandler : IHandleMessages
     {
-        private readonly IEnumerable<IPublisher> _publishers;
+        private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IPlayerClient _playerClient;
 
-        public FplInjuryCommandHandler(IEnumerable<IPublisher> publishers, IPlayerClient playerClient)
+        public FplInjuryCommandHandler(IEnumerable<IPublisherBuilder> publishers, IPlayerClient playerClient)
         {
             _publishers = publishers;
             _playerClient = playerClient;
@@ -30,8 +30,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var textToSend = Formatter.GetInjuredPlayers(injuredPlayers);
 
-            foreach (var p in _publishers)
+            foreach (var pBuilder in _publishers)
             {
+                var p = await pBuilder.Build(message.Team.Id);
                 await p.Publish(new Notification
                 {
                     Recipient = message.ChatHub.Id,
