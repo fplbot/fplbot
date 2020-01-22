@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Slackbot.Net.Abstractions.Handlers;
@@ -13,11 +12,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplCaptainCommandHandler : IHandleMessages
     {
-        private readonly IEnumerable<IPublisher> _publishers;
+        private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly ICaptainsByGameWeek _captainsByGameWeek;
         private readonly IGameweekHelper _gameweekHelper;
 
-        public FplCaptainCommandHandler(IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ICaptainsByGameWeek captainsByGameWeek,  IGameweekHelper gameweekHelper)
+        public FplCaptainCommandHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekClient gameweekClient, ICaptainsByGameWeek captainsByGameWeek,  IGameweekHelper gameweekHelper)
         {
             _publishers = publishers;
             _captainsByGameWeek = captainsByGameWeek;
@@ -26,12 +25,13 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, "captains {gw}");
+            var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(message.Bot), message.Text, "captains {gw}");
 
             var messageToSend = gameWeek.HasValue ? await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value) : "Invalid gameweek :grimacing:";
 
-            foreach (var p in _publishers)
+            foreach (var pBuilder in _publishers)
             {
+                var p = await pBuilder.Build(message.Team.Id);
                 await p.Publish(new Notification
                 {
                     Recipient = message.ChatHub.Id,

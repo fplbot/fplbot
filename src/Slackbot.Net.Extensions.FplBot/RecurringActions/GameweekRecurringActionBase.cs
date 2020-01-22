@@ -3,8 +3,8 @@ using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Publishers;
-using System.Collections.Generic;
+using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,20 +14,23 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
     {
         private readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
-        private readonly IEnumerable<IPublisher> _publishers;
+        private readonly ISlackClientService _slackClientBuilder;
         private readonly ILogger<NextGameweekRecurringAction> _logger;
+        private readonly ITokenStore _tokenStore;
         private Gameweek _storedCurrent;
 
         protected GameweekRecurringActionBase(
             IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
-            IEnumerable<IPublisher> publishers,
-            ILogger<NextGameweekRecurringAction> logger)
+            ISlackClientService slackClientBuilder,
+            ILogger<NextGameweekRecurringAction> logger,
+            ITokenStore tokenStore)
         {
             _options = options;
             _gwClient = gwClient;
-            _publishers = publishers;
+            _slackClientBuilder = slackClientBuilder;
             _logger = logger;
+            _tokenStore = tokenStore;
         }
 
         public async Task Process()
@@ -69,15 +72,17 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek) { return Task.CompletedTask; }
         public abstract string Cron { get; }
 
-        protected async Task Publish(string msg)
+        private async Task Publish(string msg)
         {
-            foreach (var p in _publishers)
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
             {
-                await p.Publish(new Notification
-                {
-                    Recipient = _options.Value.Channel,
-                    Msg = msg
-                });
+                var slackClient = _slackClientBuilder.Build(token);
+                //TODO: Fetch channel to post to from some storage for distributed app
+                var res = await slackClient.ChatPostMessage(_options.Value.Channel, msg);
+
+                if (!res.Ok)
+                    _logger.LogError($"Could not post to {_options.Value.Channel}", res.Error);
             }
         }
     }

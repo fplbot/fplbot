@@ -3,8 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Configuration;
 using Slackbot.Net.Extensions.Publishers.Logger;
 using Slackbot.Net.Extensions.Publishers.Slack;
+using Slackbot.Net.SlackClients.Http.Extensions;
 
 namespace FplBot.ConsoleApps
 {
@@ -25,8 +27,8 @@ namespace FplBot.ConsoleApps
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddSlackbotWorker(hostContext.Configuration)
-                        .AddPublisher<SlackPublisher>()
-                        .AddPublisher<LoggerPublisher>()
+                        .AddSlackPublisher()
+                        .AddLoggerPublisher()
                         .AddFplBot(hostContext.Configuration.GetSection("fpl"))
                         .BuildRecurrers();
                 })

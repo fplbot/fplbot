@@ -13,11 +13,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
     internal class FplStandingsCommandHandler : IHandleMessages
     {
         private readonly IOptions<FplbotOptions> _options;
-        private readonly IEnumerable<IPublisher> _publishers;
+        private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILeagueClient _leagueClient;
 
-        public FplStandingsCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisher> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient)
+        public FplStandingsCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisherBuilder> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient)
         {
             _options = options;
             _publishers = publishers;
@@ -29,8 +29,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var standings = await GetStandings();
 
-            foreach (var p in _publishers)
+            foreach (var pBuilder in _publishers)
             {
+                var p = await pBuilder.Build(message.Team.Id);
                 await p.Publish(new Notification
                 {
                     Recipient = message.ChatHub.Id,

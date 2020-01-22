@@ -4,11 +4,11 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Dynamic;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -16,19 +16,16 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
-        private readonly IMessageHelper _messageHelper;
-        private readonly ISlackClient _slackClient;
+        private readonly ISlackClientService _slackClientService;
 
         public FplPlayerCommandHandler(
-            ISlackClient slackClient, 
+            ISlackClientService slackClient, 
             IPlayerClient playerClient, 
-            ITeamsClient teamsClient, 
-            IMessageHelper messageHelper)
+            ITeamsClient teamsClient)
         {
             _playerClient = playerClient;
             _teamsClient = teamsClient;
-            _messageHelper = messageHelper;
-            _slackClient = slackClient;
+            _slackClientService = slackClient;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
@@ -39,10 +36,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var allPlayers = (await allPlayersTask).OrderByDescending(player => player.OwnershipPercentage);
             var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
+            var slackClient = await _slackClientService.CreateClient(message.Team.Id);
 
             if (mostPopularMatchingPlayer == null)
             {
-                await _slackClient.ChatPostMessage(new ChatPostMessageRequest
+                await slackClient.ChatPostMessage(new ChatPostMessageRequest
                 {
                     Channel = message.ChatHub.Id,
                     Text = $"Couldn't find {name}"
@@ -52,7 +50,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var playerName = $"{mostPopularMatchingPlayer.FirstName} {mostPopularMatchingPlayer.SecondName}";
             var teams = await teamsTask;
-            await _slackClient.ChatPostMessage(new ChatPostMessageRequest
+            await slackClient.ChatPostMessage(new ChatPostMessageRequest
             {
                 Channel = message.ChatHub.Id,
                 Blocks = Formatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
@@ -126,7 +124,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private string ParsePlayerFromInput(SlackMessage message)
         {
-            return _messageHelper.ExtractArgs(message.Text, "player {args}");
+            return new MessageHelper(message.Bot).ExtractArgs(message.Text, "player {args}");
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");

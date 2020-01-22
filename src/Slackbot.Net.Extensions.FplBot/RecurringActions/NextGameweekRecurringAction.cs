@@ -5,6 +5,8 @@ using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.SlackClients.Http;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {

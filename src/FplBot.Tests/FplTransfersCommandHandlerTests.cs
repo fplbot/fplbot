@@ -26,7 +26,8 @@ namespace FplBot.Tests
             var playerData = await _client.Handle(new SlackMessage
             {
                 Text = input,
-                ChatHub = new ChatHub()
+                ChatHub = new ChatHub(),
+                Bot = Factory.MockBot
             });
             
             Assert.StartsWith("Transfers", playerData.HandledMessage);
