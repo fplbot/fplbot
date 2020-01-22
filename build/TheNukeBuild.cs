@@ -106,7 +106,7 @@ namespace FplBot.Build
         string FplClientVersion = "0.3.3";
         
         string FplBotSlackExtension = "Slackbot.Net.Extensions.FplBot";
-        string FplBotSlackExtensionVersion = "0.3.7";
+        string FplBotSlackExtensionVersion = "0.4.0";
         
         Target PackFplClient => _ => _
             .DependsOn(Test)

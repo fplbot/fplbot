@@ -16,18 +16,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
-        private readonly IMessageHelper _messageHelper;
         private readonly ISlackClient _slackClient;
 
         public FplPlayerCommandHandler(
             ISlackClient slackClient, 
             IPlayerClient playerClient, 
-            ITeamsClient teamsClient, 
-            IMessageHelper messageHelper)
+            ITeamsClient teamsClient)
         {
             _playerClient = playerClient;
             _teamsClient = teamsClient;
-            _messageHelper = messageHelper;
             _slackClient = slackClient;
         }
         public async Task<HandleResponse> Handle(SlackMessage message)
@@ -126,7 +123,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private string ParsePlayerFromInput(SlackMessage message)
         {
-            return _messageHelper.ExtractArgs(message.Text, "player {args}");
+            return new MessageHelper(message.Bot).ExtractArgs(message.Text, "player {args}");
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");

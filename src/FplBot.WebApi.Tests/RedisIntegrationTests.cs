@@ -7,7 +7,7 @@ namespace FplBot.WebApi.Tests
 {
     public class RedisIntegrationTests
     {
-        [Fact()]
+        [Fact(Skip = "Not rdy")]
         public async Task CanConnect()
         {
             var connection = ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_URL"));

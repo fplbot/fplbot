@@ -1,18 +1,13 @@
-using System.Collections.Generic;
 using System.Linq;
 using FakeItEasy;
 using Fpl.Client.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
-using Slackbot.Net.Connections;
-using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.SlackClients.Http;
-using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
@@ -47,9 +42,6 @@ namespace FplBot.Tests.Helpers
             });
 
             services.ReplacePublishersWithDebugPublisher(logger);
-            var getConnectionDetails = A.Fake<IGetConnectionDetails>();
-            A.CallTo(() => getConnectionDetails.GetConnectionBotDetails()).Returns(new BotDetails {Id = "UREFQD887", Name = "fplbot"});
-            services.Replace<IGetConnectionDetails>(getConnectionDetails);
             SlackClient = A.Fake<ISlackClient>();
             
             services.Replace<ISlackClient>(SlackClient);
@@ -60,7 +52,8 @@ namespace FplBot.Tests.Helpers
         }
         
         public static ISlackClient SlackClient { get; set; }
-        
+        public static BotDetails MockBot = new BotDetails {Id = "UREFQD887", Name = "fplbot"};
+
         // remove live slack integration and replace with debugging publishers
         private static void ReplacePublishersWithDebugPublisher(this ServiceCollection services, ITestOutputHelper logger)
         {
