@@ -20,7 +20,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly int _minutesBeforeDeadline;
         private readonly ITokenStore _tokenStore;
 
-        public NearDeadlineRecurringAction(IOptions<FplbotOptions> options, IGameweekClient gwClient, DateTimeUtils dateTimeUtils, ISlackClientBuilder slackClientBuilder, ILogger<NearDeadlineRecurringAction> logger, ITokenStore tokenStore)
+        public NearDeadlineRecurringAction(
+            IOptions<FplbotOptions> options, 
+            IGameweekClient gwClient, 
+            DateTimeUtils dateTimeUtils, 
+            ISlackClientBuilder slackClientBuilder, 
+            ILogger<NearDeadlineRecurringAction> logger, 
+            ITokenStore tokenStore)
         {
             _options = options;
             _gwClient = gwClient;

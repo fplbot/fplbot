@@ -1,12 +1,12 @@
-using System;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,29 +15,31 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class GoalMonitorRecurringAction : GameweekRecurringActionBase
     {
+        private readonly ITokenStore _tokenStore;
+        private readonly ISlackClientBuilder _slackClientBuilder;
         private readonly IPlayerClient _playerClient;
         private readonly IGoalsDuringGameweek _goalsDuringGameweek;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
-        private readonly ISlackClient _slackClient;
         private IDictionary<int, int> _currentGoalsByPlayerDuringGameweek;
         private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
         private IEnumerable<User> _users;
 
         public GoalMonitorRecurringAction(
-            IPlayerClient playerClient,
-            IGoalsDuringGameweek goalsDuringGameweek,
-            ITransfersByGameWeek transfersByGameWeek,
             IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
-            ISlackClient slackClient,
-            IEnumerable<IPublisher> publishers,
-            ILogger<NextGameweekRecurringAction> logger) : 
-            base(options, gwClient, publishers, logger)
+            ILogger<NextGameweekRecurringAction> logger,
+            ITokenStore tokenStore,
+            ISlackClientBuilder slackClientBuilder,
+            IPlayerClient playerClient,
+            IGoalsDuringGameweek goalsDuringGameweek,
+            ITransfersByGameWeek transfersByGameWeek) : 
+            base(options, gwClient, logger, tokenStore, slackClientBuilder)
         {
+            _tokenStore = tokenStore;
+            _slackClientBuilder = slackClientBuilder;
             _playerClient = playerClient;
             _goalsDuringGameweek = goalsDuringGameweek;
             _transfersByGameWeek = transfersByGameWeek;
-            _slackClient = slackClient;
         }
 
         protected override async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
@@ -54,7 +56,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             _currentGoalsByPlayerDuringGameweek = null;
             _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
-            _users = (await _slackClient.UsersList()).Members;
         }
 
         protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek)
@@ -98,32 +99,61 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var players = await _playerClient.GetAllPlayers();
             foreach (var key in newGoalsByPlayer.Keys)
             {
-                var player = players.Single(x => x.Id == key);
-                var goals = newGoalsByPlayer[key];
-                var message = $"{player.FirstName} {player.SecondName} just scored {(goals == 1 ? "a goal" : $"{goals} goals")}!";
-
-                var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id).ToArray();
-                if (entriesTransferredPlayerOut.Any())
+                await Publish(async slackClient =>
                 {
-                    message += $" Lol, you just transferred him out, {string.Join(", ", entriesTransferredPlayerOut)} :joy:";
-                }
-                
-                await Publish(message);
+                    var player = players.Single(x => x.Id == key);
+                    var goals = newGoalsByPlayer[key];
+                    var message = $"{player.FirstName} {player.SecondName} just scored {(goals == 1 ? "a goal" : $"{goals} goals")}!";
+
+                    var users = (await slackClient.UsersList())?.Members;
+                    if (users == null) return message;
+
+                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(users, player.Id).ToArray();
+                    if (entriesTransferredPlayerOut.Any())
+                    {
+                        message += $" Lol, you transferred him out, {string.Join(", ", entriesTransferredPlayerOut)} :joy:";
+                    }
+
+                    return message;
+                });
             }
         }
 
-        private IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId)
+        private IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(User[] users, int playerId)
         {
             return _transfersForCurrentGameweek == null ? 
                 Enumerable.Empty<string>() : 
-                _transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => GetSlackHandle(x.EntryName) ?? x.EntryName);
+                _transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => GetSlackHandle(users, x.EntryName) ?? x.EntryName);
         }
 
-        private string GetSlackHandle(string entryName)
+        private static string GetSlackHandle(User[] users, string entryName)
         {
-            var match = _users?.FirstOrDefault(m => string.Equals(m.Real_name, entryName, StringComparison.CurrentCultureIgnoreCase));
-            return match != null ? $"@{match.Name}" : null;
+            return SearchForHandle(users, user => user.Real_name, entryName) ??
+                   SearchForHandle(users, user => user.Real_name?.Split(" ")?.First(), entryName?.Split(" ")?.First()) ??
+                   SearchForHandle(users, user => user.Real_name?.Split(" ")?.Last(), entryName?.Split(" ")?.Last());
         }
+
+        private static string SearchForHandle(IEnumerable<User> users, Func<User, string> userProp, string searchFor)
+        {
+            var matches = users.Where(user => Equals(searchFor, userProp(user))).ToArray();
+            if (matches.Length > 1)
+            {
+                return null;
+            }
+
+            return matches.Length == 1 ? GetSlackHandle(matches.Single()) : null;
+        }
+
+        private static bool Equals(string s1, string s2)
+        {
+            if (s1 == null || s2 == null)
+            {
+                return false;
+            }
+            return string.Equals(s1, s2, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private static string GetSlackHandle(User user) => $"@{user.Name}";
 
         public override string Cron => Constants.CronPatterns.EveryMinute;
     }

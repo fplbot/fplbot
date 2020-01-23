@@ -1,10 +1,11 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
-using Slackbot.Net.Dynamic;
+using Slackbot.Net.SlackClients.Http;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,23 +15,23 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
     {
         private readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
-        private readonly ISlackClientService _slackClientBuilder;
-        private readonly ILogger<NextGameweekRecurringAction> _logger;
+        private readonly ILogger<GameweekRecurringActionBase> _logger;
         private readonly ITokenStore _tokenStore;
+        private readonly ISlackClientBuilder _slackClientBuilder;
         private Gameweek _storedCurrent;
 
         protected GameweekRecurringActionBase(
             IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
-            ISlackClientService slackClientBuilder,
-            ILogger<NextGameweekRecurringAction> logger,
-            ITokenStore tokenStore)
+            ILogger<GameweekRecurringActionBase> logger,
+            ITokenStore tokenStore,
+            ISlackClientBuilder slackClientBuilder)
         {
             _options = options;
             _gwClient = gwClient;
-            _slackClientBuilder = slackClientBuilder;
             _logger = logger;
             _tokenStore = tokenStore;
+            _slackClientBuilder = slackClientBuilder;
         }
 
         public async Task Process()
@@ -72,14 +73,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek) { return Task.CompletedTask; }
         public abstract string Cron { get; }
 
-        private async Task Publish(string msg)
+        protected async Task Publish(Func<ISlackClient, Task<string>> msg)
         {
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
                 var slackClient = _slackClientBuilder.Build(token);
                 //TODO: Fetch channel to post to from some storage for distributed app
-                var res = await slackClient.ChatPostMessage(_options.Value.Channel, msg);
+                var res = await slackClient.ChatPostMessage(_options.Value.Channel, await msg(slackClient));
 
                 if (!res.Ok)
                     _logger.LogError($"Could not post to {_options.Value.Channel}", res.Error);
