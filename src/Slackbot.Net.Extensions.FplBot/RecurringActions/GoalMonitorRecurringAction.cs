@@ -16,14 +16,11 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class GoalMonitorRecurringAction : GameweekRecurringActionBase
     {
-        private readonly ITokenStore _tokenStore;
-        private readonly ISlackClientBuilder _slackClientBuilder;
         private readonly IPlayerClient _playerClient;
         private readonly IGoalsDuringGameweek _goalsDuringGameweek;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
         private IDictionary<int, int> _currentGoalsByPlayerDuringGameweek;
         private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
-        private IEnumerable<User> _users;
 
         public GoalMonitorRecurringAction(
             IOptions<FplbotOptions> options,
@@ -36,8 +33,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITransfersByGameWeek transfersByGameWeek) : 
             base(options, gwClient, logger, tokenStore, slackClientBuilder)
         {
-            _tokenStore = tokenStore;
-            _slackClientBuilder = slackClientBuilder;
             _playerClient = playerClient;
             _goalsDuringGameweek = goalsDuringGameweek;
             _transfersByGameWeek = transfersByGameWeek;
