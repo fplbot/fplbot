@@ -1,10 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
-using StackExchange.Redis;
 
 namespace FplBot.WebApi.Controllers
 {
@@ -12,40 +12,55 @@ namespace FplBot.WebApi.Controllers
     [Route("[controller]")]
     public class OAuthController : ControllerBase
     {
-
         private readonly ILogger<OAuthController> _logger;
         private readonly ISlackOAuthAccessClient _oAuthAccessClient;
-        private readonly ConnectionMultiplexer _redis;
+        private readonly ISlackTeamRepository _slackTeamRepository;
+        private readonly IOptions<DistributedSlackAppOptions> _options;
 
-        private static readonly string CLIENT_ID = Environment.GetEnvironmentVariable("CLIENT_ID");
-        private static readonly string CLIENT_SECRET = Environment.GetEnvironmentVariable("CLIENT_SECRET");
-
-        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ConnectionMultiplexer redis)
+        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, IOptions<DistributedSlackAppOptions> options)
         {
             _logger = logger;
             _oAuthAccessClient = oAuthAccessClient;
-            _redis = redis;
+            _slackTeamRepository = slackTeamRepository;
+            _options = options;
         }
 
         [HttpGet("install")]
         public IActionResult Install()
         {
-            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={CLIENT_ID}");
+            _logger.LogInformation("Installing!");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}");
         }
 
         [HttpGet("authorize")]
-        public async Task<IActionResult> Authorize(string code)
+        public async Task<IActionResult> Authorize(string code, string state)
         {
+            _logger.LogInformation("Authorizing!");
             var response = await _oAuthAccessClient.OAuthAccess(new OauthAccessRequest
             {
-                ClientId = CLIENT_ID, ClientSecret = CLIENT_SECRET, Code = code, SingleChannel = true
+                ClientId = _options.Value.CLIENT_ID, 
+                ClientSecret = _options.Value.CLIENT_SECRET, 
+                Code = code, 
+                SingleChannel = true
             });
-            IDatabase db = _redis.GetDatabase();
-            db.HashSet(response.Team_Id, "TeamName", response.Team_Name);
-            db.HashSet(response.Team_Id, "Scope", response.Scope);
-            db.HashSet(response.Team_Id, "AccessToken", response.Access_Token);
 
-            return Ok();
+            if (response.Ok)
+            {
+                _logger.LogInformation($"Oauth response! {response.Ok}");
+            
+                await _slackTeamRepository.Insert(new SlackTeam
+                {
+                    TeamId = response.Team_Id,
+                    TeamName = response.Team_Name,
+                    Scope = response.Scope,
+                    AccessToken = response.Access_Token,
+                    FplBotSlackChannel = state
+                });
+
+                return Ok(); 
+            }
+            _logger.LogInformation($"Oauth response not ok! {response.Error}");
+            return BadRequest(response.Error);
         }
     }
 }

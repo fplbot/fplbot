@@ -1,9 +1,14 @@
 using System;
+using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.Publishers.Logger;
+using Slackbot.Net.Extensions.Publishers.Slack;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
 
@@ -11,10 +16,6 @@ namespace FplBot.WebApi
 {
     public class Startup
     {
-
-        private static readonly string REDIS_SERVER = Environment.GetEnvironmentVariable("REDIS_SERVER");
-        private static readonly string REDIS_USERNAME = Environment.GetEnvironmentVariable("REDIS_USERNAME");
-        private static readonly string REDIS_PASSWORD = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -27,7 +28,19 @@ namespace FplBot.WebApi
         {
             services.AddControllers();
             services.AddSlackbotOauthAccessClient();
-            services.AddSingleton<ConnectionMultiplexer>(ConnectionMultiplexer.Connect($"{REDIS_SERVER}, name={REDIS_USERNAME}, password={REDIS_PASSWORD}"));
+            services.Configure<RedisOptions>(Configuration);
+            services.Configure<DistributedSlackAppOptions>(Configuration);
+            services.AddSingleton<ConnectionMultiplexer>(c =>
+            {
+                var opts = c.GetService<IOptions<RedisOptions>>().Value;
+                return ConnectionMultiplexer.Connect($"{opts.REDIS_SERVER}, name={opts.REDIS_USERNAME}, password={opts.REDIS_PASSWORD}");
+            });
+            services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
+            services.AddSlackbotWorker<RedisSlackTeamRepository>()
+                .AddSlackPublisher()
+                .AddLoggerPublisher()
+                .AddFplBot(Configuration.GetSection("fpl"))
+                .BuildRecurrers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
