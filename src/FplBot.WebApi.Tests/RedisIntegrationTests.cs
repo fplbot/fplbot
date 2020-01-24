@@ -10,9 +10,7 @@ namespace FplBot.WebApi.Tests
         [Fact(Skip = "Not rdy")]
         public async Task CanConnect()
         {
-            var connection = ConnectionMultiplexer.Connect(Environment.GetEnvironmentVariable("REDIS_URL"));
-            Assert.True(connection.IsConnected);
-            await connection.CloseAsync();
+            
         }
     }
 }

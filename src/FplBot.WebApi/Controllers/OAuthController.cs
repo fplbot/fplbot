@@ -32,6 +32,13 @@ namespace FplBot.WebApi.Controllers
             return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}");
         }
 
+        [HttpGet("uninstall")]
+        public async Task<IActionResult> Uninstall(string teamId)
+        {
+            await _slackTeamRepository.Delete(teamId);
+            return Ok("Ok");
+        }
+
         [HttpGet("authorize")]
         public async Task<IActionResult> Authorize(string code, string state)
         {
@@ -62,5 +69,7 @@ namespace FplBot.WebApi.Controllers
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
         }
+        
+        
     }
 }

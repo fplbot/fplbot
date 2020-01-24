@@ -22,6 +22,15 @@ namespace FplBot.WebApi.Data
             await _db.ListLeftPushAsync("InstalledTeams", FromTeamToString(slackTeam));
         }
 
+        public async Task Delete(string teamId)
+        {
+            var token = await _db.StringGetAsync(teamId);
+            await _db.KeyDeleteAsync(teamId);
+
+            var teamAndTokenAsString = $"{teamId}:{token}";
+            await _db.ListRemoveAsync("InstalledTeams",teamAndTokenAsString);
+        }
+
         public async Task<IEnumerable<string>> GetTokens()
         {
             var allTeamTokens = await _db.ListRangeAsync("InstalledTeams");
