@@ -139,6 +139,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var matches = users.Where(user => Equals(searchFor, userProp(user))).ToArray();
             if (matches.Length > 1)
             {
+                // if more than one slack user has a name that matches the fpl entry,
+                // we shouldn't @ either one of them, cause we're not sure who's the right one
                 return null;
             }
 
