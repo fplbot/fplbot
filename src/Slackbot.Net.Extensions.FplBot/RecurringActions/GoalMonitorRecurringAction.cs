@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
@@ -105,7 +106,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     var goals = newGoalsByPlayer[key];
                     var message = $"{player.FirstName} {player.SecondName} just scored {(goals == 1 ? "a goal" : $"{goals} goals")}!";
 
-                    var users = (await slackClient.UsersList())?.Members;
+                    var users = (await slackClient.UsersList())?.Members?.Where(user => user.IsActiveRealPerson()).ToArray();
                     if (users == null) return message;
 
                     var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(users, player.Id).ToArray();
