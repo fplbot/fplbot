@@ -10,9 +10,10 @@
 
     <ItemGroup>
       <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
-      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="2.0.1" />
-      <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="2.0.1" />
-      <PackageReference Include="Fpl.Client" Version="0.3.3" />
+      <PackageReference Include="Slackbot.Net" Version="3.0.0-preview001" />
+      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="3.0.0-preview001" />
+      <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="3.0.0-preview001" />
+      <PackageReference Include="Fpl.Client" Version="0.3.4" />
     </ItemGroup>
 
     <ItemGroup>
