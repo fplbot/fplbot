@@ -5,13 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="3.0.0-preview001" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
 
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
-    <PackageReference Include="Slackbot.Net" Version="3.0.0-preview001" />
-    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Logger" Version="3.0.0-preview001" />
-    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Slack" Version="3.0.0-preview001" />
+    <PackageReference Include="Slackbot.Net" />
+    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Logger" />
+    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Slack" />
   </ItemGroup>
 
   <ItemGroup>

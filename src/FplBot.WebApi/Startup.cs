@@ -1,4 +1,3 @@
-using System;
 using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -27,7 +26,7 @@ namespace FplBot.WebApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddSlackbotOauthAccessClient();
+            services.AddSlackbotOauthAccessHttpClient();
             services.Configure<RedisOptions>(Configuration);
             services.Configure<DistributedSlackAppOptions>(Configuration);
             services.AddSingleton<ConnectionMultiplexer>(c =>
@@ -37,8 +36,8 @@ namespace FplBot.WebApi
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
             services.AddSlackbotWorker<RedisSlackTeamRepository>()
-                .AddSlackPublisher()
-                .AddLoggerPublisher()
+                .AddSlackPublisherBuilder()
+                .AddLoggerPublisherBuilder()
                 .AddFplBot(Configuration.GetSection("fpl"))
                 .BuildRecurrers();
         }
