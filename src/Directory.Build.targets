@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <SlackbotNetVersion>3.0.0-preview003</SlackbotNetVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Slackbot.Net" Version="$(SlackbotNetVersion)" />
+    <PackageReference Update="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)" />
+
+    <PackageReference Update="Slackbot.Net.Abstractions.Hosting" Version="$(SlackbotNetVersion)" />
+    <PackageReference Update="Slackbot.Net.Abstractions.Handlers" Version="$(SlackbotNetVersion)" />
+    <PackageReference Update="Slackbot.Net.Abstractions.Publishers" Version="$(SlackbotNetVersion)" />
+
+    <PackageReference Update="Slackbot.Net.Extensions.Publishers.Logger" Version="$(SlackbotNetVersion)" />
+    <PackageReference Update="Slackbot.Net.Extensions.Publishers.Slack" Version="$(SlackbotNetVersion)" />
+
+    <PackageReference Update="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
+  </ItemGroup>
+</Project>
