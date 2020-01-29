@@ -52,7 +52,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 return;
             }
             
-            _logger.LogInformation($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
+            _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
             
             if (fetchedCurrent.Id >_storedCurrent.Id)
             {
