@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		..\Fplbot.Dockerfile = ..\Fplbot.Dockerfile
 		..\FplbotWebApi.Dockerfile = ..\FplbotWebApi.Dockerfile
 		..\heroku.yml = ..\heroku.yml
+		Directory.Build.targets = Directory.Build.targets
+		..\buildherokuimage.sh = ..\buildherokuimage.sh
 	EndProjectSection
 EndProject
 Global

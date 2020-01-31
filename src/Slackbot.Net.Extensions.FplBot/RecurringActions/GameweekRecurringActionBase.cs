@@ -36,13 +36,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         public async Task Process()
         {
-            _logger.LogInformation($"Channel: {_options.Value.Channel} & League: {_options.Value.LeagueId}");
+            _logger.LogDebug($"Channel: {_options.Value.Channel} & League: {_options.Value.LeagueId}");
 
             var gameweeks = await _gwClient.GetGameweeks();
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
             if (_storedCurrent == null)
             {
-                _logger.LogInformation("Initial fetch executed.");
+                _logger.LogDebug("Initial fetch executed.");
                 _storedCurrent = fetchedCurrent;
                 if (fetchedCurrent != null)
                 {
@@ -52,11 +52,11 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             if (fetchedCurrent == null)
             {
-                _logger.LogInformation("No gw marked as current");
+                _logger.LogDebug("No gw marked as current");
                 return;
             }
 
-            _logger.LogInformation($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
+            _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
 
             if (fetchedCurrent.Id > _storedCurrent.Id)
             {
