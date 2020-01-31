@@ -139,7 +139,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var imageUrl = $"https://platform-static-files.s3.amazonaws.com/premierleague/photos/players/110x140/p{player.Code}.png";
 
             if (!ImageIsAvailable(imageUrl))
-                imageUrl = "https://resources.premierleague.com/photos/2019/06/20/4ea7b474-d5cd-4c95-8e91-2f237502b1c5/Unai-Emery-2.jpg?width=300";
+                imageUrl = "https://user-images.githubusercontent.com/206726/73577018-207e4100-447c-11ea-98e3-9cc598c56519.png";
             
             playerCard.Add(new ImageBlock
             {
