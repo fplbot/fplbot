@@ -39,26 +39,32 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
                 foreach (var team in league.Standings.Entries)
                 {
-                    var entry = await _entryClient.GetPicks(team.Entry, gameweek);
-
-                    var hasUsedTripleCaptainForGameWeek = await _chipsPlayed.GetHasUsedTripleCaptainForGameWeek(gameweek, team.Entry);
-
-                    var captainPick = entry.Picks.SingleOrDefault(pick => pick.IsCaptain);
-                    var captain = players.SingleOrDefault(player => player.Id == captainPick.PlayerId);
-
-                    var viceCaptainPick = entry.Picks.SingleOrDefault(pick => pick.IsViceCaptain);
-                    var viceCaptain = players.SingleOrDefault(player => player.Id == viceCaptainPick.PlayerId);
-
-                    sb.Append($"*{team.GetEntryLink(gameweek)}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
-                    if (hasUsedTripleCaptainForGameWeek)
+                    try
                     {
-                        sb.Append("TRIPLECAPPED!! :rocket::rocket::rocket::rocket:");
+                        var entry = await _entryClient.GetPicks(team.Entry, gameweek);
+
+                        var hasUsedTripleCaptainForGameWeek = await _chipsPlayed.GetHasUsedTripleCaptainForGameWeek(gameweek, team.Entry);
+
+                        var captainPick = entry.Picks.SingleOrDefault(pick => pick.IsCaptain);
+                        var captain = players.SingleOrDefault(player => player.Id == captainPick.PlayerId);
+
+                        var viceCaptainPick = entry.Picks.SingleOrDefault(pick => pick.IsViceCaptain);
+                        var viceCaptain = players.SingleOrDefault(player => player.Id == viceCaptainPick.PlayerId);
+
+                        sb.Append($"*{team.GetEntryLink(gameweek)}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
+                        if (hasUsedTripleCaptainForGameWeek)
+                        {
+                            sb.Append("TRIPLECAPPED!! :rocket::rocket::rocket::rocket:");
+                        }
+                        sb.Append("\n");
                     }
-                    sb.Append("\n");
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
                 }
 
                 return sb.ToString();
-
             }
             catch (Exception e)
             {

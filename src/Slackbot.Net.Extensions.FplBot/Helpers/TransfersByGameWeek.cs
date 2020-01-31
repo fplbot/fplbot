@@ -1,12 +1,14 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -15,14 +17,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         private readonly FplbotOptions _fplbotOptions;
         private readonly ILeagueClient _leagueClient;
         private readonly IPlayerClient _playerClient;
-        private readonly IGameweekHelper _gameweekHelper;
         private readonly ITransfersClient _transfersClient;
         private readonly IEntryClient _entryClient;
 
-        public TransfersByGameWeek(IOptions<FplbotOptions> fplbotOptions, 
+        public TransfersByGameWeek(
+            IOptions<FplbotOptions> fplbotOptions, 
             ILeagueClient leagueClient,
             IPlayerClient playerClient,
-            IGameweekHelper gameweekHelper,
             ITransfersClient transfersClient,
             IEntryClient entryClient
             )
@@ -30,12 +31,44 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             _fplbotOptions = fplbotOptions.Value;
             _leagueClient = leagueClient;
             _playerClient = playerClient;
-            _gameweekHelper = gameweekHelper;
             _transfersClient = transfersClient;
             _entryClient = entryClient;
         }
-        
-        public async Task<string> GetTransfersByGameweek(int? gw)
+
+        public async Task<IEnumerable<Transfer>> GetTransfersByGameweek(int gw)
+        {
+            var league = await _leagueClient.GetClassicLeague(_fplbotOptions.LeagueId);
+            
+            var playerTransfers = new ConcurrentBag<Transfer>();
+            var entries = league.Standings.Entries;
+
+            await Task.WhenAll(entries.Select(async entry =>
+            {
+                var transfers = (await _transfersClient.GetTransfers(entry.Entry)).Where(x => x.Event == gw).Select(x =>
+                {
+                    var e = entries.Single(e => e.Entry == x.Entry);
+                    return new Transfer
+                    {
+                        EntryId = x.Entry,
+                        EntryName = e.PlayerName,
+                        EntryRealName = e.EntryName,
+                        PlayerTransferredIn = x.ElementIn,
+                        PlayerTransferredOut = x.ElementOut
+                    };
+                });
+
+                foreach (var transfer in transfers)
+                {
+                    playerTransfers.Add(transfer);
+                }
+            }));
+
+            return playerTransfers.ToArray();
+        }
+
+       
+
+        public async Task<string> GetTransfersByGameweekTexts(int? gw)
         {
             var leagueTask = _leagueClient.GetClassicLeague(_fplbotOptions.LeagueId);
             var playersTask = _playerClient.GetAllPlayers();
@@ -54,6 +87,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             return sb.ToString();
         }
+
         
         private async Task<string> GetTransfersTextForEntry(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players)
         {
@@ -74,14 +108,22 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             sb.Append($"{entry.GetEntryLink(gameweek)} ");
             if (transfers.Any())
             {
-                var picks = await picksTask;
-                var transferCost = picks.EventEntryHistory.EventTransfersCost;
-                var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
-                var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : wildcardPlayed ? " (:fire:wildcard:fire:)" : "";
-                sb.Append($"transferred{transferCostString}:\n");
-                foreach (var entryTransfer in transfers)
+                try
                 {
-                    sb.Append($"   {entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                    var picks = await picksTask;
+                    var transferCost = picks.EventEntryHistory.EventTransfersCost;
+                    var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
+                    var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : wildcardPlayed ? " (:fire:wildcard:fire:)" : "";
+                    sb.Append($"transferred{transferCostString}:\n");
+                    foreach (var entryTransfer in transfers)
+                    {
+                        sb.Append($"   {entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                    }
+                }
+                catch (Exception e)
+                {
+                    sb.Append("was perhaps not part of this gameweek :shrug:\n");
+                    Console.WriteLine(e.Message);
                 }
             }
             else
@@ -96,6 +138,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             var player = players.SingleOrDefault(x => x.Id == playerId);
             return player != null ? $"{player.FirstName} {player.SecondName}" : "";
+        }
+
+        internal class Transfer
+        {
+            public int EntryId { get; set; }
+            public string EntryName { get; set; }
+            public string EntryRealName { get; set; }
+            public string SlackHandle { get; set; }
+            public int PlayerTransferredOut { get; set; }
+            public int PlayerTransferredIn { get; set; }
         }
     }
 }

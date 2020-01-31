@@ -9,5 +9,15 @@
             public const string FreeHit = "freehit";
             public const string BenchBoost = "bboost";
         }
+
+        public static class StatIdentifiers
+        {
+            public const string GoalsScored = "goals_scored";
+        }
+
+        public static class CronPatterns
+        {
+            public const string EveryMinute = "0 */1 * * * *";
+        }
     }
 }
