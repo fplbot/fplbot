@@ -65,12 +65,12 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             _storedCurrent = fetchedCurrent;
 
-            await DoStuffWithinCurrentGameweek(_storedCurrent.Id);
+            await DoStuffWithinCurrentGameweek(_storedCurrent.Id, _storedCurrent.IsFinished);
         }
 
         protected virtual Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek) { return Task.CompletedTask; }
         protected virtual Task DoStuffWhenNewGameweekHaveJustBegun(int newGameweek) { return Task.CompletedTask; }
-        protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek) { return Task.CompletedTask; }
+        protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished) { return Task.CompletedTask; }
         public abstract string Cron { get; }
 
         protected async Task Publish(Func<ISlackClient, Task<string>> msg)

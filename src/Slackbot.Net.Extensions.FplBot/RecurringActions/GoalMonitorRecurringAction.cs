@@ -54,8 +54,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
         }
 
-        protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek)
+        protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished)
         {
+            if (isFinished)
+            {
+                return;
+            }
+
             var goalsByPlayer = await _goalsDuringGameweek.GetGoalsByPlayerId(currentGameweek);
 
             if (_currentGoalsByPlayerDuringGameweek == null)
@@ -112,6 +117,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                     return message;
                 });
+                await Task.Delay(2000);
             }
         }
 
