@@ -4,6 +4,7 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
@@ -134,9 +135,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
             });
 
+
+            var imageUrl = $"https://platform-static-files.s3.amazonaws.com/premierleague/photos/players/110x140/p{player.Code}.png";
+
+            if (!ImageIsAvailable(imageUrl))
+                imageUrl = "https://resources.premierleague.com/photos/2019/06/20/4ea7b474-d5cd-4c95-8e91-2f237502b1c5/Unai-Emery-2.jpg?width=300";
+            
             playerCard.Add(new ImageBlock
             {
-                image_url = $"https://platform-static-files.s3.amazonaws.com/premierleague/photos/players/110x140/p{player.Code}.png",
+                image_url = imageUrl,
                 title = new Text
                 {
                     text = $"{player.SecondName}.png"
@@ -197,6 +204,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
 
             return playerCard.ToArray();
+        }
+
+        private static bool ImageIsAvailable(string imageUrl)
+        {
+            var httpClient = new HttpClient();
+            var req = new HttpRequestMessage(HttpMethod.Head, imageUrl);
+            return httpClient.SendAsync(req).GetAwaiter().GetResult().IsSuccessStatusCode;
         }
 
         public static string FormatCurrency(int amount)
