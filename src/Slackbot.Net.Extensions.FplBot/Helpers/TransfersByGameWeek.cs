@@ -1,3 +1,4 @@
+using System;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Options;
@@ -107,14 +108,22 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             sb.Append($"{entry.GetEntryLink(gameweek)} ");
             if (transfers.Any())
             {
-                var picks = await picksTask;
-                var transferCost = picks.EventEntryHistory.EventTransfersCost;
-                var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
-                var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : wildcardPlayed ? " (:fire:wildcard:fire:)" : "";
-                sb.Append($"transferred{transferCostString}:\n");
-                foreach (var entryTransfer in transfers)
+                try
                 {
-                    sb.Append($"   {entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                    var picks = await picksTask;
+                    var transferCost = picks.EventEntryHistory.EventTransfersCost;
+                    var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
+                    var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : wildcardPlayed ? " (:fire:wildcard:fire:)" : "";
+                    sb.Append($"transferred{transferCostString}:\n");
+                    foreach (var entryTransfer in transfers)
+                    {
+                        sb.Append($"   {entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                    }
+                }
+                catch (Exception e)
+                {
+                    sb.Append("was perhaps not part of this gameweek :shrug:\n");
+                    Console.WriteLine(e.Message);
                 }
             }
             else
