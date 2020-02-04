@@ -50,7 +50,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         private async Task Reset(int newGameweek)
         {
-            _currentGoalsByPlayerDuringGameweek = null;
+            _currentGoalsByPlayerDuringGameweek = await _goalsDuringGameweek.GetGoalsByPlayerId(newGameweek);
             _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
         }
 
@@ -63,14 +63,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             var goalsByPlayer = await _goalsDuringGameweek.GetGoalsByPlayerId(currentGameweek);
 
-            if (_currentGoalsByPlayerDuringGameweek == null)
-            {
-                await ProcessNewGoals(goalsByPlayer);
-            }
-            else
-            {
-                await ProcessNewGoals(GoalDiff(_currentGoalsByPlayerDuringGameweek, goalsByPlayer));
-            }
+            await ProcessNewGoals(GoalDiff(_currentGoalsByPlayerDuringGameweek, goalsByPlayer));
+
             _currentGoalsByPlayerDuringGameweek = goalsByPlayer;
         }
 
