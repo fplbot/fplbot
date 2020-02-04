@@ -21,6 +21,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly ITransfersByGameWeek _transfersByGameWeek;
         private IDictionary<int, int> _currentGoalsByPlayerDuringGameweek;
         private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
+        private readonly string[] _transferredGoalScorerOutTaunts =
+        {
+            "Ah jiiz, you transferred him out, {0} :joy:",
+            "You just had to knee jerk him out, didn't you, {0}?",
+            "Didn't you have that guy last week, {0}?",
+            "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
+        };
+
 
         public GoalMonitorRecurringAction(
             IOptions<FplbotOptions> options,
@@ -98,7 +106,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 {
                     var player = players.Single(x => x.Id == key);
                     var goals = newGoalsByPlayer[key];
-                    var message = $"{player.FirstName} {player.SecondName} just scored {(goals == 1 ? "a goal" : $"{goals} goals")}!";
+                    var message = $":soccer: {player.FirstName} {player.SecondName} just scored {(goals == 1 ? "a goal" : $"{goals} goals")}!";
 
                     var users = (await slackClient.UsersList())?.Members?.Where(user => user.IsActiveRealPerson()).ToArray();
                     if (users == null) return message;
@@ -106,7 +114,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(users, player.Id).ToArray();
                     if (entriesTransferredPlayerOut.Any())
                     {
-                        message += $" Lol, you transferred him out, {string.Join(", ", entriesTransferredPlayerOut)} :joy:";
+                        message += $" {string.Format(_transferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
                     }
 
                     return message;
