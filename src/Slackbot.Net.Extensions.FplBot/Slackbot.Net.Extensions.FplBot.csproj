@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>Slackbot.Net.Extensions.FplBot</RootNamespace>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
