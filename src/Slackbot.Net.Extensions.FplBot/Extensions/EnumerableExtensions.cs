@@ -46,5 +46,29 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
             var random = new Random();
             return array[random.Next(0, array.Length)];
         }
+
+        public static string Join(
+            this IEnumerable<string> enumerable, 
+            string separator = ", ",
+            string lastSeparator = " and ")
+        {
+            if (enumerable == null)
+            {
+                return string.Empty;
+            }
+
+            var array = enumerable.MaterializeToArray();
+
+            if (!array.Any())
+            {
+                return string.Empty;
+            }
+            if (array.Length == 1)
+            {
+                return array.Single();
+            }
+
+            return string.Join(separator, array.Take(array.Length - 1)) + lastSeparator + array.Last();
+        }
     }
 }
