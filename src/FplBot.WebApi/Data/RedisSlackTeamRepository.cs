@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
 
@@ -9,56 +11,40 @@ namespace FplBot.WebApi.Data
     {
         private readonly ConnectionMultiplexer _redis;
         private IDatabase _db;
+        private string _server;
 
-        public RedisSlackTeamRepository(ConnectionMultiplexer redis)
+
+        public RedisSlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions)
         {
             _redis = redis;
             _db = _redis.GetDatabase();
+            _server = redisOptions.Value.REDIS_SERVER;
         }
         
         public async Task Insert(SlackTeam slackTeam)
         {
-            await _db.StringSetAsync(slackTeam.TeamId, slackTeam.AccessToken);
-            await _db.ListLeftPushAsync("InstalledTeams", FromTeamToString(slackTeam));
+            await _db.StringSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), slackTeam.AccessToken);
         }
 
         public async Task Delete(string teamId)
         {
-            var token = await _db.StringGetAsync(teamId);
-            await _db.KeyDeleteAsync(teamId);
-
-            var teamAndTokenAsString = $"{teamId}:{token}";
-            await _db.ListRemoveAsync("InstalledTeams",teamAndTokenAsString);
+            await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
         }
 
         public async Task<IEnumerable<string>> GetTokens()
         {
-            var allTeamTokens = await _db.ListRangeAsync("InstalledTeams");
-            var tokens = new List<string>();
-            foreach (var team in allTeamTokens)
-            {
-                tokens.Add(FromStringToTeam(team).AccessToken);
-            }
-            return tokens;
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
+            var tokens =  await _db.StringGetAsync(keys: allTeamKeys.ToArray());
+            return tokens.Select(t => t.ToString());
         }
 
         public async Task<string> GetTokenByTeamId(string teamId)
         {
-            return await _db.StringGetAsync(teamId);
+            return await _db.StringGetAsync(FromTeamIdToTeamKey(teamId));
         }
-
-        private static string FromTeamToString(SlackTeam slackTeam)
+        private static string FromTeamIdToTeamKey(string teamId)
         {
-            return $"{slackTeam.TeamId}:{slackTeam.AccessToken}";
-        }
-        
-        private static SlackTeam FromStringToTeam(string teamString)
-        {
-            return new SlackTeam
-            {
-                TeamId = teamString.Split(":")[0],
-                AccessToken = teamString.Split(":")[1]
-            };
+            return $"TeamId-{teamId}";
         }
     }
 }
