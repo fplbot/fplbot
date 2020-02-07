@@ -66,7 +66,6 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             {
                 var entryCaptainPicks = await GetEntryCaptainPicks(gameweek);
                 var captainGroups = entryCaptainPicks
-                    .WhereNotNull()
                     .GroupBy(x => x.Captain.Id, el => el.Captain)
                     .OrderByDescending(x => x.Count())
                     .Select((group, i) => new { Captain = group.First(), Count = group.Count(), Emoji = GetCaptainCountEmoji(i) })
@@ -138,7 +137,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var entryCaptainPicks = await Task.WhenAll(league.Standings.Entries.OrderBy(x => x.Rank)
                 .Select(entry => GetEntryCaptainPick(entry, gameweek, players)));
 
-            return entryCaptainPicks;
+            return entryCaptainPicks.WhereNotNull();
         }
 
         private async Task<EntryCaptainPick> GetEntryCaptainPick(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players)
