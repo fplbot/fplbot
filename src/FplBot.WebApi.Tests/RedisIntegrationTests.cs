@@ -51,6 +51,19 @@ namespace FplBot.WebApi.Tests
 
             Assert.Equal(2, tokensFromRedis.Count());
         }
+        
+        [Fact]
+        public async Task TestInsertAndDelete()
+        {
+            await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234"});
+
+
+            await _repo.Delete("accessToken2");
+            
+            var tokensAfterDelete = await _repo.GetTokens();
+            Assert.Single(tokensAfterDelete);
+        }
 
         public void Dispose()
         {

@@ -35,9 +35,16 @@ namespace FplBot.WebApi.Data
             });
         }
 
-        public async Task Delete(string teamId)
+        public async Task Delete(string token)
         {
-            await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
+            
+            foreach (var key in allTeamKeys)
+            {
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
+                if (fetchedTeamData[0] == token)
+                    await _db.KeyDeleteAsync(key);
+            }
         }
 
         public async Task<IEnumerable<string>> GetTokens()
