@@ -8,6 +8,7 @@ using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -19,6 +20,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _slackClientBuilder;
         private Gameweek _storedCurrent;
+        private IFetchFplbotSetup _teamRepo;
 
         protected GameweekRecurringActionBase(
             IOptions<FplbotOptions> options,
@@ -78,12 +80,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
+                var setup = await _teamRepo.GetSetupByToken(token);
+                
                 var slackClient = _slackClientBuilder.Build(token);
-                //TODO: Fetch channel to post to from some storage for distributed app
-                var res = await slackClient.ChatPostMessage(_options.Value.Channel, await msg(slackClient));
+                
+                var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
 
                 if (!res.Ok)
-                    _logger.LogError($"Could not post to {_options.Value.Channel}", res.Error);
+                    _logger.LogError($"Could not post to {setup.Channel}", res.Error);
             }
         }
     }

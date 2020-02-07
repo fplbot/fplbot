@@ -3,6 +3,7 @@ using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
 
@@ -26,10 +27,10 @@ namespace FplBot.WebApi.Controllers
         }
 
         [HttpGet("install")]
-        public IActionResult Install()
+        public IActionResult Install(string channel, string leagueId)
         {
-            _logger.LogInformation("Installing!");
-            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}");
+            _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={channel},{leagueId}");
         }
 
         [HttpGet("uninstall")]
@@ -54,22 +55,31 @@ namespace FplBot.WebApi.Controllers
             if (response.Ok)
             {
                 _logger.LogInformation($"Oauth response! {response.Ok}");
-            
+                var setup = ParseState(state);
                 await _slackTeamRepository.Insert(new SlackTeam
                 {
                     TeamId = response.Team_Id,
                     TeamName = response.Team_Name,
                     Scope = response.Scope,
                     AccessToken = response.Bot.Bot_Access_Token,
-                    FplBotSlackChannel = state
+                    FplBotSlackChannel = setup.Channel,
+                    FplbotLeagueId = setup.LeagueId
                 });
 
-                return Ok(); 
+                return Redirect("/success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
         }
-        
-        
+
+        private FplbotSetup ParseState(string state)
+        {
+            var splitted = state.Split(",");
+            return new FplbotSetup
+            {
+                Channel = splitted[0],
+                LeagueId = int.Parse(splitted[1])
+            };
+        }
     }
 }
