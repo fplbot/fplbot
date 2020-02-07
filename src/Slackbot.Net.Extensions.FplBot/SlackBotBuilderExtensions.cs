@@ -44,6 +44,7 @@ namespace Slackbot.Net.Abstractions.Hosting
         {
             builder.Services.AddFplApiClient(clientOptions);
             builder.Services.AddSingleton<IFetchFplbotSetup, T>();
+            builder.AddCommon();
             return builder;
         }
         
