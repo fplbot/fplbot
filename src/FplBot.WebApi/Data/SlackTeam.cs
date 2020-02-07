@@ -7,5 +7,6 @@ namespace FplBot.WebApi.Data
         public string Scope { get; set; }
         public string AccessToken { get; set; }
         public string FplBotSlackChannel { get; set; }
+        public long FplbotLeagueId { get; set; }
     }
-}
+}   

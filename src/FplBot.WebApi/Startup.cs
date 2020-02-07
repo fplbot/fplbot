@@ -38,8 +38,9 @@ namespace FplBot.WebApi
             services.AddSlackbotWorker<RedisSlackTeamRepository>()
                 .AddSlackPublisherBuilder()
                 .AddLoggerPublisherBuilder()
-                .AddFplBot(Configuration.GetSection("fpl"))
+                .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
                 .BuildRecurrers();
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -59,6 +60,7 @@ namespace FplBot.WebApi
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapRazorPages();
             });
         }
     }
