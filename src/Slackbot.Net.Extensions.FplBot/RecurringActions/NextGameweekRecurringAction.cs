@@ -34,6 +34,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek);
             await Publish(_ => Task.FromResult(captains));
 
+            var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek);
+            await Publish(_ => Task.FromResult(captainsChart));
+
             var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek);
             await Publish(_ => Task.FromResult(transfers));
         }
