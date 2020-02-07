@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
 using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -30,7 +32,8 @@ namespace FplBot.WebApi.Controllers
         public IActionResult Install(string channel, string leagueId)
         {
             _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
-            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={channel},{leagueId}");
+            var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}");
         }
 
         [HttpGet("uninstall")]
@@ -72,8 +75,9 @@ namespace FplBot.WebApi.Controllers
             return BadRequest(response.Error);
         }
 
-        private FplbotSetup ParseState(string state)
+        private FplbotSetup ParseState(string urlencodedState)
         {
+            var state = WebUtility.UrlDecode(urlencodedState);
             var splitted = state.Split(",");
             return new FplbotSetup
             {
