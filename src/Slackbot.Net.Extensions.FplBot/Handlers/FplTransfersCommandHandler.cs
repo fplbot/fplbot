@@ -1,11 +1,11 @@
 ﻿using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -25,7 +25,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(message.Bot), message.Text, "transfers {gw}");
-            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek);
+            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek.Value);
             
             foreach (var pBuilder in _publishers)
             {
