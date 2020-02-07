@@ -13,6 +13,7 @@ namespace FplBot.WebApi.Data
         private IDatabase _db;
         private string _server;
 
+        private string _accessTokenField = "accessToken";
 
         public RedisSlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions)
         {
@@ -23,7 +24,10 @@ namespace FplBot.WebApi.Data
         
         public async Task Insert(SlackTeam slackTeam)
         {
-            await _db.StringSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), slackTeam.AccessToken);
+            await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), new []
+            {
+                new HashEntry(_accessTokenField, slackTeam.AccessToken)
+            });
         }
 
         public async Task Delete(string teamId)
@@ -34,13 +38,18 @@ namespace FplBot.WebApi.Data
         public async Task<IEnumerable<string>> GetTokens()
         {
             var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
-            var tokens =  await _db.StringGetAsync(keys: allTeamKeys.ToArray());
+            var tokens = new List<string>();
+            foreach (var key in allTeamKeys)
+            {
+                var token = await _db.HashGetAsync(key,_accessTokenField);
+                tokens.Add(token);
+            }
             return tokens.Select(t => t.ToString());
         }
 
         public async Task<string> GetTokenByTeamId(string teamId)
         {
-            return await _db.StringGetAsync(FromTeamIdToTeamKey(teamId));
+            return await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), _accessTokenField);
         }
         private static string FromTeamIdToTeamKey(string teamId)
         {
