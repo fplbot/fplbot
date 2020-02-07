@@ -24,7 +24,7 @@ namespace FplBot.WebApi.Tests
                 REDIS_PASSWORD = Environment.GetEnvironmentVariable("REDIS_PASSWORD"),
                 REDIS_USERNAME = Environment.GetEnvironmentVariable("REDIS_USERNAME")
             });
-            string connStr = $"{opts.Value.REDIS_SERVER}, name={opts.Value.REDIS_USERNAME}, password={opts.Value.REDIS_PASSWORD}";
+            string connStr = $"{opts.Value.REDIS_SERVER}, name={opts.Value.REDIS_USERNAME}, password={opts.Value.REDIS_PASSWORD}, allowAdmin=true";
             _helper.WriteLine(connStr);
             var multiplexer = ConnectionMultiplexer.Connect(connStr);
             _server = multiplexer.GetServer(opts.Value.REDIS_SERVER);
