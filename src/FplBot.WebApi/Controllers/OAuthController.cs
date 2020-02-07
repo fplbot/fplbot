@@ -60,7 +60,7 @@ namespace FplBot.WebApi.Controllers
                     TeamId = response.Team_Id,
                     TeamName = response.Team_Name,
                     Scope = response.Scope,
-                    AccessToken = response.Access_Token,
+                    AccessToken = response.Bot.Bot_Access_Token,
                     FplBotSlackChannel = state
                 });
 
