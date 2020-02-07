@@ -31,7 +31,7 @@ namespace FplBot.WebApi.Data
             {
                 new HashEntry(_accessTokenField, slackTeam.AccessToken),
                 new HashEntry(_channelField, slackTeam.FplBotSlackChannel), 
-                new HashEntry(_channelField, slackTeam.FplbotLeagueId)
+                new HashEntry(_leagueField, slackTeam.FplbotLeagueId)
             });
         }
 
@@ -67,12 +67,12 @@ namespace FplBot.WebApi.Data
             
             foreach (var key in allTeamKeys)
             {
-                var fetchedToken = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
-                if (fetchedToken[0] == token)
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
+                if (fetchedTeamData[0] == token)
                     return new FplbotSetup
                     {
-                        Channel = fetchedToken[1],
-                        LeagueId = int.Parse(fetchedToken[2])
+                        Channel = fetchedTeamData[1],
+                        LeagueId = int.Parse(fetchedTeamData[2])
                     };
             }
 
