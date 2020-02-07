@@ -6,15 +6,28 @@ on:
       - 'master'
 
 jobs:
-  ubuntu-16_04:
-    name: ubuntu-16_04
-    runs-on: ubuntu-16.04
+  windows-latest:
+    name: windows-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Run './build/build.sh PushDockerImage'
-        run: ./build/build.sh PushDockerImage
+      - name: Run 'powershell .\build\build.ps1'
+        run: powershell .\build\build.ps1 PushDockerImage
         env:
             fpl__login: ${{ secrets.fpl__login }}
             fpl__password: ${{ secrets.fpl__password }}
             DockerHub_Username: ${{ secrets.DockerHub_Username }}
-            DockerHub_Password: ${{ secrets.DockerHub_Password }}
+            DockerHub_Password: ${{ secrets.DockerHub_Password }}         
+               
+  # ubuntu-16_04:
+  #   name: ubuntu-16_04
+  #   runs-on: ubuntu-16.04
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - name: Run './build/build.sh PushDockerImage'
+  #       run: ./build/build.sh PushDockerImage
+  #       env:
+  #           fpl__login: ${{ secrets.fpl__login }}
+  #           fpl__password: ${{ secrets.fpl__password }}
+  #           DockerHub_Username: ${{ secrets.DockerHub_Username }}
+  #           DockerHub_Password: ${{ secrets.DockerHub_Password }}
