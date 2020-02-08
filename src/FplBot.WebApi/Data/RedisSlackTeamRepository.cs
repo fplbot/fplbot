@@ -52,6 +52,19 @@ namespace FplBot.WebApi.Data
             await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
         }
 
+        public async Task<IEnumerable<FplbotSetup>> GetAllWorkspaces()
+        {
+            var tokens = await GetTokens();
+            var setups = new List<FplbotSetup>();
+            foreach (var token in tokens)
+            {
+                var s = await GetSetupByToken(token);
+                setups.Add(s);
+            }
+
+            return setups;
+        }
+
         public async Task<IEnumerable<string>> GetTokens()
         {
             var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));

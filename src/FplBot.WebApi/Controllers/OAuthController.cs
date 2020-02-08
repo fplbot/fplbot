@@ -27,6 +27,13 @@ namespace FplBot.WebApi.Controllers
             _slackTeamRepository = slackTeamRepository;
             _options = options;
         }
+        
+        [HttpGet("workspaces")]
+        public async Task<IActionResult> Debug()
+        {
+            var allWorkspaces = await _slackTeamRepository.GetAllWorkspaces();
+            return Ok(allWorkspaces);
+        }
 
         [HttpGet("install")]
         public IActionResult Install(string channel, string leagueId)

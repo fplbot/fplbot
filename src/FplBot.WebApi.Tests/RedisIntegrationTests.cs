@@ -53,6 +53,16 @@ namespace FplBot.WebApi.Tests
         }
         
         [Fact]
+        public async Task TestGetTokenByTeamId()
+        {
+            await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
+
+            var tokensFromRedis = await _repo.GetTokenByTeamId("teamId2");
+
+            Assert.Equal("accessToken2", tokensFromRedis);
+        }
+        
+        [Fact]
         public async Task TestInsertAndDelete()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123"});
