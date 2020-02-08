@@ -20,8 +20,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITransfersByGameWeek transfersByGameweek,
             ILogger<NextGameweekRecurringAction> logger,
             ITokenStore tokenStore,
-            ISlackClientBuilder slackClientBuilder) : 
-            base(options, gwClient, logger, tokenStore, slackClientBuilder)
+            ISlackClientBuilder slackClientBuilder,
+            IFetchFplbotSetup teamRepo) : 
+            base(options, gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
