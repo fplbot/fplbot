@@ -86,13 +86,12 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         }
                         else
                         {
-                            sb.Append("\n");
                             break;
                         }
                     }
-                }
 
-                sb.Append("\n");
+                    sb.Append("\n");
+                }
 
                 foreach (var captainGroup in captainGroups)
                 {
