@@ -46,6 +46,11 @@ namespace FplBot.WebApi.Data
                     await _db.KeyDeleteAsync(key);
             }
         }
+        
+        public async Task DeleteByTeamId(string teamId)
+        {
+            await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
+        }
 
         public async Task<IEnumerable<string>> GetTokens()
         {

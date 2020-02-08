@@ -39,7 +39,7 @@ namespace FplBot.WebApi.Controllers
         [HttpGet("uninstall")]
         public async Task<IActionResult> Uninstall(string teamId)
         {
-            await _slackTeamRepository.Delete(teamId);
+            await _slackTeamRepository.DeleteByTeamId(teamId);
             return Ok("Ok");
         }
 
