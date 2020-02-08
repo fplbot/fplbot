@@ -1,14 +1,14 @@
-﻿using System;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -19,21 +19,23 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly ILogger<GameweekRecurringActionBase> _logger;
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _slackClientBuilder;
+        private readonly IFetchFplbotSetup _teamRepo;
         private Gameweek _storedCurrent;
-        private IFetchFplbotSetup _teamRepo;
 
         protected GameweekRecurringActionBase(
             IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
             ILogger<GameweekRecurringActionBase> logger,
             ITokenStore tokenStore,
-            ISlackClientBuilder slackClientBuilder)
+            ISlackClientBuilder slackClientBuilder,
+            IFetchFplbotSetup teamRepo)
         {
             _options = options;
             _gwClient = gwClient;
             _logger = logger;
             _tokenStore = tokenStore;
             _slackClientBuilder = slackClientBuilder;
+            _teamRepo = teamRepo;
         }
 
         public async Task Process()
