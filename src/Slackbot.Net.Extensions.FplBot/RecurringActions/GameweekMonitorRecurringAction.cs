@@ -86,6 +86,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 }).ToList();
 
+            PostNewEvents(newFixtureEvents);
+
             _currentGameweekFixtures = newGameweekFixtures;
         }
 
