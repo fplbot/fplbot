@@ -1,4 +1,7 @@
+using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -40,7 +43,27 @@ namespace FplBot.WebApi
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
                 .BuildRecurrers();
-            services.AddRazorPages();
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie(o => o.ForwardChallenge = SlackAuthenticationDefaults.AuthenticationScheme)
+                .AddSlack(c =>
+            {
+                c.ClientId = Configuration.GetValue<string>("CLIENT_ID");
+                c.ClientSecret = Configuration.GetValue<string>("CLIENT_SECRET");
+            });
+            services.AddAuthorization(options =>
+            {
+                //options.AddPolicy("IsHeltBlankSlackUser", b => b.RequireClaim("TeamName", "heltblank"));
+            });
+            services.AddRazorPages().AddRazorPagesOptions(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Admin");
+                options.Conventions.AllowAnonymousToPage("/*");
+            });;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,6 +78,8 @@ namespace FplBot.WebApi
 
             app.UseRouting();
 
+            app.UseCookiePolicy();
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
@@ -63,5 +88,9 @@ namespace FplBot.WebApi
                 endpoints.MapRazorPages();
             });
         }
+    }
+
+    public class HasBlankEmail : IAuthorizationRequirement
+    {
     }
 }
