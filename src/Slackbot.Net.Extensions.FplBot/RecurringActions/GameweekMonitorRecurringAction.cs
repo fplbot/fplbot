@@ -14,10 +14,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class GameweekMonitorRecurringAction : GameweekRecurringActionBase
     {
+        private readonly GameweekEventsFormatter _gameweekEventsFormatter;
         private readonly IFixtureClient _fixtureClient;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
         private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
-        private readonly GameweekEventsFormatter _gameweekEventsFormatter;
+        private readonly IPlayerClient _playerClient;
+        private ICollection<Team> _teams;
+        private readonly ITeamsClient _teamsClient;
+        private ICollection<Player> _players;
 
         private ICollection<Fixture> _currentGameweekFixtures;
 
@@ -29,12 +33,16 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ISlackClientBuilder slackClientBuilder,
             ITransfersByGameWeek transfersByGameWeek,
             IFixtureClient fixtureClient,
-            GameweekEventsFormatter gameweekEventsFormatter
+            GameweekEventsFormatter gameweekEventsFormatter,
+            IPlayerClient playerClient,
+            ITeamsClient teamsClient
             ) : base(options, gwClient, logger, tokenStore, slackClientBuilder)
         {
             _fixtureClient = fixtureClient;
             _gameweekEventsFormatter = gameweekEventsFormatter;
             _transfersByGameWeek = transfersByGameWeek;
+            _playerClient = playerClient;
+            _teamsClient = teamsClient;
         }
 
         protected override async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
@@ -51,6 +59,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
+            _players = await _playerClient.GetAllPlayers();
+            _teams = await _teamsClient.GetAllTeams();
         }
 
         protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished)
@@ -82,7 +92,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 }).ToList();
 
-            var formattedEvents = await _gameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, _transfersForCurrentGameweek);
+            var formattedEvents = _gameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, _transfersForCurrentGameweek, _players, _teams);
             await PostNewEvents(formattedEvents);
 
             _currentGameweekFixtures = newGameweekFixtures;

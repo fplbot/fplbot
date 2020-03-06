@@ -12,8 +12,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class GameweekEventsFormatter
     {
-        private readonly IPlayerClient _playerClient;
-        private readonly ITeamsClient _teamsClient;
         private readonly string[] _transferredGoalScorerOutTaunts =
         {
             "Ah jiiz, you transferred him out, {0} :joy:",
@@ -22,20 +20,17 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
         };
 
-        public GameweekEventsFormatter(
-            ILogger<GameweekEventsFormatter> logger,
-            IPlayerClient playerClient,
-            ITeamsClient teamsClient)
+        public GameweekEventsFormatter(ILogger<GameweekEventsFormatter> logger)
         {
-            _playerClient = playerClient;
-            _teamsClient = teamsClient;
         }
 
-        public async Task<List<string>> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
+        public List<string> FormatNewFixtureEvents(
+            List<FixtureEvents> newFixtureEvents,
+            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
+            ICollection<Player> players,
+            ICollection<Team> teams
+            )
         {
-            var players = await _playerClient.GetAllPlayers();
-            var teams = await _teamsClient.GetAllTeams();
-
             var formattedStrings = new List<string>();
 
             newFixtureEvents.ForEach(newFixtureEvent =>
