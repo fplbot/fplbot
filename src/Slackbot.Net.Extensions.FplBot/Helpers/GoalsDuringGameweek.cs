@@ -16,7 +16,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             _fixtureClient = fixtureClient;
         }
 
-        public async Task<IDictionary<int, int>> GetGoalsByPlayerId(int gameweek)
+        public async Task<IDictionary<int, int>> GetPlayerGoals(int gameweek)
         {
             var fixtures = await _fixtureClient.GetFixturesByGameweek(gameweek);
 

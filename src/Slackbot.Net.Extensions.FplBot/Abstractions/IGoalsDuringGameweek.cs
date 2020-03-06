@@ -5,6 +5,6 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
     internal interface IGoalsDuringGameweek
     {
-        Task<IDictionary<int, int>> GetGoalsByPlayerId(int gameweek);
+        Task<IDictionary<int, int>> GetPlayerGoals(int gameweek);
     }
 }

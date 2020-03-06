@@ -58,7 +58,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         private async Task Reset(int newGameweek)
         {
-            _currentGoalsByPlayerDuringGameweek = await _goalsDuringGameweek.GetGoalsByPlayerId(newGameweek);
+            _currentGoalsByPlayerDuringGameweek = await _goalsDuringGameweek.GetPlayerGoals(newGameweek);
             _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
         }
 
@@ -69,9 +69,10 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 return;
             }
 
-            var goalsByPlayer = await _goalsDuringGameweek.GetGoalsByPlayerId(currentGameweek);
+            var goalsByPlayer = await _goalsDuringGameweek.GetPlayerGoals(currentGameweek);
+            var goalDiff = GoalDiff(_currentGoalsByPlayerDuringGameweek, goalsByPlayer);
 
-            await ProcessNewGoals(GoalDiff(_currentGoalsByPlayerDuringGameweek, goalsByPlayer));
+            await ProcessNewGoals(goalDiff);
 
             _currentGoalsByPlayerDuringGameweek = goalsByPlayer;
         }
@@ -127,39 +128,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             return _transfersForCurrentGameweek == null ? 
                 Enumerable.Empty<string>() : 
-                _transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => GetSlackHandle(users, x.EntryName) ?? x.EntryName);
+                _transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => SlackHandleHelper.GetSlackHandle(users, x.EntryName) ?? x.EntryName);
         }
-
-        private static string GetSlackHandle(User[] users, string entryName)
-        {
-            return SearchForHandle(users, user => user.Real_name, entryName) ??
-                   SearchForHandle(users, user => user.Real_name?.Split(" ")?.First(), entryName?.Split(" ")?.First()) ??
-                   SearchForHandle(users, user => user.Real_name?.Split(" ")?.Last(), entryName?.Split(" ")?.Last());
-        }
-
-        private static string SearchForHandle(IEnumerable<User> users, Func<User, string> userProp, string searchFor)
-        {
-            var matches = users.Where(user => Equals(searchFor, userProp(user))).ToArray();
-            if (matches.Length > 1)
-            {
-                // if more than one slack user has a name that matches the fpl entry,
-                // we shouldn't @ either one of them, cause we're not sure who's the right one
-                return null;
-            }
-
-            return matches.Length == 1 ? GetSlackHandle(matches.Single()) : null;
-        }
-
-        private static bool Equals(string s1, string s2)
-        {
-            if (s1 == null || s2 == null)
-            {
-                return false;
-            }
-            return string.Equals(s1, s2, StringComparison.CurrentCultureIgnoreCase);
-        }
-
-        private static string GetSlackHandle(User user) => $"@{user.Name}";
 
         public override string Cron => Constants.CronPatterns.EveryMinute;
     }

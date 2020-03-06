@@ -8,12 +8,15 @@
 
     <ItemGroup>
       <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
-      <PackageReference Include="Slackbot.Net" />
-      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" />
-      <PackageReference Include="Slackbot.Net.SlackClients.Http" />
+      <PackageReference Include="Slackbot.Net" Version="$(SlackbotNetVersion)" />
+      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="$(SlackbotNetVersion)" />
+      <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
     </ItemGroup>
 
     <ItemGroup>
      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Models\" />
     </ItemGroup>
 </Project>
