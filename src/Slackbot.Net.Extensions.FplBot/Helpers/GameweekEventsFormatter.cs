@@ -68,7 +68,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return newGoalEvents.Select(g =>
             {
                 var player = players.Single(x => x.Id == g.PlayerId);
-                var message = $":soccer: {player.FirstName} {player.SecondName} just scored a goal!";
+                var message = $"{player.FirstName} {player.SecondName} just scored a goal! :soccer:";
 
                 if (g.IsRemoved)
                 {
