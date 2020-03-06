@@ -32,13 +32,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             await Publish(_ => Task.FromResult($"Gameweek {newGameweek}!"));
 
-            var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek);
+            var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, _options.Value.LeagueId);
             await Publish(_ => Task.FromResult(captains));
 
-            var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek);
+            var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, _options.Value.LeagueId);
             await Publish(_ => Task.FromResult(captainsChart));
 
-            var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek);
+            var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, _options.Value.LeagueId);
             await Publish(_ => Task.FromResult(transfers));
         }
 

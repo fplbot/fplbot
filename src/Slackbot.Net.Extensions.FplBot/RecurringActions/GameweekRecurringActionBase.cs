@@ -14,7 +14,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal abstract class GameweekRecurringActionBase : IRecurringAction
     {
-        private readonly IOptions<FplbotOptions> _options;
+        protected readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
         private readonly ILogger<GameweekRecurringActionBase> _logger;
         private readonly ITokenStore _tokenStore;

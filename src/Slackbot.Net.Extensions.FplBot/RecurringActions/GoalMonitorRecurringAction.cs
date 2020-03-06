@@ -60,7 +60,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private async Task Reset(int newGameweek)
         {
             _currentGoalsByPlayerDuringGameweek = await _goalsDuringGameweek.GetGoalsByPlayerId(newGameweek);
-            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
+            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek, _options.Value.LeagueId);
         }
 
         protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished)

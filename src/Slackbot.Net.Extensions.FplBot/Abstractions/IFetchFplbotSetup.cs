@@ -29,7 +29,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 
     public class FplbotSetup
     {
-        public long LeagueId { get; set; }
+        public int LeagueId { get; set; }
         public string Channel { get; set; }
     }
 }

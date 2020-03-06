@@ -6,6 +6,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Slackbot.Net.Abstractions.Hosting;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -14,15 +15,21 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly ICaptainsByGameWeek _captainsByGameWeek;
         private readonly IGameweekHelper _gameweekHelper;
+        private readonly ITokenStore _tokenStore;
+        private readonly IFetchFplbotSetup _setupFetcher;
 
         public FplCaptainCommandHandler(
             IEnumerable<IPublisherBuilder> publishers, 
             ICaptainsByGameWeek captainsByGameWeek,  
-            IGameweekHelper gameweekHelper)
+            IGameweekHelper gameweekHelper,
+            ITokenStore tokenStore,
+            IFetchFplbotSetup setupFetcher)
         {
             _publishers = publishers;
             _captainsByGameWeek = captainsByGameWeek;
             _gameweekHelper = gameweekHelper;
+            _tokenStore = tokenStore;
+            _setupFetcher = setupFetcher;
         }
 
         public async Task<HandleResponse> Handle(SlackMessage incomingMessage)
@@ -40,10 +47,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             {
                 return await Publish(incomingMessage, "Invalid gameweek :grimacing:");
             }
-            
+
+            var token = await _tokenStore.GetTokenByTeamId(incomingMessage.Team.Id);
+            var setup = await _setupFetcher.GetSetupByToken(token);
             var outgoingMessage = isChartRequest ? 
-                await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value) : 
-                await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value);
+                await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, setup.LeagueId) : 
+                await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, setup.LeagueId);
 
             return await Publish(incomingMessage, outgoingMessage);
         }

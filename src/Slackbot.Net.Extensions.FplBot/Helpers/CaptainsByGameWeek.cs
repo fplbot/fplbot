@@ -13,26 +13,26 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {
-        private readonly IOptions<FplbotOptions> _options;
+        private readonly IFetchFplbotSetup _fetcher;
         private readonly IEntryClient _entryClient;
         private readonly IPlayerClient _playerClient;
         private readonly ILeagueClient _leagueClient;
         private readonly IChipsPlayed _chipsPlayed;
 
-        public CaptainsByGameWeek(IOptions<FplbotOptions> options, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, IChipsPlayed chipsPlayed)
+        public CaptainsByGameWeek(IFetchFplbotSetup fetcher, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, IChipsPlayed chipsPlayed)
         {
-            _options = options;
+            _fetcher = fetcher;
             _entryClient = entryClient;
             _playerClient = playerClient;
             _leagueClient = leagueClient;
             _chipsPlayed = chipsPlayed;
         }
         
-        public async Task<string> GetCaptainsByGameWeek(int gameweek)
+        public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId)
         {
             try
             {
-                var entryCaptainPicks = await GetEntryCaptainPicks(gameweek);
+                var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
                 
                 var sb = new StringBuilder();
                 sb.Append($":boom: *Captain picks for gameweek {gameweek}*\n");
@@ -60,11 +60,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
         }
 
-        public async Task<string> GetCaptainsChartByGameWeek(int gameweek)
+        public async Task<string> GetCaptainsChartByGameWeek(int gameweek, int leagueId)
         {
             try
             {
-                var entryCaptainPicks = await GetEntryCaptainPicks(gameweek);
+                var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
                 var captainGroups = entryCaptainPicks
                     .GroupBy(x => x.Captain.Id, el => el.Captain)
                     .OrderByDescending(x => x.Count())
@@ -125,9 +125,9 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             };
         }
 
-        private async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek)
+        private async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)
         {
-            var leagueTask = _leagueClient.GetClassicLeague(_options.Value.LeagueId);
+            var leagueTask = _leagueClient.GetClassicLeague(leagueId);
             var playersTask = _playerClient.GetAllPlayers();
 
             var league = await leagueTask;

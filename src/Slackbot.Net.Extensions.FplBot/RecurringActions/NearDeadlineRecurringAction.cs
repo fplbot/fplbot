@@ -13,7 +13,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class NearDeadlineRecurringAction : IRecurringAction
     {
-        private readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
         private readonly DateTimeUtils _dateTimeUtils;
         private readonly ISlackClientBuilder _slackClientBuilder;
@@ -31,7 +30,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITokenStore tokenStore, 
             IFetchFplbotSetup teamRepo)
         {
-            _options = options;
             _gwClient = gwClient;
             _dateTimeUtils = dateTimeUtils;
             _slackClientBuilder = slackClientBuilder;

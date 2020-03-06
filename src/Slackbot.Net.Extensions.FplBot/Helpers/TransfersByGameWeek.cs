@@ -14,35 +14,32 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class TransfersByGameWeek : ITransfersByGameWeek
     {
-        private readonly FplbotOptions _fplbotOptions;
         private readonly ILeagueClient _leagueClient;
         private readonly IPlayerClient _playerClient;
         private readonly ITransfersClient _transfersClient;
         private readonly IEntryClient _entryClient;
 
         public TransfersByGameWeek(
-            IOptions<FplbotOptions> fplbotOptions, 
             ILeagueClient leagueClient,
             IPlayerClient playerClient,
             ITransfersClient transfersClient,
             IEntryClient entryClient
             )
         {
-            _fplbotOptions = fplbotOptions.Value;
             _leagueClient = leagueClient;
             _playerClient = playerClient;
             _transfersClient = transfersClient;
             _entryClient = entryClient;
         }
 
-        public async Task<IEnumerable<Transfer>> GetTransfersByGameweek(int gw)
+        public async Task<IEnumerable<Transfer>> GetTransfersByGameweek(int gw, int leagueId)
         {
             if (gw < 2)
             {
                 return Enumerable.Empty<Transfer>();
             }
 
-            var league = await _leagueClient.GetClassicLeague(_fplbotOptions.LeagueId);
+            var league = await _leagueClient.GetClassicLeague(leagueId);
             
             var playerTransfers = new ConcurrentBag<Transfer>();
             var entries = league.Standings.Entries;
@@ -73,14 +70,14 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
        
 
-        public async Task<string> GetTransfersByGameweekTexts(int gw)
+        public async Task<string> GetTransfersByGameweekTexts(int gw, int leagueId)
         {
             if (gw < 2)
             {
                 return "No transfers are made the first gameweek.";
             }
 
-            var leagueTask = _leagueClient.GetClassicLeague(_fplbotOptions.LeagueId);
+            var leagueTask = _leagueClient.GetClassicLeague(leagueId);
             var playersTask = _playerClient.GetAllPlayers();
 
             var league = await leagueTask;
