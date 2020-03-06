@@ -9,6 +9,7 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
+    
     public class RedisIntegrationTests : IDisposable
     {
         private readonly ITestOutputHelper _helper;
@@ -31,7 +32,7 @@ namespace FplBot.WebApi.Tests
             _repo = new RedisSlackTeamRepository(multiplexer, opts);
         }
 
-        [Fact]
+        [Fact(Skip = "Exploratory test")]
         public async Task TestInsertAndFetchOne()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", AccessToken = "accessToken1"});
@@ -41,7 +42,7 @@ namespace FplBot.WebApi.Tests
             Assert.Equal("accessToken1", tokenFromRedis);
         }
 
-        [Fact]
+        [Fact(Skip = "Exploratory test")]
         public async Task TestInsertAndFetchAll()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2"});
@@ -52,7 +53,7 @@ namespace FplBot.WebApi.Tests
             Assert.Equal(2, tokensFromRedis.Count());
         }
         
-        [Fact]
+        [Fact(Skip = "Exploratory test")]
         public async Task TestGetTokenByTeamId()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
@@ -62,7 +63,7 @@ namespace FplBot.WebApi.Tests
             Assert.Equal("accessToken2", tokensFromRedis);
         }
         
-        [Fact]
+        [Fact(Skip = "Exploratory test")]
         public async Task TestInsertAndDelete()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123"});

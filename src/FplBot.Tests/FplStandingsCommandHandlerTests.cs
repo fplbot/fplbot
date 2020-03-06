@@ -22,11 +22,7 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> standings")]
         public async Task GetStandings(string input)
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub()
-            });
+            var playerData = await _client.Handle(Factory.CreateDummy(input));
             
             Assert.StartsWith(":star:", playerData.HandledMessage);
         }

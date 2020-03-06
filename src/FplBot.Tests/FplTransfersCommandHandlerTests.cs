@@ -23,12 +23,7 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> transfers 20")]
         public async Task GetTransfersHandlerShouldPostTransfers(string input)
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
-            });
+            var playerData = await _client.Handle(Factory.CreateDummy(input));
             
             Assert.StartsWith("Transfers", playerData.HandledMessage);
         }
@@ -38,12 +33,7 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> transfers 1")]
         public async Task GetTransfersHandlerForGw1ShouldPostSpecialMessage(string input)
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
-            });
+            var playerData = await _client.Handle(Factory.CreateDummy(input));
 
             Assert.Equal("No transfers are made the first gameweek.", playerData.HandledMessage);
         }
