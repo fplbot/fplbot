@@ -36,6 +36,6 @@ namespace FplBot.ConsoleApps
                     .MinimumLevel.Debug()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                     .Enrich.FromLogContext()
-                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} ({SourceContext}){NewLine}{Exception}"));
+                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} ({SourceContext}){NewLine}{Exception}"));
     }
 }
