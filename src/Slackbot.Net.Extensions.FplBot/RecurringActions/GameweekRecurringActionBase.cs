@@ -40,7 +40,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         public async Task Process()
         {
-            _logger.LogDebug($"Channel: {_options.Value.Channel} & League: {_options.Value.LeagueId}");
 
             var gameweeks = await _gwClient.GetGameweeks();
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
@@ -72,7 +71,15 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             await DoStuffWithinCurrentGameweek(_storedCurrent.Id, _storedCurrent.IsFinished);
         }
 
-        protected virtual Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek) { return Task.CompletedTask; }
+        protected virtual async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
+        {
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
+            {
+                var setup = await _teamRepo.GetSetupByToken(token);
+                _logger.LogDebug($"Channel: {setup.Channel} & League: {setup.LeagueId}");    
+            }
+        }
         protected virtual Task DoStuffWhenNewGameweekHaveJustBegun(int newGameweek) { return Task.CompletedTask; }
         protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished) { return Task.CompletedTask; }
         public abstract string Cron { get; }
@@ -83,7 +90,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             foreach (var token in tokens)
             {
                 var setup = await _teamRepo.GetSetupByToken(token);
-                
+
                 var slackClient = _slackClientBuilder.Build(token);
                 
                 var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
