@@ -8,12 +8,13 @@
         YellowCards,
         RedCards,
         PenaltiesSaved,
-        PenaltiesMissed
+        PenaltiesMissed,
+        Unknown
     }
 
     static class StatTypeMethods
     {
-        public static StatType? FromStatString(string identifier)
+        public static StatType FromStatString(string identifier)
         {
             switch (identifier)
             {
@@ -32,7 +33,7 @@
                 case "penalties_missed":
                     return StatType.PenaltiesMissed;
                 default:
-                    return null;
+                    return StatType.Unknown;
             }
         }
     }

@@ -114,7 +114,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             foreach (FixtureStat stat in newFixture.Stats)
             {
                 var type = StatTypeMethods.FromStatString(stat.Identifier);
-                if (!type.HasValue)
+                if (type == StatType.Unknown)
                 {
                     continue;
                 }
@@ -123,7 +123,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 FixtureStat oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
 
-                newFixtureStats.Add(type.Value, DiffStat(stat, oldStat));
+                newFixtureStats.Add(type, DiffStat(stat, oldStat));
             }
 
             return newFixtureStats;
