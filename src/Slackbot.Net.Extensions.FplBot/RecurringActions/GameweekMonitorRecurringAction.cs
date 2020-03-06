@@ -9,6 +9,7 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -74,13 +75,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             var newFixtureEvents = newGameweekFixtures.Select(fixture =>
                 {
-                    Fixture oldFixture = _currentGameweekFixtures.FirstOrDefault(f => f.Code == fixture.Code);
+                    var oldFixture = _currentGameweekFixtures.FirstOrDefault(f => f.Code == fixture.Code);
 
                     var newFixtureStats = DiffFixtureStats(fixture, oldFixture);
 
-                    return new FixtureEvents()
+                    return newFixtureStats.Values.Any() ? new FixtureEvents
                     {
-                        gameScore = new GameScore()
+                        GameScore = new GameScore
                         {
                             HomeTeamId = fixture.HomeTeamId,
                             AwayTeamId = fixture.AwayTeamId,
@@ -88,7 +89,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                             AwayTeamScore = fixture.AwayTeamScore,
                         },
                         StatMap = newFixtureStats
-                    };
+                    } : null;
 
                 }).ToList();
 
@@ -100,7 +101,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         private async Task PostNewEvents(List<string> events)
         {
-            foreach (string s in events)
+            foreach (var s in events)
             {
                 await Publish(async slackClient => await Task.FromResult(s));
                 await Task.Delay(2000);
@@ -111,7 +112,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             var newFixtureStats = new Dictionary<StatType, List<PlayerEvent>>();
 
-            foreach (FixtureStat stat in newFixture.Stats)
+            foreach (var stat in newFixture.Stats)
             {
                 var type = StatTypeMethods.FromStatString(stat.Identifier);
                 if (type == StatType.Unknown)
@@ -119,11 +120,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     continue;
                 }
 
-                var diffs = new List<PlayerEvent>();
+                var oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
+                var newPlayerEvents = DiffStat(stat, oldStat);
 
-                FixtureStat oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
-
-                newFixtureStats.Add(type, DiffStat(stat, oldStat));
+                if (newPlayerEvents.Any())
+                {
+                    newFixtureStats.Add(type, newPlayerEvents);
+                }
             }
 
             return newFixtureStats;
@@ -133,8 +136,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             var diffs = new List<PlayerEvent>();
 
-            diffs.Concat(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat.HomeStats));
-            diffs.Concat(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat.AwayStats));
+            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat.HomeStats));
+            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat.AwayStats));
 
             return diffs;
         }
@@ -146,9 +149,10 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             var diffs = new List<PlayerEvent>();
 
-            foreach (FixtureStatValue newStat in newStats)
+            foreach (var newStat in newStats)
             {
-                var oldStat = oldStats.Where(old => old.Element == newStat.Element).FirstOrDefault();
+                var oldStat = oldStats.FirstOrDefault(old => old.Element == newStat.Element);
+
                 // Player had no stats from last check, so we add as new stat
                 if (oldStat == null)
                 {
@@ -161,27 +165,29 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 {
                     continue;
                 }
+
                 // New stat for player is higher than old stat, so we add as new stat
                 if (newStat.Value > oldStat.Value)
                 {
                     diffs.Add(new PlayerEvent(newStat.Element, teamType, false));
                     continue;
                 }
+
                 // New stat for player is lower than old stat, so we add as removed stat
                 if (newStat.Value < oldStat.Value)
                 {
                     diffs.Add(new PlayerEvent(newStat.Element, teamType, true));
-                    continue;
                 }
             }
 
-            foreach (FixtureStatValue oldStat in oldStats)
+            foreach (var oldStat in oldStats)
             {
-                var newStat = newStats.Where(newStat => newStat.Element == oldStat.Element).FirstOrDefault();
+                var newStat = newStats.FirstOrDefault(x => x.Element == oldStat.Element);
+                
                 // Player had a stat previously that is now removed, so we add as removed stat
                 if (newStat == null)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, teamType, true));
+                    diffs.Add(new PlayerEvent(oldStat.Element, teamType, true));
                 }
             }
 
