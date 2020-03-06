@@ -5,17 +5,17 @@ using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using Slackbot.Net.Extensions.FplBot.Models;
 using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class GameweekMonitorRecurringAction : GameweekRecurringActionBase
     {
-        private readonly GameweekEventsFormatter _gameweekEventsFormatter;
         private readonly IFixtureClient _fixtureClient;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
         private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
@@ -34,13 +34,11 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ISlackClientBuilder slackClientBuilder,
             ITransfersByGameWeek transfersByGameWeek,
             IFixtureClient fixtureClient,
-            GameweekEventsFormatter gameweekEventsFormatter,
             IPlayerClient playerClient,
             ITeamsClient teamsClient
             ) : base(options, gwClient, logger, tokenStore, slackClientBuilder)
         {
             _fixtureClient = fixtureClient;
-            _gameweekEventsFormatter = gameweekEventsFormatter;
             _transfersByGameWeek = transfersByGameWeek;
             _playerClient = playerClient;
             _teamsClient = teamsClient;
@@ -91,9 +89,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                         StatMap = newFixtureStats
                     } : null;
 
-                }).ToList();
+                }).WhereNotNull().ToList();
 
-            var formattedEvents = _gameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, _transfersForCurrentGameweek, _players, _teams);
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, _transfersForCurrentGameweek, _players, _teams);
             await PostNewEvents(formattedEvents);
 
             _currentGameweekFixtures = newGameweekFixtures;

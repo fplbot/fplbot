@@ -1,5 +1,4 @@
 using Fpl.Client.Models;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Models;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class GameweekEventsFormatter
     {
-        private readonly string[] _transferredGoalScorerOutTaunts =
+        private static readonly string[] TransferredGoalScorerOutTaunts =
         {
             "Ah jiiz, you transferred him out, {0} :joy:",
             "You just had to knee jerk him out, didn't you, {0}?",
@@ -17,11 +16,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
         };
 
-        public GameweekEventsFormatter(ILogger<GameweekEventsFormatter> logger)
-        {
-        }
-
-        public List<string> FormatNewFixtureEvents(
+        public static List<string> FormatNewFixtureEvents(
             List<FixtureEvents> newFixtureEvents,
             IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
             ICollection<Player> players,
@@ -32,7 +27,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             newFixtureEvents.ForEach(newFixtureEvent =>
             {
                 var scoreHeading = $"{GetScore(teams, newFixtureEvent)}\n";
-                var eventMessages = newFixtureEvent.StatMap.Select(stat =>
+                var eventMessages = newFixtureEvent.StatMap.SelectMany(stat =>
                 {
                     switch (stat.Key)
                     {
@@ -51,7 +46,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         default: return Enumerable.Empty<string>();
                     }
                 });
-                formattedStrings.Add(scoreHeading + eventMessages.Select(s => $":black_small_square: {s}\n"));
+                formattedStrings.Add(scoreHeading + string.Join("\n", eventMessages.Select(s => $":black_small_square: {s}")));
             });
 
             return formattedStrings;
@@ -61,11 +56,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             var gameScore = fixtureEvent.GameScore;
             return $"{teams.Single(team => team.Id == gameScore.HomeTeamId).Name} " +
-                   $"{gameScore.HomeTeamScore} - {gameScore.AwayTeamScore} " +
+                   $"{gameScore.HomeTeamScore}–{gameScore.AwayTeamScore} " +
                    $"{teams.Single(team => team.Id == gameScore.AwayTeamId).Name}";
         }
 
-        private List<string> FormatNewGoals(
+        private static List<string> FormatNewGoals(
             List<PlayerEvent> newGoalEvents, 
             ICollection<Player> players, 
             IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
@@ -84,7 +79,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                     var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
                     if (entriesTransferredPlayerOut.Any())
                     {
-                        message += $" {string.Format(_transferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
+                        message += $" {string.Format(TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
                     }
                 }
 
@@ -92,7 +87,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }).WhereNotNull().ToList();
         }
 
-        private IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
+        private static IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
         {
             return transfersForCurrentGameweek == null ? 
                 Enumerable.Empty<string>() : 
