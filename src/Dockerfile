@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
+COPY Directory.Build.targets Directory.Build.targets
 COPY FplBot.sln ./FplBot.sln
-
 COPY /FplBot.ConsoleApps/FplBot.ConsoleApps.csproj ./FplBot.ConsoleApps/FplBot.ConsoleApps.csproj
 COPY /Fpl.Client/Fpl.Client.csproj ./Fpl.Client/Fpl.Client.csproj
 COPY /Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj ./Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj

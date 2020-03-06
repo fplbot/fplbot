@@ -1,0 +1,26 @@
+@page
+@model FplBot.WebApi.Pages.Admin.Index
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+<div>
+    <h1>ADMIN</h1>
+    <ul>
+    @foreach (var ws in Model.Workspaces)
+    {
+        <li>@ws.Channel - @ws.LeagueId</li>
+    }
+    </ul>
+
+</div>
+</body>
+</html>

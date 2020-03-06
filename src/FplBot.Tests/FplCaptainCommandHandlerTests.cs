@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Handlers;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -20,14 +20,9 @@ namespace FplBot.Tests
         [Theory]
         [InlineData("@fplbot captains")]
         [InlineData("<@UREFQD887> captains")]
-        public async Task GetCurrentGameweekHandler(string input)
+        public async Task GetCaptainsShouldPostAllEntryCaptainPicks(string input)
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
-            });
+            var playerData = await _client.Handle(Factory.CreateDummy(input));
             
             Assert.StartsWith(":boom:", playerData.HandledMessage);
         }
@@ -35,16 +30,23 @@ namespace FplBot.Tests
         [Theory]
         [InlineData("@fplbot captains 1")]
         [InlineData("<@UREFQD887> captains 1")]
-        public async Task GetGameweekOneHandler(string input)
+        public async Task GetCaptainsForGameweekShouldPostAllEntryCaptainPicksForThatGameweek(string input)
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot
-            });
+            var playerData = await _client.Handle(Factory.CreateDummy(input));
 
             Assert.StartsWith(":boom:", playerData.HandledMessage);
+        }
+
+        [Theory]
+        [InlineData("@fplbot captains chart")]
+        [InlineData("<@UREFQD887> captains chart")]
+        [InlineData("<@UREFQD887> captains chart 19")]
+        [InlineData("<@UREFQD887> captains 19 chart")]
+        public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChart(string input)
+        {
+            var playerData = await _client.Handle(Factory.CreateDummy(input));
+
+            Assert.StartsWith(":bar_chart:", playerData.HandledMessage);
         }
     }
 }

@@ -38,8 +38,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ISlackClientBuilder slackClientBuilder,
             IPlayerClient playerClient,
             IGoalsDuringGameweek goalsDuringGameweek,
-            ITransfersByGameWeek transfersByGameWeek) : 
-            base(options, gwClient, logger, tokenStore, slackClientBuilder)
+            ITransfersByGameWeek transfersByGameWeek,
+            IFetchFplbotSetup teamRepo) : 
+            base(options, gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _playerClient = playerClient;
             _goalsDuringGameweek = goalsDuringGameweek;
@@ -58,8 +59,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         private async Task Reset(int newGameweek)
         {
-            _currentGoalsByPlayerDuringGameweek = await _goalsDuringGameweek.GetPlayerGoals(newGameweek);
-            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
+            _currentGoalsByPlayerDuringGameweek = await _goalsDuringGameweek.GetGoalsByPlayerId(newGameweek);
+            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek, _options.Value.LeagueId);
         }
 
         protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished)

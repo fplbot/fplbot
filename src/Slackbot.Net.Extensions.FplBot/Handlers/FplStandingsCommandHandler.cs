@@ -5,29 +5,33 @@ using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
+using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplStandingsCommandHandler : IHandleMessages
     {
-        private readonly IOptions<FplbotOptions> _options;
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILeagueClient _leagueClient;
+        private readonly ITokenStore _tokenStore;
+        private readonly IFetchFplbotSetup _setupFetcher;
 
-        public FplStandingsCommandHandler(IOptions<FplbotOptions> options, IEnumerable<IPublisherBuilder> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient)
+        public FplStandingsCommandHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher)
         {
-            _options = options;
             _publishers = publishers;
             _gameweekClient = gameweekClient;
             _leagueClient = leagueClient;
+            _tokenStore = tokenStore;
+            _setupFetcher = setupFetcher;
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
-            var standings = await GetStandings();
+            var standings = await GetStandings(message);
 
             foreach (var pBuilder in _publishers)
             {
@@ -42,11 +46,13 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse(standings);
         }
 
-        private async Task<string> GetStandings()
+        private async Task<string> GetStandings(SlackMessage message)
         {
             try
             {
-                var leagueTask = _leagueClient.GetClassicLeague(_options.Value.LeagueId);
+                var token = await _tokenStore.GetTokenByTeamId(message.Team.Id);
+                var setup = await _setupFetcher.GetSetupByToken(token);
+                var leagueTask = _leagueClient.GetClassicLeague(setup.LeagueId);
                 var gameweeksTask = _gameweekClient.GetGameweeks();
                 var standings = Formatter.GetStandings(await leagueTask, await gameweeksTask);
                 return standings;

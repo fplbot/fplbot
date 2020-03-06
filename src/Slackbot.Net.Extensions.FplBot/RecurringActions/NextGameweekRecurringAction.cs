@@ -20,8 +20,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITransfersByGameWeek transfersByGameweek,
             ILogger<NextGameweekRecurringAction> logger,
             ITokenStore tokenStore,
-            ISlackClientBuilder slackClientBuilder) : 
-            base(options, gwClient, logger, tokenStore, slackClientBuilder)
+            ISlackClientBuilder slackClientBuilder,
+            IFetchFplbotSetup teamRepo) : 
+            base(options, gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
@@ -31,10 +32,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             await Publish(_ => Task.FromResult($"Gameweek {newGameweek}!"));
 
-            var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek);
+            var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, _options.Value.LeagueId);
             await Publish(_ => Task.FromResult(captains));
 
-            var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek);
+            var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, _options.Value.LeagueId);
+            await Publish(_ => Task.FromResult(captainsChart));
+
+            var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, _options.Value.LeagueId);
             await Publish(_ => Task.FromResult(transfers));
         }
 

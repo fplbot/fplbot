@@ -1,11 +1,12 @@
 ﻿using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Abstractions.Hosting;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -14,18 +15,24 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekHelper _gameweekHelper;
         private readonly ITransfersByGameWeek _transfersClient;
+        private readonly ITokenStore _tokenStore;
+        private readonly IFetchFplbotSetup _setupFetcher;
 
-        public FplTransfersCommandHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekHelper gameweekHelper, ITransfersByGameWeek transfersByGameweek)
+        public FplTransfersCommandHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekHelper gameweekHelper, ITransfersByGameWeek transfersByGameweek, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher)
         {
             _publishers = publishers;
             _gameweekHelper = gameweekHelper;
             _transfersClient = transfersByGameweek;
+            _tokenStore = tokenStore;
+            _setupFetcher = setupFetcher;
         }
 
         public async Task<HandleResponse> Handle(SlackMessage message)
         {
             var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(message.Bot), message.Text, "transfers {gw}");
-            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek);
+            var token = await _tokenStore.GetTokenByTeamId(message.Team.Id);
+            var setup = await _setupFetcher.GetSetupByToken(token);
+            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek.Value, setup.LeagueId);
             
             foreach (var pBuilder in _publishers)
             {

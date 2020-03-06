@@ -1,8 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
 using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
 
@@ -24,18 +27,26 @@ namespace FplBot.WebApi.Controllers
             _slackTeamRepository = slackTeamRepository;
             _options = options;
         }
+        
+        [HttpGet("workspaces")]
+        public async Task<IActionResult> Debug()
+        {
+            var allWorkspaces = await _slackTeamRepository.GetAllWorkspaces();
+            return Ok(allWorkspaces);
+        }
 
         [HttpGet("install")]
-        public IActionResult Install()
+        public IActionResult Install(string channel, string leagueId)
         {
-            _logger.LogInformation("Installing!");
-            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}");
+            _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
+            var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}");
         }
 
         [HttpGet("uninstall")]
         public async Task<IActionResult> Uninstall(string teamId)
         {
-            await _slackTeamRepository.Delete(teamId);
+            await _slackTeamRepository.DeleteByTeamId(teamId);
             return Ok("Ok");
         }
 
@@ -54,22 +65,32 @@ namespace FplBot.WebApi.Controllers
             if (response.Ok)
             {
                 _logger.LogInformation($"Oauth response! {response.Ok}");
-            
+                var setup = ParseState(state);
                 await _slackTeamRepository.Insert(new SlackTeam
                 {
                     TeamId = response.Team_Id,
                     TeamName = response.Team_Name,
                     Scope = response.Scope,
-                    AccessToken = response.Access_Token,
-                    FplBotSlackChannel = state
+                    AccessToken = response.Bot.Bot_Access_Token,
+                    FplBotSlackChannel = setup.Channel,
+                    FplbotLeagueId = setup.LeagueId
                 });
 
-                return Ok(); 
+                return Redirect("/success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
         }
-        
-        
+
+        private FplbotSetup ParseState(string urlencodedState)
+        {
+            var state = WebUtility.UrlDecode(urlencodedState);
+            var splitted = state.Split(",");
+            return new FplbotSetup
+            {
+                Channel = splitted[0],
+                LeagueId = int.Parse(splitted[1])
+            };
+        }
     }
 }

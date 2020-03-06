@@ -1,10 +1,13 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace FplBot.WebApi.Data
 {
     public interface ISlackTeamRepository
     {
         Task Insert(SlackTeam slackTeam);
-        Task Delete(string teamId);
+        Task DeleteByTeamId(string teamId);
+        Task<IEnumerable<FplbotSetup>> GetAllWorkspaces();
     }
 }

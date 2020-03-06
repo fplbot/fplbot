@@ -7,18 +7,19 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal class NearDeadlineRecurringAction : IRecurringAction
     {
-        private readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
         private readonly DateTimeUtils _dateTimeUtils;
         private readonly ISlackClientBuilder _slackClientBuilder;
         private readonly ILogger<NearDeadlineRecurringAction> _logger;
         private readonly int _minutesBeforeDeadline;
         private readonly ITokenStore _tokenStore;
+        private readonly IFetchFplbotSetup _teamRepo;
 
         public NearDeadlineRecurringAction(
             IOptions<FplbotOptions> options, 
@@ -26,14 +27,15 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             DateTimeUtils dateTimeUtils, 
             ISlackClientBuilder slackClientBuilder, 
             ILogger<NearDeadlineRecurringAction> logger, 
-            ITokenStore tokenStore)
+            ITokenStore tokenStore, 
+            IFetchFplbotSetup teamRepo)
         {
-            _options = options;
             _gwClient = gwClient;
             _dateTimeUtils = dateTimeUtils;
             _slackClientBuilder = slackClientBuilder;
             _logger = logger;
             _tokenStore = tokenStore;
+            _teamRepo = teamRepo;
             _minutesBeforeDeadline = 60;
         }
 
@@ -86,12 +88,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
+                var setup = await _teamRepo.GetSetupByToken(token);
+
                 var slackClient = _slackClientBuilder.Build(token);
-                //TODO: Fetch channel to post to from some storage for distributed app
-                var res = await slackClient.ChatPostMessage(_options.Value.Channel, msg);
+                var res = await slackClient.ChatPostMessage(setup.Channel, msg);
 
                 if (!res.Ok)
-                    _logger.LogError($"Could not post to {_options.Value.Channel}", res.Error);
+                    _logger.LogError($"Could not post to {setup.Channel}", res.Error);
             }
         }
 

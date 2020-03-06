@@ -1,4 +1,5 @@
 using System;
+using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,7 @@ namespace Slackbot.Net.Abstractions.Hosting
                 o.Login = opts.Login;
                 o.Password = opts.Password;
             });
+            builder.Services.AddSingleton<IFetchFplbotSetup, ConfigFplbotSetupFetcher>();
             builder.AddCommon();
 
             return builder;
@@ -33,6 +35,23 @@ namespace Slackbot.Net.Abstractions.Hosting
         {
             builder.Services.Configure<FplbotOptions>(config);
             builder.Services.AddFplApiClient(config);
+            builder.Services.AddSingleton<IFetchFplbotSetup, ConfigFplbotSetupFetcher>();
+            builder.AddCommon();
+            return builder;
+        }
+
+        public static ISlackbotWorkerBuilder AddDistributedFplBot<T>(this ISlackbotWorkerBuilder builder, Action<FplApiClientOptions> clientOptions) where T: class, IFetchFplbotSetup
+        {
+            builder.Services.AddFplApiClient(clientOptions);
+            builder.Services.AddSingleton<IFetchFplbotSetup, T>();
+            builder.AddCommon();
+            return builder;
+        }
+        
+        public static ISlackbotWorkerBuilder AddDistributedFplBot<T>(this ISlackbotWorkerBuilder builder, IConfiguration config) where T: class, IFetchFplbotSetup
+        {
+            builder.Services.AddFplApiClient(config);
+            builder.Services.AddSingleton<IFetchFplbotSetup, T>();
             builder.AddCommon();
             return builder;
         }

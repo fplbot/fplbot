@@ -1,11 +1,12 @@
-﻿using System;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,11 +14,12 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal abstract class GameweekRecurringActionBase : IRecurringAction
     {
-        private readonly IOptions<FplbotOptions> _options;
+        protected readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
         private readonly ILogger<GameweekRecurringActionBase> _logger;
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _slackClientBuilder;
+        private readonly IFetchFplbotSetup _teamRepo;
         private Gameweek _storedCurrent;
 
         protected GameweekRecurringActionBase(
@@ -25,18 +27,19 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             IGameweekClient gwClient,
             ILogger<GameweekRecurringActionBase> logger,
             ITokenStore tokenStore,
-            ISlackClientBuilder slackClientBuilder)
+            ISlackClientBuilder slackClientBuilder,
+            IFetchFplbotSetup teamRepo)
         {
             _options = options;
             _gwClient = gwClient;
             _logger = logger;
             _tokenStore = tokenStore;
             _slackClientBuilder = slackClientBuilder;
+            _teamRepo = teamRepo;
         }
 
         public async Task Process()
         {
-            _logger.LogDebug($"Channel: {_options.Value.Channel} & League: {_options.Value.LeagueId}");
 
             var gameweeks = await _gwClient.GetGameweeks();
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
@@ -68,7 +71,15 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             await DoStuffWithinCurrentGameweek(_storedCurrent.Id, _storedCurrent.IsFinished);
         }
 
-        protected virtual Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek) { return Task.CompletedTask; }
+        protected virtual async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
+        {
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
+            {
+                var setup = await _teamRepo.GetSetupByToken(token);
+                _logger.LogDebug($"Channel: {setup.Channel} & League: {setup.LeagueId}");    
+            }
+        }
         protected virtual Task DoStuffWhenNewGameweekHaveJustBegun(int newGameweek) { return Task.CompletedTask; }
         protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished) { return Task.CompletedTask; }
         public abstract string Cron { get; }
@@ -78,12 +89,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
+                var setup = await _teamRepo.GetSetupByToken(token);
+
                 var slackClient = _slackClientBuilder.Build(token);
-                //TODO: Fetch channel to post to from some storage for distributed app
-                var res = await slackClient.ChatPostMessage(_options.Value.Channel, await msg(slackClient));
+                
+                var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
 
                 if (!res.Ok)
-                    _logger.LogError($"Could not post to {_options.Value.Channel}", res.Error);
+                    _logger.LogError($"Could not post to {setup.Channel}", res.Error);
             }
         }
     }

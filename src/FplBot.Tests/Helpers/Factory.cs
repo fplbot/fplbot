@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Handlers;
+using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Dynamic;
@@ -78,6 +79,21 @@ namespace FplBot.Tests.Helpers
             }
 
             services.AddSingleton<T>(s => replacement);
+        }
+
+        public static SlackMessage CreateDummy(string input)
+        {
+            return new SlackMessage
+            {
+                Text = input,
+                ChatHub = new ChatHub(),
+                Bot = Factory.MockBot,
+                Team = new TeamDetails
+                {
+                    Id = "123",
+                    Name = "SomeTeam"
+                }
+            };
         }
     }
 }
