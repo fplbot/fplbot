@@ -3,6 +3,8 @@ using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +15,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
     internal class GameweekMonitorRecurringAction : GameweekRecurringActionBase
     {
         private readonly IFixtureClient _fixtureClient;
-        private readonly ITeamsClient _teamsClient;
-        private readonly IPlayerClient _playerClient;
+        private readonly ITransfersByGameWeek _transfersByGameWeek;
+        private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
+        private readonly GameweekEventsFormatter _gameweekEventsFormatter;
 
         private ICollection<Fixture> _currentGameweekFixtures;
 
@@ -24,14 +27,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ILogger<GameweekMonitorRecurringAction> logger,
             ITokenStore tokenStore,
             ISlackClientBuilder slackClientBuilder,
+            ITransfersByGameWeek transfersByGameWeek,
             IFixtureClient fixtureClient,
-            ITeamsClient teamsClient,
-            IPlayerClient playerClient
+            GameweekEventsFormatter gameweekEventsFormatter
             ) : base(options, gwClient, logger, tokenStore, slackClientBuilder)
         {
             _fixtureClient = fixtureClient;
-            _teamsClient = teamsClient;
-            _playerClient = playerClient;
+            _gameweekEventsFormatter = gameweekEventsFormatter;
+            _transfersByGameWeek = transfersByGameWeek;
         }
 
         protected override async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
@@ -47,6 +50,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private async Task Reset(int newGameweek)
         {
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
+            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
         }
 
         protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished)
@@ -58,17 +62,11 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             var newGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
 
-            var players = await _playerClient.GetAllPlayers();
-            var teams = await _teamsClient.GetAllTeams();
-
             var newFixtureEvents = newGameweekFixtures.Select(fixture =>
                 {
-                    var homeTeamName = teams.Single(t => t.Id == fixture.HomeTeamId).ShortName;
-                    var awayTeamName = teams.Single(t => t.Id == fixture.AwayTeamId).ShortName;
-
                     Fixture oldFixture = _currentGameweekFixtures.FirstOrDefault(f => f.Code == fixture.Code);
 
-                    var newFixtureStats = DiffFixtureStats(fixture, oldFixture, players);
+                    var newFixtureStats = DiffFixtureStats(fixture, oldFixture);
 
                     return new FixtureEvents()
                     {
@@ -78,65 +76,28 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                             AwayTeamId = fixture.AwayTeamId,
                             HomeTeamScore = fixture.HomeTeamScore,
                             AwayTeamScore = fixture.AwayTeamScore,
-                            HomeTeamName = homeTeamName,
-                            AwayTeamName = awayTeamName,
                         },
                         StatMap = newFixtureStats
                     };
 
                 }).ToList();
 
-            PostNewEvents(newFixtureEvents);
+            var formattedEvents = await _gameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, _transfersForCurrentGameweek);
+            await PostNewEvents(formattedEvents);
 
             _currentGameweekFixtures = newGameweekFixtures;
         }
 
-        private void PostNewEvents(List<FixtureEvents> newFixtureEvents)
+        private async Task PostNewEvents(List<string> events)
         {
-            newFixtureEvents.ForEach(newFixtureEvent =>
+            foreach (string s in events)
             {
-                newFixtureEvent.StatMap.Keys.ToList().ForEach(statType =>
-                {
-                    switch (statType)
-                    {
-                        case StatType.GoalsScored:
-                            // Format goals
-                            break;
-                        case StatType.Assists:
-                            // Format assists
-                            break;
-                        case StatType.OwnGoals:
-                            // Format own goals
-                            break;
-                        case StatType.RedCards:
-                            // Format red cards
-                            break;
-                        case StatType.PenaltiesMissed:
-                            // Format penalties missed
-                            break;
-                        case StatType.PenaltiesSaved:
-                            // Format penalties saved
-                            break;
-                    }
-                });
-            });
-        } 
-
-        /*private async Task PostNewFixtureEvents(IDictionary<int, int> newGoalsByPlayer)
-        {
-            var players = await _playerClient.GetAllPlayers();
-            foreach (var key in newGoalsByPlayer.Keys)
-            {
-                await Publish(async slackClient =>
-                {
-                    message = "";
-                    return message;
-                });
+                await Publish(async slackClient => await Task.FromResult(s));
                 await Task.Delay(2000);
             }
-        }*/
+        }
 
-        private static IDictionary<StatType, List<PlayerEvent>> DiffFixtureStats(Fixture newFixture, Fixture oldFixture, ICollection<Player> players)
+        private static IDictionary<StatType, List<PlayerEvent>> DiffFixtureStats(Fixture newFixture, Fixture oldFixture)
         {
             var newFixtureStats = new Dictionary<StatType, List<PlayerEvent>>();
 
@@ -152,18 +113,18 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 FixtureStat oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
 
-                newFixtureStats.Add(type.Value, DiffStat(stat, oldStat, players));
+                newFixtureStats.Add(type.Value, DiffStat(stat, oldStat));
             }
 
             return newFixtureStats;
         }
 
-        private static List<PlayerEvent> DiffStat(FixtureStat newStat, FixtureStat oldStat, ICollection<Player> players)
+        private static List<PlayerEvent> DiffStat(FixtureStat newStat, FixtureStat oldStat)
         {
             var diffs = new List<PlayerEvent>();
 
-            diffs.Concat(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat.HomeStats, players));
-            diffs.Concat(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat.AwayStats, players));
+            diffs.Concat(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat.HomeStats));
+            diffs.Concat(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat.AwayStats));
 
             return diffs;
         }
@@ -171,21 +132,17 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private static List<PlayerEvent> DiffStat(
             PlayerEvent.TeamType teamType,
             ICollection<FixtureStatValue> newStats,
-            ICollection<FixtureStatValue> oldStats,
-            ICollection<Player> players)
+            ICollection<FixtureStatValue> oldStats)
         {
             var diffs = new List<PlayerEvent>();
 
             foreach (FixtureStatValue newStat in newStats)
             {
-                Player player = players.FirstOrDefault(p => p.Id == newStat.Element);
-                string playerName = $"{player.FirstName} {player.SecondName}";
-
                 var oldStat = oldStats.Where(old => old.Element == newStat.Element).FirstOrDefault();
                 // Player had no stats from last check, so we add as new stat
                 if (oldStat == null)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, playerName, teamType, false));
+                    diffs.Add(new PlayerEvent(newStat.Element, teamType, false));
                     continue;
                 }
 
@@ -197,13 +154,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 // New stat for player is higher than old stat, so we add as new stat
                 if (newStat.Value > oldStat.Value)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, playerName, teamType, false));
+                    diffs.Add(new PlayerEvent(newStat.Element, teamType, false));
                     continue;
                 }
                 // New stat for player is lower than old stat, so we add as removed stat
                 if (newStat.Value < oldStat.Value)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, playerName, teamType, true));
+                    diffs.Add(new PlayerEvent(newStat.Element, teamType, true));
                     continue;
                 }
             }
@@ -214,9 +171,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 // Player had a stat previously that is now removed, so we add as removed stat
                 if (newStat == null)
                 {
-                    Player player = players.FirstOrDefault(p => p.Id == newStat.Element);
-                    string playerName = $"{player.FirstName} {player.SecondName}";
-                    diffs.Add(new PlayerEvent(newStat.Element, playerName, teamType, true));
+                    diffs.Add(new PlayerEvent(newStat.Element, teamType, true));
                 }
             }
 
