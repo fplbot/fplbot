@@ -16,6 +16,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
         };
 
+        private static readonly string[] GoodTransferMessages =
+        {
+            "Nice save {0} ! :v:",
+            "How did you know, {0}?",
+            "Trying to climb the ranks, {}? :chart_with_upwards_trend:"
+        };
+
         public static List<string> FormatNewFixtureEvents(
             List<FixtureEvents> newFixtureEvents,
             IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
@@ -38,7 +45,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         case StatType.OwnGoals:
                             return Enumerable.Empty<string>();
                         case StatType.RedCards:
-                            return Enumerable.Empty<string>();
+                            return FormatNewRedCards(stat.Value, players, transfersForCurrentGameweek);
                         case StatType.PenaltiesMissed:
                             return Enumerable.Empty<string>();
                         case StatType.PenaltiesSaved:
@@ -68,7 +75,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return newGoalEvents.Select(g =>
             {
                 var player = players.Single(x => x.Id == g.PlayerId);
-                var message = $"{player.FirstName} {player.SecondName} just scored a goal! :soccer:";
+                var message = $"{player.FirstName} {player.SecondName} just scored a goal! :soccer: ";
 
                 if (g.IsRemoved)
                 {
@@ -80,6 +87,33 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                     if (entriesTransferredPlayerOut.Any())
                     {
                         message += $" {string.Format(TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
+                    }
+                }
+
+                return message;
+            }).WhereNotNull().ToList();
+        }
+
+        private static List<string> FormatNewRedCards(
+            List<PlayerEvent> newRedCardEvents,
+            ICollection<Player> players,
+            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
+        {
+            return newRedCardEvents.Select(g =>
+            {
+                var player = players.Single(x => x.Id == g.PlayerId);
+                var message = $"{player.FirstName} {player.SecondName} just got a red card! :red_circle:";
+
+                if (g.IsRemoved)
+                {
+                    message = $"~{message}~ (VAR? :shrug:)";
+                }
+                else
+                {
+                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
+                    if (entriesTransferredPlayerOut.Any())
+                    {
+                        message += $" {string.Format(GoodTransferMessages.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
                     }
                 }
 
