@@ -149,9 +149,14 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                     var picks = await picksTask;
                     var transferCost = picks.EventEntryHistory.EventTransfersCost;
                     var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
+                    var freeHitPlayed = picks.ActiveChip == Constants.ChipNames.FreeHit;
                     if (wildcardPlayed)
                     {
                         sb.Append($"{entry.GetEntryLink(gameweek)} threw a WILDCAAAAARD :fire::fire::fire::\n");
+                    } 
+                    else if (freeHitPlayed)
+                    {
+                        sb.Append($"{entry.GetEntryLink(gameweek)} went all in with the Free Hit chip:\n");
                     }
                     else
                     {
