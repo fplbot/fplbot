@@ -2,6 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Events;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.Publishers.Logger;
 using Slackbot.Net.Extensions.Publishers.Slack;
@@ -30,12 +32,10 @@ namespace FplBot.ConsoleApps
                         .AddFplBot(hostContext.Configuration.GetSection("fpl"))
                         .BuildRecurrers();
                 })
-                .ConfigureLogging((context, configLogging) =>
-                {
-                    configLogging
-                        .SetMinimumLevel(LogLevel.Trace)
-                        .AddConsole(c => c.DisableColors = true)
-                        .AddDebug();
-                });
+                .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
+                    .MinimumLevel.Debug()
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} ({SourceContext}){NewLine}{Exception}"));
     }
 }
