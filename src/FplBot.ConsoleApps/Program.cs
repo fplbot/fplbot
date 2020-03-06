@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,8 +34,8 @@ namespace FplBot.ConsoleApps
                         .BuildRecurrers();
                 })
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
-                    .MinimumLevel.Debug()
-                    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                    .ReadFrom.Configuration(hostingContext.Configuration)
+                    .Filter.ByExcluding(c => c.Properties.Any(p => p.Value.ToString().Contains("LogicalHandler")))
                     .Enrich.FromLogContext()
                     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} ({SourceContext}){NewLine}{Exception}"));
     }
