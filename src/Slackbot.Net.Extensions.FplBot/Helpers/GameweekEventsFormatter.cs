@@ -1,6 +1,7 @@
 using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,7 +21,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             "Nice save {0} ! :v:",
             "How did you know, {0}?",
-            "Trying to climb the ranks, {}? :chart_with_upwards_trend:"
+            "Trying to climb the ranks, {0}? :chart_with_upwards_trend:"
         };
 
         public static List<string> FormatNewFixtureEvents(
@@ -41,15 +42,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         case StatType.GoalsScored:
                             return FormatNewGoals(stat.Value, players, transfersForCurrentGameweek);
                         case StatType.Assists:
-                            return Enumerable.Empty<string>();
+                            return FormatNewAssists(stat.Value, players);
                         case StatType.OwnGoals:
-                            return Enumerable.Empty<string>();
+                            return FormatOwnGoals(stat.Value, players);
                         case StatType.RedCards:
                             return FormatNewRedCards(stat.Value, players, transfersForCurrentGameweek);
                         case StatType.PenaltiesMissed:
-                            return Enumerable.Empty<string>();
+                            return FormatNewPenaltiesMissed(stat.Value, players);
                         case StatType.PenaltiesSaved:
-                            return Enumerable.Empty<string>();
+                            return FormatNewPenaltiesSaved(stat.Value, players);
                         default: return Enumerable.Empty<string>();
                     }
                 });
@@ -59,12 +60,48 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return formattedStrings;
         }
 
-        private static string GetScore(ICollection<Team> teams, FixtureEvents fixtureEvent)
+        private static IEnumerable<object> FormatNewAssists(
+            List<PlayerEvent> newAssistEvents, 
+            ICollection<Player> players)
         {
-            var gameScore = fixtureEvent.GameScore;
-            return $"{teams.Single(team => team.Id == gameScore.HomeTeamId).Name} " +
-                   $"{gameScore.HomeTeamScore}–{gameScore.AwayTeamScore} " +
-                   $"{teams.Single(team => team.Id == gameScore.AwayTeamId).Name}";
+            return FormatEvent(
+                newAssistEvents,
+                players,
+                "just got an assist!",
+                ":right-facing_fist::left-facing_fist: ");
+        }
+
+        private static IEnumerable<object> FormatOwnGoals(
+            List<PlayerEvent> newOwnGoalEvents,
+            ICollection<Player> players)
+        {
+            return FormatEvent(
+                newOwnGoalEvents,
+                players,
+                "just scored a goal! In his own goal!",
+                ":face_palm:");
+        }
+
+        private static IEnumerable<object> FormatNewPenaltiesMissed(
+            List<PlayerEvent> newPenaltiesMissedEvents,
+            ICollection<Player> players)
+        {
+            return FormatEvent(
+                newPenaltiesMissedEvents,
+                players,
+                "just missed a penalty!",
+                ":dizzy_face:");
+        }
+
+        private static IEnumerable<object> FormatNewPenaltiesSaved(
+            List<PlayerEvent> newPenaltiesSavedEvents,
+            ICollection<Player> players)
+        {
+            return FormatEvent(
+                newPenaltiesSavedEvents,
+                players,
+                "just saved a penalty!",
+                ":man-cartwheeling:");
         }
 
         private static List<string> FormatNewGoals(
@@ -72,26 +109,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             ICollection<Player> players, 
             IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
         {
-            return newGoalEvents.Select(g =>
-            {
-                var player = players.Single(x => x.Id == g.PlayerId);
-                var message = $"{player.FirstName} {player.SecondName} just scored a goal! :soccer: ";
-
-                if (g.IsRemoved)
-                {
-                    message = $"~{message}~ (VAR? :shrug:)";
-                }
-                else
+            return FormatEvent(
+                newGoalEvents,
+                players,
+                "just scored a goal!",
+                ":soccer:",
+                player =>
                 {
                     var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
-                    if (entriesTransferredPlayerOut.Any())
-                    {
-                        message += $" {string.Format(TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
-                    }
-                }
-
-                return message;
-            }).WhereNotNull().ToList();
+                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
+                });
         }
 
         private static List<string> FormatNewRedCards(
@@ -99,10 +126,29 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             ICollection<Player> players,
             IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
         {
-            return newRedCardEvents.Select(g =>
+            return FormatEvent(
+                newRedCardEvents,
+                players,
+                "just got a red card!",
+                ":red_circle:",
+                player =>
+                {
+                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
+                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(GoodTransferMessages.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
+                });
+        }
+
+        private static List<string> FormatEvent(
+            List<PlayerEvent> newGoalEvents,
+            ICollection<Player> players,
+            string eventDescription,
+            string eventEmoji,
+            Func<Player, string> append = null)
+        {
+            return newGoalEvents.Select(g =>
             {
                 var player = players.Single(x => x.Id == g.PlayerId);
-                var message = $"{player.FirstName} {player.SecondName} just got a red card! :red_circle:";
+                var message = $"{player.FirstName} {player.SecondName} {eventDescription} {eventEmoji} ";
 
                 if (g.IsRemoved)
                 {
@@ -110,15 +156,20 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
                 else
                 {
-                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
-                    if (entriesTransferredPlayerOut.Any())
-                    {
-                        message += $" {string.Format(GoodTransferMessages.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}";
-                    }
+                    message += append?.Invoke(player);
                 }
 
                 return message;
+
             }).WhereNotNull().ToList();
+        }
+
+        private static string GetScore(ICollection<Team> teams, FixtureEvents fixtureEvent)
+        {
+            var gameScore = fixtureEvent.GameScore;
+            return $"{teams.Single(team => team.Id == gameScore.HomeTeamId).Name} " +
+                   $"{gameScore.HomeTeamScore}-{gameScore.AwayTeamScore} " +
+                   $"{teams.Single(team => team.Id == gameScore.AwayTeamId).Name}";
         }
 
         private static IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
