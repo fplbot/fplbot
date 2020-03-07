@@ -1,6 +1,5 @@
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -22,7 +21,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly IFetchFplbotSetup _teamRepo;
 
         public NearDeadlineRecurringAction(
-            IOptions<FplbotOptions> options, 
             IGameweekClient gwClient, 
             DateTimeUtils dateTimeUtils, 
             ISlackClientBuilder slackClientBuilder, 
