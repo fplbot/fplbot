@@ -9,7 +9,7 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
     {
         public static async Task ForEach<T>(this IEnumerable<T> enumerable, Func<T, Task> func)
         {
-            foreach (var item in enumerable)
+            foreach (var item in enumerable.MaterializeToArray())
             {
                 await func(item);
             }
