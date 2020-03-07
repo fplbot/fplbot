@@ -73,7 +73,8 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddHandler<FplTransfersCommandHandler>()
                 .AddRecurring<NextGameweekRecurringAction>()
                 .AddRecurring<NearDeadlineRecurringAction>()
-                .AddRecurring<GoalMonitorRecurringAction>();
+                .AddRecurring<GameweekMonitorRecurringAction>();
+                //.AddRecurring<GoalMonitorRecurringAction>();
         }
     }
 }
