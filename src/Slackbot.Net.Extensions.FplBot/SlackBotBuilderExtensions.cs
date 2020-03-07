@@ -74,7 +74,6 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddRecurring<NextGameweekRecurringAction>()
                 .AddRecurring<NearDeadlineRecurringAction>()
                 .AddRecurring<GameweekMonitorRecurringAction>();
-                //.AddRecurring<GoalMonitorRecurringAction>();
         }
     }
 }

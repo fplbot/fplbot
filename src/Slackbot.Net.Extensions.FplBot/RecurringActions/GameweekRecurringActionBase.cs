@@ -14,23 +14,21 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     internal abstract class GameweekRecurringActionBase : IRecurringAction
     {
-        protected readonly IOptions<FplbotOptions> _options;
         private readonly IGameweekClient _gwClient;
         private readonly ILogger<GameweekRecurringActionBase> _logger;
-        private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _slackClientBuilder;
-        private readonly IFetchFplbotSetup _teamRepo;
         private Gameweek _storedCurrent;
+        
+        protected readonly ITokenStore _tokenStore;
+        protected readonly IFetchFplbotSetup _teamRepo;
 
         protected GameweekRecurringActionBase(
-            IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
             ILogger<GameweekRecurringActionBase> logger,
             ITokenStore tokenStore,
             ISlackClientBuilder slackClientBuilder,
             IFetchFplbotSetup teamRepo)
         {
-            _options = options;
             _gwClient = gwClient;
             _logger = logger;
             _tokenStore = tokenStore;
@@ -84,20 +82,38 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         protected virtual Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished) { return Task.CompletedTask; }
         public abstract string Cron { get; }
 
-        protected async Task Publish(Func<ISlackClient, Task<string>> msg)
+        protected async Task PublishToAllWorkspaces(Func<ISlackClient, Task<string>> msg)
+        {
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
+            {
+                await Publish(msg, token);
+            }
+        }
+
+        protected async Task PublishToSingleWorkspaceConnectedToLeague(Func<ISlackClient, Task<string>> msg, int leagueId)
         {
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
                 var setup = await _teamRepo.GetSetupByToken(token);
 
-                var slackClient = _slackClientBuilder.Build(token);
-                
-                var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
-
-                if (!res.Ok)
-                    _logger.LogError($"Could not post to {setup.Channel}", res.Error);
+                if (setup.LeagueId == leagueId)
+                {
+                    await Publish(msg, token);
+                }
             }
+        }
+
+        protected async Task Publish(Func<ISlackClient, Task<string>> msg, string token)
+        {
+            var setup = await _teamRepo.GetSetupByToken(token);
+            var slackClient = _slackClientBuilder.Build(token);
+
+            var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
+
+            if (!res.Ok)
+                _logger.LogError($"Could not post to {setup.Channel}", res.Error);
         }
     }
 }
