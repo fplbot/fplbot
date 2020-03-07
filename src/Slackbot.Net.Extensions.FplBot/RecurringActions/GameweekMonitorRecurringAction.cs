@@ -26,8 +26,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         private ICollection<Fixture> _currentGameweekFixtures;
 
-        public GameweekMonitorRecurringAction(
-            IOptions<FplbotOptions> options,
+        public GameweekMonitorRecurringAction(IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
             ILogger<GameweekMonitorRecurringAction> logger,
             ITokenStore tokenStore,
@@ -35,8 +34,8 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITransfersByGameWeek transfersByGameWeek,
             IFixtureClient fixtureClient,
             IPlayerClient playerClient,
-            ITeamsClient teamsClient
-            ) : base(options, gwClient, logger, tokenStore, slackClientBuilder)
+            ITeamsClient teamsClient, 
+            IFetchFplbotSetup teamRepo) : base(options, gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _fixtureClient = fixtureClient;
             _transfersByGameWeek = transfersByGameWeek;
@@ -57,7 +56,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private async Task Reset(int newGameweek)
         {
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
-            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek);
+            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek, _options.Value.LeagueId);
             _players = await _playerClient.GetAllPlayers();
             _teams = await _teamsClient.GetAllTeams();
         }
