@@ -1,7 +1,6 @@
 ﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -18,7 +17,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
     {
         private readonly IFixtureClient _fixtureClient;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
-        private IEnumerable<TransfersByGameWeek.Transfer> _transfersForCurrentGameweek;
+        private readonly IDictionary<int, IEnumerable<TransfersByGameWeek.Transfer>> _transfersForCurrentGameweek;
         private readonly IPlayerClient _playerClient;
         private ICollection<Team> _teams;
         private readonly ITeamsClient _teamsClient;
@@ -26,7 +25,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         private ICollection<Fixture> _currentGameweekFixtures;
 
-        public GameweekMonitorRecurringAction(IOptions<FplbotOptions> options,
+        public GameweekMonitorRecurringAction(
             IGameweekClient gwClient,
             ILogger<GameweekMonitorRecurringAction> logger,
             ITokenStore tokenStore,
@@ -35,12 +34,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             IFixtureClient fixtureClient,
             IPlayerClient playerClient,
             ITeamsClient teamsClient, 
-            IFetchFplbotSetup teamRepo) : base(options, gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
+            IFetchFplbotSetup teamRepo) : base(gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _fixtureClient = fixtureClient;
             _transfersByGameWeek = transfersByGameWeek;
             _playerClient = playerClient;
             _teamsClient = teamsClient;
+            _transfersForCurrentGameweek = new Dictionary<int, IEnumerable<TransfersByGameWeek.Transfer>>();
         }
 
         protected override async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
@@ -56,9 +56,16 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private async Task Reset(int newGameweek)
         {
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
-            _transfersForCurrentGameweek = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek, _options.Value.LeagueId);
             _players = await _playerClient.GetAllPlayers();
             _teams = await _teamsClient.GetAllTeams();
+            
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
+            {
+                var c = await _teamRepo.GetSetupByToken(token);
+                var transferForLeague = await _transfersByGameWeek.GetTransfersByGameweek(newGameweek, c.LeagueId);
+                _transfersForCurrentGameweek.Add(c.LeagueId, transferForLeague);
+            }
         }
 
         protected override async Task DoStuffWithinCurrentGameweek(int currentGameweek, bool isFinished)
@@ -90,18 +97,22 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 }).WhereNotNull().ToList();
 
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, _transfersForCurrentGameweek, _players, _teams);
-            await PostNewEvents(formattedEvents);
+            foreach (var league in _transfersForCurrentGameweek.Keys)
+            {
+                var theEventsForTheLeague = _transfersForCurrentGameweek[league];
+                var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, theEventsForTheLeague, _players, _teams);
+                await PostNewEvents(league, formattedEvents); 
+            }
 
             _currentGameweekFixtures = newGameweekFixtures;
         }
 
-        private async Task PostNewEvents(List<string> events)
+        private async Task PostNewEvents(int leagueId, List<string> events)
         {
             foreach (var s in events)
             {
-                await Publish(async slackClient => await Task.FromResult(s));
-                await Task.Delay(2000);
+                await PublishToSingleWorkspaceConnectedToLeague(async slackClient => await Task.FromResult(s), leagueId);
+                await Task.Delay(500);
             }
         }
 

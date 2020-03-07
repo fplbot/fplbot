@@ -1,6 +1,5 @@
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
@@ -14,7 +13,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly ITransfersByGameWeek _transfersByGameweek;
 
         public NextGameweekRecurringAction(
-            IOptions<FplbotOptions> options,
             IGameweekClient gwClient,
             ICaptainsByGameWeek captainsByGameweek,
             ITransfersByGameWeek transfersByGameweek,
@@ -22,7 +20,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITokenStore tokenStore,
             ISlackClientBuilder slackClientBuilder,
             IFetchFplbotSetup teamRepo) : 
-            base(options, gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
+            base(gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
@@ -30,16 +28,22 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         protected override async Task DoStuffWhenNewGameweekHaveJustBegun(int newGameweek)
         {
-            await Publish(_ => Task.FromResult($"Gameweek {newGameweek}!"));
+            await PublishToAllWorkspaces(_ => Task.FromResult($"Gameweek {newGameweek}!"));
 
-            var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, _options.Value.LeagueId);
-            await Publish(_ => Task.FromResult(captains));
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
+            {
+                var setup = await _teamRepo.GetSetupByToken(token);
+                
+                var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, setup.LeagueId);
+                await Publish(_ => Task.FromResult(captains), token);
 
-            var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, _options.Value.LeagueId);
-            await Publish(_ => Task.FromResult(captainsChart));
+                var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, setup.LeagueId);
+                await Publish(_ => Task.FromResult(captainsChart), token);
 
-            var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, _options.Value.LeagueId);
-            await Publish(_ => Task.FromResult(transfers));
+                var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, setup.LeagueId);
+                await Publish(_ => Task.FromResult(transfers), token);
+            }
         }
 
         public override string Cron => Constants.CronPatterns.EveryMinute;
