@@ -53,8 +53,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                             return FormatNewPenaltiesSaved(stat.Value, players);
                         default: return Enumerable.Empty<string>();
                     }
-                });
-                formattedStrings.Add(scoreHeading + string.Join("\n", eventMessages.Select(s => $":black_small_square: {s}")));
+                }).MaterializeToArray();
+                if (eventMessages.Any())
+                {
+                    formattedStrings.Add(scoreHeading + string.Join("\n", eventMessages.Select(s => $":black_small_square: {s}")));
+                }
             });
 
             return formattedStrings;
