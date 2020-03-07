@@ -1,3 +1,4 @@
+using System;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Handlers;
@@ -6,6 +7,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using System.Linq;
 using System.Threading.Tasks;
+using Cronos;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
@@ -74,7 +76,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             else
             {
                 _logger.LogDebug($"Not {_minutesBeforeDeadline} minutes to deadline.\n" +
-                                 $"NowUtc: {_dateTimeUtils.NowUtc}\n" + 
+                                 $"NowUtc: {DateTime.UtcNow}\n" + 
                                  $"Deadline current:{current.Deadline}\n" +
                                  $"Deadline next:{next.Deadline}\n" +
                                  $"No notification.");
