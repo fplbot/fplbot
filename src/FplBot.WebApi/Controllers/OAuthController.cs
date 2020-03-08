@@ -5,6 +5,7 @@ using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
@@ -40,7 +41,7 @@ namespace FplBot.WebApi.Controllers
         {
             _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
-            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri=http://localhost:1337/oauth/authorize");
         }
 
         [HttpGet("uninstall")]
@@ -61,6 +62,8 @@ namespace FplBot.WebApi.Controllers
                 Code = code, 
                 SingleChannel = true
             });
+            
+            _logger.LogInformation($"OauthResponse : {JsonConvert.SerializeObject(response)}");
 
             if (response.Ok)
             {
