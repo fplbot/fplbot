@@ -41,6 +41,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _playerClient = playerClient;
             _teamsClient = teamsClient;
             _transfersForCurrentGameweek = new Dictionary<int, IEnumerable<TransfersByGameWeek.Transfer>>();
+            _currentGameweekFixtures = new List<Fixture>();
+            _players = new List<Player>();
+            _teams = new List<Team>();
         }
 
         protected override async Task DoStuffWhenInitialGameweekHasJustBegun(int newGameweek)
