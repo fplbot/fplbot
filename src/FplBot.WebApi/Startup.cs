@@ -48,8 +48,13 @@ namespace FplBot.WebApi
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    
                 })
-                .AddCookie(o => o.ForwardChallenge = SlackAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(o =>
+                {
+                    o.AccessDeniedPath = "/Forbidden";
+                    o.ForwardChallenge = SlackAuthenticationDefaults.AuthenticationScheme;
+                })
                 .AddSlack(c =>
             {
                 c.ClientId = Configuration.GetValue<string>("CLIENT_ID");
@@ -57,11 +62,11 @@ namespace FplBot.WebApi
             });
             services.AddAuthorization(options =>
             {
-                //options.AddPolicy("IsHeltBlankSlackUser", b => b.RequireClaim("TeamName", "heltblank"));
+                options.AddPolicy("IsHeltBlankSlackUser", b => b.RequireClaim("urn:slack:team_id", "T0A9QSU83"));
             });
             services.AddRazorPages().AddRazorPagesOptions(options =>
             {
-                options.Conventions.AuthorizeFolder("/Admin");
+                options.Conventions.AuthorizeFolder("/Admin", "IsHeltBlankSlackUser");
                 options.Conventions.AllowAnonymousToPage("/*");
             });;
         }

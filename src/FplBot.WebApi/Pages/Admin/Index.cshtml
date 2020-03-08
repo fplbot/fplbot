@@ -9,18 +9,21 @@
 
 <html>
 <head>
-    <title>Home</title>
+    <title>Admin</title>
 </head>
 <body>
 <div>
     <h1>ADMIN</h1>
+    <p>Logged in as @User.Identity.Name</p>
+    <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+    
+    <h3>Workspaces</h3>
     <ul>
     @foreach (var ws in Model.Workspaces)
     {
         <li>@ws.Channel - @ws.LeagueId</li>
     }
     </ul>
-
 </div>
 </body>
 </html>

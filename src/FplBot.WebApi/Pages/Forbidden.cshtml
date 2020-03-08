@@ -1,0 +1,33 @@
+@page
+@model FplBot.WebApi.Pages.Forbidden
+
+@{
+    Layout = null;
+    var team = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_id")?.Value;
+    var slackurl = $"https://app.slack.com/client/{team}";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Forbidden</title>
+</head>
+<body>
+<div>
+    <h1>Forbidden</h1>
+    @User.Identity.Name does not have access to this page.
+    
+    @if(!string.IsNullOrEmpty(team))
+    {
+        <p>
+            Slack team for current user: <a href="@slackurl">@slackurl</a>
+        </p>
+        <p>
+            <a href="@Url.Action("TriggerChallenge", "Account")">Authenticate with another Slack workspace</a>
+        </p>
+    }
+
+</div>
+</body>
+</html>
