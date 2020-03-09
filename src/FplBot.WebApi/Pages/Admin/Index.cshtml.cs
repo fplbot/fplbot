@@ -11,24 +11,24 @@ namespace FplBot.WebApi.Pages.Admin
     {
         private readonly ITokenStore _tokenStore;
         private readonly IFetchFplbotSetup _setups;
+        private readonly ISlackTeamRepository _teamRepo;
 
-        public Index(ITokenStore tokenStore, IFetchFplbotSetup setups)
+        public Index(ITokenStore tokenStore, IFetchFplbotSetup setups, ISlackTeamRepository teamRepo)
         {
             _tokenStore = tokenStore;
             _setups = setups;
-            Workspaces = new List<FplbotSetup>();
+            _teamRepo = teamRepo;
+            Workspaces = new List<SlackTeam>();
         }
         
         public async Task OnGet()
         {
-            var tokens = await _tokenStore.GetTokens();
-            foreach (var token in tokens)
+            await foreach (var t in _teamRepo.GetAllTeams())
             {
-                var setup = await _setups.GetSetupByToken(token);
-                Workspaces.Add(setup);
+                Workspaces.Add(t);
             }
         }
 
-        public List<FplbotSetup> Workspaces { get; set; }
+        public List<SlackTeam> Workspaces { get; set; }
     }
 }

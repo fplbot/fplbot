@@ -9,5 +9,6 @@ namespace FplBot.WebApi.Data
         Task Insert(SlackTeam slackTeam);
         Task DeleteByTeamId(string teamId);
         Task<IEnumerable<FplbotSetup>> GetAllWorkspaces();
+        IAsyncEnumerable<SlackTeam> GetAllTeams();
     }
 }

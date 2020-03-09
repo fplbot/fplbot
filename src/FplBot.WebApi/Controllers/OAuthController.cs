@@ -41,7 +41,7 @@ namespace FplBot.WebApi.Controllers
         {
             _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
-            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri=http://localhost:1337/oauth/authorize");
+            return Redirect($"https://slack.com/oauth/authorize?scope=bot,chat:write:bot&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={Url.AbsoluteLink(HttpContext.Request.Host.Value, "authorize")}");
         }
 
         [HttpGet("uninstall")]
@@ -60,7 +60,8 @@ namespace FplBot.WebApi.Controllers
                 ClientId = _options.Value.CLIENT_ID, 
                 ClientSecret = _options.Value.CLIENT_SECRET, 
                 Code = code, 
-                SingleChannel = true
+                SingleChannel = true,
+                RedirectUri = Url.AbsoluteLink(HttpContext.Request.Host.Value, "authorize")
             });
             
             _logger.LogInformation($"OauthResponse : {JsonConvert.SerializeObject(response)}");

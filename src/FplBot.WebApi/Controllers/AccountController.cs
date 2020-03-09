@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AspNet.Security.OAuth.Slack;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -22,9 +23,10 @@ namespace FplBot.WebApi.Controllers
         
         [Route("/logout")]
         [AllowAnonymous]
-        public IActionResult Logout()
+        public async Task<RedirectToPageResult> Logout()
         {
-            return SignOut();
+            await HttpContext.SignOutAsync();
+            return RedirectToPage("/SignedOut");
         }
     }
 }

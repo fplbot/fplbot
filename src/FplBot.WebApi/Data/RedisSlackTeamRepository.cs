@@ -17,6 +17,7 @@ namespace FplBot.WebApi.Data
         private string _accessTokenField = "accessToken";
         private string _channelField = "fplchannel";
         private string _leagueField = "fplleagueId";
+        private string _teamNameField = "teamName";
 
         public RedisSlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions)
         {
@@ -31,7 +32,8 @@ namespace FplBot.WebApi.Data
             {
                 new HashEntry(_accessTokenField, slackTeam.AccessToken),
                 new HashEntry(_channelField, slackTeam.FplBotSlackChannel), 
-                new HashEntry(_leagueField, slackTeam.FplbotLeagueId)
+                new HashEntry(_leagueField, slackTeam.FplbotLeagueId),
+                new HashEntry(_teamNameField, slackTeam.TeamName),
             });
         }
 
@@ -102,6 +104,22 @@ namespace FplBot.WebApi.Data
             }
 
             return null;
+        }
+        
+        public async IAsyncEnumerable<SlackTeam> GetAllTeams()
+        {
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
+            
+            foreach (var key in allTeamKeys)
+            {
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
+                yield return new SlackTeam
+                    {
+                        AccessToken = fetchedTeamData[0],
+                        FplBotSlackChannel = fetchedTeamData[1],
+                        FplbotLeagueId = int.Parse(fetchedTeamData[2])
+                    };
+            }
         }
     }
 }
