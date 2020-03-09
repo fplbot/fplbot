@@ -14,7 +14,6 @@ namespace FplBot.WebApi.Controllers
         [Route("/challenge")]
         public async Task<ChallengeResult> TriggerChallenge()
         {
-            await HttpContext.SignOutAsync();
             return Challenge(new AuthenticationProperties
             {
                 RedirectUri = "/admin"
