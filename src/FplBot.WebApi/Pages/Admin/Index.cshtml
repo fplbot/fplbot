@@ -14,7 +14,7 @@
 <body>
 <div>
     <h1>Admin page</h1>
-    <p>Logged in as @User.Identity.Name</p>
+    <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
     <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
     
     <h3>Workspaces that have installed fplbot</h3>

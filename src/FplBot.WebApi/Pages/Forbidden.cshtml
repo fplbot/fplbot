@@ -3,8 +3,9 @@
 
 @{
     Layout = null;
-    var team = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_id")?.Value;
-    var slackurl = $"https://app.slack.com/client/{team}";
+    var teamId = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_id")?.Value;
+    var teamName = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value;
+    var slackurl = $"https://app.slack.com/client/{teamId}";
 }
 
 <!DOCTYPE html>
@@ -16,15 +17,13 @@
 <body>
 <div>
     <h1>Forbidden</h1>
-    @User.Identity.Name does not have access to this page.
+    @User.Identity.Name from @teamName does not have access.
+
     
-    @if(!string.IsNullOrEmpty(team))
+    @if(!string.IsNullOrEmpty(teamId))
     {
         <p>
-            Slack team for current user: <a href="@slackurl">@slackurl</a>
-        </p>
-        <p>
-            <a href="@Url.Action("TriggerChallenge", "Account")">Authenticate with another Slack workspace</a>
+            <a href="@Url.Action("TriggerChallenge", "Account")">Log in using another workspace</a>
         </p>
     }
 

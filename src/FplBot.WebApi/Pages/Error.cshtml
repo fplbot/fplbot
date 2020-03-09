@@ -1,0 +1,25 @@
+@page
+@model FplBot.WebApi.Pages.Error
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Error</title>
+</head>
+<body>
+<div>
+    <h1>Error</h1>
+    <p>@Request.Query["msg"]</p>
+    
+    <p>
+        <a href="@Url.Action("TriggerChallenge", "Account")">Login</a>
+    </p>
+
+</div>
+</body>
+</html>

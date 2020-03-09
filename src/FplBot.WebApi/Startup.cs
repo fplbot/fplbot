@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -64,17 +65,29 @@ namespace FplBot.WebApi
                 {
                     c.ClientId = Configuration.GetValue<string>("CLIENT_ID");
                     c.ClientSecret = Configuration.GetValue<string>("CLIENT_SECRET");
+                    c.Scope.Add("identity.team");
+
+                    c.Events.OnRemoteFailure = r =>
+                    {
+                        var errorMsg = r.Request.Query["error"];
+                        r.Response.Redirect($"/error?msg={errorMsg}");
+                        r.HandleResponse();
+                        return Task.FromResult(0);
+                    };
                 });
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("IsHeltBlankSlackUser", b => b.RequireClaim("urn:slack:team_id", "T0A9QSU83"));
             });
-            services.AddRazorPages().AddRazorPagesOptions(options =>
-            {
-                
-                options.Conventions.AuthorizeFolder("/admin", "IsHeltBlankSlackUser");
-                options.Conventions.AllowAnonymousToPage("/*");
-            });
+            services
+                .AddRazorPages()
+                .AddRazorPagesOptions(options =>
+                {
+                    options.Conventions.AuthorizeFolder("/admin", "IsHeltBlankSlackUser");
+                    options.Conventions.AllowAnonymousToPage("/*");
+                })
+                .AddRazorRuntimeCompilation();
+            
             services.Configure<RouteOptions>(o =>
             {
                 o.LowercaseQueryStrings = true;
