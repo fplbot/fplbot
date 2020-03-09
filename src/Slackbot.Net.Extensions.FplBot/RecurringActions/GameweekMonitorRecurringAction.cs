@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             ITransfersByGameWeek transfersByGameWeek,
             IFixtureClient fixtureClient,
             IPlayerClient playerClient,
-            ITeamsClient teamsClient, 
+            ITeamsClient teamsClient,
             IFetchFplbotSetup teamRepo) : base(gwClient, logger, tokenStore, slackClientBuilder, teamRepo)
         {
             _fixtureClient = fixtureClient;
@@ -61,7 +61,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             _players = await _playerClient.GetAllPlayers();
             _teams = await _teamsClient.GetAllTeams();
-            
+
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
@@ -80,7 +80,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             var newGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
 
-            var newFixtureEvents = newGameweekFixtures.Select(fixture =>
+            var newFixtureEvents = newGameweekFixtures.Where(f => f.Stats.Any()).Select(fixture =>
                 {
                     var oldFixture = _currentGameweekFixtures.FirstOrDefault(f => f.Code == fixture.Code);
 
@@ -104,7 +104,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             {
                 var theEventsForTheLeague = _transfersForCurrentGameweek[league];
                 var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, theEventsForTheLeague, _players, _teams);
-                await PostNewEvents(league, formattedEvents); 
+                await PostNewEvents(league, formattedEvents);
             }
 
             _currentGameweekFixtures = newGameweekFixtures;
