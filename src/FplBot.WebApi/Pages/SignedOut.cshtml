@@ -2,21 +2,11 @@
 @model FplBot.WebApi.Pages.SignedOut
 
 @{
-    Layout = null;
+    Layout = "Shared/_Layout";
+    ViewData["Title"] = "Signed out";
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <title>Signed out</title>
-</head>
-<body>
-<div>
-    Signed out. ThxBye.
-    <p>
-        <a href="@Url.PageLink("admin/index")">Back to admin</a>
-    </p>
-</div>
-</body>
-</html>
+Signed out. ThxBye.
+<p>
+    <a href="@Url.PageLink("admin/index")">Back to admin</a>
+</p>

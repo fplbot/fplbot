@@ -2,24 +2,13 @@
 @model FplBot.WebApi.Pages.Error
 
 @{
-    Layout = null;
+    ViewData["Title"] = "Oops!";
 }
 
-<!DOCTYPE html>
 
-<html>
-<head>
-    <title>Error</title>
-</head>
-<body>
-<div>
-    <h1>Error</h1>
-    <p>@Request.Query["msg"]</p>
-    
-    <p>
-        <a href="@Url.Action("TriggerChallenge", "Account")">Login</a>
-    </p>
+<h1>🚨 Error!</h1>
+<p>@Request.Query["msg"]</p>
 
-</div>
-</body>
-</html>
+<p>
+    Try another <a href="@Url.Action("TriggerChallenge", "Account")">login</a>
+</p>

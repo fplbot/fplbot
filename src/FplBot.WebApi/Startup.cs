@@ -87,7 +87,7 @@ namespace FplBot.WebApi
                     options.Conventions.AllowAnonymousToPage("/*");
                 })
                 .AddRazorRuntimeCompilation();
-            
+
             services.Configure<RouteOptions>(o =>
             {
                 o.LowercaseQueryStrings = true;
@@ -105,7 +105,7 @@ namespace FplBot.WebApi
             }
 
             app.UseHttpsRedirection();
-
+            app.UseStaticFiles();
             app.UseRouting();
 
             app.UseCookiePolicy();

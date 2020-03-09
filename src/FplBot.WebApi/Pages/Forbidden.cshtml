@@ -2,31 +2,18 @@
 @model FplBot.WebApi.Pages.Forbidden
 
 @{
-    Layout = null;
+    ViewData["Title"] = "⚠️ Forbidden";
     var teamId = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_id")?.Value;
     var teamName = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value;
-    var slackurl = $"https://app.slack.com/client/{teamId}";
 }
 
-<!DOCTYPE html>
+<h1>⚠️ Forbidden</h1>
+@User.Identity.Name from @teamName does not have access.
 
-<html>
-<head>
-    <title>Forbidden</title>
-</head>
-<body>
-<div>
-    <h1>Forbidden</h1>
-    @User.Identity.Name from @teamName does not have access.
 
-    
-    @if(!string.IsNullOrEmpty(teamId))
-    {
-        <p>
-            <a href="@Url.Action("TriggerChallenge", "Account")">Log in using another workspace</a>
-        </p>
-    }
-
-</div>
-</body>
-</html>
+@if(!string.IsNullOrEmpty(teamId))
+{
+    <p>
+        <a href="@Url.Action("TriggerChallenge", "Account")">Log in using another workspace</a>
+    </p>
+}
