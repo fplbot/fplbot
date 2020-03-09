@@ -112,12 +112,13 @@ namespace FplBot.WebApi.Data
             
             foreach (var key in allTeamKeys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField});
                 yield return new SlackTeam
                     {
                         AccessToken = fetchedTeamData[0],
                         FplBotSlackChannel = fetchedTeamData[1],
-                        FplbotLeagueId = int.Parse(fetchedTeamData[2])
+                        FplbotLeagueId = int.Parse(fetchedTeamData[2]),
+                        TeamName = fetchedTeamData[3]
                     };
             }
         }
