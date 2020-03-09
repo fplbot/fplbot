@@ -5,10 +5,13 @@
     ViewData["Title"] = "Oops!";
 }
 
+<div class="col-6">
+    <h1>🚨 Error!</h1>
+    <p>@Request.Query["msg"]</p>
 
-<h1>🚨 Error!</h1>
-<p>@Request.Query["msg"]</p>
+    <p>
+        Try another <a href="@Url.Action("TriggerChallenge", "Account")">login</a>
+    </p>
+</div>
 
-<p>
-    Try another <a href="@Url.Action("TriggerChallenge", "Account")">login</a>
-</p>
+

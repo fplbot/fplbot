@@ -2,28 +2,21 @@
 @model FplBot.WebApi.Pages.Admin.Index
 
 @{
-    Layout = null;
+    ViewData["Title"] = "Admin";
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <title>Admin</title>
-</head>
-<body>
-<div>
+<div class="col-6">
     <h1>Admin page</h1>
     <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
     <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
-    
+
     <h3>Workspaces that have installed fplbot</h3>
-    <ul>
+    <ul class="list-group">
         @if (Model.Workspaces.Any())
         {
             foreach (var ws in Model.Workspaces)
             {
-                <li>
+                <li class="list-group-item">
                     @ws.TeamName: (@ws.FplbotLeagueId in @ws.FplBotSlackChannel)
                 </li>
             }
@@ -32,8 +25,6 @@
         {
             <p>No installs :/</p>
         }
-      
+        
     </ul>
 </div>
-</body>
-</html>

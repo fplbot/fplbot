@@ -7,13 +7,15 @@
     var teamName = User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value;
 }
 
-<h1>⚠️ Forbidden</h1>
-@User.Identity.Name from @teamName does not have access.
+<div class="col-6">
+    <h1>⚠️ Forbidden</h1>
 
+    @User.Identity.Name from @teamName does not have access.
 
-@if(!string.IsNullOrEmpty(teamId))
-{
-    <p>
-        <a href="@Url.Action("TriggerChallenge", "Account")">Log in using another workspace</a>
-    </p>
-}
+    @if(!string.IsNullOrEmpty(teamId))
+    {
+        <p>
+            <a href="@Url.Action("TriggerChallenge", "Account")">Log in using another workspace</a>
+        </p>
+    }
+</div>
