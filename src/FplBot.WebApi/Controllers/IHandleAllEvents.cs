@@ -22,6 +22,7 @@ namespace FplBot.WebApi.Controllers
         
         public Task Handle(string payload)
         {
+            _logger.LogInformation("PAYLOAD RECEIVE FROM EVENT API");
             _logger.LogInformation(payload);
             return Task.CompletedTask;
         }

@@ -27,7 +27,7 @@ namespace FplBot.ConsoleApps
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddSlackbotWorker(hostContext.Configuration)
+                    services.AddSlackbotWorker(hostContext.Configuration).AddRtmConnections()
                         .AddSlackPublisherBuilder()
                         .AddLoggerPublisherBuilder()
                         .AddFplBot(hostContext.Configuration.GetSection("fpl"))
