@@ -23,5 +23,13 @@
     <ProjectReference Include="..\Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="appsettings.Local.json">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 
 </Project>

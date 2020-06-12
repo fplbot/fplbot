@@ -1,6 +1,8 @@
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
+using FplBot.WebApi.Controllers;
 using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +12,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.Publishers.Logger;
@@ -38,7 +41,10 @@ namespace FplBot.WebApi
             services.AddSingleton<ConnectionMultiplexer>(c =>
             {
                 var opts = c.GetService<IOptions<RedisOptions>>().Value;
-                return ConnectionMultiplexer.Connect($"{opts.REDIS_SERVER}, name={opts.REDIS_USERNAME}, password={opts.REDIS_PASSWORD}");
+                var logger = c.GetService<ILogger<Startup>>();
+                var connString = $"{opts.REDIS_SERVER}, name={opts.REDIS_USERNAME}, password={opts.REDIS_PASSWORD}";
+                logger.LogInformation(connString);
+                return ConnectionMultiplexer.Connect(connString);
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
             services.AddSlackbotWorker<RedisSlackTeamRepository>()
@@ -46,6 +52,7 @@ namespace FplBot.WebApi
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
                 .BuildRecurrers();
+            services.AddSingleton<IHandleAllEvents, HandleAllEvents>();
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
