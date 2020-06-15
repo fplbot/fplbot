@@ -55,12 +55,11 @@ namespace FplBot.WebApi.Controllers
         public async Task<IActionResult> Authorize(string code, string state)
         {
             _logger.LogInformation("Authorizing!");
-            var response = await _oAuthAccessClient.OAuthAccess(new OauthAccessRequest
+            var response = await _oAuthAccessClient.OAuthAccessV2(new OauthAccessRequestV2
             {
                 ClientId = _options.Value.CLIENT_ID, 
                 ClientSecret = _options.Value.CLIENT_SECRET, 
-                Code = code, 
-                SingleChannel = true,
+                Code = code,
                 RedirectUri = Url.AbsoluteLink(HttpContext.Request.Host.Value, "authorize")
             });
             
@@ -72,10 +71,10 @@ namespace FplBot.WebApi.Controllers
                 var setup = ParseState(state);
                 await _slackTeamRepository.Insert(new SlackTeam
                 {
-                    TeamId = response.Team_Id,
-                    TeamName = response.Team_Name,
+                    TeamId = response.Team.Id,
+                    TeamName = response.Team.Name,
                     Scope = response.Scope,
-                    AccessToken = response.Bot.Bot_Access_Token,
+                    AccessToken = response.Access_Token,
                     FplBotSlackChannel = setup.Channel,
                     FplbotLeagueId = setup.LeagueId
                 });
