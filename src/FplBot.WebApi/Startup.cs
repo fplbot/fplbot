@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Controllers;
 using FplBot.WebApi.Data;
+using FplBot.WebApi.EventApi;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;

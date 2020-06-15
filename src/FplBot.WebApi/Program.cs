@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace FplBot.WebApi
 {
@@ -20,7 +21,7 @@ namespace FplBot.WebApi
                     .ReadFrom.Configuration(hostingContext.Configuration)
                     .Filter.ByExcluding(c => c.Properties.Any(p => p.Value.ToString().Contains("LogicalHandler")))
                     .Enrich.FromLogContext()
-                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} ({SourceContext}){NewLine}{Exception}"))
+                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} ({SourceContext}){NewLine}{Exception}",theme: SystemConsoleTheme.None))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
