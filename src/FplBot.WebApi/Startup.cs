@@ -15,8 +15,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Dynamic;
 using Slackbot.Net.Extensions.Publishers.Logger;
 using Slackbot.Net.Extensions.Publishers.Slack;
+using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
 
@@ -47,7 +49,9 @@ namespace FplBot.WebApi
                 return ConnectionMultiplexer.Connect(connString);
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
+            services.AddSingleton<ISlackClientService, SlackClientService>();
             services.AddSlackbotWorker<RedisSlackTeamRepository>()
+                
                 .AddSlackPublisherBuilder()
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace FplBot.WebApi.Data
         private string _channelField = "fplchannel";
         private string _leagueField = "fplleagueId";
         private string _teamNameField = "teamName";
+        private string _teamIdField = "teamId";
 
         public RedisSlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions)
         {
@@ -34,6 +36,7 @@ namespace FplBot.WebApi.Data
                 new HashEntry(_channelField, slackTeam.FplBotSlackChannel), 
                 new HashEntry(_leagueField, slackTeam.FplbotLeagueId),
                 new HashEntry(_teamNameField, slackTeam.TeamName),
+                new HashEntry(_teamIdField, slackTeam.TeamId)
             });
         }
 
@@ -43,7 +46,7 @@ namespace FplBot.WebApi.Data
             
             foreach (var key in allTeamKeys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamIdField});
                 if (fetchedTeamData[0] == token)
                     await _db.KeyDeleteAsync(key);
             }
@@ -87,6 +90,11 @@ namespace FplBot.WebApi.Data
         {
             return $"TeamId-{teamId}";
         }
+        
+        private static string FromKeyToTeamId(string key)
+        {
+            return key.Split('-')[1];
+        }
 
         public async Task<FplbotSetup> GetSetupByToken(string token)
         {
@@ -94,12 +102,12 @@ namespace FplBot.WebApi.Data
             
             foreach (var key in allTeamKeys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField});
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamIdField});
                 if (fetchedTeamData[0] == token)
                     return new FplbotSetup
                     {
                         Channel = fetchedTeamData[1],
-                        LeagueId = int.Parse(fetchedTeamData[2])
+                        LeagueId = int.Parse(fetchedTeamData[2]),
                     };
             }
 
@@ -118,7 +126,8 @@ namespace FplBot.WebApi.Data
                         AccessToken = fetchedTeamData[0],
                         FplBotSlackChannel = fetchedTeamData[1],
                         FplbotLeagueId = int.Parse(fetchedTeamData[2]),
-                        TeamName = fetchedTeamData[3]
+                        TeamName = fetchedTeamData[3],
+                        TeamId = FromKeyToTeamId(key)
                     };
             }
         }

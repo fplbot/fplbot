@@ -7,7 +7,8 @@ using Newtonsoft.Json;
 namespace FplBot.WebApi.Controllers
 {
     [Route("[controller]")]
-    public class EventsController : Controller
+    [ApiController]
+    public class EventsController : ControllerBase
     {
         private readonly ILogger<EventsController> _logger;
         private readonly IHandleAllEvents _responseHandler;
@@ -18,6 +19,8 @@ namespace FplBot.WebApi.Controllers
             _responseHandler = responseHandler;
         }
         
+        [HttpPost]
+
         public async Task<ActionResult> Index([FromBody]EventWrapper eventWrapper)
         {
             _logger.LogInformation(eventWrapper.Challenge);
@@ -27,9 +30,9 @@ namespace FplBot.WebApi.Controllers
                 return new JsonResult(new {challenge = eventWrapper.Challenge});
             }
 
-            if (!string.IsNullOrEmpty(eventWrapper.Event))
+            if (eventWrapper.Event != null)
             {
-                await _responseHandler.Handle(@eventWrapper.Event);
+                await _responseHandler.Handle(eventWrapper);
                 return Ok();
             }
 
@@ -42,12 +45,21 @@ namespace FplBot.WebApi.Controllers
     {
         public string Token { get; set; }
         public string Team_Id { get; set; }
-        public string Event { get; set; }
+        public BotMentionedEvent Event { get; set; }
         public string Type { get; set; }
         public string[] AuthedUsers { get; set; }
         public string Event_Id { get; set; }
-        public string Event_Time { get; set; }
+        public long Event_Time { get; set; }
         // only used for install-verify
         public string Challenge { get; set; }
+    }
+
+    public class BotMentionedEvent
+    {
+        public string Text { get; set; }
+        public string Channel { get; set; }
+        public string Type { get; set; }
+        public string Ts { get; set; }
+        public string Event_Ts { get; set; }
     }
 }
