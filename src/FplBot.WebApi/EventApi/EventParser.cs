@@ -21,7 +21,7 @@ namespace FplBot.WebApi.EventApi
                     Name = "we-dont-get-this-value-from-the-event-api"
                 },
                 Text = text,
-                MentionsBot = eventTyped is BotMentionedEvent,
+                MentionsBot = eventTyped is AppMentionEvent,
                 ChatHub = new ChatHub
                 {
                     Id = channelId,
@@ -39,7 +39,7 @@ namespace FplBot.WebApi.EventApi
         {
             switch (eventTyped)
             {
-                case BotMentionedEvent e:
+                case AppMentionEvent e:
                     return (e.Text,e.Channel);
                 default:
                     return ("unsupported-eventtype", "unsupported-eventtype");
@@ -52,7 +52,7 @@ namespace FplBot.WebApi.EventApi
             switch (eventType)
             {    
                 case EventTypes.AppMention:
-                    return eventJson.ToObject<BotMentionedEvent>();
+                    return eventJson.ToObject<AppMentionEvent>();
                 default:
                     return eventJson.ToObject<SlackEvent>();
             }

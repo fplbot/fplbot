@@ -36,7 +36,10 @@ namespace FplBot.WebApi.Pages.Admin
         public async Task<IActionResult> OnPost(string teamId)
         {
             _logger.LogInformation($"Deleting {teamId}");
+            
+            // Should switch to https://api.slack.com/methods/apps.uninstall & let the event handling take care of delete in DB
             await _teamRepo.DeleteByTeamId(teamId);
+            
             return RedirectToPage("Index");
         }
 

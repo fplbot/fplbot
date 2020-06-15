@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Threading.Tasks;
-using FplBot.WebApi.Data;
 using FplBot.WebApi.EventApi;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -14,13 +13,11 @@ namespace FplBot.WebApi.Controllers
     {
         private readonly ILogger<EventsController> _logger;
         private readonly IHandleAllEvents _responseHandler;
-        private ISlackTeamRepository _slackTeamRepository;
 
-        public EventsController(ILogger<EventsController> logger, IHandleAllEvents responseHandler, ISlackTeamRepository slackTeamRepository)
+        public EventsController(ILogger<EventsController> logger, IHandleAllEvents responseHandler)
         {
             _logger = logger;
             _responseHandler = responseHandler;
-            _slackTeamRepository = slackTeamRepository;
         }
         
         [HttpPost]
