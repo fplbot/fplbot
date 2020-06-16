@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.WebApi.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -17,27 +16,16 @@ namespace FplBot.WebApi.EventApi
     {
         private readonly ILogger<HandleAllEvents> _logger;
         private readonly IServiceProvider _provider;
-        private ISlackTeamRepository _slackTeamRepository;
 
-        public HandleAllEvents(ILogger<HandleAllEvents> logger, IServiceProvider provider, ISlackTeamRepository slackTeamRepository)
+        public HandleAllEvents(ILogger<HandleAllEvents> logger, IServiceProvider provider)
         {
             _logger = logger;
             _provider = provider;
-            _slackTeamRepository = slackTeamRepository;
         }
         
         public async Task Handle(EventMetaData eventMetadata, JObject slackEvent)
         {
-            var eventType = EventParser.GetEventType(slackEvent);
-
-            if(eventType == EventTypes.AppUninstalled || eventType == EventTypes.TokensRevoked) 
-            {
-                await _slackTeamRepository.DeleteByTeamId(eventMetadata.Team_Id);
-            }
-            else
-            {
-                await HandleAsRtmMessage(eventMetadata, slackEvent);
-            }
+            await HandleAsRtmMessage(eventMetadata, slackEvent);
         }
 
         // Converting this to the RTM api message as an interim hack to re-use existing handlers 

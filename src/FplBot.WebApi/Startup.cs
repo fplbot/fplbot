@@ -5,6 +5,7 @@ using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Controllers;
 using FplBot.WebApi.Data;
 using FplBot.WebApi.EventApi;
+using FplBot.WebApi.EventApi.Middlewares;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -52,7 +53,6 @@ namespace FplBot.WebApi
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
             services.AddSingleton<ISlackClientService, SlackClientService>();
             services.AddSlackbotWorker<RedisSlackTeamRepository>()
-                
                 .AddSlackPublisherBuilder()
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
@@ -123,16 +123,12 @@ namespace FplBot.WebApi
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
-
+            app.UseSlackbotEvents("/events");
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
             });
         }
-    }
-
-    public class HasBlankEmail : IAuthorizationRequirement
-    {
     }
 }
