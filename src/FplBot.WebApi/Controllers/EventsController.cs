@@ -34,7 +34,7 @@ namespace FplBot.WebApi.Controllers
 
             if (jObject["event"] != null)
             {
-                var slackEvent = jObject["event"].ToObject<SlackEvent>();
+                var slackEvent = EventParser.ToEventType(jObject["event"] as JObject);
                 await _responseHandler.Handle(jObject.ToObject<EventMetaData>(), slackEvent);
                 return Ok();
             }

@@ -46,5 +46,27 @@ namespace FplBot.WebApi
                     return ("unsupported-eventtype", "unsupported-eventtype");
             }
         }
+        
+        public static SlackEvent ToEventType(JObject eventJson)
+        {
+            var eventType = GetEventType(eventJson);
+            switch (eventType)
+            {    
+                case EventTypes.AppMention:
+                    return eventJson.ToObject<AppMentionEvent>();
+                default:
+                    return eventJson.ToObject<SlackEvent>();
+            }
+        }
+        
+        public static string GetEventType(JObject eventJson)
+        {
+            if (eventJson != null)
+            {
+                return eventJson["type"].Value<string>();
+            }
+            
+            return "unknown";
+        }
     }
 }
