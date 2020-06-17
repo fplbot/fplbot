@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Slackbot.Net.Endpoints.Abstractions;
 
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Hosting
 {
     public class SlackBotEventHandlersBuilder : ISlackbotEventHandlersBuilder
     {

@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
     <ProjectReference Include="..\Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj" />
   </ItemGroup>
 

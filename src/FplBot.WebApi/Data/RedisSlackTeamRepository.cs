@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using StackExchange.Redis;
 
@@ -57,7 +59,7 @@ namespace FplBot.WebApi.Data
             await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
         }
 
-        public async Task<IEnumerable<FplbotSetup>> GetAllWorkspaces()
+        public async Task<IEnumerable<FplbotSetup>> GetAllFplBotSetup()
         {
             var tokens = await GetTokens();
             var setups = new List<FplbotSetup>();

@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
-using FplBot.WebApi.EventApi;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi
+namespace Slackbot.Net.Endpoints
 {
     public class NoOpEventHandler : IHandleEvent
     {

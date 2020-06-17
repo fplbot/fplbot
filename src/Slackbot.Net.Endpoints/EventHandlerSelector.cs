@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Dynamic;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi.EventApi
+namespace Slackbot.Net.Endpoints
 {
     internal class EventHandlerSelector : ISelectEventHandlers
     {

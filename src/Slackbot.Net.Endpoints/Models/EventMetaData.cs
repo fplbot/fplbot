@@ -1,4 +1,4 @@
-namespace FplBot.WebApi.EventApi
+namespace Slackbot.Net.Endpoints.Models
 {
     public class EventMetaData
     {

@@ -1,9 +1,9 @@
-using FplBot.WebApi.EventApi;
 using Newtonsoft.Json.Linq;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi
+namespace Slackbot.Net.Endpoints
 {
     // Hack: map to RTM api models (Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived.SlackMessage)
     // until migration to Event API models in handlers

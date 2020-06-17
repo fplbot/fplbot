@@ -1,17 +1,16 @@
 using System.Threading.Tasks;
-using FplBot.WebApi.Data;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.WebApi
+namespace Slackbot.Net.Endpoints
 {
     internal class SlackClientService : ISlackClientService
     {
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _clientFactory;
 
-        public SlackClientService(ITokenStore tokenStore, ISlackTeamRepository teamsClient,  ISlackClientBuilder clientFactory)
+        public SlackClientService(ITokenStore tokenStore, ISlackClientBuilder clientFactory)
         {
             _tokenStore = tokenStore;
             _clientFactory = clientFactory;

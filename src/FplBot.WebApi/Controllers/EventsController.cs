@@ -1,10 +1,10 @@
-using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using FplBot.WebApi.EventApi;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Models;
 
 namespace FplBot.WebApi.Controllers
 {

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi.EventApi
+namespace Slackbot.Net.Endpoints.Abstractions
 {
     public interface ISelectEventHandlers
     {

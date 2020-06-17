@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Slackbot.Net.Endpoints.Middlewares;
 
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Hosting
 {
     public static class IApplicationBuilderExtensions
     {

@@ -1,6 +1,4 @@
-using FplBot.WebApi.Controllers;
-
-namespace FplBot.WebApi.EventApi
+namespace Slackbot.Net.Endpoints.Models
 {
     public class AppMentionEvent : SlackEvent
     {

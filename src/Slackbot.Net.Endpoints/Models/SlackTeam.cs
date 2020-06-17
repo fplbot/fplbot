@@ -1,4 +1,4 @@
-namespace FplBot.WebApi.Data
+namespace Slackbot.Net.Endpoints.Models
 {
     public class SlackTeam
     {

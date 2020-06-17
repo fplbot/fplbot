@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
@@ -19,20 +21,22 @@ namespace FplBot.WebApi.Controllers
         private readonly ILogger<OAuthController> _logger;
         private readonly ISlackOAuthAccessClient _oAuthAccessClient;
         private readonly ISlackTeamRepository _slackTeamRepository;
+        private readonly IFetchFplbotSetup _setupFetcher;
         private readonly IOptions<DistributedSlackAppOptions> _options;
 
-        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, IOptions<DistributedSlackAppOptions> options)
+        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, IFetchFplbotSetup setupFetcher, IOptions<DistributedSlackAppOptions> options)
         {
             _logger = logger;
             _oAuthAccessClient = oAuthAccessClient;
             _slackTeamRepository = slackTeamRepository;
+            _setupFetcher = setupFetcher;
             _options = options;
         }
         
         [HttpGet("workspaces")]
         public async Task<IActionResult> Debug()
         {
-            var allWorkspaces = await _slackTeamRepository.GetAllWorkspaces();
+            var allWorkspaces = await _setupFetcher.GetAllFplBotSetup();
             return Ok(allWorkspaces);
         }
 

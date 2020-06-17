@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FplBot.WebApi.Data;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Endpoints.Models;
 using StackExchange.Redis;
 using Xunit;
 using Xunit.Abstractions;

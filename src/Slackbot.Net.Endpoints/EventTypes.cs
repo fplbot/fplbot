@@ -1,4 +1,4 @@
-namespace FplBot.WebApi.EventApi
+namespace Slackbot.Net.Endpoints
 {
     public static class EventTypes
     {

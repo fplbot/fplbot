@@ -2,8 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Middlewares
 {
     public class Events
     {

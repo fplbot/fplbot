@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.WebApi.EventApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Dynamic;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Handlers;
 
 namespace FplBot.WebApi

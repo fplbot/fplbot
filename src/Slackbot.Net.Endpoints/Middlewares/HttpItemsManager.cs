@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Middlewares
 {
     public class HttpItemsManager
     {

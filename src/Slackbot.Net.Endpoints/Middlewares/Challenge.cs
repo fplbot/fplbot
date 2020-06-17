@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Middlewares
 {
     public class Challenge
     {

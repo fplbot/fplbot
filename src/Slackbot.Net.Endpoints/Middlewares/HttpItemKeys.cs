@@ -1,4 +1,4 @@
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Middlewares
 {
     public class HttpItemKeys
     {

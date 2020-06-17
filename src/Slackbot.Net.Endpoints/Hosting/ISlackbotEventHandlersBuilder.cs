@@ -1,4 +1,6 @@
-namespace FplBot.WebApi.EventApi.Middlewares
+using Slackbot.Net.Endpoints.Abstractions;
+
+namespace Slackbot.Net.Endpoints.Hosting
 {
     public interface ISlackbotEventHandlersBuilder
     {

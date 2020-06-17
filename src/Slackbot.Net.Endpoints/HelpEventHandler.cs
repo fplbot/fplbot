@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.WebApi.EventApi;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.WebApi
+namespace Slackbot.Net.Endpoints
 {
     public class HelpEventHandler : IHandleEvent
     {

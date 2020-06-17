@@ -1,9 +1,10 @@
 using System.Threading.Tasks;
-using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi.EventApi.Middlewares
+namespace Slackbot.Net.Endpoints.Middlewares
 {
     public class Uninstall
     {
