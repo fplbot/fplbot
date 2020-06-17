@@ -5,29 +5,27 @@ using Newtonsoft.Json;
 
 namespace FplBot.WebApi.EventApi.Middlewares
 {
-    public class SlackEventsChallengeMiddleware
+    public class Challenge
     {
-        private readonly ILogger<SlackEventsMiddleware> _logger;
-        public SlackEventsChallengeMiddleware(ILogger<SlackEventsMiddleware> logger)
+        private readonly ILogger<Events> _logger;
+        public Challenge(RequestDelegate next, ILogger<Events> logger)
         {
             _logger = logger;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            
-            var body = context.Request.Form;
-            string challenge = body["challenge"];
+            var challenge = context.Items[HttpItemKeys.ChallengeKey];
+
             _logger.LogInformation($"Handling challenge request. Challenge: {challenge}");
             context.Response.StatusCode = 200;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonConvert.SerializeObject(new {challenge}));
         }
 
-        public static bool ShouldRun(HttpContext ctx, string path)
+        public static bool ShouldRun(HttpContext ctx)
         {
-            var isPostForPath = ctx.Request.Method == "POST" && ctx.Request.Path == path;
-            return isPostForPath && ctx.Request.Form.ContainsKey("challenge");
+            return ctx.Items.ContainsKey(HttpItemKeys.ChallengeKey);
         }
     }
 }

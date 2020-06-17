@@ -8,7 +8,7 @@ using Slackbot.Net.Dynamic;
 
 namespace FplBot.WebApi.EventApi
 {
-    public class EventHandlerSelector : ISelectEventHandlers
+    internal class EventHandlerSelector : ISelectEventHandlers
     {
         private readonly ILogger<EventHandlerSelector> _logger;
         private readonly IServiceProvider _provider;

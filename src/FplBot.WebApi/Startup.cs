@@ -57,6 +57,7 @@ namespace FplBot.WebApi
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
                 .BuildRecurrers();
+            // services.AddSlackBotEventHandlers();
             services.AddSingleton<RtmBridgeEventsHandler>();
             services.AddAuthentication(options =>
                 {
