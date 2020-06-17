@@ -1,16 +1,17 @@
+using FplBot.WebApi.EventApi;
 using Newtonsoft.Json.Linq;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 
-namespace FplBot.WebApi.EventApi
+namespace FplBot.WebApi
 {
     // Hack: map to RTM api models (Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived.SlackMessage)
     // until migration to Event API models in handlers
     public static class EventParser
     {
-        public static SlackMessage ToBackCompatRtmMessage(EventMetaData eventMetadata, JObject slackEvent)
+        public static SlackMessage ToBackCompatRtmMessage(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
-            var eventTyped = ToEventType(slackEvent);
+            var eventTyped = slackEvent;
             var (text, channelId) = GetTextAndChannel(eventTyped);
             
             return new SlackMessage
@@ -44,28 +45,6 @@ namespace FplBot.WebApi.EventApi
                 default:
                     return ("unsupported-eventtype", "unsupported-eventtype");
             }
-        }
-
-        public static SlackEvent ToEventType(JObject eventJson)
-        {
-            var eventType = GetEventType(eventJson);
-            switch (eventType)
-            {    
-                case EventTypes.AppMention:
-                    return eventJson.ToObject<AppMentionEvent>();
-                default:
-                    return eventJson.ToObject<SlackEvent>();
-            }
-        }
-        
-        public static string GetEventType(JObject eventJson)
-        {
-            if (eventJson != null)
-            {
-                return eventJson["type"].Value<string>();
-            }
-            
-            return "unknown";
         }
     }
 }

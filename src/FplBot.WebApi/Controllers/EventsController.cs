@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FplBot.WebApi.EventApi;
@@ -12,16 +13,15 @@ namespace FplBot.WebApi.Controllers
     public class EventsController : ControllerBase
     {
         private readonly ILogger<EventsController> _logger;
-        private readonly IHandleAllEvents _responseHandler;
+        private readonly RtmBridgeEventsHandler _responseHandler;
 
-        public EventsController(ILogger<EventsController> logger, IHandleAllEvents responseHandler)
+        public EventsController(ILogger<EventsController> logger, RtmBridgeEventsHandler responseHandler)
         {
             _logger = logger;
             _responseHandler = responseHandler;
         }
         
         [HttpPost]
-
         public async Task<ActionResult> Index([FromBody] JsonElement jsonElement)
         {
             var body = jsonElement.GetRawText();
@@ -34,7 +34,8 @@ namespace FplBot.WebApi.Controllers
 
             if (jObject["event"] != null)
             {
-                await _responseHandler.Handle(jObject.ToObject<EventMetaData>(), jObject["event"] as JObject);
+                var slackEvent = jObject["event"].ToObject<SlackEvent>();
+                await _responseHandler.Handle(jObject.ToObject<EventMetaData>(), slackEvent);
                 return Ok();
             }
 
