@@ -8,6 +8,7 @@ COPY /src/FplBot.ConsoleApps/FplBot.ConsoleApps.csproj FplBot.ConsoleApps/FplBot
 COPY /src/Fpl.Client/Fpl.Client.csproj ./Fpl.Client/Fpl.Client.csproj
 COPY /src/FplBot.WebApi/FplBot.WebApi.csproj FplBot.WebApi/FplBot.WebApi.csproj
 COPY /src/Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj
+COPY /src/Slackbot.Net.Endpoints/Slackbot.Net.Endpoints.csproj ./Slackbot.Net.Endpoints/Slackbot.Net.Endpoints.csproj
 
 COPY /src/FplBot.Tests/FplBot.Tests.csproj FplBot.Tests/FplBot.Tests.csproj
 COPY /src/FplBot.WebApi.Tests/FplBot.WebApi.Tests.csproj FplBot.WebApi.Tests/FplBot.WebApi.Tests.csproj
@@ -18,6 +19,7 @@ RUN dotnet restore FplBot.sln
 COPY /src/Slackbot.Net.Extensions.FplBot/ Slackbot.Net.Extensions.FplBot/
 COPY /src/FplBot.ConsoleApps/ FplBot.ConsoleApps/
 COPY /src/Fpl.Client/ Fpl.Client/
+COPY /src/Slackbot.Net.Endpoints/ Slackbot.Net.Endpoints/
 
 # Publish
 RUN dotnet publish FplBot.ConsoleApps/FplBot.ConsoleApps.csproj -c Release -o /app/out/fplbot
