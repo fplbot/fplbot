@@ -7,12 +7,15 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplStandingsCommandHandler : IHandleMessages
+    internal class FplStandingsCommandHandler : IHandleMessages, IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekClient _gameweekClient;
@@ -64,7 +67,17 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("standings");
+        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");
+        
         public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("standings", "Get current league standings");
+        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        {
+            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
+            await Handle(rtmMessage);        
+        }
+
+    
+
         public bool ShouldShowInHelp => true;
     }
 }

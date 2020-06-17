@@ -9,11 +9,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
 using Slackbot.Net.Dynamic;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Models;
+using IHandleEvent = Slackbot.Net.Endpoints.Abstractions.IHandleEvent;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplNextGameweekCommandHandler : IHandleMessages
+    public class FplNextGameweekCommandHandler : IHandleMessages, IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly ISlackClientService _slackClientBuilder;
@@ -87,7 +91,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("next");
+        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("next");
         public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("next", "Displays the fixtures for next gameweek");
+        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        {
+            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
+            await Handle(rtmMessage);
+        }
+
         public bool ShouldShowInHelp => true;
+     
     }
 }

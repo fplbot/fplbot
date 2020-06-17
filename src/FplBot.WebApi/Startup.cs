@@ -52,9 +52,9 @@ namespace FplBot.WebApi
                 .AddSlackPublisherBuilder()
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
+                .AddFplBotEventHandlers()
                 .BuildRecurrers();
-            //services.AddSlackBotEventHandlers().AddEventHandler<FplCaptainCommandHandler>();
-            services.AddSingleton<RtmBridgeEventsHandler>();
+
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -120,7 +120,7 @@ namespace FplBot.WebApi
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
-            //app.UseSlackbotEvents("/events");
+            app.UseSlackbotEvents("/events");
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

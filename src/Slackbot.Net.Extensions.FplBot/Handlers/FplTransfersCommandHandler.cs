@@ -7,10 +7,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplTransfersCommandHandler : IHandleMessages
+    internal class FplTransfersCommandHandler : IHandleMessages, IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekHelper _gameweekHelper;
@@ -46,8 +49,16 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             return new HandleResponse(messageToSend);
         }
+        
+        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        {
+            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
+            await Handle(rtmMessage);        
+        }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("transfers");
+        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("transfers");
+
         public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("transfers {GW/''}", "Displays each team's transfers");
         public bool ShouldShowInHelp => true;
     }

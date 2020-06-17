@@ -13,11 +13,13 @@ namespace Slackbot.Net.Endpoints
     internal class EventHandlerSelector : ISelectEventHandlers
     {
         private readonly ILogger<EventHandlerSelector> _logger;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly IServiceProvider _provider;
 
-        public EventHandlerSelector(ILogger<EventHandlerSelector> logger, IServiceProvider provider)
+        public EventHandlerSelector(ILoggerFactory loggerFactory, IServiceProvider provider)
         {
-            _logger = logger;
+            _logger = loggerFactory.CreateLogger<EventHandlerSelector>();
+            _loggerFactory = loggerFactory;
             _provider = provider;
         }
         
@@ -45,7 +47,7 @@ namespace Slackbot.Net.Endpoints
                 yield return handler;
             }
 
-            yield return new NoOpEventHandler();
+            yield return new NoOpEventHandler(_loggerFactory.CreateLogger<NoOpEventHandler>());
         }
     }
 }

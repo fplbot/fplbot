@@ -7,10 +7,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplCaptainCommandHandler : IHandleMessages
+    internal class FplCaptainCommandHandler : IHandleMessages, IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly ICaptainsByGameWeek _captainsByGameWeek;
@@ -56,6 +59,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             return await Publish(incomingMessage, outgoingMessage);
         }
+        
+        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        {
+            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
+            await Handle(rtmMessage);
+        }
 
         private async Task<HandleResponse> Publish(SlackMessage incomingMessage, string outgoingMessage)
         {
@@ -73,6 +82,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("captains");
+        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("captains");
+
         public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("captains [chart] {GW/''}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
         public bool ShouldShowInHelp => true;
     }

@@ -3,6 +3,7 @@ using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Handlers;
@@ -53,6 +54,18 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddFplApiClient(config);
             builder.Services.AddSingleton<IFetchFplbotSetup, T>();
             builder.AddCommon();
+            return builder;
+        }
+
+        public static ISlackbotWorkerBuilder AddFplBotEventHandlers(this ISlackbotWorkerBuilder builder)
+        {
+            builder.Services.AddSlackBotEventHandlers()
+                .AddHandler<FplPlayerCommandHandler>()
+                .AddHandler<FplStandingsCommandHandler>()
+                .AddHandler<FplNextGameweekCommandHandler>()
+                .AddHandler<FplInjuryCommandHandler>()
+                .AddHandler<FplCaptainCommandHandler>()
+                .AddHandler<FplTransfersCommandHandler>();
             return builder;
         }
 

@@ -9,10 +9,13 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Slackbot.Net.Dynamic;
+using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplPlayerCommandHandler : IHandleMessages
+    internal class FplPlayerCommandHandler : IHandleMessages, IHandleEvent
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
@@ -57,6 +60,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             });
             
             return new HandleResponse($"Found matching player for {name}: " + playerName);
+        }
+        
+        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        {
+            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
+            await Handle(rtmMessage);
         }
 
         private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
@@ -128,6 +137,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");
+        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("player");
+
         public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("player {name}", "Display info about the player");
         public bool ShouldShowInHelp => true;
     }

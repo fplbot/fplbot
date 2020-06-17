@@ -4,6 +4,6 @@ namespace Slackbot.Net.Endpoints.Hosting
 {
     public interface ISlackbotEventHandlersBuilder
     {
-        public void AddEventHandler<T>() where T:class,IHandleEvent;
+        public ISlackbotEventHandlersBuilder AddHandler<T>() where T:class,IHandleEvent;
     }
 }

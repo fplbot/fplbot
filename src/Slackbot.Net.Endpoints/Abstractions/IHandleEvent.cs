@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Slackbot.Net.Endpoints.Models;
 
@@ -9,6 +10,6 @@ namespace Slackbot.Net.Endpoints.Abstractions
         bool ShouldHandle(SlackEvent slackEvent);
 
         bool ShouldShowInHelp => true;
-        (string key, string description) GetHelpDescription();
+        Tuple<string, string> GetHelpDescription();
     }
 }

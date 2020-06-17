@@ -7,7 +7,7 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace Slackbot.Net.Endpoints
 {
-    public class HelpEventHandler : IHandleEvent
+    public class HelpEventHandler
     {
         private readonly IEnumerable<IHandleEvent> _handlers;
         private readonly ISlackClient _slackClient;
@@ -38,13 +38,6 @@ namespace Slackbot.Net.Endpoints
             }
 
             return true;
-        }
-
-        public bool ShouldShowInHelp => false;
-
-        public (string key, string description) GetHelpDescription()
-        {
-            return ("help", "lists out all handlers");
         }
     }
 }
