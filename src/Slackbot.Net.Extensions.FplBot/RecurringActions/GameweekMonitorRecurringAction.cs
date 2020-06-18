@@ -17,7 +17,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
     {
         private readonly IFixtureClient _fixtureClient;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
-        private readonly IDictionary<int, IEnumerable<TransfersByGameWeek.Transfer>> _transfersForCurrentGameweek;
+        private IDictionary<int, IEnumerable<TransfersByGameWeek.Transfer>> _transfersForCurrentGameweek;
         private readonly IPlayerClient _playerClient;
         private ICollection<Team> _teams;
         private readonly ITeamsClient _teamsClient;
@@ -61,7 +61,9 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             _players = await _playerClient.GetAllPlayers();
             _teams = await _teamsClient.GetAllTeams();
-
+            
+            _transfersForCurrentGameweek.Clear();
+            
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
