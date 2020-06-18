@@ -1,13 +1,13 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Dork.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Slackbot.Net.Endpoints.Models;
 
-namespace Slackbot.Net.Endpoints.Middlewares
+namespace Dork.Middlewares
 {
     public class HttpItemsManager
     {

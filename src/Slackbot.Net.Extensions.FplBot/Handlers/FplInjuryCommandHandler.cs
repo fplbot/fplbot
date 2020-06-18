@@ -7,7 +7,6 @@ using Fpl.Client.Models;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
-using Slackbot.Net.Endpoints;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Helpers;

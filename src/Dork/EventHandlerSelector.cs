@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dork.Abstractions;
+using Dork.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Dynamic;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
 
-namespace Slackbot.Net.Endpoints
+namespace Dork
 {
     internal class EventHandlerSelector : ISelectEventHandlers
     {

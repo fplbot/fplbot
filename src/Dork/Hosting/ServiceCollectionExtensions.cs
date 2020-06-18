@@ -1,8 +1,8 @@
+using Dork.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Dynamic;
-using Slackbot.Net.Endpoints.Abstractions;
 
-namespace Slackbot.Net.Endpoints.Hosting
+namespace Dork.Hosting
 {
     public static class ServiceCollectionExtensions
     {

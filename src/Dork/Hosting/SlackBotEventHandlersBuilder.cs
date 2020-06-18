@@ -1,7 +1,7 @@
+using Dork.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
-using Slackbot.Net.Endpoints.Abstractions;
 
-namespace Slackbot.Net.Endpoints.Hosting
+namespace Dork.Hosting
 {
     public class SlackBotEventHandlersBuilder : ISlackbotEventHandlersBuilder
     {

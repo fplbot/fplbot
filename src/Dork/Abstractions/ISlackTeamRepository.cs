@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Slackbot.Net.Endpoints.Models;
+using Dork.Models;
 
-namespace Slackbot.Net.Endpoints.Abstractions
+namespace Dork.Abstractions
 {
     public interface ISlackTeamRepository
     {

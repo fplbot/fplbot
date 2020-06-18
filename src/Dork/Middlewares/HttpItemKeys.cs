@@ -1,4 +1,4 @@
-namespace Slackbot.Net.Endpoints.Middlewares
+namespace Dork.Middlewares
 {
     public class HttpItemKeys
     {

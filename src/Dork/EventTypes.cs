@@ -1,4 +1,4 @@
-namespace Slackbot.Net.Endpoints
+namespace Dork
 {
     public static class EventTypes
     {

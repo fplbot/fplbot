@@ -1,21 +1,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
-using Slackbot.Net.SlackClients.Http;
 
-namespace Slackbot.Net.Endpoints
+namespace Slackbot.Net.Extensions.FplBot
 {
-    public class HelpEventHandler
+    public class HelpEventHandler : IShortcutHandler
     {
         private readonly IEnumerable<IHandleEvent> _handlers;
-        private readonly ISlackClient _slackClient;
+        private readonly ISlackClientService _slackClientService;
 
-        public HelpEventHandler(IEnumerable<IHandleEvent> allHandlers, ISlackClient slackClient)
+        public HelpEventHandler(IEnumerable<IHandleEvent> allHandlers, ISlackClientService slackClientService)
         {
             _handlers = allHandlers;
-            _slackClient = slackClient;
+            _slackClientService = slackClientService;
         }
 
         public async Task Handle(EventMetaData eventMetadata, SlackEvent @event)
@@ -26,7 +26,8 @@ namespace Slackbot.Net.Endpoints
             
             var appMention = (AppMentionEvent) @event;
 
-            await _slackClient.ChatPostMessage(appMention.Channel, text);        
+            var slackClient = await _slackClientService.CreateClient(eventMetadata.Team_Id);
+            await slackClient.ChatPostMessage(appMention.Channel, text);        
         }
 
         public bool ShouldHandle(SlackEvent @event)

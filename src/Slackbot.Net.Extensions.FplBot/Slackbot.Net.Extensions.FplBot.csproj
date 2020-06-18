@@ -11,10 +11,10 @@
       <PackageReference Include="Slackbot.Net" />
       <PackageReference Include="Slackbot.Net.Abstractions.Hosting" />
       <PackageReference Include="Slackbot.Net.SlackClients.Http" />
+      <PackageReference Include="Slackbot.Net.Endpoints" />
     </ItemGroup>
 
     <ItemGroup>
      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
-     <ProjectReference Include="..\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
     </ItemGroup>
 </Project>

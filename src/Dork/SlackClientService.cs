@@ -3,7 +3,7 @@ using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.SlackClients.Http;
 
-namespace Slackbot.Net.Endpoints
+namespace Dork
 {
     internal class SlackClientService : ISlackClientService
     {

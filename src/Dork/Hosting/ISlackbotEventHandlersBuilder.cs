@@ -1,6 +1,6 @@
-using Slackbot.Net.Endpoints.Abstractions;
+using Dork.Abstractions;
 
-namespace Slackbot.Net.Endpoints.Hosting
+namespace Dork.Hosting
 {
     public interface ISlackbotEventHandlersBuilder
     {

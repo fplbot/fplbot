@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Slackbot.Net.Endpoints.Middlewares
+namespace Dork.Middlewares
 {
     public class Challenge
     {

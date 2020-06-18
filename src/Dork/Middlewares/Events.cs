@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Dork.Abstractions;
+using Dork.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
 
-namespace Slackbot.Net.Endpoints.Middlewares
+namespace Dork.Middlewares
 {
     public class Events
     {

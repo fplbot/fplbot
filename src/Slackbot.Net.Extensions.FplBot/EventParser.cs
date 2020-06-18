@@ -1,9 +1,8 @@
-using Newtonsoft.Json.Linq;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Endpoints.Models;
 
-namespace Slackbot.Net.Endpoints
+namespace Slackbot.Net.Extensions.FplBot
 {
     // Hack: map to RTM api models (Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived.SlackMessage)
     // until migration to Event API models in handlers
@@ -45,28 +44,6 @@ namespace Slackbot.Net.Endpoints
                 default:
                     return ("unsupported-eventtype", "unsupported-eventtype");
             }
-        }
-        
-        public static SlackEvent ToEventType(JObject eventJson)
-        {
-            var eventType = GetEventType(eventJson);
-            switch (eventType)
-            {    
-                case EventTypes.AppMention:
-                    return eventJson.ToObject<AppMentionEvent>();
-                default:
-                    return eventJson.ToObject<SlackEvent>();
-            }
-        }
-        
-        public static string GetEventType(JObject eventJson)
-        {
-            if (eventJson != null)
-            {
-                return eventJson["type"].Value<string>();
-            }
-            
-            return "unknown";
         }
     }
 }

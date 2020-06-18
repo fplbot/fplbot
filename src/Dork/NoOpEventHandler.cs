@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Dork.Abstractions;
+using Dork.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
 
-namespace Slackbot.Net.Endpoints
+namespace Dork
 {
     public class NoOpEventHandler : IHandleEvent
     {

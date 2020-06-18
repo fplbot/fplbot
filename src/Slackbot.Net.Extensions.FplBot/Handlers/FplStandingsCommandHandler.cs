@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
-using Slackbot.Net.Endpoints;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
@@ -67,6 +65,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("standings");
+        public bool ShouldShowInHelp => true;
+
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");
         
         public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("standings", "Get current league standings");
@@ -75,9 +75,5 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
             await Handle(rtmMessage);        
         }
-
-    
-
-        public bool ShouldShowInHelp => true;
     }
 }

@@ -1,4 +1,4 @@
-namespace Slackbot.Net.Endpoints.Models
+namespace Dork.Models
 {
     public class SlackTeam
     {

@@ -1,4 +1,5 @@
 using System;
+
 using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
@@ -57,9 +58,10 @@ namespace Slackbot.Net.Abstractions.Hosting
             return builder;
         }
 
-        public static ISlackbotWorkerBuilder AddFplBotEventHandlers(this ISlackbotWorkerBuilder builder)
+        public static ISlackbotWorkerBuilder AddFplBotEventHandlers<T>(this ISlackbotWorkerBuilder builder) where T : class, ITokenStore
         {
-            builder.Services.AddSlackBotEventHandlers()
+            builder.Services.AddSlackBotEvents<T>()
+                .AddShortcut<HelpEventHandler>()
                 .AddHandler<FplPlayerCommandHandler>()
                 .AddHandler<FplStandingsCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()

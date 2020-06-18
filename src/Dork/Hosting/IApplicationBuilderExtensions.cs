@@ -1,8 +1,8 @@
+using Dork.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Slackbot.Net.Endpoints.Middlewares;
 
-namespace Slackbot.Net.Endpoints.Hosting
+namespace Dork.Hosting
 {
     public static class IApplicationBuilderExtensions
     {

@@ -4,16 +4,13 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.SlackClients.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
 using Slackbot.Net.Dynamic;
-using Slackbot.Net.Endpoints;
+using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
-using IHandleEvent = Slackbot.Net.Endpoints.Abstractions.IHandleEvent;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
