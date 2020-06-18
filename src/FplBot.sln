@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.ConsoleApps", "FplBot.ConsoleApps\FplBot.ConsoleApps.csproj", "{418B7658-E90E-452E-B0B0-C5C7645BAE64}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Tests", "FplBot.Tests\FplBot.Tests.csproj", "{0DB12843-588F-4B7B-837C-1D8D12683751}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Build", "..\build\FplBot.Build.csproj", "{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B}"
@@ -19,8 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi.Tests", "FplB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E-772F-4E70-BD50-1121343BA7D7}"
 	ProjectSection(SolutionItems) = preProject
-		..\Fplbot.Dockerfile = ..\Fplbot.Dockerfile
-		..\FplbotWebApi.Dockerfile = ..\FplbotWebApi.Dockerfile
+		..\Heroku.Dockerfile = ..\Heroku.Dockerfile
 		..\heroku.yml = ..\heroku.yml
 		Directory.Build.targets = Directory.Build.targets
 		..\buildherokuimage.sh = ..\buildherokuimage.sh
@@ -37,18 +34,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|x64.Build.0 = Debug|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Debug|x86.Build.0 = Debug|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|Any CPU.Build.0 = Release|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x64.ActiveCfg = Release|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x64.Build.0 = Release|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x86.ActiveCfg = Release|Any CPU
-		{418B7658-E90E-452E-B0B0-C5C7645BAE64}.Release|x86.Build.0 = Release|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DB12843-588F-4B7B-837C-1D8D12683751}.Debug|x64.ActiveCfg = Debug|Any CPU
