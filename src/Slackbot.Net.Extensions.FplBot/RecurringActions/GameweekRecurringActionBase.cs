@@ -9,6 +9,7 @@ using Slackbot.Net.SlackClients.Http;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.SlackClients.Http.Exceptions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -110,10 +111,25 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var setup = await _teamRepo.GetSetupByToken(token);
             var slackClient = _slackClientBuilder.Build(token);
 
-            var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
+            try
+            {
+                var res = await slackClient.ChatPostMessage(setup.Channel, await msg(slackClient));
 
-            if (!res.Ok)
-                _logger.LogError($"Could not post to {setup.Channel}", res.Error);
+                if (!res.Ok)
+                {
+                    _logger.LogError($"Could not post to {setup.Channel}", res.Error);
+
+               
+                }
+            }
+            catch (SlackApiException sae)
+            {
+                if (sae.Message == "account_inactive")
+                {
+                    await _tokenStore.Delete(token);
+                    _logger.LogInformation($"Deleted inactive token");
+                }
+            }
         }
     }
 }

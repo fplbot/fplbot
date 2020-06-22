@@ -79,6 +79,18 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             {
                 return;
             }
+            
+            // Check for new Slack workspaces installed during a gameweek being monitored
+            var tokens = await _tokenStore.GetTokens();
+            foreach (var token in tokens)
+            {
+                var c = await _teamRepo.GetSetupByToken(token);
+                if (!_transfersForCurrentGameweek.ContainsKey(c.LeagueId))
+                {
+                    var transferForLeague = await _transfersByGameWeek.GetTransfersByGameweek(currentGameweek, c.LeagueId);
+                    _transfersForCurrentGameweek.Add(c.LeagueId, transferForLeague);
+                }
+            }
 
             var newGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
 
