@@ -129,6 +129,11 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     await _tokenStore.Delete(token);
                     _logger.LogInformation($"Deleted inactive token");
                 }
+                else
+                {
+                    _logger.LogError(sae, sae.Message);
+
+                }
             }
         }
     }
