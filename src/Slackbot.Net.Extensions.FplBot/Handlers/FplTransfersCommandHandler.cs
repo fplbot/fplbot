@@ -12,7 +12,7 @@ using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplTransfersCommandHandler : IHandleMessages, IHandleEvent
+    internal class FplTransfersCommandHandler : IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekHelper _gameweekHelper;
@@ -58,7 +58,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("transfers");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("transfers");
 
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("transfers {GW/''}", "Displays each team's transfers");
+        public (string,string) GetHelpDescription() => ("transfers {GW/''}", "Displays each team's transfers");
         public bool ShouldShowInHelp => true;
     }
 }

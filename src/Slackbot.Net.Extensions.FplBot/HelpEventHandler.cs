@@ -20,9 +20,8 @@ namespace Slackbot.Net.Extensions.FplBot
 
         public async Task Handle(EventMetaData eventMetadata, SlackEvent @event)
         {
-            var text = _handlers.Where(handler => handler.ShouldShowInHelp)
-                .Select(handler => handler.GetHelpDescription())
-                .Aggregate("*HALP:*", (current, helpDescription) => current + $"\n• `{helpDescription.Item1}` : _{helpDescription.Item2}_");
+            var text = _handlers.Select(handler => handler.GetHelpDescription())
+                .Aggregate("*HALP:*", (current, helpDescription) => current + $"\n• `{helpDescription.HandlerTrigger}` : _{helpDescription.Description}_");
             
             var appMention = (AppMentionEvent) @event;
 

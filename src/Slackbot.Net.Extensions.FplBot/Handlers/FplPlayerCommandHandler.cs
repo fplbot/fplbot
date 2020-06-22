@@ -14,7 +14,7 @@ using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplPlayerCommandHandler : IHandleMessages, IHandleEvent
+    internal class FplPlayerCommandHandler : IHandleEvent
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
@@ -138,7 +138,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("player");
 
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("player {name}", "Display info about the player");
+        public (string,string) GetHelpDescription() => ("player {name}", "Display info about the player");
         public bool ShouldShowInHelp => true;
     }
 }

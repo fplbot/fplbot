@@ -13,7 +13,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplStandingsCommandHandler : IHandleMessages, IHandleEvent
+    internal class FplStandingsCommandHandler : IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekClient _gameweekClient;
@@ -69,7 +69,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");
         
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("standings", "Get current league standings");
+        public (string,string) GetHelpDescription() => ("standings", "Get current league standings");
         public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);

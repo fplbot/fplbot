@@ -4,7 +4,6 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Extensions;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,7 +13,7 @@ using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplNextGameweekCommandHandler : IHandleMessages, IHandleEvent
+    public class FplNextGameweekCommandHandler : IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly ISlackClientService _slackClientBuilder;
@@ -89,7 +88,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("next");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("next");
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("next", "Displays the fixtures for next gameweek");
+        public (string,string) GetHelpDescription() => ("next", "Displays the fixtures for next gameweek");
         public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);

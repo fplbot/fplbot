@@ -80,13 +80,7 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<ITeamValue, TeamValue>();
             builder.Services.AddSingleton<IGameweekHelper, GameweekHelper>();
             builder.Services.AddSingleton<DateTimeUtils>();
-            builder.AddHandler<FplPlayerCommandHandler>()
-                .AddHandler<FplStandingsCommandHandler>()
-                .AddHandler<FplNextGameweekCommandHandler>()
-                .AddHandler<FplInjuryCommandHandler>()
-                .AddHandler<FplCaptainCommandHandler>()
-                .AddHandler<FplTransfersCommandHandler>()
-                .AddRecurring<NextGameweekRecurringAction>()
+            builder.AddRecurring<NextGameweekRecurringAction>()
                 .AddRecurring<NearDeadlineRecurringAction>()
                 .AddRecurring<GameweekMonitorRecurringAction>();
         }

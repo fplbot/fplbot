@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -13,7 +12,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplInjuryCommandHandler : IHandleMessages, IHandleEvent
+    internal class FplInjuryCommandHandler : IHandleEvent
     {
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IPlayerClient _playerClient;
@@ -69,7 +68,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("injuries");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("injuries");
 
-        public Tuple<string, string> GetHelpDescription() => new Tuple<string, string>("injuries", "See injured players owned by more than 5 %");
+        public (string,string) GetHelpDescription() => ("injuries", "See injured players owned by more than 5 %");
         public bool ShouldShowInHelp => true;
     }
 
