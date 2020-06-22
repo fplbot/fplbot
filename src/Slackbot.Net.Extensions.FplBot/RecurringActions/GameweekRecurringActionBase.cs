@@ -118,8 +118,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 if (!res.Ok)
                 {
                     _logger.LogError($"Could not post to {setup.Channel}", res.Error);
-
-               
                 }
             }
             catch (SlackApiException sae)
@@ -132,7 +130,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 else
                 {
                     _logger.LogError(sae, sae.Message);
-
                 }
             }
         }
