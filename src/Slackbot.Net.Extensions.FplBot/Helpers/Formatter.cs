@@ -19,14 +19,14 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             var numPlayers = league.Standings.Entries.Count;
 
-            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
+            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent);
             
-            sb.Append($":star: *Results after GW {currentGw}* :star: \n\n");
+            sb.Append($":star: *Results after GW {currentGw.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. {player.GetEntryLink(currentGw)} - {player.Total} {arrow} \n");
+                sb.Append($"{player.Rank}. {player.GetEntryLink(currentGw.Id)} - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
