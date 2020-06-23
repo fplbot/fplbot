@@ -1,8 +1,7 @@
 using FplBot.Tests.Helpers;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using System.Threading.Tasks;
+using Slackbot.Net.Endpoints.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -10,7 +9,7 @@ namespace FplBot.Tests
 {
     public class FplTransfersCommandHandlerTests
     {
-        private readonly IHandleMessages _client;
+        private readonly IHandleEvent _client;
 
         public FplTransfersCommandHandlerTests(ITestOutputHelper logger)
         {
@@ -23,9 +22,9 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> transfers 20")]
         public async Task GetTransfersHandlerShouldPostTransfers(string input)
         {
-            var playerData = await _client.Handle(Factory.CreateDummy(input));
-            
-            Assert.StartsWith("Transfers", playerData.HandledMessage);
+            var dummy = Factory.CreateDummyEvent(input);
+            var transfers = await _client.Handle(dummy.meta, dummy.@event);
+            Assert.StartsWith("Transfers", transfers.Response);
         }
 
         [Theory]
@@ -33,9 +32,10 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> transfers 1")]
         public async Task GetTransfersHandlerForGw1ShouldPostSpecialMessage(string input)
         {
-            var playerData = await _client.Handle(Factory.CreateDummy(input));
+            var dummy = Factory.CreateDummyEvent(input);
+            var transfers = await _client.Handle(dummy.meta, dummy.@event);
 
-            Assert.Equal("No transfers are made the first gameweek.", playerData.HandledMessage);
+            Assert.Equal("No transfers are made the first gameweek.", transfers.Response);
         }
     }
 }

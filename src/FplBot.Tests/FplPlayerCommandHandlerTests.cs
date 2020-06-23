@@ -3,6 +3,7 @@ using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using System.Threading.Tasks;
+using Slackbot.Net.Endpoints.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -10,7 +11,7 @@ namespace FplBot.Tests
 {
     public class FplPlayerCommandHandlerTests
     {
-        private readonly IHandleMessages _client;
+        private readonly IHandleEvent _client;
 
         public FplPlayerCommandHandlerTests(ITestOutputHelper logger)
         {
@@ -22,16 +23,9 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> player salah")]
         public async Task GetPlayerHandler(string input)
         {
-
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot,
-                Team = new TeamDetails()
-            });
-            
-            Assert.Contains("Found matching player for salah", playerData.HandledMessage);
+            var dummy = Factory.CreateDummyEvent(input);
+            var playerData = await _client.Handle(dummy.meta, dummy.@event);
+            Assert.Contains("Found matching player for salah", playerData.Response);
         }
 
         [Theory]
@@ -39,15 +33,10 @@ namespace FplBot.Tests
         [InlineData("<@UREFQD887> player ", "nonexistant")]
         public async Task GetPlayerHandlerNonPlayer(string input, string player)
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = $"{input}{player}",
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot,
-                Team = new TeamDetails()
-            });
-            
-            Assert.Equal("Found no matching player for nonexistant: ", playerData.HandledMessage);
+            var dummy = Factory.CreateDummyEvent($"{input}{player}");
+            var playerData = await _client.Handle(dummy.meta, dummy.@event);
+
+            Assert.Equal("Found no matching player for nonexistant: ", playerData.Response);
         }
         
         [Theory]
@@ -87,16 +76,11 @@ namespace FplBot.Tests
         [InlineData("Kun", "Sergio Agüero")]
         [InlineData("Kun Agüero", "Sergio Agüero")]
         public async Task GetPlayer(string input, string expectedPlayer)
+        
         {
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = $"@fplbot player {input}",
-                ChatHub = new ChatHub(),
-                Bot = Factory.MockBot,
-                Team = new TeamDetails()
-            });
-            
-            Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.HandledMessage);
+            var dummy = Factory.CreateDummyEvent($"player {input}");
+            var playerData = await _client.Handle(dummy.meta, dummy.@event);
+            Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.Response);
         }
     }
 }

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Clients;
 using Microsoft.Extensions.Configuration;
@@ -9,6 +11,8 @@ using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Dynamic;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.SlackClients.Http;
 using Xunit.Abstractions;
 
@@ -21,9 +25,9 @@ namespace FplBot.Tests.Helpers
             return BuildServiceProvider(logger).GetService<T>();
         }
 
-        public static IHandleMessages GetHandler<T>(ITestOutputHelper logger)
+        public static IHandleEvent GetHandler<T>(ITestOutputHelper logger)
         {
-            var allHandlers = BuildServiceProvider(logger).GetServices<IHandleMessages>();
+            var allHandlers = BuildServiceProvider(logger).GetServices<IHandleEvent>();
             return allHandlers.First(h => h is T);
         }
         
@@ -41,7 +45,9 @@ namespace FplBot.Tests.Helpers
             {
                 o.Login = configurationSection["Login"];
                 o.Password = configurationSection["Password"];
-            });
+            }).AddFplBotEventHandlers<DontCareRepo>();
+            
+            
 
             services.ReplacePublishersWithDebugPublisher(logger);
             SlackClient = A.Fake<ISlackClient>();
@@ -94,6 +100,49 @@ namespace FplBot.Tests.Helpers
                     Name = "SomeTeam"
                 }
             };
+        }
+        
+        public static (EventMetaData meta, AppMentionEvent @event) CreateDummyEvent(string input)
+        {
+            return (new EventMetaData
+            {
+                Team_Id =  "123",
+            }, 
+                new AppMentionEvent()
+            {
+                Text = input
+            });
+        }
+        
+        public static (EventMetaData meta, AppMentionEvent @event) CreateDummyEventByUser(string input, string userId)
+        {
+            return (new EventMetaData
+                {
+                    Team_Id =  "123",
+                }, 
+                new AppMentionEvent()
+                {
+                    Text = input,
+                    User = userId,
+                });
+        }
+    }
+
+    internal class DontCareRepo : ITokenStore
+    {
+        public Task<IEnumerable<string>> GetTokens()
+        {
+            return Task.FromResult(new List<string>().AsEnumerable());
+        }
+
+        public Task<string> GetTokenByTeamId(string teamId)
+        {
+            return Task.FromResult(string.Empty);
+        }
+
+        public Task Delete(string token)
+        {
+            return Task.CompletedTask;
         }
     }
 }

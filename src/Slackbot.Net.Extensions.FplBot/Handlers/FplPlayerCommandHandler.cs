@@ -61,10 +61,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse($"Found matching player for {name}: " + playerName);
         }
         
-        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            await Handle(rtmMessage);
+            var messageHandled = await Handle(rtmMessage);
+            return new EventHandledResponse(messageHandled.HandledMessage);
         }
 
         private static Player FindMostPopularMatchingPlayer(Player[] players, string name)

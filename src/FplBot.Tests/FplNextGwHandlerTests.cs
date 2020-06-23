@@ -3,6 +3,7 @@ using FakeItEasy;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
+using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit;
@@ -12,7 +13,7 @@ namespace FplBot.Tests
 {
     public class FplNextGwHandlerTests
     {
-        private readonly IHandleMessages _client;
+        private readonly IHandleEvent _client;
 
         public FplNextGwHandlerTests(ITestOutputHelper logger)
         {
@@ -34,17 +35,10 @@ namespace FplBot.Tests
                         },
                     }
                 });
-            var playerData = await _client.Handle(new SlackMessage
-            {
-                Text = input,
-                ChatHub = new ChatHub(),
-                User = new Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived.User
-                {
-                    Id = "123"
-                }
-            });
+            var dummy = Factory.CreateDummyEventByUser(input, "123");
+            var playerData = await _client.Handle(dummy.meta, dummy.@event);
             
-            Assert.NotEmpty(playerData.HandledMessage);
+            Assert.NotEmpty(playerData.Response);
         }
     }
 }

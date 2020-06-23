@@ -49,10 +49,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse(messageToSend);
         }
         
-        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            await Handle(rtmMessage);        
+            var messageHandled = await Handle(rtmMessage);
+            return new EventHandledResponse(messageHandled.HandledMessage);
+
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("transfers");

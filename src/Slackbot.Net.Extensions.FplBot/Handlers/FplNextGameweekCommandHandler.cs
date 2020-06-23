@@ -89,10 +89,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("next");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("next");
         public (string,string) GetHelpDescription() => ("next", "Displays the fixtures for next gameweek");
-        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            await Handle(rtmMessage);
+            var messageHandled = await Handle(rtmMessage);
+            return new EventHandledResponse(messageHandled.HandledMessage);
         }
 
         public bool ShouldShowInHelp => true;

@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         /// <returns>Extracted arguments if found</returns>
         public string ExtractArgs(string messageText, string pattern)
         {
-            return FindMatch(messageText, $"{BotPattern} {pattern.Replace("{args}", "(.+)?")}");
+            return FindMatch(messageText, $"{pattern.Replace("{args}", "(.+)?")}");
         }
 
         private static string FindMatch(string input, string regexPattern)
@@ -50,7 +50,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             {
                 if (string.IsNullOrEmpty(_botPattern))
                 {
-                    _botPattern = $"(?:@{_botDetails.Name}|<@{_botDetails.Id}>)";
+                    _botPattern = $"(<@\\w*>)";
                 }
 
                 return _botPattern;

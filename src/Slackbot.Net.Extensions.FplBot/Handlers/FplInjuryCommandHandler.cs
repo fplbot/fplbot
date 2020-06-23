@@ -49,10 +49,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new HandleResponse(textToSend);
         }
         
-        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            await Handle(rtmMessage);
+            var messageHandled = await Handle(rtmMessage);
+            return new EventHandledResponse(messageHandled.HandledMessage);
+
         }
 
         private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)

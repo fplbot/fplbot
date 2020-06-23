@@ -58,10 +58,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return await Publish(incomingMessage, outgoingMessage);
         }
         
-        public async Task Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            await Handle(rtmMessage);
+            var messageHandled = await Handle(rtmMessage);
+            return new EventHandledResponse(messageHandled.HandledMessage);
         }
 
         private async Task<HandleResponse> Publish(SlackMessage incomingMessage, string outgoingMessage)
