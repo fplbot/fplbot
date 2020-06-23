@@ -20,7 +20,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         /// <returns>Extracted gameweek if found</returns>
         public int? ExtractGameweek(string messageText, string pattern)
         {
-            var gameweek = FindMatch(messageText, $"{BotPattern} {pattern.Replace("{gw}", "(\\d+?)(?:\\s|$)")}");
+            var gameweek = FindMatch(messageText, $"{pattern.Replace("{gw}", "(\\d+?)(?:\\s|$)")}");
             return gameweek == null ? (int?) null : int.Parse(gameweek);
         }
         
