@@ -1,7 +1,5 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using System.Collections.Generic;
@@ -30,13 +28,14 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsclient = teamsclient;
         }
 
-        public async Task<HandleResponse> Handle(SlackMessage message)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent baseEvent)
         {
-            var slackClient = await _slackClientBuilder.CreateClient(message.Team.Id);
+            var slackEvent = (AppMentionEvent) baseEvent;
+            var slackClient = await _slackClientBuilder.CreateClient(eventMetadata.Team_Id);
             var usersTask = slackClient.UsersList();
             var gameweeksTask = _gameweekClient.GetGameweeks();
             var teamsTask = _teamsclient.GetAllTeams();
-            
+
             var users = await usersTask;
             var gameweeks = await gameweeksTask;
             var teams = await teamsTask;
@@ -44,22 +43,22 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var nextGw = gameweeks.First(gw => gw.IsNext);
             var fixtures = await _fixtureClient.GetFixturesByGameweek(nextGw.Id);
 
-            var user = users.Members.FirstOrDefault(x => x.Id == message.User?.Id);
+            var user = users.Members.FirstOrDefault(x => x.Id == slackEvent.User);
             var userTzOffset = user?.Tz_Offset ?? 0;
 
             var textToSend = TextToSend(nextGw, fixtures, teams, userTzOffset);
 
             foreach (var pBuilder in _publishers)
             {
-                var p = await pBuilder.Build(message.Team.Id);
+                var p = await pBuilder.Build(eventMetadata.Team_Id);
                 await p.Publish(new Notification
                 {
-                    Recipient = message.ChatHub.Id,
+                    Recipient = slackEvent.Channel,
                     Msg = textToSend
                 });
             }
 
-            return new HandleResponse(textToSend);
+            return new EventHandledResponse(textToSend);
         }
 
         private static string TextToSend(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
@@ -86,17 +85,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return textToSend;
         }
 
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("next");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("next");
         public (string,string) GetHelpDescription() => ("next", "Displays the fixtures for next gameweek");
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
-        {
-            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            var messageHandled = await Handle(rtmMessage);
-            return new EventHandledResponse(messageHandled.HandledMessage);
-        }
 
-        public bool ShouldShowInHelp => true;
-     
     }
 }
