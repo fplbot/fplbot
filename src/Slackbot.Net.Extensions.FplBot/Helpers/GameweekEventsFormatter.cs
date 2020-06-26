@@ -4,6 +4,7 @@ using Slackbot.Net.Extensions.FplBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -25,32 +26,29 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         };
 
         public static List<string> FormatNewFixtureEvents(
-            List<FixtureEvents> newFixtureEvents,
-            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
-            ICollection<Player> players,
-            ICollection<Team> teams)
+            List<FixtureEvents> newFixtureEvents, GameweekLeagueContext context)
         {
             var formattedStrings = new List<string>();
 
             newFixtureEvents.ForEach(newFixtureEvent =>
             {
-                var scoreHeading = $"{GetScore(teams, newFixtureEvent)}\n";
+                var scoreHeading = $"{GetScore(context.Teams, newFixtureEvent)}\n";
                 var eventMessages = newFixtureEvent.StatMap.SelectMany(stat =>
                 {
                     switch (stat.Key)
                     {
                         case StatType.GoalsScored:
-                            return FormatNewGoals(stat.Value, players, transfersForCurrentGameweek);
+                            return FormatNewGoals(stat.Value, context.Players, context.TransfersForLeague);
                         case StatType.Assists:
-                            return FormatNewAssists(stat.Value, players);
+                            return FormatNewAssists(stat.Value, context.Players);
                         case StatType.OwnGoals:
-                            return FormatOwnGoals(stat.Value, players);
+                            return FormatOwnGoals(stat.Value, context.Players);
                         case StatType.RedCards:
-                            return FormatNewRedCards(stat.Value, players, transfersForCurrentGameweek);
+                            return FormatNewRedCards(stat.Value, context.Players, context.TransfersForLeague);
                         case StatType.PenaltiesMissed:
-                            return FormatNewPenaltiesMissed(stat.Value, players);
+                            return FormatNewPenaltiesMissed(stat.Value, context.Players);
                         case StatType.PenaltiesSaved:
-                            return FormatNewPenaltiesSaved(stat.Value, players);
+                            return FormatNewPenaltiesSaved(stat.Value, context.Players);
                         default: return Enumerable.Empty<string>();
                     }
                 }).MaterializeToArray();

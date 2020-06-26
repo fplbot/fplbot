@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Slackbot.Net.Endpoints.Models;
 
-namespace FplBot.WebApi.Data
+namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
     public interface ISlackTeamRepository
     {
         Task DeleteByTeamId(string teamId);
         Task Insert(SlackTeam slackTeam);
         IAsyncEnumerable<SlackTeam> GetAllTeams();
+        Task<IEnumerable<SlackTeam>> GetAllTeamsAsync();
     }
 }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    internal class TransfersByGameWeek : ITransfersByGameWeek
+    public class TransfersByGameWeek : ITransfersByGameWeek
     {
         private readonly ILeagueClient _leagueClient;
         private readonly IPlayerClient _playerClient;
@@ -185,7 +185,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return player != null ? $"{player.FirstName.First()}. {player.SecondName}" : "";
         }
 
-        internal class Transfer
+        public class Transfer
         {
             public int EntryId { get; set; }
             public string EntryName { get; set; }

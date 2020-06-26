@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
@@ -79,10 +81,14 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
             builder.Services.AddSingleton<ITeamValue, TeamValue>();
             builder.Services.AddSingleton<IGameweekHelper, GameweekHelper>();
+            builder.Services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
+            builder.Services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();
+            builder.Services.AddSingleton<IMonitorFixtureEvents, FixtureEventsMonitor>();
+            builder.Services.AddSingleton<IState, State>();
+            builder.Services.AddSingleton<GameweekMonitorOrchestrator>();
             builder.Services.AddSingleton<DateTimeUtils>();
-            builder.AddRecurring<NextGameweekRecurringAction>()
-                .AddRecurring<NearDeadlineRecurringAction>()
-                .AddRecurring<GameweekMonitorRecurringAction>();
+            builder.AddRecurring<GameweekLifecycleRecurringAction>()
+                .AddRecurring<NearDeadlineRecurringAction>();
         }
     }
 }

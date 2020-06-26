@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.Publishers.Logger;
 using Slackbot.Net.Extensions.Publishers.Slack;
 using Slackbot.Net.SlackClients.Http.Extensions;

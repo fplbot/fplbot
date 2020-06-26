@@ -7,7 +7,6 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using System.Linq;
 using System.Threading.Tasks;
-using Cronos;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
