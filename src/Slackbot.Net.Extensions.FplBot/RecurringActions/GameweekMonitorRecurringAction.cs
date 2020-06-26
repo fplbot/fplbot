@@ -91,37 +91,55 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     _transfersForCurrentGameweek.Add(c.LeagueId, transferForLeague);
                 }
             }
+            var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
+            var newEvents = GetUpdatedFixtureEvents(latest, _currentGameweekFixtures);
 
-            var newGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
-
-            var newFixtureEvents = newGameweekFixtures.Where(f => f.Stats.Any()).Select(fixture =>
+            if (newEvents.Any())
+            {
+                foreach (var league in _transfersForCurrentGameweek.Keys)
                 {
-                    var oldFixture = _currentGameweekFixtures.FirstOrDefault(f => f.Code == fixture.Code);
+                    var theEventsForTheLeague = _transfersForCurrentGameweek[league];
+                    var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), theEventsForTheLeague, _players, _teams);
+                    await PostNewEvents(league, formattedEvents);
+                }
 
+                _currentGameweekFixtures = latest;
+            }
+        }
+
+        public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current)
+        {
+            if(latestFixtures == null)
+                return new List<FixtureEvents>();
+            
+            if (current == null)
+                return new List<FixtureEvents>();
+            
+            return latestFixtures.Where(f => f.Stats.Any()).Select(fixture =>
+            {
+                var oldFixture = current.FirstOrDefault(f => f.Code == fixture.Code);
+                if (oldFixture != null)
+                {
                     var newFixtureStats = StatHelper.DiffFixtureStats(fixture, oldFixture);
 
-                    return newFixtureStats.Values.Any() ? new FixtureEvents
-                    {
-                        GameScore = new GameScore
+                    if (newFixtureStats.Values.Any())
+                        return new FixtureEvents
                         {
-                            HomeTeamId = fixture.HomeTeamId,
-                            AwayTeamId = fixture.AwayTeamId,
-                            HomeTeamScore = fixture.HomeTeamScore,
-                            AwayTeamScore = fixture.AwayTeamScore,
-                        },
-                        StatMap = newFixtureStats
-                    } : null;
+                            GameScore = new GameScore
+                            {
+                                HomeTeamId = fixture.HomeTeamId,
+                                AwayTeamId = fixture.AwayTeamId,
+                                HomeTeamScore = fixture.HomeTeamScore,
+                                AwayTeamScore = fixture.AwayTeamScore,
+                            },
+                            StatMap = newFixtureStats
+                        };
+                    else
+                        return null;
+                }
 
-                }).WhereNotNull().ToList();
-
-            foreach (var league in _transfersForCurrentGameweek.Keys)
-            {
-                var theEventsForTheLeague = _transfersForCurrentGameweek[league];
-                var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newFixtureEvents, theEventsForTheLeague, _players, _teams);
-                await PostNewEvents(league, formattedEvents);
-            }
-
-            _currentGameweekFixtures = newGameweekFixtures;
+                return null;
+            }).WhereNotNull();
         }
 
         private async Task PostNewEvents(int leagueId, List<string> events)
