@@ -63,10 +63,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 return $"Oops: {e.Message}";
             }
         }
-
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("standings");
-        public bool ShouldShowInHelp => true;
-
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");
         
         public (string,string) GetHelpDescription() => ("standings", "Get current league standings");
@@ -75,7 +71,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
             var messageHandled = await Handle(rtmMessage);     
             return new EventHandledResponse(messageHandled.HandledMessage);
-
         }
     }
 }

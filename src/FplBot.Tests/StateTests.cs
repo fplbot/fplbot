@@ -10,11 +10,19 @@ using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace FplBot.Tests
 {
     public class StateTests
     {
+        private readonly ITestOutputHelper _helper;
+
+        public StateTests(ITestOutputHelper helper)
+        {
+            _helper = helper;
+        }
+        
         [Fact]
         public async Task DoesNotCrashWithNoDataReturned()
         {
@@ -36,10 +44,19 @@ namespace FplBot.Tests
             await state.Reset(1);
             var newEvents = await state.Refresh(1);
             Assert.NotEmpty(newEvents);
-            
+            Assert.Single(newEvents);
             var goalEvent = newEvents.First().StatMap[StatType.GoalsScored].First();
             Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
-            Assert.Equal(1337, goalEvent.PlayerId);
+            Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
+            
+            var context = state.GetGameweekLeagueContext(TestBuilder.LeagueId);
+            
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
+            foreach (var formatttedEvent in formattedEvents)
+            {
+                _helper.WriteLine(formatttedEvent);
+            }
+            Assert.Contains("PlayerFirstName PlayerSecondName just scored a goal", formattedEvents.First());
         }
 
         private static IState CreateAllMockState()
@@ -56,17 +73,14 @@ namespace FplBot.Tests
             var playerClient = A.Fake<IPlayerClient>();
             A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
             {
-                new Player
-                {
-                    Id = 1
-                }
+                TestBuilder.Player()
             });
             
             var slackTeamRepository = A.Fake<ISlackTeamRepository>();
-            A.CallTo(() => slackTeamRepository.GetAllTeamsAsync()).Returns(new List<SlackTeam>{ new SlackTeam
+            A.CallTo(() => slackTeamRepository.GetAllTeamsAsync()).Returns(new List<SlackTeam>
             {
-                FplbotLeagueId = 111,
-            }});
+                TestBuilder.SlackTeam()
+            });
             
             var transfersByGameWeek = A.Fake<ITransfersByGameWeek>();
             A.CallTo(() => transfersByGameWeek.GetTransfersByGameweek(1, 111)).Returns(new List<TransfersByGameWeek.Transfer>{ new TransfersByGameWeek.Transfer { EntryId = 2 }});
@@ -74,6 +88,7 @@ namespace FplBot.Tests
             var teamsClient = A.Fake<ITeamsClient>();
             A.CallTo(() => teamsClient.GetAllTeams()).Returns(new List<Team>
             {
+               TestBuilder.HomeTeam(),
                TestBuilder.AwayTeam()
             });
 
@@ -82,12 +97,14 @@ namespace FplBot.Tests
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
             {
                 TestBuilder.AwayTeamGoal(888, 1)
-            }).Once();
+            }).Once()
+                .Then.Returns(
+                new List<Fixture>
+                {
+                    TestBuilder.AwayTeamGoal(888, 2)
+                });
             
-            A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
-            {
-                TestBuilder.AwayTeamGoal(888, 2)
-            }).Once();
+         
             
             return new State(fixtureClient,
                 playerClient,

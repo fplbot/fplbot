@@ -27,7 +27,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
-                await PublishUsingToken(msg, token);
+                await PublishUsingToken(token, msg);
             }
         }
 
@@ -72,7 +72,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                 {
                     foreach (var msg in messages)
                     {
-                        await PublishUsingToken(msg, token); 
+                        await PublishUsingToken(token, msg); 
                     }
                     
                 }

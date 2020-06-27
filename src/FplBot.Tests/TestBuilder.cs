@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
+using Slackbot.Net.Endpoints.Models;
 
 namespace FplBot.Tests
 {
@@ -8,6 +9,8 @@ namespace FplBot.Tests
     {
         private const int HomeTeamId = 10;
         private const int AwayTeamId = 20;
+        internal const int LeagueId = 111;
+        internal const int PlayerId = 123;
 
         public static Fixture NoGoals(int fixtureCode)
         {
@@ -60,10 +63,18 @@ namespace FplBot.Tests
                 {
                     new FixtureStatValue
                     {
-                        Element = 1337,
+                        Element = PlayerId,
                         Value = goals
                     }
                 }
+            };
+        }
+        
+        public static Team HomeTeam()
+        {
+            return new Team
+            {
+                Id = HomeTeamId
             };
         }
 
@@ -72,6 +83,24 @@ namespace FplBot.Tests
             return new Team
             {
                 Id = AwayTeamId
+            };
+        }
+
+        public static SlackTeam SlackTeam()
+        {
+            return new SlackTeam
+            {
+                FplbotLeagueId = LeagueId,
+            };
+        }
+
+        public static Player Player()
+        {
+            return new Player
+            {
+                Id = PlayerId,
+                FirstName = "PlayerFirstName",
+                SecondName = "PlayerSecondName"
             };
         }
     }

@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
             if (_storedCurrent == null)
             {
-                _logger.LogDebug("Initial fetch executed.");
+                _logger.LogDebug("Executeing initial fetch");
                 _storedCurrent = fetchedCurrent;
                 if (fetchedCurrent != null)
                 {
