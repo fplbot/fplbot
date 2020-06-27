@@ -1,17 +1,21 @@
 using System.Collections.Generic;
+using System.Linq;
 using Fpl.Client.Models;
 
 namespace FplBot.Tests
 {
     public class TestBuilder
     {
+        private const int HomeTeamId = 10;
+        private const int AwayTeamId = 20;
+
         public static Fixture NoGoals(int fixtureCode)
         {
             return new Fixture
             {
                 Code = fixtureCode,
                 HomeTeamId = 10,
-                AwayTeamId = 20,
+                AwayTeamId = AwayTeamId,
                 Stats = new[]
                 {
                     new FixtureStat
@@ -34,28 +38,40 @@ namespace FplBot.Tests
             return new Fixture
             {
                 Code = fixtureCode,
-                HomeTeamId = 10,
-                AwayTeamId = 20,
+                HomeTeamId = HomeTeamId,
+                AwayTeamId = AwayTeamId,
                 Stats = new[]
                 {
-                    new FixtureStat
+                    AwayTeamLeadingBy(goals)
+                }
+            };
+        }
+
+        private static FixtureStat AwayTeamLeadingBy(int goals)
+        {
+            return new FixtureStat
+            {
+                Identifier = "goals_scored",
+                HomeStats = new List<FixtureStatValue>
+                {
+                            
+                },
+                AwayStats = new List<FixtureStatValue>
+                {
+                    new FixtureStatValue
                     {
-                        Identifier = "goals_scored",
-                        HomeStats = new List<FixtureStatValue>
-                        {
-                            
-                        },
-                        AwayStats = new List<FixtureStatValue>
-                        {
-                            new FixtureStatValue
-                            {
-                                Element = 1337,
-                                Value = goals
-                            }
-                        }
-                            
+                        Element = 1337,
+                        Value = goals
                     }
                 }
+            };
+        }
+
+        public static Team AwayTeam()
+        {
+            return new Team
+            {
+                Id = AwayTeamId
             };
         }
     }

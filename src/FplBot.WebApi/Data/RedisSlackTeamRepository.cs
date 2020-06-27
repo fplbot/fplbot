@@ -131,5 +131,25 @@ namespace FplBot.WebApi.Data
                     };
             }
         }
+
+        public async Task<IEnumerable<SlackTeam>> GetAllTeamsAsync()
+        {
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
+            var teams = new List<SlackTeam>();
+            foreach (var key in allTeamKeys)
+            {
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField});
+                teams.Add(new SlackTeam
+                {
+                    AccessToken = fetchedTeamData[0],
+                    FplBotSlackChannel = fetchedTeamData[1],
+                    FplbotLeagueId = int.Parse(fetchedTeamData[2]),
+                    TeamName = fetchedTeamData[3],
+                    TeamId = FromKeyToTeamId(key)
+                });
+            }
+
+            return teams;
+        }
     }
 }

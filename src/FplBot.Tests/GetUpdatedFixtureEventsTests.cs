@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot;
-using Slackbot.Net.Extensions.FplBot.RecurringActions;
+using Slackbot.Net.Extensions.FplBot.Helpers;
 using Xunit;
 
 namespace FplBot.Tests
@@ -30,7 +30,7 @@ namespace FplBot.Tests
                 TestBuilder.AwayTeamGoal(fixtureCode:1, goals: 1)
             };
           
-            var events = GameweekMonitorRecurringAction.GetUpdatedFixtureEvents(latest, current);
+            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current);
             var awayGoalEvent = events.First();
             Assert.Equal(1337, awayGoalEvent.StatMap[StatType.GoalsScored].First().PlayerId);
             Assert.Equal(PlayerEvent.TeamType.Away, awayGoalEvent.StatMap[StatType.GoalsScored].First().Team);
@@ -38,7 +38,7 @@ namespace FplBot.Tests
 
         private static void AssertEmpty(ICollection<Fixture> latest, ICollection<Fixture> current)
         {
-            var events = GameweekMonitorRecurringAction.GetUpdatedFixtureEvents(latest, current);
+            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current);
             Assert.Empty(events);
         }
     }
