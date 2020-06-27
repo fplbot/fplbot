@@ -68,8 +68,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return FormatEvent(
                 newAssistEvents,
                 players,
-                "just got an assist!",
-                ":right-facing_fist::left-facing_fist: ");
+                "got an assist!",
+                ":handshake:");
         }
 
         private static IEnumerable<object> FormatOwnGoals(
@@ -79,7 +79,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return FormatEvent(
                 newOwnGoalEvents,
                 players,
-                "just scored a goal! In his own goal!",
+                "scored a goal! In his own goal!",
                 ":face_palm:");
         }
 
@@ -90,7 +90,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return FormatEvent(
                 newPenaltiesMissedEvents,
                 players,
-                "just missed a penalty!",
+                "missed a penalty!",
                 ":dizzy_face:");
         }
 
@@ -101,7 +101,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return FormatEvent(
                 newPenaltiesSavedEvents,
                 players,
-                "just saved a penalty!",
+                "saved a penalty!",
                 ":man-cartwheeling:");
         }
 
@@ -113,7 +113,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return FormatEvent(
                 newGoalEvents,
                 players,
-                "just scored a goal!",
+                "scored a goal!",
                 ":soccer:",
                 player =>
                 {
@@ -130,7 +130,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return FormatEvent(
                 newRedCardEvents,
                 players,
-                "just got a red card!",
+                "got a red card!",
                 ":red_circle:",
                 player =>
                 {
