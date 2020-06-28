@@ -10,7 +10,7 @@ namespace FplBot.Tests
     public class GameweekMonitorOrchestratorTests
     {
         [Fact]
-        public void WhenGameweek_HasJustBegun_TriggersEvent()
+        public void WhenGameweekJustBegun_TriggersEvent()
         {
             var orchestrator = CreateOrchestrator();
             
@@ -28,7 +28,7 @@ namespace FplBot.Tests
         }
 
         [Fact]
-        public void WhenGameweekIsOngoing_HasJustBegun_TriggersEvent()
+        public void WhenGameweekIsOngoing_TriggersEvent()
         {
             var orchestrator = CreateOrchestrator();
             
@@ -40,6 +40,24 @@ namespace FplBot.Tests
             };
 
             orchestrator.GameweekIsCurrentlyOngoing(1);
+            
+            Assert.NotNull(gwId);
+            Assert.Equal(1, gwId.Value);
+        }
+        
+        [Fact]
+        public void WhenGameweekJustEnded_TriggersEvent()
+        {
+            var orchestrator = CreateOrchestrator();
+            
+            int? gwId = null;
+            orchestrator.GameweekEndedEventHandlers +=  i =>
+            {
+                gwId = i;
+                return Task.CompletedTask;
+            };
+
+            orchestrator.GameweekJustEnded(1);
             
             Assert.NotNull(gwId);
             Assert.Equal(1, gwId.Value);

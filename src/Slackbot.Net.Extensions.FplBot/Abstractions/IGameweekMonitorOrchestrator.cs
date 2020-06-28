@@ -7,5 +7,6 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Task Initialize(int gameweek);
         Task GameweekJustBegan(int gameweek);
         Task GameweekIsCurrentlyOngoing(int gameweek);
+        Task GameweekJustEnded(int gameweek);
     }
 }
