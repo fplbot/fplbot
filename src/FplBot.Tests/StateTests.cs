@@ -56,7 +56,7 @@ namespace FplBot.Tests
             {
                 _helper.WriteLine(formatttedEvent);
             }
-            Assert.Contains("PlayerFirstName PlayerSecondName just scored a goal", formattedEvents.First());
+            Assert.Contains("PlayerFirstName PlayerSecondName scored a goal", formattedEvents.First());
         }
 
         private static IState CreateAllMockState()

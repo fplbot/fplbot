@@ -32,7 +32,7 @@ namespace FplBot.Tests
           
             var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current);
             var awayGoalEvent = events.First();
-            Assert.Equal(1337, awayGoalEvent.StatMap[StatType.GoalsScored].First().PlayerId);
+            Assert.Equal(123, awayGoalEvent.StatMap[StatType.GoalsScored].First().PlayerId);
             Assert.Equal(PlayerEvent.TeamType.Away, awayGoalEvent.StatMap[StatType.GoalsScored].First().Team);
         }
 
