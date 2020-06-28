@@ -103,5 +103,40 @@ namespace FplBot.Tests
                 SecondName = "PlayerSecondName"
             };
         }
+        
+        public static Gameweek OlderGameweek(int id)
+        {
+            return new Gameweek
+            {
+                Id = id
+            };
+        }
+
+        public static Gameweek CurrentGameweek(int id)
+        {
+            return new Gameweek
+            {
+                Id = id,
+                IsCurrent = true
+            };
+        }
+        
+        public static Gameweek PreviousGameweek(int id)
+        {
+            return new Gameweek
+            {
+                Id = id,
+                IsPrevious = true
+            };
+        }
+        
+        public static Gameweek NextGameweek(int id)
+        {
+            return new Gameweek
+            {
+                Id = id,
+                IsNext = true
+            };
+        }
     }
 }

@@ -5,7 +5,7 @@ using Slackbot.Net.Extensions.FplBot.RecurringActions;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 {
-    internal class GameweekMonitorOrchestrator
+    public class GameweekMonitorOrchestrator : IGameweekMonitorOrchestrator
     {
         public event Func<int, Task> InitializeEventHandlers = i => Task.CompletedTask;
         public event Func<int, Task> GameWeekJustBeganEventHandlers = i => Task.CompletedTask;

@@ -86,7 +86,7 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();
             builder.Services.AddSingleton<IMonitorFixtureEvents, FixtureEventsMonitor>();
             builder.Services.AddSingleton<IState, State>();
-            builder.Services.AddSingleton<GameweekMonitorOrchestrator>();
+            builder.Services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
             builder.Services.AddSingleton<DateTimeUtils>();
             builder.AddRecurring<GameweekLifecycleRecurringAction>()
                 .AddRecurring<NearDeadlineRecurringAction>();

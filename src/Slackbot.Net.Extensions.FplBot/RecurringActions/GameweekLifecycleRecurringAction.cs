@@ -4,21 +4,22 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Handlers;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
-    internal class GameweekLifecycleRecurringAction : IRecurringAction
+    public class GameweekLifecycleRecurringAction : IRecurringAction
     {
         private readonly IGameweekClient _gwClient;
         private readonly ILogger<GameweekLifecycleRecurringAction> _logger;
-        private readonly GameweekMonitorOrchestrator _orchestrator;
+        private readonly IGameweekMonitorOrchestrator _orchestrator;
         private Gameweek _storedCurrent;
 
         public GameweekLifecycleRecurringAction(
             IGameweekClient gwClient,
             ILogger<GameweekLifecycleRecurringAction> logger,
-            GameweekMonitorOrchestrator orchestrator)
+            IGameweekMonitorOrchestrator orchestrator)
         {
             _gwClient = gwClient;
             _logger = logger;
