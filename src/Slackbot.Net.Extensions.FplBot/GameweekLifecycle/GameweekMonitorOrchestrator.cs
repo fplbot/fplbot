@@ -10,17 +10,17 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
         public event Func<int, Task> InitializeEventHandlers = i => Task.CompletedTask;
         public event Func<int, Task> GameWeekJustBeganEventHandlers = i => Task.CompletedTask;
         public event Func<int, Task> GameweekIsCurrentlyOngoingEventHandlers = i => Task.CompletedTask;
-        
         public event Func<int, Task> GameweekEndedEventHandlers = i => Task.CompletedTask;
 
-        public GameweekMonitorOrchestrator(IHandleGameweekStarted startedNotifier, IMonitorFixtureEvents fixtureEventsMonitor)
+        public GameweekMonitorOrchestrator(IHandleGameweekStarted startedNotifier, IMonitorFixtureEvents fixtureEventsMonitor, IHandleGameweekEnded endedNotifier)
         {
             InitializeEventHandlers += fixtureEventsMonitor.Initialize;
+            GameWeekJustBeganEventHandlers += fixtureEventsMonitor.HandleGameweekStarted;
+            GameweekIsCurrentlyOngoingEventHandlers += fixtureEventsMonitor.HandleGameweekOngoing;
             
             GameWeekJustBeganEventHandlers += startedNotifier.HandleGameweekStarted;
-            GameWeekJustBeganEventHandlers += fixtureEventsMonitor.HandleGameweekStarted;
-            
-            GameweekIsCurrentlyOngoingEventHandlers += fixtureEventsMonitor.HandleGameweekOngoing;
+           
+            GameweekEndedEventHandlers += endedNotifier.HandleGameweekEndeded;
         }
         
         public async Task Initialize(int gameweek)
@@ -40,7 +40,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 
         public async Task GameweekJustEnded(int gameweek)
         {
-            await GameweekJustEnded(gameweek);
+            await GameweekEndedEventHandlers(gameweek);
         }
     }
 }
