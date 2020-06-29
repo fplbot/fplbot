@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using FplBot.WebApi.Data;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -43,7 +45,9 @@ namespace FplBot.WebApi.Controllers
         {
             _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
-            return Redirect($"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={Url.AbsoluteLink(HttpContext.Request.Host.Value, "authorize")}");
+            var original = new Uri(HttpContext.Request.GetDisplayUrl());
+            var redirect_uri = new Uri(original, "/authorize");
+            return Redirect($"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}");
         }
 
         [HttpGet("uninstall")]
@@ -85,6 +89,20 @@ namespace FplBot.WebApi.Controllers
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
+        }
+
+        [HttpGet("debug")]
+        public string GetDebug()
+        {
+            var original = new Uri(HttpContext.Request.GetDisplayUrl());
+            var replaced = new Uri(original, "/authorize");
+            return JsonConvert.SerializeObject(new
+            {
+                ctx = HttpContext.Request.Headers,
+                host = HttpContext.Request.Host.Value,
+                fullUrl = HttpContext.Request.GetDisplayUrl(),
+                replaced = replaced
+            });
         }
 
         private FplbotSetup ParseState(string urlencodedState)
