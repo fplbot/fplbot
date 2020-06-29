@@ -61,12 +61,14 @@ namespace FplBot.WebApi.Controllers
         public async Task<IActionResult> Authorize(string code, string state)
         {
             _logger.LogInformation("Authorizing!");
+            var original = new Uri(HttpContext.Request.GetDisplayUrl());
+            var redirect_uri = new Uri(original, "/oauth/authorize");
             var response = await _oAuthAccessClient.OAuthAccessV2(new OauthAccessRequestV2
             {
                 ClientId = _options.Value.CLIENT_ID,
                 ClientSecret = _options.Value.CLIENT_SECRET,
                 Code = code,
-                RedirectUri = Url.AbsoluteLink(HttpContext.Request.Host.Value, "oauth/authorize")
+                RedirectUri = redirect_uri.ToString()
             });
 
             _logger.LogInformation($"OauthResponse : {JsonConvert.SerializeObject(response)}");
@@ -95,13 +97,13 @@ namespace FplBot.WebApi.Controllers
         public string GetDebug()
         {
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
-            var replaced = new Uri(original, "/authorize");
+            var replaced = new Uri(original, "/oauth/authorize");
             return JsonConvert.SerializeObject(new
             {
                 ctx = HttpContext.Request.Headers,
                 host = HttpContext.Request.Host.Value,
                 fullUrl = HttpContext.Request.GetDisplayUrl(),
-                replaced = replaced
+                replaced = replaced.ToString()
             });
         }
 
