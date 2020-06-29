@@ -24,7 +24,7 @@ namespace Fpl.Client.Models
         public string FormattedDeadlineTime { get; set; }
 
         [JsonProperty("stats")]
-        public FixtureStat[] Stats { get; set; }
+        public FixtureStat[] Stats { get; set; } = new FixtureStat[0];
 
         [JsonProperty("team_h_difficulty")]
         public int HomeTeamDifficulty { get; set; }
