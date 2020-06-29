@@ -81,7 +81,7 @@ namespace FplBot.WebApi.Controllers
                     FplbotLeagueId = setup.LeagueId
                 });
 
-                return Redirect("/success");
+                return RedirectToPage("success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
