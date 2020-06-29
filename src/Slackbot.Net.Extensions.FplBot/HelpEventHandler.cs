@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Handlers;
 
 namespace Slackbot.Net.Extensions.FplBot
 {
@@ -20,7 +21,7 @@ namespace Slackbot.Net.Extensions.FplBot
 
         public async Task Handle(EventMetaData eventMetadata, SlackEvent @event)
         {
-            var text = _handlers.Select(handler => handler.GetHelpDescription())
+            var text = _handlers.Where(h => !(h is AppUninstalledHandler)).Select(handler => handler.GetHelpDescription())
                 .Aggregate("*HALP:*", (current, helpDescription) => current + $"\n• `{helpDescription.HandlerTrigger}` : _{helpDescription.Description}_");
             
             var appMention = (AppMentionEvent) @event;

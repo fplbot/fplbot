@@ -65,6 +65,7 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSlackBotEvents<T>()
                 .AddShortcut<HelpEventHandler>()
                 .AddHandler<FplPlayerCommandHandler>()
+                .AddHandler<AppUninstalledHandler>()
                 .AddHandler<FplStandingsCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
