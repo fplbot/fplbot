@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
@@ -57,6 +58,10 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                     {
                         _logger.LogError(sae, sae.Message);
                     }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogInformation(e, e.Message);
                 }
             }
         }
