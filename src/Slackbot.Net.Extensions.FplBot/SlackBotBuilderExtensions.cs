@@ -4,6 +4,7 @@ using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
@@ -62,10 +63,10 @@ namespace Slackbot.Net.Abstractions.Hosting
 
         public static ISlackbotWorkerBuilder AddFplBotEventHandlers<T>(this ISlackbotWorkerBuilder builder) where T : class, ITokenStore
         {
+            builder.Services.AddSingleton<IUninstall, AppUninstaller>();
             builder.Services.AddSlackBotEvents<T>()
                 .AddShortcut<HelpEventHandler>()
                 .AddHandler<FplPlayerCommandHandler>()
-                .AddHandler<AppUninstalledHandler>()
                 .AddHandler<FplStandingsCommandHandler>()
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
