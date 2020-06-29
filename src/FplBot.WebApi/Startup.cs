@@ -4,6 +4,7 @@ using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -98,6 +99,10 @@ namespace FplBot.WebApi
                 o.LowercaseQueryStrings = true;
                 o.LowercaseUrls = true;
             });
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
 
         }
 
@@ -108,7 +113,7 @@ namespace FplBot.WebApi
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseForwardedHeaders();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
