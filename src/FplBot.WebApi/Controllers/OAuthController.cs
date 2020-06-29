@@ -30,7 +30,7 @@ namespace FplBot.WebApi.Controllers
             _setupFetcher = setupFetcher;
             _options = options;
         }
-        
+
         [HttpGet("workspaces")]
         public async Task<IActionResult> Debug()
         {
@@ -59,12 +59,12 @@ namespace FplBot.WebApi.Controllers
             _logger.LogInformation("Authorizing!");
             var response = await _oAuthAccessClient.OAuthAccessV2(new OauthAccessRequestV2
             {
-                ClientId = _options.Value.CLIENT_ID, 
-                ClientSecret = _options.Value.CLIENT_SECRET, 
+                ClientId = _options.Value.CLIENT_ID,
+                ClientSecret = _options.Value.CLIENT_SECRET,
                 Code = code,
                 RedirectUri = Url.AbsoluteLink(HttpContext.Request.Host.Value, "authorize")
             });
-            
+
             _logger.LogInformation($"OauthResponse : {JsonConvert.SerializeObject(response)}");
 
             if (response.Ok)
@@ -81,7 +81,7 @@ namespace FplBot.WebApi.Controllers
                     FplbotLeagueId = setup.LeagueId
                 });
 
-                return RedirectToPage("success");
+                return RedirectToPage("/success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
