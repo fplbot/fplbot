@@ -19,7 +19,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
 
                 var oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
-                var newPlayerEvents = DiffStat(stat, oldStat);
+                var newPlayerEvents = oldStat != null ? DiffStat(stat, oldStat) : new List<PlayerEvent>();
 
                 if (newPlayerEvents.Any())
                 {
