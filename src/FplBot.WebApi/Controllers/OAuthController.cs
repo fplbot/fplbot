@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using FplBot.WebApi.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -103,7 +104,9 @@ namespace FplBot.WebApi.Controllers
                 ctx = HttpContext.Request.Headers,
                 host = HttpContext.Request.Host.Value,
                 fullUrl = HttpContext.Request.GetDisplayUrl(),
-                replaced = replaced.ToString()
+                replaced = replaced.ToString(),
+                protocol = HttpContext.Request.Protocol,
+                scheme = HttpContext.Request.Scheme
             });
         }
 
