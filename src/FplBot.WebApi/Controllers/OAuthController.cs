@@ -46,7 +46,7 @@ namespace FplBot.WebApi.Controllers
             _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
-            var redirect_uri = new Uri(original, "/authorize");
+            var redirect_uri = new Uri(original, "/oauth/authorize");
             return Redirect($"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}");
         }
 
@@ -66,7 +66,7 @@ namespace FplBot.WebApi.Controllers
                 ClientId = _options.Value.CLIENT_ID,
                 ClientSecret = _options.Value.CLIENT_SECRET,
                 Code = code,
-                RedirectUri = Url.AbsoluteLink(HttpContext.Request.Host.Value, "authorize")
+                RedirectUri = Url.AbsoluteLink(HttpContext.Request.Host.Value, "oauth/authorize")
             });
 
             _logger.LogInformation($"OauthResponse : {JsonConvert.SerializeObject(response)}");
