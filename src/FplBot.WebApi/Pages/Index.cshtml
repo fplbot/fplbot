@@ -5,11 +5,19 @@
     ViewData["Title"] = "fplbot";
 }
 
-<div class="col-3">
-    <h2>@@fplbot</h2>
+<div class="col-2 mt-3">
+    <img src="images/fpl.png" alt="fplbot" width="100" height="100"/>
 </div>
 
-<form id="installform" method="get" action="/oauth/install" class="col-10">
+<div class="col-12 mt-3">
+    <h2>About</h2>
+    <div>
+        @@fplbot is an unnofficial Slackbot for Fantasy Premier League.
+    </div>
+</div>
+
+<form id="installform" method="get" action="/oauth/install" class="col-12 mt-5">
+    <h2>Install</h2>
     <div class="form-group">
         <label for="formGroupExampleInput">Slack channel:</label>
         <input type="text" class="form-control" name="channel" id="channel" placeholder="#test" value="#test">
