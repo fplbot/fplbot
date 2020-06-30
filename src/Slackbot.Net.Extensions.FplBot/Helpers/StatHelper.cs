@@ -49,7 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             foreach (var newStat in newStats)
             {
-                var oldStat = oldStats.FirstOrDefault(old => old.Element == newStat.Element);
+                var oldStat = oldStats?.FirstOrDefault(old => old.Element == newStat.Element);
 
                 // Player had no stats from last check, so we add as new stat
                 if (oldStat == null)
