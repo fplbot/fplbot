@@ -1,5 +1,5 @@
-# FPL bot
-A slackbot for Blank FPL league
+# @fplbot
+A Slackbot for Fantasy Premier league: https://slack.com/apps/AREFP62B1-fplbot
 
 [![master](https://github.com/fplbot/fplbot/workflows/Release/badge.svg)](https://github.com/fplbot/fplbot/actions?query=workflow%3ARelease)
 
