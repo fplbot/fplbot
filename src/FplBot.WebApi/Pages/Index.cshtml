@@ -2,26 +2,28 @@
 @model FplBot.WebApi.Pages.Index
 
 @{
-    ViewData["Title"] = "Install fplbot";
+    ViewData["Title"] = "fplbot";
 }
 
-    <div class="col-3">
-        <h2>Install fplbot</h2>
-    </div>
+<div class="col-3">
+    <h2>@@fplbot</h2>
+</div>
 
-    <form id="installform" method="get" action="/oauth/install" class="col-12">
-        <div class="form-group">
-            <label for="formGroupExampleInput">Slack channel:</label>
-            <input type="text" class="form-control" name="channel" id="channel" placeholder="#test" value="#test">
-        </div>
-        <div class="form-group">
-            <label for="formGroupExampleInput2">Fantasy League Id:</label>
-            <input type="text" class="form-control" name="leagueId" id="leagueId" placeholder="89903" value="89903">
-        </div>
-        <div class="form-group">
-            <img style="cursor: pointer" alt="Add to Slack" onclick="document.getElementById('installform').submit()" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"> 
-        </div>
-    </form> 
+<form id="installform" method="get" action="/oauth/install" class="col-10">
+    <div class="form-group">
+        <label for="formGroupExampleInput">Slack channel:</label>
+        <input type="text" class="form-control" name="channel" id="channel" placeholder="#test" value="#test">
+    </div>
+    <div class="form-group">
+        <label for="formGroupExampleInput2">Fantasy League Id:</label>
+        <input type="text" class="form-control" name="leagueId" id="leagueId" placeholder="89903" value="89903">
+    </div>
+    <div class="form-group">
+        <img style="cursor: pointer" alt="Add to Slack" onclick="document.getElementById('installform').submit()" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x">
+    </div>
+</form>
+    
+
 
 
 
