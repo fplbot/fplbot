@@ -64,6 +64,56 @@ namespace FplBot.Tests
             A.CallTo(() => orchestrator.GameweekJustBegan(3)).MustHaveHappenedOnceExactly();
         }
 
+        [Fact]
+        public async Task OnGameweekFinished_CallsOrchestratorEnd()
+        {
+            var gameweekClient = A.Fake<IGameweekClient>();
+            A.CallTo(() => gameweekClient.GetGameweeks())
+                .Returns(GameweeksBeforeTransition()).Once()
+                .Then.Returns(GameweeksWithCurrentNowMarkedAsFinished());
+            
+            var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
+            var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
+            
+            await action.Process();
+            await action.Process();
+            
+            A.CallTo(() => orchestrator.Initialize(2)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => orchestrator.GameweekJustEnded(2)).MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task OnNoChanges_CallsNothing()
+        {
+            var gameweekClient = A.Fake<IGameweekClient>();
+            A.CallTo(() => gameweekClient.GetGameweeks())
+                .Returns(GameweeksWithCurrentNowMarkedAsFinished());
+            
+            var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
+            var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
+            
+            await action.Process();
+            
+            A.CallTo(() => orchestrator.Initialize(2)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => orchestrator.GameweekJustBegan(2)).MustNotHaveHappened();
+            A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustNotHaveHappened();
+            A.CallTo(() => orchestrator.GameweekJustEnded(2)).MustNotHaveHappened();
+
+            
+            await action.Process();
+
+            A.CallTo(() => orchestrator.GameweekJustBegan(2)).MustNotHaveHappened();
+            A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustNotHaveHappened();
+            A.CallTo(() => orchestrator.GameweekJustEnded(2)).MustNotHaveHappened();
+
+            
+            await action.Process();
+            
+            A.CallTo(() => orchestrator.GameweekJustBegan(2)).MustNotHaveHappened();
+            A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustNotHaveHappened();
+            A.CallTo(() => orchestrator.GameweekJustEnded(2)).MustNotHaveHappened();        }
+
         private static List<Gameweek> SomeGameweeks()
         {
             return new List<Gameweek>
@@ -86,6 +136,18 @@ namespace FplBot.Tests
                 TestBuilder.OlderGameweek(1),
                 TestBuilder.PreviousGameweek(2),
                 TestBuilder.CurrentGameweek(3)
+            };
+        }
+        
+        private static List<Gameweek> GameweeksWithCurrentNowMarkedAsFinished()
+        {
+            var currentGameweek = TestBuilder.CurrentGameweek(2);
+            currentGameweek.IsFinished = true;
+            return new List<Gameweek>
+            {
+                TestBuilder.PreviousGameweek(1),
+                currentGameweek,
+                TestBuilder.NextGameweek(3)
             };
         }
     }

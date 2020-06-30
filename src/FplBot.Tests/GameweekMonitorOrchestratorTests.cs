@@ -10,7 +10,7 @@ namespace FplBot.Tests
     public class GameweekMonitorOrchestratorTests
     {
         [Fact]
-        public void WhenGameweek_HasJustBegun_TriggersEvent()
+        public async Task WhenGameweekJustBegun_TriggersEvent()
         {
             var orchestrator = CreateOrchestrator();
             
@@ -21,14 +21,14 @@ namespace FplBot.Tests
                 return Task.CompletedTask;
             };
 
-            orchestrator.GameweekJustBegan(1);
+            await orchestrator.GameweekJustBegan(1);
             
             Assert.NotNull(gwId);
             Assert.Equal(1, gwId.Value);
         }
 
         [Fact]
-        public void WhenGameweekIsOngoing_HasJustBegun_TriggersEvent()
+        public async Task WhenGameweekIsOngoing_TriggersEvent()
         {
             var orchestrator = CreateOrchestrator();
             
@@ -39,7 +39,25 @@ namespace FplBot.Tests
                 return Task.CompletedTask;
             };
 
-            orchestrator.GameweekIsCurrentlyOngoing(1);
+            await orchestrator.GameweekIsCurrentlyOngoing(1);
+            
+            Assert.NotNull(gwId);
+            Assert.Equal(1, gwId.Value);
+        }
+        
+        [Fact]
+        public async Task WhenGameweekJustEnded_TriggersEvent()
+        {
+            var orchestrator = CreateOrchestrator();
+            
+            int? gwId = null;
+            orchestrator.GameweekEndedEventHandlers +=  i =>
+            {
+                gwId = i;
+                return Task.CompletedTask;
+            };
+
+            await orchestrator.GameweekJustEnded(1);
             
             Assert.NotNull(gwId);
             Assert.Equal(1, gwId.Value);
@@ -47,7 +65,7 @@ namespace FplBot.Tests
 
         private static GameweekMonitorOrchestrator CreateOrchestrator()
         {
-            var orchestrator = new GameweekMonitorOrchestrator(A.Fake<IHandleGameweekStarted>(), A.Fake<IMonitorFixtureEvents>());
+            var orchestrator = new GameweekMonitorOrchestrator(A.Fake<IHandleGameweekStarted>(), A.Fake<IMonitorFixtureEvents>(), A.Fake<IHandleGameweekEnded>());
             return orchestrator;
         }
     }

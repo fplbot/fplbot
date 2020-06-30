@@ -5,7 +5,6 @@ using Slackbot.Net.Abstractions.Handlers;
 using System.Linq;
 using System.Threading.Tasks;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -50,18 +49,31 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
 
-            if (fetchedCurrent.Id > _storedCurrent.Id)
+            if (IsChangeToNewGameweek(fetchedCurrent))
             {
                 await _orchestrator.GameweekJustBegan(fetchedCurrent.Id);
             }
+            else if (IsChangeToFinishedGameweek(fetchedCurrent))
+            {
+                await _orchestrator.GameweekJustEnded(fetchedCurrent.Id);
+            }
+            else
+            {
+                if(!_storedCurrent.IsFinished)
+                    await _orchestrator.GameweekIsCurrentlyOngoing(_storedCurrent.Id);
+            }
 
             _storedCurrent = fetchedCurrent;
-
-            if (!_storedCurrent.IsFinished)
-            {
-                await _orchestrator.GameweekIsCurrentlyOngoing(_storedCurrent.Id);
-            }
         }
 
+        private bool IsChangeToNewGameweek(Gameweek fetchedCurrent)
+        {
+            return fetchedCurrent.Id > _storedCurrent.Id;
+        }
+
+        private bool IsChangeToFinishedGameweek(Gameweek fetchedCurrent)
+        {
+            return fetchedCurrent.Id == _storedCurrent.Id && !_storedCurrent.IsFinished && fetchedCurrent.IsFinished;
+        }
     }
 }
