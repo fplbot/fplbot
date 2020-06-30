@@ -1,7 +1,7 @@
 # FPL bot
 A slackbot for Blank FPL league
 
-[![Build](https://github.com/fplbot/fplbot/workflows/CI/badge.svg)](https://github.com/fplbot/fplbot/actions) [![Release](https://github.com/fplbot/fplbot/workflows/Release/badge.svg)](https://github.com/fplbot/fplbot/actions)
+[![master](https://github.com/fplbot/fplbot/workflows/Release/badge.svg)](https://github.com/fplbot/fplbot/actions?query=workflow%3ARelease)
 
 # Contributing
 Requirements: .NET Core 3.1 SDK: https://dotnet.microsoft.com/download/dotnet-core/3.1
