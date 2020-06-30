@@ -8,7 +8,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
     {
         public static IDictionary<StatType, List<PlayerEvent>> DiffFixtureStats(Fixture newFixture, Fixture oldFixture)
         {
+            
             var newFixtureStats = new Dictionary<StatType, List<PlayerEvent>>();
+
+            if (newFixture == null || oldFixture == null)
+                return newFixtureStats;
 
             foreach (var stat in newFixture.Stats)
             {
