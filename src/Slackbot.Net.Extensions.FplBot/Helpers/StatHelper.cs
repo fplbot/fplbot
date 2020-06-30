@@ -19,7 +19,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
 
                 var oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
-                var newPlayerEvents = oldStat != null ? DiffStat(stat, oldStat) : new List<PlayerEvent>();
+                var newPlayerEvents = DiffStat(stat, oldStat);
 
                 if (newPlayerEvents.Any())
                 {
@@ -34,8 +34,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             var diffs = new List<PlayerEvent>();
 
-            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat.HomeStats));
-            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat.AwayStats));
+            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat?.HomeStats));
+            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat?.AwayStats));
 
             return diffs;
         }
