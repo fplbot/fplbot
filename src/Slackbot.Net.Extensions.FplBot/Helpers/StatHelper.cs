@@ -78,14 +78,17 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
             }
 
-            foreach (var oldStat in oldStats)
+            if (oldStats != null)
             {
-                var newStat = newStats.FirstOrDefault(x => x.Element == oldStat.Element);
-
-                // Player had a stat previously that is now removed, so we add as removed stat
-                if (newStat == null)
+                foreach (var oldStat in oldStats)
                 {
-                    diffs.Add(new PlayerEvent(oldStat.Element, teamType, true));
+                    var newStat = newStats.FirstOrDefault(x => x.Element == oldStat.Element);
+
+                    // Player had a stat previously that is now removed, so we add as removed stat
+                    if (newStat == null)
+                    {
+                        diffs.Add(new PlayerEvent(oldStat.Element, teamType, true));
+                    }
                 }
             }
 
