@@ -1,13 +1,23 @@
+@using FplBot.WebApi
+@using Microsoft.Extensions.Options
+@inject IOptions<AnalyticsOptions> options
+@{
+    var googleAccount = options.Value.GA_Account;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171370989-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());    
-      gtag('config', 'UA-171370989-1');
-    </script>
+    @if (!string.IsNullOrEmpty(googleAccount))
+    {
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@googleAccount"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());    
+          gtag('config', '@googleAccount');
+        </script>
+    }
+    
 
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>

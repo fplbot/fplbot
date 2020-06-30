@@ -45,6 +45,7 @@ namespace FplBot.WebApi
                 return ConnectionMultiplexer.Connect(connString);
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
+            services.Configure<AnalyticsOptions>(Configuration);
             services.AddSlackbotWorker<RedisSlackTeamRepository>()
                 .AddSlackPublisherBuilder()
                 .AddLoggerPublisherBuilder()
