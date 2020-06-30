@@ -61,8 +61,10 @@ namespace Slackbot.Net.Abstractions.Hosting
             return builder;
         }
 
-        public static ISlackbotWorkerBuilder AddFplBotEventHandlers<T>(this ISlackbotWorkerBuilder builder) where T : class, ITokenStore
+        public static ISlackbotWorkerBuilder AddFplBotEventHandlers<T>(this ISlackbotWorkerBuilder builder,
+            Action<SlackAppOptions> configuration) where T : class, ITokenStore
         {
+            builder.Services.Configure<SlackAppOptions>(configuration);
             builder.Services.AddSingleton<IUninstall, AppUninstaller>();
             builder.Services.AddSlackBotEvents<T>()
                 .AddShortcut<HelpEventHandler>()
@@ -93,5 +95,11 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.AddRecurring<GameweekLifecycleRecurringAction>()
                 .AddRecurring<NearDeadlineRecurringAction>();
         }
+    }
+
+    public class SlackAppOptions
+    {
+        public string Client_Id { get; set; }
+        public string Client_Secret { get; set; }
     }
 }

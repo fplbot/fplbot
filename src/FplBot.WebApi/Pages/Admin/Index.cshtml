@@ -3,12 +3,21 @@
 
 @{
     ViewData["Title"] = "Admin";
+    
 }
 
 <div class="col-6">
     <h1>Admin page</h1>
     <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
     <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+    
+    
+    @if (TempData.ContainsKey("msg"))
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            @TempData["msg"]
+        </div>
+    }
 
     <h3>Workspaces that have installed fplbot</h3>
 
@@ -18,7 +27,7 @@
             foreach (var ws in Model.Workspaces)
             {
                 <li class="list-group-item">
-                    @ws.TeamName: (@ws.FplbotLeagueId in @ws.FplBotSlackChannel)
+                    @ws.TeamName: (@ws.FplbotLeagueId in @ws.FplBotSlackChannel) - @ws.AccessToken
                     <form method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="teamId" value="@ws.TeamId"/>

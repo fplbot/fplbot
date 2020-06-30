@@ -45,7 +45,7 @@ namespace FplBot.Tests.Helpers
             {
                 o.Login = configurationSection["Login"];
                 o.Password = configurationSection["Password"];
-            }).AddFplBotEventHandlers<DontCareRepo>();
+            }).AddFplBotEventHandlers<DontCareRepo>(c => {});
             
             
 

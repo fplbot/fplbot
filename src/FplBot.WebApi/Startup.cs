@@ -49,7 +49,11 @@ namespace FplBot.WebApi
                 .AddSlackPublisherBuilder()
                 .AddLoggerPublisherBuilder()
                 .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
-                .AddFplBotEventHandlers<RedisSlackTeamRepository>()
+                .AddFplBotEventHandlers<RedisSlackTeamRepository>(c =>
+                {
+                    c.Client_Id = Configuration.GetValue<string>("CLIENT_ID");
+                    c.Client_Secret = Configuration.GetValue<string>("CLIENT_SECRET");
+                })
                 .BuildRecurrers();
 
             services.AddAuthentication(options =>
