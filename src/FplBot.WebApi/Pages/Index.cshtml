@@ -23,12 +23,23 @@
     </ul>
 </div>
 
-<form id="installform" method="get" action="/oauth/install" class="col-12 mt-5">
-    <h2>Install</h2>
+<div class="col-12 mt-3">
+        <h2>Install</h2>
     <div class="mb-3 alert alert-info">
-        <div class="mb-2">Invite @@fplbot to the channel you register here after you've installed it. It won't be able to notify into the channel unless it's a member of this channel.</div>
-        <div>You can find your <code>leagueId</code> by navigating to your league in <a href="https://fantasy.premierleague.com/leagues">fantasy.premierleague.com/leagues</a>. It's in the URL as: <pre>https://fantasy.premierleague.com/leagues/{leagueId}/standings/</pre></div>
+        <span>BETA! 😁</span>
+        <ul>
+            <li>
+                <div class="m-2">Invite @@fplbot to the channel you register here after you've installed it. It won't be able to notify into the channel unless it's a member of this channel.</div>
+            </li>
+            <li>
+                <div class="m-2">You can find your <code>leagueId</code> by navigating to your league in <a href="https://fantasy.premierleague.com/leagues">fantasy.premierleague.com/leagues</a>. It's in the URL as: <pre>https://fantasy.premierleague.com/leagues/{leagueId}/standings</pre></div>
+            </li>
+        </ul>
     </div>
+</div>
+
+<form id="installform" method="get" action="/oauth/install" class="col-6 mt-5">
+
     <div class="form-group">
         <label for="formGroupExampleInput">Slack channel:</label>
         <input type="text" class="form-control" name="channel" id="channel" placeholder="#test" value="#test">
