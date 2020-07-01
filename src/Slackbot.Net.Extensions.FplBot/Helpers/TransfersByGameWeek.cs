@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -18,18 +19,20 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         private readonly IPlayerClient _playerClient;
         private readonly ITransfersClient _transfersClient;
         private readonly IEntryClient _entryClient;
+        private readonly ILogger<TransfersByGameWeek> _logger;
 
         public TransfersByGameWeek(
             ILeagueClient leagueClient,
             IPlayerClient playerClient,
             ITransfersClient transfersClient,
-            IEntryClient entryClient
-            )
+            IEntryClient entryClient,
+            ILogger<TransfersByGameWeek> logger)
         {
             _leagueClient = leagueClient;
             _playerClient = playerClient;
             _transfersClient = transfersClient;
             _entryClient = entryClient;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Transfer>> GetTransfersByGameweek(int gw, int leagueId)
@@ -71,6 +74,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
             catch (Exception e)
             {
+                _logger.LogError(e, e.Message);
+
                 return Enumerable.Empty<Transfer>();
             }
         }
