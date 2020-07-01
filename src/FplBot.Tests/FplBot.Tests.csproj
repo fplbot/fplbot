@@ -15,7 +15,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FplBot.ConsoleApps\FplBot.ConsoleApps.csproj" />
       <ProjectReference Include="..\Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj" />
     </ItemGroup>
 
