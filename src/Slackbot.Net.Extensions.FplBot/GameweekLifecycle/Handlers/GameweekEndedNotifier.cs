@@ -1,5 +1,7 @@
+using System;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -13,18 +15,20 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ITokenStore _tokenStore;
         private readonly ILeagueClient _leagueClient;
         private readonly IGameweekClient _gameweekClient;
+        private readonly ILogger<GameweekEndedNotifier> _logger;
 
         public GameweekEndedNotifier(ISlackWorkSpacePublisher publisher, 
             IFetchFplbotSetup teamsRepo, 
             ITokenStore tokenStore, 
             ILeagueClient leagueClient, 
-            IGameweekClient gameweekClient)
+            IGameweekClient gameweekClient, ILogger<GameweekEndedNotifier> logger)
         {
             _publisher = publisher;
             _teamRepo = teamsRepo;
             _tokenStore = tokenStore;
             _leagueClient = leagueClient;
             _gameweekClient = gameweekClient;
+            _logger = logger;
         }
 
         public async Task HandleGameweekEndeded(int gameweek)
@@ -34,10 +38,17 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             foreach (var token in tokens)
             {
                 var setup = await _teamRepo.GetSetupByToken(token);
-                var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
-                var gameweeks = await _gameweekClient.GetGameweeks();
-                var standings = Formatter.GetStandings(league, gameweeks);
-                await _publisher.PublishUsingToken(token, standings);
+                try
+                {
+                    var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
+                    var gameweeks = await _gameweekClient.GetGameweeks();
+                    var standings = Formatter.GetStandings(league, gameweeks);
+                    await _publisher.PublishUsingToken(token, standings);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
+                }
             }
         }
     }
