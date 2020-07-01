@@ -39,33 +39,40 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return Enumerable.Empty<Transfer>();
             }
 
-            var league = await _leagueClient.GetClassicLeague(leagueId);
-            
-            var playerTransfers = new ConcurrentBag<Transfer>();
-            var entries = league.Standings.Entries;
-
-            await Task.WhenAll(entries.Select(async entry =>
+            try
             {
-                var transfers = (await _transfersClient.GetTransfers(entry.Entry)).Where(x => x.Event == gw).Select(x =>
+                var league = await _leagueClient.GetClassicLeague(leagueId);
+            
+                var playerTransfers = new ConcurrentBag<Transfer>();
+                var entries = league.Standings.Entries;
+
+                await Task.WhenAll(entries.Select(async entry =>
                 {
-                    var e = entries.Single(e => e.Entry == x.Entry);
-                    return new Transfer
+                    var transfers = (await _transfersClient.GetTransfers(entry.Entry)).Where(x => x.Event == gw).Select(x =>
                     {
-                        EntryId = x.Entry,
-                        EntryName = e.PlayerName,
-                        EntryRealName = e.EntryName,
-                        PlayerTransferredIn = x.ElementIn,
-                        PlayerTransferredOut = x.ElementOut
-                    };
-                });
+                        var e = entries.Single(e => e.Entry == x.Entry);
+                        return new Transfer
+                        {
+                            EntryId = x.Entry,
+                            EntryName = e.PlayerName,
+                            EntryRealName = e.EntryName,
+                            PlayerTransferredIn = x.ElementIn,
+                            PlayerTransferredOut = x.ElementOut
+                        };
+                    });
 
-                foreach (var transfer in transfers)
-                {
-                    playerTransfers.Add(transfer);
-                }
-            }));
+                    foreach (var transfer in transfers)
+                    {
+                        playerTransfers.Add(transfer);
+                    }
+                }));
 
-            return playerTransfers.ToArray();
+                return playerTransfers.ToArray();
+            }
+            catch (Exception e)
+            {
+                return Enumerable.Empty<Transfer>();
+            }
         }
 
        
