@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -18,18 +19,20 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         private readonly IPlayerClient _playerClient;
         private readonly ITransfersClient _transfersClient;
         private readonly IEntryClient _entryClient;
+        private readonly ILogger<TransfersByGameWeek> _logger;
 
         public TransfersByGameWeek(
             ILeagueClient leagueClient,
             IPlayerClient playerClient,
             ITransfersClient transfersClient,
-            IEntryClient entryClient
-            )
+            IEntryClient entryClient,
+            ILogger<TransfersByGameWeek> logger)
         {
             _leagueClient = leagueClient;
             _playerClient = playerClient;
             _transfersClient = transfersClient;
             _entryClient = entryClient;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Transfer>> GetTransfersByGameweek(int gw, int leagueId)
@@ -39,33 +42,42 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return Enumerable.Empty<Transfer>();
             }
 
-            var league = await _leagueClient.GetClassicLeague(leagueId);
-            
-            var playerTransfers = new ConcurrentBag<Transfer>();
-            var entries = league.Standings.Entries;
-
-            await Task.WhenAll(entries.Select(async entry =>
+            try
             {
-                var transfers = (await _transfersClient.GetTransfers(entry.Entry)).Where(x => x.Event == gw).Select(x =>
+                var league = await _leagueClient.GetClassicLeague(leagueId);
+            
+                var playerTransfers = new ConcurrentBag<Transfer>();
+                var entries = league.Standings.Entries;
+
+                await Task.WhenAll(entries.Select(async entry =>
                 {
-                    var e = entries.Single(e => e.Entry == x.Entry);
-                    return new Transfer
+                    var transfers = (await _transfersClient.GetTransfers(entry.Entry)).Where(x => x.Event == gw).Select(x =>
                     {
-                        EntryId = x.Entry,
-                        EntryName = e.PlayerName,
-                        EntryRealName = e.EntryName,
-                        PlayerTransferredIn = x.ElementIn,
-                        PlayerTransferredOut = x.ElementOut
-                    };
-                });
+                        var e = entries.Single(e => e.Entry == x.Entry);
+                        return new Transfer
+                        {
+                            EntryId = x.Entry,
+                            EntryName = e.PlayerName,
+                            EntryRealName = e.EntryName,
+                            PlayerTransferredIn = x.ElementIn,
+                            PlayerTransferredOut = x.ElementOut
+                        };
+                    });
 
-                foreach (var transfer in transfers)
-                {
-                    playerTransfers.Add(transfer);
-                }
-            }));
+                    foreach (var transfer in transfers)
+                    {
+                        playerTransfers.Add(transfer);
+                    }
+                }));
 
-            return playerTransfers.ToArray();
+                return playerTransfers.ToArray();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, e.Message);
+
+                return Enumerable.Empty<Transfer>();
+            }
         }
 
        
