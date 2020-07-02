@@ -12,7 +12,7 @@ namespace FplBot.WebApi.Controllers
     public class AccountController : Controller
     {
         [Route("/challenge")]
-        public async Task<ChallengeResult> TriggerChallenge()
+        public ChallengeResult TriggerChallenge()
         {
             return Challenge(new AuthenticationProperties
             {

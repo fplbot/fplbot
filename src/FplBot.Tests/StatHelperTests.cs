@@ -60,7 +60,7 @@ namespace FplBot.Tests
             Assert.Equal(StatType.GoalsScored, events.First().Key);
             var playerEvent = events.First().Value.First();
             Assert.Equal(TestBuilder.PlayerId, playerEvent.PlayerId);
-            Assert.Equal(true, playerEvent.IsRemoved);
+            Assert.True(playerEvent.IsRemoved);
         }
     }
 }

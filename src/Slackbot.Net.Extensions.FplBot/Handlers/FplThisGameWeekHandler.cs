@@ -15,13 +15,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplThisGameWeekHandler : IHandleEvent
     {
-        private readonly IHandleGameweekStarted _notifier;
         private readonly IEnumerable<IPublisherBuilder> _publishers;
         private readonly IGameweekClient _gwClient;
         private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameweek;
         private readonly IFetchFplbotSetup _setupFetcher;
-        private ITokenStore _tokenStore;
+        private readonly ITokenStore _tokenStore;
 
         public FplThisGameWeekHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekClient gwClient, ICaptainsByGameWeek captainsByGameweek, ITransfersByGameWeek transfersByGameWeek, IFetchFplbotSetup setupFetcher, ITokenStore tokenStore)
         {
