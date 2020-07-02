@@ -45,7 +45,7 @@ namespace FplBot.WebApi.Controllers
             }
             catch (Exception)
             {
-                var msg = $"Could not find FPL league with id `{leagueId}. Only classic leagues are currently supported (not draft leagues)`";
+                var msg = $"Could not find FPL league with id `{leagueId}`. Only classic leagues are currently supported (not draft leagues)";
                 return Redirect($"/error?msg={msg}");
             }
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");

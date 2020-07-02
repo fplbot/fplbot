@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Http;
@@ -8,13 +9,6 @@ namespace Fpl.Client.Clients
 {
     public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFactoryOptions>
     {
-        private readonly FplHttpHandler _fplHttphandler;
-
-        public FplClientOptionsConfigurator(FplHttpHandler fplHttphandler)
-        {
-            _fplHttphandler = fplHttphandler;
-        }
-        
         public void Configure(HttpClientFactoryOptions options)
         {
             
@@ -26,9 +20,11 @@ namespace Fpl.Client.Clients
             {
                 options.HttpClientActions.Add(SetupFplClient);
                 options.HttpMessageHandlerBuilderActions.Add(b =>
-                {
-                    b.PrimaryHandler = _fplHttphandler;
-                });
+                    b.PrimaryHandler = new HttpClientHandler
+                    {
+                        AutomaticDecompression = DecompressionMethods.GZip,
+                        SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                    });
             }
         }
 
