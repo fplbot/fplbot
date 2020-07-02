@@ -24,6 +24,7 @@
         public static class CronPatterns
         {
             public const string EveryMinute = "0 */1 * * * *";
+            public const string EveryMinuteAt20Seconds = "20 */1 * * * *";
             public const string EveryTwentySeconds = "*/20 * * * * *";
 
         }

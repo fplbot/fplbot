@@ -97,6 +97,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             }
         }
 
-        public string Cron => Constants.CronPatterns.EveryMinute;
+        public string Cron => Constants.CronPatterns.EveryMinuteAt20Seconds;
     }
 }
