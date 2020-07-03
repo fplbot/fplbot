@@ -90,7 +90,7 @@ namespace FplBot.Tests
         {
             return new SlackTeam
             {
-                FplbotLeagueId = LeagueId,
+                FplbotLeagueId = LeagueId
             };
         }
 

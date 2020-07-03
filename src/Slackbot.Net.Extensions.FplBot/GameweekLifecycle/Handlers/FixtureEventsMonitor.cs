@@ -1,9 +1,9 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -43,8 +43,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 foreach (var league in _state.GetLeagues())
                 {
                     var context = _state.GetGameweekLeagueContext(league);
-                    var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-                    await _publisher.PublishToSingleWorkspaceConnectedToLeague((int)league, formattedEvents.ToArray());
+                    await _publisher.PublishToSingleWorkspaceConnectedToLeague((int)league, users => string.Join("\n\n", GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context, users).MaterializeToArray()));
                 }
             }
         }

@@ -5,6 +5,7 @@ using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
+using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 {
@@ -23,7 +24,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             _logger = logger;
         }
 
-        public async Task PublishToAllWorkspaces(string msg)
+        public async Task PublishToAllWorkspaces(Func<User[], string> msg)
         {
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
@@ -32,15 +33,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             }
         }
 
-        public async Task PublishUsingToken(string token, params string[] messages)
+        public async Task PublishUsingToken(string token, params Func<User[], string>[] messages)
         {
             var setup = await _teamRepo.GetSetupByToken(token);
             var slackClient = _slackClientBuilder.Build(token);
+            var users = await slackClient.UsersList();
             foreach (var message in messages)
             {
                 try
                 {
-                    var res = await slackClient.ChatPostMessage(setup.Channel, message);
+                    var res = await slackClient.ChatPostMessage(setup.Channel, message(users.Members));
 
                     if (!res.Ok)
                     {
@@ -66,7 +68,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             }
         }
 
-        public async Task PublishToSingleWorkspaceConnectedToLeague(int leagueId, params string[] messages)
+        public async Task PublishToSingleWorkspaceConnectedToLeague(int leagueId, params Func<User[], string>[] messages)
         {
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
@@ -79,7 +81,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                     {
                         await PublishUsingToken(token, msg); 
                     }
-                    
                 }
             }
         }

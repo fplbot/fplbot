@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task HandleGameweekStarted(int newGameweek)
         {
-            await _publisher.PublishToAllWorkspaces($"Gameweek {newGameweek}!");
+            await _publisher.PublishToAllWorkspaces(_ => $"Gameweek {newGameweek}!");
             var tokens = await _tokenStore.GetTokens();
 
             foreach (var token in tokens)
@@ -45,7 +45,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, setup.LeagueId);
                     var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, setup.LeagueId);
                     var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, setup.LeagueId);
-                    await _publisher.PublishUsingToken(token, captains, captainsChart, transfers);
+                    await _publisher.PublishUsingToken(token, _=> captains, _=> captainsChart, _=> transfers);
                 }
                 catch (Exception e)
                 {

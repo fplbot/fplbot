@@ -20,7 +20,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             
             GameWeekJustBeganEventHandlers += startedNotifier.HandleGameweekStarted;
            
-            GameweekEndedEventHandlers += endedNotifier.HandleGameweekEndeded;
+            GameweekEndedEventHandlers += endedNotifier.HandleGameweekEnded;
         }
         
         public async Task Initialize(int gameweek)

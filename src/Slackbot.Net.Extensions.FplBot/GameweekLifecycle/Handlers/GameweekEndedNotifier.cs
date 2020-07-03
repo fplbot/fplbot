@@ -31,9 +31,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _logger = logger;
         }
 
-        public async Task HandleGameweekEndeded(int gameweek)
+        public async Task HandleGameweekEnded(int gameweek)
         {
-            await _publisher.PublishToAllWorkspaces($"Gameweek {gameweek} finished.");
+            await _publisher.PublishToAllWorkspaces(_ => $"Gameweek {gameweek} finished.");
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
@@ -43,7 +43,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
                     var gameweeks = await _gameweekClient.GetGameweeks();
                     var standings = Formatter.GetStandings(league, gameweeks);
-                    await _publisher.PublishUsingToken(token, standings);
+                    await _publisher.PublishUsingToken(token, _ => standings);
                 }
                 catch (Exception e)
                 {

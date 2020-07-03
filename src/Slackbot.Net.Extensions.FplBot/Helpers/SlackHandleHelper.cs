@@ -7,6 +7,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     public static class SlackHandleHelper
     {
+        public static string GetSlackHandleOrFallback(User[] users, string entryName)
+        {
+            return GetSlackHandle(users, entryName) ?? entryName;
+        }
+
         public static string GetSlackHandle(User[] users, string entryName)
         {
             return SearchForHandle(users, user => user.Real_name, entryName) ??
