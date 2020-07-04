@@ -50,6 +50,15 @@ namespace FplBot.Tests
                 Assert.True(isTheMinute);
             }
         }
+        
+        [Fact]
+        public void WhenIs()
+        {
+            var deadline = new DateTime(2020, 7, 4, 10, 30, 0);
+            _deadlineChecker.NowUtcOverride = new DateTime(2020, 7, 4, 10, 0, 20);
+            var isTheMinute = _deadlineChecker.IsWithinMinutesToDate(30, deadline);
+            Assert.True(isTheMinute);
+        }
 
         [Fact]
         public void WhenPassedTheMinute()

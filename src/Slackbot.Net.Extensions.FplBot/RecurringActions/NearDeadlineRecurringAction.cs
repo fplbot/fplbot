@@ -28,7 +28,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _dateTimeUtils = dateTimeUtils;
             _workspacePublisher = workspacePublisher;
             _logger = logger;
-            _minutesBeforeDeadline = 30;
+            _minutesBeforeDeadline = 5;
         }
 
         public async Task Process()
