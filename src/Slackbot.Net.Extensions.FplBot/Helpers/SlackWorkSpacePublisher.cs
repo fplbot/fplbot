@@ -5,6 +5,7 @@ using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 {
@@ -40,7 +41,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             {
                 try
                 {
-                    var res = await slackClient.ChatPostMessage(setup.Channel, message);
+                    var res = await slackClient.ChatPostMessage(new ChatPostMessageRequest
+                    {
+                        Channel = setup.Channel, 
+                        Text = message,
+                        unfurl_links = "false"
+                    });
 
                     if (!res.Ok)
                     {
