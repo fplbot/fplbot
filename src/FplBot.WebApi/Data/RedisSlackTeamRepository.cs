@@ -51,7 +51,20 @@ namespace FplBot.WebApi.Data
                     await _db.KeyDeleteAsync(key);
             }
         }
-        
+
+        public async Task<SlackTeam> GetTeam(string teamId)
+        {
+            var fetchedTeamData = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField});
+            return new SlackTeam
+            {
+                AccessToken = fetchedTeamData[0],
+                FplBotSlackChannel = fetchedTeamData[1],
+                FplbotLeagueId = int.Parse(fetchedTeamData[2]),
+                TeamName = fetchedTeamData[3],
+                TeamId = teamId
+            };
+        }
+
         public async Task DeleteByTeamId(string teamId)
         {
             await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));

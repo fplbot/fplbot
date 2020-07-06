@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task HandleGameweekEndeded(int gameweek)
         {
-            await _publisher.PublishToAllWorkspaces($"Gameweek {gameweek} finished.");
+            await _publisher.PublishTAllWorkspaceChannels($"Gameweek {gameweek} finished.");
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
             {
@@ -43,7 +43,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
                     var gameweeks = await _gameweekClient.GetGameweeks();
                     var standings = Formatter.GetStandings(league, gameweeks);
-                    await _publisher.PublishUsingToken(token, standings);
+                    await _publisher.PublishToWorkspaceChannelUsingToken(token, standings);
                 }
                 catch (Exception e)
                 {

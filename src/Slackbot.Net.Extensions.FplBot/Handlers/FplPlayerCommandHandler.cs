@@ -133,7 +133,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private string ParsePlayerFromInput(SlackMessage message)
         {
-            return new MessageHelper(message.Bot).ExtractArgs(message.Text, "player {args}");
+            return new MessageHelper().ExtractArgs(message.Text, "player {args}");
         }
 
         public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");

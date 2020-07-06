@@ -47,7 +47,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline, current.Deadline))
             {
                 _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline} minutes to current (gw{current.Id}) deadline");
-                await _workspacePublisher.PublishToAllWorkspaces($"<!channel> Gameweek {current.Id} deadline in 60 minutes!");
+                await _workspacePublisher.PublishTAllWorkspaceChannels($"<!channel> Gameweek {current.Id} deadline in 60 minutes!");
                 return;
             }
             
@@ -62,7 +62,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline, next.Deadline))
             {
                 _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline} minutes to next (gw{next.Id}) deadline");
-                await _workspacePublisher.PublishToAllWorkspaces($"<!channel> Gameweek {next.Id} deadline in 60 minutes!");
+                await _workspacePublisher.PublishTAllWorkspaceChannels($"<!channel> Gameweek {next.Id} deadline in 60 minutes!");
             }
             
             else
