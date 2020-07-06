@@ -6,6 +6,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Dynamic;
+using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
@@ -29,7 +30,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly IDictionary<long, IEnumerable<TransfersByGameWeek.Transfer>> _transfersForCurrentGameweek;
         private ICollection<Player> _players;
         private ICollection<Fixture> _currentGameweekFixtures;
-        private readonly IDictionary<long, IEnumerable<User>> _slackUsers;
+        private readonly IDictionary<string, IEnumerable<User>> _slackUsers;
+        private IList<SlackTeam> _activeTeams;
 
 
         public State(IFixtureClient fixtureClient, 
@@ -52,7 +54,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _currentGameweekFixtures = new List<Fixture>();
             _players = new List<Player>();
             _teams = new List<Team>();
-            _slackUsers = new Dictionary<long, IEnumerable<User>>();
+            _slackUsers = new Dictionary<string, IEnumerable<User>>();
+            _activeTeams = new List<SlackTeam>();
         }
 
         public async Task Reset(int newGameweek)
@@ -62,12 +65,13 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _teams = await _teamsClient.GetAllTeams();
             _transfersForCurrentGameweek.Clear();
             _slackUsers.Clear();
+            _activeTeams.Clear();
             await EnsureNewLeaguesAreMonitored(newGameweek);
         }
 
-        public IEnumerable<long> GetLeagues()
+        public IEnumerable<SlackTeam> GetActiveTeams()
         {
-            return _transfersForCurrentGameweek.Keys;
+            return _activeTeams;
         }
 
         public async Task<IEnumerable<FixtureEvents>> Refresh(int currentGameweek)
@@ -85,14 +89,20 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             return fixtureEvents;
         }
 
-        public GameweekLeagueContext GetGameweekLeagueContext(long league)
+        public GameweekLeagueContext GetGameweekLeagueContext(string teamId)
         {
+            var teamForLeague = _activeTeams.FirstOrDefault(t => t.TeamId == teamId);
+            IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague = new List<TransfersByGameWeek.Transfer>();
+            
+            if (teamForLeague != null && _transfersForCurrentGameweek.ContainsKey(teamForLeague.FplbotLeagueId))
+                transfersForLeague = _transfersForCurrentGameweek[teamForLeague.FplbotLeagueId]; 
+            
             return new GameweekLeagueContext
             {
                 Players = _players,
                 Teams = _teams,
-                TransfersForLeague = _transfersForCurrentGameweek.ContainsKey(league) ? _transfersForCurrentGameweek[league] : new List<TransfersByGameWeek.Transfer>(),
-                Users = _slackUsers.ContainsKey(league) ? _slackUsers[league] : new List<User>()
+                TransfersForLeague = transfersForLeague,
+                Users = _slackUsers.ContainsKey(teamId) ? _slackUsers[teamId] : new List<User>()
             };
         }
 
@@ -112,15 +122,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                         var users = await slackClient.UsersList();
                         if (users != null && users.Ok)
                         {
-                            _slackUsers.Add((int) t.FplbotLeagueId, users.Members);    
+                            _slackUsers.Add(t.TeamId, users.Members);    
                         }
                     }
                     catch (Exception e)
                     {
                         _logger.LogError(e, e.Message);
-                        _slackUsers.Add((int) t.FplbotLeagueId, new List<User>());
+                        _slackUsers.Add(t.TeamId, new List<User>());
                     }
                 }
+                _activeTeams.Add(t);
             }
         }
     }

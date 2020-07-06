@@ -11,5 +11,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public ICollection<Player> Players { get; set; }
         public ICollection<Team> Teams { get; set; }
         public IEnumerable<User> Users { get; set; }
+        public int LeagueId { get; set; }
+        
+        public int TeamId { get; set; }
     }
 }

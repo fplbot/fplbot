@@ -34,10 +34,10 @@ namespace FplBot.Tests
         {
             var state = CreateAllMockState();
             await state.Reset(1);
-            var current = state.GetLeagues();
+            var current = state.GetActiveTeams();
             Assert.Empty(current);
             
-            var contextForLeague = state.GetGameweekLeagueContext(1337);
+            var contextForLeague = state.GetGameweekLeagueContext("1337");
             Assert.Empty(contextForLeague.Players);
             Assert.Empty(contextForLeague.Teams);
             Assert.Empty(contextForLeague.TransfersForLeague);
@@ -55,7 +55,7 @@ namespace FplBot.Tests
             Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
             Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
             
-            var context = state.GetGameweekLeagueContext(TestBuilder.LeagueId);
+            var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
             
             var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
             foreach (var formatttedEvent in formattedEvents)
@@ -77,7 +77,7 @@ namespace FplBot.Tests
             var state = CreateGoalScoredScenario(entryName:entryName, slackUserHandle: slackUserHandle, slackUserRealName:slackUserRealName);
             await state.Reset(1);
             var newEvents = await state.Refresh(1);
-            var context = state.GetGameweekLeagueContext(TestBuilder.LeagueId);
+            var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
             
             Assert.NotEmpty(context.Users);
 

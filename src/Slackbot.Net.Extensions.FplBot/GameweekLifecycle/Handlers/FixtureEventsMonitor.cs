@@ -39,11 +39,11 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             if (newEvents.Any())
             {
                 _logger.LogInformation("New events!");
-                foreach (var league in _state.GetLeagues())
+                foreach (var team in _state.GetActiveTeams())
                 {
-                    var context = _state.GetGameweekLeagueContext(league);
+                    var context = _state.GetGameweekLeagueContext(team.TeamId);
                     var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-                    await _publisher.PublishToWorkspaceChannelConnectedToLeague((int)league, formattedEvents.ToArray());
+                    await _publisher.PublishToWorkspaceChannelConnectedToLeague((int)context.LeagueId, formattedEvents.ToArray());
                 }
             }
         }
