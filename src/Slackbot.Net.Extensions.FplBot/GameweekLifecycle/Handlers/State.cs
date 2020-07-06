@@ -115,32 +115,32 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 {
                     var transferForLeague = await _transfersByGameWeek.GetTransfersByGameweek(currentGameweek, (int)t.FplbotLeagueId);
                     _transfersForCurrentGameweek.Add((int) t.FplbotLeagueId, transferForLeague);
-                    var slackClient = await _service.CreateClient(t.TeamId);
+                }
+                
+                var slackClient = await _service.CreateClient(t.TeamId);
 
-                    try
+                try
+                {
+                    var users = await slackClient.UsersList();
+                    if (users != null && users.Ok)
                     {
-                        var users = await slackClient.UsersList();
-                        if (users != null && users.Ok)
+                        if (_slackUsers.ContainsKey(t.TeamId))
                         {
-                            if (_slackUsers.ContainsKey(t.TeamId))
-                            {
-                                _slackUsers.Remove(t.TeamId);
-                            }
-                            _slackUsers.Add(t.TeamId, users.Members);    
+                            _slackUsers.Remove(t.TeamId);
                         }
+                        _slackUsers.Add(t.TeamId, users.Members);    
                     }
-                    catch (Exception e)
-                    {
-                        _logger.LogError(e, e.Message);
-                        _slackUsers.Add(t.TeamId, new List<User>());
-                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
+                    _slackUsers.Add(t.TeamId, new List<User>());
                 }
 
                 if (!_activeTeams.Any(team => team.TeamId == t.TeamId))
                 {
                     _activeTeams.Add(t);    
                 }
-                
             }
         }
     }
