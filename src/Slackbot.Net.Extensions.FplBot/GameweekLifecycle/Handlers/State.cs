@@ -31,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private ICollection<Player> _players;
         private ICollection<Fixture> _currentGameweekFixtures;
         private readonly IDictionary<string, IEnumerable<User>> _slackUsers;
-        private IList<SlackTeam> _activeTeams;
+        private readonly IList<SlackTeam> _activeTeams;
 
 
         public State(IFixtureClient fixtureClient, 
