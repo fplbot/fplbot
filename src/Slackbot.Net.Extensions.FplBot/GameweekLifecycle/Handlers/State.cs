@@ -85,6 +85,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 _currentGameweekFixtures = latest;
             }
+            _logger.LogInformation($"Active teams count: {_activeTeams.Count}");
+            _logger.LogInformation($"Slack users count: {_slackUsers.Count}");
+            _logger.LogInformation($"Transfers count: {_transfersForCurrentGameweek.Count}");
 
             return fixtureEvents;
         }
