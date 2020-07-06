@@ -1,6 +1,5 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,30 +7,31 @@ using System.Threading.Tasks;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     public class FplNextGameweekCommandHandler : IHandleEvent
     {
-        private readonly IEnumerable<IPublisherBuilder> _publishers;
-        private readonly ISlackClientService _slackClientBuilder;
+        private readonly ISlackWorkSpacePublisher _workspacePublisher;
+        private readonly ISlackClientService _slackClientService;
         private readonly IGameweekClient _gameweekClient;
         private readonly IFixtureClient _fixtureClient;
         private readonly ITeamsClient _teamsclient;
 
-        public FplNextGameweekCommandHandler(IEnumerable<IPublisherBuilder> publishers, ISlackClientService slackClientBuilder, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient)
+        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient, ISlackClientService slackClientService)
         {
-            _publishers = publishers;
-            _slackClientBuilder = slackClientBuilder;
+            _workspacePublisher = workspacePublisher;
             _gameweekClient = gameweekClient;
             _fixtureClient = fixtureClient;
             _teamsclient = teamsclient;
+            _slackClientService = slackClientService;
         }
 
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent baseEvent)
         {
             var slackEvent = (AppMentionEvent) baseEvent;
-            var slackClient = await _slackClientBuilder.CreateClient(eventMetadata.Team_Id);
+            var slackClient = await _slackClientService.CreateClient(eventMetadata.Team_Id);
             var usersTask = slackClient.UsersList();
             var gameweeksTask = _gameweekClient.GetGameweeks();
             var teamsTask = _teamsclient.GetAllTeams();
@@ -48,16 +48,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var textToSend = TextToSend(nextGw, fixtures, teams, userTzOffset);
 
-            foreach (var pBuilder in _publishers)
-            {
-                var p = await pBuilder.Build(eventMetadata.Team_Id);
-                await p.Publish(new Notification
-                {
-                    Recipient = slackEvent.Channel,
-                    Msg = textToSend
-                });
-            }
-
+            await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, slackEvent.Channel, textToSend);
+            
             return new EventHandledResponse(textToSend);
         }
 
