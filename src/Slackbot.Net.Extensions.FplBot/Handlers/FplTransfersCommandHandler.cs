@@ -1,66 +1,39 @@
-﻿using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
-using Slackbot.Net.Abstractions.Publishers;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
+﻿using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplTransfersCommandHandler : IHandleEvent
     {
-        private readonly IEnumerable<IPublisherBuilder> _publishers;
+        private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly IGameweekHelper _gameweekHelper;
         private readonly ITransfersByGameWeek _transfersClient;
-        private readonly ITokenStore _tokenStore;
-        private readonly IFetchFplbotSetup _setupFetcher;
+        private readonly ISlackTeamRepository _slackTeamRepo;
 
-        public FplTransfersCommandHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekHelper gameweekHelper, ITransfersByGameWeek transfersByGameweek, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher)
+        public FplTransfersCommandHandler(ISlackWorkSpacePublisher workSpacePublisher, IGameweekHelper gameweekHelper, ITransfersByGameWeek transfersByGameweek, ISlackTeamRepository slackTeamRepo)
         {
-            _publishers = publishers;
+            _workSpacePublisher = workSpacePublisher;
             _gameweekHelper = gameweekHelper;
             _transfersClient = transfersByGameweek;
-            _tokenStore = tokenStore;
-            _setupFetcher = setupFetcher;
+            _slackTeamRepo = slackTeamRepo;
         }
 
-        public async Task<HandleResponse> Handle(SlackMessage message)
-        {
-            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(), message.Text, "transfers {gw}");
-            var token = await _tokenStore.GetTokenByTeamId(message.Team.Id);
-            var setup = await _setupFetcher.GetSetupByToken(token);
-            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek.Value, setup.LeagueId);
-            
-            foreach (var pBuilder in _publishers)
-            {
-                var p = await pBuilder.Build(message.Team.Id);
-                await p.Publish(new Notification
-                {
-                    Recipient = message.ChatHub.Id,
-                    Msg = messageToSend
-                });
-            }
-
-            return new HandleResponse(messageToSend);
-        }
-        
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
-            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            var messageHandled = await Handle(rtmMessage);
-            return new EventHandledResponse(messageHandled.HandledMessage);
-
+            var message = slackEvent as AppMentionEvent;
+            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(), message.Text, "transfers {gw}");
+            var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
+            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek.Value, (int)team.FplbotLeagueId);
+            await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
+            return new EventHandledResponse(messageToSend);
         }
 
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("transfers");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("transfers");
 
         public (string,string) GetHelpDescription() => ("transfers {GW/''}", "Displays each team's transfers");
-        public bool ShouldShowInHelp => true;
     }
 }
