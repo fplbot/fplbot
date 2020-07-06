@@ -61,7 +61,9 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
             return Task.CompletedTask;
         }
 
+        #pragma warning disable 1998
         public async IAsyncEnumerable<SlackTeam> GetAllTeams()
+        #pragma warning restore 1998
         {
             yield return new SlackTeam
             {
