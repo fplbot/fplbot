@@ -36,7 +36,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
         public async Task PublishToWorkspaceChannelUsingToken(string token, params string[] messages)
         {
             var setup = await _teamRepo.GetSetupByToken(token);
-            await PublishToChannel(token, setup.Channel, messages);
+            await PublishUsingToken(token, setup.Channel, messages);
         }
 
         public async Task PublishToWorkspaceChannelConnectedToLeague(int leagueId, params string[] messages)
@@ -58,26 +58,65 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 
         public async Task PublishToWorkspace(string teamId, string channel, params string[] messages)
         {
-            var token = await _tokenStore.GetTokenByTeamId(teamId);
             foreach (var msg in messages)
             {
-                await PublishToChannel(token,channel, msg);
+                var req = new ChatPostMessageRequest
+                {
+                    Channel = channel,
+                    Text = msg,
+                    unfurl_links = "false"
+                };
+                await PublishToWorkspace(teamId, req);
             }
         }
 
-        private async Task PublishToChannel(string token, string channel, params string[] messages)
+        public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
+        {
+            var token = await _tokenStore.GetTokenByTeamId(teamId);
+            await PublishUsingToken(token,messages);
+        }
+
+        private async Task PublishUsingToken(string token, params ChatPostMessageRequest[] messages)
         {
             var slackClient = _slackClientBuilder.Build(token);
             foreach (var message in messages)
             {
                 try
                 {
-                    var res = await slackClient.ChatPostMessage(new ChatPostMessageRequest
+                    var res = await slackClient.ChatPostMessage(message);
+
+                    if (!res.Ok)
                     {
-                        Channel = channel,
-                        Text = message,
-                        unfurl_links = "false"
-                    });
+                        _logger.LogError($"Could not post to {message.Channel}", res.Error);
+                    }
+                }
+                catch (SlackApiException sae)
+                {
+                    if (sae.Message == "account_inactive")
+                    {
+                        await _tokenStore.Delete(token);
+                        _logger.LogInformation($"Deleted inactive token");
+                    }
+                    else
+                    {
+                        _logger.LogError(sae, sae.Message);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogInformation(e, e.Message);
+                }
+            }
+        }
+        
+        private async Task PublishUsingToken(string token, string channel, params string[] messages)
+        {
+            var slackClient = _slackClientBuilder.Build(token);
+            foreach (var message in messages)
+            {
+                try
+                {
+                    var res = await slackClient.ChatPostMessage(channel,message);
 
                     if (!res.Ok)
                     {

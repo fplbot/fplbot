@@ -1,16 +1,14 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -19,18 +17,22 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
         private readonly ISlackClientService _slackClientService;
+        private readonly ISlackWorkSpacePublisher _workSpacePublisher;
 
         public FplPlayerCommandHandler(
             ISlackClientService slackClient, 
+            ISlackWorkSpacePublisher workSpacePublisher,
             IPlayerClient playerClient, 
             ITeamsClient teamsClient)
         {
             _playerClient = playerClient;
             _teamsClient = teamsClient;
             _slackClientService = slackClient;
+            _workSpacePublisher = workSpacePublisher;
         }
-        public async Task<HandleResponse> Handle(SlackMessage message)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
+            var message = slackEvent as AppMentionEvent;
             var allPlayersTask = _playerClient.GetAllPlayers();
             var teamsTask = _teamsClient.GetAllTeams();
 
@@ -38,34 +40,23 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             var allPlayers = (await allPlayersTask).OrderByDescending(player => player.OwnershipPercentage);
             var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
-            var slackClient = await _slackClientService.CreateClient(message.Team.Id);
 
             if (mostPopularMatchingPlayer == null)
             {
-                await slackClient.ChatPostMessage(new ChatPostMessageRequest
-                {
-                    Channel = message.ChatHub.Id,
-                    Text = $"Couldn't find {name}"
-                });
-                return new HandleResponse($"Found no matching player for {name}: ");
+                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, $"Couldn't find {name}");
+                return new EventHandledResponse($"Found no matching player for {name}: ");
             }
 
             var playerName = $"{mostPopularMatchingPlayer.FirstName} {mostPopularMatchingPlayer.SecondName}";
             var teams = await teamsTask;
-            await slackClient.ChatPostMessage(new ChatPostMessageRequest
+            
+            await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
             {
-                Channel = message.ChatHub.Id,
+                Channel = message.Channel,
                 Blocks = Formatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
             });
             
-            return new HandleResponse($"Found matching player for {name}: " + playerName);
-        }
-        
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
-        {
-            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            var messageHandled = await Handle(rtmMessage);
-            return new EventHandledResponse(messageHandled.HandledMessage);
+            return new EventHandledResponse($"Found matching player for {name}: " + playerName);
         }
 
         private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
@@ -131,15 +122,13 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance == 0;
         }
 
-        private string ParsePlayerFromInput(SlackMessage message)
+        private string ParsePlayerFromInput(AppMentionEvent message)
         {
             return new MessageHelper().ExtractArgs(message.Text, "player {args}");
         }
 
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("player");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("player");
 
         public (string,string) GetHelpDescription() => ("player {name}", "Display info about the player");
-        public bool ShouldShowInHelp => true;
     }
 }
