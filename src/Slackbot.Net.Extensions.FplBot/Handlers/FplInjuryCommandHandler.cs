@@ -3,58 +3,41 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
-using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplInjuryCommandHandler : IHandleEvent
     {
-        private readonly IEnumerable<IPublisherBuilder> _publishers;
+        private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly IPlayerClient _playerClient;
 
-        public FplInjuryCommandHandler(IEnumerable<IPublisherBuilder> publishers, IPlayerClient playerClient)
+        public FplInjuryCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IPlayerClient playerClient)
         {
-            _publishers = publishers;
+            _workspacePublisher = workspacePublisher;
             _playerClient = playerClient;
         }
-        public async Task<HandleResponse> Handle(SlackMessage message)
+        
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
-
+            var message = slackEvent as AppMentionEvent;
             var allPlayers = await _playerClient.GetAllPlayers();
 
             var injuredPlayers = FindInjuredPlayers(allPlayers);
 
             var textToSend = Formatter.GetInjuredPlayers(injuredPlayers);
 
-            foreach (var pBuilder in _publishers)
-            {
-                var p = await pBuilder.Build(message.Team.Id);
-                await p.Publish(new Notification
-                {
-                    Recipient = message.ChatHub.Id,
-                    Msg = textToSend
-                });
-            }
-
             if (string.IsNullOrEmpty(textToSend))
             {
-                return new HandleResponse("Not found");
-
+                return new EventHandledResponse("Not found");
             }
-            return new HandleResponse(textToSend);
-        }
-        
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
-        {
-            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            var messageHandled = await Handle(rtmMessage);
-            return new EventHandledResponse(messageHandled.HandledMessage);
+            await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, textToSend);
 
+            return new EventHandledResponse(textToSend);
         }
 
         private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)
@@ -67,11 +50,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
         }
 
-        public bool ShouldHandle(SlackMessage message) => message.MentionsBot && message.Text.Contains("injuries");
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("injuries");
 
         public (string,string) GetHelpDescription() => ("injuries", "See injured players owned by more than 5 %");
-        public bool ShouldShowInHelp => true;
     }
 
 }

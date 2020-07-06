@@ -1,17 +1,9 @@
 ﻿using System.Text.RegularExpressions;
-using Slackbot.Net.Abstractions.Handlers;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class MessageHelper
     {
-        private readonly BotDetails _botDetails;
-
-        public MessageHelper(BotDetails botDetails)
-        {
-            _botDetails = botDetails;
-        }
-        
         /// <summary>
         /// Extracts gameweek number from message text using pattern "some text here {gw}". E.g. "captains {gw}".
         /// </summary>
@@ -40,21 +32,6 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var regex = new Regex(regexPattern);
             var result = regex.Match(input).Groups;
             return result.Count > 1 ? result[1].Value : null;
-        }
-
-        private string _botPattern;
-
-        private string BotPattern
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_botPattern))
-                {
-                    _botPattern = $"(<@\\w*>)";
-                }
-
-                return _botPattern;
-            }
         }
     }
 }

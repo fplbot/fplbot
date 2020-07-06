@@ -6,6 +6,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
     public interface ISlackTeamRepository
     {
+        Task<SlackTeam> GetTeam(string teamId);
         Task DeleteByTeamId(string teamId);
         Task Insert(SlackTeam slackTeam);
         IAsyncEnumerable<SlackTeam> GetAllTeams();

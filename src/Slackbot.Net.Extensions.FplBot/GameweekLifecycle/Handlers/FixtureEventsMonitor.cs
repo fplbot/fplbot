@@ -44,7 +44,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 {
                     var context = _state.GetGameweekLeagueContext(league);
                     var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-                    await _publisher.PublishToSingleWorkspaceConnectedToLeague((int)league, formattedEvents.ToArray());
+                    await _publisher.PublishToWorkspaceChannelConnectedToLeague((int)league, formattedEvents.ToArray());
                 }
             }
         }
