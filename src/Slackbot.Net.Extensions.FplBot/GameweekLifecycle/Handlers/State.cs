@@ -122,6 +122,10 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                         var users = await slackClient.UsersList();
                         if (users != null && users.Ok)
                         {
+                            if (_slackUsers.ContainsKey(t.TeamId))
+                            {
+                                _slackUsers.Remove(t.TeamId);
+                            }
                             _slackUsers.Add(t.TeamId, users.Members);    
                         }
                     }
@@ -131,7 +135,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                         _slackUsers.Add(t.TeamId, new List<User>());
                     }
                 }
-                _activeTeams.Add(t);
+
+                if (!_activeTeams.Any(team => team.TeamId == t.TeamId))
+                {
+                    _activeTeams.Add(t);    
+                }
+                
             }
         }
     }

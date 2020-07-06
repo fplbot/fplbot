@@ -150,7 +150,6 @@ namespace FplBot.Tests
                     TestBuilder.AwayTeamGoal(888, 2)
                 });
 
-
             var slackClientService = A.Fake<ISlackClientService>();
 
             var fakeSlackClient = A.Fake<ISlackClient>();
@@ -167,6 +166,7 @@ namespace FplBot.Tests
                 }
             });
             A.CallTo(() => slackClientService.CreateClient(A<string>._)).Returns(fakeSlackClient);
+            
             return new State(fixtureClient,
                 playerClient,
                 teamsClient,
