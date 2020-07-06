@@ -153,7 +153,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
                 if (g.IsRemoved)
                 {
-                    message = $"~{message}~ (VAR? :shrug:)";
+                    message = $"~{message.TrimEnd()}~ (VAR? :shrug:)";
                 }
                 else
                 {
