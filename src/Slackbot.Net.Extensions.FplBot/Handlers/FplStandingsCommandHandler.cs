@@ -1,57 +1,45 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Abstractions.Hosting;
-using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     internal class FplStandingsCommandHandler : IHandleEvent
     {
-        private readonly IEnumerable<IPublisherBuilder> _publishers;
+        private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILeagueClient _leagueClient;
         private readonly ITokenStore _tokenStore;
         private readonly IFetchFplbotSetup _setupFetcher;
 
-        public FplStandingsCommandHandler(IEnumerable<IPublisherBuilder> publishers, IGameweekClient gameweekClient, ILeagueClient leagueClient, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher)
+        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, ILeagueClient leagueClient, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher)
         {
-            _publishers = publishers;
+            _workspacePublisher = workspacePublisher;
             _gameweekClient = gameweekClient;
             _leagueClient = leagueClient;
             _tokenStore = tokenStore;
             _setupFetcher = setupFetcher;
         }
 
-        public async Task<HandleResponse> Handle(SlackMessage message)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
-            var standings = await GetStandings(message);
-
-            foreach (var pBuilder in _publishers)
-            {
-                var p = await pBuilder.Build(message.Team.Id);
-                await p.Publish(new Notification
-                {
-                    Recipient = message.ChatHub.Id,
-                    Msg = standings
-                });
-            }
-
-            return new HandleResponse(standings);
+            var appMentioned = slackEvent as AppMentionEvent;
+            var standings = await GetStandings(eventMetadata.Team_Id);
+            await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, standings);
+            return new EventHandledResponse(standings);
         }
 
-        private async Task<string> GetStandings(SlackMessage message)
+        private async Task<string> GetStandings(string teamId)
         {
             try
             {
-                var token = await _tokenStore.GetTokenByTeamId(message.Team.Id);
+                var token = await _tokenStore.GetTokenByTeamId(teamId);
                 var setup = await _setupFetcher.GetSetupByToken(token);
                 var leagueTask = _leagueClient.GetClassicLeague(setup.LeagueId);
                 var gameweeksTask = _gameweekClient.GetGameweeks();
@@ -66,11 +54,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");
         
         public (string,string) GetHelpDescription() => ("standings", "Get current league standings");
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
-        {
-            var rtmMessage = EventParser.ToBackCompatRtmMessage(eventMetadata, slackEvent);
-            var messageHandled = await Handle(rtmMessage);     
-            return new EventHandledResponse(messageHandled.HandledMessage);
-        }
+     
     }
 }
