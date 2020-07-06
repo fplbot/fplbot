@@ -73,8 +73,7 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
                 .AddHandler<FplCaptainCommandHandler>()
-                .AddHandler<FplTransfersCommandHandler>()
-                .AddHandler<FplThisGameWeekHandler>();
+                .AddHandler<FplTransfersCommandHandler>();
             return builder;
         }
 
