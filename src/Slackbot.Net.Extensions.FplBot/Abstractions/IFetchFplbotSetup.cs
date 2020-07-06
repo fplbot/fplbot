@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Endpoints.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
@@ -11,7 +12,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Task<IEnumerable<FplbotSetup>> GetAllFplBotSetup();
     }
 
-    public class ConfigFplbotSetupFetcher : IFetchFplbotSetup
+    public class ConfigFplbotSetupFetcher : IFetchFplbotSetup, ISlackTeamRepository
     {
         private readonly IOptions<FplbotOptions> _options;
 
@@ -40,6 +41,43 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
                 }
             };
             return Task.FromResult(fplbotSetups.AsEnumerable());
+        }
+
+        public Task<SlackTeam> GetTeam(string teamId)
+        {
+            return Task.FromResult(new SlackTeam
+            {
+                FplbotLeagueId = _options.Value.LeagueId
+            });
+        }
+
+        public Task DeleteByTeamId(string teamId)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task Insert(SlackTeam slackTeam)
+        {
+            return Task.CompletedTask;
+        }
+
+        public async IAsyncEnumerable<SlackTeam> GetAllTeams()
+        {
+            yield return new SlackTeam
+            {
+                FplbotLeagueId = _options.Value.LeagueId
+            };
+        }
+
+        public Task<IEnumerable<SlackTeam>> GetAllTeamsAsync()
+        {
+            IEnumerable<SlackTeam> teams = new []{ 
+                new SlackTeam
+                {
+                    FplbotLeagueId = _options.Value.LeagueId
+                } 
+            };
+            return Task.FromResult(teams);
         }
     }
 

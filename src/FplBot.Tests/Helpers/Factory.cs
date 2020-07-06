@@ -41,7 +41,8 @@ namespace FplBot.Tests.Helpers
 
             var services = new ServiceCollection();
             var configurationSection = configuration.GetSection("fpl");
-            services.AddSlackbotWorker(configuration).AddFplBot(o =>
+            services.AddSlackbotWorker(configuration).
+            AddFplBot(o =>
             {
                 o.Login = configurationSection["Login"];
                 o.Password = configurationSection["Password"];

@@ -13,6 +13,7 @@ using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
+using Slackbot.Net.SlackClients.Http.Extensions;
 
 // ReSharper disable once CheckNamespace
 namespace Slackbot.Net.Abstractions.Hosting
@@ -31,6 +32,7 @@ namespace Slackbot.Net.Abstractions.Hosting
                 o.Password = opts.Password;
             });
             builder.Services.AddSingleton<IFetchFplbotSetup, ConfigFplbotSetupFetcher>();
+            builder.Services.AddSingleton<ISlackTeamRepository, ConfigFplbotSetupFetcher>();
             builder.AddCommon();
 
             return builder;
@@ -79,6 +81,7 @@ namespace Slackbot.Net.Abstractions.Hosting
 
         private static void AddCommon(this ISlackbotWorkerBuilder builder)
         {
+            builder.Services.AddSlackClientBuilder();
             builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             builder.Services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
             builder.Services.AddSingleton<IGoalsDuringGameweek, GoalsDuringGameweek>();
