@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers

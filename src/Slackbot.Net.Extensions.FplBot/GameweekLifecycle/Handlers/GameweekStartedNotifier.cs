@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task HandleGameweekStarted(int newGameweek)
         {
-            await _publisher.PublishTAllWorkspaceChannels($"Gameweek {newGameweek}!");
+            await _publisher.PublishToAllWorkspaceChannels($"Gameweek {newGameweek}!");
             var tokens = await _tokenStore.GetTokens();
 
             foreach (var token in tokens)

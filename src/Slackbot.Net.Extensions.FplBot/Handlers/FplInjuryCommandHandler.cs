@@ -5,6 +5,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 

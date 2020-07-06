@@ -24,7 +24,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             _logger = logger;
         }
 
-        public async Task PublishTAllWorkspaceChannels(string msg)
+        public async Task PublishToAllWorkspaceChannels(string msg)
         {
             var tokens = await _tokenStore.GetTokens();
             foreach (var token in tokens)
