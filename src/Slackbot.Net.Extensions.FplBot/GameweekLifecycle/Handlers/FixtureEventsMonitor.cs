@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
