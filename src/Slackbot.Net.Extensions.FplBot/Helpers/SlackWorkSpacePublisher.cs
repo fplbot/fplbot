@@ -41,15 +41,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             await PublishUsingToken(token, setup.Channel, messages);
         }
 
-        public async Task PublishToWorkspaceChannel(string teamId, params string[] messages)
-        {
-            var team = await _repository.GetTeam(teamId);
-            foreach (var msg in messages)
-            {
-                await PublishToWorkspaceChannelUsingToken(team.AccessToken, msg);
-            }
-        }
-
         public async Task PublishToWorkspace(string teamId, string channel, params string[] messages)
         {
             foreach (var msg in messages)
