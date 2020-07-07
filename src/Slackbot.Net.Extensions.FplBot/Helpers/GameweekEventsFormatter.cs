@@ -1,32 +1,18 @@
 using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Extensions;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class GameweekEventsFormatter
     {
-        private static readonly string[] TransferredGoalScorerOutTaunts =
-        {
-            "Ah jiiz, you transferred him out, {0} :joy:",
-            "You just had to knee jerk him out, didn't you, {0}?",
-            "Didn't you have that guy last week, {0}?",
-            "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
-        };
 
-        private static readonly string[] GoodTransferMessages =
-        {
-            "Nice save {0} ! :v:",
-            "How did you know, {0}?",
-            "Trying to climb the ranks, {0}? :chart_with_upwards_trend:"
-        };
-
-        public static List<string> FormatNewFixtureEvents(
-            List<FixtureEvents> newFixtureEvents, GameweekLeagueContext context)
+        public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, GameweekLeagueContext context)
         {
             var formattedStrings = new List<string>();
 
@@ -38,13 +24,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                     switch (stat.Key)
                     {
                         case StatType.GoalsScored:
-                            return FormatNewGoals(stat.Value, context.Players, context.TransfersForLeague);
+                            return FormatNewGoals(stat.Value, context.Players, context.TransfersForLeague, context.Users);
                         case StatType.Assists:
                             return FormatNewAssists(stat.Value, context.Players);
                         case StatType.OwnGoals:
                             return FormatOwnGoals(stat.Value, context.Players);
                         case StatType.RedCards:
-                            return FormatNewRedCards(stat.Value, context.Players, context.TransfersForLeague);
+                            return FormatNewRedCards(stat.Value, context.Players, context.TransfersForLeague, context.Users);
                         case StatType.PenaltiesMissed:
                             return FormatNewPenaltiesMissed(stat.Value, context.Players);
                         case StatType.PenaltiesSaved:
@@ -108,7 +94,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         private static List<string> FormatNewGoals(
             List<PlayerEvent> newGoalEvents, 
             ICollection<Player> players, 
-            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
+            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
+            IEnumerable<User> users)
         {
             return FormatEvent(
                 newGoalEvents,
@@ -117,15 +104,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 ":soccer:",
                 player =>
                 {
-                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
-                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
+                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek, users).ToArray();
+                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(Constants.EventMessages.TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
                 });
         }
 
         private static List<string> FormatNewRedCards(
             List<PlayerEvent> newRedCardEvents,
             ICollection<Player> players,
-            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
+            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
+            IEnumerable<User> users)
         {
             return FormatEvent(
                 newRedCardEvents,
@@ -134,8 +122,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 ":red_circle:",
                 player =>
                 {
-                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek).ToArray();
-                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(GoodTransferMessages.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
+                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek, users).ToArray();
+                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(Constants.EventMessages.GoodTransferMessages.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
                 });
         }
 
@@ -173,11 +161,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                    $"{teams.Single(team => team.Id == gameScore.AwayTeamId).Name}";
         }
 
-        private static IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek)
+        private static IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek, IEnumerable<User> users)
         {
             return transfersForCurrentGameweek == null ? 
                 Enumerable.Empty<string>() : 
-                transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => x.EntryName);
+                transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => SlackHandleHelper.GetSlackHandleOrFallback(users, x.EntryName));
         }
     }
 }

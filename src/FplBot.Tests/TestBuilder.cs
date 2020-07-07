@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Models;
 
@@ -11,6 +10,7 @@ namespace FplBot.Tests
         private const int AwayTeamId = 20;
         internal const int LeagueId = 111;
         internal const int PlayerId = 123;
+        internal const string SlackTeamId = "@T01337";
 
         public static Fixture NoGoals(int fixtureCode)
         {
@@ -90,6 +90,7 @@ namespace FplBot.Tests
         {
             return new SlackTeam
             {
+                TeamId = SlackTeamId,
                 FplbotLeagueId = LeagueId,
             };
         }

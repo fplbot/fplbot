@@ -13,13 +13,15 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
     {
         private readonly ITokenStore _tokenStore;
         private readonly IFetchFplbotSetup _teamRepo;
+        private readonly ISlackTeamRepository _repository;
         private readonly ISlackClientBuilder _slackClientBuilder;
         private readonly ILogger<SlackWorkSpacePublisher> _logger;
 
-        public SlackWorkSpacePublisher(ITokenStore tokenStore, IFetchFplbotSetup teamRepo, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
+        public SlackWorkSpacePublisher(ITokenStore tokenStore, IFetchFplbotSetup teamRepo, ISlackTeamRepository repository, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
         {
             _tokenStore = tokenStore;
             _teamRepo = teamRepo;
+            _repository = repository;
             _slackClientBuilder = builder;
             _logger = logger;
         }
@@ -37,23 +39,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
         {
             var setup = await _teamRepo.GetSetupByToken(token);
             await PublishUsingToken(token, setup.Channel, messages);
-        }
-
-        public async Task PublishToWorkspaceChannelConnectedToLeague(int leagueId, params string[] messages)
-        {
-            var tokens = await _tokenStore.GetTokens();
-            foreach (var token in tokens)
-            {
-                var setup = await _teamRepo.GetSetupByToken(token);
-
-                if (setup.LeagueId == leagueId)
-                {
-                    foreach (var msg in messages)
-                    {
-                        await PublishToWorkspaceChannelUsingToken(token, msg); 
-                    }
-                }
-            }
         }
 
         public async Task PublishToWorkspace(string teamId, string channel, params string[] messages)

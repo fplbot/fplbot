@@ -114,5 +114,23 @@
                 ":palm_tree:",
             };
         }
+        
+        public static class EventMessages
+        {
+            public static readonly string[] TransferredGoalScorerOutTaunts =
+            {
+                "Ah jiiz, you transferred him out, {0} :joy:",
+                "You just had to knee jerk him out, didn't you, {0}?",
+                "Didn't you have that guy last week, {0}?",
+                "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
+            };
+
+            public static readonly string[] GoodTransferMessages =
+            {
+                "Nice save {0} ! :v:",
+                "How did you know, {0}?",
+                "Trying to climb the ranks, {0}? :chart_with_upwards_trend:"
+            };
+        }
     }
 }

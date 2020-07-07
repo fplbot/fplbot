@@ -14,12 +14,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         /// Publishes to the install-channel of a single workspaces connected to the token
         /// </summary>
         Task PublishToWorkspaceChannelUsingToken(string token, params string[] messages);
-        
-        /// <summary>
-        /// Publishes to the install-channel of a single workspaces connected to the league
-        /// </summary>
-        Task PublishToWorkspaceChannelConnectedToLeague(int leagueId, params string[] messages);
-        
+
         /// <summary>
         /// Publishes to single workspaces to the channel provided
         /// </summary>
