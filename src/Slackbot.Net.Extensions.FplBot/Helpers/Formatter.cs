@@ -20,7 +20,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var numPlayers = league.Standings.Entries.Count;
 
             var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent);
-            
+
             sb.Append($":star: *Results after {currentGw.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
@@ -122,7 +122,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return sb.ToString();
         }
 
-        public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams) {
+        public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams)
+        {
 
             List<IBlock> playerCard = new List<IBlock>();
 
@@ -140,7 +141,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             if (!ImageIsAvailable(imageUrl))
                 imageUrl = "https://user-images.githubusercontent.com/206726/73577018-207e4100-447c-11ea-98e3-9cc598c56519.png";
-            
+
             playerCard.Add(new ImageBlock
             {
                 image_url = imageUrl,
@@ -218,6 +219,24 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return (amount / 10.0).ToString("£0.0", CultureInfo.InvariantCulture);
         }
 
+        public static string FormatPriceChanged(IEnumerable<Player> priceChangesPlayers)
+        {
+            var messageToSend = "";
+            var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
+            foreach (var group in grouped)
+            {
+                var isPriceIncrease = @group.Key > 0;
+                var priceChange = $"{Formatter.FormatCurrency(group.Key)}";
+                var header = isPriceIncrease ? $"*Price up {priceChange} :chart_with_upwards_trend:*" : $"*Price down {priceChange} :chart_with_downwards_trend:*";
+                messageToSend += $"\n\n{header}";
+                foreach (var p in group)
+                {
+                    messageToSend += $"\n• {p.WebName} {Formatter.FormatCurrency(p.NowCost)}";
+                }
+            }
+
+            return messageToSend;
+        }
     }
 
 }

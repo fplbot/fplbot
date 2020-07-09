@@ -4,7 +4,7 @@ using Slackbot.Net.Endpoints.Models;
 
 namespace FplBot.Tests
 {
-    public class TestBuilder
+    public static class TestBuilder
     {
         private const int HomeTeamId = 10;
         private const int AwayTeamId = 20;
@@ -103,6 +103,12 @@ namespace FplBot.Tests
                 FirstName = "PlayerFirstName",
                 SecondName = "PlayerSecondName"
             };
+        }
+        
+        public static Player OfCost(this Player player, int cost)
+        {
+            player.NowCost = cost;
+            return player;
         }
         
         public static Gameweek OlderGameweek(int id)

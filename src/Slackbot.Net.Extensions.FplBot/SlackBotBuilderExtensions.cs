@@ -12,6 +12,7 @@ using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using Slackbot.Net.Extensions.FplBot.PriceMonitoring;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using Slackbot.Net.SlackClients.Http.Extensions;
 
@@ -75,7 +76,8 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddHandler<FplNextGameweekCommandHandler>()
                 .AddHandler<FplInjuryCommandHandler>()
                 .AddHandler<FplCaptainCommandHandler>()
-                .AddHandler<FplTransfersCommandHandler>();
+                .AddHandler<FplTransfersCommandHandler>()
+                .AddHandler<FplPricesHandler>();
             return builder;
         }
 
@@ -93,10 +95,12 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<IHandleGameweekEnded, GameweekEndedNotifier>();
             builder.Services.AddSingleton<IMonitorFixtureEvents, FixtureEventsMonitor>();
             builder.Services.AddSingleton<IState, State>();
+            builder.Services.AddSingleton<PriceChangedMonitor>();
             builder.Services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
             builder.Services.AddSingleton<DateTimeUtils>();
             builder.AddRecurring<GameweekLifecycleRecurringAction>()
-                .AddRecurring<NearDeadlineRecurringAction>();
+                .AddRecurring<NearDeadlineRecurringAction>()
+                .AddRecurring<PriceChangedRecurringAction>();
         }
     }
 
