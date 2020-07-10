@@ -21,19 +21,37 @@ namespace Slackbot.Net.Extensions.FplBot.PriceMonitoring
         {
             if (!_currentPlayers.Any())
             {
-                _currentPlayers = await _playerClient.GetAllPlayers();
-                return new PriceChanged(new List<Player>());
+                var allPlayersInitial = await _playerClient.GetAllPlayers();
+                var playersWithPriceChangesInitial = allPlayersInitial.Where(p => p.CostChangeEvent != 0).ToList();
+                _currentPlayers = playersWithPriceChangesInitial;
+                var noPlayers = new List<Player>();
+                return new PriceChanged(noPlayers);
             }
 
             var after = await _playerClient.GetAllPlayers();
-            var playersWithPriceChanges = GetPlayersWithPriceChanges(_currentPlayers, after);
-            _currentPlayers = after;
-            return new PriceChanged(playersWithPriceChanges);
+            var playersWithPriceChanges = after.Where(p => p.CostChangeEvent != 0).ToList();
+            var newPlayersWithPriceChanges = playersWithPriceChanges.Except(_currentPlayers, new PlayerComparer()).ToList();
+            _currentPlayers = playersWithPriceChanges;
+            return new PriceChanged(newPlayersWithPriceChanges);
+        }
+    }
+
+    public class PlayerComparer : IEqualityComparer<Player>
+    {
+        public bool Equals(Player x, Player y)
+        {
+            if (x == null && y == null)
+                return true;
+            
+            if (x == null || y == null)
+                return false;
+            
+            return x.Id == y.Id;
         }
 
-        private ICollection<Player> GetPlayersWithPriceChanges(ICollection<Player> currentPlayers, ICollection<Player> newPlayers)
+        public int GetHashCode(Player obj)
         {
-            return currentPlayers.Where(p => p.NowCost != newPlayers.First(np => np.Id == p.Id).NowCost).ToList();
+            return obj.Id;
         }
     }
 }

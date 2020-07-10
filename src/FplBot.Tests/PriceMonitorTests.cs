@@ -12,51 +12,42 @@ namespace FplBot.Tests
     public class PriceMonitorTests
     {
         [Fact]
-        public async Task GetChangedPlayers_WhenCalledOnce_ReturnsNoChanges()
+        public async Task GetChangedPlayers_WhenNoPlayers_ReturnsNoChanges()
         {
-            var before = new List<Player>{ TestBuilder.Player().OfCost(10) };
-            var after = new List<Player>{ TestBuilder.Player().OfCost(10) };
+            var before = new List<Player>{ };
+            var after = new List<Player>{ };
 
             var priceMonitor = CreatePriceMonitor(before, after);
             var priceChanges = await priceMonitor.GetChangedPlayers();
             Assert.Empty(priceChanges.Players);
-        }
-
-        [Fact]
-        public async Task GetChangedPlayers_WhenCalledTwice_AndChanges_ReturnsChanges()
-        {
-            var before = new List<Player>{ TestBuilder.Player().OfCost(10) };
-            var after = new List<Player>{ TestBuilder.Player().OfCost(11) };
-
-            var priceMonitor = CreatePriceMonitor(before, after);
-            var initialCheck = await priceMonitor.GetChangedPlayers();
-            Assert.Empty(initialCheck.Players);
             
-            var priceChanges = await priceMonitor.GetChangedPlayers();
-            Assert.NotEmpty(priceChanges.Players);
-            Assert.Single(priceChanges.Players);
-        }
-
-        [Fact]
-        public async Task PriceDecrease_ReturnsPriceChangedPlayers()
-        {
-            var before = new List<Player>{ TestBuilder.Player().OfCost(10) };
-            var after = new List<Player>{ TestBuilder.Player().OfCost(9) };
-
-            var priceMonitor = CreatePriceMonitor(before, after);
-            var initialCheck = await priceMonitor.GetChangedPlayers();
-            Assert.Empty(initialCheck.Players);
-            
-            var priceChanges = await priceMonitor.GetChangedPlayers();
-            Assert.NotEmpty(priceChanges.Players);
-            Assert.Single(priceChanges.Players);
+            var secondPriceChangeCheck = await priceMonitor.GetChangedPlayers();
+            Assert.Empty(secondPriceChangeCheck.Players);
         }
         
         [Fact]
-        public async Task PriceIncrease_FirstReturnsInitialNoChange_ThenChanges_ThenNoChanges()
+        public async Task GetChangedPlayers_WhenSamePlayersWithPriceChange_ReturnsNoChanges()
         {
-            var before = new List<Player>{ TestBuilder.Player().OfCost(10) };
-            var after = new List<Player>{ TestBuilder.Player().OfCost(9) };
+            var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+            var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+
+            var priceMonitor = CreatePriceMonitor(before, after);
+            var priceChanges = await priceMonitor.GetChangedPlayers();
+            Assert.Empty(priceChanges.Players);
+            
+            var secondPriceChangeCheck = await priceMonitor.GetChangedPlayers();
+            Assert.Empty(secondPriceChangeCheck.Players);
+        }
+        
+        [Fact]
+        public async Task GetChangedPlayers_OneNewPriceChange_ReturnsChangesOnlyOnce()
+        {
+            var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+            var after = new List<Player>
+            {
+                TestBuilder.Player().WithCostChangeEvent(1),
+                TestBuilder.OtherPlayer().WithCostChangeEvent(1)
+            };
 
             var priceMonitor = CreatePriceMonitor(before, after);
             var initialCheck = await priceMonitor.GetChangedPlayers();
@@ -65,9 +56,32 @@ namespace FplBot.Tests
             var priceChanges = await priceMonitor.GetChangedPlayers();
             Assert.NotEmpty(priceChanges.Players);
             Assert.Single(priceChanges.Players);
+            Assert.Equal(TestBuilder.OtherPlayer().Id, priceChanges.Players.First().Id);
             
             var noChanges = await priceMonitor.GetChangedPlayers();
             Assert.Empty(noChanges.Players);
+        }
+        
+        [Fact]
+        public async Task GetChangedPlayers_OneLessPriceChange_ReturnsNoChanges()
+        {
+            var before = new List<Player>
+            {
+                TestBuilder.Player().WithCostChangeEvent(1),
+                TestBuilder.OtherPlayer().WithCostChangeEvent(1)
+            };
+            
+            var after = new List<Player>
+            {
+                TestBuilder.Player().WithCostChangeEvent(1)
+            };
+
+            var priceMonitor = CreatePriceMonitor(before, after);
+            var initialCheck = await priceMonitor.GetChangedPlayers();
+            Assert.Empty(initialCheck.Players);
+            
+            var priceChanges = await priceMonitor.GetChangedPlayers();
+            Assert.Empty(priceChanges.Players);
         }
 
         private static PriceChangedMonitor CreatePriceMonitor(ICollection<Player> before, ICollection<Player> after)

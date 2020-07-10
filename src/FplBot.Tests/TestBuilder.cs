@@ -9,7 +9,13 @@ namespace FplBot.Tests
         private const int HomeTeamId = 10;
         private const int AwayTeamId = 20;
         internal const int LeagueId = 111;
+        
         internal const int PlayerId = 123;
+        internal const int PlayerCode = 123;
+        
+        internal const int OtherPlayerId = 456;
+        internal const int OtherPlayerCode = 456;
+        
         internal const string SlackTeamId = "@T01337";
 
         public static Fixture NoGoals(int fixtureCode)
@@ -100,14 +106,26 @@ namespace FplBot.Tests
             return new Player
             {
                 Id = PlayerId,
+                Code = PlayerCode,
                 FirstName = "PlayerFirstName",
                 SecondName = "PlayerSecondName"
             };
         }
         
-        public static Player OfCost(this Player player, int cost)
+        public static Player OtherPlayer()
         {
-            player.NowCost = cost;
+            return new Player
+            {
+                Id = OtherPlayerId,
+                Code = OtherPlayerCode,
+                FirstName = "OtherPlayerFirstName",
+                SecondName = "OtherPlayerSecondName"
+            };
+        }
+        
+        public static Player WithCostChangeEvent(this Player player, int cost)
+        {
+            player.CostChangeEvent = cost;
             return player;
         }
         
