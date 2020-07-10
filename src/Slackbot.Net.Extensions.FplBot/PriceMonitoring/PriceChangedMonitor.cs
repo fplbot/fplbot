@@ -22,21 +22,20 @@ namespace Slackbot.Net.Extensions.FplBot.PriceMonitoring
             if (!_currentPlayers.Any())
             {
                 var allPlayersInitial = await _playerClient.GetAllPlayers();
-                var playersWithPriceChangesInitial = allPlayersInitial.Where(p => p.CostChangeEvent != 0).ToList();
-                _currentPlayers = playersWithPriceChangesInitial;
+                _currentPlayers = allPlayersInitial;
                 var noPlayers = new List<Player>();
                 return new PriceChanged(noPlayers);
             }
 
             var after = await _playerClient.GetAllPlayers();
             var playersWithPriceChanges = after.Where(p => p.CostChangeEvent != 0).ToList();
-            var newPlayersWithPriceChanges = playersWithPriceChanges.Except(_currentPlayers, new PlayerComparer()).ToList();
-            _currentPlayers = playersWithPriceChanges;
+            var newPlayersWithPriceChanges = playersWithPriceChanges.Except(_currentPlayers, new PlayerPriceComparer()).ToList();
+            _currentPlayers = after;
             return new PriceChanged(newPlayersWithPriceChanges);
         }
     }
 
-    public class PlayerComparer : IEqualityComparer<Player>
+    public class PlayerPriceComparer : IEqualityComparer<Player>
     {
         public bool Equals(Player x, Player y)
         {
@@ -46,7 +45,7 @@ namespace Slackbot.Net.Extensions.FplBot.PriceMonitoring
             if (x == null || y == null)
                 return false;
             
-            return x.Id == y.Id;
+            return x.Id == y.Id && x.CostChangeEvent == y.CostChangeEvent;
         }
 
         public int GetHashCode(Player obj)
