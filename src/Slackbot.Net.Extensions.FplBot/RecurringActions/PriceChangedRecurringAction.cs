@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
@@ -20,8 +21,11 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         public async Task Process()
         {
             var priceChanges = await _priceChangedMonitor.GetChangedPlayers();
-            var message = Formatter.FormatPriceChanged(priceChanges.Players);
-            await _slackWorkSpacePublisher.PublishToAllWorkspaceChannels(message);
+            if (priceChanges.Players.Any())
+            {
+                var message = Formatter.FormatPriceChanged(priceChanges.Players);
+                await _slackWorkSpacePublisher.PublishToAllWorkspaceChannels(message);
+            }
         }
 
         public string Cron => Constants.CronPatterns.EveryOtherMinuteAt40SecondsSharp;
