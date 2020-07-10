@@ -36,28 +36,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var joinedEvent = slackEvent as MemberJoinedChannelEvent;
             _logger.LogInformation(JsonConvert.SerializeObject(joinedEvent));
-            var slackClient = await _slackClientService.CreateClient(eventMetadata.Team_Id);
-            var users = await slackClient.UsersList();
-
-            var fplbotUser = users.Members.Where(u => u.Profile.Real_Name.Contains("fplbot")); // in case both test and prod are installed
-
-            if (!fplbotUser.Any())
-            {
-                _logger.LogWarning("No fplbot user");
-                return new EventHandledResponse("Could not find FplBot user");
-            }
-
-            if (fplbotUser.Any(u => u.Id == joinedEvent.User))
-            {
-                var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
-                var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
-                var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
-                var setupMessage = $"I'm also pushing notification relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
-                await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
-                return new EventHandledResponse("OK");
-            }
-            _logger.LogWarning("None of the fplbot users had the id of the user joined!");
-            return new EventHandledResponse("fplbot user found, but mismatch in id!");
+            var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
+            var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
+            var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
+            var setupMessage = $"I'm also pushing notification relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
+            await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
+            return new EventHandledResponse("OK");
         }
 
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is MemberJoinedChannelEvent;
