@@ -49,8 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                 {
                     Channel = channel,
                     Text = msg,
-                    unfurl_links = "false",
-                    Parse = "full"
+                    unfurl_links = "false"
                 };
                 await PublishToWorkspace(teamId, req);
             }
