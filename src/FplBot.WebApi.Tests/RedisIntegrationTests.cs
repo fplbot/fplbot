@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FplBot.WebApi.Data;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using StackExchange.Redis;
 using Xunit;
 using Xunit.Abstractions;

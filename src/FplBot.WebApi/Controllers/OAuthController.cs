@@ -51,7 +51,7 @@ namespace FplBot.WebApi.Controllers
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
             var redirect_uri = new Uri(original, "/oauth/authorize");
-            return Redirect($"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}");
+            return Redirect($"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}");
         }
 
         [HttpGet("authorize")]

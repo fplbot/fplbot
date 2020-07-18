@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace FplBot.Tests
 {
