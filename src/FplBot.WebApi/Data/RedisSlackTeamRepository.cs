@@ -25,7 +25,7 @@ namespace FplBot.WebApi.Data
         {
             _redis = redis;
             _db = _redis.GetDatabase();
-            _server = redisOptions.Value.REDIS_SERVER;
+            _server = redisOptions.Value.GetRedisServerHostAndPort;
         }
         
         public async Task Insert(SlackTeam slackTeam)

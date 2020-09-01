@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using FplBot.WebApi.Data;
 using Microsoft.Extensions.Options;
-using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using StackExchange.Redis;
 using Xunit;
@@ -23,21 +22,25 @@ namespace FplBot.WebApi.Tests
             _helper = helper;
             var opts = new OptionsWrapper<RedisOptions>(new RedisOptions
             {
-                REDIS_SERVER = Environment.GetEnvironmentVariable("REDIS_SERVER"),
-                REDIS_PASSWORD = Environment.GetEnvironmentVariable("REDIS_PASSWORD"),
-                REDIS_USERNAME = Environment.GetEnvironmentVariable("REDIS_USERNAME")
+                REDIS_URL = Environment.GetEnvironmentVariable("REDIS_URL"),
             });
-            string connStr = $"{opts.Value.REDIS_SERVER}, name={opts.Value.REDIS_USERNAME}, password={opts.Value.REDIS_PASSWORD}, allowAdmin=true";
-            _helper.WriteLine(connStr);
-            var multiplexer = ConnectionMultiplexer.Connect(connStr);
-            _server = multiplexer.GetServer(opts.Value.REDIS_SERVER);
+
+            var configurationOptions = new ConfigurationOptions
+            {
+                ClientName = opts.Value.GetRedisUsername,
+                Password = opts.Value.GetRedisPassword,
+                EndPoints = { opts.Value.GetRedisServerHostAndPort },
+            };
+            
+            var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
+            _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
             _repo = new RedisSlackTeamRepository(multiplexer, opts);
         }
 
         [Fact(Skip = "Exploratory test")]
         public async Task TestInsertAndFetchOne()
         {
-            await _repo.Insert(new SlackTeam {TeamId = "teamId1", AccessToken = "accessToken1"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
 
             var tokenFromRedis = await _repo.GetTokenByTeamId("teamId1");
             
@@ -47,8 +50,8 @@ namespace FplBot.WebApi.Tests
         [Fact(Skip = "Exploratory test")]
         public async Task TestInsertAndFetchAll()
         {
-            await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2"});
-            await _repo.Insert(new SlackTeam {TeamId = "teamId3", AccessToken = "accessToken3"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName1", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName2", AccessToken = "accessToken3", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
 
             var tokensFromRedis = await _repo.GetTokens();
 
@@ -58,7 +61,7 @@ namespace FplBot.WebApi.Tests
         [Fact(Skip = "Exploratory test")]
         public async Task TestGetTokenByTeamId()
         {
-            await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test"});
 
             var tokensFromRedis = await _repo.GetTokenByTeamId("teamId2");
 
@@ -68,8 +71,8 @@ namespace FplBot.WebApi.Tests
         [Fact(Skip = "Exploratory test")]
         public async Task TestInsertAndDelete()
         {
-            await _repo.Insert(new SlackTeam {TeamId = "teamId2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123"});
-            await _repo.Insert(new SlackTeam {TeamId = "teamId3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123"});
+            await _repo.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234"});
 
 
             await _repo.Delete("accessToken2");

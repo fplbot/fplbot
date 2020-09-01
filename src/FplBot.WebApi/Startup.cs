@@ -40,9 +40,14 @@ namespace FplBot.WebApi
             {
                 var opts = c.GetService<IOptions<RedisOptions>>().Value;
                 var logger = c.GetService<ILogger<Startup>>();
-                var connString = $"{opts.REDIS_SERVER}, name={opts.REDIS_USERNAME}, password={opts.REDIS_PASSWORD}";
-                logger.LogInformation(connString);
-                return ConnectionMultiplexer.Connect(connString);
+                var options = new ConfigurationOptions
+                {
+                    ClientName = opts.GetRedisUsername,
+                    Password = opts.GetRedisPassword,
+                    EndPoints = {opts.GetRedisServerHostAndPort}
+                };
+                logger.LogInformation(options.ToString());
+                return ConnectionMultiplexer.Connect(options);
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
             services.Configure<AnalyticsOptions>(Configuration);
