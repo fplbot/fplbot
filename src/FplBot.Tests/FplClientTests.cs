@@ -21,8 +21,8 @@ namespace FplBot.Tests
         [Fact]
         public async Task GetClassicLeague()
         {
-            var scoreboard = await _leagueClient.GetClassicLeague(579157);
-            Assert.NotEmpty(scoreboard.Standings.Entries);
+            var scoreboard = await _leagueClient.GetClassicLeague(15673);
+            Assert.NotNull(scoreboard.Standings);
         }
         
         [Fact]
