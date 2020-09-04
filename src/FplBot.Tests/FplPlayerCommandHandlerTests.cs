@@ -54,7 +54,7 @@ namespace FplBot.Tests
         [InlineData("Jimenez", "Raúl Jiménez")]
         [InlineData("Aguero", "Sergio Agüero")]
         [InlineData("firmino", "Roberto Firmino")]
-        [InlineData("henderson", "Dean Henderson")]
+        [InlineData("henderson", "Jordan Henderson")]
         [InlineData("wijnaldum", "Georginio Wijnaldum")]
         [InlineData("tavares", "Fabio Henrique Tavares")]
         [InlineData("robertson", "Andrew Robertson")]
