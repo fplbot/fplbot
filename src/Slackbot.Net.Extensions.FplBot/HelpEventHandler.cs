@@ -47,13 +47,12 @@ namespace Slackbot.Net.Extensions.FplBot
 
         public bool ShouldHandle(SlackEvent @event)
         {
-            if (@event is AppMentionEvent)
+            return @event switch
             {
-                var appMention = (AppMentionEvent) @event;
-                return appMention.Text.Contains("help");
-            }
-
-            return false;
+                AppMentionEvent appMention => appMention.Text.Contains("help"),
+                UnknownSlackEvent unknown => true,
+                _ => false
+            };
         }
     }
 }
