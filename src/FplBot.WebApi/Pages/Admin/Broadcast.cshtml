@@ -1,0 +1,28 @@
+@page
+@model FplBot.WebApi.Pages.Admin.Broadcast
+
+@{
+    ViewData["Title"] = "Broadcast";
+}
+
+<div class="col-6">
+    <h1>@ViewData["Title"]</h1>
+    <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
+    <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+    <p><a href="@Url.PageLink("Index")">Gå til admin</a></p>
+    
+    @if (TempData.ContainsKey("msg"))
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            @TempData["msg"]    
+        </div>
+    }
+
+    <h3>Broadcast message to all @Model.Workspaces.Count workspaces:</h3>
+
+      <form method="post">
+         @Html.AntiForgeryToken()
+         <textarea class="form-control" name="message" placeholder="📢 Hi!">📢 Hi!</textarea>
+         <input type="submit" value="Broadcast" class="btn btn-primary"/>
+        </form>
+</div>
