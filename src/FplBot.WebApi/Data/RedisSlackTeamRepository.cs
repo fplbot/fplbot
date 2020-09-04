@@ -65,6 +65,11 @@ namespace FplBot.WebApi.Data
             };
         }
 
+        public async Task UpdateLeagueId(string teamId, long newLeagueId)
+        {
+            await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_leagueField, newLeagueId) });
+        }
+
         public async Task DeleteByTeamId(string teamId)
         {
             await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
