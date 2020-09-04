@@ -10,6 +10,7 @@
     <h1>Admin page</h1>
     <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
     <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+    <p><a href="@Url.PageLink("Broadcast")">Gå til @Url.Page("Broadcast")</a></p>
     
     
     @if (TempData.ContainsKey("msg"))
