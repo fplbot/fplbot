@@ -20,7 +20,7 @@ namespace FplBot.Tests
         [Fact]
         public async Task ChangeLeagueIdShouldUpdate()
         {
-            var dummy = Factory.CreateDummyEvent("updateleagueidm 1337");
+            var dummy = Factory.CreateDummyEvent("updateleagueid 1337");
             var response = await _client.Handle(dummy.meta, dummy.@event);
             Assert.Contains("Thanks! You're now following", response.Response, StringComparison.InvariantCultureIgnoreCase);
         }

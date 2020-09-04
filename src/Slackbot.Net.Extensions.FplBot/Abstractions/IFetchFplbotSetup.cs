@@ -53,7 +53,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 
         public Task UpdateLeagueId(string teamId, long newLeagueId)
         {
-            throw new System.NotImplementedException();
+            return Task.CompletedTask;
         }
 
         public Task DeleteByTeamId(string teamId)
