@@ -22,7 +22,7 @@ namespace FplBot.WebApi.Tests
             _helper = helper;
             var opts = new OptionsWrapper<RedisOptions>(new RedisOptions
             {
-                REDIS_URL = Environment.GetEnvironmentVariable("REDIS_URL_BLUE"),
+                REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
             });
 
             var configurationOptions = new ConfigurationOptions
