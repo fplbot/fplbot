@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
@@ -17,14 +18,16 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly ILeagueClient _leagueClient;
         private readonly ITokenStore _tokenStore;
         private readonly IFetchFplbotSetup _setupFetcher;
+        private readonly ILogger<FplStandingsCommandHandler> _logger;
 
-        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, ILeagueClient leagueClient, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher)
+        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, ILeagueClient leagueClient, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher, ILogger<FplStandingsCommandHandler> logger)
         {
             _workspacePublisher = workspacePublisher;
             _gameweekClient = gameweekClient;
             _leagueClient = leagueClient;
             _tokenStore = tokenStore;
             _setupFetcher = setupFetcher;
+            _logger = logger;
         }
 
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
@@ -41,14 +44,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             {
                 var token = await _tokenStore.GetTokenByTeamId(teamId);
                 var setup = await _setupFetcher.GetSetupByToken(token);
-                var leagueTask = _leagueClient.GetClassicLeague(setup.LeagueId);
-                var gameweeksTask = _gameweekClient.GetGameweeks();
-                var standings = Formatter.GetStandings(await leagueTask, await gameweeksTask);
+                var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
+                var gameweeks = await _gameweekClient.GetGameweeks();
+                var standings = Formatter.GetStandings(league, gameweeks);
                 return standings;
             }
             catch (Exception e)
             {
-                return $"Oops: {e.Message}";
+                _logger.LogError(e.Message,e);
+                return $"Oops, could not fetch standings.";
             }
         }
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");

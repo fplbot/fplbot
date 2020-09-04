@@ -23,7 +23,7 @@ namespace FplBot.Tests
         {
             var dummy = Factory.CreateDummyEvent(input);
             var playerData = await _client.Handle(dummy.meta, dummy.@event);
-            Assert.StartsWith(":star:", playerData.Response);
+            Assert.DoesNotContain("Oops", playerData.Response);
         }
     }
 }

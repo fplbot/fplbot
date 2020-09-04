@@ -21,6 +21,12 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent);
 
+            if (currentGw == null)
+            {
+                sb.Append("No current gameweek!");
+                return sb.ToString();
+            }
+
             sb.Append($":star: *Results after {currentGw.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)

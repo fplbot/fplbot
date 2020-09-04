@@ -1,3 +1,4 @@
+using System;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using System.Threading.Tasks;
@@ -19,12 +20,20 @@ namespace FplBot.Tests
         [Theory]
         [InlineData("@fplbot transfers")]
         [InlineData("<@UREFQD887> transfers")]
-        [InlineData("<@UREFQD887> transfers 20")]
         public async Task GetTransfersHandlerShouldPostTransfers(string input)
         {
             var dummy = Factory.CreateDummyEvent(input);
             var transfers = await _client.Handle(dummy.meta, dummy.@event);
-            Assert.StartsWith("Transfers", transfers.Response);
+            Assert.Contains("Transfers", transfers.Response, StringComparison.InvariantCultureIgnoreCase);
+        }
+        
+        [Theory]
+        [InlineData("<@UREFQD887> transfers 20")]
+        public async Task GetTransfersForExplicitGwShouldPostTransfersForGameweek(string input)
+        {
+            var dummy = Factory.CreateDummyEvent(input);
+            var transfers = await _client.Handle(dummy.meta, dummy.@event);
+            Assert.Contains("Transfers", transfers.Response, StringComparison.InvariantCultureIgnoreCase);
         }
 
         [Theory]
@@ -35,7 +44,7 @@ namespace FplBot.Tests
             var dummy = Factory.CreateDummyEvent(input);
             var transfers = await _client.Handle(dummy.meta, dummy.@event);
 
-            Assert.Equal("No transfers are made the first gameweek.", transfers.Response);
+            Assert.Contains("Transfers", transfers.Response, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }

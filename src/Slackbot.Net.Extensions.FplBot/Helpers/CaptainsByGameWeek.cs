@@ -13,15 +13,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {
-        private readonly IFetchFplbotSetup _fetcher;
         private readonly IEntryClient _entryClient;
         private readonly IPlayerClient _playerClient;
         private readonly ILeagueClient _leagueClient;
         private readonly IChipsPlayed _chipsPlayed;
 
-        public CaptainsByGameWeek(IFetchFplbotSetup fetcher, IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, IChipsPlayed chipsPlayed)
+        public CaptainsByGameWeek(IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, IChipsPlayed chipsPlayed)
         {
-            _fetcher = fetcher;
             _entryClient = entryClient;
             _playerClient = playerClient;
             _leagueClient = leagueClient;
@@ -30,8 +28,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         
         public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId)
         {
-            try
-            {
+            
                 var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
                 
                 var sb = new StringBuilder();
@@ -52,18 +49,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
 
                 return sb.ToString();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return $"Oops: {e.Message}";
-            }
+            
+         
         }
 
         public async Task<string> GetCaptainsChartByGameWeek(int gameweek, int leagueId)
         {
-            try
-            {
+            
                 var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
                 var captainGroups = entryCaptainPicks
                     .GroupBy(x => x.Captain.Id, el => el.Captain)
@@ -74,7 +66,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 var sb = new StringBuilder();
                 sb.Append($":bar_chart: *Captain picks chart for gameweek {gameweek}*\n\n");
 
-                var max = captainGroups.Max(x => x.Count);
+                var max = captainGroups.Max(x => x?.Count);
 
                 for (var i = max; i > 0; i--)
                 {
@@ -106,12 +98,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
 
                 return sb.ToString();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return $"Oops: {e.Message}";
-            }
+            
+           
         }
 
         private static string GetCaptainCountEmoji(int i)
