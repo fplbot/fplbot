@@ -40,9 +40,17 @@ namespace FplBot.Tests
         [Theory]
         [InlineData("@fplbot captains chart")]
         [InlineData("<@UREFQD887> captains chart")]
+        public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForCurrentGw(string input)
+        {
+            var dummyEvent = Factory.CreateDummyEvent(input);
+            var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);
+            Assert.StartsWith(":bar_chart:", playerData.Response);
+        }
+        
+        [Theory]
         [InlineData("<@UREFQD887> captains chart 19")]
         [InlineData("<@UREFQD887> captains 19 chart")]
-        public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChart(string input)
+        public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForExplicitGw(string input)
         {
             var dummyEvent = Factory.CreateDummyEvent(input);
             var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);

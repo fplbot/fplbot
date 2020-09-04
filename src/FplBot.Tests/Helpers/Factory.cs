@@ -2,7 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FakeItEasy;
+using Fpl.Client;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
+using Fpl.Client.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -50,10 +53,30 @@ namespace FplBot.Tests.Helpers
 
             services.ReplacePublishersWithDebugPublisher(logger);
             SlackClient = A.Fake<ISlackClient>();
-
+            GameweekClient = A.Fake<IGameweekClient>();
+            A.CallTo(() => GameweekClient.GetGameweeks()).Returns(new List<Gameweek>
+            {
+                new Gameweek
+                {
+                    Id = 1,
+                    IsCurrent = false
+                },
+                new Gameweek
+                {
+                    Id = 2,
+                    IsCurrent = true
+                },
+                new Gameweek
+                {
+                    Id = 3,
+                    IsNext = true
+                }
+            });
+            
             var slackClientServiceMock = A.Fake<ISlackClientService>();
             A.CallTo(() => slackClientServiceMock.CreateClient(A<string>.Ignored)).Returns(SlackClient);
             services.Replace<ISlackClientService>(slackClientServiceMock);
+            services.Replace<IGameweekClient>(GameweekClient);
 
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             var provider = services.BuildServiceProvider();
@@ -61,6 +84,7 @@ namespace FplBot.Tests.Helpers
         }
         
         public static ISlackClient SlackClient { get; set; }
+        public static IGameweekClient GameweekClient { get; set; }
         public static BotDetails MockBot = new BotDetails {Id = "UREFQD887", Name = "fplbot"};
 
         // remove live slack integration and replace with debugging publishers

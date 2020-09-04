@@ -26,8 +26,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var message = slackEvent as AppMentionEvent;
             var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(), message.Text, "transfers {gw}");
+
+            
             var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
-            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek.Value, (int)team.FplbotLeagueId);
+            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek ?? 1, (int)team.FplbotLeagueId);
+            
+
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
             return new EventHandledResponse(messageToSend);
         }
