@@ -7,23 +7,14 @@ on:
       - '!master'
       
 jobs:
-  # ubuntu-16_04:
-  #   name: ubuntu-16_04
-  #   runs-on: ubuntu-16.04
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #     - name: Run './build/build.sh PackFplClient BuildDockerImage'
-  #       run: ./build/build.sh PackFplClient BuildDockerImage
-  #       env:
-  #           fpl__login: ${{ secrets.fpl__login }}
-  #           fpl__password: ${{ secrets.fpl__password }}
-  windows-latest:
-    name: windows-latest
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Run 'powershell .\build\build.ps1 PackFplClient BuildDockerImage'
-        run: powershell .\build\build.ps1 PackFplClient BuildDockerImage
-        env:
-            fpl__login: ${{ secrets.fpl__login }}
-            fpl__password: ${{ secrets.fpl__password }}
+   ubuntu-16_04:
+     name: ubuntu-16_04
+     runs-on: ubuntu-16.04
+     steps:
+       - uses: actions/checkout@v1
+       - name: Run './build/build.sh PackFplClient BuildDockerImage'
+         run: ./build/build.sh PackFplClient BuildDockerImage
+         env:
+             fpl__login: ${{ secrets.fpl__login }}
+             fpl__password: ${{ secrets.fpl__password }}
+

@@ -21,8 +21,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		..\heroku.yml = ..\heroku.yml
 		Directory.Build.targets = Directory.Build.targets
 		..\buildherokuimage.sh = ..\buildherokuimage.sh
-		Dockerfile = Dockerfile
+		Dockerfile = Dockerfile		
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
+ProjectSection(SolutionItems) = preProject
+	CI.yml = ..\.github\workflows\CI.yml
+	Release.yml = ..\.github\workflows\Release.yml
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -110,6 +116,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E45F0A3A-13B7-4CB1-B02B-9B979FD1C67B} = {F7DA770E-772F-4E70-BD50-1121343BA7D7}
+		{3A8DA51F-F076-4468-8F49-B101E912748C} = {F7DA770E-772F-4E70-BD50-1121343BA7D7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}
