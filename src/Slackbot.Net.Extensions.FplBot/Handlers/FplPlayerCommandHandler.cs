@@ -1,15 +1,13 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using System.Linq;
 using System.Threading.Tasks;
-using Slackbot.Net.Dynamic;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -17,18 +15,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
-        private readonly ISlackClientService _slackClientService;
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
 
         public FplPlayerCommandHandler(
-            ISlackClientService slackClient, 
             ISlackWorkSpacePublisher workSpacePublisher,
             IPlayerClient playerClient, 
             ITeamsClient teamsClient)
         {
             _playerClient = playerClient;
             _teamsClient = teamsClient;
-            _slackClientService = slackClient;
             _workSpacePublisher = workSpacePublisher;
         }
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)

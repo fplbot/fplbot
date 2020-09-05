@@ -51,6 +51,11 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
             });
         }
 
+        public Task UpdateLeagueId(string teamId, long newLeagueId)
+        {
+            return Task.CompletedTask;
+        }
+
         public Task DeleteByTeamId(string teamId)
         {
             throw new System.NotImplementedException();
