@@ -66,6 +66,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             catch (HttpRequestException e)
             {
                 _logger.LogError(e.Message, e);
+                await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
                 return new EventHandledResponse(failure);
             }
         }

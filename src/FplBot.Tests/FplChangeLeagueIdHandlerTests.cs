@@ -54,5 +54,15 @@ namespace FplBot.Tests
             _logger.WriteLine(response.Response);
             Assert.Contains("No leagueId provided. Usage: `@fplbot updateleagueid 123`", response.Response, StringComparison.InvariantCultureIgnoreCase);
         }
+        
+        [Fact]
+        public async Task ChangeToOtherNotFoundLeagueIdShouldNotUpdate()
+        {
+            var dummy = Factory.CreateDummyEvent("updateleagueid 11111111");
+            var response = await _client.Handle(dummy.meta, dummy.@event);
+            _logger.WriteLine(response.Response);
+            Assert.Contains("Could not find league 11111111 :/ Could you find it at https://fantasy.premierleague.com/leagues/11111111/standings/c ?", response.Response, StringComparison.InvariantCultureIgnoreCase);
+        }
+        
     }
 }
