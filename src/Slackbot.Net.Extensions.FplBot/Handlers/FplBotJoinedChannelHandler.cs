@@ -18,8 +18,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ILeagueClient _leagueClient;
 
-        public FplBotJoinedChannelHandler(ILogger<FplBotJoinedChannelHandler> logger, 
-            ISlackWorkSpacePublisher publisher, 
+        public FplBotJoinedChannelHandler(ILogger<FplBotJoinedChannelHandler> logger,
+            ISlackWorkSpacePublisher publisher,
             ISlackClientService slackClientService,
             ISlackTeamRepository teamRepo,
             ILeagueClient leagueClient
@@ -31,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamRepo = teamRepo;
             _leagueClient = leagueClient;
         }
-        
+
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var joinedEvent = slackEvent as MemberJoinedChannelEvent;
@@ -39,13 +39,13 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
             var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
             var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
-            var setupMessage = $"I'm also pushing notification relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
+            var setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
             await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
             return new EventHandledResponse("OK");
         }
 
         public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is MemberJoinedChannelEvent;
 
-        public (string HandlerTrigger, string Description) GetHelpDescription() => ("","");
+        public (string HandlerTrigger, string Description) GetHelpDescription() => ("", "");
     }
 }
