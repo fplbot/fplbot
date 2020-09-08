@@ -79,7 +79,8 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddHandler<FplTransfersCommandHandler>()
                 .AddHandler<FplBotJoinedChannelHandler>()
                 .AddHandler<FplPricesHandler>()
-                .AddHandler<FplChangeLeagueIdHandler>();
+                .AddHandler<FplChangeLeagueIdHandler>()
+                .AddHandler<AppHomeOpenedEventHandler>();
             return builder;
         }
 

@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot
                     break;
                 case AppMentionEvent appMention:
                 {
-                    var text = _handlers.Where(h => !(h is FplBotJoinedChannelHandler)).Select(handler => handler.GetHelpDescription())
+                    var text = _handlers.Where(h => !(h is FplBotJoinedChannelHandler) && !(h is AppHomeOpenedEventHandler)).Select(handler => handler.GetHelpDescription())
                         .Aggregate("*HALP:*", (current, helpDescription) => current + $"\n• `{helpDescription.HandlerTrigger}` : _{helpDescription.Description}_");
 
                     var slackClient = await _slackClientService.CreateClient(eventMetadata.Team_Id);
