@@ -41,8 +41,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             
             if (current == null)
             {
-                _logger.LogDebug($"No current gameweek");
-                return;
+                current = gweeks.First();
             }
 
             if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline, current.Deadline))
