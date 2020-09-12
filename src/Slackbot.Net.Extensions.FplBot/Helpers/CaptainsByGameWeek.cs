@@ -121,13 +121,32 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var league = await leagueTask;
             var players = await playersTask;
 
-            var entryCaptainPicks = await Task.WhenAll(league.Standings.Entries.OrderBy(x => x.Rank)
-                .Select(entry => GetEntryCaptainPick(entry, gameweek, players)));
+            var entries = new List<GenericEntry>();
+            if (league.Standings.Entries.Any())
+            {
+                entries = league.Standings.Entries.OrderBy(x => x.Rank).ToList().Select(e => new GenericEntry
+                {
+                    Entry = e.Entry,
+                    EntryName = e.EntryName
+                
+                }).ToList();
+            }
+            else
+            {
+                entries = league.NewEntries.Entries.ToList().Select(e => new GenericEntry
+                {
+                    Entry = e.Entry,
+                    EntryName = e.EntryName
+                
+                }).ToList();
+            }
+            
+            var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, players)));
 
             return entryCaptainPicks.WhereNotNull();
         }
 
-        private async Task<EntryCaptainPick> GetEntryCaptainPick(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players)
+        private async Task<EntryCaptainPick> GetEntryCaptainPick(GenericEntry entry, int gameweek, ICollection<Player> players)
         {
             try
             {
@@ -156,10 +175,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         private class EntryCaptainPick
         {
-            public ClassicLeagueEntry Entry { get; set; }
+            public GenericEntry Entry { get; set; }
             public Player Captain { get; set; }
             public Player ViceCaptain { get; set; }
             public bool IsTripleCaptain { get; set; }
         }
+    }
+
+    public class GenericEntry
+    {
+        public int Entry { get; set; }
+        public string EntryName { get; set; }
     }
 }

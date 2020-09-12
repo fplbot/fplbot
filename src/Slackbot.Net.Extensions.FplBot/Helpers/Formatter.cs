@@ -14,7 +14,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
         {
             var sb = new StringBuilder();
-
+         
             var sortedByRank = league.Standings.Entries.OrderBy(x => x.Rank);
 
             var numPlayers = league.Standings.Entries.Count;
