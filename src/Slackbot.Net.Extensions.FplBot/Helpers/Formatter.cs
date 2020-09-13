@@ -115,6 +115,9 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string GetInjuredPlayers(IEnumerable<Player> players)
         {
+            if (!players.Any())
+                return "No injuries amongst the most selected players";
+
             var sb = new StringBuilder();
 
             sb.Append($":helmet_with_white_cross: *Injured players*\n");
