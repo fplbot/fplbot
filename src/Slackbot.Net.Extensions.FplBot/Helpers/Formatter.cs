@@ -227,12 +227,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string FormatPriceChanged(IEnumerable<Player> priceChangesPlayers)
         {
+            if (!priceChangesPlayers.Any())
+                return "No players with price changes.";
+            
             var messageToSend = "";
             var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
             foreach (var group in grouped)
             {
                 var isPriceIncrease = @group.Key > 0;
-                var priceChange = $"{Formatter.FormatCurrency(group.Key)}";
+                var priceChange = $"{FormatCurrency(group.Key)}";
                 var header = isPriceIncrease ? $"*Price up {priceChange} :chart_with_upwards_trend:*" : $"*Price down {priceChange} :chart_with_downwards_trend:*";
                 messageToSend += $"\n\n{header}";
                 foreach (var p in group)
