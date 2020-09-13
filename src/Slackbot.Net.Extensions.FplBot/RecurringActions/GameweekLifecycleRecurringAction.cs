@@ -49,7 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
             _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
 
-            if (IsChangeToNewGameweek(fetchedCurrent))
+            if (IsChangeToNewGameweek(fetchedCurrent) || IsFirstGameweekChangingToCurrent(fetchedCurrent))
             {
                 await _orchestrator.GameweekJustBegan(fetchedCurrent.Id);
             }
@@ -74,6 +74,13 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private bool IsChangeToFinishedGameweek(Gameweek fetchedCurrent)
         {
             return fetchedCurrent.Id == _storedCurrent.Id && !_storedCurrent.IsFinished && fetchedCurrent.IsFinished;
+        }
+        
+        private bool IsFirstGameweekChangingToCurrent(Gameweek fetchedCurrent)
+        {
+            var isFirstGameweekBeginning = _storedCurrent.Id == 1 && fetchedCurrent.Id == 1;
+            var isFirstGameweekChangeToCurrent = _storedCurrent.IsCurrent == false && fetchedCurrent.IsCurrent;
+            return isFirstGameweekBeginning && isFirstGameweekChangeToCurrent;
         }
     }
 }
