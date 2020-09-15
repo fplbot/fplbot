@@ -54,6 +54,31 @@ namespace FplBot.WebApi.Controllers
             return Redirect($"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}");
         }
 
+        [HttpGet("install-url")]
+        public async Task<IActionResult> InstallUrl(string channel, string leagueId)
+        {
+            _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
+            try
+            {
+                await _leagueClient.GetClassicLeague(int.Parse(leagueId));
+            }
+            catch (Exception)
+            {
+                var msg = $"Could not find FPL league with id `{leagueId}`. Only classic leagues are currently supported (not draft leagues)";
+                return BadRequest(
+                new {
+                    leagueId = msg
+                });
+            }
+            var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
+            var original = new Uri(HttpContext.Request.GetDisplayUrl());
+            var redirect_uri = new Uri(original, "/oauth/authorize");
+            
+            return Ok(new {
+                redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}"
+            });
+        }
+
         [HttpGet("authorize")]
         public async Task<IActionResult> Authorize(string code, string state)
         {
