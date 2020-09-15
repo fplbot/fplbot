@@ -56,7 +56,7 @@ namespace FplBot.WebApi.Controllers
         }
 
         [HttpGet("install-url")]
-        public async Task<IActionResult> InstallUrl(string channel, string leagueId)
+        public async Task<IActionResult> InstallUrl(string channel, string leagueId, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
         {
             _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
             try
@@ -66,10 +66,8 @@ namespace FplBot.WebApi.Controllers
             catch (Exception)
             {
                 var msg = $"Could not find FPL league with id `{leagueId}`. Only classic leagues are currently supported (not draft leagues)";
-                return BadRequest(
-                new {
-                    leagueId = msg
-                });
+                ModelState.AddModelError("leagueId", msg);
+                return apiBehaviorOptions.Value.InvalidModelStateResponseFactory(ControllerContext);
             }
             var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
