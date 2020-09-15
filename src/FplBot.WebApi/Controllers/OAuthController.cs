@@ -185,6 +185,9 @@ namespace FplBot.WebApi.Controllers
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
+            if (value == null)
+                return new ValidationResult($"{validationContext.DisplayName} must start with a `#`");
+            
             return value.ToString().StartsWith("#") ?
                 ValidationResult.Success :
                 new ValidationResult($"{validationContext.DisplayName} must start with a `#`");
