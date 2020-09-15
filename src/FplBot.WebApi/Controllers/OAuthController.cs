@@ -3,13 +3,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
@@ -62,7 +60,7 @@ namespace FplBot.WebApi.Controllers
             _logger.LogInformation($"Installing using channel {install.Channel} and league {install.LeagueId}!");
             try
             {
-                await _leagueClient.GetClassicLeague(int.Parse(install.LeagueId));
+                await _leagueClient.GetClassicLeague(install.LeagueId);
             }
             catch (Exception)
             {
@@ -85,7 +83,7 @@ namespace FplBot.WebApi.Controllers
             _logger.LogInformation($"Installing using channel {install.Channel} and league {install.LeagueId}!");
             try
             {
-                await _leagueClient.GetClassicLeague(int.Parse(install.LeagueId));
+                await _leagueClient.GetClassicLeague((int)install.LeagueId);
             }
             catch (Exception)
             {
@@ -172,18 +170,14 @@ namespace FplBot.WebApi.Controllers
         public string Channel { get; set; }
         
         [Required, LeagueId]
-        public string LeagueId { get; set; }
+        public int LeagueId { get; set; }
     }
 
     public class LeagueIdAttribute : ValidationAttribute
     {
-        public LeagueIdAttribute()
-        {
-            
-        }
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return Convert.ToInt64(value) > 0 ? ValidationResult.Success : new ValidationResult($"{validationContext.DisplayName} must be an integer greater than 0.");
+            return Convert.ToInt32(value) > 0 ? ValidationResult.Success : new ValidationResult($"{validationContext.DisplayName} must be an integer greater than 0.");
         }
     }
 
