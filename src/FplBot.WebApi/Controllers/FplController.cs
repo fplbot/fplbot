@@ -29,7 +29,7 @@ namespace FplBot.WebApi.Controllers
                 return Ok(new
                 {
                     LeagueName = league.Properties.Name,
-                    LeagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Id == league.Properties.AdminEntry)?.EntryName
+                    LeagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Entry == league.Properties.AdminEntry)?.PlayerName
                 });
             }
             catch (HttpRequestException e)
