@@ -129,14 +129,14 @@ namespace FplBot.WebApi
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-
+            app.UseCors();
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSlackbotEvents("/events");
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllers().RequireCors(p => p.WithOrigins("https://fplbot-frontend.herokuapp.com"));
                 endpoints.MapRazorPages();
             });
         }
