@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
