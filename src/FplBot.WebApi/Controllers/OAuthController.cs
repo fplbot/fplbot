@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -56,20 +57,43 @@ namespace FplBot.WebApi.Controllers
         }
 
         [HttpGet("install-url")]
-        public async Task<IActionResult> InstallUrl(string channel, string leagueId, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
+        public async Task<IActionResult> InstallUrl([FromQuery] InstallParameters install, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
         {
-            _logger.LogInformation($"Installing using channel {channel} and league {leagueId}!");
+            _logger.LogInformation($"Installing using channel {install.Channel} and league {install.LeagueId}!");
             try
             {
-                await _leagueClient.GetClassicLeague(int.Parse(leagueId));
+                await _leagueClient.GetClassicLeague(int.Parse(install.LeagueId));
             }
             catch (Exception)
             {
-                var msg = $"Could not find FPL league with id `{leagueId}`. Only classic leagues are currently supported (not draft leagues)";
+                var msg = $"Could not find FPL league with id `{install.LeagueId}`. Only classic leagues are currently supported (not draft leagues)";
                 ModelState.AddModelError("leagueId", msg);
                 return apiBehaviorOptions.Value.InvalidModelStateResponseFactory(ControllerContext);
             }
-            var urlencodedState = WebUtility.UrlEncode($"{channel},{leagueId}");
+            var urlencodedState = WebUtility.UrlEncode($"{install.Channel},{install.LeagueId}");
+            var original = new Uri(HttpContext.Request.GetDisplayUrl());
+            var redirect_uri = new Uri(original, "/oauth/authorize");
+            
+            return Ok(new {
+                redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}"
+            });
+        }
+        
+        [HttpPost("install-url")]
+        public async Task<IActionResult> PostCreateInstallUrl([FromBody] InstallParameters install, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
+        {
+            _logger.LogInformation($"Installing using channel {install.Channel} and league {install.LeagueId}!");
+            try
+            {
+                await _leagueClient.GetClassicLeague(int.Parse(install.LeagueId));
+            }
+            catch (Exception)
+            {
+                var msg = $"Could not find FPL league with id `{install.LeagueId}`. Only classic leagues are currently supported (not draft leagues)";
+                ModelState.AddModelError("leagueId", msg);
+                return apiBehaviorOptions.Value.InvalidModelStateResponseFactory(ControllerContext);
+            }
+            var urlencodedState = WebUtility.UrlEncode($"{install.Channel},{install.LeagueId}");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
             var redirect_uri = new Uri(original, "/oauth/authorize");
             
@@ -129,7 +153,7 @@ namespace FplBot.WebApi.Controllers
                 scheme = HttpContext.Request.Scheme
             });
         }
-
+    
         private FplbotSetup ParseState(string urlencodedState)
         {
             var state = WebUtility.UrlDecode(urlencodedState);
@@ -139,6 +163,37 @@ namespace FplBot.WebApi.Controllers
                 Channel = splitted[0],
                 LeagueId = int.Parse(splitted[1])
             };
+        }
+    }
+
+    public class InstallParameters
+    {
+        [Required, SlackChannel]
+        public string Channel { get; set; }
+        
+        [Required, LeagueId]
+        public string LeagueId { get; set; }
+    }
+
+    public class LeagueIdAttribute : ValidationAttribute
+    {
+        public LeagueIdAttribute()
+        {
+            
+        }
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        {
+            return Convert.ToInt64(value) > 0 ? ValidationResult.Success : new ValidationResult($"{validationContext.DisplayName} must be an integer greater than 0.");
+        }
+    }
+
+    public class SlackChannelAttribute : ValidationAttribute
+    {
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        {
+            return value.ToString().StartsWith("#") ?
+                ValidationResult.Success :
+                new ValidationResult($"{validationContext.DisplayName} must start with a `#`");
         }
     }
 }
