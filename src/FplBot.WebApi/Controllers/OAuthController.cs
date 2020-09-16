@@ -130,7 +130,7 @@ namespace FplBot.WebApi.Controllers
                     FplbotLeagueId = setup.LeagueId
                 });
 
-                return Redirect("https://fplbot-frontend.herokuapp.com/success");
+                return Redirect("https://www.fplbot.app/success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);
