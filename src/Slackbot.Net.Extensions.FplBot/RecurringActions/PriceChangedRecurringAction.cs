@@ -23,7 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             var priceChanges = await _priceChangedMonitor.GetChangedPlayers();
             if (priceChanges.Players.Any())
             {
-                var message = Formatter.FormatPriceChanged(priceChanges.Players);
+                var message = Formatter.FormatPriceChanged(priceChanges.Players, priceChanges.Teams);
                 await _slackWorkSpacePublisher.PublishToAllWorkspaceChannels(message);
             }
         }
