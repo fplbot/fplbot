@@ -8,6 +8,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     internal class GameweekLeagueContext
     {
         public IEnumerable<TransfersByGameWeek.Transfer> TransfersForLeague { get; set; }
+        public IEnumerable<GameweekEntry> GameweekEntries { get; set; }
         public ICollection<Player> Players { get; set; }
         public ICollection<Team> Teams { get; set; }
         public IEnumerable<User> Users { get; set; }

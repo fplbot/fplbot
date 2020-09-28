@@ -102,6 +102,7 @@ namespace FplBot.Tests
                 A.Fake<ITeamsClient>(),
                 A.Fake<ISlackTeamRepository>(),
                 A.Fake<ITransfersByGameWeek>(),
+                A.Fake<ILeagueEntriesByGameweek>(),
                 A.Fake<ISlackClientService>(),
                 FakeLogger());
         }
@@ -172,6 +173,7 @@ namespace FplBot.Tests
                 teamsClient,
                 slackTeamRepository,
                 transfersByGameWeek,
+                A.Fake<ILeagueEntriesByGameweek>(),
                 slackClientService,
                 FakeLogger());
         }

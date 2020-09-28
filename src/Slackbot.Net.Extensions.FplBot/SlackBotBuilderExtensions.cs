@@ -91,7 +91,8 @@ namespace Slackbot.Net.Abstractions.Hosting
             builder.Services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
             builder.Services.AddSingleton<IGoalsDuringGameweek, GoalsDuringGameweek>();
             builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
-            builder.Services.AddSingleton<ITeamValue, TeamValue>();
+            builder.Services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
+            builder.Services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
             builder.Services.AddSingleton<IGameweekHelper, GameweekHelper>();
             builder.Services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
             builder.Services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();

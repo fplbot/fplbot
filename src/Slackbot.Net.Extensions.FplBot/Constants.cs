@@ -126,12 +126,26 @@
                 "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
             };
 
-            public static readonly string[] GoodTransferMessages =
+            public static readonly string[] TransferredInRedCardPlayerTaunts =
             {
-                "Nice save {0}! :v:",
-                "How did you know, {0}?",
-                "Trying to climb the ranks, {0}? :chart_with_upwards_trend:"
+                "Smart move bringing him in, {0} :upside_down_face:",
+                "Didn't you tranfer him in this week, {0}? :japanese_ogre:",
+                "Maybe you should have waited one more week before knee jerking him in, {0}?"
             };
+
+            public static readonly string[] OwningPlayerWithOwnGoalTaunts =
+            {
+                "Isn't that guy in your team, {0}?",
+                "That's -2pts, {0} :grimacing:",
+                "Are you playing anti-fpl, {0}?"
+            };
+
+            public static readonly string[] MissedPenaltyTaunts =
+            {
+                "Bet you thought you were getting some points there, {0}!",
+                "Isn't that guy in your team, {0}?",
+            };
+
         }
     }
 }
