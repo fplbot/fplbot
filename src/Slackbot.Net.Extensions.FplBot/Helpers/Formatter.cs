@@ -27,7 +27,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return sb.ToString();
             }
 
-            sb.Append($":star: *Results after {currentGw.Name}* :star: \n\n");
+            sb.Append($":star: *Standings for {currentGw.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
