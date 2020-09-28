@@ -61,7 +61,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             if (player.Rank == numPlayers)
             {
-                emojiString.Append(":rip:");
+                emojiString.Append(":hankey:");
             }
 
             return emojiString.ToString();
