@@ -38,8 +38,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             try
             {
-                var entryPicksTask = _entryClient.GetPicks(entry.Entry, gameweek);
-                var entryPicks = await entryPicksTask;
+                var entryPicks = await _entryClient.GetPicks(entry.Entry, gameweek);
 
                 return new GameweekEntry(entry.Entry, entry.EntryName, entry.EntryName, entryPicks);
             }
