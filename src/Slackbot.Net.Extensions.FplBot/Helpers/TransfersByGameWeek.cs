@@ -123,7 +123,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
             else if (didNoTransfers.Count == 1)
             {
-                sb.Append($"\n{didNoTransfers.Single().GetEntryLink(gw)} saved the transfer :sleeping:");
+                sb.Append($"\n{didNoTransfers.Single().GetEntryLink(gw)} saved their transfer :sleeping:");
             }
             else if (didNoTransfers.Count > 0)
             {

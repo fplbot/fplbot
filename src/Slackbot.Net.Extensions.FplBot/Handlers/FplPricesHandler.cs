@@ -12,19 +12,22 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
     {
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly IPlayerClient _playerClient;
+        private readonly ITeamsClient _teamsClient;
 
-        public FplPricesHandler(ISlackWorkSpacePublisher workSpacePublisher, IPlayerClient playerClient)
+        public FplPricesHandler(ISlackWorkSpacePublisher workSpacePublisher, IPlayerClient playerClient, ITeamsClient teamsClient)
         {
             _workSpacePublisher = workSpacePublisher;
             _playerClient = playerClient;
+            _teamsClient = teamsClient;
         }
 
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
         {
             var message = slackEvent as AppMentionEvent;
             var allPlayers = await _playerClient.GetAllPlayers();
+            var teams = await _teamsClient.GetAllTeams();
             var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0);
-            var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers);
+            var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers, teams);
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
             return new EventHandledResponse(messageToSend);
         }

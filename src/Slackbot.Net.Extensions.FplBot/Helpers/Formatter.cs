@@ -27,7 +27,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return sb.ToString();
             }
 
-            sb.Append($":star: *Results after {currentGw.Name}* :star: \n\n");
+            sb.Append($":star: *Standings for {currentGw.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
@@ -61,7 +61,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             if (player.Rank == numPlayers)
             {
-                emojiString.Append(":rip:");
+                emojiString.Append(":hankey:");
             }
 
             return emojiString.ToString();
@@ -228,7 +228,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return (amount / 10.0).ToString("£0.0", CultureInfo.InvariantCulture);
         }
 
-        public static string FormatPriceChanged(IEnumerable<Player> priceChangesPlayers)
+        public static string FormatPriceChanged(IEnumerable<Player> priceChangesPlayers, ICollection<Team> teams)
         {
             if (!priceChangesPlayers.Any())
                 return "No players with price changes.";
@@ -243,7 +243,9 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 messageToSend += $"\n\n{header}";
                 foreach (var p in group)
                 {
-                    messageToSend += $"\n• {p.WebName} {Formatter.FormatCurrency(p.NowCost)}";
+                    var team = teams.FirstOrDefault(t => t.Code == p.TeamCode);
+                    var teamName = team != null ? $"({team.Name})" : "";
+                    messageToSend += $"\n• {p.FirstName} {p.SecondName} {teamName} {FormatCurrency(p.NowCost)}";
                 }
             }
 

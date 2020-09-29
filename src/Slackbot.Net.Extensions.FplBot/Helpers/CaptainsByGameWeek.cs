@@ -13,17 +13,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {
-        private readonly IEntryClient _entryClient;
         private readonly IPlayerClient _playerClient;
         private readonly ILeagueClient _leagueClient;
-        private readonly IChipsPlayed _chipsPlayed;
+        private readonly IEntryForGameweek _entryForGameweek;
 
-        public CaptainsByGameWeek(IEntryClient entryClient, IPlayerClient playerClient, ILeagueClient leagueClient, IChipsPlayed chipsPlayed)
+        public CaptainsByGameWeek(IPlayerClient playerClient, ILeagueClient leagueClient, IEntryForGameweek entryForGameweek)
         {
-            _entryClient = entryClient;
             _playerClient = playerClient;
             _leagueClient = leagueClient;
-            _chipsPlayed = chipsPlayed;
+            _entryForGameweek = entryForGameweek;
         }
         
         public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId)
@@ -150,20 +148,15 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             try
             {
-                var entryPicksTask = _entryClient.GetPicks(entry.Entry, gameweek);
-                var hasUsedTripleCaptainForGameWeekTask = _chipsPlayed.GetHasUsedTripleCaptainForGameWeek(gameweek, entry.Entry);
-
-                var entryPicks = await entryPicksTask;
-
-                var captain = players.SingleOrDefault(player => player.Id == entryPicks.Picks.Single(pick => pick.IsCaptain).PlayerId);
-                var viceCaptain = players.SingleOrDefault(player => player.Id == entryPicks.Picks.Single(pick => pick.IsViceCaptain).PlayerId);
+                var entryForGameweekTask = _entryForGameweek.GetEntryForGameweek(entry, gameweek);
+                var entryPicksForGameweek = await entryForGameweekTask;
 
                 return new EntryCaptainPick
                 {
                     Entry = entry,
-                    Captain = captain,
-                    ViceCaptain = viceCaptain,
-                    IsTripleCaptain = await hasUsedTripleCaptainForGameWeekTask
+                    Captain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.Captain.PlayerId),
+                    ViceCaptain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.ViceCaptain.PlayerId),
+                    IsTripleCaptain = entryPicksForGameweek.ActiveChip == Constants.ChipNames.TripleCaptain
                 };
             }
             catch (Exception e)

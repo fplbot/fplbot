@@ -138,13 +138,14 @@ namespace FplBot.Tests
             };
 
             var playerClient = A.Fake<IPlayerClient>();
+            var teamsClient = A.Fake<ITeamsClient>();
             A.CallTo(() => playerClient.GetAllPlayers())
                 .Returns(initial).Once()
                 .Then.Returns(first).Once()
                 .Then.Returns(second).Once()
                 .Then.Returns(third);
             
-            var priceMonitor = new PriceChangedMonitor(playerClient);            
+            var priceMonitor = new PriceChangedMonitor(playerClient, teamsClient);
             
             var initialCheck = await priceMonitor.GetChangedPlayers();
             Assert.Empty(initialCheck.Players);
@@ -170,11 +171,12 @@ namespace FplBot.Tests
         private static PriceChangedMonitor CreatePriceMonitor(ICollection<Player> before, ICollection<Player> after, ICollection<Player> lastly = null)
         {
             var playerClient = A.Fake<IPlayerClient>();
+            var teamsClient = A.Fake<ITeamsClient>();
             A.CallTo(() => playerClient.GetAllPlayers())
                 .Returns(before).Once()
                 .Then.Returns(after).Once()
                 .Then.Returns(lastly);
-            return new PriceChangedMonitor(playerClient);
+            return new PriceChangedMonitor(playerClient, teamsClient);
         }
     }
 }

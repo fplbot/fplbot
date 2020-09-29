@@ -25,7 +25,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _orchestrator = orchestrator;
         }
         
-        public string Cron => Constants.CronPatterns.EveryMinute;
+        public string Cron => Constants.CronPatterns.EveryOtherMinute;
 
         public async Task Process()
         {
