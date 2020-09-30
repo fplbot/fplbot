@@ -75,16 +75,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                         _logger.LogError($"Could not post to {message.Channel}", res.Error);
                     }
                 }
-                catch (SlackApiException sae)
+                catch (WellKnownSlackApiException sae)
                 {
-                    if (sae.Message == "account_inactive")
+                    if (sae.Error == "account_inactive")
                     {
                         await _tokenStore.Delete(token);
                         _logger.LogInformation($"Deleted inactive token");
                     }
                     else
                     {
-                        _logger.LogError(sae, sae.Message);
+                        _logger.LogError(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
                     }
                 }
                 catch (Exception e)
@@ -108,16 +108,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                         _logger.LogError($"Could not post to {channel}", res.Error);
                     }
                 }
-                catch (SlackApiException sae)
+                catch (WellKnownSlackApiException sae)
                 {
-                    if (sae.Message == "account_inactive")
+                    if (sae.Error == "account_inactive")
                     {
                         await _tokenStore.Delete(token);
                         _logger.LogInformation($"Deleted inactive token");
                     }
                     else
                     {
-                        _logger.LogError(sae, sae.Message);
+                        _logger.LogError(sae, $"Could not post to {channel}. {sae.Error} {sae.ResponseContent}") ;
                     }
                 }
                 catch (Exception e)

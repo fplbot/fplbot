@@ -38,7 +38,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 res = await client.ViewPublish(viewPublishRequest);
                 return !res.Ok ? new EventHandledResponse(res.Error) : new EventHandledResponse("Opened AppHome");
             }
-            catch (SlackApiException se)
+            catch (WellKnownSlackApiException se)
             {
                 _logger.LogError(se.Message, se);
                 return new EventHandledResponse(se.Message);
