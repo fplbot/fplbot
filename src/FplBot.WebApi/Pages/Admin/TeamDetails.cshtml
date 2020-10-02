@@ -23,10 +23,15 @@
                 <td class="font-weight-bolder">TeamId</td><td>@Model.Team.TeamId</td>
             </tr>
             <tr>
-                <td class="font-weight-bolder">Channel</td><td>@Model.Team.FplBotSlackChannel @(Model.ChannelStatus ? "✅" : "❌")</td>
+                <td class="font-weight-bolder">Channel</td><td>@Model.Team.FplBotSlackChannel  @(!Model.ChannelStatus.HasValue ? "N/A" : Model.ChannelStatus.Value  ? "✅" : "❌")</td>
             </tr>
             <tr>
-                <td class="font-weight-bolder">LeagueId</td><td>@Model.Team.FplbotLeagueId</td>
+                <td class="font-weight-bolder">LeagueId</td>
+                <td>
+                    <a href="https://fantasy.premierleague.com/leagues/@Model.Team.FplbotLeagueId/standings/c" target="_blank">
+                        @Model.Team.FplbotLeagueId
+                    </a>
+                </td>
             </tr>
             <tr>
                 <td class="font-weight-bolder">State</td><td><pre>@Model.GameweekLeagueContext</pre></td>

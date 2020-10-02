@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -44,8 +45,15 @@ namespace FplBot.WebApi.Pages.Admin
                 var league = await _leagueClient.GetClassicLeague((int) team.FplbotLeagueId);
                 League = league;
                 var slackClient = await CreateSlackClient(teamIdToUpper);
-                var channels = await slackClient.ConversationsListPublicChannels(500);
-                ChannelStatus = channels.Channels.FirstOrDefault(c => team.FplBotSlackChannel == $"#{c.Name}") != null;
+                try
+                {
+                    var channels = await slackClient.ConversationsListPublicChannels(500);
+                    ChannelStatus = channels.Channels.FirstOrDefault(c => team.FplBotSlackChannel == $"#{c.Name}") != null;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
+                }
                 var ctx = _stateDetails.GetGameweekLeagueContext(teamIdToUpper);
                 GameweekLeagueContext = JsonConvert.SerializeObject(new
                 {
@@ -59,7 +67,7 @@ namespace FplBot.WebApi.Pages.Admin
         }
 
         public ClassicLeague League { get; set; }
-        public bool ChannelStatus { get; set; }
+        public bool? ChannelStatus { get; set; }
 
         public async Task<IActionResult> OnPost(string teamId)
         {

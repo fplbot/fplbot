@@ -39,7 +39,7 @@
                 {
                     <tr>
                         <td>@ws.TeamName</td>
-                        <td>@ws.FplbotLeagueId</td>
+                        <td><a href="https://fantasy.premierleague.com/leagues/@ws.FplbotLeagueId/standings/c" target="_blank">@ws.FplbotLeagueId</a></td>
                         <td>@ws.FplBotSlackChannel</td>
                         <td><a href="@Url.PageLink("TeamDetails", values: new { teamId = ws.TeamId})">Details</a></td>
                     </tr>
