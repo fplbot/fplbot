@@ -6,7 +6,7 @@
     
 }
 
-<div class="col-6">
+<div class="col-12">
     <h1>Admin page</h1>
     <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
     <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
@@ -22,25 +22,35 @@
 
     <h3>Workspaces that have installed fplbot (@Model.Workspaces.Count)</h3>
 
-    <ul class="list-group">
+
         @if (Model.Workspaces.Any())
         {
-            foreach (var ws in Model.Workspaces)
-            {
-                <li class="list-group-item">
-                    @ws.TeamName: (@ws.FplbotLeagueId in @ws.FplBotSlackChannel) - @ws.AccessToken
-                    <form method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="teamId" value="@ws.TeamId"/>
-                        <input type="submit" value="Uninstall" class="btn btn-danger"/>
-                    </form>
-                </li>
-            }
-
-        }else
+            <table class="table">
+                <thead>
+                <th>Team</th>
+                <th>LeagueId</th>
+                <th>Channel</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                </thead>
+                <tbody>
+                @foreach (var ws in Model.Workspaces)
+                {
+                    <tr>
+                        <td>@ws.TeamName</td>
+                        <td>@ws.FplbotLeagueId</td>
+                        <td>@ws.FplBotSlackChannel</td>
+                        <td><a href="@Url.PageLink("TeamDetails", values: new { teamId = ws.TeamId})">Details</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
         {
             <p>No installs :/</p>
         }
-        
-    </ul>
+
+    
 </div>

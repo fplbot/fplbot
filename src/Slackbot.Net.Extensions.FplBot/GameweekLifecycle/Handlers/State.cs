@@ -33,6 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private ICollection<Fixture> _currentGameweekFixtures;
         private readonly IDictionary<string, IEnumerable<User>> _slackUsers;
         private readonly IList<SlackTeam> _activeSlackTeams;
+        private int? _currentGameweek;
 
 
         public State(IFixtureClient fixtureClient, 
@@ -64,6 +65,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task Reset(int newGameweek)
         {
+            _currentGameweek = newGameweek;
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             _players = await _playerClient.GetAllPlayers();
             _teams = await _teamsClient.GetAllTeams();
@@ -116,12 +118,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 Teams = _teams,
                 GameweekEntries = entriesForLeague,
                 TransfersForLeague = transfersForLeague,
-                Users = _slackUsers.ContainsKey(teamId) ? _slackUsers[teamId] : new List<User>()
+                Users = _slackUsers.ContainsKey(teamId) ? _slackUsers[teamId] : new List<User>(),
+                CurrentGameweek = _currentGameweek
             };
         }
 
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {
+            _currentGameweek = currentGameweek;
             var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
             foreach (var t in allTeams)
             {

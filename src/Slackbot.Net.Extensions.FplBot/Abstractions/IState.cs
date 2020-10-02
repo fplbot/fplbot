@@ -6,7 +6,7 @@ using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
-    internal interface IState
+    public interface IState
     {
         Task Reset(int newGameweek);
         
