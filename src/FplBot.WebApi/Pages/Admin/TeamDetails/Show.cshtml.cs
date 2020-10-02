@@ -12,9 +12,9 @@ using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.WebApi.Pages.Admin
+namespace FplBot.WebApi.Pages.Admin.TeamDetails
 {
-    public class TeamDetails : PageModel
+    public class TeamDetailsIndex : PageModel
     {
         private readonly IState _stateDetails;
         private readonly ISlackTeamRepository _teamRepo;
@@ -22,9 +22,9 @@ namespace FplBot.WebApi.Pages.Admin
         private readonly ISlackClientBuilder _builder;
         private readonly ILeagueClient _leagueClient;
         private readonly IOptions<SlackAppOptions> _slackAppOptions;
-        private readonly ILogger<Index> _logger;
+        private readonly ILogger<TeamDetailsIndex> _logger;
 
-        public TeamDetails(IState state, ISlackTeamRepository teamRepo, ITokenStore tokenStore, ILogger<Index> logger, IOptions<SlackAppOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
+        public TeamDetailsIndex(IState state, ISlackTeamRepository teamRepo, ITokenStore tokenStore, ILogger<TeamDetailsIndex> logger, IOptions<SlackAppOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
         {
             _stateDetails = state;
             _teamRepo = teamRepo;

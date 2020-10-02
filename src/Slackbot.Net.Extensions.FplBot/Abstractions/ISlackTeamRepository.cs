@@ -11,6 +11,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Task Insert(SlackTeam slackTeam);
         IAsyncEnumerable<SlackTeam> GetAllTeams();
         Task<IEnumerable<SlackTeam>> GetAllTeamsAsync();
+        Task UpdateChannel(string teamId, string newChannel);
     }
     
     public class SlackTeam

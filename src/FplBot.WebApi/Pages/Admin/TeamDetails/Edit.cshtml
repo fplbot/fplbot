@@ -1,0 +1,53 @@
+@page "/admin/teamdetails/{teamId}/edit"
+@using Fpl.Client.Models
+@model FplBot.WebApi.Pages.Admin.TeamDetails.Edit
+
+@if (TempData.ContainsKey("msg"))
+{
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        @TempData["msg"]    
+    </div>
+}
+
+<div class="col-12">
+    <h1>Edit details</h1>
+    <p>
+        <a href="@Url.Page("Show", values: new {teamId = Model.Team.TeamId})">Back to view details</a>
+    </p>
+    <p>
+        <a href="@Url.Page("/Admin/Index")">Go to Home</a>
+    </p>
+
+    <form method="post">
+        <table class="table">
+            <tbody>
+            <tr>
+                <td class="font-weight-bolder">Team</td><td>@Model.Team.TeamName</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">TeamId</td><td>@Model.Team.TeamId</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">LeagueId</td>
+                <td>
+                    <input class="form-control" type="text" name="leagueId" value="@Model.Team.FplbotLeagueId"/>
+                     <i>(@Model.LeagueName)</i>
+                </td>
+            </tr>
+          <tr>
+                <td class="font-weight-bolder">Channel</td>
+                <td>
+                    <input class="form-control" type="text" name="channel" value="@Model.Team.FplBotSlackChannel"/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="teamId" value="@Model.Team.TeamId"/>
+                    <input type="submit" value="Edit" class="btn btn-primary"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
