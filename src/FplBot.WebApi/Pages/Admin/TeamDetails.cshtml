@@ -1,0 +1,52 @@
+@page "/admin/teamdetails/{teamId}"
+@model FplBot.WebApi.Pages.Admin.TeamDetails
+
+<div class="col-12">
+    <h1>Details</h1>
+       <p><a href="@Url.PageLink("Index")">Go back</a></p>
+    
+        @if (TempData.ContainsKey("msg"))
+        {
+            <div class="alert alert-warning alert-dismissible" role="alert">
+                @TempData["msg"]    
+            </div>
+        }
+    
+    @if (Model.Team != null)
+    {
+        <table class="table">
+            <tbody>
+            <tr>
+                <td class="font-weight-bolder">Team</td><td>@Model.Team.TeamName</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">TeamId</td><td>@Model.Team.TeamId</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">Channel</td><td>@Model.Team.FplBotSlackChannel @(Model.ChannelStatus ? "✅" : "❌")</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">LeagueId</td><td>@Model.Team.FplbotLeagueId</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">State</td><td><pre>@Model.GameweekLeagueContext</pre></td>
+            </tr>
+            <tr>
+                <td class="font-weight-bolder">Token</td><td><code>@Model.Team.AccessToken</code></td>
+            </tr>
+          
+            <tr>
+                <td colspan="2">      
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="teamId" value="@Model.Team.TeamId"/>
+                        <input type="submit" value="Uninstall" class="btn btn-danger"/>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    }
+    
+   
+</div>

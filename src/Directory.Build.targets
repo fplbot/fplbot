@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <SlackbotNetVersion>3.0.0-preview123</SlackbotNetVersion>
+    <SlackbotNetVersion>3.0.0-preview125</SlackbotNetVersion>
   </PropertyGroup>
 
   <ItemGroup>
