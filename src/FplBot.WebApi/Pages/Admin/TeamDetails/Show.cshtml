@@ -1,9 +1,9 @@
 @page "/admin/teamdetails/{teamId}"
-@model FplBot.WebApi.Pages.Admin.TeamDetails
+@model FplBot.WebApi.Pages.Admin.TeamDetails.TeamDetailsIndex
 
 <div class="col-12">
     <h1>Details</h1>
-       <p><a href="@Url.PageLink("Index")">Go back</a></p>
+       <p><a href="@Url.Page("/Admin/Index")">Go back</a></p>
     
         @if (TempData.ContainsKey("msg"))
         {
@@ -14,6 +14,7 @@
     
     @if (Model.Team != null)
     {
+        <p><a href="@Url.PageLink("/Admin/TeamDetails/Edit", values: new { teamId = Model.Team.TeamId})">Edit</a></p>
         <table class="table">
             <tbody>
             <tr>
@@ -31,6 +32,8 @@
                     <a href="https://fantasy.premierleague.com/leagues/@Model.Team.FplbotLeagueId/standings/c" target="_blank">
                         @Model.Team.FplbotLeagueId
                     </a>
+                    
+                    <i>(@Model.League.Properties.Name)</i>
                 </td>
             </tr>
             <tr>

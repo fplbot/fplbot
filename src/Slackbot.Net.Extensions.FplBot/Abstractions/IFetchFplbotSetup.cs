@@ -86,6 +86,11 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
             };
             return Task.FromResult(teams);
         }
+
+        public Task UpdateChannel(string teamId, string newChannel)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     public class FplbotSetup
