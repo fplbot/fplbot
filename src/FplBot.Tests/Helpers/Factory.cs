@@ -15,6 +15,7 @@ using Slackbot.Net.Abstractions.Publishers;
 using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Xunit.Abstractions;
 
@@ -42,12 +43,9 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            var configurationSection = configuration.GetSection("fpl");
-            services.AddSlackbotWorker(configuration).AddFplBot(o =>
-            {
-                o.Login = configurationSection["Login"];
-                o.Password = configurationSection["Password"];
-            }).AddFplBotEventHandlers<DontCareRepo>(c => {});
+            services.AddSlackbotWorker(configuration)
+                .AddDistributedFplBot<InMemorySlackTeamRepository>(configuration.GetSection("fpl"))
+                .AddFplBotEventHandlers<DontCareRepo>();
             
             
 

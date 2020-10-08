@@ -12,15 +12,13 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
     internal class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
     {
         private readonly ITokenStore _tokenStore;
-        private readonly IFetchFplbotSetup _teamRepo;
         private readonly ISlackTeamRepository _repository;
         private readonly ISlackClientBuilder _slackClientBuilder;
         private readonly ILogger<SlackWorkSpacePublisher> _logger;
 
-        public SlackWorkSpacePublisher(ITokenStore tokenStore, IFetchFplbotSetup teamRepo, ISlackTeamRepository repository, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
+        public SlackWorkSpacePublisher(ITokenStore tokenStore, ISlackTeamRepository repository, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
         {
             _tokenStore = tokenStore;
-            _teamRepo = teamRepo;
             _repository = repository;
             _slackClientBuilder = builder;
             _logger = logger;
@@ -28,17 +26,11 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 
         public async Task PublishToAllWorkspaceChannels(string msg)
         {
-            var tokens = await _tokenStore.GetTokens();
-            foreach (var token in tokens)
+            var teams = await _repository.GetAllTeamsAsync();
+            foreach (var team in teams)
             {
-                await PublishToWorkspaceChannelUsingToken(token, msg);
+                await PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, msg);
             }
-        }
-
-        public async Task PublishToWorkspaceChannelUsingToken(string token, params string[] messages)
-        {
-            var setup = await _teamRepo.GetSetupByToken(token);
-            await PublishUsingToken(token, setup.Channel, messages);
         }
 
         public async Task PublishToWorkspace(string teamId, string channel, params string[] messages)
@@ -85,39 +77,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                     else
                     {
                         _logger.LogError(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogInformation(e, e.Message);
-                }
-            }
-        }
-        
-        private async Task PublishUsingToken(string token, string channel, params string[] messages)
-        {
-            var slackClient = _slackClientBuilder.Build(token);
-            foreach (var message in messages)
-            {
-                try
-                {
-                    var res = await slackClient.ChatPostMessage(channel,message);
-
-                    if (!res.Ok)
-                    {
-                        _logger.LogError($"Could not post to {channel}", res.Error);
-                    }
-                }
-                catch (WellKnownSlackApiException sae)
-                {
-                    if (sae.Error == "account_inactive")
-                    {
-                        await _tokenStore.Delete(token);
-                        _logger.LogInformation($"Deleted inactive token");
-                    }
-                    else
-                    {
-                        _logger.LogError(sae, $"Could not post to {channel}. {sae.Error} {sae.ResponseContent}") ;
                     }
                 }
                 catch (Exception e)
