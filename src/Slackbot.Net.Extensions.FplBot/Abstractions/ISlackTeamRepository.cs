@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Abstractions
@@ -22,5 +24,20 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         public string AccessToken { get; set; }
         public string FplBotSlackChannel { get; set; }
         public long FplbotLeagueId { get; set; }
+        public IEnumerable<EventSubscription> FplBotEventSubscriptions { get; set; } 
+            = Enum.GetValues(typeof(EventSubscription)).Cast<EventSubscription>(); // TODO remove this initializer once we have stuff ready in db
+    }
+
+    public enum EventSubscription
+    {
+        Standings,
+        Captains,
+        Transfers,
+        FixtureGoals,
+        FixtureAssists,
+        FixtureCards,
+        FixturePenaltyMisses,
+        Taunts,
+        PriceChanges
     }
 }

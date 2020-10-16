@@ -6,6 +6,8 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Taunts;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -19,22 +21,24 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             newFixtureEvents.ForEach(newFixtureEvent =>
             {
                 var scoreHeading = $"{GetScore(context.Teams, newFixtureEvent)}\n";
-                var eventMessages = newFixtureEvent.StatMap.SelectMany(stat =>
+                var eventMessages = newFixtureEvent.StatMap
+                    .Where(stat => TeamSubscribesForThisEvent(context, stat.Key))
+                    .SelectMany(stat =>
                 {
                     switch (stat.Key)
                     {
                         case StatType.GoalsScored:
-                            return FormatNewGoals(stat.Value, context.Players, context.TransfersForLeague, context.Users);
+                            return FormatNewGoals(stat.Value, context);
                         case StatType.Assists:
-                            return FormatNewAssists(stat.Value, context.Players);
+                            return FormatNewAssists(stat.Value, context);
                         case StatType.OwnGoals:
-                            return FormatOwnGoals(stat.Value, context.Players, context.GameweekEntries, context.Users);
+                            return FormatOwnGoals(stat.Value, context);
                         case StatType.RedCards:
-                            return FormatNewRedCards(stat.Value, context.Players, context.TransfersForLeague, context.Users);
+                            return FormatNewRedCards(stat.Value, context);
                         case StatType.PenaltiesMissed:
-                            return FormatNewPenaltiesMissed(stat.Value, context.Players, context.GameweekEntries, context.Users);
+                            return FormatNewPenaltiesMissed(stat.Value, context);
                         case StatType.PenaltiesSaved:
-                            return FormatNewPenaltiesSaved(stat.Value, context.Players);
+                            return FormatNewPenaltiesSaved(stat.Value, context);
                         default: return Enumerable.Empty<string>();
                     }
                 }).MaterializeToArray();
@@ -47,124 +51,124 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return formattedStrings;
         }
 
+        private static bool TeamSubscribesForThisEvent(GameweekLeagueContext context, StatType statType)
+        {
+            return context.EventSubscriptions.Contains(statType.GetSubscriptionType());
+        }
+
         private static IEnumerable<object> FormatNewAssists(
-            List<PlayerEvent> newAssistEvents, 
-            ICollection<Player> players)
+            List<PlayerEvent> newAssistEvents,
+            GameweekLeagueContext context)
         {
             return FormatEvent(
                 newAssistEvents,
-                players,
+                context,
                 "got an assist!",
-                ":handshake:");
+                ":handshake:",
+                new AssistTaunt());
         }
 
         private static IEnumerable<object> FormatOwnGoals(
             List<PlayerEvent> newOwnGoalEvents,
-            ICollection<Player> players,
-            IEnumerable<GameweekEntry> gameweekEntries,
-            IEnumerable<User> users)
+            GameweekLeagueContext context)
         {
             return FormatEvent(
                 newOwnGoalEvents,
-                players,
+                context,
                 "scored a goal! In his own goal!",
                 ":face_palm:",
-                player =>
-                {
-                    var entriesThatOwnPlayer = EntriesThatHasPlayerInTeam(player.Id, gameweekEntries, users).ToArray();
-                    return entriesThatOwnPlayer.Any() ? $" {string.Format(Constants.EventMessages.OwningPlayerWithOwnGoalTaunts.GetRandom(), string.Join(", ", entriesThatOwnPlayer))}" : null;
-                });
+                new OwnGoalTaunt());
         }
 
         private static IEnumerable<object> FormatNewPenaltiesMissed(
             List<PlayerEvent> newPenaltiesMissedEvents,
-            ICollection<Player> players,
-            IEnumerable<GameweekEntry> gameweekEntries,
-            IEnumerable<User> users)
+            GameweekLeagueContext context)
         {
             return FormatEvent(
                 newPenaltiesMissedEvents,
-                players,
+                context,
                 "missed a penalty!",
                 ":dizzy_face:",
-                player =>
-                {
-                    var entriesThatOwnPlayer = EntriesThatHasPlayerInTeam(player.Id, gameweekEntries, users).ToArray();
-                    return entriesThatOwnPlayer.Any() ? $" {string.Format(Constants.EventMessages.MissedPenaltyTaunts.GetRandom(), string.Join(", ", entriesThatOwnPlayer))}" : null;
-                });
+                new PenaltyMissTaunt());
         }
 
         private static IEnumerable<object> FormatNewPenaltiesSaved(
             List<PlayerEvent> newPenaltiesSavedEvents,
-            ICollection<Player> players)
+            GameweekLeagueContext context)
         {
             return FormatEvent(
                 newPenaltiesSavedEvents,
-                players,
+                context,
                 "saved a penalty!",
-                ":man-cartwheeling:");
+                ":man-cartwheeling:",
+                null);
         }
 
         private static List<string> FormatNewGoals(
-            List<PlayerEvent> newGoalEvents, 
-            ICollection<Player> players, 
-            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
-            IEnumerable<User> users)
+            List<PlayerEvent> newGoalEvents,
+            GameweekLeagueContext context)
         {
             return FormatEvent(
                 newGoalEvents,
-                players,
+                context,
                 "scored a goal!",
                 ":soccer:",
-                player =>
-                {
-                    var entriesTransferredPlayerOut = EntriesThatTransferredPlayerOutThisGameweek(player.Id, transfersForCurrentGameweek, users).ToArray();
-                    return entriesTransferredPlayerOut.Any() ? $" {string.Format(Constants.EventMessages.TransferredGoalScorerOutTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerOut))}" : null;
-                });
+                new GoalTaunt());
         }
 
         private static List<string> FormatNewRedCards(
             List<PlayerEvent> newRedCardEvents,
-            ICollection<Player> players,
-            IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek,
-            IEnumerable<User> users)
+            GameweekLeagueContext context)
         {
             return FormatEvent(
                 newRedCardEvents,
-                players,
+                context,
                 "got a red card!",
                 ":red_circle:",
-                player =>
-                {
-                    var entriesTransferredPlayerIn = EntriesThatTransferredPlayerInThisGameweek(player.Id, transfersForCurrentGameweek, users).ToArray();
-                    return entriesTransferredPlayerIn.Any() ? $" {string.Format(Constants.EventMessages.TransferredInRedCardPlayerTaunts.GetRandom(), string.Join(", ", entriesTransferredPlayerIn))}" : null;
-                });
+                new RedCardTaunt());
         }
 
         private static List<string> FormatEvent(
             List<PlayerEvent> newGoalEvents,
-            ICollection<Player> players,
+            GameweekLeagueContext context,
             string eventDescription,
             string eventEmoji,
-            Func<Player, string> append = null)
+            ITaunt taunt)
         {
             return newGoalEvents.Select(g =>
             {
-                var player = players.Single(x => x.Id == g.PlayerId);
+                var player = context.Players.Single(x => x.Id == g.PlayerId);
                 var message = $"{player.FirstName} {player.SecondName} {eventDescription} {eventEmoji} ";
 
                 if (g.IsRemoved)
                 {
                     message = $"~{message.TrimEnd()}~ (VAR? :shrug:)";
                 }
-                else
+                else if (taunt != null && context.EventSubscriptions.Contains(EventSubscription.Taunts))
                 {
-                    message += append?.Invoke(player);
+                    var tauntibleEntries = GetTauntibleEntries(context, player, taunt.Type);
+                    var append = tauntibleEntries.Any() ? $" {string.Format(taunt.JokePool.GetRandom(), string.Join(", ", tauntibleEntries))}" : null;
+                    message += append;
                 }
 
                 return message;
 
             }).WhereNotNull().ToList();
+        }
+
+        private static string[] GetTauntibleEntries(GameweekLeagueContext context, Player player, TauntType tauntType)
+        {
+            switch (tauntType)
+            {
+                case TauntType.HasPlayerInTeam:
+                    return EntriesThatHasPlayerInTeam(player.Id, context.GameweekEntries, context.Users).ToArray();
+                case TauntType.InTransfers:
+                    return EntriesThatTransferredPlayerInThisGameweek(player.Id, context.TransfersForLeague, context.Users).ToArray();
+                case TauntType.OutTransfers:
+                    return EntriesThatTransferredPlayerOutThisGameweek(player.Id, context.TransfersForLeague, context.Users).ToArray();
+                default:
+                    return Array.Empty<string>();
+            }
         }
 
         private static string GetScore(ICollection<Team> teams, FixtureEvents fixtureEvent)
@@ -196,4 +200,5 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 gameweekEntries.Where(x => x.Picks.Any(pick => pick.PlayerId == playerId)).Select(x => SlackHandleHelper.GetSlackHandleOrFallback(users, x.EntryName));
         }
     }
+
 }

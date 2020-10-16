@@ -101,16 +101,17 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public GameweekLeagueContext GetGameweekLeagueContext(string teamId)
         {
-            var teamForLeague = _activeSlackTeams.FirstOrDefault(t => t.TeamId == teamId);
-            IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague = new List<TransfersByGameWeek.Transfer>();
-            IEnumerable<GameweekEntry> entriesForLeague = new List<GameweekEntry>();
+            var slackTeam = _activeSlackTeams.FirstOrDefault(t => t.TeamId == teamId);
+            var transfersForLeague = Enumerable.Empty<TransfersByGameWeek.Transfer>();
+            var entriesForLeague = Enumerable.Empty<GameweekEntry>();
+            var eventSubscriptions = Enumerable.Empty<EventSubscription>();
 
-
-            if (teamForLeague != null && _transfersForCurrentGameweekBySlackTeam.ContainsKey(teamForLeague.FplbotLeagueId))
-                transfersForLeague = _transfersForCurrentGameweekBySlackTeam[teamForLeague.FplbotLeagueId];
-
-            if (teamForLeague != null && _entriesForCurrentGameweekBySlackTeam.ContainsKey(teamForLeague.FplbotLeagueId))
-                entriesForLeague = _entriesForCurrentGameweekBySlackTeam[teamForLeague.FplbotLeagueId];
+            if (slackTeam != null)
+            {
+                _transfersForCurrentGameweekBySlackTeam.TryGetValue(slackTeam.FplbotLeagueId, out transfersForLeague);
+                _entriesForCurrentGameweekBySlackTeam.TryGetValue(slackTeam.FplbotLeagueId, out entriesForLeague);
+                eventSubscriptions = slackTeam.FplBotEventSubscriptions;
+            }
 
             return new GameweekLeagueContext
             {
@@ -119,6 +120,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 GameweekEntries = entriesForLeague,
                 TransfersForLeague = transfersForLeague,
                 Users = _slackUsers.ContainsKey(teamId) ? _slackUsers[teamId] : new List<User>(),
+                EventSubscriptions = eventSubscriptions,
                 CurrentGameweek = _currentGameweek
             };
         }

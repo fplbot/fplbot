@@ -1,4 +1,7 @@
-﻿namespace Slackbot.Net.Extensions.FplBot
+﻿using System;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
+
+namespace Slackbot.Net.Extensions.FplBot
 {
     public enum StatType
     {
@@ -35,6 +38,21 @@
                 default:
                     return StatType.Unknown;
             }
+        }
+
+        public static EventSubscription GetSubscriptionType(this StatType statType)
+        {
+            return statType switch
+            {
+                StatType.GoalsScored => EventSubscription.FixtureGoals,
+                StatType.Assists => EventSubscription.FixtureAssists,
+                StatType.OwnGoals => EventSubscription.FixtureGoals,
+                StatType.YellowCards => EventSubscription.FixtureCards,
+                StatType.RedCards => EventSubscription.FixtureCards,
+                StatType.PenaltiesSaved => EventSubscription.FixturePenaltyMisses,
+                StatType.PenaltiesMissed => EventSubscription.FixturePenaltyMisses,
+                _ => EventSubscription.FixtureGoals
+            };
         }
     }
 }
