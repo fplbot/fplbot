@@ -12,21 +12,18 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     {
         private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameweek;
-        private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly ISlackWorkSpacePublisher _publisher;
-        private readonly IFetchFplbotSetup _teamRepo;
+        private readonly ISlackTeamRepository _teamRepo;
         private readonly ILogger<GameweekStartedNotifier> _logger;
 
-        public GameweekStartedNotifier(ICaptainsByGameWeek captainsByGameweek, 
+        public GameweekStartedNotifier(ICaptainsByGameWeek captainsByGameweek,
             ITransfersByGameWeek transfersByGameweek,
-            ISlackTeamRepository slackTeamRepo,
-            ISlackWorkSpacePublisher publisher, 
-            IFetchFplbotSetup teamsRepo, 
+            ISlackWorkSpacePublisher publisher,
+            ISlackTeamRepository teamsRepo,
             ILogger<GameweekStartedNotifier> logger)
         {
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
-            _slackTeamRepo = slackTeamRepo;
             _publisher = publisher;
             _teamRepo = teamsRepo;
             _logger = logger;
@@ -35,9 +32,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleGameweekStarted(int newGameweek)
         {
             await _publisher.PublishToAllWorkspaceChannels($"Gameweek {newGameweek}!");
-            var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
+            var teams = await _teamRepo.GetAllTeams();
 
-            foreach (var team in allTeams)
+            foreach (var team in teams)
             {
                 try
                 {
@@ -47,20 +44,23 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     {
                         messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int)team.FplbotLeagueId));
                         messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                        _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
                     }
 
                     if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
                     {
                         messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)team.FplbotLeagueId));
+                        _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.TeamId);
                     }
 
-                    await _publisher.PublishToWorkspaceChannelUsingToken(team.AccessToken, messages.ToArray());
+                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, messages.ToArray());
+
                 }
                 catch (Exception e)
                 {
                     _logger.LogError(e, e.Message);
                 }
-              
+
             }
         }
     }

@@ -5,7 +5,6 @@ using Fpl.Client.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
@@ -19,9 +18,8 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _builder;
         private readonly ILeagueClient _leagueClient;
-        private readonly ILogger<Edit> _logger;
 
-        public Edit(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, ITokenStore tokenStore, ISlackClientBuilder builder, IOptions<SlackAppOptions> slackAppOptions)
+        public Edit(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, ITokenStore tokenStore, ISlackClientBuilder builder)
         {
             _teamRepo = teamRepo;
             _leagueClient = leagueClient;
@@ -46,10 +44,9 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
         
         public async Task<IActionResult> OnPost(string teamId, int leagueId, string channel)
         {
-            var teamIdToUpper = teamId.ToUpper();
             try
             {
-                var league = await _leagueClient.GetClassicLeague(leagueId);
+                await _leagueClient.GetClassicLeague(leagueId);
             }
             catch (Exception e)
             {

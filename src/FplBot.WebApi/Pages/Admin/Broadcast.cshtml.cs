@@ -25,7 +25,8 @@ namespace FplBot.WebApi.Pages.Admin
         
         public async Task OnGet()
         {
-            await foreach (var t in _teamRepo.GetAllTeams())
+            var teams = await _teamRepo.GetAllTeams();
+            foreach (var t in teams)
             {
                 Workspaces.Add(t);
             }

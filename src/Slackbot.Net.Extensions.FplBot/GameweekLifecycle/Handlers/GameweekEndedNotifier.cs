@@ -11,23 +11,19 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     internal class GameweekEndedNotifier : IHandleGameweekEnded
     {
         private readonly ISlackWorkSpacePublisher _publisher;
-        private readonly IFetchFplbotSetup _teamRepo;
-        private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly ILeagueClient _leagueClient;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILogger<GameweekEndedNotifier> _logger;
+        private readonly ISlackTeamRepository _teamRepo;
 
-        public GameweekEndedNotifier(
-            ISlackWorkSpacePublisher publisher, 
-            IFetchFplbotSetup teamsRepo,
-            ISlackTeamRepository slackTeamRepo,
+        public GameweekEndedNotifier(ISlackWorkSpacePublisher publisher, 
+            ISlackTeamRepository teamsRepo,
             ILeagueClient leagueClient, 
             IGameweekClient gameweekClient, 
             ILogger<GameweekEndedNotifier> logger)
         {
             _publisher = publisher;
             _teamRepo = teamsRepo;
-            _slackTeamRepo = slackTeamRepo;
             _leagueClient = leagueClient;
             _gameweekClient = gameweekClient;
             _logger = logger;
@@ -36,9 +32,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleGameweekEndeded(int gameweek)
         {
             await _publisher.PublishToAllWorkspaceChannels($"Gameweek {gameweek} finished.");
-            var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
-
-            foreach (var team in allTeams)
+            var teams = await _teamRepo.GetAllTeams();
+            foreach (var team in teams)
             {
                 if (!team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
                 {
@@ -51,7 +46,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
                     var gameweeks = await _gameweekClient.GetGameweeks();
                     var standings = Formatter.GetStandings(league, gameweeks);
-                    await _publisher.PublishToWorkspaceChannelUsingToken(team.AccessToken, standings);
+                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, standings);
                 }
                 catch (Exception e)
                 {

@@ -117,7 +117,7 @@ namespace FplBot.Tests
             });
             
             var slackTeamRepository = A.Fake<ISlackTeamRepository>();
-            A.CallTo(() => slackTeamRepository.GetAllTeamsAsync()).Returns(new List<SlackTeam>
+            A.CallTo(() => slackTeamRepository.GetAllTeams()).Returns(new List<SlackTeam>
             {
                 TestBuilder.SlackTeam()
             });

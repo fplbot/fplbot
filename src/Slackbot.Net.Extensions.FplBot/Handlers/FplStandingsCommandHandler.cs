@@ -2,11 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
@@ -16,17 +14,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILeagueClient _leagueClient;
-        private readonly ITokenStore _tokenStore;
-        private readonly IFetchFplbotSetup _setupFetcher;
+        private readonly ISlackTeamRepository _teamRepo;
         private readonly ILogger<FplStandingsCommandHandler> _logger;
 
-        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, ILeagueClient leagueClient, ITokenStore tokenStore, IFetchFplbotSetup setupFetcher, ILogger<FplStandingsCommandHandler> logger)
+        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, ILeagueClient leagueClient, ISlackTeamRepository teamRepo, ILogger<FplStandingsCommandHandler> logger)
         {
             _workspacePublisher = workspacePublisher;
             _gameweekClient = gameweekClient;
             _leagueClient = leagueClient;
-            _tokenStore = tokenStore;
-            _setupFetcher = setupFetcher;
+            _teamRepo = teamRepo;
             _logger = logger;
         }
 
@@ -42,9 +38,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             try
             {
-                var token = await _tokenStore.GetTokenByTeamId(teamId);
-                var setup = await _setupFetcher.GetSetupByToken(token);
-                var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
+                var setup = await _teamRepo.GetTeam(teamId);
+                var league = await _leagueClient.GetClassicLeague((int)setup.FplbotLeagueId);
                 var gameweeks = await _gameweekClient.GetGameweeks();
                 var standings = Formatter.GetStandings(league, gameweeks);
                 return standings;

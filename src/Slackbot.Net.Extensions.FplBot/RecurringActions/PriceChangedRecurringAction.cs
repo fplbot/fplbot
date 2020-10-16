@@ -31,12 +31,12 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             {
                 var message = Formatter.FormatPriceChanged(priceChanges.Players, priceChanges.Teams);
 
-                var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
+                var allTeams = await _slackTeamRepo.GetAllTeams();
                 foreach (var team in allTeams)
                 {
                     if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
                     {
-                        await _slackWorkSpacePublisher.PublishToWorkspaceChannelUsingToken(team.AccessToken, message);
+                        await _slackWorkSpacePublisher.PublishToWorkspace(team.TeamId, message);
                     }
                 }
             }
