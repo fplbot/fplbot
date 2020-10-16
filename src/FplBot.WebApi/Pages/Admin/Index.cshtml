@@ -30,6 +30,7 @@
                 <th>Team</th>
                 <th>LeagueId</th>
                 <th>Channel</th>
+                <th>Subs</th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -41,6 +42,7 @@
                         <td>@ws.TeamName</td>
                         <td><a href="https://fantasy.premierleague.com/leagues/@ws.FplbotLeagueId/standings/c" target="_blank">@ws.FplbotLeagueId</a></td>
                         <td>@ws.FplBotSlackChannel</td>
+                        <td>@string.Join(",",ws.Subscriptions) (@ws.Subscriptions.Count())</td>
                         <td><a href="@Url.PageLink("TeamDetails/Show", values: new { teamId = ws.TeamId})">Details</a></td>
                     </tr>
                 }
