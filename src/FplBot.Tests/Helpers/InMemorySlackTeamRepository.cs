@@ -38,17 +38,7 @@ namespace FplBot.Tests.Helpers
             return Task.CompletedTask;
         }
 
-#pragma warning disable 1998
-        public async IAsyncEnumerable<SlackTeam> GetAllTeams()
-#pragma warning restore 1998
-        {
-            yield return new SlackTeam
-            {
-                FplbotLeagueId = _options.Value.LeagueId
-            };
-        }
-
-        public Task<IEnumerable<SlackTeam>> GetAllTeamsAsync()
+        public Task<IEnumerable<SlackTeam>> GetAllTeams()
         {
             IEnumerable<SlackTeam> teams = new []{ 
                 new SlackTeam

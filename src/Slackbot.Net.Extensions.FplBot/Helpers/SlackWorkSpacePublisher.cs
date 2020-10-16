@@ -26,7 +26,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 
         public async Task PublishToAllWorkspaceChannels(string msg)
         {
-            var teams = await _repository.GetAllTeamsAsync();
+            var teams = await _repository.GetAllTeams();
             foreach (var team in teams)
             {
                 await PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, msg);

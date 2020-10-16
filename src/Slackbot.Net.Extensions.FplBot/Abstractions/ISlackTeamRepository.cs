@@ -9,8 +9,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Task UpdateLeagueId(string teamId, long newLeagueId);
         Task DeleteByTeamId(string teamId);
         Task Insert(SlackTeam slackTeam);
-        IAsyncEnumerable<SlackTeam> GetAllTeams();
-        Task<IEnumerable<SlackTeam>> GetAllTeamsAsync();
+        Task<IEnumerable<SlackTeam>> GetAllTeams();
         Task UpdateChannel(string teamId, string newChannel);
     }
     

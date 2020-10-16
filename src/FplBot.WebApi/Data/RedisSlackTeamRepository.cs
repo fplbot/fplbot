@@ -79,19 +79,6 @@ namespace FplBot.WebApi.Data
             await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
         }
 
-        public async Task<IEnumerable<FplbotSetup>> GetAllFplBotSetup()
-        {
-            var tokens = await GetTokens();
-            var setups = new List<FplbotSetup>();
-            foreach (var token in tokens)
-            {
-                var s = await GetSetupByToken(token);
-                setups.Add(s);
-            }
-
-            return setups;
-        }
-
         public async Task<IEnumerable<string>> GetTokens()
         {
             var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
@@ -118,43 +105,7 @@ namespace FplBot.WebApi.Data
             return key.Split('-')[1];
         }
 
-        public async Task<FplbotSetup> GetSetupByToken(string token)
-        {
-            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
-            
-            foreach (var key in allTeamKeys)
-            {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamIdField});
-                if (fetchedTeamData[0] == token)
-                    return new FplbotSetup
-                    {
-                        Channel = fetchedTeamData[1],
-                        LeagueId = int.Parse(fetchedTeamData[2]),
-                    };
-            }
-
-            return null;
-        }
-        
-        public async IAsyncEnumerable<SlackTeam> GetAllTeams()
-        {
-            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
-            
-            foreach (var key in allTeamKeys)
-            {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField});
-                yield return new SlackTeam
-                    {
-                        AccessToken = fetchedTeamData[0],
-                        FplBotSlackChannel = fetchedTeamData[1],
-                        FplbotLeagueId = int.Parse(fetchedTeamData[2]),
-                        TeamName = fetchedTeamData[3],
-                        TeamId = FromKeyToTeamId(key)
-                    };
-            }
-        }
-
-        public async Task<IEnumerable<SlackTeam>> GetAllTeamsAsync()
+        public async Task<IEnumerable<SlackTeam>> GetAllTeams()
         {
             var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
             var teams = new List<SlackTeam>();
