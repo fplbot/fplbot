@@ -42,6 +42,12 @@
             <tr>
                 <td class="font-weight-bolder">Token</td><td><code>@Model.Team.AccessToken</code></td>
             </tr>
+            <tr>
+                    <td class="font-weight-bolder">Subscriptions</td>
+                    <td>
+                        @string.Join(",",Model.Team.Subscriptions)
+                    </td>
+            </tr>  
           
             <tr>
                 <td colspan="2">      

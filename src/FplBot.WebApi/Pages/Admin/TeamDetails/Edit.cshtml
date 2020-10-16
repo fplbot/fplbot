@@ -34,12 +34,18 @@
                      <i>(@Model.LeagueName)</i>
                 </td>
             </tr>
-          <tr>
+            <tr>
                 <td class="font-weight-bolder">Channel</td>
                 <td>
                     <input class="form-control" type="text" name="channel" value="@Model.Team.FplBotSlackChannel"/>
                 </td>
             </tr>
+            <tr>
+                <td class="font-weight-bolder">Subscriptions</td>
+                <td>
+                    @string.Join(",",Model.Team.Subscriptions)
+                </td>
+            </tr>            
             <tr>
                 <td colspan="2">
                     @Html.AntiForgeryToken()
