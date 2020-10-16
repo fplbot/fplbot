@@ -1,46 +1,18 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Tests.Helpers
 {
-    public interface IFetchFplbotSetup
-    {
-        Task<FplbotSetup> GetSetupByToken(string token);
-        Task<IEnumerable<FplbotSetup>> GetAllFplBotSetup();
-    }
-
-    public class ConfigFplbotSetupFetcher : IFetchFplbotSetup, ISlackTeamRepository
+    public class InMemorySlackTeamRepository : ISlackTeamRepository
     {
         private readonly IOptions<FplbotOptions> _options;
 
-        public ConfigFplbotSetupFetcher(IOptions<FplbotOptions> options)
+        public InMemorySlackTeamRepository(IOptions<FplbotOptions> options)
         {
             _options = options;
-        }
-
-        public Task<FplbotSetup> GetSetupByToken(string token)
-        {
-            return Task.FromResult(new FplbotSetup
-            {
-                LeagueId = _options.Value.LeagueId,
-                Channel = _options.Value.Channel
-            });        
-        }
-
-        public Task<IEnumerable<FplbotSetup>> GetAllFplBotSetup()
-        {
-            var fplbotSetups = new List<FplbotSetup>()
-            {
-                new FplbotSetup
-                {
-                    LeagueId = _options.Value.LeagueId,
-                    Channel = _options.Value.Channel
-                }
-            };
-            return Task.FromResult(fplbotSetups.AsEnumerable());
         }
 
         public Task<SlackTeam> GetTeam(string teamId)
@@ -66,9 +38,9 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
             return Task.CompletedTask;
         }
 
-        #pragma warning disable 1998
+#pragma warning disable 1998
         public async IAsyncEnumerable<SlackTeam> GetAllTeams()
-        #pragma warning restore 1998
+#pragma warning restore 1998
         {
             yield return new SlackTeam
             {
@@ -91,11 +63,5 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         {
             return Task.CompletedTask;
         }
-    }
-
-    public class FplbotSetup
-    {
-        public int LeagueId { get; set; }
-        public string Channel { get; set; }
     }
 }

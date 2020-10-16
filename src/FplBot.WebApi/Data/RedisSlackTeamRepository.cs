@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FplBot.WebApi.Data
 {
-    public class RedisSlackTeamRepository : ISlackTeamRepository, ITokenStore, IFetchFplbotSetup
+    public class RedisSlackTeamRepository : ISlackTeamRepository, ITokenStore
     {
         private readonly ConnectionMultiplexer _redis;
         private IDatabase _db;
