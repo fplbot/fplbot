@@ -1,13 +1,13 @@
 using Fpl.Client.Models;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.Extensions.FplBot.Taunts;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Taunts;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -53,7 +53,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         private static bool TeamSubscribesForThisEvent(GameweekLeagueContext context, StatType statType)
         {
-            return context.EventSubscriptions.Contains(statType.GetSubscriptionType());
+            return context.EventSubscriptions.ContainsSubscriptionFor(statType.GetSubscriptionType());
         }
 
         private static IEnumerable<object> FormatNewAssists(
@@ -144,7 +144,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 {
                     message = $"~{message.TrimEnd()}~ (VAR? :shrug:)";
                 }
-                else if (taunt != null && context.EventSubscriptions.Contains(EventSubscription.Taunts))
+                else if (taunt != null && context.EventSubscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
                 {
                     var tauntibleEntries = GetTauntibleEntries(context, player, taunt.Type);
                     var append = tauntibleEntries.Any() ? $" {string.Format(taunt.JokePool.GetRandom(), string.Join(", ", tauntibleEntries))}" : null;

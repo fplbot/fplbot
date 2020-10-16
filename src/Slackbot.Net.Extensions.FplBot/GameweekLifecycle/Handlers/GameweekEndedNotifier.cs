@@ -1,10 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using System;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -12,20 +12,22 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly IFetchFplbotSetup _teamRepo;
-        private readonly ITokenStore _tokenStore;
+        private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly ILeagueClient _leagueClient;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILogger<GameweekEndedNotifier> _logger;
 
-        public GameweekEndedNotifier(ISlackWorkSpacePublisher publisher, 
-            IFetchFplbotSetup teamsRepo, 
-            ITokenStore tokenStore, 
+        public GameweekEndedNotifier(
+            ISlackWorkSpacePublisher publisher, 
+            IFetchFplbotSetup teamsRepo,
+            ISlackTeamRepository slackTeamRepo,
             ILeagueClient leagueClient, 
-            IGameweekClient gameweekClient, ILogger<GameweekEndedNotifier> logger)
+            IGameweekClient gameweekClient, 
+            ILogger<GameweekEndedNotifier> logger)
         {
             _publisher = publisher;
             _teamRepo = teamsRepo;
-            _tokenStore = tokenStore;
+            _slackTeamRepo = slackTeamRepo;
             _leagueClient = leagueClient;
             _gameweekClient = gameweekClient;
             _logger = logger;
@@ -34,16 +36,22 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleGameweekEndeded(int gameweek)
         {
             await _publisher.PublishToAllWorkspaceChannels($"Gameweek {gameweek} finished.");
-            var tokens = await _tokenStore.GetTokens();
-            foreach (var token in tokens)
+            var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
+
+            foreach (var team in allTeams)
             {
-                var setup = await _teamRepo.GetSetupByToken(token);
+                if (!team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
+                {
+                    _logger.LogInformation("Team {team} hasn't subscribed for gw standings, so bypassing it", team.TeamId);
+                    return;
+                }
+
                 try
                 {
-                    var league = await _leagueClient.GetClassicLeague(setup.LeagueId);
+                    var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
                     var gameweeks = await _gameweekClient.GetGameweeks();
                     var standings = Formatter.GetStandings(league, gameweeks);
-                    await _publisher.PublishToWorkspaceChannelUsingToken(token, standings);
+                    await _publisher.PublishToWorkspaceChannelUsingToken(team.AccessToken, standings);
                 }
                 catch (Exception e)
                 {

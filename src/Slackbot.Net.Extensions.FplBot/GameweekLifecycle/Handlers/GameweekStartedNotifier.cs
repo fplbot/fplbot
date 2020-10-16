@@ -1,9 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -11,41 +12,49 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     {
         private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameweek;
+        private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly IFetchFplbotSetup _teamRepo;
-        private readonly ITokenStore _tokenStore;
         private readonly ILogger<GameweekStartedNotifier> _logger;
 
         public GameweekStartedNotifier(ICaptainsByGameWeek captainsByGameweek, 
-            ITransfersByGameWeek transfersByGameweek, 
+            ITransfersByGameWeek transfersByGameweek,
+            ISlackTeamRepository slackTeamRepo,
             ISlackWorkSpacePublisher publisher, 
             IFetchFplbotSetup teamsRepo, 
-            ITokenStore tokenStore,
             ILogger<GameweekStartedNotifier> logger)
         {
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
+            _slackTeamRepo = slackTeamRepo;
             _publisher = publisher;
             _teamRepo = teamsRepo;
-            _tokenStore = tokenStore;
             _logger = logger;
         }
 
         public async Task HandleGameweekStarted(int newGameweek)
         {
             await _publisher.PublishToAllWorkspaceChannels($"Gameweek {newGameweek}!");
-            var tokens = await _tokenStore.GetTokens();
+            var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
 
-            foreach (var token in tokens)
+            foreach (var team in allTeams)
             {
-                var setup = await _teamRepo.GetSetupByToken(token);
-
                 try
                 {
-                    var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, setup.LeagueId);
-                    var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, setup.LeagueId);
-                    var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, setup.LeagueId);
-                    await _publisher.PublishToWorkspaceChannelUsingToken(token, captains, captainsChart, transfers);
+                    var messages = new List<string>();
+
+                    if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+                    {
+                        messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                        messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                    }
+
+                    if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+                    {
+                        messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)team.FplbotLeagueId));
+                    }
+
+                    await _publisher.PublishToWorkspaceChannelUsingToken(team.AccessToken, messages.ToArray());
                 }
                 catch (Exception e)
                 {

@@ -30,6 +30,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
 
     public enum EventSubscription
     {
+        All,
         Standings,
         Captains,
         Transfers,
