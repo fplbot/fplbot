@@ -40,14 +40,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 {
                     var messages = new List<string>();
 
-                    if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+                    if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
                     {
                         messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int)team.FplbotLeagueId));
                         messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId));
                         _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
                     }
 
-                    if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+                    if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
                     {
                         messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)team.FplbotLeagueId));
                         _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.TeamId);

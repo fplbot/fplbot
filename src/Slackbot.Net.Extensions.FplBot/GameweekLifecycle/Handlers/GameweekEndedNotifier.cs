@@ -35,7 +35,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             var teams = await _teamRepo.GetAllTeams();
             foreach (var team in teams)
             {
-                if (!team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
+                if (!team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
                 {
                     _logger.LogInformation("Team {team} hasn't subscribed for gw standings, so bypassing it", team.TeamId);
                     return;

@@ -110,7 +110,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 _transfersForCurrentGameweekBySlackTeam.TryGetValue(slackTeam.FplbotLeagueId, out transfersForLeague);
                 _entriesForCurrentGameweekBySlackTeam.TryGetValue(slackTeam.FplbotLeagueId, out entriesForLeague);
-                eventSubscriptions = slackTeam.FplBotEventSubscriptions;
+                eventSubscriptions = slackTeam.Subscriptions;
             }
 
             return new GameweekLeagueContext

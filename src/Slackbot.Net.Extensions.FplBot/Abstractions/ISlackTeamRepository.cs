@@ -13,28 +13,27 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Task Insert(SlackTeam slackTeam);
         Task<IEnumerable<SlackTeam>> GetAllTeams();
         Task UpdateChannel(string teamId, string newChannel);
-        Task UpdateSubscriptions(string teamId, IEnumerable<string> subscriptions);
+        Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions);
     }
     
     public class SlackTeam
     {
         public SlackTeam()
         {
-            Subscriptions = new List<string>();
+            Subscriptions = new List<EventSubscription>();
         }
         
-        /// <summary>
-        /// WIP
-        /// </summary>
-        public IEnumerable<string> Subscriptions { get; set; }
         public string TeamId { get; set; }
         public string TeamName { get; set; }
         public string Scope { get; set; }
         public string AccessToken { get; set; }
         public string FplBotSlackChannel { get; set; }
         public long FplbotLeagueId { get; set; }
-        public IEnumerable<EventSubscription> FplBotEventSubscriptions { get; set; } 
-            = Enum.GetValues(typeof(EventSubscription)).Cast<EventSubscription>(); // TODO remove this initializer once we have stuff ready in db
+        
+        /// <summary>
+        /// WIP
+        /// </summary>
+        public IEnumerable<EventSubscription> Subscriptions { get; set; }
     }
 
     public enum EventSubscription

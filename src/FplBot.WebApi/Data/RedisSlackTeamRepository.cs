@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
@@ -68,11 +69,10 @@ namespace FplBot.WebApi.Data
             };
 
             var subs = !fetchedTeamData[4].HasValue
-                ? new List<string>()
-                : fetchedTeamData[4].ToString().Split(" ").ToList();
+                ? new List<EventSubscription>()
+                : fetchedTeamData[4].ToString().Split(" ").Select(s => Enum.Parse(typeof(EventSubscription), s)).Cast<EventSubscription>().ToList();
 
             team.Subscriptions = subs;
-            
 
             return team;
         }
@@ -134,8 +134,8 @@ namespace FplBot.WebApi.Data
                     TeamId = FromKeyToTeamId(key)
                 };
                 var subs = !fetchedTeamData[4].HasValue
-                    ? new List<string>()
-                    : fetchedTeamData[4].ToString().Split(" ").ToList();
+                    ? new List<EventSubscription>()
+                    : fetchedTeamData[4].ToString().Split(" ").Select(s => Enum.Parse(typeof(EventSubscription), s)).Cast<EventSubscription>().ToList();
                 slackTeam.Subscriptions = subs;
                 teams.Add(slackTeam);
             }
@@ -143,7 +143,7 @@ namespace FplBot.WebApi.Data
             return teams;
         }
 
-        public async Task UpdateSubscriptions(string teamId, IEnumerable<string> subscriptions)
+        public async Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
         {
             await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_subscriptionsField, string.Join(" ", subscriptions)) });
         }

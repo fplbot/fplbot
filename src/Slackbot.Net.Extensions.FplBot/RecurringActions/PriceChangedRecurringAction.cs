@@ -34,7 +34,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                 var allTeams = await _slackTeamRepo.GetAllTeams();
                 foreach (var team in allTeams)
                 {
-                    if (team.FplBotEventSubscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
+                    if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
                     {
                         await _slackWorkSpacePublisher.PublishToWorkspace(team.TeamId, message);
                     }
