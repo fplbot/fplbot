@@ -126,7 +126,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {
             _currentGameweek = currentGameweek;
-            var allTeams = await _slackTeamRepo.GetAllTeamsAsync();
+            var allTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var t in allTeams)
             {
                 if (!_transfersForCurrentGameweekBySlackTeam.ContainsKey(t.FplbotLeagueId))
