@@ -11,7 +11,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     internal static class Formatter
     {
-        public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
+        public static string GetStandings(ClassicLeague league, Gameweek gameweek)
         {
             var sb = new StringBuilder();
          
@@ -19,23 +19,33 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             var numPlayers = league.Standings.Entries.Count;
 
-            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent);
-
-            if (currentGw == null)
+            if (gameweek == null)
             {
                 sb.Append("No current gameweek!");
                 return sb.ToString();
             }
 
-            sb.Append($":star: *Standings for {currentGw.Name}* :star: \n\n");
+            sb.Append($":star: *Standings for {gameweek.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. {player.GetEntryLink(currentGw.Id)} - {player.Total} {arrow} \n");
+                sb.Append($"{player.Rank}. {player.GetEntryLink(gameweek.Id)} - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
+        }
+
+        public static string GetBestPerformer(ClassicLeague league, Gameweek gameweek)
+        {
+            var best = league.Standings.Entries.OrderByDescending(e => e.EventTotal).FirstOrDefault();
+            return best == null ? null : $"{best.GetEntryLink(gameweek.Id)} did best with a whopping {best.EventTotal} points :clap:";
+        }
+
+        public static string GetWorstPerformer(ClassicLeague league, Gameweek gameweek)
+        {
+            var worst = league.Standings.Entries.OrderBy(e => e.EventTotal).FirstOrDefault();
+            return worst == null ? null : $"{worst.GetEntryLink(gameweek.Id)} only got {worst.EventTotal} points. Wow.";
         }
 
         private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers)
