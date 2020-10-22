@@ -40,7 +40,7 @@ namespace Slackbot.Net.Extensions.FplBot
             }
         }
 
-        public static EventSubscription GetSubscriptionType(this StatType statType)
+        public static EventSubscription? GetSubscriptionType(this StatType statType)
         {
             return statType switch
             {
@@ -51,7 +51,7 @@ namespace Slackbot.Net.Extensions.FplBot
                 StatType.RedCards => EventSubscription.FixtureCards,
                 StatType.PenaltiesSaved => EventSubscription.FixturePenaltyMisses,
                 StatType.PenaltiesMissed => EventSubscription.FixturePenaltyMisses,
-                _ => EventSubscription.FixtureGoals
+                _ => null
             };
         }
     }

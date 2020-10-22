@@ -53,7 +53,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         private static bool TeamSubscribesForThisEvent(GameweekLeagueContext context, StatType statType)
         {
-            return context.EventSubscriptions.ContainsSubscriptionFor(statType.GetSubscriptionType());
+            var subscriptionType = statType.GetSubscriptionType();
+            return subscriptionType.HasValue && context.EventSubscriptions.ContainsSubscriptionFor(subscriptionType.Value);
         }
 
         private static IEnumerable<object> FormatNewAssists(
