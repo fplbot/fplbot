@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
@@ -125,7 +126,8 @@ namespace FplBot.WebApi.Controllers
                     Scope = response.Scope,
                     AccessToken = response.Access_Token,
                     FplBotSlackChannel = setup.Channel,
-                    FplbotLeagueId = setup.LeagueId
+                    FplbotLeagueId = setup.LeagueId,
+                    Subscriptions = new List<EventSubscription> { EventSubscription.All }
                 });
 
                 return Redirect("https://www.fplbot.app/success");

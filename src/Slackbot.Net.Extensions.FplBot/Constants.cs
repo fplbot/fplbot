@@ -115,37 +115,5 @@
                 ":palm_tree:",
             };
         }
-        
-        public static class EventMessages
-        {
-            public static readonly string[] TransferredGoalScorerOutTaunts =
-            {
-                "Ah jeez, you transferred him out, {0} :joy:",
-                "You just had to knee jerk him out, didn't you, {0}?",
-                "Didn't you have that guy last week, {0}?",
-                "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
-            };
-
-            public static readonly string[] TransferredInRedCardPlayerTaunts =
-            {
-                "Smart move bringing him in, {0} :upside_down_face:",
-                "Didn't you transfer him in this week, {0}? :japanese_ogre:",
-                "Maybe you should have waited a couple of more weeks before knee jerking him in, {0}?"
-            };
-
-            public static readonly string[] OwningPlayerWithOwnGoalTaunts =
-            {
-                "Isn't that guy in your team, {0}?",
-                "That's -2pts, {0} :grimacing:",
-                "Are you playing anti-fpl, {0}?"
-            };
-
-            public static readonly string[] MissedPenaltyTaunts =
-            {
-                "Bet you thought you were getting some points there, {0}!",
-                "Isn't that guy in your team, {0}?",
-            };
-
-        }
     }
 }

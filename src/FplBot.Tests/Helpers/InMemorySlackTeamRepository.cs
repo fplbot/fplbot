@@ -54,7 +54,7 @@ namespace FplBot.Tests.Helpers
             return Task.CompletedTask;
         }
 
-        public Task UpdateSubscriptions(string teamId, IEnumerable<string> subscriptions)
+        public Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
         {
             return Task.CompletedTask;
         }

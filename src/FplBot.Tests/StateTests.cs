@@ -13,6 +13,7 @@ using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using Slackbot.Net.Extensions.FplBot.Taunts;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit;
@@ -91,7 +92,7 @@ namespace FplBot.Tests
             // Assert
             var formattedEvent = formattedEvents.First();
             var regex = new Regex("\\{0\\}.*");
-            CustomAssert.AnyOfContains(Constants.EventMessages.TransferredGoalScorerOutTaunts.Select(x => regex.Replace(x, string.Empty)), formattedEvent);
+            CustomAssert.AnyOfContains(new GoalTaunt().JokePool.Select(x => regex.Replace(x, string.Empty)), formattedEvent);
             Assert.Contains(expectedTauntName, formattedEvent);
         }
 

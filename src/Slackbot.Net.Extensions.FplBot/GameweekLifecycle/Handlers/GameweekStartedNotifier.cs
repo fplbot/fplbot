@@ -1,8 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -36,15 +38,29 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 try
                 {
-                    var captains = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int) team.FplbotLeagueId);
-                    var captainsChart = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId);
-                    var transfers = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int) team.FplbotLeagueId);
-                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, captains, captainsChart, transfers);
+                    var messages = new List<string>();
+
+                    if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+                    {
+                        messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                        messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                        _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
+                    }
+
+                    if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+                    {
+                        messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)team.FplbotLeagueId));
+                        _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.TeamId);
+                    }
+
+                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, messages.ToArray());
+
                 }
                 catch (Exception e)
                 {
                     _logger.LogError(e, e.Message);
                 }
+
             }
         }
     }

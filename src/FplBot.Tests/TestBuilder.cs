@@ -99,6 +99,7 @@ namespace FplBot.Tests
             {
                 TeamId = SlackTeamId,
                 FplbotLeagueId = LeagueId,
+                Subscriptions = new [] { EventSubscription.All }
             };
         }
 
