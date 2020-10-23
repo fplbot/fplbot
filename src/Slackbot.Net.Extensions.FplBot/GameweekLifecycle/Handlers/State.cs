@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
@@ -10,6 +6,10 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private ICollection<Player> _players;
         private ICollection<Fixture> _currentGameweekFixtures;
         private readonly IDictionary<string, IEnumerable<User>> _slackUsers;
-        private readonly IList<SlackTeam> _activeSlackTeams;
+        private IEnumerable<SlackTeam> _activeSlackTeams;
         private int? _currentGameweek;
 
 
@@ -72,7 +72,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _transfersForCurrentGameweekBySlackTeam.Clear();
             _entriesForCurrentGameweekBySlackTeam.Clear();
             _slackUsers.Clear();
-            _activeSlackTeams.Clear();
             await EnsureNewLeaguesAreMonitored(newGameweek);
         }
 
@@ -92,7 +91,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 _currentGameweekFixtures = latest;
             }
-            _logger.LogInformation($"Active teams count: {_activeSlackTeams.Count}");
+            _logger.LogInformation($"Active teams count: {_activeSlackTeams.Count()}");
             _logger.LogInformation($"Slack users count: {_slackUsers.Count}");
             _logger.LogInformation($"Transfers count: {_transfersForCurrentGameweekBySlackTeam.Count}");
 
@@ -128,8 +127,10 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {
             _currentGameweek = currentGameweek;
-            var allTeams = await _slackTeamRepo.GetAllTeams();
-            foreach (var t in allTeams)
+            
+            await RefreshSlackTeams();
+
+            foreach (var t in _activeSlackTeams)
             {
                 if (!_transfersForCurrentGameweekBySlackTeam.ContainsKey(t.FplbotLeagueId))
                 {
@@ -162,11 +163,18 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     _logger.LogError(e, e.Message);
                     _slackUsers.Add(t.TeamId, new List<User>());
                 }
+            }
+        }
 
-                if (!_activeSlackTeams.Any(team => team.TeamId == t.TeamId))
-                {
-                    _activeSlackTeams.Add(t);    
-                }
+        private async Task RefreshSlackTeams()
+        {
+            try
+            {
+                _activeSlackTeams = await _slackTeamRepo.GetAllTeams();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Unable to refresh slack teams");
             }
         }
     }
