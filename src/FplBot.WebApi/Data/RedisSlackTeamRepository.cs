@@ -69,7 +69,7 @@ namespace FplBot.WebApi.Data
             };
 
             var subs = !fetchedTeamData[4].HasValue
-                ? new List<EventSubscription>()
+                ? new List<EventSubscription> {EventSubscription.All}
                 : fetchedTeamData[4].ToString().Split(" ").Select(s => Enum.Parse(typeof(EventSubscription), s)).Cast<EventSubscription>().ToList();
 
             team.Subscriptions = subs;
@@ -134,7 +134,7 @@ namespace FplBot.WebApi.Data
                     TeamId = FromKeyToTeamId(key)
                 };
                 var subs = !fetchedTeamData[4].HasValue
-                    ? new List<EventSubscription>()
+                    ? new List<EventSubscription> {EventSubscription.All}
                     : fetchedTeamData[4].ToString().Split(" ").Select(s => Enum.Parse(typeof(EventSubscription), s)).Cast<EventSubscription>().ToList();
                 slackTeam.Subscriptions = subs;
                 teams.Add(slackTeam);
