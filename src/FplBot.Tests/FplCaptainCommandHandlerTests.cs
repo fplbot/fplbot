@@ -9,7 +9,7 @@ namespace FplBot.Tests
 {
     public class FplCaptainCommandHandlerTests
     {
-        private readonly IHandleEvent _client;
+        private readonly IHandleAppMentions _client;
 
         public FplCaptainCommandHandlerTests(ITestOutputHelper logger)
         {

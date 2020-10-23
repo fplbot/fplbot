@@ -5,14 +5,13 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplInjuryCommandHandler : IHandleEvent
+    internal class FplInjuryCommandHandler : IHandleAppMentions
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly IPlayerClient _playerClient;
@@ -23,9 +22,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _playerClient = playerClient;
         }
         
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var message = slackEvent as AppMentionEvent;
             var allPlayers = await _playerClient.GetAllPlayers();
 
             var injuredPlayers = FindInjuredPlayers(allPlayers);
@@ -51,7 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("injuries");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("injuries");
 
         public (string,string) GetHelpDescription() => ("injuries", "See injured players owned by more than 5 %");
     }

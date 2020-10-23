@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
@@ -12,7 +12,7 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class AppHomeOpenedEventHandler : IHandleEvent
+    public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
     {
         private readonly ISlackClientBuilder _builder;
         private readonly ISlackTeamRepository _repo;
@@ -25,9 +25,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
         
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppHomeOpenedEvent appHomeEvent)
         {
-            var appHomeEvent = slackEvent as AppHomeOpenedEvent;
             var team = await _repo.GetTeam(eventMetadata.Team_Id);
             var client = _builder.Build(team.AccessToken);
             
@@ -44,10 +43,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 return new EventHandledResponse(se.Message);
             }
         }
-
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppHomeOpenedEvent;
-
-        public (string HandlerTrigger, string Description) GetHelpDescription() => ("NA", "Not applicable, should now show in help");
 
         private static ViewPublishRequest BuildViewRequest(string userId)
         {

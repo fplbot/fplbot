@@ -1,6 +1,4 @@
 using System;
-
-using Fpl.Client.Clients;
 using Fpl.Client.Infra;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,55 +19,54 @@ namespace Slackbot.Net.Abstractions.Hosting
 {
     public static class SlackBotBuilderExtensions
     {
-        public static ISlackbotWorkerBuilder AddDistributedFplBot<T>(this ISlackbotWorkerBuilder builder, IConfiguration config) where T: class, ISlackTeamRepository
+        public static IServiceCollection AddDistributedFplBot<T>(this IServiceCollection services, IConfiguration config) where T: class, ISlackTeamRepository
         {
-            builder.Services.AddFplApiClient(config);
-            builder.Services.AddSingleton<ISlackTeamRepository, T>();
-            builder.AddCommon();
-            return builder;
+            services.AddFplApiClient(config);
+            services.AddSingleton<ISlackTeamRepository, T>();
+            services.AddSlackClientBuilder();
+            services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
+            services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
+            services.AddSingleton<IGoalsDuringGameweek, GoalsDuringGameweek>();
+            services.AddSingleton<IChipsPlayed, ChipsPlayed>();
+            services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
+            services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
+            services.AddSingleton<IGameweekHelper, GameweekHelper>();
+            services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
+            services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();
+            services.AddSingleton<IHandleGameweekEnded, GameweekEndedNotifier>();
+            services.AddSingleton<IMonitorFixtureEvents, FixtureEventsMonitor>();
+            services.AddSingleton<IState, State>();
+            services.AddSingleton<PriceChangedMonitor>();
+            services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
+            services.AddSingleton<DateTimeUtils>();
+            
+            services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
+                .AddRecurrer<NearDeadlineRecurringAction>()
+                .AddRecurrer<PriceChangedRecurringAction>().Build();
+            
+            return services;
         }
 
-        public static ISlackbotWorkerBuilder AddFplBotEventHandlers<T>(this ISlackbotWorkerBuilder builder,
+        public static IServiceCollection AddFplBotEventHandlers<T>(this IServiceCollection services,
             Action<SlackAppOptions> configuration = null) where T : class, ITokenStore
         {
-            builder.Services.Configure<SlackAppOptions>(configuration ?? (c => {}));
-            builder.Services.AddSingleton<IUninstall, AppUninstaller>();
-            builder.Services.AddSlackBotEvents<T>()
+            services.Configure<SlackAppOptions>(configuration ?? (c => {}));
+            services.AddSingleton<IUninstall, AppUninstaller>();
+            services.AddSlackBotEvents<T>()
+                
                 .AddShortcut<HelpEventHandler>()
-                .AddHandler<FplPlayerCommandHandler>()
-                .AddHandler<FplStandingsCommandHandler>()
-                .AddHandler<FplNextGameweekCommandHandler>()
-                .AddHandler<FplInjuryCommandHandler>()
-                .AddHandler<FplCaptainCommandHandler>()
-                .AddHandler<FplTransfersCommandHandler>()
-                .AddHandler<FplBotJoinedChannelHandler>()
-                .AddHandler<FplPricesHandler>()
-                .AddHandler<FplChangeLeagueIdHandler>()
-                .AddHandler<AppHomeOpenedEventHandler>();
-            return builder;
-        }
-
-        private static void AddCommon(this ISlackbotWorkerBuilder builder)
-        {
-            builder.Services.AddSlackClientBuilder();
-            builder.Services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
-            builder.Services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
-            builder.Services.AddSingleton<IGoalsDuringGameweek, GoalsDuringGameweek>();
-            builder.Services.AddSingleton<IChipsPlayed, ChipsPlayed>();
-            builder.Services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
-            builder.Services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
-            builder.Services.AddSingleton<IGameweekHelper, GameweekHelper>();
-            builder.Services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
-            builder.Services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();
-            builder.Services.AddSingleton<IHandleGameweekEnded, GameweekEndedNotifier>();
-            builder.Services.AddSingleton<IMonitorFixtureEvents, FixtureEventsMonitor>();
-            builder.Services.AddSingleton<IState, State>();
-            builder.Services.AddSingleton<PriceChangedMonitor>();
-            builder.Services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
-            builder.Services.AddSingleton<DateTimeUtils>();
-            builder.AddRecurring<GameweekLifecycleRecurringAction>()
-                .AddRecurring<NearDeadlineRecurringAction>()
-                .AddRecurring<PriceChangedRecurringAction>();
+                .AddAppMentionHandler<FplPlayerCommandHandler>()
+                .AddAppMentionHandler<FplStandingsCommandHandler>()
+                .AddAppMentionHandler<FplNextGameweekCommandHandler>()
+                .AddAppMentionHandler<FplInjuryCommandHandler>()
+                .AddAppMentionHandler<FplCaptainCommandHandler>()
+                .AddAppMentionHandler<FplTransfersCommandHandler>()
+                .AddAppMentionHandler<FplPricesHandler>()
+                .AddAppMentionHandler<FplChangeLeagueIdHandler>()
+                
+                .AddMemberJoinedChannelHandler<FplBotJoinedChannelHandler>()
+                .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>();
+            return services;
         }
     }
 

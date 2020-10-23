@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using FakeItEasy;
 using FplBot.Tests.Helpers;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
@@ -13,7 +11,7 @@ namespace FplBot.Tests
 {
     public class FplNextGwHandlerTests
     {
-        private readonly IHandleEvent _client;
+        private readonly IHandleAppMentions _client;
 
         public FplNextGwHandlerTests(ITestOutputHelper logger)
         {

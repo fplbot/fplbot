@@ -1,6 +1,4 @@
 using FplBot.Tests.Helpers;
-using Slackbot.Net.Abstractions.Handlers;
-using Slackbot.Net.Abstractions.Handlers.Models.Rtm.MessageReceived;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using System.Threading.Tasks;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -11,7 +9,7 @@ namespace FplBot.Tests
 {
     public class FplPlayerCommandHandlerTests
     {
-        private readonly IHandleEvent _client;
+        private readonly IHandleAppMentions _client;
 
         public FplPlayerCommandHandlerTests(ITestOutputHelper logger)
         {

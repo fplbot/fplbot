@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
@@ -22,7 +23,7 @@ namespace FplBot.Tests
             var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
             var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
             
-            await action.Process();
+            await action.Process(CancellationToken.None);
             
             A.CallTo(() => orchestrator.Initialize(A<int>._)).MustNotHaveHappened();
             A.CallTo(() => orchestrator.GameweekJustBegan(A<int>._)).MustNotHaveHappened();
@@ -39,7 +40,7 @@ namespace FplBot.Tests
             var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
             var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
             
-            await action.Process();
+            await action.Process(CancellationToken.None);
             
             A.CallTo(() => orchestrator.Initialize(2)).MustHaveHappenedOnceExactly();
             A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustHaveHappenedOnceExactly();
@@ -56,8 +57,8 @@ namespace FplBot.Tests
             var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
             var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
             
-            await action.Process();
-            await action.Process();
+            await action.Process(CancellationToken.None);
+            await action.Process(CancellationToken.None);
             
             A.CallTo(() => orchestrator.Initialize(2)).MustHaveHappenedOnceExactly();
             A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustHaveHappenedOnceExactly();
@@ -75,8 +76,8 @@ namespace FplBot.Tests
             var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
             var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
             
-            await action.Process();
-            await action.Process();
+            await action.Process(CancellationToken.None);
+            await action.Process(CancellationToken.None);
             
             A.CallTo(() => orchestrator.Initialize(2)).MustHaveHappenedOnceExactly();
             A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustHaveHappenedOnceExactly();
@@ -93,7 +94,7 @@ namespace FplBot.Tests
             var orchestrator = A.Fake<IGameweekMonitorOrchestrator>();
             var action = new GameweekLifecycleRecurringAction(gameweekClient, A.Fake<ILogger<GameweekLifecycleRecurringAction>>(), orchestrator);
             
-            await action.Process();
+            await action.Process(CancellationToken.None);
             
             A.CallTo(() => orchestrator.Initialize(2)).MustHaveHappenedOnceExactly();
             A.CallTo(() => orchestrator.GameweekJustBegan(2)).MustNotHaveHappened();
@@ -101,14 +102,14 @@ namespace FplBot.Tests
             A.CallTo(() => orchestrator.GameweekJustEnded(2)).MustNotHaveHappened();
 
             
-            await action.Process();
+            await action.Process(CancellationToken.None);
 
             A.CallTo(() => orchestrator.GameweekJustBegan(2)).MustNotHaveHappened();
             A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustNotHaveHappened();
             A.CallTo(() => orchestrator.GameweekJustEnded(2)).MustNotHaveHappened();
 
             
-            await action.Process();
+            await action.Process(CancellationToken.None);
             
             A.CallTo(() => orchestrator.GameweekJustBegan(2)).MustNotHaveHappened();
             A.CallTo(() => orchestrator.GameweekIsCurrentlyOngoing(2)).MustNotHaveHappened();

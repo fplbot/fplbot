@@ -2,12 +2,11 @@
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Threading.Tasks;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
+using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplTransfersCommandHandler : IHandleEvent
+    internal class FplTransfersCommandHandler : IHandleAppMentions
     {
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly IGameweekHelper _gameweekHelper;
@@ -22,9 +21,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _slackTeamRepo = slackTeamRepo;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var message = slackEvent as AppMentionEvent;
             var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(), message.Text, "transfers {gw}");
 
             
@@ -36,7 +34,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("transfers");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("transfers");
 
         public (string,string) GetHelpDescription() => ("transfers {GW/''}", "Displays each team's transfers");
     }

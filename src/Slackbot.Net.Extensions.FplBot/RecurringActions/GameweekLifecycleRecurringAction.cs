@@ -1,9 +1,10 @@
 ﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Handlers;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using CronBackgroundServices;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
@@ -27,7 +28,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         
         public string Cron => Constants.CronPatterns.EveryOtherMinute;
 
-        public async Task Process()
+        public async Task Process(CancellationToken token)
         {
             var gameweeks = await _gwClient.GetGameweeks();
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
