@@ -8,11 +8,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.2" />
     <PackageReference Include="Slackbot.Net.SlackClients.Http" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
-
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
-    <PackageReference Include="Slackbot.Net" />
-    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Logger" />
-    <PackageReference Include="Slackbot.Net.Extensions.Publishers.Slack" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />

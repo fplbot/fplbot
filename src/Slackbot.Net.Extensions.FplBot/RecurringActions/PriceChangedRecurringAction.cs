@@ -1,10 +1,11 @@
-using Slackbot.Net.Abstractions.Handlers;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CronBackgroundServices;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.PriceMonitoring;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -24,7 +25,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _slackWorkSpacePublisher = slackWorkSpacePublisher;
         }
         
-        public async Task Process()
+        public async Task Process(CancellationToken token)
         {
             var priceChanges = await _priceChangedMonitor.GetChangedPlayers();
             if (priceChanges.Players.Any())

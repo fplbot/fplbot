@@ -13,9 +13,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
+using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.Publishers.Logger;
-using Slackbot.Net.Extensions.Publishers.Slack;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
 
@@ -52,16 +51,12 @@ namespace FplBot.WebApi
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
             services.Configure<AnalyticsOptions>(Configuration);
-            services.AddSlackbotWorker<RedisSlackTeamRepository>()
-                .AddSlackPublisherBuilder()
-                .AddLoggerPublisherBuilder()
-                .AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
+            services.AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
                 .AddFplBotEventHandlers<RedisSlackTeamRepository>(c =>
                 {
                     c.Client_Id = Configuration.GetValue<string>("CLIENT_ID");
                     c.Client_Secret = Configuration.GetValue<string>("CLIENT_SECRET");
-                })
-                .BuildRecurrers();
+                });
 
             services.AddAuthentication(options =>
                 {

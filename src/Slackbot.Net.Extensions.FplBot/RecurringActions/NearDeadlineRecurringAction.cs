@@ -1,12 +1,12 @@
 using System;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using CronBackgroundServices;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _minutesBeforeDeadline = 60;
         }
 
-        public async Task Process()
+        public async Task Process(CancellationToken token)
         {
             var gweeks = await _gwClient.GetGameweeks();
             

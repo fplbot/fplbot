@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplStandingsCommandHandler : IHandleEvent
+    internal class FplStandingsCommandHandler : IHandleAppMentions
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly IGameweekClient _gameweekClient;
@@ -26,9 +26,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
         {
-            var appMentioned = slackEvent as AppMentionEvent;
             var standings = await GetStandings(eventMetadata.Team_Id);
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, standings);
             return new EventHandledResponse(standings);
@@ -50,7 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 return $"Oops, could not fetch standings.";
             }
         }
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("standings");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("standings");
         
         public (string,string) GetHelpDescription() => ("standings", "Get current league standings");
      

@@ -10,7 +10,7 @@ namespace FplBot.Tests
 {
     public class FplTransfersCommandHandlerTests
     {
-        private readonly IHandleEvent _client;
+        private readonly IHandleAppMentions _client;
 
         public FplTransfersCommandHandlerTests(ITestOutputHelper logger)
         {

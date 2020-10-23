@@ -98,8 +98,9 @@ namespace FplBot.WebApi.Tests
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards }});
             await _repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureCards });
             var updated = await _repo.GetTeam("teamId1");
-            Assert.Equal(1,updated.Subscriptions.Count());
-            Assert.DoesNotContain(EventSubscription.FixtureAssists, updated.Subscriptions);
+
+            Assert.Single(updated.Subscriptions);
+            Assert.DoesNotContain(EventSubscription.FixtureCards,updated.Subscriptions);
         }
         
         [Fact(Skip = "Exploratory test")]

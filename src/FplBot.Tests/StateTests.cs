@@ -7,8 +7,6 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Dynamic;
-using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
@@ -104,7 +102,7 @@ namespace FplBot.Tests
                 A.Fake<ISlackTeamRepository>(),
                 A.Fake<ITransfersByGameWeek>(),
                 A.Fake<ILeagueEntriesByGameweek>(),
-                A.Fake<ISlackClientService>(),
+                A.Fake<ISlackClientBuilder>(),
                 FakeLogger());
         }
         
@@ -152,7 +150,7 @@ namespace FplBot.Tests
                     TestBuilder.AwayTeamGoal(888, 2)
                 });
 
-            var slackClientService = A.Fake<ISlackClientService>();
+            var slackClientService = A.Fake<ISlackClientBuilder>();
 
             var fakeSlackClient = A.Fake<ISlackClient>();
             A.CallTo(() => fakeSlackClient.UsersList()).Returns(new UsersListResponse
@@ -167,7 +165,7 @@ namespace FplBot.Tests
                     }
                 }
             });
-            A.CallTo(() => slackClientService.CreateClient(A<string>._)).Returns(fakeSlackClient);
+            A.CallTo(() => slackClientService.Build(A<string>._)).Returns(fakeSlackClient);
             
             return new State(fixtureClient,
                 playerClient,

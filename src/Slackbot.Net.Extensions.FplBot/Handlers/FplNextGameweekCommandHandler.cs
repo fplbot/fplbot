@@ -4,35 +4,37 @@ using Slackbot.Net.Extensions.FplBot.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Slackbot.Net.Dynamic;
+using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
+using Slackbot.Net.SlackClients.Http;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplNextGameweekCommandHandler : IHandleEvent
+    public class FplNextGameweekCommandHandler : IHandleAppMentions
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
-        private readonly ISlackClientService _slackClientService;
+        private readonly ISlackClientBuilder _slackClientService;
+        private readonly ITokenStore _tokenStore;
         private readonly IGameweekClient _gameweekClient;
         private readonly IFixtureClient _fixtureClient;
         private readonly ITeamsClient _teamsclient;
 
-        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient, ISlackClientService slackClientService)
+        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient, ISlackClientBuilder slackClientService, ITokenStore tokenStore)
         {
             _workspacePublisher = workspacePublisher;
             _gameweekClient = gameweekClient;
             _fixtureClient = fixtureClient;
             _teamsclient = teamsclient;
             _slackClientService = slackClientService;
+            _tokenStore = tokenStore;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent baseEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
-            var slackEvent = (AppMentionEvent) baseEvent;
-            var slackClient = await _slackClientService.CreateClient(eventMetadata.Team_Id);
+            var token = await _tokenStore.GetTokenByTeamId(eventMetadata.Team_Id);
+            var slackClient = _slackClientService.Build(token);
             var usersTask = slackClient.UsersList();
             var gameweeksTask = _gameweekClient.GetGameweeks();
             var teamsTask = _teamsclient.GetAllTeams();
@@ -78,7 +80,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return textToSend;
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("next");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("next");
         public (string,string) GetHelpDescription() => ("next", "Displays the fixtures for next gameweek");
 
     }

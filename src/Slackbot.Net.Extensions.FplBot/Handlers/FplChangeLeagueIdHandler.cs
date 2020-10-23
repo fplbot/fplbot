@@ -1,17 +1,15 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using Fpl.Client.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Threading.Tasks;
-using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplChangeLeagueIdHandler : IHandleEvent
+    public class FplChangeLeagueIdHandler : IHandleAppMentions
     {
         private readonly ISlackTeamRepository _slackTeamRepository;
         private readonly ILeagueClient _leagueClient;
@@ -26,10 +24,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var message = slackEvent as AppMentionEvent;
-
             var newLeagueId = ParseLeagueId(message);
 
             if (string.IsNullOrEmpty(newLeagueId))
@@ -76,7 +72,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new MessageHelper().ExtractArgs(message.Text, "updateleagueid {args}");
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("updateleagueid");
+        public bool ShouldHandle(AppMentionEvent @event ) => @event.Text.Contains("updateleagueid");
 
         public (string, string) GetHelpDescription() => ("updateleagueid <new league id>", "Change which league to follow");
     }

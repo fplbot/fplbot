@@ -1,17 +1,17 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplPlayerCommandHandler : IHandleEvent
+    internal class FplPlayerCommandHandler : IHandleAppMentions
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
@@ -26,9 +26,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsClient = teamsClient;
             _workSpacePublisher = workSpacePublisher;
         }
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var message = slackEvent as AppMentionEvent;
             var allPlayersTask = _playerClient.GetAllPlayers();
             var teamsTask = _teamsClient.GetAllTeams();
 
@@ -123,7 +122,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new MessageHelper().ExtractArgs(message.Text, "player {args}");
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("player");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("player");
 
         public (string,string) GetHelpDescription() => ("player {name}", "Display info about the player");
     }

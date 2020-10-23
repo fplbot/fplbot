@@ -2,12 +2,11 @@
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Threading.Tasks;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
+using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplCaptainCommandHandler : IHandleEvent
+    internal class FplCaptainCommandHandler : IHandleAppMentions
     {
         private readonly ICaptainsByGameWeek _captainsByGameWeek;
         private readonly IGameweekHelper _gameweekHelper;
@@ -27,9 +26,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _workspacePublisher = workspacePublisher;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent incomingMessage)
         {
-            var incomingMessage = slackEvent as AppMentionEvent;
             var isChartRequest = incomingMessage.Text.Contains("chart");
 
             var gwPattern = "captains {gw}";
@@ -56,7 +54,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(outgoingMessage);
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("captains");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("captains");
 
         public (string,string) GetHelpDescription() => ("captains [chart] {GW/''}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
     }

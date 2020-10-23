@@ -1,29 +1,28 @@
-using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Slackbot.Net.Dynamic;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.SlackClients.Http;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplBotJoinedChannelHandler : IHandleEvent
+    public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
     {
         private const string FplBotProdAppId = "AREFP62B1";
         private const string FplBotTestAppId = "ATDD4SFQ9";
         
         private readonly ILogger<FplBotJoinedChannelHandler> _logger;
         private readonly ISlackWorkSpacePublisher _publisher;
-        private readonly ISlackClientService _slackClientService;
+        private readonly ISlackClientBuilder _slackClientService;
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ILeagueClient _leagueClient;
 
         public FplBotJoinedChannelHandler(ILogger<FplBotJoinedChannelHandler> logger,
             ISlackWorkSpacePublisher publisher,
-            ISlackClientService slackClientService,
+            ISlackClientBuilder slackClientService,
             ISlackTeamRepository teamRepo,
             ILeagueClient leagueClient
             )
@@ -35,12 +34,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _leagueClient = leagueClient;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, MemberJoinedChannelEvent joinedEvent)
         {
-            var joinedEvent = slackEvent as MemberJoinedChannelEvent;
             _logger.LogInformation(JsonConvert.SerializeObject(joinedEvent));
             _logger.LogInformation(JsonConvert.SerializeObject(eventMetadata));
-            var slackClient = await _slackClientService.CreateClient(eventMetadata.Team_Id);
+            var slackClient = _slackClientService.Build(eventMetadata.Token);
             var userProfile = await slackClient.UserProfile(joinedEvent.User);
             if (userProfile.Profile.Api_App_Id == FplBotProdAppId || userProfile.Profile.Api_App_Id == FplBotTestAppId)
             {
@@ -53,9 +51,5 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
             return new EventHandledResponse($"IGNORED FOR {userProfile.Profile.Real_Name}");
         }
-
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is MemberJoinedChannelEvent;
-
-        public (string HandlerTrigger, string Description) GetHelpDescription() => ("", "");
     }
 }

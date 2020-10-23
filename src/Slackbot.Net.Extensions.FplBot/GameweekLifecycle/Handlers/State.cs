@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Dynamic;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
@@ -22,7 +22,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
       
         private readonly ITransfersByGameWeek _transfersByGameWeek;
         private readonly ILeagueEntriesByGameweek _leagueEntriesByGameweek;
-        private readonly ISlackClientService _service;
+        private readonly ISlackClientBuilder _service;
         private readonly ILogger<State> _logger;
 
 
@@ -42,7 +42,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             ISlackTeamRepository slackTeamRepo,
             ITransfersByGameWeek transfersByGameWeek,
             ILeagueEntriesByGameweek leagueEntriesByGameweek,
-            ISlackClientService service,
+            ISlackClientBuilder service,
             ILogger<State> logger)
         {
             _fixtureClient = fixtureClient;
@@ -143,7 +143,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     _entriesForCurrentGameweekBySlackTeam.Add((int)t.FplbotLeagueId, entriesForLeagues);
                 }
 
-                var slackClient = await _service.CreateClient(t.TeamId);
+                var slackClient = _service.Build(t.AccessToken);
 
                 try
                 {

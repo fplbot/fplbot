@@ -11,7 +11,7 @@ namespace FplBot.Tests
     public class FplChangeLeagueIdHandlerTests
     {
         private readonly ITestOutputHelper _logger;
-        private readonly IHandleEvent _client;
+        private readonly IHandleAppMentions _client;
 
         public FplChangeLeagueIdHandlerTests(ITestOutputHelper logger)
         {

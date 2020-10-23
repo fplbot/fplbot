@@ -8,8 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
-      <PackageReference Include="Slackbot.Net" Version="$(SlackbotNetVersion)" />
-      <PackageReference Include="Slackbot.Net.Abstractions.Hosting" Version="$(SlackbotNetVersion)" />
+      <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />
       <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
       <PackageReference Include="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)" />
     </ItemGroup>

@@ -4,11 +4,11 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplPricesHandler : IHandleEvent
+    internal class FplPricesHandler : IHandleAppMentions
     {
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly IPlayerClient _playerClient;
@@ -21,9 +21,8 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsClient = teamsClient;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, SlackEvent slackEvent)
+        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var message = slackEvent as AppMentionEvent;
             var allPlayers = await _playerClient.GetAllPlayers();
             var teams = await _teamsClient.GetAllTeams();
             var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0);
@@ -32,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public bool ShouldHandle(SlackEvent slackEvent) => slackEvent is AppMentionEvent @event && @event.Text.Contains("pricechanges");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("pricechanges");
 
         public (string,string) GetHelpDescription() => ("pricechanges", "Displays players with recent price change");
     }
