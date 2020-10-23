@@ -100,7 +100,7 @@ namespace FplBot.WebApi.Tests
             var updated = await _repo.GetTeam("teamId1");
 
             Assert.Single(updated.Subscriptions);
-            Assert.DoesNotContain(EventSubscription.FixtureCards,updated.Subscriptions);
+            Assert.DoesNotContain(EventSubscription.FixtureAssists,updated.Subscriptions);
         }
         
         [Fact(Skip = "Exploratory test")]
@@ -111,6 +111,15 @@ namespace FplBot.WebApi.Tests
             var updated = await _repo.GetTeam("teamId1");
             Assert.Equal(3,updated.Subscriptions.Count());
             Assert.Contains(EventSubscription.FixturePenaltyMisses, updated.Subscriptions);
+        }
+        
+        [Fact(Skip = "Exploratory test")]
+        public async Task Temp_NoExplicitSubs_MeansAllEventSubs()
+        {
+            await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
+            var updated = await _repo.GetTeam("teamId1");
+            Assert.Single(updated.Subscriptions);
+            Assert.Contains(EventSubscription.All, updated.Subscriptions);
         }
 
         public void Dispose()
