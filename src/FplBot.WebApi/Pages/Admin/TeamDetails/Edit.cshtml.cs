@@ -42,7 +42,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             }
         }
         
-        public async Task<IActionResult> OnPost(string teamId, int leagueId, string channel)
+        public async Task<IActionResult> OnPost(string teamId, int leagueId, string channel, EventSubscription[] subscriptions)
         {
             try
             {
@@ -66,6 +66,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 
             await _teamRepo.UpdateLeagueId(teamId, leagueId);
             await _teamRepo.UpdateChannel(teamId, channel);
+            await _teamRepo.UpdateSubscriptions(teamId, subscriptions);
             
             TempData["msg"]+= "Updated!";
             return RedirectToPage("Edit");

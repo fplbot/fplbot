@@ -1,5 +1,6 @@
 @page "/admin/teamdetails/{teamId}/edit"
 @using Fpl.Client.Models
+@using Slackbot.Net.Extensions.FplBot.Abstractions
 @model FplBot.WebApi.Pages.Admin.TeamDetails.Edit
 
 @if (TempData.ContainsKey("msg"))
@@ -43,7 +44,19 @@
             <tr>
                 <td class="font-weight-bolder">Subscriptions</td>
                 <td>
-                    @string.Join(",",Model.Team.Subscriptions)
+                    <ul class="list-group">
+                        @foreach (var sub in Enum.GetNames(typeof(EventSubscription)))
+                        {
+                            var isOn = Model.Team.Subscriptions.Any(s => s.ToString() == sub);
+                            var active = isOn ? "active" : "";
+                            <li class="list-group-item @active">
+                                  <div class="form-check">
+                                      <input type="checkbox" class="form-check-input" name="subscriptions" id="subscriptions-@sub" checked="@isOn" value="@sub">
+                                      <label class="form-check-label" for="subscriptions-@sub">@sub</label>
+                                  </div>
+                            </li>
+                        }
+                    </ul>
                 </td>
             </tr>            
             <tr>
