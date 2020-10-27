@@ -90,7 +90,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             sb.Append($"{string.Join(", ", Enum.GetNames(typeof(EventSubscription)))})");
 
             return (
-            "subscribe {comma separated list of events}",
+            "subscribe/unsubscribe {comma separated list of events}",
             sb.ToString());
         }
     }
