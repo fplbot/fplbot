@@ -65,7 +65,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 {
                     var isValid = Enum.TryParse(e.Trim(), out EventSubscription eventSubscription);
                     return isValid ? eventSubscription : (EventSubscription?)null;
-                }).Where(e => e.HasValue && e != null);
+                }).Where(e => e.HasValue && e != null).ToList();
         }
 
         private string FormatSubscriptionMessage(IEnumerable<EventSubscription> eventSubscriptions)
@@ -85,12 +85,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var sb = new StringBuilder();
 
-            sb.Append("Update what notifications fplbot should post\n");
+            sb.Append("Update what notifications fplbot should post. (");
 
-            sb.Append($"{string.Join(",", Enum.GetNames(typeof(EventSubscription)))}");
+            sb.Append($"{string.Join(", ", Enum.GetNames(typeof(EventSubscription)))})");
 
             return (
-            "Subscribe {comma separated list of events}",
+            "subscribe {comma separated list of events}",
             sb.ToString());
         }
     }

@@ -43,7 +43,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
                 sb.Append("This channel will receive notifications for: \n");
 
-                sb.Append($"{string.Join(",", team.Subscriptions)}");
+                sb.Append($"{string.Join(", ", team.Subscriptions)}");
 
                 return sb.ToString();
             }
