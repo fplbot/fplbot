@@ -70,7 +70,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             sb.Append("Updated subscriptions :sparkles:\n");
 
-            sb.Append($"You will now receive updates for: {string.Join(",", eventSubscriptions)}");
+            sb.Append($"You will now receive updates for: {string.Join(", ", eventSubscriptions)}");
 
             return sb.ToString();
         }
