@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -39,13 +38,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             {
                 var team = await _teamRepo.GetTeam(teamId);
                 var currentSubscriptions = team.Subscriptions;
+                var inputSubscriptions = ParseSubscriptionsFromInput(appMentioned);
 
+                IEnumerable<EventSubscription> newSubscriptions = appMentioned.Text.Contains("unsubscribe") ?
+                    UnsubscribeToEvents(inputSubscriptions, currentSubscriptions) :
+                    SubscribeToEvents(inputSubscriptions, currentSubscriptions);
 
-                IEnumerable<EventSubscription> newSubscriptions = GetNewSubscriptionList(
-                    appMentioned.Text.Contains("unsubscribe"),
-                    ParseSubscriptionsFromInput(appMentioned),
-                    team.Subscriptions
-                );
 
                 await _teamRepo.UpdateSubscriptions(teamId, newSubscriptions);
 
@@ -53,23 +51,35 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message,e);
+                _logger.LogError(e.Message, e);
                 return $"Oops, could not update subscriptions.";
             }
         }
 
-        private IEnumerable<EventSubscription> GetNewSubscriptionList(
-            bool isUnsubscribe,
+        private IEnumerable<EventSubscription> UnsubscribeToEvents(
             IEnumerable<EventSubscription> inputSubscriptions,
             IEnumerable<EventSubscription> currentSubscriptions
         )
         {
-            var includesAll = inputSubscriptions.Contains(EventSubscription.All);
+            if (inputSubscriptions.Contains(EventSubscription.All)) { return new List<EventSubscription>(); }
 
-            if (includesAll && isUnsubscribe) { return new List<EventSubscription>(); }
-            if (includesAll && !isUnsubscribe) { return new List<EventSubscription>() { EventSubscription.All }; }
+            if (currentSubscriptions.Contains(EventSubscription.All))
+            {
+                return EventSubscriptionExtensions.GetAllSubscriptionTypes().Except(inputSubscriptions.Append(EventSubscription.All));
+            }
 
-            if (isUnsubscribe) {return currentSubscriptions.Except(inputSubscriptions.Append(EventSubscription.All));}
+            return currentSubscriptions.Except(inputSubscriptions);
+        }
+
+        private IEnumerable<EventSubscription> SubscribeToEvents(
+            IEnumerable<EventSubscription> inputSubscriptions,
+            IEnumerable<EventSubscription> currentSubscriptions
+        )
+        {
+            if (inputSubscriptions.Contains(EventSubscription.All))
+            {
+                return new List<EventSubscription>() { EventSubscription.All };
+            }
 
             return currentSubscriptions.Union(inputSubscriptions);
         }

@@ -1,4 +1,5 @@
 ﻿using Slackbot.Net.Extensions.FplBot.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +12,11 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
             var events = eventSubscriptions as EventSubscription[] ?? eventSubscriptions.ToArray();
 
             return events.Contains(EventSubscription.All) || events.Contains(eventSubscription);
+        }
+
+        public static IEnumerable<EventSubscription> GetAllSubscriptionTypes()
+        {
+            return Enum.GetValues(typeof(EventSubscription)).Cast<EventSubscription>();
         }
     }
 }
