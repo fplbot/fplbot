@@ -23,7 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(), message.Text, "transfers {gw}");
+            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, "transfers {gw}");
 
             
             var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
@@ -36,6 +36,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("transfers");
 
-        public (string,string) GetHelpDescription() => ("transfers {GW/''}", "Displays each team's transfers");
+        public (string,string) GetHelpDescription() => ("transfers {GW-number, or empty for current}", "Displays each team's transfers");
     }
 }

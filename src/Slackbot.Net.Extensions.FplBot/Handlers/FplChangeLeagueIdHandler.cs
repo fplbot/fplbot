@@ -69,11 +69,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private static string ParseLeagueId(AppMentionEvent message)
         {
-            return new MessageHelper().ExtractArgs(message.Text, "updateleagueid {args}");
+            return MessageHelper.ExtractArgs(message.Text, "updateleagueid {args}");
         }
 
         public bool ShouldHandle(AppMentionEvent @event ) => @event.Text.Contains("updateleagueid");
 
-        public (string, string) GetHelpDescription() => ("updateleagueid <new league id>", "Change which league to follow");
+        public (string, string) GetHelpDescription() => ("updateleagueid {new league id}", "Change which league to follow");
     }
 }
