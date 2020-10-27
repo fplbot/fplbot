@@ -12,11 +12,24 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
             return string.Join("", text.Replace("-", " ").Split(" ").Select(s => s.First()));
         }
 
-        public static IEnumerable<EventSubscription> ParseSubscriptionString(this string subscriptionString, string delimiter)
+        public static IEnumerable<EventSubscription> ParseSubscriptionString(this string subscriptionString, string delimiter, out string[] unableToParse)
         {
-            return string.IsNullOrWhiteSpace(subscriptionString) ? 
+            var erroneous = new List<string>();
+
+            var parsed = string.IsNullOrWhiteSpace(subscriptionString) ? 
                 Enumerable.Empty<EventSubscription>() : 
-                subscriptionString.Split(delimiter).Select(s => Enum.Parse(typeof(EventSubscription), s.Trim())).Cast<EventSubscription>();
+                subscriptionString.Split(delimiter).Select(s =>
+                {
+                    if (!Enum.TryParse(typeof(EventSubscription), s.Trim(), true, out var result))
+                    {
+                        erroneous.Add(s);
+                    }
+                    return result;
+                }).Cast<EventSubscription>();
+
+            unableToParse = erroneous.ToArray();
+
+            return parsed;
         }
     }
 }

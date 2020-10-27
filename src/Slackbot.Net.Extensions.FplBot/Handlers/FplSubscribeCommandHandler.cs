@@ -38,16 +38,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             {
                 var team = await _teamRepo.GetTeam(teamId);
                 var currentSubscriptions = team.Subscriptions;
-                var inputSubscriptions = ParseSubscriptionsFromInput(appMentioned);
+                var inputSubscriptions = ParseSubscriptionsFromInput(appMentioned, out var unableToParse);
 
-                IEnumerable<EventSubscription> newSubscriptions = appMentioned.Text.Contains("unsubscribe") ?
+                var newSubscriptions = appMentioned.Text.Contains("unsubscribe") ?
                     UnsubscribeToEvents(inputSubscriptions, currentSubscriptions) :
                     SubscribeToEvents(inputSubscriptions, currentSubscriptions);
 
-
                 await _teamRepo.UpdateSubscriptions(teamId, newSubscriptions);
 
-                return FormatSubscriptionMessage(newSubscriptions);
+                return FormatSubscriptionMessage(newSubscriptions, unableToParse);
             }
             catch (Exception e)
             {
@@ -65,7 +64,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             if (currentSubscriptions.Contains(EventSubscription.All))
             {
-                return EventSubscriptionExtensions.GetAllSubscriptionTypes().Except(inputSubscriptions.Append(EventSubscription.All));
+                return EventSubscriptionHelper.GetAllSubscriptionTypes().Except(inputSubscriptions.Append(EventSubscription.All));
             }
 
             return currentSubscriptions.Except(inputSubscriptions);
@@ -84,19 +83,25 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return currentSubscriptions.Union(inputSubscriptions);
         }
 
-        private IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
+        private static IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned, out string[] unableToParse)
         {
             var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, "subscribe {args}");
-            return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
+            return stringListOfEvents.ParseSubscriptionString(delimiter: ",", out unableToParse);
         }
 
-        private string FormatSubscriptionMessage(IEnumerable<EventSubscription> eventSubscriptions)
+        private string FormatSubscriptionMessage(IEnumerable<EventSubscription> eventSubscriptions, string[] unableToParse)
         {
             var sb = new StringBuilder();
 
             sb.Append("Updated subscriptions :sparkles:\n");
+            sb.Append($"You will now receive updates for:\n{Formatter.BulletPoints(eventSubscriptions)}");
 
-            sb.Append($"You will now receive updates for: {string.Join(", ", eventSubscriptions)}");
+            if (unableToParse.Any())
+            {
+                sb.Append("\n");
+                sb.Append($"Btw, I was unable to understand these: {string.Join(", ", unableToParse)}. " +
+                          $"You can choose from: {string.Join(", ", EventSubscriptionHelper.GetAllSubscriptionTypes())}");
+            }
 
             return sb.ToString();
         }

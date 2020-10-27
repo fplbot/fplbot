@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FplBot.WebApi.Data;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using StackExchange.Redis;
@@ -11,6 +12,30 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
+    public class SimpleLogger : ILogger<RedisSlackTeamRepository>
+    {
+        private readonly ITestOutputHelper _helper;
+
+        public SimpleLogger(ITestOutputHelper helper)
+        {
+            _helper = helper;
+        }
+
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
+            _helper.WriteLine(formatter(state, exception));
+        }
+    }
     
     public class RedisIntegrationTests : IDisposable
     {
@@ -36,7 +61,7 @@ namespace FplBot.WebApi.Tests
             
             var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
-            _repo = new RedisSlackTeamRepository(multiplexer, opts);
+            _repo = new RedisSlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
         }
 
         [Fact(Skip = "Exploratory test")]
