@@ -40,11 +40,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 var team = await _teamRepo.GetTeam(teamId);
                 var currentSubscriptions = team.Subscriptions;
 
-                var inputSubscriptions = ParseSubscriptionsFromInput(appMentioned);
 
-                IEnumerable<EventSubscription> newSubscriptions;
-                if (appMentioned.Text.Contains("unsubscribe")) { newSubscriptions = currentSubscriptions.Except(inputSubscriptions); }
-                else { newSubscriptions = currentSubscriptions.Union(inputSubscriptions); }
+                IEnumerable<EventSubscription> newSubscriptions = GetNewSubscriptionList(
+                    appMentioned.Text.Contains("unsubscribe"),
+                    ParseSubscriptionsFromInput(appMentioned),
+                    team.Subscriptions
+                );
 
                 await _teamRepo.UpdateSubscriptions(teamId, newSubscriptions);
 
@@ -57,9 +58,24 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        private static IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
+        private IEnumerable<EventSubscription> GetNewSubscriptionList(
+            bool isUnsubscribe,
+            IEnumerable<EventSubscription> inputSubscriptions,
+            IEnumerable<EventSubscription> currentSubscriptions
+        )
         {
+            var includesAll = inputSubscriptions.Contains(EventSubscription.All);
 
+            if (includesAll && isUnsubscribe) { return new List<EventSubscription>(); }
+            if (includesAll && !isUnsubscribe) { return new List<EventSubscription>() { EventSubscription.All }; }
+
+            if (isUnsubscribe) {return currentSubscriptions.Except(inputSubscriptions);}
+
+            return currentSubscriptions.Union(inputSubscriptions);
+        }
+
+        private IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
+        {
             var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, "subscribe {args}");
             return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
         }
