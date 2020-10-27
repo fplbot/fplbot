@@ -69,7 +69,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             if (includesAll && isUnsubscribe) { return new List<EventSubscription>(); }
             if (includesAll && !isUnsubscribe) { return new List<EventSubscription>() { EventSubscription.All }; }
 
-            if (isUnsubscribe) {return currentSubscriptions.Except(inputSubscriptions);}
+            if (isUnsubscribe) {return currentSubscriptions.Except(inputSubscriptions.Append(EventSubscription.All));}
 
             return currentSubscriptions.Union(inputSubscriptions);
         }
