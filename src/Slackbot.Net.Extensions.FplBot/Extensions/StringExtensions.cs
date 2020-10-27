@@ -25,7 +25,7 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
                         erroneous.Add(s);
                     }
                     return result;
-                }).Cast<EventSubscription>();
+                }).Where(x => x != null).Cast<EventSubscription>();
 
             unableToParse = erroneous.ToArray();
 
