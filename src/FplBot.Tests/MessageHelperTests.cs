@@ -32,7 +32,7 @@ namespace FplBot.Tests
         [Fact]
         public void ExtractArgsShouldExtractCorrectListOfUnsubscriptionEvents()
         {
-            var result = MessageHelper.ExtractArgs("unsubscribe standings, transfers, captains", "hei {args}");
+            var result = MessageHelper.ExtractArgs("unsubscribe standings, transfers, captains", "subscribe {args}");
             Assert.Equal("standings, transfers, captains", result);
         }
     }
