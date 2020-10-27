@@ -1,12 +1,11 @@
-using System;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace FplBot.WebApi.Data
 {
@@ -70,7 +69,7 @@ namespace FplBot.WebApi.Data
 
             var subs = !fetchedTeamData[4].HasValue
                 ? new List<EventSubscription> {EventSubscription.All}
-                : fetchedTeamData[4].ToString().Split(" ").Select(s => Enum.Parse(typeof(EventSubscription), s)).Cast<EventSubscription>().ToList();
+                : fetchedTeamData[4].ToString().ParseSubscriptionString(delimiter: " ").ToList();
 
             team.Subscriptions = subs;
 
@@ -135,7 +134,7 @@ namespace FplBot.WebApi.Data
                 };
                 var subs = !fetchedTeamData[4].HasValue
                     ? new List<EventSubscription> {EventSubscription.All}
-                    : fetchedTeamData[4].ToString().Split(" ").Select(s => Enum.Parse(typeof(EventSubscription), s)).Cast<EventSubscription>().ToList();
+                    : fetchedTeamData[4].ToString().ParseSubscriptionString(delimiter: " ").ToList();
                 slackTeam.Subscriptions = subs;
                 teams.Add(slackTeam);
             }

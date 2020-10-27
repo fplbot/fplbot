@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
@@ -56,16 +57,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        private IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
+        private static IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
         {
 
             var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, "subscribe {args}");
-            return (IEnumerable<EventSubscription>)stringListOfEvents.Split(",")
-                .Select(e =>
-                {
-                    var isValid = Enum.TryParse(e.Trim(), out EventSubscription eventSubscription);
-                    return isValid ? eventSubscription : (EventSubscription?)null;
-                }).Where(e => e.HasValue && e != null).ToList();
+            return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
         }
 
         private string FormatSubscriptionMessage(IEnumerable<EventSubscription> eventSubscriptions)
