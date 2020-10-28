@@ -88,15 +88,12 @@ namespace FplBot.WebApi.Data
 
         private async Task<List<EventSubscription>> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
         {
-            var unableToParse = Array.Empty<string>();
-
-            var subs = new List<EventSubscription>();
 
             if (!fetchedTeamData.HasValue)
             {
                 if (fetchedTeamData == "") // team has explicitly set no subs
                 {
-                    return subs;
+                    return new List<EventSubscription>();
                 }
                 // save 'all' to team (migrate)
                 var allEvents = new List<EventSubscription> {EventSubscription.All};
@@ -104,14 +101,14 @@ namespace FplBot.WebApi.Data
                 return allEvents;
             }
                 
-            subs = fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ", out unableToParse).ToList();
+            (var subs, var unableToParse) = fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ");
 
             if (unableToParse.Any())
             {
                 _logger.LogError("Unable to parse events for team {team}: {unableToParse}", teamId, string.Join(", ", unableToParse));
             }
 
-            return subs;
+            return subs.ToList();
         }
 
         public async Task UpdateLeagueId(string teamId, long newLeagueId)
