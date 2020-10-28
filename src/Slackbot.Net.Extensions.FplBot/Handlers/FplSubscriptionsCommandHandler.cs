@@ -39,6 +39,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 var team = await _teamRepo.GetTeam(teamId);
                 var currentSubscriptions = team.Subscriptions;
 
+                if (currentSubscriptions.Count() < 1)
+                {
+                    return "You are not subscribing to any fplbot updates :disappointed:";
+                }
+
                 var sb = new StringBuilder();
 
                 sb.Append("This channel will receive notifications for: \n");

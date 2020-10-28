@@ -109,7 +109,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var sb = new StringBuilder();
 
             sb.Append("Updated subscriptions :sparkles:\n");
-            sb.Append($"You will now receive updates for:\n{Formatter.BulletPoints(eventSubscriptions)}");
+
+            if (eventSubscriptions.Count() < 1) sb.Append($"You are not subscribing to any fplbot updates.");
+            else sb.Append($"You will now receive updates for:\n{Formatter.BulletPoints(eventSubscriptions)}");
 
             if (unableToParse.Any())
             {
