@@ -20,9 +20,10 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
                 Enumerable.Empty<EventSubscription>() : 
                 subscriptionString.Split(delimiter).Select(s =>
                 {
-                    if (!Enum.TryParse(typeof(EventSubscription), s.Trim(), true, out var result))
+                    var trimmed = s.Trim();
+                    if (!Enum.TryParse(typeof(EventSubscription), trimmed, true, out var result))
                     {
-                        erroneous.Add(s);
+                        erroneous.Add(trimmed);
                     }
                     return result;
                 }).Where(x => x != null).Cast<EventSubscription>();
