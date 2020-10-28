@@ -14,23 +14,29 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
 
         public static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionString(this string subscriptionString, string delimiter)
         {
+            var events = new List<EventSubscription>();
             var erroneous = new List<string>();
 
-            var parsed = string.IsNullOrWhiteSpace(subscriptionString) ? 
-                Enumerable.Empty<EventSubscription>() : 
-                subscriptionString.Split(delimiter).Select(s =>
+            if (string.IsNullOrWhiteSpace(subscriptionString))
+            {
+                return (Enumerable.Empty<EventSubscription>(), Array.Empty<string>());
+            }
+
+            var split = subscriptionString.Split(delimiter);
+            foreach (var s in split)
+            {
+                var trimmed = s.Trim();
+                if (Enum.TryParse(typeof(EventSubscription), trimmed, true, out var result))
                 {
-                    var trimmed = s.Trim();
-                    if (!Enum.TryParse(typeof(EventSubscription), trimmed, true, out var result))
-                    {
-                        erroneous.Add(trimmed);
-                    }
-                    return result;
-                }).Where(x => x != null).Cast<EventSubscription>();
-
-            var failed = erroneous.ToArray();
-
-            return (events: parsed, unableToParse: failed);
+                    events.Add((EventSubscription)result);
+                }
+                else
+                {
+                    erroneous.Add(trimmed);
+                }
+            }
+       
+            return (events, erroneous.ToArray());
         }
     }
 }
