@@ -36,15 +36,22 @@ namespace FplBot.WebApi.Data
 
         public async Task Insert(SlackTeam slackTeam)
         {
-            await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), new []
+            var hashEntries = new List<HashEntry>
             {
                 new HashEntry(_accessTokenField, slackTeam.AccessToken),
                 new HashEntry(_channelField, slackTeam.FplBotSlackChannel), 
                 new HashEntry(_leagueField, slackTeam.FplbotLeagueId),
                 new HashEntry(_teamNameField, slackTeam.TeamName),
-                new HashEntry(_teamIdField, slackTeam.TeamId),
-                new HashEntry(_subscriptionsField, string.Join(" ", slackTeam.Subscriptions)) 
-            });
+                new HashEntry(_teamIdField, slackTeam.TeamId)
+            };
+
+            if (slackTeam.Subscriptions != null)
+            {
+                var hashEntry = new HashEntry(_subscriptionsField, string.Join(" ", slackTeam.Subscriptions));
+                hashEntries.Add(hashEntry);
+            }
+            
+            await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), hashEntries.ToArray());
         }
 
         public async Task Delete(string token)
@@ -72,20 +79,28 @@ namespace FplBot.WebApi.Data
                 TeamId = teamId
             };
 
-            var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
+            var subs = await GetSubscriptions(teamId, fetchedTeamData[4]);
 
             team.Subscriptions = subs;
 
             return team;
         }
 
-        private List<EventSubscription> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
+        private async Task<List<EventSubscription>> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
         {
             var unableToParse = Array.Empty<string>();
 
-            var subs = !fetchedTeamData.HasValue
-                ? new List<EventSubscription> {EventSubscription.All}
-                : fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ", out unableToParse).ToList();
+            var subs = new List<EventSubscription>();
+            
+            // migrate
+            if (!fetchedTeamData.HasValue && !string.IsNullOrEmpty(fetchedTeamData) )
+            {
+                var allEvents = new List<EventSubscription> {EventSubscription.All};
+                await UpdateSubscriptions(teamId, allEvents);
+                return allEvents;
+            }
+                
+            subs = fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ", out unableToParse).ToList();
 
             if (unableToParse.Any())
             {
@@ -155,7 +170,7 @@ namespace FplBot.WebApi.Data
                     TeamId = teamId
                 };
 
-                var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
+                var subs = await GetSubscriptions(teamId, fetchedTeamData[4]);
 
                 slackTeam.Subscriptions = subs;
                 teams.Add(slackTeam);
