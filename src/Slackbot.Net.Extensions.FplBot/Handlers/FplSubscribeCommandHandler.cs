@@ -47,7 +47,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
                 if (inputSubscriptions.Count() < 1)
                 {
-                    return $"I couldn't understand what you were saying :confused: \n {FormatAllSubsAvailable()}";
+                    return $"I was not able to understand: *{string.Join(", ", unableToParse)}.* :confused: \n {FormatAllSubsAvailable()}";
                 }
 
                 var newSubscriptions = appMentioned.Text.Contains("unsubscribe") ?
@@ -114,7 +114,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             if (unableToParse.Any())
             {
                 sb.Append("\n");
-                sb.Append($"Btw, I was unable to understand these: {string.Join(", ", unableToParse)}. " + FormatAllSubsAvailable());
+                sb.Append($"Btw, I was not able to understand these: *{string.Join(", ", unableToParse)}.* \n" + FormatAllSubsAvailable());
             }
 
             return sb.ToString();
