@@ -15,11 +15,18 @@ namespace FplBot.Tests
         public void ParseSubscriptionString_ShouldWork(string input, EventSubscription[] expected, string[] unableToParse) 
         {
             // Act
-            (var result, var errors) = input.ParseSubscriptionString(",");
+            var (result, errors) = input.ParseSubscriptionString(",");
 
             // Assert
-            Assert.True(result.All(expected.Contains));
-            Assert.True(unableToParse == null && !errors.Any() || errors.All(unableToParse.Contains));
+            Assert.True(expected.All(result.Contains));
+            if (unableToParse == null)
+            {
+                Assert.True(!errors.Any());
+            }
+            else
+            {
+                Assert.True(unableToParse.All(errors.Contains));
+            }
         }
     }
 }
