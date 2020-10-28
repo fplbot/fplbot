@@ -38,7 +38,17 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             {
                 var team = await _teamRepo.GetTeam(teamId);
                 var currentSubscriptions = team.Subscriptions;
-                var inputSubscriptions = ParseSubscriptionsFromInput(appMentioned, out var unableToParse);
+                (var inputSubscriptions, var unableToParse) = ParseSubscriptionsFromInput(appMentioned);
+
+                if (inputSubscriptions.Count() < 1 && unableToParse.Count() < 1)
+                {
+                    return $"You need to pass some arguments\n {FormatAllSubsAvailable()}";
+                }
+
+                if (inputSubscriptions.Count() < 1)
+                {
+                    return $"I couldn't understand what you were saying :confused: \n {FormatAllSubsAvailable()}";
+                }
 
                 var newSubscriptions = appMentioned.Text.Contains("unsubscribe") ?
                     UnsubscribeToEvents(inputSubscriptions, currentSubscriptions) :
@@ -75,6 +85,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             IEnumerable<EventSubscription> currentSubscriptions
         )
         {
+            if (currentSubscriptions.Contains(EventSubscription.All))
+            {
+                return inputSubscriptions;
+            }
+
             if (inputSubscriptions.Contains(EventSubscription.All))
             {
                 return new List<EventSubscription>() { EventSubscription.All };
@@ -83,10 +98,10 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return currentSubscriptions.Union(inputSubscriptions);
         }
 
-        private static IEnumerable<EventSubscription> ParseSubscriptionsFromInput(AppMentionEvent appMentioned, out string[] unableToParse)
+        private static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
         {
             var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, "subscribe {args}");
-            return stringListOfEvents.ParseSubscriptionString(delimiter: ",", out unableToParse);
+            return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
         }
 
         private string FormatSubscriptionMessage(IEnumerable<EventSubscription> eventSubscriptions, string[] unableToParse)
@@ -99,11 +114,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             if (unableToParse.Any())
             {
                 sb.Append("\n");
-                sb.Append($"Btw, I was unable to understand these: {string.Join(", ", unableToParse)}. " +
-                          $"You can choose from: {string.Join(", ", EventSubscriptionHelper.GetAllSubscriptionTypes())}");
+                sb.Append($"Btw, I was unable to understand these: {string.Join(", ", unableToParse)}. " + FormatAllSubsAvailable());
             }
 
             return sb.ToString();
+        }
+
+        private string FormatAllSubsAvailable()
+        {
+            return $"You can choose from: {string.Join(", ", EventSubscriptionHelper.GetAllSubscriptionTypes())}";
         }
 
         public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("subscribe");
@@ -114,7 +133,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             sb.Append("Update what notifications fplbot should post. (");
 
-            sb.Append($"{string.Join(", ", Enum.GetNames(typeof(EventSubscription)))})");
+            sb.Append($"{string.Join(", ", EventSubscriptionHelper.GetAllSubscriptionTypes())})");
 
             return (
             "subscribe/unsubscribe {comma separated list of events}",

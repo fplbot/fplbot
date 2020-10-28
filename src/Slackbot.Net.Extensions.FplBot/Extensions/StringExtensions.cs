@@ -12,7 +12,7 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
             return string.Join("", text.Replace("-", " ").Split(" ").Select(s => s.First()));
         }
 
-        public static IEnumerable<EventSubscription> ParseSubscriptionString(this string subscriptionString, string delimiter, out string[] unableToParse)
+        public static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionString(this string subscriptionString, string delimiter)
         {
             var erroneous = new List<string>();
 
@@ -27,9 +27,9 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
                     return result;
                 }).Where(x => x != null).Cast<EventSubscription>();
 
-            unableToParse = erroneous.ToArray();
+            var failed = erroneous.ToArray();
 
-            return parsed;
+            return (events: parsed, unableToParse: failed);
         }
     }
 }
