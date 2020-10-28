@@ -91,10 +91,14 @@ namespace FplBot.WebApi.Data
             var unableToParse = Array.Empty<string>();
 
             var subs = new List<EventSubscription>();
-            
-            // migrate
-            if (!fetchedTeamData.HasValue && !string.IsNullOrEmpty(fetchedTeamData) )
+
+            if (!fetchedTeamData.HasValue)
             {
+                if (fetchedTeamData == "") // team has explicitly set no subs
+                {
+                    return subs;
+                }
+                // save 'all' to team (migrate)
                 var allEvents = new List<EventSubscription> {EventSubscription.All};
                 await UpdateSubscriptions(teamId, allEvents);
                 return allEvents;

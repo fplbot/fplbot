@@ -64,7 +64,7 @@ namespace FplBot.WebApi.Tests
             _repo = new RedisSlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
         }
 
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task TestInsertAndFetchOne()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription>{ EventSubscription.FixtureGoals, EventSubscription.Captains}});
@@ -83,7 +83,7 @@ namespace FplBot.WebApi.Tests
             Assert.Equal(EventSubscription.Captains, team.Subscriptions.Last());
         }
 
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task TestInsertAndFetchAll()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName1", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { } });
@@ -94,7 +94,7 @@ namespace FplBot.WebApi.Tests
             Assert.Equal(2, tokensFromRedis.Count());
         }
 
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task TestInsertAndDelete()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
@@ -107,7 +107,7 @@ namespace FplBot.WebApi.Tests
             Assert.Single(tokensAfterDelete);
         }
         
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task UpdatesLeagueId()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { }});
@@ -117,7 +117,7 @@ namespace FplBot.WebApi.Tests
             Assert.Equal(456,updated.FplbotLeagueId);
         }
         
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task Unsubscribe()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards }});
@@ -128,7 +128,7 @@ namespace FplBot.WebApi.Tests
             Assert.DoesNotContain(EventSubscription.FixtureAssists,updated.Subscriptions);
         }
         
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task Subscribe()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards } });
@@ -138,8 +138,17 @@ namespace FplBot.WebApi.Tests
             Assert.Contains(EventSubscription.FixturePenaltyMisses, updated.Subscriptions);
         }
         
-        [Fact(Skip = "Exploratory test")]
-        public async Task MigrationScenario_NullSubs()
+        // [Fact]
+        [Fact]
+        public async Task MigrationScenario_GetTeamWithNoSubs_Migrates()
+        {
+            await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null});
+            var team = await _repo.GetTeam("teamId1"); // side-effect: migration inserting EventSubscriptions.All
+            Assert.Contains(EventSubscription.All, team.Subscriptions);
+        }
+        
+        [Fact]
+        public async Task MigrationScenario_Update_NullSubs()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null});
             await _repo.GetTeam("teamId1"); // side-effect: migration inserting EventSubscriptions.All
@@ -148,8 +157,8 @@ namespace FplBot.WebApi.Tests
             Assert.Empty(updated.Subscriptions);
         }
         
-        [Fact(Skip = "Exploratory test")]
-        public async Task MigrationScenario_EmptySubs()
+        [Fact]
+        public async Task NoSubs_ShouldNotMigrate()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription>()});
             await _repo.GetTeam("teamId1"); // side-effect: migration inserting EventSubscriptions.All
@@ -158,7 +167,7 @@ namespace FplBot.WebApi.Tests
             Assert.Empty(updated.Subscriptions);
         }
         
-        [Fact(Skip = "Exploratory test")]
+        [Fact]
         public async Task Temp_NoSubs_MeansNoSubs()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
