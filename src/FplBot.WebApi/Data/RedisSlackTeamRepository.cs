@@ -91,14 +91,7 @@ namespace FplBot.WebApi.Data
 
             if (!fetchedTeamData.HasValue)
             {
-                if (fetchedTeamData == "") // team has explicitly set no subs
-                {
-                    return new List<EventSubscription>();
-                }
-                // save 'all' to team (migrate)
-                var allEvents = new List<EventSubscription> {EventSubscription.All};
-                await UpdateSubscriptions(teamId, allEvents);
-                return allEvents;
+                return new List<EventSubscription>();
             }
                 
             (var subs, var unableToParse) = fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ");
