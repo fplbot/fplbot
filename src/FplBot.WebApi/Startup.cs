@@ -3,7 +3,6 @@ using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Routing;
@@ -113,14 +112,9 @@ namespace FplBot.WebApi
             });
             services.AddCors(options =>
             {
-                options.AddDefaultPolicy(
-                    builder =>
-                    {
-                        builder
-                            .WithOrigins("http://localhost:3000","https://fplbot-frontend.herokuapp.com", "https://www.fplbot.app")
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
-                    });
+                options.AddPolicy(CorsOriginValidator.CustomCorsPolicyName, p => 
+                    p.SetIsOriginAllowed(CorsOriginValidator.ValidateOrigin).AllowAnyHeader().AllowAnyMethod()
+                );
             });
 
         }
@@ -143,7 +137,7 @@ namespace FplBot.WebApi
             app.UseSlackbot("/events");
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers().RequireCors(new CorsOptions().DefaultPolicyName);
+                endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
                 endpoints.MapRazorPages();
             });
         }
