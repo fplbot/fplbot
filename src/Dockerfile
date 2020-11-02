@@ -20,7 +20,7 @@ COPY . ./
 RUN dotnet publish FplBot.WebApi/FplBot.WebApi.csproj -c Release -o /app/out/fplbot
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /fplbot
 COPY --from=build-env /app/out/fplbot .
 ENTRYPOINT ["dotnet", "FplBot.WebApi.dll"]

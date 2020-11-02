@@ -26,6 +26,6 @@ COPY /src/ext/Slackbot.Net.Shared/ ./ext/Slackbot.Net.Shared/
 RUN dotnet publish FplBot.WebApi/FplBot.WebApi.csproj -c Release -o /app/out/fplbot-webapi
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /fplbot
 COPY --from=build-env /app/out/fplbot-webapi . 
