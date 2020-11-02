@@ -251,6 +251,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             return messageToSend;
         }
+
+        public static string BulletPoints<T>(IEnumerable<T> list)
+        {
+            return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
+        }
     }
 
 }

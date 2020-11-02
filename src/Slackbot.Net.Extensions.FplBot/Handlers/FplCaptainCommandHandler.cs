@@ -35,7 +35,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             {
                 gwPattern = "captains chart {gw}|captains {gw} chart";
             }
-            var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(new MessageHelper(), incomingMessage.Text, gwPattern);
+            var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(incomingMessage.Text, gwPattern);
 
             if (!gameWeek.HasValue)
             {
@@ -56,6 +56,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("captains");
 
-        public (string,string) GetHelpDescription() => ("captains [chart] {GW/''}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
+        public (string,string) GetHelpDescription() => ("captains [chart] {GW-number, or empty for current}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
     }
 }

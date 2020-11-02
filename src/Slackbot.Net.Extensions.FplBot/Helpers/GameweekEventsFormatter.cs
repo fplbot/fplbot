@@ -44,7 +44,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }).MaterializeToArray();
                 if (eventMessages.Any())
                 {
-                    formattedStrings.Add(scoreHeading + string.Join("\n", eventMessages.Select(s => $":black_small_square: {s}")));
+                    formattedStrings.Add(scoreHeading + Formatter.BulletPoints(eventMessages));
                 }
             });
 

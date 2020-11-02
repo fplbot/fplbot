@@ -13,9 +13,9 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             _gameweekClient = gameweekClient;
         }
 
-        public async Task<int?> ExtractGameweekOrFallbackToCurrent(MessageHelper helper,string messageText, string pattern)
+        public async Task<int?> ExtractGameweekOrFallbackToCurrent(string messageText, string pattern)
         {
-            var extractedGw = helper.ExtractGameweek(messageText, pattern);
+            var extractedGw = MessageHelper.ExtractGameweek(messageText, pattern);
             return extractedGw ?? (await _gameweekClient.GetGameweeks()).SingleOrDefault(x => x.IsCurrent)?.Id;
         }
     }
@@ -28,7 +28,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         /// <param name="messageText">Message text</param>
         /// <param name="pattern">Pattern (excluding bot handle). E.g. "captains {gw}"</param>
         /// <returns>Extracted gameweek if found, else current gameweek.</returns>
-        Task<int?> ExtractGameweekOrFallbackToCurrent(MessageHelper helper, string messageText, string pattern);
+        Task<int?> ExtractGameweekOrFallbackToCurrent(string messageText, string pattern);
     }
 
 }
