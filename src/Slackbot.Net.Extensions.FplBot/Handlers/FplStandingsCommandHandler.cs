@@ -49,7 +49,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 return $"Oops, could not fetch standings.";
             }
         }
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("standings");
+        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("standings") && !@event.Text.Contains("subscribe");
         
         public (string,string) GetHelpDescription() => ("standings", "Get current league standings");
      
