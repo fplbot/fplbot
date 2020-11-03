@@ -14,7 +14,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _logger = logger;
             _state = state;
             var fixtureEventHandler = new FixtureEventsHandler(publisher);
+            var priceChangeHandler = new PriceChangeHandler(publisher);
             _state.OnNewFixtureEvents += fixtureEventHandler.OnNewFixtureEvents;
+            _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
         }
 
         public async Task Initialize(int gwId)
@@ -33,6 +35,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         {
             _logger.LogInformation("Refreshing state");
             await _state.Refresh(currentGameweek);
+        }
+
+        public async Task HandleGameweekCurrentlyFinished(int gwId)
+        {
+            _logger.LogInformation("Refreshing state - finished gw");
+            await _state.Refresh(gwId);
         }
     }
 }

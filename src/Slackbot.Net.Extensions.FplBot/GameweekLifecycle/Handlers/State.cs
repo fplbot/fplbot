@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.PriceMonitoring;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -90,6 +91,30 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 }
                 _currentGameweekFixtures = latest;
             }
+            
+            var after = await _playerClient.GetAllPlayers();
+            var playersWithPriceChanges = after.Where(p => p.CostChangeEvent != 0).ToList();
+            var newPlayersWithPriceChanges = playersWithPriceChanges.Except(_players, new PlayerPriceComparer()).ToList();
+            _players = after;
+            
+            if (newPlayersWithPriceChanges.Any())
+            {
+                var priceChanges = newPlayersWithPriceChanges.Select(p => new PriceChange
+                {
+                    PlayerWebName = p.WebName,
+                    PlayerFirstName = p.FirstName,
+                    PlayerSecondName = p.SecondName,
+                    NowCost = p.NowCost,
+                    CostChangeEvent = p.CostChangeEvent,
+                    TeamName = _teams.FirstOrDefault(t => t.Code == p.TeamCode)?.Name
+                });
+                foreach (var team in _activeSlackTeams)
+                {
+                    var context = GetGameweekLeagueContext(team.TeamId);
+                    await OnPriceChanges(context, priceChanges);
+                }
+            }
+
             _logger.LogInformation($"Active teams count: {_activeSlackTeams.Count()}");
             _logger.LogInformation($"Slack users count: {_slackUsers.Count}");
             _logger.LogInformation($"Transfers count: {_transfersForCurrentGameweekBySlackTeam.Count}");
@@ -120,6 +145,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         }
 
         public event Func<GameweekLeagueContext, IEnumerable<FixtureEvents>, Task> OnNewFixtureEvents = (ctx,fixtureEvents) => Task.CompletedTask;
+        public event Func<GameweekLeagueContext, IEnumerable<PriceChange>, Task> OnPriceChanges = (ctx,fixtureEvents) => Task.CompletedTask;
 
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {
