@@ -80,7 +80,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             return _activeSlackTeams;
         }
 
-        public async Task<IEnumerable<FixtureEvents>> Refresh(int currentGameweek)
+        public async Task Refresh(int currentGameweek)
         {
             await EnsureNewLeaguesAreMonitored(currentGameweek);
             
@@ -89,13 +89,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             
             if (fixtureEvents.Any())
             {
+                await OnNewFixtureEvents(fixtureEvents.ToList());
                 _currentGameweekFixtures = latest;
             }
             _logger.LogInformation($"Active teams count: {_activeSlackTeams.Count()}");
             _logger.LogInformation($"Slack users count: {_slackUsers.Count}");
             _logger.LogInformation($"Transfers count: {_transfersForCurrentGameweekBySlackTeam.Count}");
-
-            return fixtureEvents;
         }
 
         public GameweekLeagueContext GetGameweekLeagueContext(string teamId)
@@ -123,6 +122,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 CurrentGameweek = _currentGameweek
             };
         }
+
+        public event Func<IEnumerable<FixtureEvents>, Task> OnNewFixtureEvents = fixtureEvents => Task.CompletedTask;
 
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {

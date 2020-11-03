@@ -46,22 +46,29 @@ namespace FplBot.Tests
         public async Task WithGoalScoredEvent()
         {
             var state = CreateGoalScoredScenario();
-            await state.Reset(1);
-            var newEvents = await state.Refresh(1);
-            Assert.NotEmpty(newEvents);
-            Assert.Single(newEvents);
-            var goalEvent = newEvents.First().StatMap[StatType.GoalsScored].First();
-            Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
-            Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
-            
-            var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
-            
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-            foreach (var formatttedEvent in formattedEvents)
+            var newFixtureEventsHappened = false;
+            state.OnNewFixtureEvents += newEvents =>
             {
-                _helper.WriteLine(formatttedEvent);
-            }
-            Assert.Contains("PlayerFirstName PlayerSecondName scored a goal", formattedEvents.First());
+                newFixtureEventsHappened = true;
+                Assert.NotEmpty(newEvents);
+                Assert.Single(newEvents);
+                var goalEvent = newEvents.First().StatMap[StatType.GoalsScored].First();
+                Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
+                Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
+                var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
+            
+                var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
+                foreach (var formatttedEvent in formattedEvents)
+                {
+                    _helper.WriteLine(formatttedEvent);
+                }
+                Assert.Contains("PlayerFirstName PlayerSecondName scored a goal", formattedEvents.First());
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(newFixtureEventsHappened);
         }
         
         [Theory]
@@ -75,23 +82,26 @@ namespace FplBot.Tests
             // Arrange
             var state = CreateGoalScoredScenario(entryName:entryName, slackUserHandle: slackUserHandle, slackUserRealName:slackUserRealName);
             await state.Reset(1);
-            var newEvents = await state.Refresh(1);
-            var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
-            
-            Assert.NotEmpty(context.Users);
-
-            // Act
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-            foreach (var formatttedEvent in formattedEvents)
+            state.OnNewFixtureEvents += newEvents =>
             {
-                _helper.WriteLine(formatttedEvent);
-            }
-
-            // Assert
-            var formattedEvent = formattedEvents.First();
-            var regex = new Regex("\\{0\\}.*");
-            CustomAssert.AnyOfContains(new GoalTaunt().JokePool.Select(x => regex.Replace(x, string.Empty)), formattedEvent);
-            Assert.Contains(expectedTauntName, formattedEvent);
+                var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
+                Assert.NotEmpty(context.Users);
+        
+                // Act
+                var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
+                foreach (var formatttedEvent in formattedEvents)
+                {
+                    _helper.WriteLine(formatttedEvent);
+                }
+        
+                // Assert
+                var formattedEvent = formattedEvents.First();
+                var regex = new Regex("\\{0\\}.*");
+                CustomAssert.AnyOfContains(new GoalTaunt().JokePool.Select(x => regex.Replace(x, string.Empty)), formattedEvent);
+                Assert.Contains(expectedTauntName, formattedEvent);
+                return Task.CompletedTask;
+            };
+            await state.Refresh(1);
         }
 
         private static IState CreateAllMockState()

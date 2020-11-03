@@ -19,6 +19,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _publisher = publisher;
             _logger = logger;
             _state = state;
+            _state.OnNewFixtureEvents += HandleNewFixtureEvents;
         }
 
         public async Task Initialize(int gwId)
@@ -36,8 +37,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleGameweekOngoing(int currentGameweek)
         {
             _logger.LogInformation("Refreshing state");
-            var newEvents = await _state.Refresh(currentGameweek);
-            await HandleNewFixtureEvents(newEvents);
+            await _state.Refresh(currentGameweek);
         }
 
         private async Task HandleNewFixtureEvents(IEnumerable<FixtureEvents> newEvents)
