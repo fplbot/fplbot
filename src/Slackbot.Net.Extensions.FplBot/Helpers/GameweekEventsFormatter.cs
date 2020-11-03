@@ -54,7 +54,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         private static bool TeamSubscribesForThisEvent(GameweekLeagueContext context, StatType statType)
         {
             var subscriptionType = statType.GetSubscriptionType();
-            return subscriptionType.HasValue && context.EventSubscriptions.ContainsSubscriptionFor(subscriptionType.Value);
+            return subscriptionType.HasValue && context.SlackTeam.Subscriptions.ContainsSubscriptionFor(subscriptionType.Value);
         }
 
         private static IEnumerable<object> FormatNewAssists(
@@ -145,7 +145,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 {
                     message = $"~{message.TrimEnd()}~ (VAR? :shrug:)";
                 }
-                else if (taunt != null && context.EventSubscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
+                else if (taunt != null && context.SlackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
                 {
                     var tauntibleEntries = GetTauntibleEntries(context, player, taunt.Type);
                     var append = tauntibleEntries.Any() ? $" {string.Format(taunt.JokePool.GetRandom(), string.Join(", ", tauntibleEntries))}" : null;

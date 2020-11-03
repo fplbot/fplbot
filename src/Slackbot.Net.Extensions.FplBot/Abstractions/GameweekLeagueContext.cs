@@ -13,7 +13,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public ICollection<Player> Players { get; set; }
         public ICollection<Team> Teams { get; set; }
         public IEnumerable<User> Users { get; set; }
-        public IEnumerable<EventSubscription> EventSubscriptions { get; set; }
         public int? CurrentGameweek { get; set; }
+        public SlackTeam SlackTeam { get; set; }
     }
 }

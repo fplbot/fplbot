@@ -9,23 +9,17 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
     public class FixtureEventsHandler
     {
-        private readonly IState _state;
         private readonly ISlackWorkSpacePublisher _publisher;
 
-        public FixtureEventsHandler(IState state, ISlackWorkSpacePublisher publisher)
+        public FixtureEventsHandler(ISlackWorkSpacePublisher publisher)
         {
-            _state = state;
             _publisher = publisher;
         }
         
-        public async Task OnNewFixtureEvents(IEnumerable<FixtureEvents> newEvents)
+        public async Task OnNewFixtureEvents(GameweekLeagueContext context, IEnumerable<FixtureEvents> newEvents)
         {
-            foreach (var team in _state.GetActiveTeams())
-            {
-                var context = _state.GetGameweekLeagueContext(team.TeamId);
-                var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-                await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, formattedEvents.ToArray());
-            }
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
+            await _publisher.PublishToWorkspace(context.SlackTeam.TeamId, context.SlackTeam.FplBotSlackChannel, formattedEvents.ToArray());
         }
     }
 }

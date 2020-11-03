@@ -32,14 +32,12 @@ namespace FplBot.Tests
         public async Task DoesNotCrashWithNoDataReturned()
         {
             var state = CreateAllMockState();
+            state.OnNewFixtureEvents += (ctx, events) =>
+            {
+                Assert.False(true); // should not emit this event on reset
+                return Task.CompletedTask;
+            };
             await state.Reset(1);
-            var current = state.GetActiveTeams();
-            Assert.Empty(current);
-            
-            var contextForLeague = state.GetGameweekLeagueContext("1337");
-            Assert.Empty(contextForLeague.Players);
-            Assert.Empty(contextForLeague.Teams);
-            Assert.Empty(contextForLeague.TransfersForLeague);
         }
 
         [Fact]
@@ -47,7 +45,7 @@ namespace FplBot.Tests
         {
             var state = CreateGoalScoredScenario();
             var newFixtureEventsHappened = false;
-            state.OnNewFixtureEvents += newEvents =>
+            state.OnNewFixtureEvents += (context,newEvents) =>
             {
                 newFixtureEventsHappened = true;
                 Assert.NotEmpty(newEvents);
@@ -55,7 +53,6 @@ namespace FplBot.Tests
                 var goalEvent = newEvents.First().StatMap[StatType.GoalsScored].First();
                 Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
                 Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
-                var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
             
                 var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
                 foreach (var formatttedEvent in formattedEvents)
@@ -82,9 +79,8 @@ namespace FplBot.Tests
             // Arrange
             var state = CreateGoalScoredScenario(entryName:entryName, slackUserHandle: slackUserHandle, slackUserRealName:slackUserRealName);
             await state.Reset(1);
-            state.OnNewFixtureEvents += newEvents =>
+            state.OnNewFixtureEvents += (context,newEvents) =>
             {
-                var context = state.GetGameweekLeagueContext(TestBuilder.SlackTeamId);
                 Assert.NotEmpty(context.Users);
         
                 // Act
