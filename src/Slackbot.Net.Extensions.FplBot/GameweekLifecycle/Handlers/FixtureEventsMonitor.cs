@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -35,7 +37,11 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         {
             _logger.LogInformation("Refreshing state");
             var newEvents = await _state.Refresh(currentGameweek);
+            await HandleNewFixtureEvents(newEvents);
+        }
 
+        private async Task HandleNewFixtureEvents(IEnumerable<FixtureEvents> newEvents)
+        {
             if (newEvents.Any())
             {
                 _logger.LogInformation("New events!");
