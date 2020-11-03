@@ -60,8 +60,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             }
             else
             {
-                if(!_storedCurrent.IsFinished)
+                if (!_storedCurrent.IsFinished)
+                {
                     await _orchestrator.GameweekIsCurrentlyOngoing(_storedCurrent.Id);
+                }
+                else
+                {
+                    await _orchestrator.GameweekIsCurrentlyFinished(_storedCurrent.Id);
+                }
             }
 
             _storedCurrent = fetchedCurrent;
