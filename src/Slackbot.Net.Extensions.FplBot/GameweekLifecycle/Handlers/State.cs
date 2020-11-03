@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
-    internal class State : IState
+    public class State : IState
     {
         private readonly IFixtureClient _fixtureClient;
         private readonly IPlayerClient _playerClient;
@@ -24,7 +24,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ILeagueEntriesByGameweek _leagueEntriesByGameweek;
         private readonly ISlackClientBuilder _service;
         private readonly ILogger<State> _logger;
-
 
         private ICollection<Team> _teams;
         private readonly IDictionary<long, IEnumerable<TransfersByGameWeek.Transfer>> _transfersForCurrentGameweekBySlackTeam;
@@ -75,11 +74,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             await EnsureNewLeaguesAreMonitored(newGameweek);
         }
 
-        public IEnumerable<SlackTeam> GetActiveTeams()
-        {
-            return _activeSlackTeams;
-        }
-
         public async Task Refresh(int currentGameweek)
         {
             await EnsureNewLeaguesAreMonitored(currentGameweek);
@@ -89,7 +83,11 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             
             if (fixtureEvents.Any())
             {
-                await OnNewFixtureEvents(fixtureEvents.ToList());
+                foreach (var team in _activeSlackTeams)
+                {
+                    var context = GetGameweekLeagueContext(team.TeamId);
+                    await OnNewFixtureEvents(context, fixtureEvents.ToList());
+                }
                 _currentGameweekFixtures = latest;
             }
             _logger.LogInformation($"Active teams count: {_activeSlackTeams.Count()}");
@@ -102,13 +100,11 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             var slackTeam = _activeSlackTeams.FirstOrDefault(t => t.TeamId == teamId);
             var transfersForLeague = Enumerable.Empty<TransfersByGameWeek.Transfer>();
             var entriesForLeague = Enumerable.Empty<GameweekEntry>();
-            var eventSubscriptions = Enumerable.Empty<EventSubscription>();
 
             if (slackTeam != null)
             {
                 _transfersForCurrentGameweekBySlackTeam.TryGetValue(slackTeam.FplbotLeagueId, out transfersForLeague);
                 _entriesForCurrentGameweekBySlackTeam.TryGetValue(slackTeam.FplbotLeagueId, out entriesForLeague);
-                eventSubscriptions = slackTeam.Subscriptions;
             }
 
             return new GameweekLeagueContext
@@ -118,12 +114,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 GameweekEntries = entriesForLeague,
                 TransfersForLeague = transfersForLeague,
                 Users = _slackUsers.ContainsKey(teamId) ? _slackUsers[teamId] : new List<User>(),
-                EventSubscriptions = eventSubscriptions,
-                CurrentGameweek = _currentGameweek
+                CurrentGameweek = _currentGameweek,
+                SlackTeam = slackTeam
             };
         }
 
-        public event Func<IEnumerable<FixtureEvents>, Task> OnNewFixtureEvents = fixtureEvents => Task.CompletedTask;
+        public event Func<GameweekLeagueContext, IEnumerable<FixtureEvents>, Task> OnNewFixtureEvents = (ctx,fixtureEvents) => Task.CompletedTask;
 
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {

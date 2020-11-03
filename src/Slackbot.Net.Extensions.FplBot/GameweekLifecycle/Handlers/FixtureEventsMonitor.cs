@@ -6,16 +6,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
     internal class FixtureEventsMonitor : IMonitorFixtureEvents
     {
-        private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ILogger<FixtureEventsMonitor> _logger;
         private readonly IState _state;
 
         public FixtureEventsMonitor(IState state, ISlackWorkSpacePublisher publisher, ILogger<FixtureEventsMonitor> logger)
         {
-            _publisher = publisher;
             _logger = logger;
             _state = state;
-            var fixtureEventHandler = new FixtureEventsHandler(_state, publisher);
+            var fixtureEventHandler = new FixtureEventsHandler(publisher);
             _state.OnNewFixtureEvents += fixtureEventHandler.OnNewFixtureEvents;
         }
 

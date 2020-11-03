@@ -10,13 +10,14 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails
 {
     public class TeamDetailsIndex : PageModel
     {
-        private readonly IState _stateDetails;
+        private readonly State _stateDetails;
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _builder;
@@ -26,7 +27,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 
         public TeamDetailsIndex(IState state, ISlackTeamRepository teamRepo, ITokenStore tokenStore, ILogger<TeamDetailsIndex> logger, IOptions<SlackAppOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
         {
-            _stateDetails = state;
+            _stateDetails = state as State;
             _teamRepo = teamRepo;
             _tokenStore = tokenStore;
             _logger = logger;
