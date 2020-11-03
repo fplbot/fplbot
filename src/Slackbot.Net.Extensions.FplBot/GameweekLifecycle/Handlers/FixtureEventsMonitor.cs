@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
@@ -17,6 +15,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _publisher = publisher;
             _logger = logger;
             _state = state;
+            var fixtureEventHandler = new FixtureEventsHandler(_state, publisher);
+            _state.OnNewFixtureEvents += fixtureEventHandler.OnNewFixtureEvents;
         }
 
         public async Task Initialize(int gwId)
@@ -34,18 +34,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleGameweekOngoing(int currentGameweek)
         {
             _logger.LogInformation("Refreshing state");
-            var newEvents = await _state.Refresh(currentGameweek);
-
-            if (newEvents.Any())
-            {
-                _logger.LogInformation("New events!");
-                foreach (var team in _state.GetActiveTeams())
-                {
-                    var context = _state.GetGameweekLeagueContext(team.TeamId);
-                    var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, formattedEvents.ToArray());
-                }
-            }
+            await _state.Refresh(currentGameweek);
         }
     }
 }
