@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Abstractions
 {
-    public interface IMonitorFixtureEvents
+    public interface IMonitorState
     {
         Task Initialize(int gwId);
         Task HandleGameweekStarted(int gwId);
