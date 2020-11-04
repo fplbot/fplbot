@@ -268,7 +268,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 messageToSend += $"\n\n{header}";
                 foreach (var p in group)
                 {
-                    messageToSend += $"\n• {p.PlayerFirstName} {p.PlayerSecondName} {p.TeamName} {FormatCurrency(p.NowCost)}";
+                    messageToSend += $"\n• {p.PlayerFirstName} {p.PlayerSecondName} ({p.TeamName}) {FormatCurrency(p.NowCost)}";
                 }
             }
 
