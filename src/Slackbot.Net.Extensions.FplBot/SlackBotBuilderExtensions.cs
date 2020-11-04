@@ -35,6 +35,10 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();
             services.AddSingleton<IHandleGameweekEnded, GameweekEndedNotifier>();
             services.AddSingleton<IMonitorState, StateEventsMonitor>();
+            services.AddSingleton<FixtureEventsHandler>();
+            services.AddSingleton<FixtureEventsHandlerV2>();
+            services.AddSingleton<PriceChangeHandler>();
+            services.AddSingleton<PriceChangeHandlerV2>();
             services.AddSingleton<IState, State>();
             services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
             services.AddSingleton<DateTimeUtils>();

@@ -93,6 +93,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var context = GetGameweekLeagueContext(team.TeamId);
                     await OnNewFixtureEvents(context, fixtureEvents.ToList());
                 }
+                await OnNewFixtureEventsBeta(_currentGameweek.Value,fixtureEvents);
             }
 
             if (priceChanges.Any())
@@ -102,7 +103,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var context = GetGameweekLeagueContext(team.TeamId);
                     await OnPriceChanges(context, priceChanges);
                 }
+                await OnPriceChangesBeta(priceChanges);
             }
+
 
             _logger.LogInformation($"Active teams count: {_activeSlackTeams.Count()}");
             _logger.LogInformation($"Slack users count: {_slackUsers.Count}");
@@ -134,7 +137,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         }
 
         public event Func<GameweekLeagueContext, IEnumerable<FixtureEvents>, Task> OnNewFixtureEvents = (ctx,fixtureEvents) => Task.CompletedTask;
+        public event Func<int, IEnumerable<FixtureEvents>, Task> OnNewFixtureEventsBeta = (gwId,fixtureEvents) => Task.CompletedTask;
         public event Func<GameweekLeagueContext, IEnumerable<PriceChange>, Task> OnPriceChanges = (ctx,fixtureEvents) => Task.CompletedTask;
+        public event Func<IEnumerable<PriceChange>, Task> OnPriceChangesBeta = (fixtureEvents) => Task.CompletedTask;
 
         private async Task EnsureNewLeaguesAreMonitored(int currentGameweek)
         {
