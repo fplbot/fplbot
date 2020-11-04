@@ -46,7 +46,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 try
                 {
-                    await HandleForTeam(currentGameweek, newEvents, slackTeam, players, teams);
+                    var formattedStr = await HandleForTeam(currentGameweek, newEvents, slackTeam, players, teams);
+                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
+
                 }
                 catch (Exception e)
                 {
@@ -55,7 +57,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             }
         }
 
-        private async Task HandleForTeam(int currentGameweek, IEnumerable<FixtureEvents> newEvents, SlackTeam slackTeam, ICollection<Player> players, ICollection<Team> teams)
+        public async Task<IEnumerable<string>> HandleForTeam(int currentGameweek, IEnumerable<FixtureEvents> newEvents, SlackTeam slackTeam, ICollection<Player> players, ICollection<Team> teams)
         {
             var slackUsers = await GetSlackUsers(slackTeam);
             var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGameweek, (int) slackTeam.FplbotLeagueId);
@@ -67,10 +69,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 Users = slackUsers,
                 GameweekEntries = entries,
                 SlackTeam = slackTeam,
-                TransfersForLeague = transfers,
+                TransfersForLeague = transfers
             };
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
-            await _publisher.PublishToWorkspace(context.SlackTeam.TeamId, context.SlackTeam.FplBotSlackChannel, formattedEvents.ToArray());
+            return GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
         }
 
         private async Task<IEnumerable<User>> GetSlackUsers(SlackTeam t)
