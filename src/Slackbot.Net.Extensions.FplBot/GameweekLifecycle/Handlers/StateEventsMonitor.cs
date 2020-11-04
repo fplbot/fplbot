@@ -9,14 +9,15 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ILogger<StateEventsMonitor> _logger;
         private readonly IState _state;
 
-        public StateEventsMonitor(IState state, ISlackWorkSpacePublisher publisher, ILogger<StateEventsMonitor> logger)
+        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventHandler, FixtureEventsHandlerV2 fixtureEventsHandlerV2, PriceChangeHandler priceChangeHandler, PriceChangeHandlerV2 priceChangeHandlerV2,  ILogger<StateEventsMonitor> logger)
         {
             _logger = logger;
             _state = state;
-            var fixtureEventHandler = new FixtureEventsHandler(publisher);
-            var priceChangeHandler = new PriceChangeHandler(publisher);
             _state.OnNewFixtureEvents += fixtureEventHandler.OnNewFixtureEvents;
+            _state.OnNewFixtureEventsBeta += fixtureEventsHandlerV2.OnNewFixtureEvents;
+            
             _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
+            _state.OnPriceChangesBeta += priceChangeHandlerV2.OnPriceChanges;
         }
 
         public async Task Initialize(int gwId)
