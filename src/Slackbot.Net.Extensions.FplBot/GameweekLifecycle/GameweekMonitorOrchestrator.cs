@@ -18,9 +18,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             InitializeEventHandlers += fixtureEventsMonitor.Initialize;
             GameWeekJustBeganEventHandlers += fixtureEventsMonitor.HandleGameweekStarted;
             GameweekIsCurrentlyOngoingEventHandlers += fixtureEventsMonitor.HandleGameweekOngoing;
+            GameweekCurrentlyFinishedEventHandlers += fixtureEventsMonitor.HandleGameweekCurrentlyFinished;
             
             GameWeekJustBeganEventHandlers += startedNotifier.HandleGameweekStarted;
-           
             GameweekEndedEventHandlers += endedNotifier.HandleGameweekEndeded;
         }
         

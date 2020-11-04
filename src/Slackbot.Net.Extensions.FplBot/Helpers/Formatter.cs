@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -251,11 +252,35 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             return messageToSend;
         }
+        
+        public static string FormatPriceChanged(IEnumerable<PriceChange> priceChangesPlayers)
+        {
+            if (!priceChangesPlayers.Any())
+                return "No players with price changes.";
+            
+            var messageToSend = "";
+            var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
+            foreach (var group in grouped)
+            {
+                var isPriceIncrease = @group.Key > 0;
+                var priceChange = $"{FormatCurrency(group.Key)}";
+                var header = isPriceIncrease ? $"*Price up {priceChange} :chart_with_upwards_trend:*" : $"*Price down {priceChange} :chart_with_downwards_trend:*";
+                messageToSend += $"\n\n{header}";
+                foreach (var p in group)
+                {
+                    messageToSend += $"\n• {p.PlayerFirstName} {p.PlayerSecondName} {p.TeamName} {FormatCurrency(p.NowCost)}";
+                }
+            }
+
+            return messageToSend;        
+        }
 
         public static string BulletPoints<T>(IEnumerable<T> list)
         {
             return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
         }
+
+       
     }
 
 }
