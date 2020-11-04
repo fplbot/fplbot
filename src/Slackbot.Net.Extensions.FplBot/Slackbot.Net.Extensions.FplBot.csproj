@@ -16,4 +16,8 @@
     <ItemGroup>
      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="PriceMonitoring" />
+    </ItemGroup>
 </Project>

@@ -93,21 +93,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             }
             
             var after = await _playerClient.GetAllPlayers();
-            var playersWithPriceChanges = after.Where(p => p.CostChangeEvent != 0).ToList();
-            var newPlayersWithPriceChanges = playersWithPriceChanges.Except(_players, new PlayerPriceComparer()).ToList();
+          
+            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
             _players = after;
             
-            if (newPlayersWithPriceChanges.Any())
+            if (priceChanges.Any())
             {
-                var priceChanges = newPlayersWithPriceChanges.Select(p => new PriceChange
-                {
-                    PlayerWebName = p.WebName,
-                    PlayerFirstName = p.FirstName,
-                    PlayerSecondName = p.SecondName,
-                    NowCost = p.NowCost,
-                    CostChangeEvent = p.CostChangeEvent,
-                    TeamName = _teams.FirstOrDefault(t => t.Code == p.TeamCode)?.Name
-                });
                 foreach (var team in _activeSlackTeams)
                 {
                     var context = GetGameweekLeagueContext(team.TeamId);

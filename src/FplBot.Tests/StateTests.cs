@@ -37,6 +37,11 @@ namespace FplBot.Tests
                 Assert.False(true); // should not emit this event on reset
                 return Task.CompletedTask;
             };
+            state.OnPriceChanges += (ctx, events) =>
+            {
+                Assert.False(true); // should not emit this event on reset
+                return Task.CompletedTask;
+            };
             await state.Reset(1);
         }
 
