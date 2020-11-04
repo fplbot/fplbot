@@ -81,6 +81,11 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             
             var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
             var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures);
+            _currentGameweekFixtures = latest;
+
+            var after = await _playerClient.GetAllPlayers();
+            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
+            _players = after;
             
             if (fixtureEvents.Any())
             {
@@ -89,14 +94,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var context = GetGameweekLeagueContext(team.TeamId);
                     await OnNewFixtureEvents(context, fixtureEvents.ToList());
                 }
-                _currentGameweekFixtures = latest;
             }
-            
-            var after = await _playerClient.GetAllPlayers();
-          
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
-            _players = after;
-            
+
             if (priceChanges.Any())
             {
                 foreach (var team in _activeSlackTeams)
