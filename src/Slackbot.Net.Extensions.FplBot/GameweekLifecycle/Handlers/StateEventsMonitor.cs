@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
-    internal class FixtureEventsMonitor : IMonitorFixtureEvents
+    internal class StateEventsMonitor : IMonitorState
     {
-        private readonly ILogger<FixtureEventsMonitor> _logger;
+        private readonly ILogger<StateEventsMonitor> _logger;
         private readonly IState _state;
 
-        public FixtureEventsMonitor(IState state, ISlackWorkSpacePublisher publisher, ILogger<FixtureEventsMonitor> logger)
+        public StateEventsMonitor(IState state, ISlackWorkSpacePublisher publisher, ILogger<StateEventsMonitor> logger)
         {
             _logger = logger;
             _state = state;
