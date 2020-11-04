@@ -21,17 +21,21 @@ namespace FplBot.Tests
         public async Task DoesNotCrashWithNoDataReturned()
         {
             var state = CreateAllMockState();
+            var wasCalled = false;
             state.OnNewFixtureEvents += (ctx, events) =>
             {
                 Assert.False(true); // should not emit this event on reset
+                wasCalled = true;
                 return Task.CompletedTask;
             };
-            state.OnPriceChanges += (ctx, events) =>
+            state.OnPriceChanges += events =>
             {
+                wasCalled = true;
                 Assert.False(true); // should not emit this event on reset
                 return Task.CompletedTask;
             };
             await state.Reset(1);
+            Assert.False(wasCalled);
         }
 
         [Fact]
@@ -60,7 +64,7 @@ namespace FplBot.Tests
         {
             var state = CreatePriceIncreaseScenario();
             var priceChangeEventEmitted = false;
-            state.OnPriceChanges += (context,newPrices) =>
+            state.OnPriceChanges += newPrices =>
             {
                 priceChangeEventEmitted = true;
                 Assert.Single(newPrices);
@@ -80,9 +84,6 @@ namespace FplBot.Tests
                 A.Fake<IPlayerClient>(),
                 A.Fake<ITeamsClient>(),
                 A.Fake<ISlackTeamRepository>(),
-                A.Fake<ITransfersByGameWeek>(),
-                A.Fake<ILeagueEntriesByGameweek>(),
-                A.Fake<ISlackClientBuilder>(),
                 FakeLogger());
         }
         
@@ -181,9 +182,6 @@ namespace FplBot.Tests
                 playerClient,
                 teamsClient,
                 slackTeamRepository,
-                transfersByGameWeek,
-                A.Fake<ILeagueEntriesByGameweek>(),
-                slackClientService,
                 FakeLogger());
         }
 

@@ -55,15 +55,6 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
                 {
                     _logger.LogError(e, e.Message);
                 }
-                var ctx = _stateDetails.GetGameweekLeagueContext(teamIdToUpper);
-                GameweekLeagueContext = JsonConvert.SerializeObject(new
-                {
-                    TransfersForLeagueCount = ctx.TransfersForLeague.Count(),
-                    PlayersCount = ctx.Players.Count(),
-                    TeamsCount = ctx.Teams.Count(),
-                    EntriesCount = ctx.GameweekEntries.Count(),
-                    CurrentGameweek = ctx.CurrentGameweek
-                }, Formatting.Indented);
             }
         }
 
@@ -93,8 +84,6 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             var slackClient = _builder.Build(token: token);
             return slackClient;
         }
-
-        public string GameweekLeagueContext { get; set; }
         public SlackTeam Team { get; set; }
     }
 }
