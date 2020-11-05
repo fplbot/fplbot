@@ -38,20 +38,21 @@ namespace FplBot.WebApi.Controllers
             var blankTeam = await _teamRepo.GetTeam("T0A9QSU83");
             blankTeam.FplbotLeagueId = 619747;
             blankTeam.Subscriptions = new[] {EventSubscription.All};
+            blankTeam.FplBotSlackChannel = "#fpltest";
             
             var players = await _playerclient.GetAllPlayers();
             var teams = await _teamsClient.GetAllTeams();
-            var formattedStrings = await _eventsHandler.HandleForTeam(7, CreateDummyEvents(teams, players), blankTeam, players, teams);
-            return Ok(formattedStrings);
+            await _eventsHandler.HandleForTeam(currentGameweek:7, CreateDummyEvents(teams, players), blankTeam, players, teams);
+            return Ok();
         }
 
         private IEnumerable<FixtureEvents> CreateDummyEvents(ICollection<Team> teams, ICollection<Player> players)
         {
-            var homeTeam = teams.First();
-            var awayTeam = teams.Last();
+            var homeTeam = teams.First(t => t.Name == "Leeds");
+            var awayTeam = teams.First(t => t.Name == "Leicester");
 
-            var goalScorer = players.First();
-            var assist = players.Last();
+            var goalScorer = players.First(p => p.FirstName == "Harvey"  && p.SecondName == "Barnes");
+            var assist = players.First(p => p.FirstName == "Jamie" && p.SecondName == "Vardy");
 
  
             return new[] {new FixtureEvents
