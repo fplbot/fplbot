@@ -1,3 +1,5 @@
+using Fpl.Client.Models;
+
 namespace Slackbot.Net.Extensions.FplBot.Models
 {
     public class PlayerStatusUpdate
@@ -6,8 +8,15 @@ namespace Slackbot.Net.Extensions.FplBot.Models
         public string PlayerSecondName { get; set; }
         public string PlayerWebName { get; set; }
         
+        public string News { get; set; }
         public string TeamName { get; set; }
-        public string From { get; set; }
-        public string To { get; set; }
+        public string FromStatus { get; set; }
+        public string ToStatus { get; set; }
+
+        public void Deconstruct(out string fromStatus, out string toStatus)
+        {
+            fromStatus = FromStatus;
+            toStatus = ToStatus;
+        }
     }
 }
