@@ -1,9 +1,7 @@
 build:
   docker:
-    fplbot-local-webapi: /Heroku.Dockerfile
+    web: /Heroku.Dockerfile
 
 run:
-  web:
-    command:
-      - dotnet ./FplBot.WebApi.dll
-    image: fplbot-local-webapi
+  web: dotnet ./FplBot.WebApi.dll
+    
