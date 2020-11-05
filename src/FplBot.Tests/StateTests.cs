@@ -77,6 +77,44 @@ namespace FplBot.Tests
             await state.Refresh(1);
             Assert.True(priceChangeEventEmitted);
         }
+        
+        [Fact]
+        public async Task WithInjuryUpdate()
+        {
+            var state = CreateNewInjuryScenario();
+            var statusUpdateEmitted = false;
+            state.OnStatusUpdates += statusUpdates =>
+            {
+                statusUpdateEmitted = true;
+                Assert.Single(statusUpdates);
+                var statusUpdate = statusUpdates.First();
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(statusUpdateEmitted);
+        }
+        
+        [Fact]
+        public async Task WithNewPlayer()
+        {
+            var state = CreateNewPlayerScenario();
+            var statusUpdateEmitted = false;
+            state.OnStatusUpdates += statusUpdates =>
+            {
+                statusUpdateEmitted = true;
+                Assert.Single(statusUpdates);
+                var statusUpdate = statusUpdates.First();
+                Assert.Equal(statusUpdate.PlayerSecondName, TestBuilder.OtherPlayer().SecondName);
+                Assert.Null(statusUpdate.FromStatus);
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(statusUpdateEmitted);
+        }
 
         private static IState CreateAllMockState()
         {
@@ -109,6 +147,39 @@ namespace FplBot.Tests
             return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
         }
         
+        private static IState CreateNewInjuryScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        {
+            var playerClient = A.Fake<IPlayerClient>();
+            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Available)
+            }).Once().Then.Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
+            });
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+        }
+        
+        private static IState CreateNewPlayerScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        {
+            var playerClient = A.Fake<IPlayerClient>();
+            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Available)
+            }).Once().Then.Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Available),
+                TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)
+            });
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+        }
+
         private static IState CreatePriceIncreaseScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
             var playerClient = A.Fake<IPlayerClient>();
@@ -121,16 +192,7 @@ namespace FplBot.Tests
             });
             
             var fixtureClient = A.Fake<IFixtureClient>();
-            A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
-                {
-                    TestBuilder.AwayTeamGoal(888, 1)
-                }).Once()
-                .Then.Returns(
-                    new List<Fixture>
-                    {
-                        TestBuilder.AwayTeamGoal(888, 2)
-                    });
-            
+
             return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
         }
 
@@ -142,41 +204,12 @@ namespace FplBot.Tests
                 TestBuilder.SlackTeam()
             });
 
-            var transfersByGameWeek = A.Fake<ITransfersByGameWeek>();
-            A.CallTo(() => transfersByGameWeek.GetTransfersByGameweek(1, 111)).Returns(new List<TransfersByGameWeek.Transfer>
-            {
-                new TransfersByGameWeek.Transfer
-                {
-                    EntryId = 2,
-                    EntryName = entryName,
-                    PlayerTransferredOut = TestBuilder.PlayerId
-                }
-            });
-
             var teamsClient = A.Fake<ITeamsClient>();
             A.CallTo(() => teamsClient.GetAllTeams()).Returns(new List<Team>
             {
                 TestBuilder.HomeTeam(),
                 TestBuilder.AwayTeam()
             });
-
-
-            var slackClientService = A.Fake<ISlackClientBuilder>();
-
-            var fakeSlackClient = A.Fake<ISlackClient>();
-            A.CallTo(() => fakeSlackClient.UsersList()).Returns(new UsersListResponse
-            {
-                Ok = true,
-                Members = new[]
-                {
-                    new User
-                    {
-                        Real_name = slackUserRealName,
-                        Name = slackUserHandle
-                    }
-                }
-            });
-            A.CallTo(() => slackClientService.Build(A<string>._)).Returns(fakeSlackClient);
 
             return new State(fixtureClient,
                 playerClient,

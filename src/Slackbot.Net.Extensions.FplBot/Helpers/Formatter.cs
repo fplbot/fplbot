@@ -280,7 +280,35 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
         }
 
-       
-    }
+        public static string FormatStatusUpdates(IEnumerable<PlayerStatusUpdate> statusUpdates)
+        {
+            var grouped = statusUpdates.GroupBy(Change).Where(c => c.Key != null);
+            var sb = new StringBuilder();
+            foreach (var group in grouped)
+            {
+                sb.Append($"*{group.Key}*\n");
+                foreach (var gUpdate in group)
+                {
+                    sb.Append($"• {gUpdate.PlayerWebName} ({gUpdate.TeamName}). _{gUpdate.News}_\n");
+                }
+            }
+            return sb.ToString();
+        }
 
+        private static string Change(PlayerStatusUpdate update)
+        {
+            return update switch
+            {
+                (_, _) s when s.FromStatus == s.ToStatus => null,
+                (_, _) s when s.FromStatus == null => "👋 New player!",
+                (_, PlayerStatuses.Injured) => "🤕 Injured",
+                (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
+                (_, PlayerStatuses.Suspended) => "❌ Suspended",
+                (_, PlayerStatuses.Unavailable) => "👀 Unavailable",
+                (_, PlayerStatuses.NotInSquad) => "😐 Not in squad",
+                (_, PlayerStatuses.Available) => "🎉 ️Available",
+                (_, _) => $"⁉️ {update.ToStatus}"
+            };
+        }
+    }
 }

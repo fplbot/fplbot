@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
+using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace FplBot.WebApi.Controllers
@@ -22,14 +24,16 @@ namespace FplBot.WebApi.Controllers
         private readonly IPlayerClient _playerclient;
         private readonly ITeamsClient _teamsClient;
         private readonly FixtureEventsHandler _eventsHandler;
+        private readonly StatusUpdateHandler _statusHandler;
 
-        public TestController(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, IPlayerClient playerclient, ITeamsClient teamsClient, FixtureEventsHandler eventsHandler, ILogger<FplController> logger)
+        public TestController(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, IPlayerClient playerclient, ITeamsClient teamsClient, FixtureEventsHandler eventsHandler, StatusUpdateHandler statusHandler, ILogger<FplController> logger)
         {
             _teamRepo = teamRepo;
             _leagueClient = leagueClient;
             _playerclient = playerclient;
             _teamsClient = teamsClient;
             _eventsHandler = eventsHandler;
+            _statusHandler = statusHandler;
         }
 
         [HttpGet("fixture-event")]
@@ -44,6 +48,59 @@ namespace FplBot.WebApi.Controllers
             var teams = await _teamsClient.GetAllTeams();
             await _eventsHandler.HandleForTeam(currentGameweek:7, CreateDummyEvents(teams, players), blankTeam, players, teams);
             return Ok();
+        }
+        
+        [HttpGet("status-event")]
+        public async Task<IActionResult> GetStatusUpdate()
+        {
+            await _statusHandler.OnStatusUpdates(StatusUpdates());
+            return Ok();
+        }
+        
+        [HttpGet("status-event2")]
+        public async Task<IActionResult> GetStatusUpdate2()
+        {
+            var all = await _playerclient.GetAllPlayers();
+            foreach (var player in all)
+            {
+                player.Status = PlayerStatuses.Available;
+            }
+            var after = await _playerclient.GetAllPlayers();
+            var teams = await _teamsClient.GetAllTeams();
+            var statusUpdates = PlayerChangesEventsExtractor.GetStatusChanges(after, all, teams);
+            await _statusHandler.OnStatusUpdates(statusUpdates);
+            return Ok();
+        }
+
+        private static PlayerStatusUpdate[] StatusUpdates()
+        {
+            var random = new Random();
+            return new []
+            {
+                PlayerStatusUpdate(PlayerStatuses.Available, PlayerStatuses.Injured, random.Next(0,10)),
+                PlayerStatusUpdate(null, PlayerStatuses.Injured, random.Next(0,10)),
+                PlayerStatusUpdate(null, PlayerStatuses.Available, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Available, PlayerStatuses.Injured, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Available, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Injured, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Injured, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Suspended, PlayerStatuses.Suspended, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Suspended, PlayerStatuses.Doubtful, random.Next(0,10)),
+            };
+        }
+
+        private static PlayerStatusUpdate PlayerStatusUpdate(string fromStatus, string toStatus, int rando)
+        {
+            return new PlayerStatusUpdate
+            {
+                PlayerWebName = $"{fromStatus}-{toStatus}",
+                PlayerFirstName = "Jonzo",
+                PlayerSecondName = "Jizzler",
+                News = $"Quacked his {rando} toe!",
+                TeamName = "FICTIVE FC",
+                FromStatus = fromStatus,
+                ToStatus = toStatus
+            };
         }
 
         private IEnumerable<FixtureEvents> CreateDummyEvents(ICollection<Team> teams, ICollection<Player> players)

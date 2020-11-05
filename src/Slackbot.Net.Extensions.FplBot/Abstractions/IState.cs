@@ -12,5 +12,6 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Task Refresh(int gameweek);
         event Func<int,IEnumerable<FixtureEvents>, Task> OnNewFixtureEvents;
         event Func<IEnumerable<PriceChange>, Task> OnPriceChanges;
+        event Func<IEnumerable<PlayerStatusUpdate>, Task> OnStatusUpdates;
     }
 }    

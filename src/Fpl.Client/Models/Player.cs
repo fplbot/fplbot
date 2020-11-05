@@ -174,5 +174,15 @@ namespace Fpl.Client.Models
 
         [JsonProperty("team")]
         public int TeamId { get; set; }
-    }          
+    }
+
+    public static class PlayerStatuses
+    {
+        public const string Available = "a";
+        public const string Unavailable = "u";
+        public const string Injured = "i";
+        public const string NotInSquad = "n";
+        public const string Suspended = "s";
+        public const string Doubtful = "d";
+    }
 }
