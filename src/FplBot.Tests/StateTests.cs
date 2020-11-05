@@ -77,6 +77,24 @@ namespace FplBot.Tests
             await state.Refresh(1);
             Assert.True(priceChangeEventEmitted);
         }
+        
+        [Fact]
+        public async Task WithInjuryUpdate()
+        {
+            var state = CreateNewInjuryScenario();
+            var statusUpdateEmitted = false;
+            state.OnStatusUpdates += statusUpdates =>
+            {
+                statusUpdateEmitted = true;
+                Assert.Single(statusUpdates);
+                var statusUpdate = statusUpdates.First();
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(statusUpdateEmitted);
+        }
 
         private static IState CreateAllMockState()
         {
@@ -109,6 +127,31 @@ namespace FplBot.Tests
             return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
         }
         
+        private static IState CreateNewInjuryScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        {
+            var playerClient = A.Fake<IPlayerClient>();
+            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Available)
+            }).Once().Then.Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
+            });
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+            A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
+                {
+                    TestBuilder.AwayTeamGoal(888, 1)
+                }).Once()
+                .Then.Returns(
+                    new List<Fixture>
+                    {
+                        TestBuilder.AwayTeamGoal(888, 2)
+                    });
+            
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+        }
+
         private static IState CreatePriceIncreaseScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
             var playerClient = A.Fake<IPlayerClient>();

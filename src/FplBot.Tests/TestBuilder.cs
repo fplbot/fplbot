@@ -130,6 +130,12 @@ namespace FplBot.Tests
             player.CostChangeEvent = cost;
             return player;
         }
+
+        public static Player WithStatus(this Player player, string playerStatus)
+        {
+            player.Status = playerStatus;
+            return player;
+        }
         
         public static Gameweek OlderGameweek(int id)
         {

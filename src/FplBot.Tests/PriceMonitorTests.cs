@@ -14,7 +14,7 @@ namespace FplBot.Tests
             var before = new List<Player>{ };
             var after = new List<Player>{ };
             
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
             
             Assert.Empty(priceChanges);
         }
@@ -25,7 +25,7 @@ namespace FplBot.Tests
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
 
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
             
             Assert.Empty(priceChanges);
         }
@@ -36,7 +36,7 @@ namespace FplBot.Tests
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
             
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
 
             Assert.Single(priceChanges);
             Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().PlayerSecondName);
@@ -48,7 +48,7 @@ namespace FplBot.Tests
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
             
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
             
             Assert.Empty(priceChanges);
         }
@@ -63,7 +63,7 @@ namespace FplBot.Tests
                 TestBuilder.OtherPlayer().WithCostChangeEvent(1)
             };
 
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
 
             Assert.Single(priceChanges);
             Assert.Equal(TestBuilder.OtherPlayer().SecondName, priceChanges.First().PlayerSecondName);
@@ -83,7 +83,7 @@ namespace FplBot.Tests
                 TestBuilder.Player().WithCostChangeEvent(1)
             };
 
-            var priceChanges = PriceChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
 
             Assert.Empty(priceChanges);
         }

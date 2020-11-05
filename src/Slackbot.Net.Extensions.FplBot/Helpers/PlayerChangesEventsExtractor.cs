@@ -6,7 +6,7 @@ using Slackbot.Net.Extensions.FplBot.PriceMonitoring;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    internal class PriceChangesEventsExtractor
+    internal class PlayerChangesEventsExtractor
     {
         public static IEnumerable<PriceChange> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
@@ -21,6 +21,26 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 CostChangeEvent = p.CostChangeEvent,
                 TeamName = teams.FirstOrDefault(t => t.Code == p.TeamCode)?.Name
             });
+        }
+        
+        public static IEnumerable<PlayerStatusUpdate> GetStatusChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        {
+            var playersWithNewStatus = after.Except(players, new StatusComparer()).ToList();
+            var updates = new List<PlayerStatusUpdate>();
+            foreach (var player in playersWithNewStatus)
+            {
+                updates.Add(new PlayerStatusUpdate
+                {
+                    PlayerWebName = player.WebName,
+                    PlayerFirstName = player.FirstName,
+                    PlayerSecondName = player.SecondName,
+                    From = players.FirstOrDefault(p => p.Id == player.Id)?.Status,
+                    TeamName = teams.FirstOrDefault(t => t.Code == player.TeamCode)?.Name,
+                    To = player.Status
+                });
+            }
+
+            return updates;
         }
     }
 }
