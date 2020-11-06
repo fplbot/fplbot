@@ -115,6 +115,23 @@ namespace FplBot.Tests
             await state.Refresh(1);
             Assert.True(statusUpdateEmitted);
         }
+        
+        [Fact]
+        public async Task WithChangeInDoubtfulnessEmitsEvent()
+        {
+            var state = CreateChangeInDoubtfulnessScenario();
+            var statusUpdateEmitted = false;
+            state.OnStatusUpdates += statusUpdates =>
+            {
+                statusUpdateEmitted = true;
+                Assert.Single(statusUpdates);
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(statusUpdateEmitted);
+        }
 
         private static IState CreateAllMockState()
         {
@@ -156,6 +173,22 @@ namespace FplBot.Tests
             }).Once().Then.Returns(new List<Player>
             {
                 TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
+            });
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+        }
+        
+        private static IState CreateChangeInDoubtfulnessScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        {
+            var playerClient = A.Fake<IPlayerClient>();
+            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 75% chance of playing"),
+            }).Once().Then.Returns(new List<Player>
+            {
+                TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 25% chance of playing")
             });
             
             var fixtureClient = A.Fake<IFixtureClient>();

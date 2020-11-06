@@ -299,7 +299,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         chance += $"[{chanceOfPlayingChange}%]";
                     }
                          
-                    sb.Append($"• {gUpdate.PlayerWebName} ({gUpdate.TeamName}). _{gUpdate.ToNews}_ {chance}\n");
+                    sb.Append($"• {gUpdate.PlayerWebName} ({gUpdate.TeamName}). {gUpdate.ToNews} {chance}\n");
                 }
             }
             return sb.ToString();

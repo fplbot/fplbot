@@ -137,6 +137,12 @@ namespace FplBot.Tests
             return player;
         }
         
+        public static Player WithNews(this Player player, string news)
+        {
+            player.News = news;
+            return player;
+        }
+        
         public static Gameweek OlderGameweek(int id)
         {
             return new Gameweek

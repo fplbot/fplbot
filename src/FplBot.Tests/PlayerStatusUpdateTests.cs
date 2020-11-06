@@ -2,11 +2,19 @@ using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace FplBot.Tests
 {
     public class PlayerStatusUpdateTests
     {
+        private readonly ITestOutputHelper _helper;
+
+        public PlayerStatusUpdateTests(ITestOutputHelper helper)
+        {
+            _helper = helper;
+        }
+        
         [Theory]
         [InlineData("50% chance of playing", "75% chance of playing", "Increased chance of playing")]
         [InlineData("75% chance of playing", "50% chance of playing", "Decreased chance of playing")]
@@ -64,6 +72,44 @@ namespace FplBot.Tests
                 ToStatus = "dontCare", 
             });
             Assert.Contains("🦇", change);
+        }
+
+        [Fact]
+        public void MultipleTests()
+        {
+            var formatted = Formatter.FormatStatusUpdates(new[]
+            {
+                Doubtful(25, 50),
+                Doubtful(75,25),
+                Available()
+            });
+            _helper.WriteLine(formatted);
+        }
+
+        private PlayerStatusUpdate Doubtful(int from = 25, int to = 50)
+        {
+            return new PlayerStatusUpdate
+            {
+                PlayerWebName = $"Dougie Doubter {to}",
+                FromNews = $"Knock - {from}% chance of playing",
+                FromStatus = PlayerStatuses.Doubtful,
+                ToNews = $"Knock - {to}% chance of playing",
+                ToStatus = PlayerStatuses.Doubtful,
+                TeamName = "TestTeam"
+            };
+        }
+        
+        private PlayerStatusUpdate Available()
+        {
+            return new PlayerStatusUpdate
+            {
+                PlayerWebName = "Able Availbleu",
+                FromNews = $"Knock - 75% chance of playing",
+                FromStatus = PlayerStatuses.Doubtful,
+                ToNews = "",
+                ToStatus = PlayerStatuses.Available,
+                TeamName = "TestTeam"
+            };
         }
     }
 }

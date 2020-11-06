@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.PriceMonitoring
             if (x == null || y == null)
                 return false;
             
-            return x.Id == y.Id && x.Status == y.Status;
+            return x.Id == y.Id && x.Status == y.Status && x.News == y.News;
         }
 
         public int GetHashCode(Player obj)
