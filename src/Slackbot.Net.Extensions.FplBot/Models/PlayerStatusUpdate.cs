@@ -8,10 +8,13 @@ namespace Slackbot.Net.Extensions.FplBot.Models
         public string PlayerSecondName { get; set; }
         public string PlayerWebName { get; set; }
         
-        public string News { get; set; }
         public string TeamName { get; set; }
         public string FromStatus { get; set; }
+        public string FromNews { get; set; }
+        
         public string ToStatus { get; set; }
+        public string ToNews { get; set; }
+
 
         public void Deconstruct(out string fromStatus, out string toStatus)
         {

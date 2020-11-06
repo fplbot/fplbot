@@ -77,29 +77,33 @@ namespace FplBot.WebApi.Controllers
             var random = new Random();
             return new []
             {
-                PlayerStatusUpdate(PlayerStatuses.Available, PlayerStatuses.Injured, random.Next(0,10)),
-                PlayerStatusUpdate(null, PlayerStatuses.Injured, random.Next(0,10)),
-                PlayerStatusUpdate(null, PlayerStatuses.Available, random.Next(0,10)),
-                PlayerStatusUpdate(PlayerStatuses.Available, PlayerStatuses.Injured, random.Next(0,10)),
-                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Available, random.Next(0,10)),
-                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Injured, random.Next(0,10)),
-                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Injured, random.Next(0,10)),
-                PlayerStatusUpdate(PlayerStatuses.Suspended, PlayerStatuses.Suspended, random.Next(0,10)),
-                PlayerStatusUpdate(PlayerStatuses.Suspended, PlayerStatuses.Doubtful, random.Next(0,10)),
+                PlayerStatusUpdate(PlayerStatuses.Available, PlayerStatuses.Injured, random.Next(0,100)),
+                PlayerStatusUpdate(null, PlayerStatuses.Injured, random.Next(0,100)),
+                PlayerStatusUpdate(null, PlayerStatuses.Available, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Available, PlayerStatuses.Injured, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Available, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Injured, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Injured, PlayerStatuses.Injured, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Suspended, PlayerStatuses.Suspended, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Suspended, PlayerStatuses.Doubtful, random.Next(0,100)),
+                PlayerStatusUpdate(PlayerStatuses.Doubtful, PlayerStatuses.Doubtful, random.Next(0,100), "Knock - 75% chance of playing"),
+                PlayerStatusUpdate(PlayerStatuses.Doubtful, PlayerStatuses.Doubtful, random.Next(0,100), "Knock - 25% chance of playing"),
+                PlayerStatusUpdate(PlayerStatuses.Doubtful, PlayerStatuses.Doubtful, random.Next(0,100), "self-isolating from the china virus"),
             };
         }
 
-        private static PlayerStatusUpdate PlayerStatusUpdate(string fromStatus, string toStatus, int rando)
+        private static PlayerStatusUpdate PlayerStatusUpdate(string fromStatus, string toStatus, int rando, string updatedDoubtfulNews = null)
         {
             return new PlayerStatusUpdate
             {
                 PlayerWebName = $"{fromStatus}-{toStatus}",
                 PlayerFirstName = "Jonzo",
                 PlayerSecondName = "Jizzler",
-                News = $"Quacked his {rando} toe!",
                 TeamName = "FICTIVE FC",
                 FromStatus = fromStatus,
-                ToStatus = toStatus
+                FromNews = $"Quacked his toe. 55% chance of playing",
+                ToStatus = toStatus,
+                ToNews = updatedDoubtfulNews ?? $"Quacked his other {rando} toe. 55% chance of playing",
             };
         }
 
