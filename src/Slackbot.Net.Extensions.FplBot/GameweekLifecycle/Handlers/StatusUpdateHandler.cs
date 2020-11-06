@@ -11,7 +11,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
 
-
         public StatusUpdateHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo)
         {
             _publisher = publisher;
@@ -20,15 +19,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         
         public async Task OnStatusUpdates(IEnumerable<PlayerStatusUpdate> statusUpdates)
         {
-            var slackTeams = await _slackTeamRepo.GetAllTeams();
-            foreach (var slackTeam in slackTeams)
-            {
-                if (slackTeam.TeamId == "T0A9QSU83")
-                {
-                    var formatted = Formatter.FormatStatusUpdates(statusUpdates);
-                    await _publisher.PublishToWorkspace(slackTeam.TeamId, "#johntest", formatted);
-                }
-            }        
+            var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
+            var formatted = Formatter.FormatStatusUpdates(statusUpdates);
+            await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
         }
     }
 }

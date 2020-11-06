@@ -29,15 +29,17 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var updates = new List<PlayerStatusUpdate>();
             foreach (var player in playersWithNewStatus)
             {
+                var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
                 updates.Add(new PlayerStatusUpdate
                 {
                     PlayerWebName = player.WebName,
                     PlayerFirstName = player.FirstName,
                     PlayerSecondName = player.SecondName,
-                    News = player.News,
-                    FromStatus = players.FirstOrDefault(p => p.Id == player.Id)?.Status,
                     TeamName = teams.FirstOrDefault(t => t.Code == player.TeamCode)?.Name,
-                    ToStatus = player.Status
+                    FromStatus = fromPlayer?.Status,
+                    FromNews = fromPlayer?.News,
+                    ToStatus = player.Status,
+                    ToNews = player.News,
                 });
             }
 
