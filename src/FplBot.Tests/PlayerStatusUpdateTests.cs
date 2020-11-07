@@ -49,6 +49,7 @@ namespace FplBot.Tests
         [InlineData(PlayerStatuses.Suspended, PlayerStatuses.Available, "Available")]
         [InlineData(PlayerStatuses.Unavailable, PlayerStatuses.Available, "Available")]
         [InlineData(PlayerStatuses.NotInSquad, PlayerStatuses.Available, "Available")]
+        [InlineData(PlayerStatuses.Available, PlayerStatuses.Doubtful, "Doubtful")]
         public void TestSuite(string fromStatus, string toStatus, string expected)
         {
             var change = Formatter.Change(new PlayerStatusUpdate
@@ -59,6 +60,43 @@ namespace FplBot.Tests
                 ToStatus = toStatus, 
             });
             Assert.Contains(expected, change);
+        }
+
+        [Theory]
+        [InlineData(null, null, null)]
+        [InlineData(null, "50% chance of playing", "News update")]
+        public void AllKindsOfDoubtful(string fromNews, string toNews, string expected)
+        {
+            var change = Formatter.Change(new PlayerStatusUpdate
+            {
+                FromNews = fromNews,
+                FromStatus = PlayerStatuses.Doubtful,
+                ToNews = toNews,
+                ToStatus = PlayerStatuses.Doubtful 
+            });
+            
+            if (expected == null)
+            {
+                Assert.Null(change);
+            }
+            else
+            {
+                Assert.Contains(expected, change);
+            }
+            
+        }
+
+        [Fact]
+        public void ErronousUpdateHandling()
+        {
+            var change = Formatter.Change(new PlayerStatusUpdate
+            {
+                FromNews = null,
+                FromStatus = null,
+                ToNews = null,
+                ToStatus = null
+            });
+            Assert.Null(change);
         }
         
         [Fact]

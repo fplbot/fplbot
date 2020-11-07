@@ -295,8 +295,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                     var chanceOfPlayingChange = ChanceOfPlayingChange(gUpdate);
                     if (chanceOfPlayingChange.HasValue && chanceOfPlayingChange != 0)
                     {
-                        chance += chanceOfPlayingChange > 0 ? $"+" : "";
-                        chance += $"[{chanceOfPlayingChange}%]";
+                        chance += chanceOfPlayingChange > 0 ? $"[+" : "[";
+                        chance += $"{chanceOfPlayingChange}%]";
                     }
                          
                     sb.Append($"• {gUpdate.PlayerWebName} ({gUpdate.TeamName}). {gUpdate.ToNews} {chance}\n");
@@ -311,7 +311,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             {
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) > 0 => "📈️ Increased chance of playing",
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) < 0 => "📉️ Decreased chance of playing",
-                (_, _) s when s.ToNews.Contains("Self-isolating",StringComparison.InvariantCultureIgnoreCase)=> "🦇 COVID-19 🦇",
+                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when NewsAdded(s) => "ℹ️ News update", 
+                (_, _) s when !string.IsNullOrEmpty(s.ToNews) && s.ToNews.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
                 (_, _) s when s.FromStatus == s.ToStatus => null,
                 (_, _) s when s.FromStatus == null => "👋 New player! 👋",
                 (_, PlayerStatuses.Injured) => "🤕 Injured 🤕",
@@ -319,21 +320,29 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 (_, PlayerStatuses.Suspended) => "❌ Suspended ❌",
                 (_, PlayerStatuses.Unavailable) => "👀 Unavailable 👀",
                 (_, PlayerStatuses.NotInSquad) => "😐 Not in squad 😐",
-                (_, PlayerStatuses.Available) => "✅ ️Available ✅",
+                (_, PlayerStatuses.Available) => "✅ Available ✅",
                 (_, _) => $"⁉️"
             };
         }
-        
+
+        private static bool NewsAdded(PlayerStatusUpdate playerStatusUpdate)
+        {
+            return playerStatusUpdate.FromNews == null && playerStatusUpdate.ToNews != null;
+        }
+
         private const string ChanceOfPlayingPattern = "(\\d+)\\% chance of playing";
         private static int? ChanceOfPlayingChange(PlayerStatusUpdate playerStatusUpdate)
         {
-            var fromChanceMatch = Regex.Matches(playerStatusUpdate.FromNews, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
-            var toChanceMatch = Regex.Matches(playerStatusUpdate.ToNews, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
-            if (fromChanceMatch.Any() && toChanceMatch.Any())
+            if (playerStatusUpdate.FromNews != null && playerStatusUpdate.ToNews != null)
             {
-                var fromChance = int.Parse(fromChanceMatch.First().Groups[1].Value);
-                var toChance = int.Parse(toChanceMatch.First().Groups[1].Value);
-                return toChance - fromChance;
+                var fromChanceMatch = Regex.Matches(playerStatusUpdate.FromNews, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                var toChanceMatch = Regex.Matches(playerStatusUpdate.ToNews, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                if (fromChanceMatch.Any() && toChanceMatch.Any())
+                {
+                    var fromChance = int.Parse(fromChanceMatch.First().Groups[1].Value);
+                    var toChance = int.Parse(toChanceMatch.First().Groups[1].Value);
+                    return toChance - fromChance;
+                }
             }
             return null;
         }
