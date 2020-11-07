@@ -319,7 +319,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 (_, PlayerStatuses.Suspended) => "❌ Suspended ❌",
                 (_, PlayerStatuses.Unavailable) => "👀 Unavailable 👀",
                 (_, PlayerStatuses.NotInSquad) => "😐 Not in squad 😐",
-                (_, PlayerStatuses.Available) => "🎉 ️Available 🎉",
+                (_, PlayerStatuses.Available) => "✅ ️Available ✅",
                 (_, _) => $"⁉️"
             };
         }
