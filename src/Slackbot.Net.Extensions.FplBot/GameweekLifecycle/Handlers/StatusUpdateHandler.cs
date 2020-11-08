@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 var filtered = statusUpdates.Where(IsRelevant);
                 var formatted = Formatter.FormatStatusUpdates(filtered);
-                _logger.LogInformation(formatted);
+                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);    
             }
         }
 
