@@ -32,14 +32,9 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
                 updates.Add(new PlayerStatusUpdate
                 {
-                    PlayerWebName = player.WebName,
-                    PlayerFirstName = player.FirstName,
-                    PlayerSecondName = player.SecondName,
+                    FromPlayer = fromPlayer,
+                    ToPlayer = player,
                     TeamName = teams.FirstOrDefault(t => t.Code == player.TeamCode)?.Name,
-                    FromStatus = fromPlayer?.Status,
-                    FromNews = fromPlayer?.News,
-                    ToStatus = player.Status,
-                    ToNews = player.News,
                 });
             }
 

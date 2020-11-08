@@ -8,9 +8,6 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.SlackClients.Http;
-using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit;
 
 namespace FplBot.Tests
@@ -106,8 +103,8 @@ namespace FplBot.Tests
                 statusUpdateEmitted = true;
                 Assert.Single(statusUpdates);
                 var statusUpdate = statusUpdates.First();
-                Assert.Equal(statusUpdate.PlayerSecondName, TestBuilder.OtherPlayer().SecondName);
-                Assert.Null(statusUpdate.FromStatus);
+                Assert.Equal(statusUpdate.ToPlayer.SecondName, TestBuilder.OtherPlayer().SecondName);
+                Assert.Null(statusUpdate.FromPlayer);
                 return Task.CompletedTask;
             };
             

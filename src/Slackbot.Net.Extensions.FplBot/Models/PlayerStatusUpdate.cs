@@ -4,22 +4,14 @@ namespace Slackbot.Net.Extensions.FplBot.Models
 {
     public class PlayerStatusUpdate
     {
-        public string PlayerFirstName { get; set; }
-        public string PlayerSecondName { get; set; }
-        public string PlayerWebName { get; set; }
-        
+        public Player FromPlayer { get; set; }
+        public Player ToPlayer { get; set; }
         public string TeamName { get; set; }
-        public string FromStatus { get; set; }
-        public string FromNews { get; set; }
-        
-        public string ToStatus { get; set; }
-        public string ToNews { get; set; }
-
 
         public void Deconstruct(out string fromStatus, out string toStatus)
         {
-            fromStatus = FromStatus;
-            toStatus = ToStatus;
+            fromStatus = FromPlayer?.Status;
+            toStatus = ToPlayer?.Status;
         }
     }
 }
