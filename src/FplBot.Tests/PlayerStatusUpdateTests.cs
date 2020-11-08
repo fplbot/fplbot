@@ -22,10 +22,16 @@ namespace FplBot.Tests
         {
             var change = Formatter.Change(new PlayerStatusUpdate
             {
-                FromNews = fromNews,
-                FromStatus = PlayerStatuses.Doubtful,
-                ToNews = toNews,
-                ToStatus = PlayerStatuses.Doubtful, 
+                FromPlayer = new Player
+                {
+                    News = fromNews,
+                    Status = PlayerStatuses.Doubtful,
+                },
+                ToPlayer = new Player
+                {
+                    News = toNews,
+                    Status = PlayerStatuses.Doubtful    
+                }
             });
             Assert.Contains(expected, change);
         }
@@ -35,10 +41,16 @@ namespace FplBot.Tests
         {
             var change = Formatter.Change(new PlayerStatusUpdate
             {
-                FromNews = "some string not containing percentage of playing",
-                FromStatus = PlayerStatuses.Doubtful,
-                ToNews = "some string not containing percentage of playing",
-                ToStatus = PlayerStatuses.Doubtful, 
+                FromPlayer = new Player
+                {
+                    News = "some string not containing percentage of playing",
+                    Status = PlayerStatuses.Doubtful,    
+                },
+                ToPlayer = new Player
+                {
+                    News = "some string not containing percentage of playing",
+                    Status = PlayerStatuses.Doubtful, 
+                }
             });
             Assert.Null(change);
         }
@@ -54,10 +66,16 @@ namespace FplBot.Tests
         {
             var change = Formatter.Change(new PlayerStatusUpdate
             {
-                FromNews = "dontcare",
-                FromStatus = fromStatus,
-                ToNews = "dontcare",
-                ToStatus = toStatus, 
+                FromPlayer = new Player
+                {
+                    News = "dontcare",
+                    Status = fromStatus,    
+                },
+                ToPlayer = new Player
+                {
+                    News = "dontcare",
+                    Status = toStatus   
+                }
             });
             Assert.Contains(expected, change);
         }
@@ -69,10 +87,16 @@ namespace FplBot.Tests
         {
             var change = Formatter.Change(new PlayerStatusUpdate
             {
-                FromNews = fromNews,
-                FromStatus = PlayerStatuses.Doubtful,
-                ToNews = toNews,
-                ToStatus = PlayerStatuses.Doubtful 
+                FromPlayer = new Player
+                {
+                    News = fromNews,
+                    Status = PlayerStatuses.Doubtful,
+                },
+                ToPlayer = new Player
+                {
+                    News = toNews,
+                    Status = PlayerStatuses.Doubtful,    
+                }
             });
             
             if (expected == null)
@@ -91,10 +115,8 @@ namespace FplBot.Tests
         {
             var change = Formatter.Change(new PlayerStatusUpdate
             {
-                FromNews = null,
-                FromStatus = null,
-                ToNews = null,
-                ToStatus = null
+                FromPlayer = null,
+                ToPlayer = null
             });
             Assert.Null(change);
         }
@@ -104,10 +126,16 @@ namespace FplBot.Tests
         {
             var change = Formatter.Change(new PlayerStatusUpdate
             {
-                FromNews = "dontcare",
-                FromStatus = "dontCare",
-                ToNews = "Self-isolating",
-                ToStatus = "dontCare", 
+                FromPlayer = new Player
+                {
+                    News = "dontcare",
+                    Status = "dontCare",
+                },
+                ToPlayer = new Player
+                {
+                    News = "Self-isolating",
+                    Status = "dontCare",    
+                }
             });
             Assert.Contains("🦇", change);
         }
@@ -128,11 +156,18 @@ namespace FplBot.Tests
         {
             return new PlayerStatusUpdate
             {
-                PlayerWebName = $"Dougie Doubter {to}",
-                FromNews = $"Knock - {from}% chance of playing",
-                FromStatus = PlayerStatuses.Doubtful,
-                ToNews = $"Knock - {to}% chance of playing",
-                ToStatus = PlayerStatuses.Doubtful,
+                FromPlayer = new Player
+                {
+                    WebName = $"Dougie Doubter {from}",
+                    News = $"Knock - {from}% chance of playing",
+                    Status = PlayerStatuses.Doubtful,
+                },
+                ToPlayer = new Player
+                {
+                    WebName = $"Dougie Doubter {to}",
+                    News = $"Knock - {to}% chance of playing",
+                    Status = PlayerStatuses.Doubtful,
+                },
                 TeamName = "TestTeam"
             };
         }
@@ -141,11 +176,18 @@ namespace FplBot.Tests
         {
             return new PlayerStatusUpdate
             {
-                PlayerWebName = "Able Availbleu",
-                FromNews = $"Knock - 75% chance of playing",
-                FromStatus = PlayerStatuses.Doubtful,
-                ToNews = "",
-                ToStatus = PlayerStatuses.Available,
+                FromPlayer = new Player
+                {
+                    WebName = "Able Availbleu",
+                    News = $"Knock - 75% chance of playing",
+                    Status = PlayerStatuses.Doubtful,    
+                },
+                ToPlayer = new Player
+                {
+                    WebName = "Able Availbleu",
+                    News = "",
+                    Status = PlayerStatuses.Available,    
+                },
                 TeamName = "TestTeam"
             };
         }

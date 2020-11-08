@@ -96,14 +96,23 @@ namespace FplBot.WebApi.Controllers
         {
             return new PlayerStatusUpdate
             {
-                PlayerWebName = $"{fromStatus}-{toStatus}",
-                PlayerFirstName = "Jonzo",
-                PlayerSecondName = "Jizzler",
+                FromPlayer = new Player
+                {
+                    WebName = $"{fromStatus}-{toStatus}",
+                    FirstName = "Jonzo",
+                    SecondName = "Jizzler",
+                    Status = fromStatus,
+                    News = $"Quacked his toe. 55% chance of playing",
+                },
                 TeamName = "FICTIVE FC",
-                FromStatus = fromStatus,
-                FromNews = $"Quacked his toe. 55% chance of playing",
-                ToStatus = toStatus,
-                ToNews = updatedDoubtfulNews ?? $"Quacked his other {rando} toe. 55% chance of playing",
+                ToPlayer = new Player
+                {
+                    WebName = $"{fromStatus}-{toStatus}",
+                    FirstName = "Jonzo",
+                    SecondName = "Jizzler",
+                    Status = toStatus,
+                    News = updatedDoubtfulNews ?? $"Quacked his other {rando} toe. 55% chance of playing",  
+                }
             };
         }
 

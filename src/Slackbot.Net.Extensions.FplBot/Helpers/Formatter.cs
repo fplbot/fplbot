@@ -299,7 +299,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         chance += $"{chanceOfPlayingChange}%]";
                     }
                          
-                    sb.Append($"• {gUpdate.PlayerWebName} ({gUpdate.TeamName}). {gUpdate.ToNews} {chance}\n");
+                    sb.Append($"• {gUpdate.ToPlayer.WebName} ({gUpdate.TeamName}). {gUpdate.ToPlayer.News} {chance}\n");
                 }
             }
             return sb.ToString();
@@ -309,34 +309,37 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             return update switch
             {
+                (_, _) s when s.FromPlayer == null && s.ToPlayer == null => null,
+                (_, _) s when s.FromPlayer == null && s.ToPlayer == null => null,
+                (_, _) s when s.FromPlayer.News == null && s.ToPlayer.News == null => null,
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) > 0 => "📈️ Increased chance of playing",
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) < 0 => "📉️ Decreased chance of playing",
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when NewsAdded(s) => "ℹ️ News update", 
-                (_, _) s when !string.IsNullOrEmpty(s.ToNews) && s.ToNews.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
-                (_, _) s when s.FromStatus == s.ToStatus => null,
-                (_, _) s when s.FromStatus == null => "👋 New player! 👋",
-                (_, PlayerStatuses.Injured) => "🤕 Injured 🤕",
-                (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful ⚠️",
-                (_, PlayerStatuses.Suspended) => "❌ Suspended ❌",
-                (_, PlayerStatuses.Unavailable) => "👀 Unavailable 👀",
-                (_, PlayerStatuses.NotInSquad) => "😐 Not in squad 😐",
-                (_, PlayerStatuses.Available) => "✅ Available ✅",
+                (_, _) s when s.ToPlayer.News.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
+                (_, _) s when s.FromPlayer.Status == s.ToPlayer.Status => null,
+                (_, _) s when s.FromPlayer == null => "👋 New player!",
+                (_, PlayerStatuses.Injured) => "🤕 Injured",
+                (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful️",
+                (_, PlayerStatuses.Suspended) => "❌ Suspended",
+                (_, PlayerStatuses.Unavailable) => "👀 Unavailable",
+                (_, PlayerStatuses.NotInSquad) => "😐 Not in squad",
+                (_, PlayerStatuses.Available) => "✅ Available",
                 (_, _) => $"⁉️"
             };
         }
 
         private static bool NewsAdded(PlayerStatusUpdate playerStatusUpdate)
         {
-            return playerStatusUpdate.FromNews == null && playerStatusUpdate.ToNews != null;
+            return playerStatusUpdate.FromPlayer.News == null && playerStatusUpdate.ToPlayer.News != null;
         }
 
         private const string ChanceOfPlayingPattern = "(\\d+)\\% chance of playing";
         private static int? ChanceOfPlayingChange(PlayerStatusUpdate playerStatusUpdate)
         {
-            if (playerStatusUpdate.FromNews != null && playerStatusUpdate.ToNews != null)
+            if (playerStatusUpdate.FromPlayer?.News != null && playerStatusUpdate.ToPlayer.News != null)
             {
-                var fromChanceMatch = Regex.Matches(playerStatusUpdate.FromNews, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
-                var toChanceMatch = Regex.Matches(playerStatusUpdate.ToNews, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                var fromChanceMatch = Regex.Matches(playerStatusUpdate.FromPlayer.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                var toChanceMatch = Regex.Matches(playerStatusUpdate.ToPlayer.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
                 if (fromChanceMatch.Any() && toChanceMatch.Any())
                 {
                     var fromChance = int.Parse(fromChanceMatch.First().Groups[1].Value);
