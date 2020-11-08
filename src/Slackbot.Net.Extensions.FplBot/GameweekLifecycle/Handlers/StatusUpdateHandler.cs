@@ -31,9 +31,20 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             }
             else
             {
-                var formatted = Formatter.FormatStatusUpdates(statusUpdates);
+                var filtered = statusUpdates.Where(IsRelevant);
+                var formatted = Formatter.FormatStatusUpdates(filtered);
                 _logger.LogInformation(formatted);
             }
+        }
+
+        private bool IsRelevant(PlayerStatusUpdate update)
+        {
+            if (update.ToPlayer?.OwnershipPercentage > 1)
+            {
+                return true;
+            }
+
+            return update.ToPlayer?.NowCost > 50;
         }
     }
 }
