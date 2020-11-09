@@ -39,12 +39,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         private bool IsRelevant(PlayerStatusUpdate update)
         {
-            if (update.ToPlayer?.OwnershipPercentage > 1)
+            if (update.ToPlayer?.OwnershipPercentage > 2)
             {
                 return true;
             }
 
-            return update.ToPlayer?.NowCost > 50;
+            return update.ToPlayer?.NowCost > 55;
         }
     }
 }
