@@ -13,21 +13,17 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     public class State : IState
     {
         private readonly IFixtureClient _fixtureClient;
-        private readonly IPlayerClient _playerClient;
-        private readonly ITeamsClient _teamsClient;
+        private readonly IGlobalSettingsClient _settingsClient;
 
         private ICollection<Player> _players;
         private ICollection<Fixture> _currentGameweekFixtures;
         private ICollection<Team> _teams;
         private int? _currentGameweek;
 
-        public State(IFixtureClient fixtureClient, 
-            IPlayerClient playerClient, 
-            ITeamsClient teamsClient)
+        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient)
         {
             _fixtureClient = fixtureClient;
-            _playerClient = playerClient;
-            _teamsClient = teamsClient;
+            _settingsClient = settingsClient;
 
             _currentGameweekFixtures = new List<Fixture>();
             _players = new List<Player>();
@@ -38,8 +34,9 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         {
             _currentGameweek = newGameweek;
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
-            _players = await _playerClient.GetAllPlayers();
-            _teams = await _teamsClient.GetAllTeams();
+            var settings = await _settingsClient.GetGlobalSettings();
+            _players = settings.Players;
+            _teams = settings.Teams;
         }
 
         public async Task Refresh(int currentGameweek)
@@ -48,7 +45,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures);
             _currentGameweekFixtures = latest;
 
-            var after = await _playerClient.GetAllPlayers();
+            var globalSettings = await _settingsClient.GetGlobalSettings();
+            var after = globalSettings.Players;
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
             var statusUpdates = PlayerChangesEventsExtractor.GetStatusChanges(after, _players, _teams);
             _players = after;

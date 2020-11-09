@@ -133,17 +133,25 @@ namespace FplBot.Tests
         private static IState CreateAllMockState()
         {
             return new State(A.Fake<IFixtureClient>(),
-                A.Fake<IPlayerClient>(),
-                A.Fake<ITeamsClient>());
+                A.Fake<IGlobalSettingsClient>());
         }
         
         private static IState CreateGoalScoredScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
-            var playerClient = A.Fake<IPlayerClient>();
-            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
-            {
-                TestBuilder.Player()
-            });
+            var playerClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+                new GlobalSettings 
+                {
+                    Teams =  new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player()
+                    }
+                });
             
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
@@ -161,62 +169,129 @@ namespace FplBot.Tests
         
         private static IState CreateNewInjuryScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
-            var playerClient = A.Fake<IPlayerClient>();
-            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
-            {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Available)
-            }).Once().Then.Returns(new List<Player>
-            {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
+            var settingsClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
+                { 
+                    Teams = new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player().WithStatus(PlayerStatuses.Available)
+                    }
+                }
+            ).Once().Then.Returns(new GlobalSettings 
+            { 
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
+                }
             });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, settingsClient);
         }
         
         private static IState CreateChangeInDoubtfulnessScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
-            var playerClient = A.Fake<IPlayerClient>();
-            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
-            {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 75% chance of playing"),
-            }).Once().Then.Returns(new List<Player>
-            {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 25% chance of playing")
+            var settingsClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
+                { 
+                    Teams = new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 75% chance of playing"),
+                    }
+                }
+            ).Once().Then.Returns(new GlobalSettings 
+            { 
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 25% chance of playing")
+                }
             });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, settingsClient);
         }
         
         private static IState CreateNewPlayerScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
-            var playerClient = A.Fake<IPlayerClient>();
-            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
-            {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Available)
-            }).Once().Then.Returns(new List<Player>
-            {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Available),
-                TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)
+            var settingsClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
+                { 
+                    Teams = new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player().WithStatus(PlayerStatuses.Available)
+                    }
+                }
+            ).Once().Then.Returns(new GlobalSettings 
+            { 
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithStatus(PlayerStatuses.Available),
+                    TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)                }
             });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, settingsClient);
         }
 
         private static IState CreatePriceIncreaseScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
         {
-            var playerClient = A.Fake<IPlayerClient>();
-            A.CallTo(() => playerClient.GetAllPlayers()).Returns(new List<Player>
-            {
-                TestBuilder.Player()
-            }).Once().Then.Returns(new List<Player>
-            {
-                TestBuilder.Player().WithCostChangeEvent(1)
+            var playerClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(new GlobalSettings 
+            { 
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player()
+                }
+            }
+            ).Once().Then.Returns(new GlobalSettings 
+            { 
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithCostChangeEvent(1)
+                }
             });
             
             var fixtureClient = A.Fake<IFixtureClient>();
@@ -224,7 +299,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
         }
 
-        private static IState CreateBaseScenario(string entryName, string slackUserRealName, string slackUserHandle, IFixtureClient fixtureClient, IPlayerClient playerClient)
+        private static IState CreateBaseScenario(string entryName, string slackUserRealName, string slackUserHandle, IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
         {
             var slackTeamRepository = A.Fake<ISlackTeamRepository>();
             A.CallTo(() => slackTeamRepository.GetAllTeams()).Returns(new List<SlackTeam>
@@ -232,16 +307,7 @@ namespace FplBot.Tests
                 TestBuilder.SlackTeam()
             });
 
-            var teamsClient = A.Fake<ITeamsClient>();
-            A.CallTo(() => teamsClient.GetAllTeams()).Returns(new List<Team>
-            {
-                TestBuilder.HomeTeam(),
-                TestBuilder.AwayTeam()
-            });
-
-            return new State(fixtureClient,
-                playerClient,
-                teamsClient);
+            return new State(fixtureClient, settingsClient);
         }
 
         private static ILogger<State> FakeLogger()

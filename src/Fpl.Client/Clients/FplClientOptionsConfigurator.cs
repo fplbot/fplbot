@@ -37,6 +37,7 @@ namespace Fpl.Client.Clients
                    name is nameof(ILeagueClient) ||
                    name is nameof(ITeamsClient) ||
                    name is nameof(IPlayerClient) ||
+                   name is nameof(IGlobalSettingsClient) ||
                    name is nameof(ITransfersClient);
         }
 

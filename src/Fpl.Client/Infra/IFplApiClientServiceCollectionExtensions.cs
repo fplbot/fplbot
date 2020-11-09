@@ -33,6 +33,7 @@ namespace Fpl.Client.Infra
             services.AddHttpClient<IPlayerClient, PlayerClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<ITeamsClient, TeamsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();
