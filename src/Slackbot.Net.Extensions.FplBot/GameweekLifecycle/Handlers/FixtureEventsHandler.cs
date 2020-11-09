@@ -38,6 +38,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task OnNewFixtureEvents(int currentGameweek, IEnumerable<FixtureEvents> newEvents)
         {
+            _logger.LogInformation("Handling new fixture events");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             var players = await _playerClient.GetAllPlayers();
             var teams = await _teamsClient.GetAllTeams();

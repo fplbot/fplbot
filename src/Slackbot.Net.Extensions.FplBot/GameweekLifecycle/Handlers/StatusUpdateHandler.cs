@@ -23,6 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         
         public async Task OnStatusUpdates(IEnumerable<PlayerStatusUpdate> statusUpdates)
         {
+            _logger.LogInformation("Handling player status updates");
             var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
             if (slackTeam.FplBotSlackChannel == "#fpltest")
             {

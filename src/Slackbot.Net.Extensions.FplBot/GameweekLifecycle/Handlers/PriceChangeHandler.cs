@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -11,15 +12,18 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
+        private readonly ILogger<PriceChangeHandler> _logger;
 
-        public PriceChangeHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo)
+        public PriceChangeHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo, ILogger<PriceChangeHandler> logger)
         {
             _publisher = publisher;
             _slackTeamRepo = slackTeamRepo;
+            _logger = logger;
         }
 
         public async Task OnPriceChanges(IEnumerable<PriceChange> priceChanges)
         {
+            _logger.LogInformation("Handling price updates");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)
             {
