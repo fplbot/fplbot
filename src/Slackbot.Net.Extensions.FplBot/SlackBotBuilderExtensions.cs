@@ -10,7 +10,6 @@ using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.PriceMonitoring;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using Slackbot.Net.SlackClients.Http.Extensions;
 
@@ -21,6 +20,7 @@ namespace Slackbot.Net.Abstractions.Hosting
     {
         public static IServiceCollection AddDistributedFplBot<T>(this IServiceCollection services, IConfiguration config) where T: class, ISlackTeamRepository
         {
+            services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config);
             services.AddSingleton<ISlackTeamRepository, T>();
             services.AddSlackClientBuilder();
