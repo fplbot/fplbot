@@ -19,7 +19,7 @@ namespace FplBot.Tests
         {
             var state = CreateAllMockState();
             var wasCalled = false;
-            state.OnNewFixtureEvents += (ctx, events) =>
+            state.OnNewFixtureEvents += (events) =>
             {
                 Assert.False(true); // should not emit this event on reset
                 wasCalled = true;
@@ -40,12 +40,12 @@ namespace FplBot.Tests
         {
             var state = CreateGoalScoredScenario();
             var newFixtureEventsHappened = false;
-            state.OnNewFixtureEvents += (context,newEvents) =>
+            state.OnNewFixtureEvents += (newEvents) =>
             {
                 newFixtureEventsHappened = true;
-                Assert.NotEmpty(newEvents);
-                Assert.Single(newEvents);
-                var goalEvent = newEvents.First().StatMap[StatType.GoalsScored].First();
+                Assert.NotEmpty(newEvents.Events);
+                Assert.Single(newEvents.Events);
+                var goalEvent = newEvents.Events.First().StatMap[StatType.GoalsScored].First();
                 Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
                 Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
                 return Task.CompletedTask;
@@ -134,9 +134,7 @@ namespace FplBot.Tests
         {
             return new State(A.Fake<IFixtureClient>(),
                 A.Fake<IPlayerClient>(),
-                A.Fake<ITeamsClient>(),
-                A.Fake<ISlackTeamRepository>(),
-                FakeLogger());
+                A.Fake<ITeamsClient>());
         }
         
         private static IState CreateGoalScoredScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
@@ -243,9 +241,7 @@ namespace FplBot.Tests
 
             return new State(fixtureClient,
                 playerClient,
-                teamsClient,
-                slackTeamRepository,
-                FakeLogger());
+                teamsClient);
         }
 
         private static ILogger<State> FakeLogger()

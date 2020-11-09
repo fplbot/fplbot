@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
@@ -20,16 +19,14 @@ namespace FplBot.WebApi.Controllers
     public class TestController : ControllerBase
     {
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly ILeagueClient _leagueClient;
         private readonly IPlayerClient _playerclient;
         private readonly ITeamsClient _teamsClient;
         private readonly FixtureEventsHandler _eventsHandler;
         private readonly StatusUpdateHandler _statusHandler;
 
-        public TestController(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, IPlayerClient playerclient, ITeamsClient teamsClient, FixtureEventsHandler eventsHandler, StatusUpdateHandler statusHandler, ILogger<FplController> logger)
+        public TestController(ISlackTeamRepository teamRepo, IPlayerClient playerclient, ITeamsClient teamsClient, FixtureEventsHandler eventsHandler, StatusUpdateHandler statusHandler)
         {
             _teamRepo = teamRepo;
-            _leagueClient = leagueClient;
             _playerclient = playerclient;
             _teamsClient = teamsClient;
             _eventsHandler = eventsHandler;
@@ -46,7 +43,14 @@ namespace FplBot.WebApi.Controllers
             
             var players = await _playerclient.GetAllPlayers();
             var teams = await _teamsClient.GetAllTeams();
-            await _eventsHandler.HandleForTeam(currentGameweek:7, CreateDummyEvents(teams, players), blankTeam, players, teams);
+            var fixtureUpdates = new FixtureUpdates
+            {
+                CurrentGameweek = 7,
+                Players = players,
+                Teams = teams,
+                Events = CreateDummyEvents(teams, players)
+            };
+            await _eventsHandler.HandleForTeam(fixtureUpdates, blankTeam);
             return Ok();
         }
         

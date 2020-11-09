@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -17,37 +15,31 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
-        private readonly IPlayerClient _playerClient;
-        private readonly ITeamsClient _teamsClient;
         private readonly ISlackClientBuilder _service;
         private readonly ILeagueEntriesByGameweek _leagueEntriesByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameWeek;
         private readonly ILogger<FixtureEventsHandler> _logger;
 
-        public FixtureEventsHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo, IPlayerClient playerClient, ITeamsClient teamsClient, ISlackClientBuilder service, ILeagueEntriesByGameweek leagueEntriesByGameweek, ITransfersByGameWeek transfersByGameWeek, ILogger<FixtureEventsHandler> logger)
+        public FixtureEventsHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo, ISlackClientBuilder service, ILeagueEntriesByGameweek leagueEntriesByGameweek, ITransfersByGameWeek transfersByGameWeek, ILogger<FixtureEventsHandler> logger)
         {
             _publisher = publisher;
             _slackTeamRepo = slackTeamRepo;
-            _playerClient = playerClient;
-            _teamsClient = teamsClient;
             _service = service;
             _leagueEntriesByGameweek = leagueEntriesByGameweek;
             _transfersByGameWeek = transfersByGameWeek;
             _logger = logger;
         }
 
-        public async Task OnNewFixtureEvents(int currentGameweek, IEnumerable<FixtureEvents> newEvents)
+        public async Task OnNewFixtureEvents(FixtureUpdates fixtureUpdates)
         {
             _logger.LogInformation("Handling new fixture events");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
-            var players = await _playerClient.GetAllPlayers();
-            var teams = await _teamsClient.GetAllTeams();
-            
+
             foreach (var slackTeam in slackTeams)
             {
                 try
                 {
-                    await HandleForTeam(currentGameweek, newEvents, slackTeam, players, teams);
+                    await HandleForTeam(fixtureUpdates,slackTeam);
                 }
                 catch (Exception e)
                 {
@@ -56,21 +48,21 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             }
         }
 
-        public async Task HandleForTeam(int currentGameweek, IEnumerable<FixtureEvents> newEvents, SlackTeam slackTeam, ICollection<Player> players, ICollection<Team> teams)
+        public async Task HandleForTeam(FixtureUpdates updates, SlackTeam slackTeam)
         {
             var slackUsers = await GetSlackUsers(slackTeam);
-            var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGameweek, (int) slackTeam.FplbotLeagueId);
-            var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGameweek, (int) slackTeam.FplbotLeagueId);
+            var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(updates.CurrentGameweek, (int) slackTeam.FplbotLeagueId);
+            var transfers = await _transfersByGameWeek.GetTransfersByGameweek(updates.CurrentGameweek, (int) slackTeam.FplbotLeagueId);
             var context = new GameweekLeagueContext
             {
-                Players = players,
-                Teams = teams,
+                Players = updates.Players,
+                Teams = updates.Teams,
                 Users = slackUsers,
                 GameweekEntries = entries,
                 SlackTeam = slackTeam,
                 TransfersForLeague = transfers
             };
-            var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(newEvents.ToList(), context);
+            var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(updates.Events.ToList(), context);
             await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
         }
 
