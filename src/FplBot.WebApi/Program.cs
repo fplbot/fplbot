@@ -19,7 +19,6 @@ namespace FplBot.WebApi
             Host.CreateDefaultBuilder(args)
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                     .ReadFrom.Configuration(hostingContext.Configuration)
-                    .Filter.ByExcluding(c => c.Properties.Any(p => p.Value.ToString().Contains("LogicalHandler")))
                     .Enrich.FromLogContext()
                     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss}][{Level:u3}][{SourceContext}] {Message:lj}{NewLine}{Exception}",theme: SystemConsoleTheme.None))
                 .ConfigureWebHostDefaults(webBuilder =>
