@@ -45,7 +45,6 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
                 .Build();
-            
             return services;
         }
 

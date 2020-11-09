@@ -16,8 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddReducedHttpClientFactoryLogging(this IServiceCollection services)
         {
-            services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
-            services.AddSingleton<IHttpMessageHandlerBuilderFilter, ReducedLoggingHttpMessageHandlerBuilderFilter>();
+            services.Replace(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, ReducedLoggingHttpMessageHandlerBuilderFilter>());
             return services;
         }
     }
@@ -28,32 +27,17 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public ReducedLoggingHttpMessageHandlerBuilderFilter(ILoggerFactory loggerFactory)
         {
-            if (loggerFactory == null)
-            {
-                throw new ArgumentNullException(nameof(loggerFactory));
-            }
-            
             _loggerFactory = loggerFactory;
         }
 
         public Action<HttpMessageHandlerBuilder> Configure(Action<HttpMessageHandlerBuilder> next)
         {
-            if (next == null)
+            return builder =>
             {
-                throw new ArgumentNullException(nameof(next));
-            }
-
-            return (builder) =>
-            {
-                // Run other configuration first, we want to decorate.
                 next(builder);
 
-                string loggerName = !string.IsNullOrEmpty(builder.Name) ? builder.Name : "Default";
-
-
-                ILogger innerLogger = _loggerFactory.CreateLogger($"System.Net.Http.HttpClient.{loggerName}.ClientHandler");
-
-
+                var loggerName = !string.IsNullOrEmpty(builder.Name) ? builder.Name : "Default";
+                var innerLogger = _loggerFactory.CreateLogger($"System.Net.Http.HttpClient.{loggerName}.ClientHandler");
                 var toRemove = builder.AdditionalHandlers.Where(h => (h is LoggingHttpMessageHandler) || h is LoggingScopeHttpMessageHandler).Select(h => h).ToList();
                 foreach (var delegatingHandler in toRemove)
                 {
@@ -81,8 +65,8 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             var stopwatch = ValueStopwatch.StartNew();
-            HttpResponseMessage response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation(new EventId(101, "RequestEnd"), string.Format("{0} - {1} in {2}ms", request.RequestUri.ToString(), response.StatusCode, stopwatch.GetElapsedTime().TotalMilliseconds));
+            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation(new EventId(101, "RequestEnd"), $"{request.Method} {request.RequestUri} - {response.StatusCode} in {stopwatch.GetElapsedTime().TotalMilliseconds}ms");
 
             return response;
         }
@@ -104,8 +88,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
             public TimeSpan GetElapsedTime()
             {
-                // Start timestamp can't be zero in an initialized ValueStopwatch. It would have to be literally the first thing executed when the machine boots to be 0.
-                // So it being 0 is a clear indication of default(ValueStopwatch)
                 if (!IsActive)
                 {
                     throw new InvalidOperationException("An uninitialized, or 'default', ValueStopwatch cannot be used to get elapsed time.");
