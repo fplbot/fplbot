@@ -12,7 +12,7 @@ using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    internal static class Formatter
+    public static class Formatter
     {
         public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
         {
@@ -348,6 +348,26 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 }
             }
             return null;
+        }
+        
+        public static string FormatLineup(Lineups details)
+        {
+            var formattedOutput = $"*Lineups {details.HomeTeamNameAbbr}-{details.AwayTeamNameAbbr}:*\n\n";
+            FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);
+            FormatTeamLineup(details.AwayTeamLineup, details.AwayTeamNameAbbr, ref formattedOutput);
+            return formattedOutput;
+        }
+
+        private static void FormatTeamLineup(IEnumerable<PlayerInLineup> playerInLineup, string teamName, ref string formattedOutput)
+        {
+            formattedOutput += $"*{teamName}*\n";
+            foreach (var groupedByPosition in playerInLineup.OrderByDescending(l => l.GetPositionWeight()).GroupBy(t => t.MatchPosition))
+            {
+                var segment = groupedByPosition.Select(player => player.Captain ? $"{player.Name.FormattedName()}(c)" : $"{player.Name.FormattedName()}");
+                formattedOutput += string.Join(",", segment);
+                formattedOutput += $"\n";
+            }
+            formattedOutput += "\n";
         }
     }
 }

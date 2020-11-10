@@ -64,5 +64,8 @@ namespace Fpl.Client.Models
 
         [JsonProperty("team_h")]
         public int HomeTeamId { get; set; }
+        
+        [JsonProperty("pulse_id")]
+        public int PulseId { get; set; }
     }
 }

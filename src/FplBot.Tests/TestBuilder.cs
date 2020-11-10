@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Models;
+using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace FplBot.Tests
@@ -23,6 +25,7 @@ namespace FplBot.Tests
         {
             return new Fixture
             {
+                Id = fixtureCode,
                 Code = fixtureCode,
                 HomeTeamId = 10,
                 AwayTeamId = AwayTeamId,
@@ -38,22 +41,24 @@ namespace FplBot.Tests
                         AwayStats = new List<FixtureStatValue>
                         {
                         }
-                            
                     }
-                }
+                }, 
+                PulseId = fixtureCode
             };
         }
         public static Fixture AwayTeamGoal(int fixtureCode, int goals)
         {
             return new Fixture
             {
+                Id = fixtureCode,
                 Code = fixtureCode,
                 HomeTeamId = HomeTeamId,
                 AwayTeamId = AwayTeamId,
                 Stats = new[]
                 {
                     AwayTeamLeadingBy(goals)
-                }
+                },
+                PulseId = fixtureCode
             };
         }
 
@@ -175,6 +180,39 @@ namespace FplBot.Tests
             {
                 Id = id,
                 IsNext = true
+            };
+        }
+
+        public static MatchDetails NoLineup(int pulseFixtureId)
+        {
+            return new MatchDetails
+            {
+                Id = pulseFixtureId,
+                Teams = SomeHomeAndAwayTeams(),
+                TeamLists = null
+            };
+        }
+
+        public static MatchDetails Lineup(int pulseFixtureId)
+        {
+            return new MatchDetails
+            {
+                Id = pulseFixtureId,
+                Teams = SomeHomeAndAwayTeams(),
+                TeamLists = new []
+                {
+                    new LineupContainer { Lineup = new []{ new PlayerInLineup() }}, 
+                    new LineupContainer { Lineup = new []{ new PlayerInLineup() }}
+                }
+            };
+        }
+
+        private static List<TeamDetails> SomeHomeAndAwayTeams()
+        {
+            return new List<TeamDetails>
+            {
+                new TeamDetails { Team = new PulseTeam { Club = new Club()}},
+                new TeamDetails { Team = new PulseTeam { Club = new Club()}}
             };
         }
     }
