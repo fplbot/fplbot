@@ -41,7 +41,10 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddSingleton<IState, State>();
             services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
             services.AddSingleton<DateTimeUtils>();
-            
+            services.AddHttpClient<IGetMatchDetails,PremierLeagueScraperApi>();
+            services.AddSingleton<MatchState>();
+            services.AddSingleton<IMatchStateMonitor, MatchStateMonitor>();
+            services.AddSingleton<LineupReadyHandler>();
             services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
                 .Build();
