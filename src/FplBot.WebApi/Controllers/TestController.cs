@@ -90,7 +90,7 @@ namespace FplBot.WebApi.Controllers
             return Ok();
         }
         
-        [HttpGet("lineups-mock}")]
+        [HttpGet("lineups-mock")]
         public async Task<IActionResult> GetLineUpsMocked()
         {
             await _readyHandler.HandleLineupReady(SomeLineups());
