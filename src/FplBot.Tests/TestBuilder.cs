@@ -199,10 +199,19 @@ namespace FplBot.Tests
             {
                 Id = pulseFixtureId,
                 Teams = SomeHomeAndAwayTeams(),
+                
                 TeamLists = new []
                 {
-                    new LineupContainer { Lineup = new []{ new PlayerInLineup() }}, 
-                    new LineupContainer { Lineup = new []{ new PlayerInLineup() }}
+                    new LineupContainer
+                    {
+                        Formation = new Formation { Players = new IEnumerable<int>[0]},
+                        Lineup = new []{ new PlayerInLineup() }
+                    }, 
+                    new LineupContainer
+                    {
+                        Formation = new Formation { Players = new IEnumerable<int>[0]},
+                        Lineup = new []{ new PlayerInLineup() }
+                    }
                 }
             };
         }
