@@ -126,5 +126,11 @@ namespace Slackbot.Net.Extensions.FplBot
         public string First { get; set; }
         public string Last { get; set; }
         public string Display { get; set; }
+
+        public override string ToString()
+        {
+            var names = Display.Split(" ");
+            return names.Length == 1 ? Display : $"{string.Join(" ",names[1..])}";
+        }
     }
 }

@@ -368,9 +368,14 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             foreach (var segment in formationSegments)
             {
                 formattedOutput += $"{PositionEmoji(segment.SegmentPosition)}  ";
-                var playersInSegment = segment.PlayersInSegment.Select(player => player.Captain ? $"{player.Name.Display}:copyright:" : $"{player.Name.Display}");
-                formattedOutput += $"{string.Join("    ", playersInSegment)}\n";
-
+                var segmentPlayersInSegment = segment.PlayersInSegment;
+                var playersInSegment = segmentPlayersInSegment.Select(player => player.Captain ? $"{player.Name}:copyright:" : $"{player.Name}");
+                
+                if (reverse)
+                {
+                    playersInSegment = playersInSegment.Reverse();
+                }
+                formattedOutput += $"{string.Join("  ", playersInSegment)}\n";
             }
             formattedOutput += "\n";
         }
