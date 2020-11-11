@@ -30,9 +30,7 @@ namespace Slackbot.Net.Extensions.FplBot
                 var document = await context.OpenAsync(req => req.Content(res));
                 var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
                 var json = fixture.Attributes.GetNamedItem("data-fixture").Value;
-                var details = JsonConvert.DeserializeObject<MatchDetails>(json);
-                _logger.LogInformation(JsonConvert.SerializeObject(details, Formatting.None));
-                return details;
+                return JsonConvert.DeserializeObject<MatchDetails>(json);
             }
             catch (Exception)
             {
