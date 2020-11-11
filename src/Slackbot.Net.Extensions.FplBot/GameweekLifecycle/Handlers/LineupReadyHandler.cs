@@ -26,7 +26,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             if (slackTeam.FplBotSlackChannel == "#fpltest")
             {
                 var formatted = Formatter.FormatLineup(lineups);
-                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                await _publisher.PublishToWorkspace(slackTeam.TeamId, "#johntest", formatted);
             }
         }
     }

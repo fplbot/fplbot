@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AngleSharp;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
@@ -12,10 +13,12 @@ namespace Slackbot.Net.Extensions.FplBot
     public class PremierLeagueScraperApi : IGetMatchDetails
     {
         private readonly HttpClient _client;
+        private readonly ILogger<PremierLeagueScraperApi> _logger;
 
-        public PremierLeagueScraperApi(HttpClient client)
+        public PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger)
         {
             _client = client;
+            _logger = logger;
         }
 
         public async Task<MatchDetails> GetMatchDetails(int pulseId)
@@ -27,7 +30,9 @@ namespace Slackbot.Net.Extensions.FplBot
                 var document = await context.OpenAsync(req => req.Content(res));
                 var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
                 var json = fixture.Attributes.GetNamedItem("data-fixture").Value;
-                return JsonConvert.DeserializeObject<MatchDetails>(json);
+                var details = JsonConvert.DeserializeObject<MatchDetails>(json);
+                _logger.LogInformation(JsonConvert.SerializeObject(details, Formatting.None));
+                return details;
             }
             catch (Exception)
             {
@@ -76,11 +81,19 @@ namespace Slackbot.Net.Extensions.FplBot
     {
         public int TeamId { get; set; }
         public IEnumerable<PlayerInLineup> Lineup { get; set; } = new List<PlayerInLineup>();
+        
+        public Formation Formation { get; set; } 
 
         public bool HasLineups()
         {
             return Lineup != null && Lineup.Any();
         }
+    }
+
+    public class Formation
+    {
+        public string Label { get; set; }
+        public IEnumerable<IEnumerable<int>> Players { get; set; }
     }
 
     public class PlayerInLineup
@@ -89,6 +102,8 @@ namespace Slackbot.Net.Extensions.FplBot
         public const string MatchPositionDefender = "D";
         public const string MatchPositionMidfielder = "M";
         public const string MatchPositionForward = "F";
+        
+        public int Id { get; set; }
         
         public int GetPositionWeight()
         {
@@ -111,23 +126,5 @@ namespace Slackbot.Net.Extensions.FplBot
         public string First { get; set; }
         public string Last { get; set; }
         public string Display { get; set; }
-
-        public string FormattedName()
-        {
-            try
-            {
-                if (Display.Split(" ").Length == 1)
-                    return Display;
-
-                if ($"{First} {Last}".Split(" ").Length > 3)
-                    return Last.Split(" ").Last();
-
-                return Last;
-            }
-            catch
-            {
-                return Display;
-            }
-        }
     }
 }

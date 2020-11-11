@@ -354,20 +354,37 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             var formattedOutput = $"*Lineups {details.HomeTeamNameAbbr}-{details.AwayTeamNameAbbr}:*\n\n";
             FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);
-            FormatTeamLineup(details.AwayTeamLineup, details.AwayTeamNameAbbr, ref formattedOutput);
+            FormatTeamLineup(details.AwayTeamLineup, details.AwayTeamNameAbbr, ref formattedOutput, true);
             return formattedOutput;
         }
 
-        private static void FormatTeamLineup(IEnumerable<PlayerInLineup> playerInLineup, string teamName, ref string formattedOutput)
+        private static void FormatTeamLineup(FormationDetails playerInLineup, string teamName, ref string formattedOutput, bool reverse = false)
         {
-            formattedOutput += $"*{teamName}*\n";
-            foreach (var groupedByPosition in playerInLineup.OrderByDescending(l => l.GetPositionWeight()).GroupBy(t => t.MatchPosition))
+            formattedOutput += $"*{teamName}* ({playerInLineup.Label})\n";
+            var formationSegments = playerInLineup.Segments;
+            if (reverse)
+                formationSegments.Reverse();
+            
+            foreach (var segment in formationSegments)
             {
-                var segment = groupedByPosition.Select(player => player.Captain ? $"{player.Name.FormattedName()}(c)" : $"{player.Name.FormattedName()}");
-                formattedOutput += string.Join(",", segment);
-                formattedOutput += $"\n";
+                formattedOutput += $"{PositionEmoji(segment.SegmentPosition)}  ";
+                var playersInSegment = segment.PlayersInSegment.Select(player => player.Captain ? $"{player.Name.Display}:copyright:" : $"{player.Name.Display}");
+                formattedOutput += $"{string.Join("    ", playersInSegment)}\n";
+
             }
             formattedOutput += "\n";
+        }
+
+        private static string PositionEmoji(string position)
+        {
+            return position switch
+            {
+                PlayerInLineup.MatchPositionGoalie => "🧤",
+                PlayerInLineup.MatchPositionDefender => "🛡",
+                PlayerInLineup.MatchPositionMidfielder => "⚙️",
+                PlayerInLineup.MatchPositionForward => "⚡️️",
+                _ => "⁇"
+            };
         }
     }
 }
