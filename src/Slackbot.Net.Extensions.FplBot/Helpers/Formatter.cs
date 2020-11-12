@@ -28,7 +28,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return sb.ToString();
             }
 
-            sb.Append($":star: *Here's the current standings for {gameweek.Name}* :star: \n\n");
+            sb.Append($":star: *Here's the current standings after {gameweek.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
