@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -55,8 +56,9 @@ namespace Slackbot.Net.Endpoints.Middlewares
                 else if (body.StartsWith("payload="))
                 {
                     _logger.LogTrace(body);
-                    var payloadJson = body.Remove(0,8);
-                    var payload = JObject.Parse(payloadJson);
+                    var payloadJsonUrlEncoded = body.Remove(0,8);
+                    var decodedJson = System.Net.WebUtility.UrlDecode(payloadJsonUrlEncoded);
+                    var payload = JObject.Parse(decodedJson);
                     var interactivePayloadTyped = ToInteractiveType(payload, body);
                     context.Items.Add(HttpItemKeys.InteractivePayloadKey, interactivePayloadTyped);
                 }
