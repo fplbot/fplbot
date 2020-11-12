@@ -1,0 +1,34 @@
+### Next gameweek:
+
+POST http://localhost:1337/events
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+        "type": "app_mention",
+        "user": "USRAR1YTV",
+        "text" : "next",
+        "channel": "CV1PD02BY"
+    }
+}
+
+
+### TRANSFERS
+
+POST http://localhost:1337/events
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+        "type": "app_mention",
+        "user": "USRAR1YTV",
+        "text" : "transfers",
+        "channel": "CV1PD02BY"
+    }
+}
+
+
+### APP HOME SUBMIT
+POST http://localhost:1337/events
+
+payload=%7B%22type%22%3A%22block_actions%22%2C%22user%22%3A%7B%22id%22%3A%22U0A9R2Y1X%22%2C%22username%22%3A%22magne%22%2C%22name%22%3A%22magne%22%2C%22team_id%22%3A%22T0A9QSU83%22%7D%2C%22api_app_id%22%3A%22ATDD4SFQ9%22%2C%22token%22%3A%22LgsBipMHM1LboZCr3rBty9LQ%22%2C%22container%22%3A%7B%22type%22%3A%22view%22%2C%22view_id%22%3A%22V01EKKG0HFC%22%7D%2C%22trigger_id%22%3A%221519980553360.10330912275.8c09222b39b22273db3bea2f6e9a45e0%22%2C%22team%22%3A%7B%22id%22%3A%22T0A9QSU83%22%2C%22domain%22%3A%22heltblank%22%7D%2C%22view%22%3A%7B%22id%22%3A%22V01EKKG0HFC%22%2C%22team_id%22%3A%22T0A9QSU83%22%2C%22type%22%3A%22home%22%2C%22blocks%22%3A%5B%7B%22type%22%3A%22section%22%2C%22block_id%22%3A%22jgvQD%22%2C%22text%22%3A%7B%22type%22%3A%22plain_text%22%2C%22text%22%3A%22Welcome+to+the+home%21%21%22%2C%22emoji%22%3Atrue%7D%7D%2C%7B%22type%22%3A%22divider%22%2C%22block_id%22%3A%22OB8ky%22%7D%2C%7B%22type%22%3A%22section%22%2C%22block_id%22%3A%22M%3Ds%22%2C%22text%22%3A%7B%22type%22%3A%22plain_text%22%2C%22text%22%3A%22Here+you+can+update+your+teams+FPL+League+ID%22%2C%22emoji%22%3Atrue%7D%7D%2C%7B%22type%22%3A%22input%22%2C%22block_id%22%3A%228N32G%22%2C%22label%22%3A%7B%22type%22%3A%22plain_text%22%2C%22text%22%3A%22FPL+League+Id%22%2C%22emoji%22%3Atrue%7D%2C%22optional%22%3Afalse%2C%22dispatch_action%22%3Afalse%2C%22element%22%3A%7B%22type%22%3A%22plain_text_input%22%2C%22action_id%22%3A%22fpl_league_id_action%22%2C%22dispatch_action_config%22%3A%7B%22trigger_actions_on%22%3A%5B%22on_enter_pressed%22%5D%7D%7D%7D%2C%7B%22type%22%3A%22actions%22%2C%22block_id%22%3A%22vyy%22%2C%22elements%22%3A%5B%7B%22type%22%3A%22button%22%2C%22action_id%22%3A%22app_home_save%22%2C%22text%22%3A%7B%22type%22%3A%22plain_text%22%2C%22text%22%3A%22Save%22%2C%22emoji%22%3Atrue%7D%2C%22value%22%3A%22save%22%7D%5D%7D%5D%2C%22private_metadata%22%3A%22%22%2C%22callback_id%22%3A%22%22%2C%22state%22%3A%7B%22values%22%3A%7B%228N32G%22%3A%7B%22fpl_league_id_action%22%3A%7B%22type%22%3A%22plain_text_input%22%2C%22value%22%3A%22hallois%22%7D%7D%7D%7D%2C%22hash%22%3A%221605178490.uvLObX9F%22%2C%22title%22%3A%7B%22type%22%3A%22plain_text%22%2C%22text%22%3A%22View+Title%22%2C%22emoji%22%3Atrue%7D%2C%22clear_on_close%22%3Afalse%2C%22notify_on_close%22%3Afalse%2C%22close%22%3Anull%2C%22submit%22%3Anull%2C%22previous_view_id%22%3Anull%2C%22root_view_id%22%3A%22V01EKKG0HFC%22%2C%22app_id%22%3A%22ATDD4SFQ9%22%2C%22external_id%22%3A%22%22%2C%22app_installed_team_id%22%3A%22T0A9QSU83%22%2C%22bot_id%22%3A%22BTPN0JHH6%22%7D%2C%22actions%22%3A%5B%7B%22action_id%22%3A%22app_home_save%22%2C%22block_id%22%3A%22vyy%22%2C%22text%22%3A%7B%22type%22%3A%22plain_text%22%2C%22text%22%3A%22Save%22%2C%22emoji%22%3Atrue%7D%2C%22value%22%3A%22save%22%2C%22type%22%3A%22button%22%2C%22action_ts%22%3A%221605178493.635193%22%7D%5D%7D
