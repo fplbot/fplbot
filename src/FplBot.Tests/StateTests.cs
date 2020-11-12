@@ -130,13 +130,124 @@ namespace FplBot.Tests
             Assert.True(statusUpdateEmitted);
         }
 
+        [Fact]
+        public async Task WithNoFinishedFixtures_DoesNotEmitEvent()
+        {
+            var state = CreateNoFinishedFixturesScenario();
+            var fixtureFinishedEmitted = false;
+            state.OnFixturesProvisionalFinished += fixtures =>
+            {
+                fixtureFinishedEmitted = true;
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.False(fixtureFinishedEmitted);
+        }
+        
+        [Fact]
+        public async Task WithSingleProvisionalFinished_EmitsEvent()
+        {
+            var state = CreateSingleFinishedFixturesScenario();
+            var fixtureFinishedEmitted = false;
+            state.OnFixturesProvisionalFinished += fixtures =>
+            {
+                fixtureFinishedEmitted = true;
+                Assert.Single(fixtures);
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(fixtureFinishedEmitted);
+        }
+        
+        [Fact]
+        public async Task WithMultipleProvisionalFinished_EmitsEvent()
+        {
+            var state = CreateMultipleFinishedFixturesScenario();
+            var fixtureFinishedEmitted = false;
+            state.OnFixturesProvisionalFinished += fixtures =>
+            {
+                fixtureFinishedEmitted = true;
+                Assert.Equal(2,fixtures.Count());
+                return Task.CompletedTask;
+            };
+            
+            await state.Reset(1);
+            await state.Refresh(1);
+            Assert.True(fixtureFinishedEmitted);
+        }
+
         private static IState CreateAllMockState()
         {
             return new State(A.Fake<IFixtureClient>(),
                 A.Fake<IGlobalSettingsClient>());
         }
         
-        private static IState CreateGoalScoredScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        private static IState CreateMultipleFinishedFixturesScenario()
+        {
+            var playerClient = A.Fake<IGlobalSettingsClient>();
+
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+            A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
+                {
+                    TestBuilder.AwayTeamGoal(888, 1),
+                    TestBuilder.AwayTeamGoal(999, 1),
+                }).Once()
+                .Then.Returns(
+                    new List<Fixture>
+                    {
+                        TestBuilder.AwayTeamGoal(888, 1).FinishedProvisional(),
+                        TestBuilder.AwayTeamGoal(999, 1).FinishedProvisional(),
+                    });
+            
+            return CreateBaseScenario(fixtureClient, playerClient);
+        }
+        
+        private static IState CreateSingleFinishedFixturesScenario()
+        {
+            var playerClient = A.Fake<IGlobalSettingsClient>();
+
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+            A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
+                {
+                    TestBuilder.AwayTeamGoal(888, 1),
+                    TestBuilder.AwayTeamGoal(999, 1)
+                }).Once()
+                .Then.Returns(
+                    new List<Fixture>
+                    {
+                        TestBuilder.AwayTeamGoal(888, 1),
+                        TestBuilder.AwayTeamGoal(999, 1).FinishedProvisional()
+                    });
+            
+            return CreateBaseScenario(fixtureClient, playerClient);
+        }
+        
+        private static IState CreateNoFinishedFixturesScenario()
+        {
+            var playerClient = A.Fake<IGlobalSettingsClient>();
+
+            
+            var fixtureClient = A.Fake<IFixtureClient>();
+            A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
+                {
+                    TestBuilder.AwayTeamGoal(888, 1)
+                }).Once()
+                .Then.Returns(
+                    new List<Fixture>
+                    {
+                        TestBuilder.AwayTeamGoal(888, 2)
+                    });
+            
+            return CreateBaseScenario(fixtureClient, playerClient);
+        }
+        
+        private static IState CreateGoalScoredScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -164,10 +275,10 @@ namespace FplBot.Tests
                         TestBuilder.AwayTeamGoal(888, 2)
                     });
             
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+            return CreateBaseScenario(fixtureClient, playerClient);
         }
         
-        private static IState CreateNewInjuryScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        private static IState CreateNewInjuryScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -197,10 +308,10 @@ namespace FplBot.Tests
 
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, settingsClient);
+            return CreateBaseScenario(fixtureClient, settingsClient);
         }
         
-        private static IState CreateChangeInDoubtfulnessScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        private static IState CreateChangeInDoubtfulnessScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -230,10 +341,10 @@ namespace FplBot.Tests
 
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, settingsClient);
+            return CreateBaseScenario(fixtureClient, settingsClient);
         }
         
-        private static IState CreateNewPlayerScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        private static IState CreateNewPlayerScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -263,10 +374,10 @@ namespace FplBot.Tests
 
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, settingsClient);
+            return CreateBaseScenario(fixtureClient, settingsClient);
         }
 
-        private static IState CreatePriceIncreaseScenario(string entryName = null, string slackUserRealName = null, string slackUserHandle = null)
+        private static IState CreatePriceIncreaseScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -296,10 +407,10 @@ namespace FplBot.Tests
             
             var fixtureClient = A.Fake<IFixtureClient>();
 
-            return CreateBaseScenario(entryName, slackUserRealName, slackUserHandle, fixtureClient, playerClient);
+            return CreateBaseScenario(fixtureClient, playerClient);
         }
 
-        private static IState CreateBaseScenario(string entryName, string slackUserRealName, string slackUserHandle, IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
+        private static IState CreateBaseScenario(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
         {
             var slackTeamRepository = A.Fake<ISlackTeamRepository>();
             A.CallTo(() => slackTeamRepository.GetAllTeams()).Returns(new List<SlackTeam>

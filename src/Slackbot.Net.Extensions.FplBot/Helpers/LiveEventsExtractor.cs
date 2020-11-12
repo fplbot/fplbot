@@ -42,5 +42,18 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return null;
             }).WhereNotNull();
         }
+        
+        public static IEnumerable<Fixture> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current)
+        {
+            if(latestFixtures == null)
+                return new List<Fixture>();
+            
+            if (current == null)
+                return new List<Fixture>();
+
+            var latestFinished = latestFixtures.Where(f => f.FinishedProvisional);
+            var currentFinished = current.Where(f => f.FinishedProvisional);
+            return latestFinished.Except(currentFinished);
+        }
     }
 }
