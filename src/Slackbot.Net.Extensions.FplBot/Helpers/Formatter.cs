@@ -1,20 +1,20 @@
-﻿using System;
-using Fpl.Client.Models;
+﻿using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Extensions;
+using Slackbot.Net.Extensions.FplBot.Models;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
-using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     public static class Formatter
     {
-        public static string GetStandings(ClassicLeague league, ICollection<Gameweek> gameweeks)
+        public static string GetStandings(ClassicLeague league, Gameweek gameweek)
         {
             var sb = new StringBuilder();
          
@@ -22,23 +22,49 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             var numPlayers = league.Standings.Entries.Count;
 
-            var currentGw = gameweeks.SingleOrDefault(x => x.IsCurrent);
-
-            if (currentGw == null)
+            if (gameweek == null)
             {
                 sb.Append("No current gameweek!");
                 return sb.ToString();
             }
 
-            sb.Append($":star: *Standings for {currentGw.Name}* :star: \n\n");
+            sb.Append($":star: *Here's the current standings for {gameweek.Name}* :star: \n\n");
 
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers);
-                sb.Append($"{player.Rank}. {player.GetEntryLink(currentGw.Id)} - {player.Total} {arrow} \n");
+                sb.Append($"{player.Rank}. {player.GetEntryLink(gameweek.Id)} - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
+        }
+
+        public static string GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek)
+        {
+            var topThree = league.Standings.Entries.OrderByDescending(e => e.EventTotal).Take(3).ToArray();
+            
+            if (!topThree.Any())
+            {
+                return null;
+            }
+
+            var sb = new StringBuilder();
+
+            sb.Append("Top three this gameweek was:\n");
+
+            for (var i = 0; i < topThree.Length; i++)
+            {
+                var entry = topThree[i];
+                sb.Append($"{Formatter.GetPositionEmoji(i)} {entry.GetEntryLink(gameweek.Id)} - {entry.Total}\n");
+            }
+
+            return sb.ToString();
+        }
+
+        public static string GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek)
+        {
+            var worst = league.Standings.Entries.OrderBy(e => e.EventTotal).FirstOrDefault();
+            return worst == null ? null : $":poop: {worst.GetEntryLink(gameweek.Id)} only got {worst.EventTotal} points. Wow.";
         }
 
         private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers)
@@ -395,6 +421,17 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         public static IEnumerable<string> FormatProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
         {
             return provisionalFixturesFinished.Select(fixture => $"FT: {fixture.HomeTeam.ShortName}-{fixture.AwayTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore}");
+        }
+
+        public static string GetPositionEmoji(int position)
+        {
+            return position switch
+            {
+                0 => ":first_place_medal:",
+                1 => ":second_place_medal:",
+                2 => ":third_place_medal:",
+                _ => Constants.Emojis.NatureEmojis.GetRandom()
+            };
         }
     }
 }

@@ -4,7 +4,9 @@ using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -31,7 +33,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task HandleGameweekEndeded(int gameweek)
         {
-            await _publisher.PublishToAllWorkspaceChannels($"Gameweek {gameweek} finished.");
+            var gameweeks = await _gameweekClient.GetGameweeks();
+            var gw = gameweeks.SingleOrDefault(g => g.Id == gameweek);
+            if (gw == null)
+            {
+                _logger.LogError("Found no gameweek with id {id}", gameweek);
+                return;
+            }
+
             var teams = await _teamRepo.GetAllTeams();
             foreach (var team in teams)
             {
@@ -44,15 +53,52 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 try
                 {
                     var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
-                    var gameweeks = await _gameweekClient.GetGameweeks();
-                    var standings = Formatter.GetStandings(league, gameweeks);
-                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, standings);
+                    
+                    var intro = GetIntroText(gw, league);
+                    var standings = Formatter.GetStandings(league, gw);
+                    var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
+                    var worst = Formatter.GetWorstGameweekEntry(league, gw);
+
+                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, intro, standings, topThree, worst);
                 }
                 catch (Exception e)
                 {
                     _logger.LogError(e, e.Message);
                 }
             }
+        }
+
+        private static string GetIntroText(Gameweek gw, ClassicLeague league)
+        {
+            var introText = $"Gameweek {gw.Name} is finished.";
+            var globalAverage = gw.AverageScore;
+            var leagueAverage = Math.Floor(league.Standings.Entries.Average(entry => entry.EventTotal));
+            var diff = Math.Abs(globalAverage - leagueAverage);
+            var nuance = diff <= 5 ? "slightly " : "";
+
+            if (globalAverage < 40)
+            {
+                introText += $" It was probably a disappointing one, with a global average of *{gw.AverageScore}* points.";
+            }
+            else if (globalAverage > 80)
+            {
+                introText += $" Must've been pretty intense, with a global average of *{globalAverage}* points.";
+            }
+            else
+            {
+                introText += $" The global average was {globalAverage} points.";
+            }
+
+            if (leagueAverage > globalAverage)
+            {
+                introText += $" Your league did {nuance}better than this, though - with *{leagueAverage}* points average.";
+            }
+            else
+            {
+                introText += $" I'm afraid your league did {nuance}worse than this, with your *{leagueAverage}* points average.";
+            }
+
+            return introText;
         }
     }
 }
