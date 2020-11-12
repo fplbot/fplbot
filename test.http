@@ -1,0 +1,28 @@
+### Next gameweek:
+
+POST http://localhost:1337/events
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+        "type": "app_mention",
+        "user": "USRAR1YTV",
+        "text" : "next",
+        "channel": "CV1PD02BY"
+    }
+}
+
+
+### TRANSFERS
+
+POST http://localhost:1337/events
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+        "type": "app_mention",
+        "user": "USRAR1YTV",
+        "text" : "transfers",
+        "channel": "CV1PD02BY"
+    }
+}
