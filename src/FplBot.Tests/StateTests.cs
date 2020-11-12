@@ -189,7 +189,19 @@ namespace FplBot.Tests
         private static IState CreateMultipleFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
-
+            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+                new GlobalSettings 
+                {
+                    Teams =  new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player()
+                    }
+                });
             
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
@@ -210,7 +222,19 @@ namespace FplBot.Tests
         private static IState CreateSingleFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
-
+            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+                new GlobalSettings 
+                {
+                    Teams =  new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player()
+                    }
+                });
             
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
@@ -231,7 +255,19 @@ namespace FplBot.Tests
         private static IState CreateNoFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
-
+            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+                new GlobalSettings 
+                {
+                    Teams =  new List<Team>
+                    {
+                        TestBuilder.HomeTeam(),
+                        TestBuilder.AwayTeam()
+                    },
+                    Players = new List<Player>
+                    {
+                        TestBuilder.Player()
+                    }
+                });
             
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>

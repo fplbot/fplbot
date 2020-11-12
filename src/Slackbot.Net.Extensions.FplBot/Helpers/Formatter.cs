@@ -391,5 +391,10 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 _ => "⁇"
             };
         }
+
+        public static IEnumerable<string> FormatProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
+        {
+            return provisionalFixturesFinished.Select(fixture => $"FT: {fixture.HomeTeam.ShortName}-{fixture.AwayTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore}");
+        }
     }
 }

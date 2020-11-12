@@ -14,6 +14,6 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         event Func<FixtureUpdates, Task> OnNewFixtureEvents;
         event Func<IEnumerable<PriceChange>, Task> OnPriceChanges;
         event Func<IEnumerable<PlayerStatusUpdate>, Task> OnStatusUpdates;
-        event Func<IEnumerable<Fixture>, Task> OnFixturesProvisionalFinished;
+        event Func<IEnumerable<FinishedFixture>, Task> OnFixturesProvisionalFinished;
     }
 }    

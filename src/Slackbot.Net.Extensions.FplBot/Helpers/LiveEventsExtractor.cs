@@ -43,17 +43,25 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }).WhereNotNull();
         }
         
-        public static IEnumerable<Fixture> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current)
+        public static IEnumerable<FinishedFixture> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams)
         {
             if(latestFixtures == null)
-                return new List<Fixture>();
+                return new List<FinishedFixture>();
             
             if (current == null)
-                return new List<Fixture>();
+                return new List<FinishedFixture>();
 
             var latestFinished = latestFixtures.Where(f => f.FinishedProvisional);
             var currentFinished = current.Where(f => f.FinishedProvisional);
-            return latestFinished.Except(currentFinished);
+            var newFinished = latestFinished.Except(currentFinished);
+            if (newFinished.Any())
+                return newFinished.Select(n => new FinishedFixture
+                {
+                    Fixture = n, 
+                    HomeTeam = teams.First(t => t.Id == n.HomeTeamId),
+                    AwayTeam = teams.First(t => t.Id == n.AwayTeamId)
+                });
+            return new List<FinishedFixture>();
         }
     }
 }
