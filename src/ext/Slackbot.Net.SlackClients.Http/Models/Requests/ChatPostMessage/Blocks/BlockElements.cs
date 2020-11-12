@@ -11,6 +11,8 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public string image_url { get; set; }
         public string alt_text { get; set; }
         public Text[] fields { get; set; }
+        public Element element { get; set; }
+        public Text label { get; set; }
     }
     public class SectionBlock : IBlock
     {
@@ -188,6 +190,7 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public const string Actions = "actions";
         public const string Context = "context";
         public const string Image = "image";
+        public const string Input = "input";
     }
 
     public static class TextTypes

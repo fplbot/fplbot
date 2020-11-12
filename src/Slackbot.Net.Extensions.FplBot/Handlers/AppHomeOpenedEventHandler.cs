@@ -3,12 +3,18 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
+using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
-using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ViewPublish;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
+using Block = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.Block;
+using BlockTypes = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.BlockTypes;
+using Element = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.Element;
+using IBlock = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.IBlock;
+using Text = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.Text;
+using TextTypes = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.TextTypes;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -43,14 +49,14 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 return new EventHandledResponse(se.Message);
             }
         }
-
+        
         private static ViewPublishRequest BuildViewRequest(string userId)
         {
             return new ViewPublishRequest(userId)
             {
                 View = new View
                 {
-                    Type = PublishViewConstants.Home,
+                    Type = PublishViewConstants.Home,    
                     Blocks = new IBlock[]
                     {
                         new Block
@@ -59,9 +65,56 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                             text = new Text
                             {
                                 type = TextTypes.PlainText,
-                                text = $"Configuration should go here! This view was rendered {DateTime.UtcNow.ToLongDateString()} - {DateTime.UtcNow.ToLongTimeString()}"
+                                text = "Welcome to the home!!"
                             }
-                        }
+                        },
+                        new Block
+                        {
+                            type = BlockTypes.Divider
+                        },
+                        new Block
+                        {
+                            type = BlockTypes.Section,
+                            text = new Text
+                            {
+                                type = TextTypes.PlainText,
+                                text = "Here you can update your teams FPL League ID"
+                            }
+                        
+                        },
+                        new Block
+                        {
+                            type = BlockTypes.Input,
+                            label = new Text
+                            {
+                                type = TextTypes.PlainText,
+                                text = "FPL League Id"
+                            },
+                            element = new Element
+                            {
+                                type = ElementTypes.PlainTextInput,
+                                action_id = "fpl_league_id_action",
+                            }
+                            
+                        },
+                       new Block
+                       {
+                           type = BlockTypes.Actions,
+                           elements = new Element[]
+                           {
+                               new Element
+                               {
+                                   action_id =  "app_home_save",
+                                   type = ElementTypes.Button,
+                                   text = new Text
+                                   {
+                                       type = TextTypes.PlainText,
+                                       text = "Save"
+                                   },
+                                   value = "save"
+                               }
+                           }
+                       }
                     }
                 }
             };
