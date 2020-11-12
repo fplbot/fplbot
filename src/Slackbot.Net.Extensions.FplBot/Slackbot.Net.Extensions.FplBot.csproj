@@ -9,12 +9,12 @@
     <ItemGroup>
       <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
       <PackageReference Include="AngleSharp" Version="1.0.0-alpha-844" />
-      <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />
-      <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
-      <PackageReference Include="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)" />
+      <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />      
     </ItemGroup>
 
     <ItemGroup>
      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+     <ProjectReference Include="..\ext\Slackbot.Net.SlackClients.Http\Slackbot.Net.SlackClients.Http.csproj" />
+     <ProjectReference Include="..\ext\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />     
     </ItemGroup>
 </Project>

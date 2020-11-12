@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <RootNamespace>Slackbot.Net.SlackClients.Http</RootNamespace>
+        <PackageId>Slackbot.Net.SlackClients.Http</PackageId>
+        <Authors>John Korsnes</Authors>
+        <Description>
+            A .NET Core Host friendly Slack API client for the Slack HTTP API
+        </Description>
+
+        <PackageTags>slack dotnetcore</PackageTags>
+        <PackageProjectUrl>https://github.com/slackbot-net/slackbot.net</PackageProjectUrl>
+        <License>https://github.com/slackbot-net/slackbot.net/blob/master/LICENSE</License>
+        <RepositoryUrl>https://github.com/slackbot-net/slackbot.net</RepositoryUrl>
+        <PackageIconUrl>images/slack.png</PackageIconUrl>
+        <PackageIcon>slack.png</PackageIcon>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="images/slack.png" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+</Project>
