@@ -51,6 +51,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task OnFixturesProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
         {
+            _logger.LogInformation("Handling fixture provisionally finished");
+
             var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
             if (slackTeam.FplBotSlackChannel == "#fpltest")
             {

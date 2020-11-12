@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
@@ -53,7 +54,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             var latestFinished = latestFixtures.Where(f => f.FinishedProvisional);
             var currentFinished = current.Where(f => f.FinishedProvisional);
-            var newFinished = latestFinished.Except(currentFinished);
+            var newFinished = latestFinished.Except(currentFinished, new FixtureComparer());
             if (newFinished.Any())
                 return newFinished.Select(n => new FinishedFixture
                 {
@@ -62,6 +63,23 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                     AwayTeam = teams.First(t => t.Id == n.AwayTeamId)
                 });
             return new List<FinishedFixture>();
+        }
+    }
+
+    internal class FixtureComparer : IEqualityComparer<Fixture>
+    {
+        public bool Equals(Fixture x, Fixture y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null)) return false;
+            if (ReferenceEquals(y, null)) return false;
+            if (x.GetType() != y.GetType()) return false;
+            return x.Id == y.Id && x.Code == y.Code;
+        }
+
+        public int GetHashCode(Fixture obj)
+        {
+            return HashCode.Combine(obj.Id, obj.Code);
         }
     }
 }
