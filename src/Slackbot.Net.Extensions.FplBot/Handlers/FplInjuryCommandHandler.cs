@@ -1,17 +1,17 @@
 ﻿
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplInjuryCommandHandler : IHandleAppMentions
+    internal class FplInjuryCommandHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly IPlayerClient _playerClient;
@@ -21,8 +21,10 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _workspacePublisher = workspacePublisher;
             _playerClient = playerClient;
         }
-        
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
+
+        public override string Command => "injuries";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
             var allPlayers = await _playerClient.GetAllPlayers();
 
@@ -39,6 +41,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(textToSend);
         }
 
+
         private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)
         {
             return players.Where(p => p.OwnershipPercentage > 5 && IsInjured(p));
@@ -49,9 +52,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
         }
 
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("injuries");
-
-        public (string,string) GetHelpDescription() => ("injuries", "See injured players owned by more than 5 %");
+        public (string,string) GetHelpDescription() => (Command, "See injured players owned by more than 5 %");
     }
 
 }

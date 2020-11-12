@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
@@ -12,6 +9,9 @@ using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
@@ -23,12 +23,16 @@ namespace FplBot.Tests.Helpers
             return BuildServiceProvider(logger).GetService<T>();
         }
 
+        public static IEnumerable<IHandleAppMentions> GetAllHandlers(ITestOutputHelper logger)
+        {
+            return BuildServiceProvider(logger).GetServices<IHandleAppMentions>();
+        }
+
         public static IHandleAppMentions GetHandler<T>(ITestOutputHelper logger)
         {
-            var allHandlers = BuildServiceProvider(logger).GetServices<IHandleAppMentions>();
-            return allHandlers.First(h => h is T);
+            return GetAllHandlers(logger).First(h => h is T);
         }
-        
+   
         private static ServiceProvider BuildServiceProvider(ITestOutputHelper logger)
         {
             var config = new ConfigurationBuilder();

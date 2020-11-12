@@ -1,18 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplSubscriptionsCommandHandler : IHandleAppMentions
+    internal class FplSubscriptionsCommandHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly ISlackTeamRepository _teamRepo;
@@ -25,7 +23,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
+        public override string Command => "subscriptions";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
         {
             var subscriptionInfo = await GetCurrentSubscriptions(eventMetadata.Team_Id, appMentioned);
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
@@ -59,12 +59,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("subscriptions");
-
         public (string, string) GetHelpDescription()
         {
-
-            return ( "subscriptions", "List current subscriptions");
+            return (Command, "List current subscriptions");
         }
     }
 }

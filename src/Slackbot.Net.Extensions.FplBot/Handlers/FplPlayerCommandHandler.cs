@@ -1,17 +1,17 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using System.Linq;
 using System.Threading.Tasks;
-using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplPlayerCommandHandler : IHandleAppMentions
+    internal class FplPlayerCommandHandler : HandleAppMentionBase
     {
         private readonly IPlayerClient _playerClient;
         private readonly ITeamsClient _teamsClient;
@@ -26,12 +26,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsClient = teamsClient;
             _workSpacePublisher = workSpacePublisher;
         }
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
+
+        public override string Command => "player";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
             var allPlayersTask = _playerClient.GetAllPlayers();
             var teamsTask = _teamsClient.GetAllTeams();
 
-            var name = ParsePlayerFromInput(message);
+            var name = ParseArguments(message);
 
             var allPlayers = (await allPlayersTask).OrderByDescending(player => player.OwnershipPercentage);
             var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
@@ -117,13 +120,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance == 0;
         }
 
-        private string ParsePlayerFromInput(AppMentionEvent message)
-        {
-            return MessageHelper.ExtractArgs(message.Text, "player {args}");
-        }
-
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("player");
-
-        public (string,string) GetHelpDescription() => ("player {name}", "Display info about the player");
+        public (string,string) GetHelpDescription() => ($"{Command} {{name}}", "Display info about the player");
     }
 }

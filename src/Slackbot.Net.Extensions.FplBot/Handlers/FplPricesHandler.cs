@@ -1,14 +1,14 @@
-﻿using System.Linq;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Helpers;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplPricesHandler : IHandleAppMentions
+    internal class FplPricesHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly IPlayerClient _playerClient;
@@ -21,7 +21,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsClient = teamsClient;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
+        public override string Command => "pricechanges";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
             var allPlayers = await _playerClient.GetAllPlayers();
             var teams = await _teamsClient.GetAllTeams();
@@ -31,8 +33,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("pricechanges");
-
-        public (string,string) GetHelpDescription() => ("pricechanges", "Displays players with recent price change");
+        public (string,string) GetHelpDescription() => (Command, "Displays players with recent price change");
     }
 }

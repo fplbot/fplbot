@@ -12,7 +12,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplSubscribeCommandHandler : IHandleAppMentions
+    internal class FplSubscribeCommandHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly ISlackTeamRepository _teamRepo;
@@ -25,7 +25,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
+        public override string Command => "subscribe";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
         {
             var subscriptionInfo = await GetAndUpdateSubscriptionInfo(eventMetadata.Team_Id, appMentioned);
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
@@ -126,8 +128,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             return $"You can choose from: {string.Join(", ", EventSubscriptionHelper.GetAllSubscriptionTypes())}";
         }
-
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("subscribe");
 
         public (string, string) GetHelpDescription()
         {
