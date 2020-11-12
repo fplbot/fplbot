@@ -37,7 +37,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var team = await _repo.GetTeam(eventMetadata.Team_Id);
             var client = _builder.Build(team.AccessToken);
             
-            var viewPublishRequest = BuildViewRequest(appHomeEvent.User);
+            
+            
+            var viewPublishRequest = BuildViewRequest(appHomeEvent.User, team.FplbotLeagueId);
             ViewPublishResponse res = null;
             try
             {
@@ -51,7 +53,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
         
-        private static ViewPublishRequest BuildViewRequest(string userId)
+        private static ViewPublishRequest BuildViewRequest(string userId, long leagueId)
         {
             return new ViewPublishRequest(userId)
             {
@@ -90,32 +92,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                             {
                                 type = TextTypes.PlainText,
                                 text = "FPL League Id"
+                                
                             },
-                            element = new Element
+                            element = new PlainTextInputElement
                             {
-                                type = ElementTypes.PlainTextInput,
                                 action_id = "fpl_league_id_action",
+                                initial_value = leagueId.ToString()
                             }
                             
-                        },
-                       new Block
-                       {
-                           type = BlockTypes.Actions,
-                           elements = new Element[]
-                           {
-                               new Element
-                               {
-                                   action_id =  "app_home_save",
-                                   type = ElementTypes.Button,
-                                   text = new Text
-                                   {
-                                       type = TextTypes.PlainText,
-                                       text = "Save"
-                                   },
-                                   value = "save"
-                               }
-                           }
-                       }
+                        }
                     }
                 }
             };

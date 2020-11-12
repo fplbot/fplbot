@@ -16,7 +16,7 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
      public class InputBlock : IBlock
      { 
          public string type { get; } = BlockTypes.Input;
-         public Element element { get; set; }
+         public IElement element { get; set; }
          public Text label { get; set; }
          public bool dispatch_action { get; set; }     
      }
@@ -102,6 +102,13 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public int? min_query_length { get; set; }
         public Confirm confirm { get; set; }
         public string style { get; set; }
+    }
+    
+    public class PlainTextInputElement : IElement
+    {
+        public string type { get; } = ElementTypes.PlainTextInput; 
+        public string initial_value { get; set;}
+        public string action_id { get; set; }
     }
     public class ImageElement : IElement
     {
@@ -217,6 +224,7 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public const string ConversationSelect = "conversation_select";
         public const string Overflow = "overflow";
         public const string DatePicker = "datepicker";
+        public const string PlainTextInput = "plain_text_input";
     }
 
     public interface IElement { }

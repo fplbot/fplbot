@@ -9,5 +9,6 @@ namespace Slackbot.Net.Endpoints.Models.Interactive.BlockActions
         public User User { get; set; }
         
         public IEnumerable<ActionsBlock> Actions { get; set; }
+        
     }
 }

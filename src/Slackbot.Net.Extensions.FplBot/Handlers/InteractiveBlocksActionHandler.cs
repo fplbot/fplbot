@@ -23,7 +23,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var newLeagueID = int.Parse(blockActionEvent.Actions.First(x => x.action_id.Equals("fpl_league_id_action")).value);
 
             await _leagueClient.GetClassicLeague(newLeagueID);
-            await _teamRepo.UpdateLeagueId(blockActionEvent.Team.Team_Id, newLeagueID);
+            await _teamRepo.UpdateLeagueId(blockActionEvent.Team.Id, newLeagueID);
+            
+
 
             return new EventHandledResponse("League ID updated");
         }
