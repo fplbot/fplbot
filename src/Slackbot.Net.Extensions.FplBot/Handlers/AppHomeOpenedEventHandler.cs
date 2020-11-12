@@ -3,15 +3,16 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ViewPublish;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 using Block = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.Block;
 using BlockTypes = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.BlockTypes;
 using Element = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.Element;
+using ElementTypes = Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions.ElementTypes;
 using IBlock = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.IBlock;
 using Text = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.Text;
 using TextTypes = Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks.TextTypes;
@@ -82,9 +83,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                             }
                         
                         },
-                        new Block
+                        new InputBlock
                         {
-                            type = BlockTypes.Input,
+                            dispatch_action = true,
                             label = new Text
                             {
                                 type = TextTypes.PlainText,

@@ -1,6 +1,6 @@
 namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
 {
- public class Block : IBlock
+    public class Block : IBlock
     {
         public string type { get; set; }
         public string block_id { get; set; }
@@ -11,9 +11,16 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public string image_url { get; set; }
         public string alt_text { get; set; }
         public Text[] fields { get; set; }
-        public Element element { get; set; }
-        public Text label { get; set; }
     }
+
+     public class InputBlock : IBlock
+     { 
+         public string type { get; } = BlockTypes.Input;
+         public Element element { get; set; }
+         public Text label { get; set; }
+         public bool dispatch_action { get; set; }     
+     }
+ 
     public class SectionBlock : IBlock
     {
         public string type { get; } = BlockTypes.Section;
