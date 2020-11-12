@@ -41,7 +41,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek)
         {
-            var topThree = league.Standings.Entries.OrderByDescending(e => e.EventTotal).Take(3).ToArray();
+            var topThree = league.Standings.Entries
+                .GroupBy(e => e.EventTotal)
+                .OrderByDescending(g => g.Key)
+                .Take(3)
+                .ToArray();
             
             if (!topThree.Any())
             {
@@ -54,8 +58,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             for (var i = 0; i < topThree.Length; i++)
             {
-                var entry = topThree[i];
-                sb.Append($"{Formatter.GetPositionEmoji(i)} {entry.GetEntryLink(gameweek.Id)} - {entry.Total}\n");
+                var group = topThree[i];
+                foreach (var entry in group)
+                {
+                    sb.Append($"{Formatter.RankEmoji(i)} {entry.GetEntryLink(gameweek.Id)} - {entry.EventTotal}\n");
+                }
             }
 
             return sb.ToString();
@@ -423,7 +430,44 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return provisionalFixturesFinished.Select(fixture => $"FT: {fixture.HomeTeam.ShortName}-{fixture.AwayTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore}");
         }
 
-        public static string GetPositionEmoji(int position)
+        public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)
+        {
+            var introText = $"Gameweek {gw.Name} is finished.";
+            var globalAverage = (int)Math.Round(gw.AverageScore);
+            var leagueAverage = (int)Math.Round(league.Standings.Entries.Average(entry => entry.EventTotal));
+            var diff = Math.Abs(globalAverage - leagueAverage);
+            var nuance = diff <= 5 ? "slightly " : "";
+
+            if (globalAverage < 40)
+            {
+                introText += $" It was probably a disappointing one, with a global average of *{gw.AverageScore}* points.";
+            }
+            else if (globalAverage > 80)
+            {
+                introText += $" Must've been pretty intense, with a global average of *{globalAverage}* points.";
+            }
+            else
+            {
+                introText += $" The global average was *{globalAverage}* points.";
+            }
+
+            if (leagueAverage > globalAverage)
+            {
+                introText += $" Your league did {nuance}better than this, though - with *{leagueAverage}* points average.";
+            } 
+            else if (leagueAverage == globalAverage)
+            {
+                introText += $" I guess your league is pretty mediocre, since you got the exact same *{leagueAverage}* points average.";
+            }
+            else
+            {
+                introText += $" I'm afraid your league did {nuance}worse than this, with your *{leagueAverage}* points average.";
+            }
+
+            return introText;
+        }
+
+        public static string RankEmoji(int position)
         {
             return position switch
             {

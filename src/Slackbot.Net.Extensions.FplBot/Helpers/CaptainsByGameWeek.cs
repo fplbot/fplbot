@@ -57,7 +57,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 var captainGroups = entryCaptainPicks
                     .GroupBy(x => x.Captain.Id, el => el.Captain)
                     .OrderByDescending(x => x.Count())
-                    .Select((group, i) => new { Captain = group.First(), Count = group.Count(), Emoji = Formatter.GetPositionEmoji(i) })
+                    .Select((group, i) => new { Captain = group.First(), Count = group.Count(), Emoji = Formatter.RankEmoji(i) })
                     .MaterializeToArray();
 
                 var sb = new StringBuilder();

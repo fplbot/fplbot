@@ -31,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _logger = logger;
         }
 
-        public async Task HandleGameweekEndeded(int gameweek)
+        public async Task HandleGameweekEnded(int gameweek)
         {
             var gameweeks = await _gameweekClient.GetGameweeks();
             var gw = gameweeks.SingleOrDefault(g => g.Id == gameweek);
@@ -57,7 +57,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var slackTeam = await _teamRepo.GetTeam("T0A9QSU83");
                     if (slackTeam.FplBotSlackChannel == "#fpltest")
                     {
-                        var intro = GetIntroText(gw, league);
+                        var intro = Formatter.FormatGameweekFinished(gw, league);
                         var standings = Formatter.GetStandings(league, gw);
                         var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
                         var worst = Formatter.GetWorstGameweekEntry(league, gw);
@@ -75,39 +75,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     _logger.LogError(e, e.Message);
                 }
             }
-        }
-
-        private static string GetIntroText(Gameweek gw, ClassicLeague league)
-        {
-            var introText = $"Gameweek {gw.Name} is finished.";
-            var globalAverage = gw.AverageScore;
-            var leagueAverage = Math.Floor(league.Standings.Entries.Average(entry => entry.EventTotal));
-            var diff = Math.Abs(globalAverage - leagueAverage);
-            var nuance = diff <= 5 ? "slightly " : "";
-
-            if (globalAverage < 40)
-            {
-                introText += $" It was probably a disappointing one, with a global average of *{gw.AverageScore}* points.";
-            }
-            else if (globalAverage > 80)
-            {
-                introText += $" Must've been pretty intense, with a global average of *{globalAverage}* points.";
-            }
-            else
-            {
-                introText += $" The global average was {globalAverage} points.";
-            }
-
-            if (leagueAverage > globalAverage)
-            {
-                introText += $" Your league did {nuance}better than this, though - with *{leagueAverage}* points average.";
-            }
-            else
-            {
-                introText += $" I'm afraid your league did {nuance}worse than this, with your *{leagueAverage}* points average.";
-            }
-
-            return introText;
         }
     }
 }
