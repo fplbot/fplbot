@@ -35,8 +35,10 @@ namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
     }
     public class ActionsBlock : IBlock
     {
+        public string action_id { get; set; }
         public string type { get; } = BlockTypes.Actions;
         public string block_id { get; set; }
+        public string value { get; set; }
         public IElement[] elements { get; set; }
     }
     public class ContextBlock : IBlock

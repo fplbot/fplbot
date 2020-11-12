@@ -30,6 +30,12 @@ namespace Slackbot.Net.Endpoints.Hosting
             return this;
         }
 
+        public ISlackbotHandlersBuilder AddInteractiveBlockActionsHandler<T>() where T : class, IHandleInteractiveBlockActions
+        {
+            _services.AddSingleton<IHandleInteractiveBlockActions, T>();
+            return this;
+        }
+
         public ISlackbotHandlersBuilder AddAppHomeOpenedHandler<T>() where T : class, IHandleAppHomeOpened
         {
             _services.AddSingleton<IHandleAppHomeOpened, T>();

@@ -8,6 +8,7 @@ namespace Slackbot.Net.Endpoints.Hosting
         public ISlackbotHandlersBuilder AddShortcut<T>() where T:class,IShortcutAppMentions;
         public ISlackbotHandlersBuilder AddMemberJoinedChannelHandler<T>() where T : class, IHandleMemberJoinedChannel;
         public ISlackbotHandlersBuilder AddViewSubmissionHandler<T>() where T : class, IHandleViewSubmissions;
+        public ISlackbotHandlersBuilder AddInteractiveBlockActionsHandler<T>() where T : class, IHandleInteractiveBlockActions;
         
         public ISlackbotHandlersBuilder AddAppHomeOpenedHandler<T>() where T : class, IHandleAppHomeOpened;
     }
