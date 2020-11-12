@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AngleSharp.Common;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -20,22 +21,22 @@ namespace FplBot.WebApi.Controllers
     public class TestController : ControllerBase
     {
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly IPlayerClient _playerclient;
-        private readonly ITeamsClient _teamsClient;
+        private readonly IGlobalSettingsClient _settings;
         private readonly FixtureEventsHandler _eventsHandler;
         private readonly StatusUpdateHandler _statusHandler;
         private readonly LineupReadyHandler _readyHandler;
         private readonly IGetMatchDetails _matchDetailsFetcher;
+        private readonly IFixtureClient _fixtureClient;
 
-        public TestController(ISlackTeamRepository teamRepo, IPlayerClient playerclient, ITeamsClient teamsClient, FixtureEventsHandler eventsHandler, StatusUpdateHandler statusHandler, LineupReadyHandler readyHandler, IGetMatchDetails matchDetailsFetcher)
+        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings, FixtureEventsHandler eventsHandler, StatusUpdateHandler statusHandler, LineupReadyHandler readyHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient)
         {
             _teamRepo = teamRepo;
-            _playerclient = playerclient;
-            _teamsClient = teamsClient;
+            _settings = settings;
             _eventsHandler = eventsHandler;
             _statusHandler = statusHandler;
             _readyHandler = readyHandler;
             _matchDetailsFetcher = matchDetailsFetcher;
+            _fixtureClient = fixtureClient;
         }
 
         [HttpGet("fixture-event")]
@@ -45,9 +46,10 @@ namespace FplBot.WebApi.Controllers
             blankTeam.FplbotLeagueId = 619747;
             blankTeam.Subscriptions = new[] {EventSubscription.All};
             blankTeam.FplBotSlackChannel = "#fpltest";
-            
-            var players = await _playerclient.GetAllPlayers();
-            var teams = await _teamsClient.GetAllTeams();
+
+            var globalSettings = await _settings.GetGlobalSettings();
+            var players = globalSettings.Players;
+            var teams = globalSettings.Teams;
             var fixtureUpdates = new FixtureUpdates
             {
                 CurrentGameweek = 7,
@@ -69,14 +71,18 @@ namespace FplBot.WebApi.Controllers
         [HttpGet("status-event2")]
         public async Task<IActionResult> GetStatusUpdate2()
         {
-            var all = await _playerclient.GetAllPlayers();
-            foreach (var player in all)
+            var globalSettings = await _settings.GetGlobalSettings();
+            var players = globalSettings.Players;
+            var teams = globalSettings.Teams;
+            foreach (var player in players)
             {
                 player.Status = PlayerStatuses.Available;
             }
-            var after = await _playerclient.GetAllPlayers();
-            var teams = await _teamsClient.GetAllTeams();
-            var statusUpdates = PlayerChangesEventsExtractor.GetStatusChanges(after, all, teams);
+            
+            var afterSettings = await _settings.GetGlobalSettings();
+
+            var after = afterSettings.Players;
+            var statusUpdates = PlayerChangesEventsExtractor.GetStatusChanges(after, players, teams);
             await _statusHandler.OnStatusUpdates(statusUpdates);
             return Ok();
         }
@@ -87,6 +93,29 @@ namespace FplBot.WebApi.Controllers
             var mDetails = await _matchDetailsFetcher.GetMatchDetails(pulseId);
             var lineups = MatchDetailsMapper.ToLineup(mDetails);
             await _readyHandler.HandleLineupReady(lineups);
+            return Ok();
+        }
+        
+        [HttpGet("fulltime")]
+        public async Task<IActionResult> GetFixtureFulltime()
+        {
+            var settings = await _settings.GetGlobalSettings();
+            var fixtures = await _fixtureClient.GetFixturesByGameweek(8);
+            await _statusHandler.OnFixturesProvisionalFinished(new []
+            {
+                new FinishedFixture
+                {
+                    Fixture = fixtures.Last(),
+                    HomeTeam = settings.Teams.First(),
+                    AwayTeam = settings.Teams.Last()
+                },
+                new FinishedFixture
+                {
+                    Fixture = fixtures.GetItemByIndex(2),
+                    HomeTeam = settings.Teams.GetItemByIndex(4),
+                    AwayTeam = settings.Teams.GetItemByIndex(5)
+                }
+            });
             return Ok();
         }
         

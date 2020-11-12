@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -46,6 +47,18 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             }
 
             return update.ToPlayer?.NowCost > 55;
+        }
+
+        public async Task OnFixturesProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
+        {
+            _logger.LogInformation("Handling fixture provisionally finished");
+
+            var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
+            if (slackTeam.FplBotSlackChannel == "#fpltest")
+            {
+                var formatted = Formatter.FormatProvisionalFinished(provisionalFixturesFinished);
+                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted.ToArray());
+            }
         }
     }
 }

@@ -62,6 +62,12 @@ namespace FplBot.Tests
             };
         }
 
+        public static Fixture FinishedProvisional(this Fixture fixture)
+        {
+            fixture.FinishedProvisional = true;
+            return fixture;
+        }
+
         private static FixtureStat AwayTeamLeadingBy(int goals)
         {
             return new FixtureStat

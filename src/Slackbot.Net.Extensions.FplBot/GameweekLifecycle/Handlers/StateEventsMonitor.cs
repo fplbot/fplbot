@@ -16,6 +16,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _state.OnNewFixtureEvents += fixtureEventsHandler.OnNewFixtureEvents;
             _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
             _state.OnStatusUpdates += statusUpdateHandler.OnStatusUpdates;
+            _state.OnFixturesProvisionalFinished += statusUpdateHandler.OnFixturesProvisionalFinished;
         }
 
         public async Task Initialize(int gwId)
