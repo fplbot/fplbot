@@ -5,6 +5,6 @@ namespace Slackbot.Net.Endpoints.Abstractions
 {
     public interface IHandleInteractiveBlockActions
     {
-        Task<EventHandledResponse> Handle(BlockActionInteraction raw);
+        Task<EventHandledResponse> Handle(BlockActionInteraction blockActionEvent);
     }
 }
