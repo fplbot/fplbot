@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Endpoints.Models.Interactive;
+using Slackbot.Net.Endpoints.Models.Interactive.BlockActions;
 using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
 
 namespace Slackbot.Net.Endpoints.Middlewares
@@ -100,6 +101,8 @@ namespace Slackbot.Net.Endpoints.Middlewares
                     viewSubmission.ViewId = view.Value<string>("id");
                     viewSubmission.ViewState = viewState;
                     return viewSubmission;
+                case InteractionTypes.BlockActions:
+                    return payloadJson.ToObject<BlockActionInteraction>();
                 default:
                     var unknownSlackEvent = payloadJson.ToObject<UnknownInteractiveMessage>();
                     unknownSlackEvent.RawJson = raw;
