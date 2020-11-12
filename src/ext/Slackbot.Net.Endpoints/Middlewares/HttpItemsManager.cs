@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Endpoints.Models.Interactive;
+using Slackbot.Net.Endpoints.Models.Interactive.BlockActions;
 using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
 
 namespace Slackbot.Net.Endpoints.Middlewares
@@ -56,7 +57,8 @@ namespace Slackbot.Net.Endpoints.Middlewares
                 {
                     _logger.LogTrace(body);
                     var payloadJson = body.Remove(0,8);
-                    var payload = JObject.Parse(payloadJson);
+                    var decodedJson = System.Net.WebUtility.UrlDecode(payloadJson);
+                    var payload = JObject.Parse(decodedJson);
                     var interactivePayloadTyped = ToInteractiveType(payload, body);
                     context.Items.Add(HttpItemKeys.InteractivePayloadKey, interactivePayloadTyped);
                 }
@@ -98,6 +100,8 @@ namespace Slackbot.Net.Endpoints.Middlewares
                     viewSubmission.ViewId = view.Value<string>("id");
                     viewSubmission.ViewState = viewState;
                     return viewSubmission;
+                case InteractionTypes.BlockActions:
+                    return payloadJson.ToObject<BlockActionInteraction>();
                 default:
                     var unknownSlackEvent = payloadJson.ToObject<UnknownInteractiveMessage>();
                     unknownSlackEvent.RawJson = raw;
