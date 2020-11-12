@@ -1,6 +1,6 @@
 namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
 {
- public class Block : IBlock
+    public class Block : IBlock
     {
         public string type { get; set; }
         public string block_id { get; set; }
@@ -12,6 +12,15 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public string alt_text { get; set; }
         public Text[] fields { get; set; }
     }
+
+     public class InputBlock : IBlock
+     { 
+         public string type { get; } = BlockTypes.Input;
+         public IElement element { get; set; }
+         public Text label { get; set; }
+         public bool dispatch_action { get; set; }     
+     }
+ 
     public class SectionBlock : IBlock
     {
         public string type { get; } = BlockTypes.Section;
@@ -93,6 +102,13 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public int? min_query_length { get; set; }
         public Confirm confirm { get; set; }
         public string style { get; set; }
+    }
+    
+    public class PlainTextInputElement : IElement
+    {
+        public string type { get; } = ElementTypes.PlainTextInput; 
+        public string initial_value { get; set;}
+        public string action_id { get; set; }
     }
     public class ImageElement : IElement
     {
@@ -188,6 +204,7 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public const string Actions = "actions";
         public const string Context = "context";
         public const string Image = "image";
+        public const string Input = "input";
     }
 
     public static class TextTypes
@@ -207,6 +224,7 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public const string ConversationSelect = "conversation_select";
         public const string Overflow = "overflow";
         public const string DatePicker = "datepicker";
+        public const string PlainTextInput = "plain_text_input";
     }
 
     public interface IElement { }
