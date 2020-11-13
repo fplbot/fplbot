@@ -79,14 +79,14 @@ namespace FplBot.WebApi.Data
                 TeamId = teamId
             };
 
-            var subs = await GetSubscriptions(teamId, fetchedTeamData[4]);
+            var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
 
             team.Subscriptions = subs;
 
             return team;
         }
 
-        private async Task<List<EventSubscription>> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
+        private List<EventSubscription> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
         {
 
             if (!fetchedTeamData.HasValue)
@@ -106,16 +106,31 @@ namespace FplBot.WebApi.Data
 
         public async Task UpdateLeagueId(string teamId, long newLeagueId)
         {
+            if(string.IsNullOrEmpty(teamId))
+                throw new ArgumentNullException(nameof(teamId));
+
+            if(newLeagueId == 0)
+                throw new ArgumentNullException(nameof(newLeagueId));
+
             await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_leagueField, newLeagueId) });
         }
         
         public async Task UpdateChannel(string teamId, string newChannel)
         {
+            if(string.IsNullOrEmpty(teamId))
+                throw new ArgumentNullException(nameof(teamId));
+
+            if(string.IsNullOrEmpty(newChannel))
+                throw new ArgumentNullException(nameof(newChannel));
+
             await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_channelField, newChannel) });
         }
 
         public async Task DeleteByTeamId(string teamId)
         {
+            if(string.IsNullOrEmpty(teamId))
+                throw new ArgumentNullException(nameof(teamId));
+
             await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
         }
 
@@ -164,7 +179,7 @@ namespace FplBot.WebApi.Data
                     TeamId = teamId
                 };
 
-                var subs = await GetSubscriptions(teamId, fetchedTeamData[4]);
+                var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
 
                 slackTeam.Subscriptions = subs;
                 teams.Add(slackTeam);
@@ -175,6 +190,9 @@ namespace FplBot.WebApi.Data
 
         public async Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
         {
+            if(string.IsNullOrEmpty(teamId))
+                throw new ArgumentNullException(nameof(teamId));
+
             await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_subscriptionsField, string.Join(" ", subscriptions)) });
         }
     }
