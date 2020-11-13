@@ -68,6 +68,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        public (string, string) GetHelpDescription() => ($"{Command} {{new league id}}", "Change which league to follow");
+        public override (string, string) GetHelpDescription() => ($"{Command} {{new league id}}", "Change which league to follow");
     }
 }

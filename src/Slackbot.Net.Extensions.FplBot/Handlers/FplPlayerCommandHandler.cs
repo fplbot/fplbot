@@ -120,6 +120,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance == 0;
         }
 
-        public (string,string) GetHelpDescription() => ($"{Command} {{name}}", "Display info about the player");
+        public override (string,string) GetHelpDescription() => ($"{Command} {{name}}", "Display info about the player");
     }
 }

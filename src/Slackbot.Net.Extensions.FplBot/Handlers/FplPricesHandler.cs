@@ -33,6 +33,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public (string,string) GetHelpDescription() => (Command, "Displays players with recent price change");
+        public override (string,string) GetHelpDescription() => (Command, "Displays players with recent price change");
     }
 }

@@ -53,6 +53,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
         
-        public (string,string) GetHelpDescription() => (Command, "Get current league standings");
+        public override (string,string) GetHelpDescription() => (Command, "Get current league standings");
     }
 }

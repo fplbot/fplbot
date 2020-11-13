@@ -129,7 +129,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return $"You can choose from: {string.Join(", ", EventSubscriptionHelper.GetAllSubscriptionTypes())}";
         }
 
-        public (string, string) GetHelpDescription()
+        public override (string, string) GetHelpDescription()
         {
             var sb = new StringBuilder();
 

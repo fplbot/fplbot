@@ -52,7 +52,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
         }
 
-        public (string,string) GetHelpDescription() => (Command, "See injured players owned by more than 5 %");
+        public override (string,string) GetHelpDescription() => (Command, "See injured players owned by more than 5 %");
     }
 
 }

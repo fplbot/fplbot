@@ -82,6 +82,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return textToSend;
         }
 
-        public (string,string) GetHelpDescription() => (Command, "Displays the fixtures for next gameweek");
+        public override (string,string) GetHelpDescription() => (Command, "Displays the fixtures for next gameweek");
     }
 }

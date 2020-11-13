@@ -59,7 +59,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        public (string, string) GetHelpDescription()
+        public override (string, string) GetHelpDescription()
         {
             return (Command, "List current subscriptions");
         }

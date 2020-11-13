@@ -36,6 +36,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public (string,string) GetHelpDescription() => ($"{Command} {{GW-number, or empty for current}}", "Displays each team's transfers");
+        public override (string,string) GetHelpDescription() => ($"{Command} {{GW-number, or empty for current}}", "Displays each team's transfers");
     }
 }

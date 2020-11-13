@@ -12,6 +12,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         public abstract string Command { get; }
         public abstract Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent);
         public virtual bool ShouldHandle(AppMentionEvent slackEvent) => slackEvent.Text.TextAfterFirstSpace().StartsWith(Command, StringComparison.InvariantCultureIgnoreCase);
-        protected virtual string ParseArguments(AppMentionEvent message) => MessageHelper.ExtractArgs(message.Text, $"{Command} {{args}}");
+        protected string ParseArguments(AppMentionEvent message) => MessageHelper.ExtractArgs(message.Text, $"{Command} {{args}}");
+        public abstract (string, string) GetHelpDescription();
     }
 }
