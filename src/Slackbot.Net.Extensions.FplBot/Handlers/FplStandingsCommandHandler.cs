@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System;
 using System.Threading.Tasks;
@@ -42,7 +43,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 var setup = await _teamRepo.GetTeam(teamId);
                 var league = await _leagueClient.GetClassicLeague((int)setup.FplbotLeagueId);
                 var gameweeks = await _gameweekClient.GetGameweeks();
-                var standings = Formatter.GetStandings(league, gameweeks);
+                var standings = Formatter.GetStandings(league, gameweeks.GetCurrentGameweek());
                 return standings;
             }
             catch (Exception e)

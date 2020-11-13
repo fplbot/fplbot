@@ -1,6 +1,5 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using System;
@@ -58,7 +57,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 var captainGroups = entryCaptainPicks
                     .GroupBy(x => x.Captain.Id, el => el.Captain)
                     .OrderByDescending(x => x.Count())
-                    .Select((group, i) => new { Captain = group.First(), Count = group.Count(), Emoji = GetCaptainCountEmoji(i) })
+                    .Select((group, i) => new { Captain = group.First(), Count = group.Count(), Emoji = Formatter.RankEmoji(i) })
                     .MaterializeToArray();
 
                 var sb = new StringBuilder();
@@ -98,17 +97,6 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return sb.ToString();
             
            
-        }
-
-        private static string GetCaptainCountEmoji(int i)
-        {
-            return i switch
-            {
-                0 => ":first_place_medal:",
-                1 => ":second_place_medal:",
-                2 => ":third_place_medal:",
-                _ => Constants.Emojis.NatureEmojis.GetRandom()
-            };
         }
 
         private async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)

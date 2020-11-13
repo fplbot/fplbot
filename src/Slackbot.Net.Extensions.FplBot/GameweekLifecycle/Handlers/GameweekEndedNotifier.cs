@@ -4,7 +4,9 @@ using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -29,9 +31,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _logger = logger;
         }
 
-        public async Task HandleGameweekEndeded(int gameweek)
+        public async Task HandleGameweekEnded(int gameweek)
         {
-            await _publisher.PublishToAllWorkspaceChannels($"Gameweek {gameweek} finished.");
+            var gameweeks = await _gameweekClient.GetGameweeks();
+            var gw = gameweeks.SingleOrDefault(g => g.Id == gameweek);
+            if (gw == null)
+            {
+                _logger.LogError("Found no gameweek with id {id}", gameweek);
+                return;
+            }
+
             var teams = await _teamRepo.GetAllTeams();
             foreach (var team in teams)
             {
@@ -44,9 +53,22 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 try
                 {
                     var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
-                    var gameweeks = await _gameweekClient.GetGameweeks();
-                    var standings = Formatter.GetStandings(league, gameweeks);
-                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, standings);
+
+                    var slackTeam = await _teamRepo.GetTeam("T0A9QSU83");
+                    if (slackTeam.FplBotSlackChannel == "#fpltest")
+                    {
+                        var intro = Formatter.FormatGameweekFinished(gw, league);
+                        var standings = Formatter.GetStandings(league, gw);
+                        var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
+                        var worst = Formatter.GetWorstGameweekEntry(league, gw);
+
+                        await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, intro, standings, topThree, worst);
+                    }
+                    else
+                    {
+                        var standings = Formatter.GetStandings(league, gw);
+                        await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, $"Gameweek {gameweek} finished.", standings);
+                    }
                 }
                 catch (Exception e)
                 {
