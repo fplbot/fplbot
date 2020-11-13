@@ -20,7 +20,7 @@ namespace FplBot.WebApi
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                     .ReadFrom.Configuration(hostingContext.Configuration)
                     .Enrich.FromLogContext()
-                    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss}][{Level:u3}][{SourceContext}] {Message:lj}{NewLine}{Exception}",theme: SystemConsoleTheme.None))
+                    .WriteTo.Console(outputTemplate: "{Level:u3} {SourceContext} {Message:lj}{NewLine}{Exception}",theme: ConsoleTheme.None))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
