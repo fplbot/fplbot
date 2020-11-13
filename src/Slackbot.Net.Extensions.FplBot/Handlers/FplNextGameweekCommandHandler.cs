@@ -1,18 +1,18 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.SlackClients.Http;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplNextGameweekCommandHandler : IHandleAppMentions
+    public class FplNextGameweekCommandHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly ISlackClientBuilder _slackClientService;
@@ -31,7 +31,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _tokenStore = tokenStore;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
+        public override string Command => "next";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
             var token = await _tokenStore.GetTokenByTeamId(eventMetadata.Team_Id);
             var slackClient = _slackClientService.Build(token);
@@ -80,8 +82,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return textToSend;
         }
 
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("next");
-        public (string,string) GetHelpDescription() => ("next", "Displays the fixtures for next gameweek");
-
+        public (string,string) GetHelpDescription() => (Command, "Displays the fixtures for next gameweek");
     }
 }

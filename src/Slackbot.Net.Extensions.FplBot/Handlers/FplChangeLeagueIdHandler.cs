@@ -1,15 +1,14 @@
-﻿using System.Net.Http;
-using Fpl.Client.Abstractions;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using System.Threading.Tasks;
+﻿using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    public class FplChangeLeagueIdHandler : IHandleAppMentions
+    public class FplChangeLeagueIdHandler : HandleAppMentionBase
     {
         private readonly ISlackTeamRepository _slackTeamRepository;
         private readonly ILeagueClient _leagueClient;
@@ -24,9 +23,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
+        public override string Command => "updateleagueid";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var newLeagueId = ParseLeagueId(message);
+            var newLeagueId = ParseArguments(message);
 
             if (string.IsNullOrEmpty(newLeagueId))
             {
@@ -67,13 +68,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        private static string ParseLeagueId(AppMentionEvent message)
-        {
-            return MessageHelper.ExtractArgs(message.Text, "updateleagueid {args}");
-        }
-
-        public bool ShouldHandle(AppMentionEvent @event ) => @event.Text.Contains("updateleagueid");
-
-        public (string, string) GetHelpDescription() => ("updateleagueid {new league id}", "Change which league to follow");
+        public (string, string) GetHelpDescription() => ($"{Command} {{new league id}}", "Change which league to follow");
     }
 }

@@ -1,12 +1,12 @@
-﻿using Slackbot.Net.Extensions.FplBot.Abstractions;
+﻿using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models.Events;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Threading.Tasks;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models.Events;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
-    internal class FplTransfersCommandHandler : IHandleAppMentions
+    internal class FplTransfersCommandHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly IGameweekHelper _gameweekHelper;
@@ -21,9 +21,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _slackTeamRepo = slackTeamRepo;
         }
 
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
+        public override string Command => "transfers";
+
+        public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, "transfers {gw}");
+            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, $"{Command} {{gw}}");
 
             
             var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
@@ -34,8 +36,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public bool ShouldHandle(AppMentionEvent @event) => @event.Text.Contains("transfers");
-
-        public (string,string) GetHelpDescription() => ("transfers {GW-number, or empty for current}", "Displays each team's transfers");
+        public (string,string) GetHelpDescription() => ($"{Command} {{GW-number, or empty for current}}", "Displays each team's transfers");
     }
 }
