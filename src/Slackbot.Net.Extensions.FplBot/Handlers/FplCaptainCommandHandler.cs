@@ -56,6 +56,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(outgoingMessage);
         }
 
-        public override (string, string) GetHelpDescription() => ($"JOHN{Command} [chart] {{GW-number, or empty for current}}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
+        public override (string, string) GetHelpDescription() => ($"{Command} [chart] {{GW-number, or empty for current}}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
     }
 }
