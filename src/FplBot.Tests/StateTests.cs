@@ -405,7 +405,8 @@ namespace FplBot.Tests
                 Players = new List<Player>
                 {
                     TestBuilder.Player().WithStatus(PlayerStatuses.Available),
-                    TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)                }
+                    TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)                
+                }
             });
 
             var fixtureClient = A.Fake<IFixtureClient>();

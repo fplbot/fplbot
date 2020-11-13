@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -24,7 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         
         public async Task OnStatusUpdates(IEnumerable<PlayerStatusUpdate> statusUpdates)
         {
-            _logger.LogInformation("Handling player status updates");
+            _logger.LogInformation($"Handling player {statusUpdates.Count()} status updates");
             var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
             if (slackTeam.FplBotSlackChannel == "#fpltest")
             {
@@ -34,8 +33,15 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             else
             {
                 var filtered = statusUpdates.Where(IsRelevant);
-                var formatted = Formatter.FormatStatusUpdates(filtered);
-                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);    
+                if (filtered.Any())
+                {
+                    var formatted = Formatter.FormatStatusUpdates(filtered);
+                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);    
+                }
+                else
+                {
+                    _logger.LogInformation("All updates filtered out because of irrelevant, so not sending any notification");
+                }
             }
         }
 

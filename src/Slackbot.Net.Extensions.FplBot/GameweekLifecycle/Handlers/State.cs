@@ -66,16 +66,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
             if (priceChanges.Any())
             {
-                await OnPriceChanges(priceChanges);
+                await OnPriceChanges(priceChanges.ToList());
             }
 
             if (statusUpdates.Any())
             {
-                await OnStatusUpdates(statusUpdates);
+                await OnStatusUpdates(statusUpdates.ToList());
             }
             
             if (finishedFixtures.Any())
-                await OnFixturesProvisionalFinished(finishedFixtures);
+                await OnFixturesProvisionalFinished(finishedFixtures.ToList());
         }
 
         public event Func<FixtureUpdates, Task> OnNewFixtureEvents = (fixtureEvents) => Task.CompletedTask;

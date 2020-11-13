@@ -43,6 +43,36 @@ namespace FplBot.Tests
         }
         
         [Fact]
+        public void GetChangedPlayers_WhenSamePlayersDuplicateWithChangeInPriceChange_ReturnsSingleChanges()
+        {
+            var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
+            var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
+            
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+
+            Assert.Single(priceChanges);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().PlayerSecondName);
+            
+            var before2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
+            var after2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
+            
+            var priceChanges2 = PlayerChangesEventsExtractor.GetPriceChanges(after2,before2, new List<Team>());
+
+            Assert.Single(priceChanges2);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges2.First().PlayerSecondName);
+            
+            var before3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
+            var after3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+            
+            var priceChanges3 = PlayerChangesEventsExtractor.GetPriceChanges(after3,before3, new List<Team>());
+
+            Assert.Single(priceChanges3);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges3.First().PlayerSecondName);
+        }
+        
+      
+        
+        [Fact]
         public void GetChangedPlayers_WhenSamePlayersWithChangeInPriceRemoved_ReturnsNoChanges()
         {
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };

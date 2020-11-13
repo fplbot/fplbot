@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
@@ -23,7 +24,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 
         public async Task OnPriceChanges(IEnumerable<PriceChange> priceChanges)
         {
-            _logger.LogInformation("Handling price updates");
+            _logger.LogInformation($"Handling {priceChanges.Count()} price updates");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)
             {
