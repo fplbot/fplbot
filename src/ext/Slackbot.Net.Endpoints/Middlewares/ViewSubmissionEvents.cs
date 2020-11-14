@@ -39,24 +39,29 @@ namespace Slackbot.Net.Endpoints.Middlewares
                     await HandleViewSubmission(payload as ViewSubmission);
                     break;
                 case InteractionTypes.BlockActions:
-                    await HandleBlockActions(payload as BlockActionInteraction);
+                    var res = await HandleBlockActions(payload as BlockActionInteraction);
+                    context.Response.StatusCode = res.Response switch
+                    {
+                        "ERROR" => 500,
+                        "VALIDATION_ERRORS" => 400,
+                        _ => context.Response.StatusCode
+                    };
+                    await context.Response.WriteAsync(res.Response);
                     break;
                 default:
                     await _noOp.Handle(payload);
                     break;
             }
-
-            await _next(context);
         }
 
-        private async Task HandleBlockActions(BlockActionInteraction payload)
+        private async Task<EventHandledResponse> HandleBlockActions(BlockActionInteraction payload)
         {
             var handler = _blockActionHandlers.FirstOrDefault();
             
             if (handler == null)
             {
                 _logger.LogError("No handler registered for BlockAction interactions");
-                await _noOp.Handle(payload);
+                return await _noOp.Handle(payload);
             }
             else
             {
@@ -66,10 +71,12 @@ namespace Slackbot.Net.Endpoints.Middlewares
                     _logger.LogInformation($"Handling using {handler.GetType()}");
                     var response = await handler.Handle(payload);
                     _logger.LogInformation(response.Response);
+                    return response;
                 }
                 catch (Exception e)
                 {
                     _logger.LogError(e, e.Message);
+                    return new EventHandledResponse("ERROR");
                 }
             }
         }
