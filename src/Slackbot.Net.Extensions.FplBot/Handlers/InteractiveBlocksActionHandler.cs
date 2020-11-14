@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -33,7 +34,15 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 return new EventHandledResponse("VALIDATION_ERRORS");
             }
 
-            await _leagueClient.GetClassicLeague(newLeagueID);
+            try
+            {
+                await _leagueClient.GetClassicLeague(newLeagueID);
+            }
+            catch (Exception)
+            {
+                return new EventHandledResponse("VALIDATION_ERRORS");
+            }
+            
             await _teamRepo.UpdateLeagueId(blockActionEvent.Team.Id, newLeagueID);
             
 
