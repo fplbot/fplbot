@@ -9,13 +9,13 @@ using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
-    public class StatusUpdateHandler
+    public class InjuryUpdateHandler
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
-        private readonly ILogger<StatusUpdateHandler> _logger;
+        private readonly ILogger<InjuryUpdateHandler> _logger;
 
-        public StatusUpdateHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo, ILogger<StatusUpdateHandler> logger)
+        public InjuryUpdateHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo, ILogger<InjuryUpdateHandler> logger)
         {
             _publisher = publisher;
             _slackTeamRepo = slackTeamRepo;
@@ -43,18 +43,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 {
                     _logger.LogInformation("All updates filtered out because of irrelevant, so not sending any notification");
                 }
-            }
-        }
-
-        public async Task OnFixturesProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
-        {
-            _logger.LogInformation("Handling fixture provisionally finished");
-
-            var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
-            if (slackTeam.FplBotSlackChannel == "#fpltest")
-            {
-                var formatted = Formatter.FormatProvisionalFinished(provisionalFixturesFinished);
-                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted.ToArray());
             }
         }
     }

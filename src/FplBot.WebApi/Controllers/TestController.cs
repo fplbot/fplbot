@@ -23,18 +23,20 @@ namespace FplBot.WebApi.Controllers
         private readonly ISlackTeamRepository _teamRepo;
         private readonly IGlobalSettingsClient _settings;
         private readonly FixtureEventsHandler _eventsHandler;
-        private readonly StatusUpdateHandler _statusHandler;
+        private readonly InjuryUpdateHandler _statusHandler;
         private readonly LineupReadyHandler _readyHandler;
+        private readonly FixtureStateHandler _fixtureStateHandler;
         private readonly IGetMatchDetails _matchDetailsFetcher;
         private readonly IFixtureClient _fixtureClient;
 
-        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings, FixtureEventsHandler eventsHandler, StatusUpdateHandler statusHandler, LineupReadyHandler readyHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient)
+        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings, FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler, FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient)
         {
             _teamRepo = teamRepo;
             _settings = settings;
             _eventsHandler = eventsHandler;
             _statusHandler = statusHandler;
             _readyHandler = readyHandler;
+            _fixtureStateHandler = fixtureStateHandler;
             _matchDetailsFetcher = matchDetailsFetcher;
             _fixtureClient = fixtureClient;
         }
@@ -101,7 +103,7 @@ namespace FplBot.WebApi.Controllers
         {
             var settings = await _settings.GetGlobalSettings();
             var fixtures = await _fixtureClient.GetFixturesByGameweek(8);
-            await _statusHandler.OnFixturesProvisionalFinished(new []
+            await _fixtureStateHandler.OnFixturesProvisionalFinished(new []
             {
                 new FinishedFixture
                 {

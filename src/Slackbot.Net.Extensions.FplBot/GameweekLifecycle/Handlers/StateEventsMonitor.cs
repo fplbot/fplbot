@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -9,14 +10,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ILogger<StateEventsMonitor> _logger;
         private readonly IState _state;
 
-        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventsHandler, PriceChangeHandler priceChangeHandler, StatusUpdateHandler statusUpdateHandler,  ILogger<StateEventsMonitor> logger)
+        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventsHandler, PriceChangeHandler priceChangeHandler, InjuryUpdateHandler statusUpdateHandler, FixtureStateHandler fixtureStateHandler,  ILogger<StateEventsMonitor> logger)
         {
             _logger = logger;
             _state = state;
             _state.OnNewFixtureEvents += fixtureEventsHandler.OnNewFixtureEvents;
             _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
             _state.OnInjuryUpdates += statusUpdateHandler.OnInjuryUpdates;
-            _state.OnFixturesProvisionalFinished += statusUpdateHandler.OnFixturesProvisionalFinished;
+            _state.OnFixturesProvisionalFinished += fixtureStateHandler.OnFixturesProvisionalFinished;
         }
 
         public async Task Initialize(int gwId)

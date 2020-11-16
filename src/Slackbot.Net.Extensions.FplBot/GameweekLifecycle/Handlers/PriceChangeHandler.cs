@@ -31,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
                 {
                     var formatted = Formatter.FormatPriceChanged(priceChanges);
-                    await _publisher.PublishToWorkspace(slackTeam.TeamId, "#johntest", formatted);
+                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
                 }
             }
         }
