@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
 
@@ -32,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             }
             else
             {
-                var filtered = statusUpdates.Where(IsRelevant);
+                var filtered = statusUpdates.Where(c => c.ToPlayer.IsRelevant());
                 if (filtered.Any())
                 {
                     var formatted = Formatter.FormatStatusUpdates(filtered);
@@ -43,16 +44,6 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     _logger.LogInformation("All updates filtered out because of irrelevant, so not sending any notification");
                 }
             }
-        }
-
-        private bool IsRelevant(PlayerStatusUpdate update)
-        {
-            if (update.ToPlayer?.OwnershipPercentage > 2)
-            {
-                return true;
-            }
-
-            return update.ToPlayer?.NowCost > 55;
         }
 
         public async Task OnFixturesProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
