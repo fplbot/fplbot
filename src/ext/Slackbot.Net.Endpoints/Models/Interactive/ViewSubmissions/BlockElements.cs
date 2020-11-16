@@ -1,6 +1,6 @@
 namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
 {
- public class Block : IBlock
+    public class Block : IBlock
     {
         public string type { get; set; }
         public string block_id { get; set; }
@@ -49,11 +49,11 @@ namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
     }
     
     public class InputBlock : IBlock
-    {
+    { 
         public string type { get; } = BlockTypes.Input;
-        public string block_id { get; set; }
-        public Text label { get; set; }
         public IElement element { get; set; }
+        public Text label { get; set; }
+        public bool dispatch_action { get; set; }     
     }
     
     public class Text : IElement
@@ -105,6 +105,14 @@ namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
         public Confirm confirm { get; set; }
         public string style { get; set; }
     }
+
+    public class PlainTextInputElement : IElement
+    {
+        public string type { get; } = ElementTypes.PlainTextInput; 
+        public string initial_value { get; set;}
+        public string action_id { get; set; }
+    }
+
     public class ImageElement : IElement
     {
         public string type { get; } = ElementTypes.Image;

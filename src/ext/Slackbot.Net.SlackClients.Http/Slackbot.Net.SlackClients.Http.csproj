@@ -28,4 +28,8 @@
         <None Include="images/slack.png" Pack="true" PackagePath="" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
+    </ItemGroup>
+
 </Project>

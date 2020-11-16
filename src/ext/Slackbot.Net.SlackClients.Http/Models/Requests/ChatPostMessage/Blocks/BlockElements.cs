@@ -12,15 +12,6 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public string alt_text { get; set; }
         public Text[] fields { get; set; }
     }
-
-     public class InputBlock : IBlock
-     { 
-         public string type { get; } = BlockTypes.Input;
-         public IElement element { get; set; }
-         public Text label { get; set; }
-         public bool dispatch_action { get; set; }     
-     }
- 
     public class SectionBlock : IBlock
     {
         public string type { get; } = BlockTypes.Section;
@@ -44,8 +35,10 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
     }
     public class ActionsBlock : IBlock
     {
+        public string action_id { get; set; }
         public string type { get; } = BlockTypes.Actions;
         public string block_id { get; set; }
+        public string value { get; set; }
         public IElement[] elements { get; set; }
     }
     public class ContextBlock : IBlock
@@ -54,6 +47,15 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public string block_id { get; set; }
         public IElement[] elements { get; set; }
     }
+    
+    public class InputBlock : IBlock
+    { 
+        public string type { get; } = BlockTypes.Input;
+        public IElement element { get; set; }
+        public Text label { get; set; }
+        public bool dispatch_action { get; set; }     
+    }
+    
     public class Text : IElement
     {
         public string type { get; set; } = TextTypes.PlainText;
@@ -103,13 +105,14 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public Confirm confirm { get; set; }
         public string style { get; set; }
     }
-    
+
     public class PlainTextInputElement : IElement
     {
         public string type { get; } = ElementTypes.PlainTextInput; 
         public string initial_value { get; set;}
         public string action_id { get; set; }
     }
+
     public class ImageElement : IElement
     {
         public string type { get; } = ElementTypes.Image;
@@ -189,6 +192,13 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks
         public Text placeholder { get; set; }
         public string initial_date { get; set; }
         public Confirm confirm { get; set; }
+    }
+
+    public class PlainTextElement : IElement
+    {
+        public string type { get; } = ElementTypes.PlainTextInput;
+        public string action_id { get; set; }
+        public Text placeholder { get; set; }
     }
 
     public static class ButtonStyles
