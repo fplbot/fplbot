@@ -22,7 +22,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _logger = logger;
         }
 
-        public async Task OnPriceChanges(IEnumerable<PriceChange> priceChanges)
+        public async Task OnPriceChanges(IEnumerable<PlayerUpdate> priceChanges)
         {
             _logger.LogInformation($"Handling {priceChanges.Count()} price updates");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
@@ -31,7 +31,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
                 {
                     var formatted = Formatter.FormatPriceChanged(priceChanges);
-                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                    await _publisher.PublishToWorkspace(slackTeam.TeamId, "#johntest", formatted);
                 }
             }
         }

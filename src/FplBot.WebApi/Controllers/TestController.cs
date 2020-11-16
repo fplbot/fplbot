@@ -64,7 +64,7 @@ namespace FplBot.WebApi.Controllers
         [HttpGet("status-event")]
         public async Task<IActionResult> GetStatusUpdate()
         {
-            await _statusHandler.OnStatusUpdates(StatusUpdates());
+            await _statusHandler.OnInjuryUpdates(StatusUpdates());
             return Ok();
         }
         
@@ -83,7 +83,7 @@ namespace FplBot.WebApi.Controllers
 
             var after = afterSettings.Players;
             var statusUpdates = PlayerChangesEventsExtractor.GetStatusChanges(after, players, teams);
-            await _statusHandler.OnStatusUpdates(statusUpdates);
+            await _statusHandler.OnInjuryUpdates(statusUpdates);
             return Ok();
         }
 
@@ -119,7 +119,7 @@ namespace FplBot.WebApi.Controllers
             return Ok();
         }
         
-        private static PlayerStatusUpdate[] StatusUpdates()
+        private static PlayerUpdate[] StatusUpdates()
         {
             var random = new Random();
             return new []
@@ -139,9 +139,9 @@ namespace FplBot.WebApi.Controllers
             };
         }
 
-        private static PlayerStatusUpdate PlayerStatusUpdate(string fromStatus, string toStatus, int rando, string updatedDoubtfulNews = null)
+        private static PlayerUpdate PlayerStatusUpdate(string fromStatus, string toStatus, int rando, string updatedDoubtfulNews = null)
         {
-            return new PlayerStatusUpdate
+            return new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -151,7 +151,7 @@ namespace FplBot.WebApi.Controllers
                     Status = fromStatus,
                     News = $"Quacked his toe. 55% chance of playing",
                 },
-                TeamName = "FICTIVE FC",
+                Team = new Team { ShortName = "FICTIVE FC"},
                 ToPlayer = new Player
                 {
                     WebName = $"{fromStatus}-{toStatus}",

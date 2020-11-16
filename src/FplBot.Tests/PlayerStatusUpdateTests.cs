@@ -20,7 +20,7 @@ namespace FplBot.Tests
         [InlineData("75% chance of playing", "50% chance of playing", "Decreased chance of playing")]
         public void IncreaseChanceOfPlaying(string fromNews, string toNews, string expected)
         {
-            var change = Formatter.Change(new PlayerStatusUpdate
+            var change = Formatter.Change(new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -39,7 +39,7 @@ namespace FplBot.Tests
         [Fact]
         public void NoChanceInfoInNews()
         {
-            var change = Formatter.Change(new PlayerStatusUpdate
+            var change = Formatter.Change(new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -64,7 +64,7 @@ namespace FplBot.Tests
         [InlineData(PlayerStatuses.Available, PlayerStatuses.Doubtful, "Doubtful")]
         public void TestSuite(string fromStatus, string toStatus, string expected)
         {
-            var change = Formatter.Change(new PlayerStatusUpdate
+            var change = Formatter.Change(new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -85,7 +85,7 @@ namespace FplBot.Tests
         [InlineData(null, "50% chance of playing", "News update")]
         public void AllKindsOfDoubtful(string fromNews, string toNews, string expected)
         {
-            var change = Formatter.Change(new PlayerStatusUpdate
+            var change = Formatter.Change(new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -113,7 +113,7 @@ namespace FplBot.Tests
         [Fact]
         public void ErronousUpdateHandling()
         {
-            var change = Formatter.Change(new PlayerStatusUpdate
+            var change = Formatter.Change(new PlayerUpdate
             {
                 FromPlayer = null,
                 ToPlayer = null
@@ -124,7 +124,7 @@ namespace FplBot.Tests
         [Fact]
         public void ReportsCovid()
         {
-            var change = Formatter.Change(new PlayerStatusUpdate
+            var change = Formatter.Change(new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -152,9 +152,9 @@ namespace FplBot.Tests
             _helper.WriteLine(formatted);
         }
 
-        private PlayerStatusUpdate Doubtful(int from = 25, int to = 50)
+        private PlayerUpdate Doubtful(int from = 25, int to = 50)
         {
-            return new PlayerStatusUpdate
+            return new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -168,13 +168,13 @@ namespace FplBot.Tests
                     News = $"Knock - {to}% chance of playing",
                     Status = PlayerStatuses.Doubtful,
                 },
-                TeamName = "TestTeam"
+                Team = new Team { ShortName = "TestTeam" }
             };
         }
         
-        private PlayerStatusUpdate Available()
+        private PlayerUpdate Available()
         {
-            return new PlayerStatusUpdate
+            return new PlayerUpdate
             {
                 FromPlayer = new Player
                 {
@@ -188,7 +188,7 @@ namespace FplBot.Tests
                     News = "",
                     Status = PlayerStatuses.Available,    
                 },
-                TeamName = "TestTeam"
+                Team = new Team { ShortName = "TestTeam" }
             };
         }
     }

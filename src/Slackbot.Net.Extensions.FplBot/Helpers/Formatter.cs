@@ -288,22 +288,27 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return messageToSend;
         }
         
-        public static string FormatPriceChanged(IEnumerable<PriceChange> priceChangesPlayers)
+        public static string FormatPriceChanged(IEnumerable<PlayerUpdate> priceChangesPlayers)
         {
             if (!priceChangesPlayers.Any())
                 return "No players with price changes.";
             
             var messageToSend = "";
-            var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
+            var grouped = priceChangesPlayers.OrderByDescending(p => p.ToPlayer.CostChangeEvent).ThenByDescending(p => p.ToPlayer.NowCost).GroupBy(p => p.ToPlayer.CostChangeEvent);
             foreach (var group in grouped)
             {
-                var isPriceIncrease = @group.Key > 0;
                 var priceChange = $"{FormatCurrency(group.Key)}";
-                var header = isPriceIncrease ? $"*Price up {priceChange} :chart_with_upwards_trend:*" : $"*Price down {priceChange} :chart_with_downwards_trend:*";
+                var header = @group.Key switch
+                {
+                    var p when p > 0 => $"*Price up {priceChange} 📈*",
+                    var p when p < 0 => $"*Price down {priceChange} 📉*",
+                    var p when p == 0 => $"*Back to status quo.. 🙃*",
+                    _ => "*No idea*"
+                };
                 messageToSend += $"\n\n{header}";
                 foreach (var p in group)
                 {
-                    messageToSend += $"\n• {p.PlayerFirstName} {p.PlayerSecondName} ({p.TeamName}) {FormatCurrency(p.NowCost)}";
+                    messageToSend += $"\n• {p.ToPlayer.FirstName} {p.ToPlayer.SecondName} ({p.Team.ShortName}) {FormatCurrency(p.ToPlayer.NowCost)}";
                 }
             }
 
@@ -315,7 +320,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
         }
 
-        public static string FormatStatusUpdates(IEnumerable<PlayerStatusUpdate> statusUpdates)
+        public static string FormatStatusUpdates(IEnumerable<PlayerUpdate> statusUpdates)
         {
             var grouped = statusUpdates.GroupBy(Change).Where(c => c.Key != null);
             var sb = new StringBuilder();
@@ -332,13 +337,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                         chance += $"{chanceOfPlayingChange}%]";
                     }
                          
-                    sb.Append($"• {gUpdate.ToPlayer.WebName} ({gUpdate.TeamName}). {gUpdate.ToPlayer.News} {chance}\n");
+                    sb.Append($"• {gUpdate.ToPlayer.WebName} ({gUpdate.Team.ShortName}). {gUpdate.ToPlayer.News} {chance}\n");
                 }
             }
             return sb.ToString();
         }
 
-        public static string Change(PlayerStatusUpdate update)
+        public static string Change(PlayerUpdate update)
         {
             return update switch
             {
@@ -361,13 +366,13 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             };
         }
 
-        private static bool NewsAdded(PlayerStatusUpdate playerStatusUpdate)
+        private static bool NewsAdded(PlayerUpdate playerStatusUpdate)
         {
             return playerStatusUpdate.FromPlayer.News == null && playerStatusUpdate.ToPlayer.News != null;
         }
 
         private const string ChanceOfPlayingPattern = "(\\d+)\\% chance of playing";
-        private static int? ChanceOfPlayingChange(PlayerStatusUpdate playerStatusUpdate)
+        private static int? ChanceOfPlayingChange(PlayerUpdate playerStatusUpdate)
         {
             if (playerStatusUpdate.FromPlayer?.News != null && playerStatusUpdate.ToPlayer.News != null)
             {

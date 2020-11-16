@@ -15,7 +15,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _state = state;
             _state.OnNewFixtureEvents += fixtureEventsHandler.OnNewFixtureEvents;
             _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
-            _state.OnStatusUpdates += statusUpdateHandler.OnStatusUpdates;
+            _state.OnInjuryUpdates += statusUpdateHandler.OnInjuryUpdates;
             _state.OnFixturesProvisionalFinished += statusUpdateHandler.OnFixturesProvisionalFinished;
         }
 

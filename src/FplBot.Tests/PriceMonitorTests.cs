@@ -3,11 +3,19 @@ using System.Linq;
 using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace FplBot.Tests
 {
     public class PriceMonitorTests
     {
+        private readonly ITestOutputHelper _helper;
+
+        public PriceMonitorTests(ITestOutputHelper helper)
+        {
+            _helper = helper;
+        }
+        
         [Fact]
         public void GetChangedPlayers_WhenNoPlayers_ReturnsNoChanges()
         {
@@ -39,7 +47,7 @@ namespace FplBot.Tests
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
 
             Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().PlayerSecondName);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().ToPlayer.SecondName);
         }
         
         [Fact]
@@ -51,7 +59,7 @@ namespace FplBot.Tests
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
 
             Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().PlayerSecondName);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().ToPlayer.SecondName);
             
             var before2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
             var after2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
@@ -59,7 +67,7 @@ namespace FplBot.Tests
             var priceChanges2 = PlayerChangesEventsExtractor.GetPriceChanges(after2,before2, new List<Team>());
 
             Assert.Single(priceChanges2);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges2.First().PlayerSecondName);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges2.First().ToPlayer.SecondName);
             
             var before3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
             var after3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
@@ -67,20 +75,18 @@ namespace FplBot.Tests
             var priceChanges3 = PlayerChangesEventsExtractor.GetPriceChanges(after3,before3, new List<Team>());
 
             Assert.Single(priceChanges3);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges3.First().PlayerSecondName);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges3.First().ToPlayer.SecondName);
         }
-        
-      
-        
+
         [Fact]
         public void GetChangedPlayers_WhenSamePlayersWithChangeInPriceRemoved_ReturnsNoChanges()
         {
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
             
-            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
-            
-            Assert.Empty(priceChanges);
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { new Team()});
+            _helper.WriteLine(Formatter.FormatPriceChanged(priceChanges));
+            Assert.Single(priceChanges);
         }
         
         [Fact]
@@ -96,7 +102,7 @@ namespace FplBot.Tests
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
 
             Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.OtherPlayer().SecondName, priceChanges.First().PlayerSecondName);
+            Assert.Equal(TestBuilder.OtherPlayer().SecondName, priceChanges.First().ToPlayer.SecondName);
         }
         
         [Fact]

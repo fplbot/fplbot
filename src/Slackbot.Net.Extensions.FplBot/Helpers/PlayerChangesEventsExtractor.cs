@@ -8,45 +8,41 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
     public class PlayerChangesEventsExtractor
     {
-        public static IEnumerable<PriceChange> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
-        {
-            if(players == null)
-                return new List<PriceChange>();
-            
-            if (after == null)
-                return new List<PriceChange>();
-            
-            var playersWithPriceChanges = after.Where(p => p.CostChangeEvent != 0).ToList();
-            var playersWithNewPrices = playersWithPriceChanges.Except(players, new PlayerPriceComparer()).ToList();
-            return playersWithNewPrices.Select(p => new PriceChange
-            {
-                PlayerWebName = p.WebName,
-                PlayerFirstName = p.FirstName,
-                PlayerSecondName = p.SecondName,
-                NowCost = p.NowCost,
-                CostChangeEvent = p.CostChangeEvent,
-                TeamName = teams.FirstOrDefault(t => t.Code == p.TeamCode)?.Name
-            });
-        }
         
-        public static IEnumerable<PlayerStatusUpdate> GetStatusChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        public static IEnumerable<PlayerUpdate> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
             if(players == null)
-                return new List<PlayerStatusUpdate>();
+                return new List<PlayerUpdate>();
             
             if (after == null)
-                return new List<PlayerStatusUpdate>();
+                return new List<PlayerUpdate>();
             
-            var playersWithNewStatus = after.Except(players, new StatusComparer()).ToList();
-            var updates = new List<PlayerStatusUpdate>();
-            foreach (var player in playersWithNewStatus)
+            return ComparePlayers(after, players, teams, new PlayerPriceComparer());
+        }
+
+        public static IEnumerable<PlayerUpdate> GetStatusChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        {
+            if(players == null)
+                return new List<PlayerUpdate>();
+            
+            if (after == null)
+                return new List<PlayerUpdate>();
+            
+            return ComparePlayers(after, players, teams, new StatusComparer());
+        }
+
+        private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
+        {
+            var playersWithChanges = after.Except(players, changeComparer).ToList();
+            var updates = new List<PlayerUpdate>();
+            foreach (var player in playersWithChanges)
             {
                 var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
-                updates.Add(new PlayerStatusUpdate
+                updates.Add(new PlayerUpdate
                 {
                     FromPlayer = fromPlayer,
                     ToPlayer = player,
-                    TeamName = teams.FirstOrDefault(t => t.Code == player.TeamCode)?.Name,
+                    Team = teams.FirstOrDefault(t => t.Code == player.TeamCode),
                 });
             }
 

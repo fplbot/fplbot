@@ -22,18 +22,18 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             _logger = logger;
         }
         
-        public async Task OnStatusUpdates(IEnumerable<PlayerStatusUpdate> statusUpdates)
+        public async Task OnInjuryUpdates(IEnumerable<PlayerUpdate> injuryUpdates)
         {
-            _logger.LogInformation($"Handling player {statusUpdates.Count()} status updates");
+            _logger.LogInformation($"Handling player {injuryUpdates.Count()} status updates");
             var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
             if (slackTeam.FplBotSlackChannel == "#fpltest")
             {
-                var formatted = Formatter.FormatStatusUpdates(statusUpdates);
+                var formatted = Formatter.FormatStatusUpdates(injuryUpdates);
                 await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);    
             }
             else
             {
-                var filtered = statusUpdates.Where(c => c.ToPlayer.IsRelevant());
+                var filtered = injuryUpdates.Where(c => c.ToPlayer.IsRelevant());
                 if (filtered.Any())
                 {
                     var formatted = Formatter.FormatStatusUpdates(filtered);

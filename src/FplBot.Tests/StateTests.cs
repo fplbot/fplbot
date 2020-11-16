@@ -66,7 +66,7 @@ namespace FplBot.Tests
                 priceChangeEventEmitted = true;
                 Assert.Single(newPrices);
                 var priceInc = newPrices.First();
-                Assert.Equal(1, priceInc.CostChangeEvent);
+                Assert.Equal(1, priceInc.ToPlayer.CostChangeEvent);
                 return Task.CompletedTask;
             };
             
@@ -80,7 +80,7 @@ namespace FplBot.Tests
         {
             var state = CreateNewInjuryScenario();
             var statusUpdateEmitted = false;
-            state.OnStatusUpdates += statusUpdates =>
+            state.OnInjuryUpdates += statusUpdates =>
             {
                 statusUpdateEmitted = true;
                 Assert.Single(statusUpdates);
@@ -98,7 +98,7 @@ namespace FplBot.Tests
         {
             var state = CreateNewPlayerScenario();
             var statusUpdateEmitted = false;
-            state.OnStatusUpdates += statusUpdates =>
+            state.OnInjuryUpdates += statusUpdates =>
             {
                 statusUpdateEmitted = true;
                 Assert.Single(statusUpdates);
@@ -118,7 +118,7 @@ namespace FplBot.Tests
         {
             var state = CreateChangeInDoubtfulnessScenario();
             var statusUpdateEmitted = false;
-            state.OnStatusUpdates += statusUpdates =>
+            state.OnInjuryUpdates += statusUpdates =>
             {
                 statusUpdateEmitted = true;
                 Assert.Single(statusUpdates);
