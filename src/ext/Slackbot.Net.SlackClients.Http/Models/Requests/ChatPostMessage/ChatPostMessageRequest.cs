@@ -1,4 +1,4 @@
-using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
+using Slackbot.Net.Models.BlockKit;
 
 namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage
 {

@@ -1,7 +1,6 @@
 ﻿using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Models;
-using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage.Blocks;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using Slackbot.Net.Models.BlockKit;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
+using Slackbot.Net.Models.BlockKit;
 
 namespace Slackbot.Net.Endpoints.Models.Interactive.BlockActions
 {

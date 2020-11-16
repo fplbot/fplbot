@@ -30,6 +30,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
+      <ProjectReference Include="..\Slackbot.Net.Shared\Slackbot.Net.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models\Requests\ChatPostMessage\Blocks" />
     </ItemGroup>
 
 </Project>

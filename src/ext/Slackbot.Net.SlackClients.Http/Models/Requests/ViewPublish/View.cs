@@ -1,5 +1,5 @@
 
-using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
+using Slackbot.Net.Models.BlockKit;
 
 namespace Slackbot.Net.SlackClients.Http.Models.Requests.ViewPublish
 {

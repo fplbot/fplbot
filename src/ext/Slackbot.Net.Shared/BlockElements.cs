@@ -1,4 +1,4 @@
-namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
+namespace Slackbot.Net.Models.BlockKit
 {
     public class Block : IBlock
     {

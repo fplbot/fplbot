@@ -9,6 +9,7 @@ COPY /Fpl.Client/Fpl.Client.csproj ./Fpl.Client/Fpl.Client.csproj
 COPY /Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj ./Slackbot.Net.Extensions.FplBot/Slackbot.Net.Extensions.FplBot.csproj
 COPY /ext/Slackbot.Net.SlackClients.Http/Slackbot.Net.SlackClients.Http.csproj ./ext/Slackbot.Net.SlackClients.Http/Slackbot.Net.SlackClients.Http.csproj
 COPY /ext/Slackbot.Net.Endpoints/Slackbot.Net.Endpoints.csproj ./ext/Slackbot.Net.Endpoints/Slackbot.Net.Endpoints.csproj
+COPY /ext/Slackbot.Net.Shared/Slackbot.Net.Shared.csproj ./ext/Slackbot.Net.Shared/Slackbot.Net.Shared.csproj
 
 RUN dotnet restore FplBot.WebApi
 RUN dotnet restore Fpl.Client

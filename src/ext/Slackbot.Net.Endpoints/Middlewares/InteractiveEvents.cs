@@ -12,15 +12,15 @@ using Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions;
 
 namespace Slackbot.Net.Endpoints.Middlewares
 {
-    internal class ViewSubmissionEvents
+    internal class InteractiveEvents
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<ViewSubmissionEvents> _logger;
+        private readonly ILogger<InteractiveEvents> _logger;
         private readonly IEnumerable<IHandleViewSubmissions> _responseHandlers;
         private readonly IEnumerable<IHandleInteractiveBlockActions> _blockActionHandlers;
         private readonly NoOpViewSubmissionHandler _noOp;
 
-        public ViewSubmissionEvents(RequestDelegate next, ILogger<ViewSubmissionEvents> logger, IEnumerable<IHandleViewSubmissions> responseHandlers, IEnumerable<IHandleInteractiveBlockActions> blockActionHandlers, ILoggerFactory loggerFactory)
+        public InteractiveEvents(RequestDelegate next, ILogger<InteractiveEvents> logger, IEnumerable<IHandleViewSubmissions> responseHandlers, IEnumerable<IHandleInteractiveBlockActions> blockActionHandlers, ILoggerFactory loggerFactory)
         {
             _next = next;
             _logger = logger;
@@ -65,7 +65,6 @@ namespace Slackbot.Net.Endpoints.Middlewares
             }
             else
             {
-                _logger.LogInformation($"Handling using {handler.GetType()}");
                 try
                 {
                     _logger.LogInformation($"Handling using {handler.GetType()}");
