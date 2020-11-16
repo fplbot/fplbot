@@ -30,8 +30,16 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
                 {
-                    var formatted = Formatter.FormatPriceChanged(priceChanges);
-                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                    var filtered = priceChanges.Where(c => c.ToPlayer.IsRelevant());
+                    if (filtered.Any())
+                    {
+                        var formatted = Formatter.FormatPriceChanged(priceChanges);
+                        await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("All price changes are all irrelevant, so not sending any notification");
+                    }
                 }
             }
         }
