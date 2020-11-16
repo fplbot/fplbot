@@ -27,7 +27,7 @@ namespace FplBot.Tests
         [InlineData("@fplbot standings", typeof(FplStandingsCommandHandler))]
         [InlineData("@fplbot transfers", typeof(FplTransfersCommandHandler))]
         [InlineData("@fplbot pricechanges", typeof(FplPricesHandler))]
-        public async Task OnlyExpectedSupportedHandlersShouldHandleCommand(string input, Type expectedSupportedHandler)
+        public void OnlyExpectedSupportedHandlersShouldHandleCommand(string input, Type expectedSupportedHandler)
         {
             // Arrange
             var mentionEvent = new AppMentionEvent {Text = input};
