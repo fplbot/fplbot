@@ -4,13 +4,13 @@ using Slackbot.Net.Extensions.FplBot.Models;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace FplBot.Tests
+namespace FplBot.Tests.Formatting
 {
-    public class PlayerStatusUpdateTests
+    public class InjuryFormattingTests
     {
         private readonly ITestOutputHelper _helper;
 
-        public PlayerStatusUpdateTests(ITestOutputHelper helper)
+        public InjuryFormattingTests(ITestOutputHelper helper)
         {
             _helper = helper;
         }
