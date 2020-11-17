@@ -5,6 +5,7 @@ using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -27,10 +28,18 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var allPlayers = await _playerClient.GetAllPlayers();
             var teams = await _teamsClient.GetAllTeams();
-            var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0);
-            var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers, teams);
-            await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
-            return new EventHandledResponse(messageToSend);
+            var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0 && p.IsRelevant());
+            if (priceChangedPlayers.Any())
+            {
+                var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers, teams);
+                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);    
+            }
+            else
+            {
+                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, "No relevant price changes yet"); 
+            }
+            
+            return new EventHandledResponse("Ok");
         }
 
         public override (string,string) GetHelpDescription() => (Command, "Displays players with recent price change");

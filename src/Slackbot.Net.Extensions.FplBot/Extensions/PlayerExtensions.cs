@@ -6,7 +6,7 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
     {
         public static bool IsRelevant(this Player player)
         {
-            if (player.OwnershipPercentage > 2)
+            if (player.OwnershipPercentage > 3)
             {
                 return true;
             }

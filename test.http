@@ -7,7 +7,7 @@ POST http://localhost:1337/events
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : "help",
+        "text" : "pricechanges",
         "channel": "C92QZTVEF"
     }
 }
