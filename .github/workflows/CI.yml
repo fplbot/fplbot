@@ -3,18 +3,20 @@ name: CI
 on:
   push:
     branches:
-      - '**'
-      - '!master'
-      
-jobs:
-   ubuntu-16_04:
-     name: ubuntu-16_04
-     runs-on: ubuntu-16.04
-     steps:
-       - uses: actions/checkout@v1
-       - name: Run './build/build.sh PackFplClient BuildDockerImage'
-         run: ./build/build.sh PackFplClient BuildDockerImage
-         env:
-             fpl__login: ${{ secrets.fpl__login }}
-             fpl__password: ${{ secrets.fpl__password }}
+      - "**"
+      - "!master"
 
+jobs:
+  ubuntu-16_04:
+    name: ubuntu-16_04
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "5.0.100"
+      - name: Run './build/build.sh PackFplClient BuildDockerImage'
+        run: ./build/build.sh PackFplClient BuildDockerImage
+        env:
+          fpl__login: ${{ secrets.fpl__login }}
+          fpl__password: ${{ secrets.fpl__password }}
