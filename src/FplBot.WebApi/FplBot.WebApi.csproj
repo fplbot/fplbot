@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="$(AspNetVersion)" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(AspNetVersion)" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />

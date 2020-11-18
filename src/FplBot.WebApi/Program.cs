@@ -1,11 +1,10 @@
 using System;
-using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Serilog.Events;
+using Serilog.Core.Enrichers;
+using Serilog.Formatting.Compact;
 using Serilog.Formatting.Json;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace FplBot.WebApi
 {
@@ -21,7 +20,7 @@ namespace FplBot.WebApi
                 .UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration
                     .ReadFrom.Configuration(hostingContext.Configuration)
                     .Enrich.FromLogContext()
-                    .WriteTo.Console(new JsonFormatter())
+                    .WriteTo.Console(new CompactJsonFormatter())
                 )
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
