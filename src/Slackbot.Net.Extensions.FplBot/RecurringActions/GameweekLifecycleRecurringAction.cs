@@ -1,4 +1,6 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System;
+using System.Collections.Generic;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using System.Linq;
@@ -30,47 +32,54 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         public async Task Process(CancellationToken token)
         {
-            var gameweeks = await _gwClient.GetGameweeks();
-            var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
-            if (_storedCurrent == null)
+            using (_logger.BeginCorrelationScope())
             {
-                _logger.LogDebug("Executeing initial fetch");
-                _storedCurrent = fetchedCurrent;
-                if (fetchedCurrent != null)
+                _logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
+
+                var gameweeks = await _gwClient.GetGameweeks();
+                var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
+                if (_storedCurrent == null)
                 {
-                    await _orchestrator.Initialize(fetchedCurrent.Id);
+                    _logger.LogDebug("Executeing initial fetch");
+                    _storedCurrent = fetchedCurrent;
+                    if (fetchedCurrent != null)
+                    {
+
+                        await _orchestrator.Initialize(fetchedCurrent.Id);
+
+                    }
                 }
-            }
 
-            if (fetchedCurrent == null)
-            {
-                _logger.LogDebug("No gw marked as current");
-                return;
-            }
-
-            _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
-
-            if (IsChangeToNewGameweek(fetchedCurrent) || IsFirstGameweekChangingToCurrent(fetchedCurrent))
-            {
-                await _orchestrator.GameweekJustBegan(fetchedCurrent.Id);
-            }
-            else if (IsChangeToFinishedGameweek(fetchedCurrent))
-            {
-                await _orchestrator.GameweekJustEnded(fetchedCurrent.Id);
-            }
-            else
-            {
-                if (!_storedCurrent.IsFinished)
+                if (fetchedCurrent == null)
                 {
-                    await _orchestrator.GameweekIsCurrentlyOngoing(_storedCurrent.Id);
+                    _logger.LogDebug("No gw marked as current");
+                    return;
+                }
+
+                _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
+
+                if (IsChangeToNewGameweek(fetchedCurrent) || IsFirstGameweekChangingToCurrent(fetchedCurrent))
+                {
+                    await _orchestrator.GameweekJustBegan(fetchedCurrent.Id);
+                }
+                else if (IsChangeToFinishedGameweek(fetchedCurrent))
+                {
+                    await _orchestrator.GameweekJustEnded(fetchedCurrent.Id);
                 }
                 else
                 {
-                    await _orchestrator.GameweekIsCurrentlyFinished(_storedCurrent.Id);
+                    if (!_storedCurrent.IsFinished)
+                    {
+                        await _orchestrator.GameweekIsCurrentlyOngoing(_storedCurrent.Id);
+                    }
+                    else
+                    {
+                        await _orchestrator.GameweekIsCurrentlyFinished(_storedCurrent.Id);
+                    }
                 }
-            }
 
-            _storedCurrent = fetchedCurrent;
+                _storedCurrent = fetchedCurrent;
+            }
         }
 
         private bool IsChangeToNewGameweek(Gameweek fetchedCurrent)
