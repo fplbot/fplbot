@@ -320,7 +320,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
         }
 
-        public static string FormatStatusUpdates(IEnumerable<PlayerUpdate> statusUpdates)
+        public static string FormatInjuryStatusUpdates(IEnumerable<PlayerUpdate> statusUpdates)
         {
             var grouped = statusUpdates.GroupBy(Change).Where(c => c.Key != null);
             var sb = new StringBuilder();

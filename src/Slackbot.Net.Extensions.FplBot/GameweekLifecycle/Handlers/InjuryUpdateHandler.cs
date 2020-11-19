@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     var filtered = injuryUpdates.Where(c => c.ToPlayer.IsRelevant());
                     if (filtered.Any())
                     {
-                        var formatted = Formatter.FormatPriceChanged(filtered);
+                        var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
                         await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
                     }
                     else
