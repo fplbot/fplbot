@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Data;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
@@ -38,14 +40,12 @@ namespace FplBot.WebApi
             services.AddSingleton<ConnectionMultiplexer>(c =>
             {
                 var opts = c.GetService<IOptions<RedisOptions>>().Value;
-                var logger = c.GetService<ILogger<Startup>>();
                 var options = new ConfigurationOptions
                 {
                     ClientName = opts.GetRedisUsername,
                     Password = opts.GetRedisPassword,
                     EndPoints = {opts.GetRedisServerHostAndPort}
                 };
-                logger.LogInformation(options.ToString());
                 return ConnectionMultiplexer.Connect(options);
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
@@ -116,12 +116,15 @@ namespace FplBot.WebApi
                     p.SetIsOriginAllowed(CorsOriginValidator.ValidateOrigin).AllowAnyHeader().AllowAnyMethod()
                 );
             });
+            services.AddHttpContextAccessor();
+
 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseSerilogRequestLogging();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
