@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
@@ -12,10 +13,12 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
     {
 
         private readonly IEntryClient _entryClient;
+        private readonly ILogger<EntryForGameweek> _logger;
 
-        public EntryForGameweek(IEntryClient entryClient)
+        public EntryForGameweek(IEntryClient entryClient, ILogger<EntryForGameweek> logger)
         {
             _entryClient = entryClient;
+            _logger = logger;
         }
 
         public async Task<GameweekEntry> GetEntryForGameweek(ClassicLeagueEntry entry, int gameweek)
@@ -29,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogError(e.Message, e);
                 return null;
             }
         }
@@ -44,7 +47,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogError(e.Message, e);
                 return null;
             }
         }
