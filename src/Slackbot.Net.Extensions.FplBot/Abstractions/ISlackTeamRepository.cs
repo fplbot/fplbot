@@ -48,6 +48,7 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         FixturePenaltyMisses,
         Taunts,
         PriceChanges,
+        InjuryUpdates,
         // TODO: Deadline
     }
 }
