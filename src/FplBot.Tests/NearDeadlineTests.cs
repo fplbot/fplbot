@@ -91,5 +91,21 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
         }
+        
+        [Fact]
+        public void When24hBefore()
+        {
+            _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 24, 20, 0, 30);
+            var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
+            Assert.True(_deadlineChecker.IsWithinMinutesToDate(60*24, deadline));
+        }
+        
+        [Fact]
+        public void When23hBefore()
+        {
+            _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 24, 21, 0, 30);
+            var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
+            Assert.False(_deadlineChecker.IsWithinMinutesToDate(60*24, deadline));
+        }
     }
 }

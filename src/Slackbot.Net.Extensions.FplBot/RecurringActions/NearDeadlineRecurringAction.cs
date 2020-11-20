@@ -49,14 +49,14 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline1Hour, current.Deadline))
                 {
-                    _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline1Hour} minutes to current (gw{current.Id}) deadline");
+                    _logger.LogInformation($"Notifying, since <{_minutesBeforeDeadline1Hour} minutes to current (gw{current.Id}) deadline");
                     await _workspacePublisher.PublishToAllWorkspaceChannels($"<!channel> ⏳ Gameweek {current.Id} deadline in 60 minutes!");
                     return;
                 }
                 
                 if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline1Day, current.Deadline))
                 {
-                    _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline1Day} minutes to current (gw{current.Id}) deadline");
+                    _logger.LogInformation($"Notifying, since <{_minutesBeforeDeadline1Day} minutes to current (gw{current.Id}) deadline");
                     await _workspacePublisher.PublishToAllWorkspaceChannels($"⏳ Gameweek {current.Id} deadline is tomorrow.. ");
                     return;
                 }
@@ -65,20 +65,20 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
                 if (next == null)
                 {
-                    _logger.LogDebug($"No next gameweek");
+                    _logger.LogInformation($"No next gameweek");
                     return;
                 }
                 
                 if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline1Hour, next.Deadline))
                 {
-                    _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline1Hour} minutes to next (gw{next.Id}) deadline");
+                    _logger.LogInformation($"Notifying, since <{_minutesBeforeDeadline1Hour} minutes to next (gw{next.Id}) deadline");
                     await _workspacePublisher.PublishToAllWorkspaceChannels($"<!channel> ⏳ Gameweek {next.Id} deadline in 60 minutes!");
                     return;
                 }
                 
                 if(_dateTimeUtils.IsWithinMinutesToDate(_minutesBeforeDeadline1Day, next.Deadline))
                 {
-                    _logger.LogDebug($"Notifying, since <{_minutesBeforeDeadline1Day} minutes to next (gw{next.Id}) deadline");
+                    _logger.LogInformation($"Notifying, since <{_minutesBeforeDeadline1Day} minutes to next (gw{next.Id}) deadline");
                     await _workspacePublisher.PublishToAllWorkspaceChannels($"⏳ Gameweek {current.Id} deadline is tomorrow.. ");
                     return;
                 }
