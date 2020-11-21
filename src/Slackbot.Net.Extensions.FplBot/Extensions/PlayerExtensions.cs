@@ -11,7 +11,7 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
                 return true;
             }
 
-            return player.NowCost > 55;
+            return false;
         }
     }
 }
