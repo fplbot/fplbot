@@ -25,8 +25,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         {
             _logger.LogInformation("Handling fixture provisionally finished");
 
-            var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
-            if (slackTeam.FplBotSlackChannel == "#fpltest")
+            var teams = await _slackTeamRepo.GetAllTeams();
+            foreach (var slackTeam in teams)
             {
                 var formatted = Formatter.FormatProvisionalFinished(provisionalFixturesFinished);
                 await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted.ToArray());
