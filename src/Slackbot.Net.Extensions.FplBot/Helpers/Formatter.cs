@@ -430,9 +430,88 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             };
         }
 
-        public static IEnumerable<string> FormatProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
+        public static string FormatProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
         {
-            return provisionalFixturesFinished.Select(fixture => $"FT: {fixture.HomeTeam.ShortName}-{fixture.AwayTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore}");
+            var finishedFixtures = new List<string>();
+            foreach (var fixture in provisionalFixturesFinished)
+            {
+                var fullTimeReport = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
+                if (fixture.BonusPoints.Any())
+                {
+                    var bonusPointsOutput = CreateBonusPointsOutput(fixture);
+                    fullTimeReport += $"\nBonus points:\n";
+                    fullTimeReport += BulletPoints(bonusPointsOutput);
+                }
+                finishedFixtures.Add(fullTimeReport);
+            }
+
+            return string.Join("\n\n", finishedFixtures);
+        }
+
+        static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)
+        {
+            return $"{bonusPoints}p {string.Join(", ", pall.OrderBy(p => p.WebName).Select(p => p.WebName))}";
+        }
+
+        //https://www.premierleague.com/news/106533
+        //The players with the top three BPS in a given match receive bonus points
+        // - three points to the highest-scoring player,
+        // - two to the second best and
+        // - one to the third.
+        //
+        // Bonus point ties are resolved as follows:
+        // - If there is a tie for first place, Players 1 & 2 will receive 3 points each and Player 3 will receive 1 point.
+        // - If there is a tie for second place, Player 1 will receive 3 points and Players 2 and 3 will receive 2 points each.
+        // - If there is a tie for third place, Player 1 will receive 3 points, Player 2 will receive 2 points and Players 3 & 4 will receive 1 point each.
+        public static IEnumerable<string> CreateBonusPointsOutput(FinishedFixture fixture)
+        {
+            var bonusPointsOutput = new List<string>();
+            var pallenCount = 0;
+            var groupedByBonusPoints = fixture.BonusPoints.OrderByDescending(b => b.BonusPoints).GroupBy(bp => bp.BonusPoints);
+            var points = 3;
+
+            foreach (var bonusGroup in groupedByBonusPoints)
+            {
+                if (points == 3)
+                {
+                    if(bonusGroup.Count() >= 3)
+                    {
+                        bonusPointsOutput.Add(BonusPointRank(3, bonusGroup.Select(p => p.Player)));
+                        break;
+                    }
+                    pallenCount = bonusGroup.Count();
+                    bonusPointsOutput.Add(BonusPointRank(3, bonusGroup.Select(p => p.Player)));
+                } 
+
+                if (points == 2)
+                {
+                    if (pallenCount > 1) 
+                    {
+                        bonusPointsOutput.Add(BonusPointRank(1, bonusGroup.Select(p => p.Player)));
+                    }
+                    else
+                    {
+                        bonusPointsOutput.Add(BonusPointRank(2, bonusGroup.Select(p => p.Player)));
+                    }
+
+                    pallenCount += bonusGroup.Count();
+                }
+
+                if (points == 1)
+                {
+                    if (pallenCount == 2)
+                    {
+                        bonusPointsOutput.Add(BonusPointRank(1, bonusGroup.Select(p => p.Player)));
+                    }
+                }
+
+
+                points--;
+
+                if (points == 0)
+                    break;
+            }
+            return bonusPointsOutput;
         }
 
         public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)

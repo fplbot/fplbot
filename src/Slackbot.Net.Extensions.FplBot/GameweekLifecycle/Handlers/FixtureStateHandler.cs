@@ -29,7 +29,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             foreach (var slackTeam in teams)
             {
                 var formatted = Formatter.FormatProvisionalFinished(provisionalFixturesFinished);
-                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted.ToArray());
+                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
             }
         }
     }

@@ -155,6 +155,7 @@ namespace FplBot.Tests
             {
                 fixtureFinishedEmitted = true;
                 Assert.Single(fixtures);
+                Assert.NotEmpty(fixtures.First().BonusPoints);
                 return Task.CompletedTask;
             };
             
@@ -232,7 +233,8 @@ namespace FplBot.Tests
                     },
                     Players = new List<Player>
                     {
-                        TestBuilder.Player()
+                        TestBuilder.Player(),
+                        TestBuilder.OtherPlayer()
                     }
                 });
             
@@ -247,6 +249,8 @@ namespace FplBot.Tests
                     {
                         TestBuilder.AwayTeamGoal(888, 1),
                         TestBuilder.AwayTeamGoal(999, 1).FinishedProvisional()
+                            .WithProvisionalBonus(TestBuilder.Player().Id, 10)
+                            .WithProvisionalBonus(TestBuilder.OtherPlayer().Id, 20)
                     });
             
             return CreateBaseScenario(fixtureClient, playerClient);
