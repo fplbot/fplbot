@@ -53,22 +53,13 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                 try
                 {
                     var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
+                    var intro = Formatter.FormatGameweekFinished(gw, league);
+                    var standings = Formatter.GetStandings(league, gw);
+                    var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
+                    var worst = Formatter.GetWorstGameweekEntry(league, gw);
 
-                    var slackTeam = await _teamRepo.GetTeam("T0A9QSU83");
-                    if (slackTeam.FplBotSlackChannel == "#fpltest")
-                    {
-                        var intro = Formatter.FormatGameweekFinished(gw, league);
-                        var standings = Formatter.GetStandings(league, gw);
-                        var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
-                        var worst = Formatter.GetWorstGameweekEntry(league, gw);
+                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, intro, standings, topThree, worst);
 
-                        await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, intro, standings, topThree, worst);
-                    }
-                    else
-                    {
-                        var standings = Formatter.GetStandings(league, gw);
-                        await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, $"Gameweek {gameweek} finished.", standings);
-                    }
                 }
                 catch (Exception e)
                 {
