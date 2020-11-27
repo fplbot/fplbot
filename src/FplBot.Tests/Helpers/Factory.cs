@@ -12,6 +12,7 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
@@ -47,29 +48,23 @@ namespace FplBot.Tests.Helpers
 
             SlackClient = A.Fake<ISlackClient>();
             GameweekClient = A.Fake<IGameweekClient>();
-            A.CallTo(() => GameweekClient.GetGameweeks()).Returns(new List<Gameweek>
-            {
-                new Gameweek
-                {
-                    Id = 1,
-                    IsCurrent = false
-                },
-                new Gameweek
-                {
-                    Id = 2,
-                    IsCurrent = true
-                },
-                new Gameweek
-                {
-                    Id = 3,
-                    IsNext = true
-                }
-            });
+            var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonConvert.DeserializeObject<GlobalSettings>(TestResources.Boostrap_Static_Json);
+            A.CallTo(() => GameweekClient.GetGameweeks()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Gameweeks);
+            var playerClient = A.Fake<IPlayerClient>();
+            A.CallTo(() => playerClient.GetAllPlayers()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Players);
+            var teamsClient = A.Fake<ITeamsClient>();
+            A.CallTo(() => teamsClient.GetAllTeams()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Teams);
+            var globalClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => globalClient.GetGlobalSettings()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
             
             var slackClientServiceMock = A.Fake<ISlackClientBuilder>();
             A.CallTo(() => slackClientServiceMock.Build(A<string>.Ignored)).Returns(SlackClient);
+            
             services.Replace<ISlackClientBuilder>(slackClientServiceMock);
             services.Replace<IGameweekClient>(GameweekClient);
+            services.Replace<IPlayerClient>(playerClient);
+            services.Replace<ITeamsClient>(teamsClient);
+            services.Replace<IGlobalSettingsClient>(globalClient);
 
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             var provider = services.BuildServiceProvider();
