@@ -20,7 +20,7 @@ namespace FplBot.Tests.Formatting
             // Arrange
             var gameweek = new Gameweek
             {
-                Name = "1",
+                Name = "Gameweek 1",
                 AverageScore = globalAverage
             };
             var league = new ClassicLeague
