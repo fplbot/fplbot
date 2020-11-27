@@ -516,7 +516,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)
         {
-            var introText = $"Gameweek {gw.Name} is finished.";
+            var introText = $"{gw.Name} is finished.";
             var globalAverage = (int)Math.Round(gw.AverageScore);
             var leagueAverage = (int)Math.Round(league.Standings.Entries.Average(entry => entry.EventTotal));
             var diff = Math.Abs(globalAverage - leagueAverage);
