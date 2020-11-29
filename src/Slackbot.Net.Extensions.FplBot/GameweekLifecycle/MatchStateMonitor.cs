@@ -32,8 +32,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
         }
         public async Task HandleGameweekOngoing(int gw)
         {
-            _logger.LogInformation("Refreshing state");
+            _logger.LogInformation("Refreshing state for ongoing gw");
             await _matchState.Refresh(gw);
+        }
+
+        public async Task HandleGameweekCurrentlyFinished(int gw)
+        {
+            _logger.LogInformation("Refreshing state for finished gw");
+            await _matchState.Refresh(gw+1); // monitor next gameweeks matches, since current = finished 
         }
     }
 }
