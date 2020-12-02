@@ -133,7 +133,7 @@ namespace FplBot.WebApi
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-            app.UseCors();
+            app.UseCors(CorsOriginValidator.CustomCorsPolicyName);
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
