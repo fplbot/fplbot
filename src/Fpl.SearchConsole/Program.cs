@@ -3,6 +3,7 @@ using Fpl.Client.Clients;
 using Fpl.Client.Models;
 using Fpl.Search;
 using Fpl.Search.Indexing;
+using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,7 +11,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Entry = Fpl.Search.Models.Entry;
 
 namespace Fpl.SearchConsole
 {
@@ -31,15 +31,11 @@ namespace Fpl.SearchConsole
                 SslProtocols = System.Security.Authentication.SslProtocols.Tls12
             });
             FplClientOptionsConfigurator.SetupFplClient(httpClient);
-
-            const string indexA = "entries_a";
-            const string indexB = "entries_b";
-            var indexAInUse = await indexingClient.IsActiveIndex(indexA);
-            var indexCurrentlyInUse = indexAInUse ? indexA : indexB;
-
+            
             var leagueClient = new LeagueClient(httpClient);
 
-            Console.WriteLine("You can either \"index\" or \"search <term>\"");
+            
+            Console.WriteLine("You can either \"index <type>\" or \"search <term>\"");
 
             var command = Console.ReadLine()?.ToLower();
 
@@ -49,11 +45,8 @@ namespace Fpl.SearchConsole
             }
             else
             {
-                if (command == "index")
+                if (command == "index entries")
                 {
-                    var indexToUse = indexAInUse ? indexB : indexA;
-                    var indexToDispose = indexAInUse ? indexA : indexB;
-
                     var i = 1;
                     var batchSize = 8;
                     var iteration = 1;
@@ -64,9 +57,9 @@ namespace Fpl.SearchConsole
                         {
                             var batchOfStandings = await GetBatchOfStandings(i, batchSize, leagueClient);
                             var entries = batchOfStandings.SelectMany(x =>
-                                x.Standings.Entries.Select(y => new Entry {Id = y.Id, TeamName = y.EntryName, RealName = y.PlayerName})).ToArray();
+                                x.Standings.Entries.Select(y => new EntryItem {Id = y.Id, TeamName = y.EntryName, RealName = y.PlayerName, Entry = y.Entry})).ToArray();
 
-                            await indexingClient.Index(entries, indexToUse);
+                            await indexingClient.IndexEntries(entries);
 
                             i += batchSize;
 
@@ -77,14 +70,44 @@ namespace Fpl.SearchConsole
                             iteration++;
                         }
                     } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                }
+                else if (command == "index leagues")
+                {
+                    var i = 1;
+                    var batchSize = 8;
+                    var iteration = 1;
+                    var hasNext = true;
 
-                    await indexingClient.DisposeIndex(indexToDispose);
-                } 
-                else if (command.StartsWith("search"))
+                    do
+                    {
+                        while (!Console.KeyAvailable && hasNext)
+                        {
+                            var batchOfLeagues = await GetBatchOfLeagues(i, batchSize, leagueClient);
+                            var leagues = batchOfLeagues.Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry}).ToArray();
+
+                            await indexingClient.IndexLeagues(leagues);
+
+                            i += batchSize;
+
+                            if (iteration % 10 == 0)
+                                Console.WriteLine($"{DateTime.Now:T} indexed page {i}");
+
+                            hasNext = batchOfLeagues.Count(x => x.Exists) > 1;
+                            iteration++;
+                        }
+                    } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                }
+                else if (command.StartsWith("searchentry"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.Search(term, 10, indexCurrentlyInUse);
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Id}"))}\n");
+                    var result = await searchClient.SearchForEntry(term, 10);
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
+                }
+                else if (command.StartsWith("searchleague"))
+                {
+                    var term = command.Substring(command.IndexOf(" ")).Trim();
+                    var result = await searchClient.SearchForLeague(term, 10);
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry}"))}\n");
                 }
             }
         }
@@ -99,6 +122,27 @@ namespace Fpl.SearchConsole
                 try
                 {
                     return await Task.WhenAll(Enumerable.Range(i, batchSize).Select(n => leagueClient.GetClassicLeague(314, n)));
+                }
+                catch (HttpRequestException e)
+                {
+                    Console.WriteLine($"Ran into a 429 (Too Many Requests) at {i}. Waiting 1s before retrying.");
+                    await Task.Delay(2000);
+                    j++;
+                }
+            }
+            throw new Exception($"Unable to get standings after {retries} retries");
+        }
+
+        private static async Task<ClassicLeague[]> GetBatchOfLeagues(int i, int batchSize, LeagueClient leagueClient)
+        {
+            var retries = 3;
+            var j = 0;
+
+            while (j < retries)
+            {
+                try
+                {
+                    return await Task.WhenAll(Enumerable.Range(i, batchSize).Select(n => leagueClient.GetClassicLeague(i)));
                 }
                 catch (HttpRequestException e)
                 {

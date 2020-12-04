@@ -1,6 +1,8 @@
 ﻿using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Fpl.Search.Searching
@@ -14,26 +16,36 @@ namespace Fpl.Search.Searching
             _logger = logger;
         }
 
-        public async Task<IReadOnlyCollection<Entry>> Search(string query, int maxHits, string index)
+        public async Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits)
         {
-            var response = await Client.SearchAsync<Entry>(x => x
+            return await Search<EntryItem>(query, maxHits, Constants.EntriesIndex, f => f.RealName, f => f.TeamName);
+        }
+
+        public async Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits)
+        {
+            return await Search<LeagueItem>(query, maxHits, Constants.LeaguesIndex, f => f.Name);
+        }
+
+        private async Task<IReadOnlyCollection<T>> Search<T>(string query, int maxHits, string index, params Expression<Func<T, object>>[] fields) where T : class
+        {
+            var response = await Client.SearchAsync<T>(x => x
                 .Index(index)
                 .From(0)
                 .Size(maxHits)
                 .Query(q => q
                     .MultiMatch(m => m
-                        .Fields(f => f.Field(y => y.RealName).Field(y => y.TeamName))
+                        .Fields(f => f.Fields(fields))
                         .Query(query))));
 
-            _logger.LogInformation("A search for {query} got {hits} hits. Returned {returned} of them due to {maxHits} maxHits.", 
-                query, response.Total, response.Documents.Count, maxHits);
+            _logger.LogInformation("Search for \"{query}\" got {totalHits} in the {index} index. Returned {returned} of them.", query, response.Total, response.Documents.Count, index);
 
             return response.Documents;
         }
     }
 
-    public interface ISearchClient : IElasticClientBase
+    public interface ISearchClient
     {
-        Task<IReadOnlyCollection<Entry>> Search(string query, int maxHits, string index);
+        Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits);
+        Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits);
     }
 }

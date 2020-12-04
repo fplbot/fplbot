@@ -1,6 +1,7 @@
 ﻿using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using Nest;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Fpl.Search.Indexing
@@ -14,9 +15,19 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task Index(Entry[] entries, string index)
+        public async Task IndexEntries(EntryItem[] entries)
         {
-            var response = await Client.IndexManyAsync(entries, index);
+            await Index(entries, Constants.EntriesIndex);
+        }
+
+        public async Task IndexLeagues(LeagueItem[] leagues)
+        {
+            await Index(leagues, Constants.LeaguesIndex);
+        }
+
+        private async Task Index<T>(IEnumerable<T> items, string index) where T : class
+        {
+            var response = await Client.IndexManyAsync(items, index);
             if (response.Errors)
             {
                 foreach (var itemWithError in response.ItemsWithErrors)
@@ -27,8 +38,9 @@ namespace Fpl.Search.Indexing
         }
     }
 
-    public interface IIndexingClient : IElasticClientBase
+    public interface IIndexingClient
     {
-        Task Index(Entry[] entries, string index);
+        Task IndexEntries(EntryItem[] entries);
+        Task IndexLeagues(LeagueItem[] leagues);
     }
 }
