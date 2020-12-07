@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		Directory.Build.targets = Directory.Build.targets
 		..\buildherokuimage.sh = ..\buildherokuimage.sh
 		Dockerfile = Dockerfile
+		..\test.http = ..\test.http
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"

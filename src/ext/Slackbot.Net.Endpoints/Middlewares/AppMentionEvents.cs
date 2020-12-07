@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,12 @@ namespace Slackbot.Net.Endpoints.Middlewares
             var appMentionEvent = (AppMentionEvent) context.Items[HttpItemKeys.SlackEventKey];
             var handlers = await _responseHandler.GetAppMentionEventHandlerFor(metadata, appMentionEvent);
 
+            _logger.BeginScope(new Dictionary<string, object>
+            {
+                ["Slack_TeamId"] = metadata?.Team_Id,
+                ["Slack_Channel"] = appMentionEvent?.Channel,
+                ["Slack_User"] = appMentionEvent?.User,
+            });
             foreach (var handler in handlers)
             {
                 try

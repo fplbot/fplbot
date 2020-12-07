@@ -23,8 +23,7 @@ namespace FplBot.WebApi
                     .ReadFrom.Configuration(hostingContext.Configuration)
                     .Enrich.WithCorrelationId()
                     .Enrich.WithCorrelationIdHeader()
-                    .WriteTo.Conditional(e => hostingContext.HostingEnvironment.IsDevelopment(), dev => dev.Console(outputTemplate: "{Level:u3} {Message:lj}{NewLine}{Exception}", theme: ConsoleTheme.None))
-                    .WriteTo.Conditional(e => !hostingContext.HostingEnvironment.IsDevelopment(), testAndProd => testAndProd.Console(new RenderedCompactJsonFormatter()))
+                    .WriteTo.Console(outputTemplate: "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}", theme: ConsoleTheme.None)
                 )
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
