@@ -46,7 +46,7 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            services.AddDistributedFplBot(configuration.GetSection("fpl"))
+            services.AddDistributedFplBot(configuration)
                 .AddFplBotEventHandlers();
 
             SlackClient = A.Fake<ISlackClient>();
