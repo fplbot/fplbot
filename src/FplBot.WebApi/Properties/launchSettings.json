@@ -7,6 +7,13 @@
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },    
+    "test": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Test",
+        "ASPNETCORE_ENVIRONMENT": "Test"
+      }
     },
     "prod": {
       "commandName": "Project",
