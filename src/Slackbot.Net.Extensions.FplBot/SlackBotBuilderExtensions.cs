@@ -1,5 +1,4 @@
 using System;
-using AngleSharp;
 using Fpl.Client.Infra;
 using FplBot.WebApi;
 using FplBot.WebApi.Data;
@@ -23,13 +22,12 @@ namespace Slackbot.Net.Abstractions.Hosting
 {
     public static class SlackBotBuilderExtensions
     {
-        public static IServiceCollection AddDistributedFplBot(this IServiceCollection services, IConfiguration Configuration)
+        public static IServiceCollection AddDistributedFplBot(this IServiceCollection services, IConfiguration config)
         {
-            var config = Configuration.GetSection("fpl");
             services.AddReducedHttpClientFactoryLogging();
-            services.AddFplApiClient(config);
-            services.Configure<RedisOptions>(Configuration);
-            services.Configure<DistributedSlackAppOptions>(Configuration);
+            services.AddFplApiClient(config.GetSection("fpl"));
+            services.Configure<RedisOptions>(config);
+            services.Configure<DistributedSlackAppOptions>(config);
             services.AddSingleton<ConnectionMultiplexer>(c =>
             {
                 var opts = c.GetService<IOptions<RedisOptions>>().Value;
