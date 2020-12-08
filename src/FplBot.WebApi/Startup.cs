@@ -35,23 +35,10 @@ namespace FplBot.WebApi
         {
             services.AddControllers();
             services.AddSlackbotOauthAccessHttpClient();
-            services.Configure<RedisOptions>(Configuration);
-            services.Configure<DistributedSlackAppOptions>(Configuration);
-            services.AddSingleton<ConnectionMultiplexer>(c =>
-            {
-                var opts = c.GetService<IOptions<RedisOptions>>().Value;
-                var options = new ConfigurationOptions
-                {
-                    ClientName = opts.GetRedisUsername,
-                    Password = opts.GetRedisPassword,
-                    EndPoints = {opts.GetRedisServerHostAndPort}
-                };
-                return ConnectionMultiplexer.Connect(options);
-            });
-            services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
+           
             services.Configure<AnalyticsOptions>(Configuration);
-            services.AddDistributedFplBot<RedisSlackTeamRepository>(Configuration.GetSection("fpl"))
-                .AddFplBotEventHandlers<RedisSlackTeamRepository>(c =>
+            services.AddDistributedFplBot(Configuration)
+                .AddFplBotEventHandlers(c =>
                 {
                     c.Client_Id = Configuration.GetValue<string>("CLIENT_ID");
                     c.Client_Secret = Configuration.GetValue<string>("CLIENT_SECRET");

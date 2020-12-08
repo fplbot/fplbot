@@ -9,7 +9,8 @@
     <ItemGroup>
       <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
       <PackageReference Include="AngleSharp" Version="1.0.0-alpha-844" />
-      <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />      
+      <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
+        <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />      
     </ItemGroup>
 
     <ItemGroup>

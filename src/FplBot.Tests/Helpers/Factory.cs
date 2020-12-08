@@ -12,7 +12,10 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Slackbot.Net.Extensions.FplBot;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
@@ -43,8 +46,8 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            services.AddDistributedFplBot<InMemorySlackTeamRepository>(configuration.GetSection("fpl"))
-                .AddFplBotEventHandlers<DontCareRepo>();
+            services.AddDistributedFplBot(configuration.GetSection("fpl"))
+                .AddFplBotEventHandlers();
 
             SlackClient = A.Fake<ISlackClient>();
             GameweekClient = A.Fake<IGameweekClient>();
@@ -65,7 +68,8 @@ namespace FplBot.Tests.Helpers
             services.Replace<IPlayerClient>(playerClient);
             services.Replace<ITeamsClient>(teamsClient);
             services.Replace<IGlobalSettingsClient>(globalClient);
-
+            services.Replace<ITokenStore>(new DontCareRepo());
+            services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository(new OptionsWrapper<FplbotOptions>(new FplbotOptions())));
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             var provider = services.BuildServiceProvider();
             return provider;

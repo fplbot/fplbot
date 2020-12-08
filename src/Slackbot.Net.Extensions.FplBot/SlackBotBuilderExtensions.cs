@@ -1,7 +1,10 @@
 using System;
+using AngleSharp;
 using Fpl.Client.Infra;
-using Microsoft.Extensions.Configuration;
+using FplBot.WebApi;
+using FplBot.WebApi.Data;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.Extensions.FplBot;
@@ -12,17 +15,33 @@ using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using Slackbot.Net.SlackClients.Http.Extensions;
+using StackExchange.Redis;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 // ReSharper disable once CheckNamespace
 namespace Slackbot.Net.Abstractions.Hosting
 {
     public static class SlackBotBuilderExtensions
     {
-        public static IServiceCollection AddDistributedFplBot<T>(this IServiceCollection services, IConfiguration config) where T: class, ISlackTeamRepository
+        public static IServiceCollection AddDistributedFplBot(this IServiceCollection services, IConfiguration Configuration)
         {
+            var config = Configuration.GetSection("fpl");
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config);
-            services.AddSingleton<ISlackTeamRepository, T>();
+            services.Configure<RedisOptions>(Configuration);
+            services.Configure<DistributedSlackAppOptions>(Configuration);
+            services.AddSingleton<ConnectionMultiplexer>(c =>
+            {
+                var opts = c.GetService<IOptions<RedisOptions>>().Value;
+                var options = new ConfigurationOptions
+                {
+                    ClientName = opts.GetRedisUsername,
+                    Password = opts.GetRedisPassword,
+                    EndPoints = {opts.GetRedisServerHostAndPort}
+                };
+                return ConnectionMultiplexer.Connect(options);
+            });
+            services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
             services.AddSlackClientBuilder();
             services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
@@ -52,12 +71,12 @@ namespace Slackbot.Net.Abstractions.Hosting
             return services;
         }
 
-        public static IServiceCollection AddFplBotEventHandlers<T>(this IServiceCollection services,
-            Action<SlackAppOptions> configuration = null) where T : class, ITokenStore
+        public static IServiceCollection AddFplBotEventHandlers(this IServiceCollection services,
+            Action<SlackAppOptions> configuration = null) 
         {
             services.Configure<SlackAppOptions>(configuration ?? (c => {}));
             services.AddSingleton<IUninstall, AppUninstaller>();
-            services.AddSlackBotEvents<T>()
+            services.AddSlackBotEvents<RedisSlackTeamRepository>()
                 
                 .AddShortcut<HelpEventHandler>()
                 .AddAppMentionHandler<FplPlayerCommandHandler>()
