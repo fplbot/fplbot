@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using NServiceBus;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Xunit.Abstractions;
@@ -71,6 +72,7 @@ namespace FplBot.Tests.Helpers
             services.Replace<ITokenStore>(new DontCareRepo());
             services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository(new OptionsWrapper<FplbotOptions>(new FplbotOptions())));
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
+            services.AddSingleton<IMessageSession>(A.Fake<IMessageSession>()); // Faking NServicebus
             var provider = services.BuildServiceProvider();
             return provider;
         }

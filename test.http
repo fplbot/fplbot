@@ -52,3 +52,18 @@ payload=%7B%22type%22%3A%22block_actions%22%2C%22user%22%3A%7B%22id%22%3A%22U0EJ
 
 ### FT event for all fixtures in a given gameweek
 GET http://localhost:1337/test/fulltime/9
+
+### app_mention event handled by NSB
+
+POST http://localhost:1337/events
+X-Correlation-Id:NSB
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+        "type": "app_mention",
+        "user": "USRAR1YTV",
+        "text" : "debug",
+        "channel": "C92QZTVEF"
+    }
+}

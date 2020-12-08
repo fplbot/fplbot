@@ -18,6 +18,7 @@ namespace FplBot.WebApi
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseMessaging()
                 .UseSerilog((hostingContext, loggerConfiguration) =>
                     loggerConfiguration
                     .ReadFrom.Configuration(hostingContext.Configuration)
