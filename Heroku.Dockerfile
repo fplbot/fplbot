@@ -24,9 +24,13 @@ COPY /src/ext/Slackbot.Net.Endpoints/ ./ext/Slackbot.Net.Endpoints/
 COPY /src/ext/Slackbot.Net.Shared/ ./ext/Slackbot.Net.Shared/
 
 # Publish
-RUN dotnet publish FplBot.WebApi/FplBot.WebApi.csproj -c Release -o /app/out/fplbot-webapi
+ARG INFOVERSION="0.666"
+RUN echo "Infoversion: $INFOVERSION"
+
+RUN dotnet publish FplBot.WebApi/FplBot.WebApi.csproj -c Release /p:InformationalVersion=$INFOVERSION -o /app/out/fplbot-webapi
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /fplbot
 COPY --from=build-env /app/out/fplbot-webapi . 
+ENTRYPOINT ["dotnet", "FplBot.WebApi.dll"]

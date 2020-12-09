@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - "**"
-      - "!master"
+      - "master"
 
 jobs:
   ubuntu-16_04:
@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: "5.0.100"
-      - name: Run './build/build.sh PackFplClient BuildDockerImage'
-        run: ./build/build.sh PackFplClient BuildDockerImage
+      - name: Run './build/build.sh Test'
+        run: ./build/build.sh Test
         env:
           fpl__login: ${{ secrets.fpl__login }}
           fpl__password: ${{ secrets.fpl__password }}

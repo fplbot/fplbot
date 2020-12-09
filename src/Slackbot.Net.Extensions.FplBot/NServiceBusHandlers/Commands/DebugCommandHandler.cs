@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -28,10 +29,11 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Commands
 
         private string DebugInfo()
         {
-            string sha = "d1a2281945811e1a54370ba361d2beee4614d8db"; // Enable GitVersion some time :)
+            string informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            var sha = informationalVersion?.Split(".").Last();
             return $"You are running @fplbot " +
-                   $"v{Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion} " +
-                   $"from <https://github.com/fplbot/fplbot/tree/{sha}|{sha}>";
+                   $"v{informationalVersion} " +
+                   $"\n<https://github.com/fplbot/fplbot/tree/{sha}|Browse {sha.Substring(0,10)} on github.com/fplbot/fplbot>";
         }
     }
 }

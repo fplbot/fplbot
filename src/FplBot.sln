@@ -24,12 +24,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		Dockerfile = Dockerfile
 		..\test.http = ..\test.http
 		.gitignore = ../.gitignore
+		..\GitVersion.yml = ..\GitVersion.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
 ProjectSection(SolutionItems) = preProject
 	CI.yml = ..\.github\workflows\CI.yml
-	Release.yml = ..\.github\workflows\Release.yml
+	ReleaseToProd.yml = ..\.github\workflows\ReleaseToProd.yml
+	ReleaseToTest.yml = ..\.github\workflows\ReleaseToTest.yml
+	BuildProdArtifact.yml = ..\.github\workflows\BuildProdArtifact.yml
+	BuildTestArtifact.yml = ..\.github\workflows\BuildTestArtifact.yml
 EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ext", "ext", "{51FD3283-052A-4E69-B969-B487BF5BBA69}"

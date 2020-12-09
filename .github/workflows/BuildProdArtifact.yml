@@ -1,0 +1,34 @@
+name: build-prod-artifact
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  ubuntu-16_04:
+    name: ubuntu-16_04
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
+      - run: echo "ACTIONS_ALLOW_UNSECURE_COMMANDS=true" >> $GITHUB_ENV
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          versionSpec: "5.x"
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+        with:
+          useConfigFile: true
+      - name: Build docker images
+        run: docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} -SHORTSHA=${{steps.gitversion.outputs.shortSha}} -f Heroku.Dockerfile .
+      - uses: docker/login-action@v1
+        with:
+          registry: registry.heroku.com
+          username: _
+          password: ${{ secrets.HEROKU_TOKEN }}
+      - name: Push tags to Heroku
+        run: docker push registry.heroku.com/blank-fplbot/web
