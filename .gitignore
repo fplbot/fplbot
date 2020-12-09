@@ -330,3 +330,8 @@ ASALocalRun/
 .DS_Store
 appsettings.Local.json
 releases/
+appsettings.Development.json
+appsettings.Test.json
+appsettings.Production.json
+local.settings.json
+.learningtransport/

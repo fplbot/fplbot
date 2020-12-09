@@ -27,8 +27,9 @@ namespace Slackbot.Net.Extensions.FplBot
         public async Task Handle(EventMetaData eventMetadata, AppMentionEvent @event)
         {
             var text = _handlers.Select(handler => handler.GetHelpDescription())
-                .Aggregate("*HALP:*", 
-                    (current, helpDescription) => current + $"\n• `{helpDescription.HandlerTrigger}` : _{helpDescription.Description}_");
+                .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
+                .Aggregate("*HALP:*", (current, tuple) => current + $"\n• `{tuple.HandlerTrigger}` : _{tuple.Description}_");
+
             var token = await _tokenStore.GetTokenByTeamId(eventMetadata.Team_Id);
             var slackClient = _slackClientService.Build(token);
             await slackClient.ChatPostMessage(@event.Channel, text);
