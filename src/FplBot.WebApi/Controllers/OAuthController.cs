@@ -5,8 +5,10 @@ using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -27,8 +29,9 @@ namespace FplBot.WebApi.Controllers
         private readonly ILeagueClient _leagueClient;
         private readonly IOptions<DistributedSlackAppOptions> _options;
         private readonly IMessageSession _messageSession;
+        private readonly IWebHostEnvironment _env;
 
-        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, IOptions<DistributedSlackAppOptions> options, IMessageSession messageSession)
+        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, IOptions<DistributedSlackAppOptions> options, IMessageSession messageSession, IWebHostEnvironment env)
         {
             _logger = logger;
             _oAuthAccessClient = oAuthAccessClient;
@@ -36,6 +39,7 @@ namespace FplBot.WebApi.Controllers
             _leagueClient = leagueClient;
             _options = options;
             _messageSession = messageSession;
+            _env = env;
         }
 
         [HttpGet("install")]
@@ -134,7 +138,11 @@ namespace FplBot.WebApi.Controllers
                     Subscriptions = new List<EventSubscription> { EventSubscription.All }
                 });
                 await _messageSession.Publish(new AppInstalled(response.Team.Id, response.Team.Name, setup.LeagueId, setup.Channel));
-                return Redirect("https://www.fplbot.app/success");
+                if (_env.IsProduction())
+                {
+                    return Redirect("https://www.fplbot.app/success");    
+                }
+                return Redirect("https://test.fplbot.app/success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);

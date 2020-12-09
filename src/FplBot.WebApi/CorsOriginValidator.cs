@@ -12,8 +12,10 @@ namespace FplBot.WebApi
         public static List<string> FixedOrigins = new List<string>
         {
             "http://localhost:3000", 
-            "https://fplbot-frontend.herokuapp.com", 
-            "https://www.fplbot.app"
+            "https://fplbot-frontend.herokuapp.com",
+            "https://fplbot-frontend-test.herokuapp.com", 
+            "https://www.fplbot.app",
+            "https://test.fplbot.app",
         };
         
         private static Regex HerokuReviewAppsOriginRegex = new Regex("https:\\/\\/fplbotfrontend-pr-\\d+.herokuapp.com");
