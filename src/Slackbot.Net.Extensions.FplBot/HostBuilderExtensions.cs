@@ -33,6 +33,7 @@ namespace Microsoft.Extensions.Hosting
             endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
             var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}");
             endpointConfiguration.EnableInstallers();
+            endpointConfiguration.License(context.Configuration["NSB_LICENSE"]);
             var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
             transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
             transport.RuleNameShortener(r =>
