@@ -67,9 +67,7 @@ namespace Microsoft.Extensions.Hosting
         {
             if (contextHostingEnvironment.IsProduction())
                 return "ServiceControl";
-            if(contextHostingEnvironment.IsEnvironment("Test"))
-                return "ServiceControl.Test";
-            return "ServiceControl.Development";
+            return "ServiceControl.Test";
         }
 
         private static EndpointConfiguration LearningTransport(this HostBuilderContext context)
