@@ -34,6 +34,10 @@ namespace Microsoft.Extensions.Hosting
             var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}");
             endpointConfiguration.EnableInstallers();
             endpointConfiguration.License(context.Configuration["NSB_LICENSE"]);
+            endpointConfiguration.SendHeartbeatTo(
+                serviceControlQueue: GetServiceControlQueue(context.HostingEnvironment),
+                frequency: TimeSpan.FromSeconds(15),
+                timeToLive: TimeSpan.FromSeconds(30));
             var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
             transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
             transport.RuleNameShortener(r =>
@@ -57,6 +61,15 @@ namespace Microsoft.Extensions.Hosting
                 }
             });
             return endpointConfiguration;
+        }
+
+        private static string GetServiceControlQueue(IHostEnvironment contextHostingEnvironment)
+        {
+            if (contextHostingEnvironment.IsProduction())
+                return "ServiceControl";
+            if(contextHostingEnvironment.IsEnvironment("Test"))
+                return "ServiceControl.Test";
+            return "ServiceControl.Development";
         }
 
         private static EndpointConfiguration LearningTransport(this HostBuilderContext context)
