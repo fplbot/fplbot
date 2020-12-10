@@ -7,7 +7,6 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Events
 {
     public class AppInstalledHandler : IHandleMessages<AppInstalled>
     {
-        private readonly ISlackTeamRepository _repo;
         private readonly ISlackWorkSpacePublisher _publisher;
 
         public AppInstalledHandler(ISlackWorkSpacePublisher publisher)
