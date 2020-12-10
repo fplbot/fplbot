@@ -65,7 +65,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                 }
                 else
                 {
-                    _logger.LogError("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
+                    _logger.LogWarning("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
                     _logger.LogInformation($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
                     _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
                 }
