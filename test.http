@@ -67,3 +67,15 @@ X-Correlation-Id:NSB
         "channel": "C92QZTVEF"
     }
 }
+
+### app_uninstalled event for in workspace fplbot.slack.com
+
+POST http://localhost:1337/events
+X-Correlation-Id:NSB
+
+{
+    "team_id": "T016B9N3U7P",
+    "event": {
+        "type": "app_uninstalled"
+    }
+}
