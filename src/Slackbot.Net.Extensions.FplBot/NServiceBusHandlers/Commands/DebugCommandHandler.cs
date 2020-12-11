@@ -33,7 +33,7 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Commands
             var sha = informationalVersion?.Split(".").Last();
             return $"You are running @fplbot " +
                    $"v{informationalVersion} " +
-                   $"\n<https://github.com/fplbot/fplbot/tree/{sha}|Browse {sha.Substring(0,10)} on github.com/fplbot/fplbot>";
+                   $"\n<https://github.com/fplbot/fplbot/tree/{sha}|Browse {sha?.Substring(0,sha.Length-1)} on github.com/fplbot/fplbot>";
         }
     }
 }
