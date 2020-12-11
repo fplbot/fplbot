@@ -24,7 +24,7 @@ jobs:
         with:
           useConfigFile: true
       - name: Build docker images
-        run: docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} -SHORTSHA=${{steps.gitversion.outputs.shortSha}} -f Heroku.Dockerfile .
+        run: docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} -f Heroku.Dockerfile .
       - uses: docker/login-action@v1
         with:
           registry: registry.heroku.com
