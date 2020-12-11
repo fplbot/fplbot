@@ -41,6 +41,8 @@ branches:
     regex: ^bugfix?[/-]
     tracks-release-branches: false
     is-release-branch: false
+    source-branches:
+      - master
   pull-request:
     mode: ContinuousDelivery
     tag: PullRequest
