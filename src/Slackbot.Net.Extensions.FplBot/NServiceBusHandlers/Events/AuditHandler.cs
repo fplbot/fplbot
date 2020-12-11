@@ -36,7 +36,7 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Events
             try
             {
                 var blankTeam = await _teamRepo.GetTeam("T0A9QSU83");
-                await _publisher.PublishToWorkspace("T0A9QSU83", blankTeam.FplBotSlackChannel, message);
+                await _publisher.PublishToWorkspace("T0A9QSU83", "#fplbot-notifications", message);
             }
             catch (Exception e)
             {
