@@ -1,9 +1,9 @@
-name: build-prod-artifact
+name: deploy-to-test
 
 on:
   push:
     branches:
-      - "master"
+      - "master"      
 
 jobs:
   ubuntu-16_04:
@@ -19,16 +19,20 @@ jobs:
         with:
           versionSpec: "5.x"
       - name: Determine Version
-        id: gitversion
+        id: gitversion # step id used as reference for output values
         uses: gittools/actions/gitversion/execute@v0.9.7
         with:
           useConfigFile: true
       - name: Build docker images
-        run: docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} -f Heroku.Dockerfile .
+        run: docker build -t registry.heroku.com/blank-fplbot-test/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} -f Heroku.Dockerfile .
       - uses: docker/login-action@v1
         with:
           registry: registry.heroku.com
           username: _
           password: ${{ secrets.HEROKU_TOKEN }}
       - name: Push tags to Heroku
-        run: docker push registry.heroku.com/blank-fplbot/web
+        run: docker push registry.heroku.com/blank-fplbot-test/web
+      - name: Release to test
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
+        run: heroku container:release web --app blank-fplbot-test
