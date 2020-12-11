@@ -22,12 +22,12 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Events
         
         public async Task Handle(AppInstalled message, IMessageHandlerContext context)
         {
-            await PublishToAuditChannel($"🎉 {message.TeamName} installed @fplbot!");
+            await PublishToAuditChannel($"🎉 A new workspace ('{message.TeamName}') installed @fplbot!");
         }
 
         public async Task Handle(AppUninstalled message, IMessageHandlerContext context)
         {
-            await PublishToAuditChannel($"😔 {message.TeamName} uninstalled @fplbot ..");
+            await PublishToAuditChannel($"😔 '{message.TeamName}' decided to uninstall @fplbot");
         }
 
         private async Task PublishToAuditChannel(string message)
