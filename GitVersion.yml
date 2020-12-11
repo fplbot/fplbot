@@ -1,19 +1,14 @@
+mode: ContinuousDeployment
+increment: Minor
+
+major-version-bump-message: '^\[(breaking|major)\]'
+minor-version-bump-message: '^\[(feature|minor)\]'
+patch-version-bump-message: '^\[(fix|patch)\]'
+no-bump-message: '^\[(docs|none|skip)\]'
+commit-message-incrementing: Enabled
+
+tag-prefix: "build-"
+
 branches:
   master:
-    regex: ^master
-    mode: ContinuousDelivery
-    tag: ""
-    increment: Patch
-    prevent-increment-of-merged-branch-version: true
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
-  feature:
-    regex: ^features?[/-]
-    mode: ContinuousDelivery
-    tag: useBranchName
-    increment: Inherit
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    tracks-release-branches: false
-    is-release-branch: false
+    increment: Minor
