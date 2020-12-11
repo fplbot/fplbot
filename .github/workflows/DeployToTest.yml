@@ -1,10 +1,11 @@
 name: deploy-to-test
 
 on:
+  pull_request:
   workflow_dispatch:
   push:
     branches:
-      - "master"      
+      - "master"
 
 jobs:
   ubuntu-16_04:
