@@ -1,2 +1,5 @@
-mode: MainLine
-increment: minor
+mode: Mainline
+branches:
+  feature:
+    mode: ContinuousDeployment
+    increment: Minor
