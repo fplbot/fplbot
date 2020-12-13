@@ -9,7 +9,7 @@ namespace Fpl.Search
 {
     public static class SearchServiceCollectionExtensions
     {
-        public static IServiceCollection AddSearch<T>(this IServiceCollection services, string indexUri)
+        public static IServiceCollection AddSearch(this IServiceCollection services, string indexUri)
         {
             services.AddSingleton<IElasticClient>(new ElasticClient(new ConnectionSettings(new Uri(indexUri))));
 

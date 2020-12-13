@@ -1,7 +1,8 @@
-using System;
 using Fpl.Client.Infra;
+using Fpl.Search;
 using FplBot.WebApi;
 using FplBot.WebApi.Data;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -15,6 +16,7 @@ using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
+using System;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 // ReSharper disable once CheckNamespace
@@ -26,6 +28,7 @@ namespace Slackbot.Net.Abstractions.Hosting
         {
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config.GetSection("fpl"));
+            services.AddSearch(config.GetValue<string>("ES_INDEX"));
             services.Configure<RedisOptions>(config);
             services.Configure<DistributedSlackAppOptions>(config);
             services.AddSingleton<ConnectionMultiplexer>(c =>

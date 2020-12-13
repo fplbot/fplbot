@@ -1,23 +1,37 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using CronBackgroundServices;
+﻿using CronBackgroundServices;
 using Fpl.Search.Indexing;
+using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 {
     public class IndexerRecurringAction : IRecurringAction
     {
-        public IIndexingClient IndexingClient { get; }
+        private readonly IIndexingService _indexingService;
+        private readonly ILogger<IndexerRecurringAction> _logger;
 
-        public IndexerRecurringAction(IIndexingClient indexingClient)
+        public IndexerRecurringAction(IIndexingService indexingService, ILogger<IndexerRecurringAction> logger)
         {
-            IndexingClient = indexingClient;
+            _indexingService = indexingService;
+            _logger = logger;
         }
 
-
-        public Task Process(CancellationToken stoppingToken)
+        public async Task Process(CancellationToken stoppingToken)
         {
-            throw new System.NotImplementedException();
+            stoppingToken.Register(() =>
+            {
+                _logger.LogInformation("Cancelling the indexing job due to stoppingToken being cancelled");
+                _indexingService.Cancel();
+            });
+
+            _logger.LogInformation("Starting the entries indexing job");
+            await _indexingService.IndexEntries();
+            _logger.LogInformation("Finished indexing all entries");
+
+            _logger.LogInformation("Starting the league indexing job");
+            await _indexingService.IndexLeagues();
+            _logger.LogInformation("Finished indexing all leagues");
         }
 
         public string Cron => Constants.CronPatterns.EveryThursdayAtMidnight;
