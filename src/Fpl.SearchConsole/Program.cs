@@ -1,9 +1,7 @@
 ﻿using Fpl.Client;
 using Fpl.Client.Clients;
-using Fpl.Client.Models;
 using Fpl.Search;
 using Fpl.Search.Indexing;
-using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,8 +21,9 @@ namespace Fpl.SearchConsole
                 IndexUri = "http://localhost:9200/"
             };
             
-            var indexingClient = new IndexingClient(new ConsoleLogger(), options);
-            var searchClient = new SearchClient(new ConsoleLogger(), options);
+            var logger = new ConsoleLogger();
+            var indexingClient = new IndexingClient(logger, options);
+            var searchClient = new SearchClient(logger, options);
             var httpClient = new HttpClient(new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip,
@@ -33,8 +32,11 @@ namespace Fpl.SearchConsole
             FplClientOptionsConfigurator.SetupFplClient(httpClient);
             
             var leagueClient = new LeagueClient(httpClient);
+            var indexingService = new IndexingService(indexingClient, 
+                new EntryIndexProvider(leagueClient, logger), 
+                new LeagueIndexProvider(leagueClient, logger), logger);
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => indexingService.Cancel();
 
-            
             Console.WriteLine("You can either \"index <type>\" or \"search <term>\"");
 
             var command = Console.ReadLine()?.ToLower();
@@ -47,55 +49,11 @@ namespace Fpl.SearchConsole
             {
                 if (command == "index entries")
                 {
-                    var i = 1;
-                    var batchSize = 8;
-                    var iteration = 1;
-                    var hasNext = true;
-                    do
-                    {
-                        while (!Console.KeyAvailable && hasNext)
-                        {
-                            var batchOfStandings = await GetBatchOfStandings(i, batchSize, leagueClient);
-                            var entries = batchOfStandings.SelectMany(x =>
-                                x.Standings.Entries.Select(y => new EntryItem {Id = y.Id, TeamName = y.EntryName, RealName = y.PlayerName, Entry = y.Entry})).ToArray();
-
-                            await indexingClient.IndexEntries(entries);
-
-                            i += batchSize;
-
-                            if (iteration % 10 == 0)
-                                Console.WriteLine($"{DateTime.Now.ToString("T")} indexed page {i}");
-
-                            hasNext = batchOfStandings.All(x => x.Standings.HasNext);
-                            iteration++;
-                        }
-                    } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                    await indexingService.IndexEntries();
                 }
                 else if (command == "index leagues")
                 {
-                    var i = 1;
-                    var batchSize = 8;
-                    var iteration = 1;
-                    var hasNext = true;
-
-                    do
-                    {
-                        while (!Console.KeyAvailable && hasNext)
-                        {
-                            var batchOfLeagues = await GetBatchOfLeagues(i, batchSize, leagueClient);
-                            var leagues = batchOfLeagues.Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry}).ToArray();
-
-                            await indexingClient.IndexLeagues(leagues);
-
-                            i += batchSize;
-
-                            if (iteration % 10 == 0)
-                                Console.WriteLine($"{DateTime.Now:T} indexed page {i}");
-
-                            hasNext = batchOfLeagues.Count(x => x.Exists) > 1;
-                            iteration++;
-                        }
-                    } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                    await indexingService.IndexLeagues();
                 }
                 else if (command.StartsWith("searchentry"))
                 {
@@ -111,51 +69,9 @@ namespace Fpl.SearchConsole
                 }
             }
         }
-
-        private static async Task<ClassicLeague[]> GetBatchOfStandings(int i, int batchSize, LeagueClient leagueClient)
-        {
-            var retries = 3;
-            var j = 0;
-
-            while (j < retries)
-            {
-                try
-                {
-                    return await Task.WhenAll(Enumerable.Range(i, batchSize).Select(n => leagueClient.GetClassicLeague(314, n)));
-                }
-                catch (HttpRequestException e)
-                {
-                    Console.WriteLine($"Ran into a 429 (Too Many Requests) at {i}. Waiting 1s before retrying.");
-                    await Task.Delay(2000);
-                    j++;
-                }
-            }
-            throw new Exception($"Unable to get standings after {retries} retries");
-        }
-
-        private static async Task<ClassicLeague[]> GetBatchOfLeagues(int i, int batchSize, LeagueClient leagueClient)
-        {
-            var retries = 3;
-            var j = 0;
-
-            while (j < retries)
-            {
-                try
-                {
-                    return await Task.WhenAll(Enumerable.Range(i, batchSize).Select(n => leagueClient.GetClassicLeague(i)));
-                }
-                catch (HttpRequestException e)
-                {
-                    Console.WriteLine($"Ran into a 429 (Too Many Requests) at {i}. Waiting 1s before retrying.");
-                    await Task.Delay(2000);
-                    j++;
-                }
-            }
-            throw new Exception($"Unable to get standings after {retries} retries");
-        }
     }
 
-    internal class ConsoleLogger : ILogger<IndexingClient>, ILogger<SearchClient>
+    internal class ConsoleLogger : ILogger<IndexingClient>, ILogger<SearchClient>, ILogger<IndexProviderBase>
     {
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
@@ -165,7 +81,7 @@ namespace Fpl.SearchConsole
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            return logLevel == LogLevel.Error;
+            return true;
         }
 
         public IDisposable BeginScope<TState>(TState state)

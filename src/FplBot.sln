@@ -36,7 +36,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slackbot.Net.Shared", "ext\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Search", "Fpl.Search\Fpl.Search.csproj", "{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.SearchConsole", "Fpl.SearchConsole\Fpl.SearchConsole.csproj", "{8638EB58-F84F-43B0-9ECF-C60D8BA6B742}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.SearchConsole", "Fpl.SearchConsole\Fpl.SearchConsole.csproj", "{8638EB58-F84F-43B0-9ECF-C60D8BA6B742}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -15,17 +15,7 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task IndexEntries(EntryItem[] entries)
-        {
-            await Index(entries, Constants.EntriesIndex);
-        }
-
-        public async Task IndexLeagues(LeagueItem[] leagues)
-        {
-            await Index(leagues, Constants.LeaguesIndex);
-        }
-
-        private async Task Index<T>(IEnumerable<T> items, string index) where T : class
+        public async Task Index<T>(IEnumerable<T> items, string index) where T : class, IIndexableItem
         {
             var response = await Client.IndexManyAsync(items, index);
             if (response.Errors)
@@ -40,7 +30,6 @@ namespace Fpl.Search.Indexing
 
     public interface IIndexingClient
     {
-        Task IndexEntries(EntryItem[] entries);
-        Task IndexLeagues(LeagueItem[] leagues);
+        Task Index<T>(IEnumerable<T> items, string index) where T : class, IIndexableItem;
     }
 }
