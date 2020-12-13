@@ -22,8 +22,8 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleLineupReady(Lineups lineups)
         {
             _logger.LogInformation("Handling new lineups");
-            var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
-            if (slackTeam.FplBotSlackChannel == "#fpltest")
+            var slackTeams = await _slackTeamRepo.GetAllTeams();
+            foreach (var slackTeam in slackTeams)
             {
                 var formatted = Formatter.FormatLineup(lineups);
                 await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);

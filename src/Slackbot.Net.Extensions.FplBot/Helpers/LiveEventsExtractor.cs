@@ -7,7 +7,7 @@ using Slackbot.Net.Extensions.FplBot.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    internal class LiveEventsExtractor
+    public class LiveEventsExtractor
     {
         public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current)
         {
@@ -44,7 +44,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             }).WhereNotNull();
         }
         
-        public static IEnumerable<FinishedFixture> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams)
+        public static IEnumerable<FinishedFixture> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams, ICollection<Player> players)
         {
             if(latestFixtures == null)
                 return new List<FinishedFixture>();
@@ -58,11 +58,39 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             if (newFinished.Any())
                 return newFinished.Select(n => new FinishedFixture
                 {
-                    Fixture = n, 
+                    Fixture = n,
                     HomeTeam = teams.First(t => t.Id == n.HomeTeamId),
-                    AwayTeam = teams.First(t => t.Id == n.AwayTeamId)
+                    AwayTeam = teams.First(t => t.Id == n.AwayTeamId),
+                    BonusPoints = CreateBonusPlayers(players, n)
                 });
             return new List<FinishedFixture>();
+        }
+
+        public static IEnumerable<BonusPointsPlayer> CreateBonusPlayers(ICollection<Player> players, Fixture fixture)
+        {
+            try
+            {
+                var bonusPointsHome = fixture.Stats.FirstOrDefault(s => s.Identifier == "bps")?.HomeStats;
+                var bonusPointsAway = fixture.Stats.FirstOrDefault(s => s.Identifier == "bps")?.AwayStats;
+
+                var home = bonusPointsHome.Select(BpsFilter).ToList();
+                var away = bonusPointsAway.Select(BpsFilter).ToList();
+                var aggregated = home.Concat(away).OrderByDescending(bpp => bpp.BonusPoints);
+                return aggregated;
+
+                BonusPointsPlayer BpsFilter(FixtureStatValue bps)
+                {
+                    return new BonusPointsPlayer
+                    {
+                        Player = players.First(p => p.Id == bps.Element),
+                        BonusPoints = bps.Value
+                    };
+                }
+            }
+            catch
+            {
+                return new List<BonusPointsPlayer>();
+            }
         }
     }
 

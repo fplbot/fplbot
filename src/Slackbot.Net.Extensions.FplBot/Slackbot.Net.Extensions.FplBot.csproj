@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>Slackbot.Net.Extensions.FplBot</RootNamespace>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
@@ -9,13 +9,19 @@
     <ItemGroup>
       <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
       <PackageReference Include="AngleSharp" Version="1.0.0-alpha-844" />
-      <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />      
+      <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
+      <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+      <PackageReference Include="NServiceBus.Extensions.Hosting" Version="1.1.0" />
+      <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="1.7.0" />
+      <PackageReference Include="NServiceBus.Heartbeat" Version="3.0.1" />
     </ItemGroup>
 
     <ItemGroup>
      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
      <ProjectReference Include="..\ext\Slackbot.Net.SlackClients.Http\Slackbot.Net.SlackClients.Http.csproj" />
      <ProjectReference Include="..\ext\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
+     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />     
      <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj" />     
     </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Models;
 using Slackbot.Net.Endpoints.Models;
@@ -58,6 +59,8 @@ namespace FplBot.Tests
                 {
                     AwayTeamLeadingBy(goals)
                 },
+                HomeTeamScore = 0,
+                AwayTeamScore = goals,
                 PulseId = fixtureCode
             };
         }
@@ -66,6 +69,26 @@ namespace FplBot.Tests
         {
             fixture.FinishedProvisional = true;
             return fixture;
+        }
+
+        public static Fixture WithProvisionalBonus(this Fixture fixture, int playerId, int bpsValue)
+        {
+            fixture.FinishedProvisional = true;
+            fixture.Stats = fixture.Stats.Append(BpsSystem(playerId,bpsValue)).ToArray();
+            return fixture;
+        }
+
+        private static FixtureStat BpsSystem(int playerId, int bps)
+        {
+            return new FixtureStat
+            {
+                Identifier = "bps",
+                HomeStats = new List<FixtureStatValue>
+                {
+                    new FixtureStatValue {Element = playerId, Value = bps}
+                },
+                AwayStats = new List<FixtureStatValue> { }
+            };
         }
 
         private static FixtureStat AwayTeamLeadingBy(int goals)
@@ -92,7 +115,8 @@ namespace FplBot.Tests
         {
             return new Team
             {
-                Id = HomeTeamId
+                Id = HomeTeamId,
+                ShortName = "HoMeTeam"
             };
         }
 
@@ -100,7 +124,8 @@ namespace FplBot.Tests
         {
             return new Team
             {
-                Id = AwayTeamId
+                Id = AwayTeamId,
+                ShortName = "AwAyTeam"
             };
         }
 

@@ -20,11 +20,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		..\buildherokuimage.sh = ..\buildherokuimage.sh
 		Directory.Build.targets = Directory.Build.targets
 		Dockerfile = Dockerfile
-		..\Heroku.Dockerfile = ..\Heroku.Dockerfile
-		..\heroku.yml = ..\heroku.yml
+		..\test.http = ..\test.http
+		.gitignore = ../.gitignore
+		..\GitVersion.yml = ..\GitVersion.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
+ProjectSection(SolutionItems) = preProject
+	CI.yml = ..\.github\workflows\CI.yml
+	DeployToProd.yml = ..\.github\workflows\DeployToProd.yml
+	DeployToTest.yml = ..\.github\workflows\DeployToTest.yml
+EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ext", "ext", "{51FD3283-052A-4E69-B969-B487BF5BBA69}"
 EndProject
@@ -33,6 +39,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slackbot.Net.SlackClients.Http", "ext\Slackbot.Net.SlackClients.Http\Slackbot.Net.SlackClients.Http.csproj", "{DD064626-123D-4EE2-8FBE-36B7D386877F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slackbot.Net.Shared", "ext\Slackbot.Net.Shared\Slackbot.Net.Shared.csproj", "{95350AF0-EFA5-48A6-80DD-9DE6C200D6EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Messaging.Contracts", "FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj", "{839F77B2-CBE2-4C16-A384-F2768EAD88F6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Search", "Fpl.Search\Fpl.Search.csproj", "{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}"
 EndProject
@@ -154,6 +162,18 @@ Global
 		{95350AF0-EFA5-48A6-80DD-9DE6C200D6EA}.Release|x64.Build.0 = Release|Any CPU
 		{95350AF0-EFA5-48A6-80DD-9DE6C200D6EA}.Release|x86.ActiveCfg = Release|Any CPU
 		{95350AF0-EFA5-48A6-80DD-9DE6C200D6EA}.Release|x86.Build.0 = Release|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Debug|x64.Build.0 = Debug|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Debug|x86.Build.0 = Debug|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Release|x64.ActiveCfg = Release|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Release|x64.Build.0 = Release|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Release|x86.ActiveCfg = Release|Any CPU
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6}.Release|x86.Build.0 = Release|Any CPU
 		{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}.Debug|x64.ActiveCfg = Debug|Any CPU

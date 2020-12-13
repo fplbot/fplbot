@@ -1,15 +1,14 @@
 ﻿using Fpl.Client;
 using Fpl.Client.Clients;
-using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
+using Nest;
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Nest;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fpl.SearchConsole

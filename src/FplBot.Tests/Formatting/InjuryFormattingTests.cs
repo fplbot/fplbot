@@ -143,7 +143,7 @@ namespace FplBot.Tests.Formatting
         [Fact]
         public void MultipleTests()
         {
-            var formatted = Formatter.FormatStatusUpdates(new[]
+            var formatted = Formatter.FormatInjuryStatusUpdates(new[]
             {
                 Doubtful(25, 50),
                 Doubtful(75,25),

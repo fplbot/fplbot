@@ -25,23 +25,21 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task OnInjuryUpdates(IEnumerable<PlayerUpdate> injuryUpdates)
         {
             _logger.LogInformation($"Handling player {injuryUpdates.Count()} status updates");
-            var slackTeam = await _slackTeamRepo.GetTeam("T0A9QSU83");
-            if (slackTeam.FplBotSlackChannel == "#fpltest")
+            var slackTeams = await _slackTeamRepo.GetAllTeams();
+            foreach (var slackTeam in slackTeams)
             {
-                var formatted = Formatter.FormatStatusUpdates(injuryUpdates);
-                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);    
-            }
-            else
-            {
-                var filtered = injuryUpdates.Where(c => c.ToPlayer.IsRelevant());
-                if (filtered.Any())
+                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
                 {
-                    var formatted = Formatter.FormatStatusUpdates(filtered);
-                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);    
-                }
-                else
-                {
-                    _logger.LogInformation("All updates filtered out because of irrelevant, so not sending any notification");
+                    var filtered = injuryUpdates.Where(c => c.ToPlayer.IsRelevant());
+                    if (filtered.Any())
+                    {
+                        var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
+                        await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("All updates injuries irrelevant, so not sending any notification");
+                    }
                 }
             }
         }

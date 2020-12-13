@@ -12,7 +12,8 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             var isAboveThreshold = NowUtc >= threshold;
             var isBeforeDate = NowUtc < dateUtc;
             var isSameMinute = NowUtc.Minute == threshold.Minute;
-            return isAboveThreshold && isBeforeDate && isSameMinute;
+            var isSameHour = NowUtc.Hour == threshold.Hour;
+            return isAboveThreshold && isBeforeDate && isSameMinute && isSameHour;
         }
 
         private DateTime NowUtc => NowUtcOverride ?? DateTime.UtcNow;

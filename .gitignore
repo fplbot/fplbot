@@ -52,7 +52,6 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
-**/Properties/launchSettings.json
 
 # StyleCop
 StyleCopReport.xml
@@ -331,3 +330,8 @@ ASALocalRun/
 .DS_Store
 appsettings.Local.json
 releases/
+appsettings.Development.json
+appsettings.Test.json
+appsettings.Production.json
+local.settings.json
+.learningtransport/

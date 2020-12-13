@@ -4,11 +4,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Messaging.Contracts.Events.v1;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using NServiceBus;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.OAuthAccess;
@@ -24,14 +28,18 @@ namespace FplBot.WebApi.Controllers
         private readonly ISlackTeamRepository _slackTeamRepository;
         private readonly ILeagueClient _leagueClient;
         private readonly IOptions<DistributedSlackAppOptions> _options;
+        private readonly IMessageSession _messageSession;
+        private readonly IWebHostEnvironment _env;
 
-        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, IOptions<DistributedSlackAppOptions> options)
+        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, IOptions<DistributedSlackAppOptions> options, IMessageSession messageSession, IWebHostEnvironment env)
         {
             _logger = logger;
             _oAuthAccessClient = oAuthAccessClient;
             _slackTeamRepository = slackTeamRepository;
             _leagueClient = leagueClient;
             _options = options;
+            _messageSession = messageSession;
+            _env = env;
         }
 
         [HttpGet("install")]
@@ -129,8 +137,12 @@ namespace FplBot.WebApi.Controllers
                     FplbotLeagueId = setup.LeagueId,
                     Subscriptions = new List<EventSubscription> { EventSubscription.All }
                 });
-
-                return Redirect("https://www.fplbot.app/success");
+                await _messageSession.Publish(new AppInstalled(response.Team.Id, response.Team.Name, setup.LeagueId, setup.Channel));
+                if (_env.IsProduction())
+                {
+                    return Redirect("https://www.fplbot.app/success");    
+                }
+                return Redirect("https://test.fplbot.app/success");
             }
             _logger.LogInformation($"Oauth response not ok! {response.Error}");
             return BadRequest(response.Error);

@@ -98,26 +98,19 @@ namespace FplBot.WebApi.Controllers
             return Ok();
         }
         
-        [HttpGet("fulltime")]
-        public async Task<IActionResult> GetFixtureFulltime()
+        [HttpGet("fulltime/{gameweek}")]
+        public async Task<IActionResult> GetFixtureFulltime(int gameweek)
         {
             var settings = await _settings.GetGlobalSettings();
-            var fixtures = await _fixtureClient.GetFixturesByGameweek(8);
-            await _fixtureStateHandler.OnFixturesProvisionalFinished(new []
+            var oldFixtures = await _fixtureClient.GetFixturesByGameweek(gameweek);
+            foreach (var oldFixture in oldFixtures)
             {
-                new FinishedFixture
-                {
-                    Fixture = fixtures.Last(),
-                    HomeTeam = settings.Teams.First(),
-                    AwayTeam = settings.Teams.Last()
-                },
-                new FinishedFixture
-                {
-                    Fixture = fixtures.GetItemByIndex(2),
-                    HomeTeam = settings.Teams.GetItemByIndex(4),
-                    AwayTeam = settings.Teams.GetItemByIndex(5)
-                }
-            });
+                oldFixture.FinishedProvisional = false;
+            }
+            var newFixtures = await _fixtureClient.GetFixturesByGameweek(gameweek);
+
+            var newStuff = LiveEventsExtractor.GetProvisionalFinishedFixtures(newFixtures, oldFixtures, settings.Teams, settings.Players); 
+            await _fixtureStateHandler.OnFixturesProvisionalFinished(newStuff);
             return Ok();
         }
         

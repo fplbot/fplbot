@@ -43,7 +43,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         {
             var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
             var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures);
-            var finishedFixtures = LiveEventsExtractor.GetProvisionalFinishedFixtures(latest, _currentGameweekFixtures, _teams);
+            var finishedFixtures = LiveEventsExtractor.GetProvisionalFinishedFixtures(latest, _currentGameweekFixtures, _teams, _players);
             _currentGameweekFixtures = latest;
 
             var globalSettings = await _settingsClient.GetGlobalSettings();

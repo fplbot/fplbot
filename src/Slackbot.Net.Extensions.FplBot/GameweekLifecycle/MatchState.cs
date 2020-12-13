@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Models;
@@ -32,7 +30,19 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             foreach (var fixture in fixtures)
             {
                 var lineups = await _scraperApi.GetMatchDetails(fixture.PulseId);
-                _matchDetails[fixture.PulseId] = lineups;
+                if (lineups != null)
+                {
+                    _matchDetails[fixture.PulseId] = lineups;
+                }
+                else
+                {
+                    // retry:
+                    var retry = await _scraperApi.GetMatchDetails(fixture.PulseId);
+                    if (retry != null)
+                    {
+                        _matchDetails[fixture.PulseId] = retry;
+                    }
+                }
             }
         }
 
@@ -43,15 +53,25 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
             foreach (var fixture in fixtures)
             {
                 var updatedMatchDetails = await _scraperApi.GetMatchDetails(fixture.PulseId);
-                var storedDetails = _matchDetails[fixture.PulseId];
-                var updates = MatchDetailsDiffer.Diff(updatedMatchDetails, storedDetails);
-                if (updates.LineupsConfirmed)
+                if (_matchDetails.ContainsKey(fixture.PulseId) && updatedMatchDetails != null)
                 {
-                    var lineups = MatchDetailsMapper.ToLineup(updatedMatchDetails);
-                    await OnLineUpReady(lineups);
+                    var storedDetails = _matchDetails[fixture.PulseId];
+                    var updates = MatchDetailsDiffer.Diff(updatedMatchDetails, storedDetails);
+                    if (updates.LineupsConfirmed)
+                    {
+                        var lineups = MatchDetailsMapper.ToLineup(updatedMatchDetails);
+                        await OnLineUpReady(lineups);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
+                    _logger.LogInformation($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
+                    _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
                 }
 
-                _matchDetails[fixture.PulseId] = updatedMatchDetails;
+                if(updatedMatchDetails != null)
+                    _matchDetails[fixture.PulseId] = updatedMatchDetails;
             }
         }
 
