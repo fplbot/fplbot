@@ -1,5 +1,6 @@
 ﻿using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -7,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace Fpl.Search.Searching
 {
-    public class SearchClient : ElasticClientBase, ISearchClient
+    public class SearchClient : ISearchClient
     {
+        private readonly IElasticClient _elasticClient;
         private readonly ILogger<SearchClient> _logger;
 
-        public SearchClient(ILogger<SearchClient> logger, SearchOptions options) : base(options)
+        public SearchClient(IElasticClient elasticClient, ILogger<SearchClient> logger)
         {
+            _elasticClient = elasticClient;
             _logger = logger;
         }
 
@@ -28,7 +31,7 @@ namespace Fpl.Search.Searching
 
         private async Task<IReadOnlyCollection<T>> Search<T>(string query, int maxHits, string index, params Expression<Func<T, object>>[] fields) where T : class
         {
-            var response = await Client.SearchAsync<T>(x => x
+            var response = await _elasticClient.SearchAsync<T>(x => x
                 .Index(index)
                 .From(0)
                 .Size(maxHits)

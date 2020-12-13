@@ -8,14 +8,14 @@ namespace Fpl.Search.Indexing
     {
         private readonly ILogger<IndexingClient> _logger;
         private readonly IIndexingClient _indexingClient;
-        private readonly EntryIndexProvider _entryIndexProvider;
-        private readonly LeagueIndexProvider _leagueIndexProvider;
+        private readonly IIndexProvider<EntryItem> _entryIndexProvider;
+        private readonly IIndexProvider<LeagueItem> _leagueIndexProvider;
         private bool _isCancelled;
 
         public IndexingService(
             IIndexingClient indexingClient,
-            EntryIndexProvider entryIndexProvider,
-            LeagueIndexProvider leagueIndexProvider,
+            IIndexProvider<EntryItem> entryIndexProvider,
+            IIndexProvider<LeagueItem> leagueIndexProvider,
             ILogger<IndexingClient> logger)
         {
             _indexingClient = indexingClient;

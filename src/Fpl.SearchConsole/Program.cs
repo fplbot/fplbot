@@ -9,6 +9,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Nest;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fpl.SearchConsole
 {
@@ -16,14 +18,10 @@ namespace Fpl.SearchConsole
     {
         static async Task Main(string[] args)
         {
-            var options = new SearchOptions
-            {
-                IndexUri = "http://localhost:9200/"
-            };
-            
             var logger = new ConsoleLogger();
-            var indexingClient = new IndexingClient(logger, options);
-            var searchClient = new SearchClient(logger, options);
+            var esClient = new ElasticClient(new ConnectionSettings(new Uri("http://localhost:9200/")));
+            var indexingClient = new IndexingClient(esClient, logger);
+            var searchClient = new SearchClient(esClient, logger);
             var httpClient = new HttpClient(new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip,
