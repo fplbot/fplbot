@@ -1,5 +1,0 @@
-mode: Mainline
-branches:
-  feature:
-    mode: ContinuousDeployment
-    increment: Minor
