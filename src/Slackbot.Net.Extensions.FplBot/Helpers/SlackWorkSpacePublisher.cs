@@ -64,7 +64,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
 
                     if (!res.Ok)
                     {
-                        _logger.LogError($"Could not post to {message.Channel}", res.Error);
+                        _logger.LogWarning($"Could not post to {message.Channel}. {res.Error}");
                     }
                 }
                 catch (WellKnownSlackApiException sae)
@@ -76,12 +76,12 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
                     }
                     else
                     {
-                        _logger.LogError(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
+                        _logger.LogWarning(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
                     }
                 }
                 catch (Exception e)
                 {
-                    _logger.LogInformation(e, e.Message);
+                    _logger.LogWarning(e, e.Message);
                 }
             }
         }
