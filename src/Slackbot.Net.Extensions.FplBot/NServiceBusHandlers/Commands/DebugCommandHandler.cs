@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -29,11 +30,15 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Commands
 
         private string DebugInfo()
         {
-            string informationalVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            Assembly entryAssembly = Assembly.GetEntryAssembly();
+            Version version = entryAssembly?.GetName()?.Version;
+            string versionStr = $"{version?.Major}.{version?.Minor}.{version?.Build}";
+            string informationalVersion = entryAssembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             var sha = informationalVersion?.Split(".").Last();
-            return $"You are running @fplbot " +
-                   $"v{informationalVersion} " +
-                   $"\n<https://github.com/fplbot/fplbot/tree/{sha}|Browse {sha?.Substring(0,sha.Length-1)} on github.com/fplbot/fplbot>";
+            return $"ℹ️ I'm currently at v{versionStr}\n" +
+                   $"▪️ Full version: {informationalVersion}\n" +
+                   $"▪️ <https://github.com/fplbot/fplbot/releases/tag/{versionStr}|Release notes>\n" +
+                   $"️▪️ <https://github.com/fplbot/fplbot/tree/{sha}|{sha?.Substring(0,sha.Length-1)}>";
         }
     }
 }

@@ -25,9 +25,10 @@ COPY /src/ext/Slackbot.Net.Shared/ ./ext/Slackbot.Net.Shared/
 
 # Publish
 ARG INFOVERSION="0.666"
+ARG VERSION="1.0.666"
 RUN echo "Infoversion: $INFOVERSION"
 
-RUN dotnet publish FplBot.WebApi/FplBot.WebApi.csproj -c Release /p:InformationalVersion=$INFOVERSION -o /app/out/fplbot-webapi
+RUN dotnet publish FplBot.WebApi/FplBot.WebApi.csproj -c Release /p:Version=$VERSION /p:InformationalVersion=$INFOVERSION -o /app/out/fplbot-webapi
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
