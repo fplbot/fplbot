@@ -68,7 +68,7 @@ X-Correlation-Id:NSB
     }
 }
 
-### app_uninstalled event for in workspace fplbot.slack.com
+### app_uninstalled event for workspace fplbot.slack.com
 
 POST http://localhost:1337/events
 X-Correlation-Id:NSB
