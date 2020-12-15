@@ -1,0 +1,4 @@
+branches:
+  feature:
+    mode: ContinuousDeployment
+    tag: 'beta'
