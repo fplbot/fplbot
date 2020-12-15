@@ -34,14 +34,14 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
         run: heroku container:release web --app blank-fplbot
-      - run: git log --oneline -${{steps.gitversion.outputs.commitsSinceVersionSource}}
+      - run: git log $(git describe --tags --abbrev=0)..HEAD --oneline
       - name: Log commit messages since last release
         id: releasenotes
         run: |
           echo 'RELEASE_NOTES<<EOF' >> $GITHUB_ENV
-          git log --oneline -${{steps.gitversion.outputs.commitsSinceVersionSource}} >> $GITHUB_ENV
+          git log $(git describe --tags --abbrev=0)..HEAD --oneline >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
-      - name: Create Release
+      - name: Create Releaseq
         id: create_release
         uses: actions/create-release@v1
         env:
