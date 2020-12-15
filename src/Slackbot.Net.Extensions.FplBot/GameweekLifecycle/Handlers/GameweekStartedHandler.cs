@@ -8,19 +8,19 @@ using System.Threading.Tasks;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
-    internal class GameweekStartedNotifier : IHandleGameweekStarted
+    internal class GameweekStartedHandler : IHandleGameweekStarted
     {
         private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameweek;
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly ILogger<GameweekStartedNotifier> _logger;
+        private readonly ILogger<GameweekStartedHandler> _logger;
 
-        public GameweekStartedNotifier(ICaptainsByGameWeek captainsByGameweek,
+        public GameweekStartedHandler(ICaptainsByGameWeek captainsByGameweek,
             ITransfersByGameWeek transfersByGameweek,
             ISlackWorkSpacePublisher publisher,
             ISlackTeamRepository teamsRepo,
-            ILogger<GameweekStartedNotifier> logger)
+            ILogger<GameweekStartedHandler> logger)
         {
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
@@ -44,12 +44,18 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
                     {
                         messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int)team.FplbotLeagueId));
                         messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                    }
+                    else
+                    {
                         _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
                     }
 
                     if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
                     {
                         messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)team.FplbotLeagueId));
+                    }
+                    else
+                    {
                         _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.TeamId);
                     }
 
