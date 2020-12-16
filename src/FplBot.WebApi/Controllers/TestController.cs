@@ -7,12 +7,14 @@ using AngleSharp.Common;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.WebApi.Controllers
 {
@@ -28,8 +30,11 @@ namespace FplBot.WebApi.Controllers
         private readonly FixtureStateHandler _fixtureStateHandler;
         private readonly IGetMatchDetails _matchDetailsFetcher;
         private readonly IFixtureClient _fixtureClient;
+        private readonly ILoggerFactory _factory;
 
-        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings, FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler, FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient)
+        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings,
+            FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler,
+            FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory)
         {
             _teamRepo = teamRepo;
             _settings = settings;
@@ -39,7 +44,26 @@ namespace FplBot.WebApi.Controllers
             _fixtureStateHandler = fixtureStateHandler;
             _matchDetailsFetcher = matchDetailsFetcher;
             _fixtureClient = fixtureClient;
+            _factory = factory;
         }
+
+        [HttpGet("neardeadline")]
+        public async Task NearDeadline(int hours, int seconds)
+        {
+            var now = new DateTime(2020, 1, 1, 1, 10, 0, 0);
+            var newNow = now.AddHours(-hours);
+            newNow = newNow.AddSeconds(-seconds);
+            
+            var deadline = new DateTime(2020, 1, 1, 1, 10, 0, 0);
+            var dateTimeUtils = new DateTimeUtils
+            {
+                NowUtcOverride = newNow
+            };
+
+            var handler = new MinutesToDeadlineHandler(new LoggerPublisher(), dateTimeUtils, _factory.CreateLogger<MinutesToDeadlineHandler>());
+            var fakeGameweek = new Gameweek {Id = 1337, Name = "Gameweek 1337", Deadline = deadline};
+            await handler.HandleMinutesTick(fakeGameweek);
+        } 
 
         [HttpGet("fixture-event")]
         public async Task<IActionResult> GetTestFixtureEvent()
@@ -182,6 +206,27 @@ namespace FplBot.WebApi.Controllers
                     { StatType.Assists, new List<PlayerEvent> { new PlayerEvent(assist.Id, PlayerEvent.TeamType.Home, false) } }
                 }
             }};
+        }
+    }
+
+    public class LoggerPublisher : ISlackWorkSpacePublisher
+    {
+        public Task PublishToAllWorkspaceChannels(string msg)
+        {
+            Console.WriteLine("======");
+            Console.WriteLine(msg);
+            Console.WriteLine("======");
+            return Task.CompletedTask;
+        }
+
+        public Task PublishToWorkspace(string teamId, string channel, params string[] messages)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] message)
+        {
+            throw new NotImplementedException();
         }
     }
 }
