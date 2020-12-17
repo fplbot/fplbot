@@ -390,7 +390,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         
         public static string FormatLineup(Lineups details)
         {
-            var formattedOutput = $"*Lineups {details.HomeTeamNameAbbr}-{details.AwayTeamNameAbbr}:*\n\n";
+            var formattedOutput = "";
             FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);
             FormatTeamLineup(details.AwayTeamLineup, details.AwayTeamNameAbbr, ref formattedOutput, true);
             return formattedOutput;

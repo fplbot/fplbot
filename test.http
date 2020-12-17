@@ -85,3 +85,8 @@ X-Correlation-Id:NSB
 
 GET http://localhost:1337/test/neardeadline/14
 X-Correlation-Id:NSB
+
+### lineup test
+
+GET http://localhost:1337/test/lineups/59017
+X-Correlation-Id:NSB
