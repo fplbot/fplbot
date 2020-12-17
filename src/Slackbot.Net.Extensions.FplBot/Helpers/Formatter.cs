@@ -430,22 +430,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             };
         }
 
-        public static string FormatProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
+        public static string FormatProvisionalFinished(FinishedFixture fixture)
         {
-            var finishedFixtures = new List<string>();
-            foreach (var fixture in provisionalFixturesFinished)
+            var fullTimeReport = "";
+            if (fixture.BonusPoints.Any())
             {
-                var fullTimeReport = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
-                if (fixture.BonusPoints.Any())
-                {
-                    var bonusPointsOutput = CreateBonusPointsOutput(fixture);
-                    fullTimeReport += $"\nBonus points:\n";
-                    fullTimeReport += BulletPoints(bonusPointsOutput);
-                }
-                finishedFixtures.Add(fullTimeReport);
+                var bonusPointsOutput = CreateBonusPointsOutput(fixture);
+                fullTimeReport += $"\nBonus points:\n";
+                fullTimeReport += BulletPoints(bonusPointsOutput);
             }
-
-            return string.Join("\n\n", finishedFixtures);
+            return fullTimeReport;
         }
 
         static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)

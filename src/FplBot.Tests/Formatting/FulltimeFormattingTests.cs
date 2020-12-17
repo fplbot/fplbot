@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Fpl.Client.Models;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
@@ -107,18 +106,16 @@ namespace FplBot.Tests.Formatting
             })));
         }
 
-        private List<FinishedFixture> GetProvisionalFinishedFixture(params BonusPointsPlayer[] bonusPointsPlayers)
+        private FinishedFixture GetProvisionalFinishedFixture(params BonusPointsPlayer[] bonusPointsPlayers)
         {
-            return new List<FinishedFixture>
-            {
-                new FinishedFixture
+            return new FinishedFixture
                 {
                     Fixture = TestBuilder.AwayTeamGoal(1, 1),
                     HomeTeam = TestBuilder.HomeTeam(),
                     AwayTeam = TestBuilder.AwayTeam(),
                     BonusPoints = bonusPointsPlayers
                 }
-            };
+            ;
         }
         BonusPointsPlayer BonusPointsPlayer(string webName, int bonusPoints)
         {
