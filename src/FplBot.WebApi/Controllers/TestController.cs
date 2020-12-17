@@ -1,9 +1,7 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AngleSharp.Common;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -31,10 +29,15 @@ namespace FplBot.WebApi.Controllers
         private readonly IGetMatchDetails _matchDetailsFetcher;
         private readonly IFixtureClient _fixtureClient;
         private readonly ILoggerFactory _factory;
+        private ITeamsClient _teamsClient;
+        private ISlackWorkSpacePublisher _slackPublisher;
+        private NearDeadlineHandler _nearDeadlineHandler;
+        private readonly IGameweekClient _gwClient;
 
         public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings,
             FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler,
-            FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory)
+            FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory, ITeamsClient teamsClient, 
+            ISlackWorkSpacePublisher slackPublisher, NearDeadlineHandler nearDeadlineHandler, IGameweekClient gwClient)
         {
             _teamRepo = teamRepo;
             _settings = settings;
@@ -45,24 +48,23 @@ namespace FplBot.WebApi.Controllers
             _matchDetailsFetcher = matchDetailsFetcher;
             _fixtureClient = fixtureClient;
             _factory = factory;
+            _teamsClient = teamsClient;
+            _slackPublisher = slackPublisher;
+            _nearDeadlineHandler = nearDeadlineHandler;
+            _gwClient = gwClient;
         }
 
-        [HttpGet("neardeadline")]
-        public async Task NearDeadline(int hours, int seconds)
+        [HttpGet("neardeadline/{gwId}")]
+        public async Task NearDeadline(int gwId, string onehour)
         {
-            var now = new DateTime(2020, 1, 1, 1, 10, 0, 0);
-            var newNow = now.AddHours(-hours);
-            newNow = newNow.AddSeconds(-seconds);
+            var gameweek = (await _gwClient.GetGameweeks()).First(gw => gw.Id == gwId);
             
-            var deadline = new DateTime(2020, 1, 1, 1, 10, 0, 0);
-            var dateTimeUtils = new DateTimeUtils
+            if(!string.IsNullOrEmpty(onehour))
+                await _nearDeadlineHandler.HandleOneHourToDeadline(gameweek);
+            else
             {
-                NowUtcOverride = newNow
-            };
-
-            var handler = new MinutesToDeadlineHandler(new LoggerPublisher(), dateTimeUtils, _factory.CreateLogger<MinutesToDeadlineHandler>());
-            var fakeGameweek = new Gameweek {Id = 1337, Name = "Gameweek 1337", Deadline = deadline};
-            await handler.HandleMinutesTick(fakeGameweek);
+                await _nearDeadlineHandler.HandleTwentyFourHoursToDeadline(gameweek);
+            }
         } 
 
         [HttpGet("fixture-event")]
@@ -217,6 +219,11 @@ namespace FplBot.WebApi.Controllers
             Console.WriteLine(msg);
             Console.WriteLine("======");
             return Task.CompletedTask;
+        }
+
+        public Task PublishToAllWorkspaceChannelsWithThreadMessage(string msg, string threadMessage)
+        {
+            throw new NotImplementedException();
         }
 
         public Task PublishToWorkspace(string teamId, string channel, params string[] messages)
