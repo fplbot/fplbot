@@ -63,6 +63,7 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddSingleton<MatchState>();
             services.AddSingleton<IMatchStateMonitor, MatchStateMonitor>();
             services.AddSingleton<LineupReadyHandler>();
+            services.AddSingleton<MinutesToDeadlineHandler>();
             services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
                 .Build();

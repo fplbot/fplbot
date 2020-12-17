@@ -79,3 +79,9 @@ X-Correlation-Id:NSB
         "type": "app_uninstalled"
     }
 }
+
+
+### near deadline test
+
+GET http://localhost:1337/test/neardeadline/1
+X-Correlation-Id:NSB
