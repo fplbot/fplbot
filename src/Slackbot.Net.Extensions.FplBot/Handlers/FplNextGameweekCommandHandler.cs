@@ -9,6 +9,7 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -51,35 +52,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var user = users.Members.FirstOrDefault(x => x.Id == slackEvent.User);
             var userTzOffset = user?.Tz_Offset ?? 0;
 
-            var textToSend = TextToSend(nextGw, fixtures, teams, userTzOffset);
+            var textToSend = Formatter.FixturesForGameweek(nextGw, fixtures, teams, userTzOffset);
 
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, slackEvent.Channel, textToSend);
             
             return new EventHandledResponse(textToSend);
-        }
-
-        private static string TextToSend(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
-        {
-            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
-            textToSend += $"\nDeadline: {gameweek.Deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
-            
-            var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
-
-            foreach (var group in groupedByDay)
-            {
-                textToSend += $"\n{group.Key.WithOffset(tzOffset):dddd}";
-                foreach (var fixture in group)
-                {
-                    var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
-                    var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
-                    var fixtureKickOffTime = fixture.KickOffTime.Value.WithOffset(tzOffset);
-                    textToSend += $"\n•{fixtureKickOffTime:HH:mm} {homeTeam.ShortName}-{awayTeam.ShortName}";
-                }
-
-                textToSend += "\n";
-            }
-
-            return textToSend;
         }
 
         public override (string,string) GetHelpDescription() => (Command, "Displays the fixtures for next gameweek");

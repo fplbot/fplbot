@@ -561,5 +561,29 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 _ => Constants.Emojis.NatureEmojis.GetRandom()
             };
         }
+
+        public static string FixturesForGameweek(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
+        {
+            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
+            textToSend += $"\nDeadline: {gameweek.Deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
+            
+            var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
+
+            foreach (var group in groupedByDay)
+            {
+                textToSend += $"\n{group.Key.WithOffset(tzOffset):dddd}";
+                foreach (var fixture in group)
+                {
+                    var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
+                    var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
+                    var fixtureKickOffTime = fixture.KickOffTime.Value.WithOffset(tzOffset);
+                    textToSend += $"\n•{fixtureKickOffTime:HH:mm} {homeTeam.ShortName}-{awayTeam.ShortName}";
+                }
+
+                textToSend += "\n";
+            }
+
+            return textToSend;
+        }
     }
 }

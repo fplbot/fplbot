@@ -11,11 +11,12 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         private readonly ILogger<NearDeadlineRecurringAction> _logger;
         private readonly NearDeadLineMonitor _nearDeadlineMonitor;
 
-        public NearDeadlineRecurringAction(NearDeadLineMonitor monitor, MinutesToDeadlineHandler handler, ILogger<NearDeadlineRecurringAction> logger)
+        public NearDeadlineRecurringAction(NearDeadLineMonitor monitor, NearDeadlineHandler handler, ILogger<NearDeadlineRecurringAction> logger)
         {
             _logger = logger;
             _nearDeadlineMonitor = monitor;
-            _nearDeadlineMonitor.MinuteTickHandlers += handler.HandleMinutesTick;
+            _nearDeadlineMonitor.OneHourToDeadlineHandlers += handler.HandleOneHourToDeadline;
+            _nearDeadlineMonitor.TwentyFourHoursToDeadlineHandlers += handler.HandleTwentyFourHoursToDeadline;
         }
 
         public async Task Process(CancellationToken token)
