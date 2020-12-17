@@ -25,7 +25,7 @@ namespace FplBot.WebApi.Controllers
         private readonly FixtureEventsHandler _eventsHandler;
         private readonly InjuryUpdateHandler _statusHandler;
         private readonly LineupReadyHandler _readyHandler;
-        private readonly FixtureStateHandler _fixtureStateHandler;
+        private readonly FixtureFulltimeHandler _fixtureFulltimeHandler;
         private readonly IGetMatchDetails _matchDetailsFetcher;
         private readonly IFixtureClient _fixtureClient;
         private readonly ILoggerFactory _factory;
@@ -36,7 +36,7 @@ namespace FplBot.WebApi.Controllers
 
         public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings,
             FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler,
-            FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory, ITeamsClient teamsClient, 
+            FixtureFulltimeHandler fixtureFulltimeHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory, ITeamsClient teamsClient, 
             ISlackWorkSpacePublisher slackPublisher, NearDeadlineHandler nearDeadlineHandler, IGameweekClient gwClient)
         {
             _teamRepo = teamRepo;
@@ -44,7 +44,7 @@ namespace FplBot.WebApi.Controllers
             _eventsHandler = eventsHandler;
             _statusHandler = statusHandler;
             _readyHandler = readyHandler;
-            _fixtureStateHandler = fixtureStateHandler;
+            _fixtureFulltimeHandler = fixtureFulltimeHandler;
             _matchDetailsFetcher = matchDetailsFetcher;
             _fixtureClient = fixtureClient;
             _factory = factory;
@@ -136,7 +136,7 @@ namespace FplBot.WebApi.Controllers
             var newFixtures = await _fixtureClient.GetFixturesByGameweek(gameweek);
 
             var newStuff = LiveEventsExtractor.GetProvisionalFinishedFixtures(newFixtures, oldFixtures, settings.Teams, settings.Players); 
-            await _fixtureStateHandler.OnFixturesProvisionalFinished(newStuff);
+            await _fixtureFulltimeHandler.OnFixtureFulltime(newStuff);
             return Ok();
         }
         
