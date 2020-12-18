@@ -96,7 +96,7 @@ X-Correlation-Id:bot-joined-event-test
     "event": {
        "type": "member_joined_channel",
        "user": "UTPNM0H7X",
-       "channel": "C01H81C5T1Q",
+       "channel": "C92QZTVEF",
        "channel_type": "C",
        "team": "T0A9QSU83",
        "inviter": "U0EJP4HTQ"
