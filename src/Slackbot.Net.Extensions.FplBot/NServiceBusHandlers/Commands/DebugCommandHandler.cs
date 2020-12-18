@@ -96,7 +96,7 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Commands
         private string GetEmoji(string text)
         {
             var emoji = "";
-            if (Regex.IsMatch(text, "[Bb]ug(fix(es)?)?|[Hh]otfix(es)?"))
+            if (Regex.IsMatch(text, "^[Bb]ug(fix(es)?)?|^[Hh]otfix(es)?"))
                 emoji += "😡";
             if(Regex.IsMatch(text, "[Rr]efactor"))
                 emoji += "🔧";
