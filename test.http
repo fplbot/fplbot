@@ -86,7 +86,19 @@ X-Correlation-Id:NSB
 GET http://localhost:1337/test/neardeadline/14
 X-Correlation-Id:NSB
 
-### lineup test
+### fplbot joined channel event
 
-GET http://localhost:1337/test/lineups/59017
-X-Correlation-Id:NSB
+POST http://localhost:1337/events
+X-Correlation-Id:bot-joined-event-test
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+       "type": "member_joined_channel",
+       "user": "UTPNM0H7X",
+       "channel": "C92QZTVEF",
+       "channel_type": "C",
+       "team": "T0A9QSU83",
+       "inviter": "U0EJP4HTQ"
+    }
+}

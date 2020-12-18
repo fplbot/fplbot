@@ -38,12 +38,12 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             _logger.LogInformation(JsonConvert.SerializeObject(joinedEvent));
             _logger.LogInformation(JsonConvert.SerializeObject(eventMetadata));
-            var slackClient = _slackClientService.Build(eventMetadata.Token);
+            var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
+            var slackClient = _slackClientService.Build(team.AccessToken);
             var userProfile = await slackClient.UserProfile(joinedEvent.User);
             if (userProfile.Profile.Api_App_Id == FplBotProdAppId || userProfile.Profile.Api_App_Id == FplBotTestAppId)
             {
                 var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
-                var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
                 var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
                 var setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);

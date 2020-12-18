@@ -47,7 +47,7 @@ namespace Slackbot.Net.Endpoints.Middlewares
                 }
             }
 
-            await _next(context);
+            context.Response.StatusCode = 200;
         }
 
         public static bool ShouldRun(HttpContext ctx) =>  ctx.Items.ContainsKey(HttpItemKeys.EventTypeKey) && (ctx.Items[HttpItemKeys.EventTypeKey].ToString() == EventTypes.MemberJoinedChannel);
