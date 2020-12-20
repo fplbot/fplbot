@@ -49,6 +49,6 @@ namespace Slackbot.Net.Extensions.FplBot.Abstractions
         Taunts,
         PriceChanges,
         InjuryUpdates,
-        // TODO: Deadline
+        Deadlines
     }
 }
