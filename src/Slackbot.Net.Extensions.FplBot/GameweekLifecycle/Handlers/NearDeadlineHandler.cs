@@ -5,6 +5,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
@@ -40,7 +41,10 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             string message = $"⏳ Gameweek {gameweek.Id} deadline in 24 hours!";
             foreach (var team in allSlackTeams)
             {
-                await PublishToTeam(team);
+                if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+                {
+                    await PublishToTeam(team);    
+                }
             }
 
             async Task PublishToTeam(SlackTeam team)
@@ -83,7 +87,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         public async Task HandleOneHourToDeadline(Gameweek gameweek)
         {
             _logger.LogInformation($"Notifying about 60 minutes to (gw{gameweek.Id}) deadline");
-            await _workspacePublisher.PublishToAllWorkspaceChannels($"<!channel> ⏳ Gameweek {gameweek.Id} deadline in 60 minutes!");
+            var allSlackTeams = await _teamRepo.GetAllTeams();
+            foreach (var team in allSlackTeams)
+            {
+                if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+                {
+                    await _workspacePublisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel,$"<!channel> ⏳ Gameweek {gameweek.Id} deadline in 60 minutes!");
+                }
+            }
         }
     }
 }

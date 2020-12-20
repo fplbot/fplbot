@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
 using Slackbot.Net.SlackClients.Http;
@@ -30,7 +31,10 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             var formattedLineup = Formatter.FormatLineup(lineups);
             foreach (var slackTeam in slackTeams)
             {
-                await PublishLineupToTeam(slackTeam);
+                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
+                {
+                    await PublishLineupToTeam(slackTeam);    
+                }
             }
             
             async Task PublishLineupToTeam(SlackTeam team)
