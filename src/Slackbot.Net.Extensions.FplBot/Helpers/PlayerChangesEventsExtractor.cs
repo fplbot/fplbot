@@ -11,28 +11,27 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         
         public static IEnumerable<PlayerUpdate> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
-            if(players == null)
-                return new List<PlayerUpdate>();
-            
-            if (after == null)
-                return new List<PlayerUpdate>();
-            
             return ComparePlayers(after, players, teams, new PlayerPriceComparer());
         }
 
         public static IEnumerable<PlayerUpdate> GetStatusChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
+            return ComparePlayers(after, players, teams, new StatusComparer());
+        }
+        
+        public static IEnumerable<PlayerUpdate> GetEventTransfers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        {
+            return ComparePlayers(after, players, teams, new PlayerTransfersComparer());
+        }
+
+        private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
+        {
             if(players == null)
                 return new List<PlayerUpdate>();
             
             if (after == null)
                 return new List<PlayerUpdate>();
             
-            return ComparePlayers(after, players, teams, new StatusComparer());
-        }
-
-        private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
-        {
             var playersWithChanges = after.Except(players, changeComparer).ToList();
             var updates = new List<PlayerUpdate>();
             foreach (var player in playersWithChanges)
@@ -48,5 +47,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
             return updates;
         }
+
+      
     }
 }

@@ -1,7 +1,9 @@
+using System;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using System.Threading.Tasks;
-using Fpl.Client.Models;
+using FplBot.Messaging.Contracts.Events.v1;
+using NServiceBus;
 
 namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
 {
@@ -10,12 +12,23 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ILogger<StateEventsMonitor> _logger;
         private readonly IState _state;
 
-        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventsHandler, PriceChangeHandler priceChangeHandler, InjuryUpdateHandler statusUpdateHandler, FixtureFulltimeHandler fixtureFulltimeHandler,  ILogger<StateEventsMonitor> logger)
+        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventsHandler, PriceChangeHandler priceChangeHandler, InjuryUpdateHandler statusUpdateHandler, FixtureFulltimeHandler fixtureFulltimeHandler, IMessageSession session, ILogger<StateEventsMonitor> logger)
         {
             _logger = logger;
             _state = state;
             _state.OnNewFixtureEvents += fixtureEventsHandler.OnNewFixtureEvents;
             _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
+            _state.OnTransfersUpdated += async (totPlayers, transferUpdate) =>
+            {
+                foreach (var update in transferUpdate)
+                {
+                    long ownersCount = (long)Math.Floor(totPlayers * (update.ToPlayer.OwnershipPercentage/100));
+                    decimal delta = update.ToPlayer.TransfersInEvent - update.ToPlayer.TransfersOutEvent;
+                    decimal transfersToOwnersRatio = Math.Round(delta / ownersCount, 1);
+                    var playerTransfersUpdated = new PlayerTransfersUpdated(update.ToPlayer.Id, update.ToPlayer.WebName, transfersToOwnersRatio);
+                    await session.Publish(playerTransfersUpdated);
+                };
+            };
             _state.OnInjuryUpdates += statusUpdateHandler.OnInjuryUpdates;
             _state.OnFixturesProvisionalFinished += fixtureFulltimeHandler.OnFixtureFulltime;
         }

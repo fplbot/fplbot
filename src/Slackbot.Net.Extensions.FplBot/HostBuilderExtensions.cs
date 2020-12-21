@@ -32,6 +32,8 @@ namespace Microsoft.Extensions.Hosting
         {
             endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
             var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}");
+            var persistence = endpointConfiguration.UsePersistence<AzureTablePersistence>();
+            persistence.ConnectionString(context.Configuration["AZ_STORAGE_CONNECTIONSTRING"]);
             endpointConfiguration.EnableInstallers();
             endpointConfiguration.License(context.Configuration["NSB_LICENSE"]);
             endpointConfiguration.SendHeartbeatTo(
@@ -74,6 +76,7 @@ namespace Microsoft.Extensions.Hosting
         {
             var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}");
             endpointConfiguration.UseTransport<LearningTransport>();
+            endpointConfiguration.UsePersistence<InMemoryPersistence>();
             return endpointConfiguration;
         }
     }

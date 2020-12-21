@@ -50,6 +50,7 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             var after = globalSettings.Players;
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
             var statusUpdates = PlayerChangesEventsExtractor.GetStatusChanges(after, _players, _teams);
+            var transfersUpdates = PlayerChangesEventsExtractor.GetEventTransfers(after, _players, _teams);
             _players = after;
             
             if (fixtureEvents.Any())
@@ -76,11 +77,17 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             
             if (finishedFixtures.Any())
                 await OnFixturesProvisionalFinished(finishedFixtures.ToList());
+
+            if (transfersUpdates.Any())
+            {
+                await OnTransfersUpdated(globalSettings.TotalPlayers, transfersUpdates);
+            }
         }
 
         public event Func<FixtureUpdates, Task> OnNewFixtureEvents = (fixtureEvents) => Task.CompletedTask;
         public event Func<IEnumerable<PlayerUpdate>, Task> OnPriceChanges = (fixtureEvents) => Task.CompletedTask;
         public event Func<IEnumerable<PlayerUpdate>, Task> OnInjuryUpdates = statusUpdates => Task.CompletedTask;
+        public event Func<long, IEnumerable<PlayerUpdate>, Task> OnTransfersUpdated = (totPlayers, transferUpdates) => Task.CompletedTask;
         public event Func<IEnumerable<FinishedFixture>, Task> OnFixturesProvisionalFinished = fixtures => Task.CompletedTask;
     }
 }

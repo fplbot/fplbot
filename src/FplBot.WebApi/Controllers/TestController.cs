@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
@@ -33,11 +35,13 @@ namespace FplBot.WebApi.Controllers
         private ISlackWorkSpacePublisher _slackPublisher;
         private NearDeadlineHandler _nearDeadlineHandler;
         private readonly IGameweekClient _gwClient;
+        private IMessageSession _messageSession;
+        private static int _updates = 0;
 
         public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings,
             FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler,
             FixtureFulltimeHandler fixtureFulltimeHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory, ITeamsClient teamsClient, 
-            ISlackWorkSpacePublisher slackPublisher, NearDeadlineHandler nearDeadlineHandler, IGameweekClient gwClient)
+            ISlackWorkSpacePublisher slackPublisher, NearDeadlineHandler nearDeadlineHandler, IGameweekClient gwClient, IMessageSession messageSession)
         {
             _teamRepo = teamRepo;
             _settings = settings;
@@ -52,6 +56,7 @@ namespace FplBot.WebApi.Controllers
             _slackPublisher = slackPublisher;
             _nearDeadlineHandler = nearDeadlineHandler;
             _gwClient = gwClient;
+            _messageSession = messageSession;
         }
 
         [HttpGet("neardeadline/{gwId}")]
@@ -137,6 +142,15 @@ namespace FplBot.WebApi.Controllers
 
             var newStuff = LiveEventsExtractor.GetProvisionalFinishedFixtures(newFixtures, oldFixtures, settings.Teams, settings.Players); 
             await _fixtureFulltimeHandler.OnFixtureFulltime(newStuff);
+            return Ok();
+        }
+        
+        [HttpGet("ownership/{delta}")]
+        public async Task<IActionResult> Ownership(decimal delta)
+        {
+            _updates++;
+            var playerTransfersUpdated = new PlayerTransfersUpdated(1337, "John Korsnes", Math.Round(delta,1));
+            await _messageSession.Publish(playerTransfersUpdated);
             return Ok();
         }
         

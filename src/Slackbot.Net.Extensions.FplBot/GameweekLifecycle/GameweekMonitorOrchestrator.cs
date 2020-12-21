@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using FplBot.Messaging.Contracts.Events.v1;
+using NServiceBus;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.RecurringActions;
 
@@ -13,19 +15,23 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
         public event Func<int, Task> GameweekEndedEventHandlers = i => Task.CompletedTask;
         public event Func<int, Task> GameweekCurrentlyFinishedEventHandlers = i => Task.CompletedTask;
 
-        public GameweekMonitorOrchestrator(IHandleGameweekStarted startedNotifier, IMonitorState stateMonitor, IMatchStateMonitor matchStateMonitor, IHandleGameweekEnded endedNotifier)
+        public GameweekMonitorOrchestrator(IHandleGameweekStarted startedNotifier, IMonitorState stateMonitor, IMatchStateMonitor matchStateMonitor, IHandleGameweekEnded endedNotifier, IMessageSession session)
         {
             InitializeEventHandlers += stateMonitor.Initialize;
             InitializeEventHandlers += matchStateMonitor.Initialize;
             GameWeekJustBeganEventHandlers += stateMonitor.HandleGameweekStarted;
             GameWeekJustBeganEventHandlers += matchStateMonitor.HandleGameweekStarted;
+            // GameWeekJustBeganEventHandlers += id => session.Publish(new GameweekStarted(id));
             GameweekIsCurrentlyOngoingEventHandlers += stateMonitor.HandleGameweekOngoing;
             GameweekIsCurrentlyOngoingEventHandlers += matchStateMonitor.HandleGameweekOngoing;
+            // GameweekIsCurrentlyOngoingEventHandlers += id => session.Publish(new GameweekOngoing(id));
             GameweekCurrentlyFinishedEventHandlers += stateMonitor.HandleGameweekCurrentlyFinished;
             GameweekCurrentlyFinishedEventHandlers += matchStateMonitor.HandleGameweekCurrentlyFinished;
+            // GameweekCurrentlyFinishedEventHandlers += id => session.Publish(new GameweekCurrentlyFinished(id));
             
             GameWeekJustBeganEventHandlers += startedNotifier.HandleGameweekStarted;
             GameweekEndedEventHandlers += endedNotifier.HandleGameweekEnded;
+            // GameweekEndedEventHandlers += id => session.Publish(new GameweekEnded(id));
         }
         
         public async Task Initialize(int gameweek)
