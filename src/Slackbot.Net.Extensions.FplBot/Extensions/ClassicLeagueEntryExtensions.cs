@@ -7,12 +7,14 @@ namespace Slackbot.Net.Extensions.FplBot.Extensions
     {
         public static string GetEntryLink(this GenericEntry entry, int? gameweek)
         {
-            return $"<https://fantasy.premierleague.com/entry/{entry.Entry}/event/{gameweek}|{entry.EntryName}>";
+            return Formatter.GetEntryLink(entry.Entry, entry.EntryName, gameweek);
         }
         
         public static string GetEntryLink(this ClassicLeagueEntry entry, int? gameweek)
         {
-            return $"<https://fantasy.premierleague.com/entry/{entry.Entry}/event/{gameweek}|{entry.EntryName}>";
+            return Formatter.GetEntryLink(entry.Entry, entry.EntryName, gameweek);
         }
+
+        
     }
 }

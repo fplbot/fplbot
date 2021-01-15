@@ -1,6 +1,8 @@
 ﻿using Fpl.Client.Models;
+using Fpl.Search.Models;
 using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.Models.BlockKit;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -8,7 +10,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
-using Slackbot.Net.Models.BlockKit;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
@@ -560,6 +561,28 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 2 => ":third_place_medal:",
                 _ => Constants.Emojis.NatureEmojis.GetRandom()
             };
+        }
+
+        public static string FormatEntryItem(EntryItem entryItem)
+        {
+            return GetEntryLink(entryItem.Entry, entryItem.TeamName, null) + $" ({entryItem.RealName})";
+        }
+
+        public static string FormatLeagueItem(LeagueItem leagueItem)
+        {
+            return GetLeagueLink(leagueItem.Id, leagueItem.Name) + (leagueItem.AdminEntry.HasValue ? $" ({GetEntryLink(leagueItem.AdminEntry.Value, "Admin", null)})" : null);
+        }
+
+        public static string GetEntryLink(int entryId, string name, int? gameweek)
+        {
+            return $"<https://fantasy.premierleague.com/entry/{entryId}/event/{GetLinkSuffix(gameweek)}|{name}>";
+        }
+
+        private static string GetLinkSuffix(int? gameweek) => gameweek.HasValue ? gameweek.Value.ToString() : "history";
+
+        public static string GetLeagueLink(int leagueId, string name)
+        {
+            return $"<https://fantasy.premierleague.com/leagues/{leagueId}/standings/c|{name}>";
         }
     }
 }
