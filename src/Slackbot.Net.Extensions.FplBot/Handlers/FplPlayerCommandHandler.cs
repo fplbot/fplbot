@@ -27,7 +27,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _workSpacePublisher = workSpacePublisher;
         }
 
-        public override string Command => "player";
+        public override string[] Commands => new[] { "player" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
@@ -120,6 +120,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance == 0;
         }
 
-        public override (string,string) GetHelpDescription() => ($"{Command} {{name}}", "Display info about the player");
+        public override (string,string) GetHelpDescription() => ($"{CommandsFormatted} {{name}}", "Display info about the player");
     }
 }

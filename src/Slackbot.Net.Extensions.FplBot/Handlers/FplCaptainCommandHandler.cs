@@ -1,4 +1,5 @@
-﻿using Slackbot.Net.Extensions.FplBot.Abstractions;
+﻿using System.Linq;
+using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using System.Threading.Tasks;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -26,16 +27,16 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _workspacePublisher = workspacePublisher;
         }
 
-        public override string Command => "captains";
+        public override string[] Commands => new[] { "captains" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent incomingMessage)
         {
             var isChartRequest = incomingMessage.Text.Contains("chart");
 
-            var gwPattern = $"{Command} {{gw}}";
+            var gwPattern = $"{Commands.First()} {{gw}}";
             if (isChartRequest)
             {
-                gwPattern = $"{Command} chart {{gw}}|{Command} {{gw}} chart";
+                gwPattern = $"{Commands.First()} chart {{gw}}|{Commands.First()} {{gw}} chart";
             }
             var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(incomingMessage.Text, gwPattern);
 
@@ -56,6 +57,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(outgoingMessage);
         }
 
-        public override (string, string) GetHelpDescription() => ($"{Command} [chart] {{GW-number, or empty for current}}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
+        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} [chart] {{GW-number, or empty for current}}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
     }
 }

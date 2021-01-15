@@ -26,6 +26,24 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             return FindMatch(messageText, $"{pattern.Replace("{args}", "(.+)?")}");
         }
+        
+        /// <summary>
+        /// Extracts arguments from message text using pattern "some text here {args}". E.g. "player {args}".
+        /// </summary>
+        /// <param name="messageText">Message text</param>
+        /// <param name="patterns">Patterns (excluding bot handle). E.g. ["subscribe {args}", "unsubscribe {args}"]</param>
+        /// <returns>Extracted arguments if found</returns>
+        public static string ExtractArgs(string messageText, string[] patterns)
+        {
+            foreach (string pattern in patterns)
+            {
+                var match = FindMatch(messageText, $"{pattern.Replace("{args}", "(.+)?")}");
+                if (match != null)
+                    return match;
+            }
+
+            return null;
+        }
 
         private static string FindMatch(string input, string regexPattern)
         {

@@ -1,4 +1,4 @@
-### Next gameweek:
+### Subscriptions:
 
 POST http://localhost:1337/events
 X-Correlation-Id:testtool
@@ -8,7 +8,7 @@ X-Correlation-Id:testtool
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : " subscriptions",
+        "text" : "<@BOT123> unsubscribe fixturegoals",
         "channel": "C92QZTVEF"
     }
 }

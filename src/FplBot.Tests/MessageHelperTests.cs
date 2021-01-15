@@ -35,5 +35,15 @@ namespace FplBot.Tests
             var result = MessageHelper.ExtractArgs("unsubscribe standings, transfers, captains", "subscribe {args}");
             Assert.Equal("standings, transfers, captains", result);
         }
+
+        [Fact]
+        public void ExtractArgsShouldExtractCorrectListWhenMultipleArgs()
+        {
+            var resultOne = MessageHelper.ExtractArgs("one standings, transfers, captains", new []{"one {args}", "two {args}"});
+            Assert.Equal("standings, transfers, captains", resultOne);
+
+            var resultTwo = MessageHelper.ExtractArgs("two standings, transfers, captains", new []{"one {args}", "two {args}"});
+            Assert.Equal("standings, transfers, captains", resultTwo);
+        }
     }
 }
