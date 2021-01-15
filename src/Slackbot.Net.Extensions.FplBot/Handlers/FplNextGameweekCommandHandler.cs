@@ -32,7 +32,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _tokenStore = tokenStore;
         }
 
-        public override string Command => "next";
+        public override string[] Commands => new[] { "next" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
@@ -59,6 +59,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(textToSend);
         }
 
-        public override (string,string) GetHelpDescription() => (Command, "Displays the fixtures for next gameweek");
+        public override (string,string) GetHelpDescription() => (CommandsFormatted, "Displays the fixtures for next gameweek");
     }
 }

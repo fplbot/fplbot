@@ -22,7 +22,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _teamsClient = teamsClient;
         }
 
-        public override string Command => "pricechanges";
+        public override string[] Commands => new[] { "pricechanges" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
@@ -42,6 +42,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse("Ok");
         }
 
-        public override (string,string) GetHelpDescription() => (Command, "Displays players with recent price change");
+        public override (string,string) GetHelpDescription() => (CommandsFormatted, "Displays players with recent price change");
     }
 }

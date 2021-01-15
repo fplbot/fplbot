@@ -20,13 +20,14 @@ namespace FplBot.Tests
         }
 
         [Theory]
-        [InlineData("@fplbot subscribe standings", typeof(FplSubscribeCommandHandler))]
-        [InlineData("@fplbot subscribe captains", typeof(FplSubscribeCommandHandler))]
-        [InlineData("@fplbot subscribe pricechanges", typeof(FplSubscribeCommandHandler))]
-        [InlineData("@fplbot subscribe transfers", typeof(FplSubscribeCommandHandler))]
-        [InlineData("@fplbot standings", typeof(FplStandingsCommandHandler))]
-        [InlineData("@fplbot transfers", typeof(FplTransfersCommandHandler))]
-        [InlineData("@fplbot pricechanges", typeof(FplPricesHandler))]
+        [InlineData("<@BOTID123> subscribe standings", typeof(FplSubscribeCommandHandler))]
+        [InlineData("<@BOTID123> subscribe captains", typeof(FplSubscribeCommandHandler))]
+        [InlineData("<@BOTID123> subscribe pricechanges", typeof(FplSubscribeCommandHandler))]
+        [InlineData("<@BOTID123> subscribe transfers", typeof(FplSubscribeCommandHandler))]
+        [InlineData("<@BOTID123> unsubscribe transfers", typeof(FplSubscribeCommandHandler))]
+        [InlineData("<@BOTID123> standings", typeof(FplStandingsCommandHandler))]
+        [InlineData("<@BOTID123> transfers", typeof(FplTransfersCommandHandler))]
+        [InlineData("<@BOTID123> pricechanges", typeof(FplPricesHandler))]
         public void OnlyExpectedSupportedHandlersShouldHandleCommand(string input, Type expectedSupportedHandler)
         {
             // Arrange

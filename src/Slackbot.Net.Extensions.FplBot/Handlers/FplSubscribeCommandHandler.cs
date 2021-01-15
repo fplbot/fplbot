@@ -25,7 +25,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public override string Command => "subscribe";
+        public override string[] Commands => new[] {"subscribe", "unsubscribe"};
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
         {
@@ -102,7 +102,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         private static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
         {
-            var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, "subscribe {args}");
+            var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, new []{ "subscribe {args}", "unsubscribe {args}"});
             return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
         }
 
