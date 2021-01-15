@@ -1,4 +1,5 @@
-﻿using Slackbot.Net.Endpoints.Abstractions;
+﻿using System.Linq;
+using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
@@ -21,11 +22,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _slackTeamRepo = slackTeamRepo;
         }
 
-        public override string Command => "transfers";
+        public override string[] Commands => new[] { "transfers" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, $"{Command} {{gw}}");
+            var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, $"{CommandsFormatted} {{gw}}");
 
             
             var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
@@ -36,6 +37,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(messageToSend);
         }
 
-        public override (string,string) GetHelpDescription() => ($"{Command} {{GW-number, or empty for current}}", "Displays each team's transfers");
+        public override (string,string) GetHelpDescription() => ($"{CommandsFormatted} {{GW-number, or empty for current}}", "Displays each team's transfers");
     }
 }

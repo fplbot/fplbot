@@ -1,4 +1,4 @@
-### Next gameweek:
+### Subscriptions:
 
 POST http://localhost:1337/events
 X-Correlation-Id:testtool
@@ -8,7 +8,7 @@ X-Correlation-Id:testtool
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : " subscriptions",
+        "text" : "<@BOT123> unsubscribe fixturegoals",
         "channel": "C92QZTVEF"
     }
 }
@@ -68,7 +68,7 @@ X-Correlation-Id:NSB
     }
 }
 
-### app_uninstalled event for in workspace fplbot.slack.com
+### app_uninstalled event for workspace fplbot.slack.com
 
 POST http://localhost:1337/events
 X-Correlation-Id:NSB
@@ -77,5 +77,28 @@ X-Correlation-Id:NSB
     "team_id": "T016B9N3U7P",
     "event": {
         "type": "app_uninstalled"
+    }
+}
+
+
+### near deadline test
+
+GET http://localhost:1337/test/neardeadline/14
+X-Correlation-Id:NSB
+
+### fplbot joined channel event
+
+POST http://localhost:1337/events
+X-Correlation-Id:bot-joined-event-test
+
+{
+    "team_id": "T0A9QSU83",
+    "event": {
+       "type": "member_joined_channel",
+       "user": "UTPNM0H7X",
+       "channel": "C92QZTVEF",
+       "channel_type": "C",
+       "team": "T0A9QSU83",
+       "inviter": "U0EJP4HTQ"
     }
 }

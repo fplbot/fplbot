@@ -23,7 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public override string Command => "updateleagueid";
+        public override string[] Commands => new[] { "updateleagueid" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
@@ -68,6 +68,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             }
         }
 
-        public override (string, string) GetHelpDescription() => ($"{Command} {{new league id}}", "Change which league to follow");
+        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{new league id}}", "Change which league to follow");
     }
 }

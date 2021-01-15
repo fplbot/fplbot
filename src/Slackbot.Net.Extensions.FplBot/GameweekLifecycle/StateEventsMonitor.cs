@@ -10,14 +10,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
         private readonly ILogger<StateEventsMonitor> _logger;
         private readonly IState _state;
 
-        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventsHandler, PriceChangeHandler priceChangeHandler, InjuryUpdateHandler statusUpdateHandler, FixtureStateHandler fixtureStateHandler,  ILogger<StateEventsMonitor> logger)
+        public StateEventsMonitor(IState state, FixtureEventsHandler fixtureEventsHandler, PriceChangeHandler priceChangeHandler, InjuryUpdateHandler statusUpdateHandler, FixtureFulltimeHandler fixtureFulltimeHandler,  ILogger<StateEventsMonitor> logger)
         {
             _logger = logger;
             _state = state;
             _state.OnNewFixtureEvents += fixtureEventsHandler.OnNewFixtureEvents;
             _state.OnPriceChanges += priceChangeHandler.OnPriceChanges;
             _state.OnInjuryUpdates += statusUpdateHandler.OnInjuryUpdates;
-            _state.OnFixturesProvisionalFinished += fixtureStateHandler.OnFixturesProvisionalFinished;
+            _state.OnFixturesProvisionalFinished += fixtureFulltimeHandler.OnFixtureFulltime;
         }
 
         public async Task Initialize(int gwId)

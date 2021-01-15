@@ -52,13 +52,13 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
             services.AddSingleton<IGameweekHelper, GameweekHelper>();
             services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
-            services.AddSingleton<IHandleGameweekStarted, GameweekStartedNotifier>();
+            services.AddSingleton<IHandleGameweekStarted, GameweekStartedHandler>();
             services.AddSingleton<IHandleGameweekEnded, GameweekEndedNotifier>();
             services.AddSingleton<IMonitorState, StateEventsMonitor>();
             services.AddSingleton<FixtureEventsHandler>();
             services.AddSingleton<PriceChangeHandler>();
             services.AddSingleton<InjuryUpdateHandler>();
-            services.AddSingleton<FixtureStateHandler>();
+            services.AddSingleton<FixtureFulltimeHandler>();
             services.AddSingleton<IState, State>();
             services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
             services.AddSingleton<DateTimeUtils>();
@@ -66,8 +66,9 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddSingleton<MatchState>();
             services.AddSingleton<IMatchStateMonitor, MatchStateMonitor>();
             services.AddSingleton<LineupReadyHandler>();
-            services.AddRecurringActions()
-                .AddRecurrer<GameweekLifecycleRecurringAction>()
+            services.AddSingleton<NearDeadlineHandler>();
+            services.AddSingleton<NearDeadLineMonitor>();
+            services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
                 .AddRecurrer<IndexerRecurringAction>()
                 .Build();

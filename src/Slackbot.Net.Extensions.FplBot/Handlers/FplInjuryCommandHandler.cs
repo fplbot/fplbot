@@ -22,7 +22,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _playerClient = playerClient;
         }
 
-        public override string Command => "injuries";
+        public override string[] Commands => new[] { "injuries" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
@@ -52,7 +52,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
         }
 
-        public override (string,string) GetHelpDescription() => (Command, "See injured players owned by more than 5 %");
+        public override (string,string) GetHelpDescription() => (CommandsFormatted, "See injured players owned by more than 5 %");
     }
 
 }

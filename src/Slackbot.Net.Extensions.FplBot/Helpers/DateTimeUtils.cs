@@ -2,9 +2,9 @@ using System;
 
 namespace Slackbot.Net.Extensions.FplBot.Helpers
 {
-    internal class DateTimeUtils
+    public class DateTimeUtils
     {
-        internal DateTime? NowUtcOverride;
+        public DateTime? NowUtcOverride;
 
         public bool IsWithinMinutesToDate(int minutes, DateTime dateUtc)
         {
@@ -16,6 +16,6 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return isAboveThreshold && isBeforeDate && isSameMinute && isSameHour;
         }
 
-        private DateTime NowUtc => NowUtcOverride ?? DateTime.UtcNow;
+        public DateTime NowUtc => NowUtcOverride ?? DateTime.UtcNow;
     }
 }

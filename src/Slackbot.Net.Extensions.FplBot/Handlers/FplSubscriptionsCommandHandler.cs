@@ -23,7 +23,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _logger = logger;
         }
 
-        public override string Command => "subscriptions";
+        public override string[] Commands => new[] { "subscriptions" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
         {
@@ -61,7 +61,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
         public override (string, string) GetHelpDescription()
         {
-            return (Command, "List current subscriptions");
+            return (CommandsFormatted, "List current subscriptions");
         }
     }
 }

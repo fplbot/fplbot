@@ -1,18 +1,18 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AngleSharp.Common;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
 using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.WebApi.Controllers
 {
@@ -25,21 +25,47 @@ namespace FplBot.WebApi.Controllers
         private readonly FixtureEventsHandler _eventsHandler;
         private readonly InjuryUpdateHandler _statusHandler;
         private readonly LineupReadyHandler _readyHandler;
-        private readonly FixtureStateHandler _fixtureStateHandler;
+        private readonly FixtureFulltimeHandler _fixtureFulltimeHandler;
         private readonly IGetMatchDetails _matchDetailsFetcher;
         private readonly IFixtureClient _fixtureClient;
+        private readonly ILoggerFactory _factory;
+        private ITeamsClient _teamsClient;
+        private ISlackWorkSpacePublisher _slackPublisher;
+        private NearDeadlineHandler _nearDeadlineHandler;
+        private readonly IGameweekClient _gwClient;
 
-        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings, FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler, FixtureStateHandler fixtureStateHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient)
+        public TestController(ISlackTeamRepository teamRepo, IGlobalSettingsClient settings,
+            FixtureEventsHandler eventsHandler, InjuryUpdateHandler statusHandler, LineupReadyHandler readyHandler,
+            FixtureFulltimeHandler fixtureFulltimeHandler, IGetMatchDetails matchDetailsFetcher, IFixtureClient fixtureClient, ILoggerFactory factory, ITeamsClient teamsClient, 
+            ISlackWorkSpacePublisher slackPublisher, NearDeadlineHandler nearDeadlineHandler, IGameweekClient gwClient)
         {
             _teamRepo = teamRepo;
             _settings = settings;
             _eventsHandler = eventsHandler;
             _statusHandler = statusHandler;
             _readyHandler = readyHandler;
-            _fixtureStateHandler = fixtureStateHandler;
+            _fixtureFulltimeHandler = fixtureFulltimeHandler;
             _matchDetailsFetcher = matchDetailsFetcher;
             _fixtureClient = fixtureClient;
+            _factory = factory;
+            _teamsClient = teamsClient;
+            _slackPublisher = slackPublisher;
+            _nearDeadlineHandler = nearDeadlineHandler;
+            _gwClient = gwClient;
         }
+
+        [HttpGet("neardeadline/{gwId}")]
+        public async Task NearDeadline(int gwId, string onehour)
+        {
+            var gameweek = (await _gwClient.GetGameweeks()).First(gw => gw.Id == gwId);
+            
+            if(!string.IsNullOrEmpty(onehour))
+                await _nearDeadlineHandler.HandleOneHourToDeadline(gameweek);
+            else
+            {
+                await _nearDeadlineHandler.HandleTwentyFourHoursToDeadline(gameweek);
+            }
+        } 
 
         [HttpGet("fixture-event")]
         public async Task<IActionResult> GetTestFixtureEvent()
@@ -110,7 +136,7 @@ namespace FplBot.WebApi.Controllers
             var newFixtures = await _fixtureClient.GetFixturesByGameweek(gameweek);
 
             var newStuff = LiveEventsExtractor.GetProvisionalFinishedFixtures(newFixtures, oldFixtures, settings.Teams, settings.Players); 
-            await _fixtureStateHandler.OnFixturesProvisionalFinished(newStuff);
+            await _fixtureFulltimeHandler.OnFixtureFulltime(newStuff);
             return Ok();
         }
         
@@ -182,6 +208,32 @@ namespace FplBot.WebApi.Controllers
                     { StatType.Assists, new List<PlayerEvent> { new PlayerEvent(assist.Id, PlayerEvent.TeamType.Home, false) } }
                 }
             }};
+        }
+    }
+
+    public class LoggerPublisher : ISlackWorkSpacePublisher
+    {
+        public Task PublishToAllWorkspaceChannels(string msg)
+        {
+            Console.WriteLine("======");
+            Console.WriteLine(msg);
+            Console.WriteLine("======");
+            return Task.CompletedTask;
+        }
+
+        public Task PublishToAllWorkspaceChannelsWithThreadMessage(string msg, string threadMessage)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task PublishToWorkspace(string teamId, string channel, params string[] messages)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] message)
+        {
+            throw new NotImplementedException();
         }
     }
 }

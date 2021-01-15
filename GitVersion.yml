@@ -1,5 +1,14 @@
-mode: Mainline
 branches:
+  master:
+    regex: ^master$
+    mode: ContinuousDelivery
+    tag: ''
   feature:
-    mode: ContinuousDeployment
-    increment: Minor
+    regex: ^features?[/-]|(?!^master$|^(hotfix|bugfix)(es)?[/-]|^support[/-]|(^(pull|pull\-requests|pr)[/-]))(^.*$)
+    tag: ''
+  pull-request:   
+    tag: ''
+  hotfix:
+    regex: ^(hotfix|bugfix)(es)?[/-]
+    increment: Inherit
+    tag: ''

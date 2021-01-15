@@ -391,7 +391,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         
         public static string FormatLineup(Lineups details)
         {
-            var formattedOutput = $"*Lineups {details.HomeTeamNameAbbr}-{details.AwayTeamNameAbbr}:*\n\n";
+            var formattedOutput = "";
             FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);
             FormatTeamLineup(details.AwayTeamLineup, details.AwayTeamNameAbbr, ref formattedOutput, true);
             return formattedOutput;
@@ -431,22 +431,16 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             };
         }
 
-        public static string FormatProvisionalFinished(IEnumerable<FinishedFixture> provisionalFixturesFinished)
+        public static string FormatProvisionalFinished(FinishedFixture fixture)
         {
-            var finishedFixtures = new List<string>();
-            foreach (var fixture in provisionalFixturesFinished)
+            var fullTimeReport = "";
+            if (fixture.BonusPoints.Any())
             {
-                var fullTimeReport = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
-                if (fixture.BonusPoints.Any())
-                {
-                    var bonusPointsOutput = CreateBonusPointsOutput(fixture);
-                    fullTimeReport += $"\nBonus points:\n";
-                    fullTimeReport += BulletPoints(bonusPointsOutput);
-                }
-                finishedFixtures.Add(fullTimeReport);
+                var bonusPointsOutput = CreateBonusPointsOutput(fixture);
+                fullTimeReport += $"\nBonus points:\n";
+                fullTimeReport += BulletPoints(bonusPointsOutput);
             }
-
-            return string.Join("\n\n", finishedFixtures);
+            return fullTimeReport;
         }
 
         static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)
@@ -561,6 +555,30 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 2 => ":third_place_medal:",
                 _ => Constants.Emojis.NatureEmojis.GetRandom()
             };
+        }
+
+        public static string FixturesForGameweek(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
+        {
+            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
+            textToSend += $"\nDeadline: {gameweek.Deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
+            
+            var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
+
+            foreach (var group in groupedByDay)
+            {
+                textToSend += $"\n{group.Key.WithOffset(tzOffset):dddd}";
+                foreach (var fixture in group)
+                {
+                    var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
+                    var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
+                    var fixtureKickOffTime = fixture.KickOffTime.Value.WithOffset(tzOffset);
+                    textToSend += $"\n•{fixtureKickOffTime:HH:mm} {homeTeam.ShortName}-{awayTeam.ShortName}";
+                }
+
+                textToSend += "\n";
+            }
+
+            return textToSend;
         }
 
         public static string FormatEntryItem(EntryItem entryItem)
