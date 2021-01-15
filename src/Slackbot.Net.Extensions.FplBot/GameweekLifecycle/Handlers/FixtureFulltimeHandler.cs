@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
 using Slackbot.Net.Extensions.FplBot.Models;
 using Slackbot.Net.SlackClients.Http;
@@ -31,11 +32,14 @@ namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
             
             foreach (var slackTeam in teams)
             {
-                foreach (var fixture in provisionalFixturesFinished)
+                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureFullTime))
                 {
-                    var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
-                    var formatted = Formatter.FormatProvisionalFinished(fixture);
-                    await PublishFulltimeMessage(slackTeam, title, formatted);
+                    foreach (var fixture in provisionalFixturesFinished)
+                    {
+                        var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
+                        var formatted = Formatter.FormatProvisionalFinished(fixture);
+                        await PublishFulltimeMessage(slackTeam, title, formatted);
+                    }
                 }
             }
             
