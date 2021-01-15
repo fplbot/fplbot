@@ -28,7 +28,7 @@ namespace Slackbot.Net.Abstractions.Hosting
         {
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config.GetSection("fpl"));
-            services.AddSearch(config.GetValue<string>("ES_INDEX"));
+            services.AddSearch(config.GetSection("Search"));
             services.Configure<RedisOptions>(config);
             services.Configure<DistributedSlackAppOptions>(config);
             services.AddSingleton<ConnectionMultiplexer>(c =>
@@ -66,8 +66,10 @@ namespace Slackbot.Net.Abstractions.Hosting
             services.AddSingleton<MatchState>();
             services.AddSingleton<IMatchStateMonitor, MatchStateMonitor>();
             services.AddSingleton<LineupReadyHandler>();
-            services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
+            services.AddRecurringActions()
+                .AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
+                .AddRecurrer<IndexerRecurringAction>()
                 .Build();
             return services;
         }

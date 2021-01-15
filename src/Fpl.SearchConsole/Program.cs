@@ -34,7 +34,7 @@ namespace Fpl.SearchConsole
                 new LeagueIndexProvider(leagueClient, logger), logger);
             AppDomain.CurrentDomain.ProcessExit += (s, e) => indexingService.Cancel();
 
-            Console.WriteLine("You can either \"index <type>\" or \"search <term>\"");
+            Console.WriteLine("You can either \"index <type>\" or \"searchentry/searchleague <term>\"");
 
             var command = Console.ReadLine()?.ToLower();
 

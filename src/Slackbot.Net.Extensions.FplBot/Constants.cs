@@ -29,6 +29,7 @@
             public const string EveryTwentySeconds = "*/20 * * * * *";
             public const string EveryOtherMinuteAt40SecondsSharp = "40 */2 * * * *";
             public const string EveryThursdayAtMidnight = "0 0 0 ? * WED *";
+            public const string EveryFridayAtMidnight = "0 0 0 ? * THU *";
         }
 
         public static class Emojis
