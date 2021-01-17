@@ -22,7 +22,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             _workSpacePublisher = workSpacePublisher;
         }
 
-        public override string Command => "search";
+        public override string[] Commands => new[] { "search" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
@@ -62,6 +62,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(sb.ToString());
         }
 
-        public override (string, string) GetHelpDescription() => ($"{Command} {{term}}", "Search for teams or leagues");
+        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{name}}", $"Search for teams or leagues. E.g. \"{Commands} magnus carlsen\".");
     }
 }

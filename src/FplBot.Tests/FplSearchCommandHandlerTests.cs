@@ -16,7 +16,7 @@ namespace FplBot.Tests
             _client = Factory.GetHandler<FplSearchHandler>(logger);
         }
 
-        [Fact]
+        [Fact(Skip = "integration")]
         public async Task SearchForSkjelbek()
         {
             var dummy = Factory.CreateDummyEvent("search skjelbek");
