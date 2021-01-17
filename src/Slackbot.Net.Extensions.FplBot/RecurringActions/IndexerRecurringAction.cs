@@ -34,6 +34,6 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _logger.LogInformation("Finished indexing all leagues");
         }
 
-        public string Cron => Constants.CronPatterns.EverySundayAtMidnight;
+        public string Cron => Constants.CronPatterns.EveryMidnight;
     }
 }
