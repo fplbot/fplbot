@@ -12,11 +12,14 @@ namespace Fpl.Search
     {
         public static IServiceCollection AddSearch(this IServiceCollection services, IConfiguration config)
         {
-            var searchOptions = config.Get<SearchOptions>();
-            searchOptions.Validate();
-            var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));
-            connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
-            services.AddSingleton<IElasticClient>(new ElasticClient(connectionSettings));
+            services.AddSingleton<IElasticClient>(provider =>
+            {
+                var searchOptions = config.Get<SearchOptions>();
+                searchOptions.Validate();
+                var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));
+                connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
+                return new ElasticClient(connectionSettings);
+            });
 
             services.AddSingleton<IIndexingClient, IndexingClient>();
             services.AddSingleton<ISearchClient, SearchClient>();

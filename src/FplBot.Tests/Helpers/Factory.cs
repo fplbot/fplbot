@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Nest;
 using Newtonsoft.Json;
 using NServiceBus;
 using Slackbot.Net.Extensions.FplBot;
@@ -60,6 +61,7 @@ namespace FplBot.Tests.Helpers
             A.CallTo(() => teamsClient.GetAllTeams()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Teams);
             var globalClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => globalClient.GetGlobalSettings()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
+            var elasticClient = A.Fake<IElasticClient>();
             
             var slackClientServiceMock = A.Fake<ISlackClientBuilder>();
             A.CallTo(() => slackClientServiceMock.Build(A<string>.Ignored)).Returns(SlackClient);
@@ -71,6 +73,7 @@ namespace FplBot.Tests.Helpers
             services.Replace<IGlobalSettingsClient>(globalClient);
             services.Replace<ITokenStore>(new DontCareRepo());
             services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository(new OptionsWrapper<FplbotOptions>(new FplbotOptions())));
+            services.Replace<IElasticClient>(elasticClient);
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             services.AddSingleton<IMessageSession>(A.Fake<IMessageSession>()); // Faking NServicebus
             var provider = services.BuildServiceProvider();
