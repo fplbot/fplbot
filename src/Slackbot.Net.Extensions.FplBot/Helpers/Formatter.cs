@@ -581,9 +581,9 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return textToSend;
         }
 
-        public static string FormatEntryItem(EntryItem entryItem)
+        public static string FormatEntryItem(EntryItem entryItem, int? gameweek)
         {
-            return GetEntryLink(entryItem.Entry, entryItem.TeamName, null) + $" ({entryItem.RealName})";
+            return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})";
         }
 
         public static string FormatLeagueItem(LeagueItem leagueItem)
