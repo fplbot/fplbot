@@ -5,7 +5,7 @@ namespace Fpl.Client.Abstractions
 {
     public interface ILeagueClient
     {
-        Task<ClassicLeague> GetClassicLeague(int leagueId);
+        Task<ClassicLeague> GetClassicLeague(int leagueId, int page = 1);
 
         Task<HeadToHeadLeague> GetHeadToHeadLeague(int leagueId);
     }

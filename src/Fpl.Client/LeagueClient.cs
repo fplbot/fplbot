@@ -15,9 +15,9 @@ namespace Fpl.Client
             _client = client;
         }
 
-        public async Task<ClassicLeague> GetClassicLeague(int leagueId)
+        public async Task<ClassicLeague> GetClassicLeague(int leagueId, int page = 1)
         {
-            var json = await _client.GetStringAsync($"/api/leagues-classic/{leagueId}/standings/");
+            var json = await _client.GetStringAsync($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}");
             
             return JsonConvert.DeserializeObject<ClassicLeague>(json);
         }

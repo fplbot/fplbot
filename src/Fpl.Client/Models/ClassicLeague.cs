@@ -12,5 +12,10 @@ namespace Fpl.Client.Models
 
         [JsonProperty("standings")]
         public ClassicLeagueStandings Standings { get; set; }
+
+        [JsonProperty("detail")]
+        public string Detail { get; set; }
+
+        public bool Exists => Detail != "Not found.";
     }
 }
