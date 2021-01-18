@@ -593,10 +593,10 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string GetEntryLink(int entryId, string name, int? gameweek)
         {
-            return $"<https://fantasy.premierleague.com/entry/{entryId}/event/{GetLinkSuffix(gameweek)}|{name}>";
+            return $"<https://fantasy.premierleague.com/entry/{entryId}/{GetLinkSuffix(gameweek)}|{name}>";
         }
 
-        private static string GetLinkSuffix(int? gameweek) => gameweek.HasValue ? gameweek.Value.ToString() : "history";
+        private static string GetLinkSuffix(int? gameweek) => gameweek.HasValue ? $"event/{gameweek.Value}" : "history";
 
         public static string GetLeagueLink(int leagueId, string name)
         {
