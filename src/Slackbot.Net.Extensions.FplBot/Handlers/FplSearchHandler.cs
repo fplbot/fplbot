@@ -62,6 +62,6 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(sb.ToString());
         }
 
-        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{name}}", $"Search for teams or leagues. E.g. \"{Commands} magnus carlsen\".");
+        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{name}}", $"Search for teams or leagues. E.g. \"{CommandsFormatted} magnus carlsen\".");
     }
 }
