@@ -3,16 +3,20 @@ using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
 namespace Fpl.Search.Indexing
 {
     public class LeagueIndexProvider : IndexProviderBase, IIndexProvider<LeagueItem>
     {
-        public LeagueIndexProvider(ILeagueClient leagueClient, ILogger<IndexProviderBase> logger) : base(leagueClient, logger)
+        private readonly SearchOptions _options;
+
+        public LeagueIndexProvider(ILeagueClient leagueClient, ILogger<IndexProviderBase> logger, IOptions<SearchOptions> options) : base(leagueClient, logger)
         {
+            _options = options.Value;
         }
 
-        public string IndexName => Constants.LeaguesIndex;
+        public string IndexName => _options.LeaguesIndex;
 
         public async Task<(LeagueItem[], bool)> GetBatchToIndex(int i, int batchSize)
         {
