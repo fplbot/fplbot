@@ -19,6 +19,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
             _indexingService = indexingService;
             _logger = logger;
             _options = options.Value;
+            _logger.LogInformation($"Registering IndexerRecurringAction. Will run at \"{_options.IndexingCron}\"");
         }
 
         public async Task Process(CancellationToken stoppingToken)
