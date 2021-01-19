@@ -24,25 +24,28 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
 
         public async Task Process(CancellationToken stoppingToken)
         {
-            if (!_options.ShouldIndex)
+            using (_logger.BeginCorrelationScope())
             {
-                _logger.LogInformation("Bypassing the indexing job, since config says so");
-                return;
+                if (!_options.ShouldIndex)
+                {
+                    _logger.LogInformation("Bypassing the indexing job, since config says so");
+                    return;
+                }
+
+                stoppingToken.Register(() =>
+                {
+                    _logger.LogInformation("Cancelling the indexing job due to stoppingToken being cancelled");
+                    _indexingService.Cancel();
+                });
+
+                _logger.LogInformation("Starting the entries indexing job");
+                await _indexingService.IndexEntries();
+                _logger.LogInformation("Finished indexing all entries");
+
+                _logger.LogInformation("Starting the league indexing job");
+                await _indexingService.IndexLeagues();
+                _logger.LogInformation("Finished indexing all leagues");
             }
-
-            stoppingToken.Register(() =>
-            {
-                _logger.LogInformation("Cancelling the indexing job due to stoppingToken being cancelled");
-                _indexingService.Cancel();
-            });
-
-            _logger.LogInformation("Starting the entries indexing job");
-            await _indexingService.IndexEntries();
-            _logger.LogInformation("Finished indexing all entries");
-
-            _logger.LogInformation("Starting the league indexing job");
-            await _indexingService.IndexLeagues();
-            _logger.LogInformation("Finished indexing all leagues");
         }
 
         public string Cron => _options.IndexingCron;
