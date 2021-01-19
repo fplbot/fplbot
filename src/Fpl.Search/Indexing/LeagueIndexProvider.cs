@@ -22,10 +22,10 @@ namespace Fpl.Search.Indexing
         {
             var batch = await GetBatchOfLeagues(i, batchSize, (client, x) => client.GetClassicLeague(x, tolerate404: true));
             var items = batch
-                .Where(x => x != null)
+                .Where(x => x != null && x.Exists)
                 .Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry })
                 .ToArray();
-            var couldBeMore = batch.Count(x => x.Exists) > 1;
+            var couldBeMore = batchSize - items.Length < (batchSize / 2); // we where able to get at least have of the batch size
 
             return (items, couldBeMore);
         }
