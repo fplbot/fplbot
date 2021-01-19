@@ -25,7 +25,7 @@ namespace Fpl.Search.Indexing
                 .Where(x => x != null && x.Exists)
                 .Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry })
                 .ToArray();
-            var couldBeMore = batchSize - items.Length < (batchSize / 2); // we where able to get at least have of the batch size
+            var couldBeMore = i + batchSize < Constants.LeagueIndexCount; // there are plenty of "holes" in the league enumeration, so run through enough items before stopping
 
             return (items, couldBeMore);
         }
