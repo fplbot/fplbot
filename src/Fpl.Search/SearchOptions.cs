@@ -7,7 +7,8 @@
         public string Password { get; set; }
         public string EntriesIndex { get; set; }
         public string LeaguesIndex { get; set; }
-        public bool ShouldIndex { get; set; }
+        public bool ShouldIndexEntries { get; set; }
+        public bool ShouldIndexLeagues { get; set; }
         public string IndexingCron { get; set; }
 
         public void Validate()
@@ -17,7 +18,7 @@
                 string.IsNullOrEmpty(Password) ||
                 string.IsNullOrEmpty(EntriesIndex) ||
                 string.IsNullOrEmpty(LeaguesIndex) || 
-                (ShouldIndex && string.IsNullOrEmpty(IndexingCron)))
+                ((ShouldIndexEntries || ShouldIndexLeagues) && string.IsNullOrEmpty(IndexingCron)))
                 throw new FplSearchException("Misconfigured search config");
         }
     }

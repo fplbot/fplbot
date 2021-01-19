@@ -3,6 +3,7 @@ using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -29,7 +30,7 @@ namespace Fpl.Search.Indexing
                 {
                     return await Task.WhenAll(Enumerable.Range(i, batchSize).Select(n => getLeagueByIterator(_leagueClient, n)));
                 }
-                catch (HttpRequestException e)
+                catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     _logger.LogWarning("Ran into a 429 (Too Many Requests) at {i}. Waiting 2s before retrying.", i);
                     await Task.Delay(2000);

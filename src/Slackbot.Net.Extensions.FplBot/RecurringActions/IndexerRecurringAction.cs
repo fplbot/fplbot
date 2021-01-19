@@ -26,7 +26,7 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
         {
             using (_logger.BeginCorrelationScope())
             {
-                if (!_options.ShouldIndex)
+                if (!_options.ShouldIndexEntries && !_options.ShouldIndexLeagues)
                 {
                     _logger.LogInformation("Bypassing the indexing job, since config says so");
                     return;
@@ -38,13 +38,19 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     _indexingService.Cancel();
                 });
 
-                _logger.LogInformation("Starting the entries indexing job");
-                await _indexingService.IndexEntries();
-                _logger.LogInformation("Finished indexing all entries");
+                if (_options.ShouldIndexEntries)
+                {
+                    _logger.LogInformation("Starting the entries indexing job");
+                    await _indexingService.IndexEntries();
+                    _logger.LogInformation("Finished indexing all entries");
+                }
 
-                _logger.LogInformation("Starting the league indexing job");
-                await _indexingService.IndexLeagues();
-                _logger.LogInformation("Finished indexing all leagues");
+                if (_options.ShouldIndexLeagues)
+                {
+                    _logger.LogInformation("Starting the league indexing job");
+                    await _indexingService.IndexLeagues();
+                    _logger.LogInformation("Finished indexing all leagues");
+                }
             }
         }
 
