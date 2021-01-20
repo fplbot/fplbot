@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Search.Searching;
@@ -23,7 +22,6 @@ namespace FplBot.WebApi.Controllers
         [HttpGet("entries/{query}")]
         public async Task<IActionResult> GetEntries(string query)
         {
-            Console.Write("Her");
             try
             {
                 var searchResult = await _searchClient.SearchForEntry(query, 10);
