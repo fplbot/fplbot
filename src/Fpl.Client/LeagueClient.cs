@@ -1,4 +1,6 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -15,11 +17,17 @@ namespace Fpl.Client
             _client = client;
         }
 
-        public async Task<ClassicLeague> GetClassicLeague(int leagueId, int page = 1)
+        public async Task<ClassicLeague> GetClassicLeague(int leagueId, int page = 1, bool tolerate404 = false)
         {
-            var json = await _client.GetStringAsync($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}");
-            
-            return JsonConvert.DeserializeObject<ClassicLeague>(json);
+            try
+            {
+                var json = await _client.GetStringAsync($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}");
+                return JsonConvert.DeserializeObject<ClassicLeague>(json);
+            }
+            catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
+            {
+                return null;
+            }
         }
 
         public async Task<HeadToHeadLeague> GetHeadToHeadLeague(int leagueId)

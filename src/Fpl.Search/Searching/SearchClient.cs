@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
 namespace Fpl.Search.Searching
 {
@@ -12,21 +13,23 @@ namespace Fpl.Search.Searching
     {
         private readonly IElasticClient _elasticClient;
         private readonly ILogger<SearchClient> _logger;
+        private readonly SearchOptions _options;
 
-        public SearchClient(IElasticClient elasticClient, ILogger<SearchClient> logger)
+        public SearchClient(IElasticClient elasticClient, ILogger<SearchClient> logger, IOptions<SearchOptions> options)
         {
             _elasticClient = elasticClient;
             _logger = logger;
+            _options = options.Value;
         }
 
         public async Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits)
         {
-            return await Search<EntryItem>(query, maxHits, Constants.EntriesIndex, f => f.RealName, f => f.TeamName);
+            return await Search<EntryItem>(query, maxHits, _options.EntriesIndex, f => f.RealName, f => f.TeamName);
         }
 
         public async Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits)
         {
-            return await Search<LeagueItem>(query, maxHits, Constants.LeaguesIndex, f => f.Name);
+            return await Search<LeagueItem>(query, maxHits, _options.LeaguesIndex, f => f.Name);
         }
 
         private async Task<IReadOnlyCollection<T>> Search<T>(string query, int maxHits, string index, params Expression<Func<T, object>>[] fields) where T : class

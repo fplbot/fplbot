@@ -1,6 +1,8 @@
 ﻿using CronBackgroundServices;
+using Fpl.Search;
 using Fpl.Search.Indexing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,30 +12,48 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
     {
         private readonly IIndexingService _indexingService;
         private readonly ILogger<IndexerRecurringAction> _logger;
+        private readonly SearchOptions _options;
 
-        public IndexerRecurringAction(IIndexingService indexingService, ILogger<IndexerRecurringAction> logger)
+        public IndexerRecurringAction(IIndexingService indexingService, ILogger<IndexerRecurringAction> logger, IOptions<SearchOptions> options)
         {
             _indexingService = indexingService;
             _logger = logger;
+            _options = options.Value;
+            _logger.LogInformation($"Registering IndexerRecurringAction. Will run at \"{_options.IndexingCron}\"");
         }
 
         public async Task Process(CancellationToken stoppingToken)
         {
-            stoppingToken.Register(() =>
+            using (_logger.BeginCorrelationScope())
             {
-                _logger.LogInformation("Cancelling the indexing job due to stoppingToken being cancelled");
-                _indexingService.Cancel();
-            });
+                if (!_options.ShouldIndexEntries && !_options.ShouldIndexLeagues)
+                {
+                    _logger.LogInformation("Bypassing the indexing job, since config says so");
+                    return;
+                }
 
-            _logger.LogInformation("Starting the entries indexing job");
-            await _indexingService.IndexEntries();
-            _logger.LogInformation("Finished indexing all entries");
+                stoppingToken.Register(() =>
+                {
+                    _logger.LogInformation("Cancelling the indexing job due to stoppingToken being cancelled");
+                    _indexingService.Cancel();
+                });
 
-            _logger.LogInformation("Starting the league indexing job");
-            await _indexingService.IndexLeagues();
-            _logger.LogInformation("Finished indexing all leagues");
+                if (_options.ShouldIndexEntries)
+                {
+                    _logger.LogInformation("Starting the entries indexing job");
+                    await _indexingService.IndexEntries();
+                    _logger.LogInformation("Finished indexing all entries");
+                }
+
+                if (_options.ShouldIndexLeagues)
+                {
+                    _logger.LogInformation("Starting the league indexing job");
+                    await _indexingService.IndexLeagues();
+                    _logger.LogInformation("Finished indexing all leagues");
+                }
+            }
         }
 
-        public string Cron => Constants.CronPatterns.EveryMidnight;
+        public string Cron => _options.IndexingCron;
     }
 }

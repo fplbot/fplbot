@@ -1,4 +1,5 @@
-﻿using Fpl.Search.Models;
+﻿using System.Linq;
+using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
@@ -50,7 +51,10 @@ namespace Fpl.Search.Indexing
             {
                 var (items, couldBeMore) = await indexProvider.GetBatchToIndex(i, batchSize);
 
-                await _indexingClient.Index(items, indexProvider.IndexName);
+                if (items.Any())
+                {
+                    await _indexingClient.Index(items, indexProvider.IndexName);
+                }
 
                 i += batchSize;
 

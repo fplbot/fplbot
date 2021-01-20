@@ -9,6 +9,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Fpl.Search;
+using Microsoft.Extensions.Options;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fpl.SearchConsole
@@ -18,9 +20,10 @@ namespace Fpl.SearchConsole
         static async Task Main(string[] args)
         {
             var logger = new ConsoleLogger();
-            var esClient = new ElasticClient(new ConnectionSettings(new Uri("http://localhost:9200/")));
+            var options = new Options();
+            var esClient = new ElasticClient(new ConnectionSettings(new Uri(options.Value.IndexUri)));
             var indexingClient = new IndexingClient(esClient, logger);
-            var searchClient = new SearchClient(esClient, logger);
+            var searchClient = new SearchClient(esClient, logger, options);
             var httpClient = new HttpClient(new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip,
@@ -30,8 +33,8 @@ namespace Fpl.SearchConsole
             
             var leagueClient = new LeagueClient(httpClient);
             var indexingService = new IndexingService(indexingClient, 
-                new EntryIndexProvider(leagueClient, logger), 
-                new LeagueIndexProvider(leagueClient, logger), logger);
+                new EntryIndexProvider(leagueClient, logger, options), 
+                new LeagueIndexProvider(leagueClient, logger, options), logger);
             AppDomain.CurrentDomain.ProcessExit += (s, e) => indexingService.Cancel();
 
             Console.WriteLine("You can either \"index <type>\" or \"searchentry/searchleague <term>\"");
@@ -85,5 +88,17 @@ namespace Fpl.SearchConsole
         {
             throw new NotImplementedException();
         }
+    }
+
+    internal class Options : IOptions<SearchOptions>
+    {
+        public SearchOptions Value => new SearchOptions
+        {
+            EntriesIndex = "test.entries",
+            LeaguesIndex = "test.leagues",
+            IndexUri = "http://localhost:9200/",
+            Username = "-",
+            Password = "-"
+        };
     }
 }

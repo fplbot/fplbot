@@ -12,6 +12,8 @@ namespace Fpl.Search
     {
         public static IServiceCollection AddSearch(this IServiceCollection services, IConfiguration config)
         {
+            services.Configure<SearchOptions>(config);
+
             services.AddSingleton<IElasticClient>(provider =>
             {
                 var searchOptions = config.Get<SearchOptions>();
