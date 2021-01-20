@@ -9,6 +9,7 @@
         public string LeaguesIndex { get; set; }
         public bool ShouldIndexEntries { get; set; }
         public bool ShouldIndexLeagues { get; set; }
+        public int ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob { get; set; }
         public string IndexingCron { get; set; }
 
         public void Validate()
@@ -18,7 +19,8 @@
                 string.IsNullOrEmpty(Password) ||
                 string.IsNullOrEmpty(EntriesIndex) ||
                 string.IsNullOrEmpty(LeaguesIndex) || 
-                ((ShouldIndexEntries || ShouldIndexLeagues) && string.IsNullOrEmpty(IndexingCron)))
+                ((ShouldIndexEntries || ShouldIndexLeagues) && string.IsNullOrEmpty(IndexingCron)) || 
+                (ShouldIndexLeagues && ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob == 0))
                 throw new FplSearchException("Misconfigured search config");
         }
     }
