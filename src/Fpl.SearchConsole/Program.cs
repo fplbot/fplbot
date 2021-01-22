@@ -1,16 +1,16 @@
 ﻿using Fpl.Client;
 using Fpl.Client.Clients;
+using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nest;
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fpl.Search;
-using Microsoft.Extensions.Options;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fpl.SearchConsole
@@ -34,7 +34,7 @@ namespace Fpl.SearchConsole
             var leagueClient = new LeagueClient(httpClient);
             var indexingService = new IndexingService(indexingClient, 
                 new EntryIndexProvider(leagueClient, logger, options), 
-                new LeagueIndexProvider(leagueClient, logger, options), logger);
+                new LeagueIndexProvider(leagueClient, new SimpleLeagueIndexBookmarkProvider(), logger, options), logger);
             AppDomain.CurrentDomain.ProcessExit += (s, e) => indexingService.Cancel();
 
             Console.WriteLine("You can either \"index <type>\" or \"searchentry/searchleague <term>\"");
@@ -94,11 +94,48 @@ namespace Fpl.SearchConsole
     {
         public SearchOptions Value => new SearchOptions
         {
-            EntriesIndex = "test.entries",
-            LeaguesIndex = "test.leagues",
+            EntriesIndex = "test-entries",
+            LeaguesIndex = "test-leagues",
             IndexUri = "http://localhost:9200/",
             Username = "-",
-            Password = "-"
+            Password = "-",
+            ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob = 10000,
+            ShouldIndexLeagues = true,
+            ShouldIndexEntries = true
         };
+    }
+
+    internal class SimpleLeagueIndexBookmarkProvider : IIndexBookmarkProvider
+    {
+        private string Path = "./bookmark.txt";
+
+        public async Task<int> GetBookmark()
+        {
+            try
+            {
+                var txt = await System.IO.File.ReadAllTextAsync(Path);
+
+                return int.TryParse(txt, out int bookmark) ? bookmark : 1;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return 1;
+            }
+        }
+
+        public Task SetBookmark(int bookmark)
+        {
+            try
+            {
+                Console.WriteLine($"Setting bookmark at {bookmark}.");
+                return System.IO.File.WriteAllTextAsync(Path, bookmark.ToString());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return Task.CompletedTask;
+            }
+        }
     }
 }
