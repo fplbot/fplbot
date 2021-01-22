@@ -1,10 +1,9 @@
-﻿using Fpl.Client.Abstractions;
+﻿using Fpl.Client;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Fpl.Search.Indexing
@@ -13,7 +12,6 @@ namespace Fpl.Search.Indexing
     {
         private readonly ILeagueClient _leagueClient;
         private readonly ILogger<IndexProviderBase> _logger;
-        private const int RetriesOnErrorBeforeGivingUp = 3;
 
         protected IndexProviderBase(ILeagueClient leagueClient, ILogger<IndexProviderBase> logger)
         {
@@ -21,23 +19,9 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        protected async Task<ClassicLeague[]> GetBatchOfLeagues(int i, int batchSize, Func<ILeagueClient, int, Task<ClassicLeague>> getLeagueByIterator)
+        protected Task<ClassicLeague[]> GetBatchOfLeagues(int i, int batchSize, Func<ILeagueClient, int, Task<ClassicLeague>> getLeagueByIterator)
         {
-            var j = 0;
-            while (j < RetriesOnErrorBeforeGivingUp)
-            {
-                try
-                {
-                    return await Task.WhenAll(Enumerable.Range(i, batchSize).Select(n => getLeagueByIterator(_leagueClient, n)));
-                }
-                catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.TooManyRequests)
-                {
-                    _logger.LogWarning("Ran into a 429 (Too Many Requests) at {i}. Waiting 2s before retrying.", i);
-                    await Task.Delay(2000);
-                    j++;
-                }
-            }
-            throw new Exception($"Unable to get standings after {RetriesOnErrorBeforeGivingUp} retries");
+            return ClientHelper.PolledRequests(Enumerable.Range(i, batchSize).Select(n => getLeagueByIterator(_leagueClient, n)).ToArray());
         }
     }
 }

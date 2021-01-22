@@ -5,11 +5,13 @@ using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Linq;
 using System.Threading.Tasks;
+using Nest;
 
 namespace Fpl.Search.Indexing
 {
     public class LeagueIndexProvider : IndexProviderBase, IIndexProvider<LeagueItem>
     {
+        private readonly IEntryClient _entryClient;
         private readonly IIndexBookmarkProvider _indexBookmarkProvider;
         private readonly SearchOptions _options;
         private int _currentConsecutiveCountOfMissingLeagues;
@@ -17,10 +19,12 @@ namespace Fpl.Search.Indexing
 
         public LeagueIndexProvider(
             ILeagueClient leagueClient,
+            IEntryClient entryClient,
             IIndexBookmarkProvider indexBookmarkProvider,
             ILogger<IndexProviderBase> logger,
             IOptions<SearchOptions> options) : base(leagueClient, logger)
         {
+            _entryClient = entryClient;
             _indexBookmarkProvider = indexBookmarkProvider;
             _options = options.Value;
         }
@@ -35,6 +39,18 @@ namespace Fpl.Search.Indexing
                 .Where(x => x != null && x.Exists)
                 .Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry })
                 .ToArray();
+
+            var admins = await Task.WhenAll(items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry.Value).Distinct().Select(x => _entryClient.Get(x)));
+            foreach (var leagueItem in items)
+            {
+                var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);
+                if (admin != null)
+                {
+                    leagueItem.AdminName = admin.PlayerFullName;
+                    leagueItem.AdminTeamName = admin.TeamName;
+                    leagueItem.AdminCountry = admin.PlayerRegionLongIso;
+                }
+            }
 
             if (!items.Any())
             {

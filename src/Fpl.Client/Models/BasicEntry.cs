@@ -29,8 +29,11 @@ namespace Fpl.Client.Models
         [JsonProperty("player_region_name")]
         public string PlayerRegionName { get; set; }
 
-        [JsonProperty("player_region_short_iso")]
+        [JsonProperty("player_region_iso_code_short")]
         public string PlayerRegionShortIso { get; set; }
+        
+        [JsonProperty("player_region_iso_code_long")]
+        public string PlayerRegionLongIso { get; set; }
 
         [JsonProperty("summary_overall_points")]
         public int? SummaryOverallPoints { get; set; }
@@ -55,5 +58,7 @@ namespace Fpl.Client.Models
 
         [JsonProperty("kit")]
         public string Kit { get; set; }
+
+        public string PlayerFullName => $"{PlayerFirstName} {PlayerLastName}";
     }
 }

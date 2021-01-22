@@ -32,9 +32,10 @@ namespace Fpl.SearchConsole
             FplClientOptionsConfigurator.SetupFplClient(httpClient);
             
             var leagueClient = new LeagueClient(httpClient);
+            var entryClient = new EntryClient(httpClient);
             var indexingService = new IndexingService(indexingClient, 
                 new EntryIndexProvider(leagueClient, logger, options), 
-                new LeagueIndexProvider(leagueClient, new SimpleLeagueIndexBookmarkProvider(), logger, options), logger);
+                new LeagueIndexProvider(leagueClient, entryClient, new SimpleLeagueIndexBookmarkProvider(), logger, options), logger);
             AppDomain.CurrentDomain.ProcessExit += (s, e) => indexingService.Cancel();
 
             Console.WriteLine("You can either \"index <type>\" or \"searchentry/searchleague <term>\"");
