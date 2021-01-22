@@ -48,7 +48,7 @@ namespace Fpl.Search.Indexing
                 {
                     leagueItem.AdminName = admin.PlayerFullName;
                     leagueItem.AdminTeamName = admin.TeamName;
-                    leagueItem.AdminCountry = admin.PlayerRegionLongIso;
+                    leagueItem.AdminCountry = admin.PlayerRegionShortIso;
                 }
             }
 

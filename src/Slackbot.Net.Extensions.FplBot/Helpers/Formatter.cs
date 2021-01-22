@@ -588,7 +588,25 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string FormatLeagueItem(LeagueItem leagueItem)
         {
-            return GetLeagueLink(leagueItem.Id, leagueItem.Name) + (leagueItem.AdminEntry.HasValue ? $" ({GetEntryLink(leagueItem.AdminEntry.Value, "Admin", null)})" : null);
+            return GetLeagueLink(leagueItem.Id, leagueItem.Name) + 
+                   (leagueItem.AdminEntry.HasValue ? 
+                       $" (administered by {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), null)})" 
+                       : null);
+        }
+
+        private static string FormatLeagueAdmin(string leagueAdminName, string leagueAdminCountryShortIso)
+        {
+            if (string.IsNullOrEmpty(leagueAdminName))
+            {
+                return "Go to admin";
+            }
+
+            return leagueAdminName + FormatCountryShortIso(leagueAdminCountryShortIso);
+        }
+
+        public static string FormatCountryShortIso(string countryIso)
+        {
+            return string.IsNullOrEmpty(countryIso) ? null : $":flag-{countryIso.ToLower()}:";
         }
 
         public static string GetEntryLink(int entryId, string name, int? gameweek)
