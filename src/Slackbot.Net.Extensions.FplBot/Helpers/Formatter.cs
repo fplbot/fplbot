@@ -606,7 +606,27 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string FormatCountryShortIso(string countryIso)
         {
-            return string.IsNullOrEmpty(countryIso) ? null : $":flag-{countryIso.ToLower()}:";
+            if (string.IsNullOrEmpty(countryIso))
+            {
+                return null;
+            }
+
+            countryIso = countryIso.ToLower();
+
+            switch (countryIso)
+            {
+                case "en":
+                    countryIso = "england";
+                    break;
+                case "s1":
+                    countryIso = "scotland";
+                    break;
+                case "wa":
+                    countryIso = "wales";
+                    break;
+            }
+
+            return $":flag-{countryIso}:";
         }
 
         public static string GetEntryLink(int entryId, string name, int? gameweek)
