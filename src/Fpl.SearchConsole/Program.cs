@@ -21,7 +21,14 @@ namespace Fpl.SearchConsole
         {
             var logger = new ConsoleLogger();
             var options = new Options();
-            var esClient = new ElasticClient(new ConnectionSettings(new Uri(options.Value.IndexUri)));
+            
+            var conn = new ConnectionSettings(new Uri(options.Value.IndexUri));
+            if (!string.IsNullOrEmpty(options.Value.Username) && !string.IsNullOrEmpty(options.Value.Password))
+            {
+                conn.BasicAuthentication(options.Value.Username, options.Value.Password);
+            }
+
+            var esClient = new ElasticClient(conn);
             var indexingClient = new IndexingClient(esClient, logger);
             var searchClient = new SearchClient(esClient, logger, options);
             var httpClient = new HttpClient(new HttpClientHandler
@@ -59,14 +66,14 @@ namespace Fpl.SearchConsole
                 else if (command.StartsWith("searchentry"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.SearchForEntry(term, 10);
+                    var result = await searchClient.SearchForEntry(term, 100);
                     Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
                 }
                 else if (command.StartsWith("searchleague"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.SearchForLeague(term, 10);
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry}"))}\n");
+                    var result = await searchClient.SearchForLeague(term, 100, "no");
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
                 }
             }
         }

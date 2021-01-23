@@ -1,11 +1,10 @@
 ﻿using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
-using Nest;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Nest;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Fpl.Search.Searching
 {
@@ -24,26 +23,35 @@ namespace Fpl.Search.Searching
 
         public async Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits)
         {
-            return await Search<EntryItem>(query, maxHits, _options.EntriesIndex, f => f.RealName, f => f.TeamName);
-        }
-
-        public async Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits)
-        {
-            return await Search<LeagueItem>(query, maxHits, _options.LeaguesIndex, f => f.Name);
-        }
-
-        private async Task<IReadOnlyCollection<T>> Search<T>(string query, int maxHits, string index, params Expression<Func<T, object>>[] fields) where T : class
-        {
-            var response = await _elasticClient.SearchAsync<T>(x => x
-                .Index(index)
+            var response = await _elasticClient.SearchAsync<EntryItem>(x => x
+                .Index(_options.EntriesIndex)
                 .From(0)
                 .Size(maxHits)
                 .Query(q => q
                     .MultiMatch(m => m
-                        .Fields(f => f.Fields(fields))
+                        .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName))
                         .Query(query))));
 
-            _logger.LogInformation("Search for \"{query}\" got {totalHits} in the {index} index. Returned {returned} of them.", query, response.Total, response.Documents.Count, index);
+            return response.Documents;
+        }
+
+        public async Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null)
+        {
+            var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
+                .Index(_options.LeaguesIndex)
+                .From(0)
+                .Size(maxHits)
+                .Query(q => q
+                    .MultiMatch(m => m
+                        .Fields(f => f.Fields(y => y.Name))
+                        .Query(query))));
+
+            if (!string.IsNullOrEmpty(countryToBoost))
+            {
+                var hits = response.Hits.OrderByDescending(h => h.Score)
+                    .ThenByDescending(h => h.Source.AdminCountry == countryToBoost ? 1 : 0);
+                return hits.Select(h => h.Source).ToArray();
+            }
 
             return response.Documents;
         }
@@ -52,6 +60,6 @@ namespace Fpl.Search.Searching
     public interface ISearchClient
     {
         Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits);
-        Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits);
+        Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null);
     }
 }
