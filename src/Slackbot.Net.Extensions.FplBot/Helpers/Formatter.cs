@@ -586,11 +586,11 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
             return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})";
         }
 
-        public static string FormatLeagueItem(LeagueItem leagueItem)
+        public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)
         {
             return GetLeagueLink(leagueItem.Id, leagueItem.Name) + 
                    (leagueItem.AdminEntry.HasValue ? 
-                       $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), null)})" 
+                       $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), gameweek)})" 
                        : null);
         }
 

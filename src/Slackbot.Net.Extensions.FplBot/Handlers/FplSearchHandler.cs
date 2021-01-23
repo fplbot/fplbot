@@ -48,9 +48,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             var sb = new StringBuilder();
             sb.Append("Matching teams:\n");
 
-            if (entries.Count > 0)
+            int? currentGameweek = null;
+            if (entries.Any() || leagues.Any())
             {
-                int? currentGameweek = null;
                 try
                 {
                     var gameweeks = await _gameweekClient.GetGameweeks();
@@ -60,7 +60,10 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 {
                     _logger.LogError(e, "Unable to obtain current gameweek when creating search result links");
                 }
-             
+            }
+
+            if (entries.Any())
+            {
                 sb.Append(Formatter.BulletPoints(entries.Select(e => Formatter.FormatEntryItem(e, currentGameweek))));
             }
             else
@@ -70,9 +73,9 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             sb.Append("\n\nMatching leagues:\n");
 
-            if (leagues.Count > 0)
+            if (leagues.Any())
             {
-                sb.Append(Formatter.BulletPoints(leagues.Select(Formatter.FormatLeagueItem)));
+                sb.Append(Formatter.BulletPoints(leagues.Select(e => Formatter.FormatLeagueItem(e, currentGameweek))));
             }
             else
             {
