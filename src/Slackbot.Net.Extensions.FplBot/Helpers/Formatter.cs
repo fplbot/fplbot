@@ -590,7 +590,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
         {
             return GetLeagueLink(leagueItem.Id, leagueItem.Name) + 
                    (leagueItem.AdminEntry.HasValue ? 
-                       $" (administered by {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), null)})" 
+                       $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), null)})" 
                        : null);
         }
 
@@ -601,7 +601,7 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
                 return "Go to admin";
             }
 
-            return leagueAdminName + FormatCountryShortIso(leagueAdminCountryShortIso);
+            return leagueAdminName + " " + FormatCountryShortIso(leagueAdminCountryShortIso);
         }
 
         public static string FormatCountryShortIso(string countryIso)
