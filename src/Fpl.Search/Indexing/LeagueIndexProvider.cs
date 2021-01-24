@@ -13,6 +13,7 @@ namespace Fpl.Search.Indexing
     {
         private readonly IEntryClient _entryClient;
         private readonly IIndexBookmarkProvider _indexBookmarkProvider;
+        private readonly ILogger<IndexProviderBase> _logger;
         private readonly SearchOptions _options;
         private int _currentConsecutiveCountOfMissingLeagues;
         private int _bookmarkCounter;
@@ -26,6 +27,7 @@ namespace Fpl.Search.Indexing
         {
             _entryClient = entryClient;
             _indexBookmarkProvider = indexBookmarkProvider;
+            _logger = logger;
             _options = options.Value;
         }
 
@@ -44,7 +46,7 @@ namespace Fpl.Search.Indexing
 
             if (adminTasks.Any())
             {
-                var admins = await ClientHelper.PolledRequests(adminTasks);
+                var admins = await ClientHelper.PolledRequests(adminTasks, _logger);
                 foreach (var leagueItem in items)
                 {
                     var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);
