@@ -1,11 +1,11 @@
-﻿using Fpl.Client.Abstractions;
+﻿using Fpl.Client;
+using Fpl.Client.Abstractions;
 using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Linq;
 using System.Threading.Tasks;
-using Nest;
 
 namespace Fpl.Search.Indexing
 {
@@ -40,15 +40,20 @@ namespace Fpl.Search.Indexing
                 .Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry })
                 .ToArray();
 
-            var admins = await Task.WhenAll(items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry.Value).Distinct().Select(x => _entryClient.Get(x)));
-            foreach (var leagueItem in items)
+            var adminTasks = items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry.Value).Distinct().Select(x => _entryClient.Get(x)).ToArray();
+
+            if (adminTasks.Any())
             {
-                var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);
-                if (admin != null)
+                var admins = await ClientHelper.PolledRequests(adminTasks);
+                foreach (var leagueItem in items)
                 {
-                    leagueItem.AdminName = admin.PlayerFullName;
-                    leagueItem.AdminTeamName = admin.TeamName;
-                    leagueItem.AdminCountry = admin.PlayerRegionShortIso;
+                    var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);
+                    if (admin != null)
+                    {
+                        leagueItem.AdminName = admin.PlayerFullName;
+                        leagueItem.AdminTeamName = admin.TeamName;
+                        leagueItem.AdminCountry = admin.PlayerRegionShortIso;
+                    }
                 }
             }
 
@@ -69,7 +74,7 @@ namespace Fpl.Search.Indexing
             {
                 await _indexBookmarkProvider.SetBookmark(1);
             }
-            else if (_bookmarkCounter > 1000) // Set a bookmark at every 1000nth batch
+            else if (_bookmarkCounter > 50) // Set a bookmark at every 50th batch
             {
                 await _indexBookmarkProvider.SetBookmark(i + batchSize);
                 _bookmarkCounter = 0;
