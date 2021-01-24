@@ -19,8 +19,8 @@ namespace Fpl.Client
                 }
                 catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.TooManyRequests)
                 {
-                    await Task.Delay(2000);
                     j++;
+                    await Task.Delay(2000 * j);
                 }
             }
             throw new Exception($"Unable to run requests after {retries} retries");
