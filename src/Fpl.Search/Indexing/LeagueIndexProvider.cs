@@ -46,7 +46,7 @@ namespace Fpl.Search.Indexing
 
             if (adminTasks.Any())
             {
-                var admins = await ClientHelper.PolledRequests(adminTasks, _logger);
+                var admins = await ClientHelper.PolledRequests(() => adminTasks, _logger);
                 foreach (var leagueItem in items)
                 {
                     var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);

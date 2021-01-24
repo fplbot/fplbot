@@ -9,14 +9,14 @@ namespace Fpl.Client
 {
     public static class ClientHelper
     {
-        public static async Task<T[]> PolledRequests<T>(Task<T>[] requests, ILogger logger, int retries = 3)
+        public static async Task<T[]> PolledRequests<T>(Func<Task<T>[]> requests, ILogger logger, int retries = 3)
         {
             var j = 0;
             while (j < retries)
             {
                 try
                 {
-                    return await Task.WhenAll(requests);
+                    return await Task.WhenAll(requests());
                 }
                 catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.TooManyRequests)
                 {

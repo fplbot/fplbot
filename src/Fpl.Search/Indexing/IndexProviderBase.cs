@@ -21,7 +21,7 @@ namespace Fpl.Search.Indexing
 
         protected Task<ClassicLeague[]> GetBatchOfLeagues(int i, int batchSize, Func<ILeagueClient, int, Task<ClassicLeague>> getLeagueByIterator)
         {
-            return ClientHelper.PolledRequests(Enumerable.Range(i, batchSize).Select(n => getLeagueByIterator(_leagueClient, n)).ToArray(), _logger);
+            return ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => getLeagueByIterator(_leagueClient, n)).ToArray(), _logger);
         }
     }
 }
