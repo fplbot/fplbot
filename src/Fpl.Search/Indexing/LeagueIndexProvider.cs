@@ -42,11 +42,11 @@ namespace Fpl.Search.Indexing
                 .Select(x => new LeagueItem { Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry })
                 .ToArray();
 
-            var adminTasks = items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry.Value).Distinct().Select(x => _entryClient.Get(x)).ToArray();
+            var adminsToFetch = items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry.Value).Distinct().ToArray();
 
-            if (adminTasks.Any())
+            if (adminsToFetch.Any())
             {
-                var admins = await ClientHelper.PolledRequests(() => adminTasks, _logger);
+                var admins = await ClientHelper.PolledRequests(() => adminsToFetch.Select(x => _entryClient.Get(x)).ToArray(), _logger);
                 foreach (var leagueItem in items)
                 {
                     var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);
