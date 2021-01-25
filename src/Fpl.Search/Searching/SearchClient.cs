@@ -37,9 +37,9 @@ namespace Fpl.Search.Searching
 
             foreach (var entryItem in entryItems)
             {
-                if (VerifiedEntries.VerifiedTeamToEmojiMap.ContainsKey(entryItem.Id))
+                if (VerifiedEntries.VerifiedTeamToEmojiMap.ContainsKey(entryItem.Entry))
                 {
-                    entryItem.VerifiedEntryEmoji = VerifiedEntries.VerifiedTeamToEmojiMap[entryItem.Id];
+                    entryItem.VerifiedEntryEmoji = VerifiedEntries.VerifiedTeamToEmojiMap[entryItem.Entry];
                 }
             }
 
