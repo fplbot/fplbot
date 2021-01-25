@@ -32,7 +32,17 @@ namespace Fpl.Search.Searching
                         .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName))
                         .Query(query))));
 
-            return response.Documents;
+            var entryItems = response.Documents;
+
+            foreach (var entryItem in entryItems)
+            {
+                if (VerifiedEntries.VerifiedTeamToEmojiMap.ContainsKey(entryItem.Id))
+                {
+                    entryItem.VerifiedEntryEmoji = VerifiedEntries.VerifiedTeamToEmojiMap[entryItem.Id];
+                }
+            }
+
+            return entryItems;
         }
 
         public async Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null)
