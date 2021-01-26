@@ -78,7 +78,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 sb.Append(Formatter.BulletPoints(entries.ExposedHits.Select(e => Formatter.FormatEntryItem(e, currentGameweek))));
                 if (entries.HitCountExceedingExposedOnes > 0)
                 {
-                    sb.Append($"...and {entries.HitCountExceedingExposedOnes} more");
+                    sb.Append($"\n...and {entries.HitCountExceedingExposedOnes} more");
                 }
             }
             else
@@ -93,7 +93,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
                 sb.Append(Formatter.BulletPoints(leagues.ExposedHits.Select(e => Formatter.FormatLeagueItem(e, currentGameweek))));
                 if (leagues.HitCountExceedingExposedOnes > 0)
                 {
-                    sb.Append($"...and {leagues.HitCountExceedingExposedOnes} more");
+                    sb.Append($"\n...and {leagues.HitCountExceedingExposedOnes} more");
                 }
             }
             else
