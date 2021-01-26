@@ -6,7 +6,7 @@ namespace Fpl.Search
     {
         public static readonly IDictionary<int, string> VerifiedTeamToEmojiMap = new Dictionary<int, string>
         {
-            { 76862, ":chess_pawn:" },
+            { 76862, "♟️" },
         };
     }
 }
