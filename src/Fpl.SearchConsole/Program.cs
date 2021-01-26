@@ -67,13 +67,13 @@ namespace Fpl.SearchConsole
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
                     var result = await searchClient.SearchForEntry(term, 100);
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
                 }
                 else if (command.StartsWith("searchleague"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
                     var result = await searchClient.SearchForLeague(term, 100, "no");
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
                 }
             }
         }

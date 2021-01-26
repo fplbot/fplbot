@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Search.Searching;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.Extensions.FplBot.Helpers;
+using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
-using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
@@ -75,7 +75,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             if (entries.Any())
             {
-                sb.Append(Formatter.BulletPoints(entries.Select(e => Formatter.FormatEntryItem(e, currentGameweek))));
+                sb.Append(Formatter.BulletPoints(entries.ExposedHits.Select(e => Formatter.FormatEntryItem(e, currentGameweek))));
+                if (entries.HitCountExceedingExposedOnes > 0)
+                {
+                    sb.Append($"...and {entries.HitCountExceedingExposedOnes} more");
+                }
             }
             else
             {
@@ -86,7 +90,11 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             if (leagues.Any())
             {
-                sb.Append(Formatter.BulletPoints(leagues.Select(e => Formatter.FormatLeagueItem(e, currentGameweek))));
+                sb.Append(Formatter.BulletPoints(leagues.ExposedHits.Select(e => Formatter.FormatLeagueItem(e, currentGameweek))));
+                if (leagues.HitCountExceedingExposedOnes > 0)
+                {
+                    sb.Append($"...and {leagues.HitCountExceedingExposedOnes} more");
+                }
             }
             else
             {

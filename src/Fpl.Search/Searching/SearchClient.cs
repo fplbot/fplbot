@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nest;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,7 +20,7 @@ namespace Fpl.Search.Searching
             _options = options.Value;
         }
 
-        public async Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits)
+        public async Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits)
         {
             var response = await _elasticClient.SearchAsync<EntryItem>(x => x
                 .Index(_options.EntriesIndex)
@@ -45,10 +44,10 @@ namespace Fpl.Search.Searching
 
             _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, entryItems.Count, response.Total);
 
-            return entryItems;
+            return new SearchResult<EntryItem>(entryItems, response.Total);
         }
 
-        public async Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null)
+        public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null)
         {
             var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
                 .Index(_options.LeaguesIndex)
@@ -70,13 +69,13 @@ namespace Fpl.Search.Searching
 
             _logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, leagueItems.Count, response.Total);
 
-            return leagueItems;
+            return new SearchResult<LeagueItem>(leagueItems, response.Total);
         }
     }
 
     public interface ISearchClient
     {
-        Task<IReadOnlyCollection<EntryItem>> SearchForEntry(string query, int maxHits);
-        Task<IReadOnlyCollection<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null);
+        Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits);
+        Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null);
     }
 }
