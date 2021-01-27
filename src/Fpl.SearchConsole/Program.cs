@@ -108,6 +108,7 @@ namespace Fpl.SearchConsole
         {
             EntriesIndex = "test-entries",
             LeaguesIndex = "test-leagues",
+            AnalyticsIndex = "test-analytics",
             IndexUri = "http://localhost:9200/",
             Username = "-",
             Password = "-",
