@@ -583,7 +583,47 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string FormatEntryItem(EntryItem entryItem, int? gameweek)
         {
-            return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})" + (entryItem.VerifiedEntryEmoji != null ? $" {entryItem.VerifiedEntryEmoji}" : null);
+            return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})" + (entryItem.VerifiedType != null ? $" {GetVerifiedTypeEmoji(entryItem.VerifiedType)}" : null);
+        }
+
+        private static string GetVerifiedTypeEmoji(VerifiedEntryType? entryItemVerifiedType)
+        {
+            if (entryItemVerifiedType == null)
+            {
+                return null;
+            }
+
+            var emojis = ":ballot_box_with_check:";
+
+            switch (entryItemVerifiedType)
+            {
+                case VerifiedEntryType.FootballerInPL:
+                case VerifiedEntryType.Footballer:
+                    emojis += ":soccer:";
+                    break;
+                case VerifiedEntryType.ChessMaster:
+                    emojis += ":chess_pawn:";
+                    break;
+                case VerifiedEntryType.Podcaster:
+                    emojis += ":studio_microphone:";
+                    break;
+                case VerifiedEntryType.CommunityFame:
+                    emojis += ":bird:";
+                    break;
+                case VerifiedEntryType.Actor:
+                    emojis += ":performing_arts:";
+                    break;
+                case VerifiedEntryType.TvFace:
+                    emojis += ":tv:";
+                    break;
+                case VerifiedEntryType.Athlete:
+                    emojis += ":sports_medal:";
+                    break;
+                default:
+                    break;
+            }
+
+            return emojis;
         }
 
         public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)

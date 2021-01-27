@@ -67,7 +67,7 @@ namespace Fpl.SearchConsole
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
                     var result = await searchClient.SearchForEntry(term, 100);
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry} {(x.VerifiedType != null ? $"({x.VerifiedType})" : null)}"))}\n");
                 }
                 else if (command.StartsWith("searchleague"))
                 {
