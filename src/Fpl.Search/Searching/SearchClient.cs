@@ -31,18 +31,11 @@ namespace Fpl.Search.Searching
                         .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName))
                         .Query(query))));
 
+            var hits = response.Hits.OrderByDescending(h => h.Score)
+                .ThenByDescending(h => h.Source.VerifiedType != null ? 1 : 0);
+            var entryItems = hits.Select(h => h.Source).ToArray();
 
-            var entryItems = response.Documents;
-
-            foreach (var entryItem in entryItems)
-            {
-                if (VerifiedEntries.VerifiedTeamToEmojiMap.ContainsKey(entryItem.Entry))
-                {
-                    entryItem.VerifiedEntryEmoji = VerifiedEntries.VerifiedTeamToEmojiMap[entryItem.Entry];
-                }
-            }
-
-            _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, entryItems.Count, response.Total);
+            _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, entryItems.Length, response.Total);
 
             return new SearchResult<EntryItem>(entryItems, response.Total);
         }

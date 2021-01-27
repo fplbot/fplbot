@@ -27,10 +27,17 @@ namespace Fpl.Search.Indexing
             var batch = await GetBatchOfLeagues(i, batchSize, (client, x) => client.GetClassicLeague(Constants.GlobalOverallLeagueId, x));
             var items = batch.SelectMany(x =>
                 x.Standings.Entries.Select(y => 
-                    new EntryItem { Id = y.Id, TeamName = y.EntryName, RealName = y.PlayerName, Entry = y.Entry })).ToArray();
+                    new EntryItem { Id = y.Id, TeamName = y.EntryName, RealName = y.PlayerName, Entry = y.Entry, VerifiedType = GetVerifiedType(y.Entry) })).ToArray();
             var couldBeMore = batch.All(x => x.Standings.HasNext);
             
             return (items, couldBeMore);
+        }
+        
+        private static VerifiedEntryType? GetVerifiedType(int entryId)
+        {
+            return VerifiedEntries.VerifiedEntriesMap.ContainsKey(entryId)
+                ? VerifiedEntries.VerifiedEntriesMap[entryId]
+                : (VerifiedEntryType?) null;
         }
     }
 }
