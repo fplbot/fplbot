@@ -42,7 +42,7 @@ namespace Fpl.Search.Indexing
 
         private async Task Index<T>(IIndexProvider<T> indexProvider) where T : class, IIndexableItem
         {
-            var i = 1;
+            var i = await indexProvider.StartIndexingFrom;
             var batchSize = 8;
             var iteration = 1;
             var shouldContinue = true;

@@ -6,6 +6,7 @@ namespace Fpl.Search.Indexing
     public interface IIndexProvider<T> where T : IIndexableItem
     {
         string IndexName { get; }
+        Task<int> StartIndexingFrom { get; }
         Task<(T[], bool)> GetBatchToIndex(int i, int batchSize);
     }
 }

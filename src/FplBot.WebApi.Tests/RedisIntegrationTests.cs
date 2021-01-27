@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Search.Indexing;
 using FplBot.WebApi.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,7 +13,7 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class SimpleLogger : ILogger<RedisSlackTeamRepository>
+    public class SimpleLogger : ILogger<RedisSlackTeamRepository>, ILogger<LeagueIndexBookmarkProvider>
     {
         private readonly ITestOutputHelper _helper;
 
@@ -41,6 +42,7 @@ namespace FplBot.WebApi.Tests
     {
         private readonly ITestOutputHelper _helper;
         private RedisSlackTeamRepository _repo;
+        private LeagueIndexBookmarkProvider _bookmarkProvider;
         private IServer _server;
 
         public RedisIntegrationTests(ITestOutputHelper helper)
@@ -62,6 +64,7 @@ namespace FplBot.WebApi.Tests
             var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
             _repo = new RedisSlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
+            _bookmarkProvider = new LeagueIndexBookmarkProvider(multiplexer, new SimpleLogger(_helper));
         }
 
         [Fact]
@@ -162,6 +165,14 @@ namespace FplBot.WebApi.Tests
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
             var updated = await _repo.GetTeam("teamId1");
             Assert.Empty(updated.Subscriptions);
+        }
+
+        [Fact]
+        public async Task GetBookmarkTest()
+        {
+            await _bookmarkProvider.SetBookmark(1337);
+            var bookmark = await _bookmarkProvider.GetBookmark();
+            Assert.Equal(1337, bookmark);
         }
 
         public void Dispose()

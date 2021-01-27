@@ -583,12 +583,50 @@ namespace Slackbot.Net.Extensions.FplBot.Helpers
 
         public static string FormatEntryItem(EntryItem entryItem, int? gameweek)
         {
-            return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})";
+            return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})" + (entryItem.VerifiedEntryEmoji != null ? $" {entryItem.VerifiedEntryEmoji}" : null);
         }
 
-        public static string FormatLeagueItem(LeagueItem leagueItem)
+        public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)
         {
-            return GetLeagueLink(leagueItem.Id, leagueItem.Name) + (leagueItem.AdminEntry.HasValue ? $" ({GetEntryLink(leagueItem.AdminEntry.Value, "Admin", null)})" : null);
+            return GetLeagueLink(leagueItem.Id, leagueItem.Name) + 
+                   (leagueItem.AdminEntry.HasValue ? 
+                       $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), gameweek)})" 
+                       : null);
+        }
+
+        private static string FormatLeagueAdmin(string leagueAdminName, string leagueAdminCountryShortIso)
+        {
+            if (string.IsNullOrEmpty(leagueAdminName))
+            {
+                return "Go to admin";
+            }
+
+            return leagueAdminName + " " + FormatCountryShortIso(leagueAdminCountryShortIso);
+        }
+
+        public static string FormatCountryShortIso(string countryIso)
+        {
+            if (string.IsNullOrEmpty(countryIso))
+            {
+                return null;
+            }
+
+            countryIso = countryIso.ToLower();
+
+            switch (countryIso)
+            {
+                case "en":
+                    countryIso = "england";
+                    break;
+                case "s1":
+                    countryIso = "scotland";
+                    break;
+                case "wa":
+                    countryIso = "wales";
+                    break;
+            }
+
+            return $":flag-{countryIso}:";
         }
 
         public static string GetEntryLink(int entryId, string name, int? gameweek)

@@ -28,6 +28,7 @@ namespace Fpl.Search
 
             services.AddSingleton<IIndexProvider<EntryItem>, EntryIndexProvider>();
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
+            services.AddSingleton<IIndexBookmarkProvider, LeagueIndexBookmarkProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();
 
             return services;

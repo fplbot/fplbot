@@ -6,5 +6,6 @@
         public int Entry { get; set; }
         public string RealName { get; set; }
         public string TeamName { get; set; }
+        public string VerifiedEntryEmoji { get; set; }
     }
 }

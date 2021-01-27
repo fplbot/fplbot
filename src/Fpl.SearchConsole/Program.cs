@@ -1,16 +1,16 @@
 ﻿using Fpl.Client;
 using Fpl.Client.Clients;
+using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nest;
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fpl.Search;
-using Microsoft.Extensions.Options;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fpl.SearchConsole
@@ -21,7 +21,14 @@ namespace Fpl.SearchConsole
         {
             var logger = new ConsoleLogger();
             var options = new Options();
-            var esClient = new ElasticClient(new ConnectionSettings(new Uri(options.Value.IndexUri)));
+            
+            var conn = new ConnectionSettings(new Uri(options.Value.IndexUri));
+            if (!string.IsNullOrEmpty(options.Value.Username) && !string.IsNullOrEmpty(options.Value.Password))
+            {
+                conn.BasicAuthentication(options.Value.Username, options.Value.Password);
+            }
+
+            var esClient = new ElasticClient(conn);
             var indexingClient = new IndexingClient(esClient, logger);
             var searchClient = new SearchClient(esClient, logger, options);
             var httpClient = new HttpClient(new HttpClientHandler
@@ -32,9 +39,10 @@ namespace Fpl.SearchConsole
             FplClientOptionsConfigurator.SetupFplClient(httpClient);
             
             var leagueClient = new LeagueClient(httpClient);
+            var entryClient = new EntryClient(httpClient);
             var indexingService = new IndexingService(indexingClient, 
                 new EntryIndexProvider(leagueClient, logger, options), 
-                new LeagueIndexProvider(leagueClient, logger, options), logger);
+                new LeagueIndexProvider(leagueClient, entryClient, new SimpleLeagueIndexBookmarkProvider(), logger, options), logger);
             AppDomain.CurrentDomain.ProcessExit += (s, e) => indexingService.Cancel();
 
             Console.WriteLine("You can either \"index <type>\" or \"searchentry/searchleague <term>\"");
@@ -58,14 +66,14 @@ namespace Fpl.SearchConsole
                 else if (command.StartsWith("searchentry"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.SearchForEntry(term, 10);
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
+                    var result = await searchClient.SearchForEntry(term, 100);
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry}"))}\n");
                 }
                 else if (command.StartsWith("searchleague"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.SearchForLeague(term, 10);
-                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry}"))}\n");
+                    var result = await searchClient.SearchForLeague(term, 100, "no");
+                    Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
                 }
             }
         }
@@ -94,11 +102,48 @@ namespace Fpl.SearchConsole
     {
         public SearchOptions Value => new SearchOptions
         {
-            EntriesIndex = "test.entries",
-            LeaguesIndex = "test.leagues",
+            EntriesIndex = "test-entries",
+            LeaguesIndex = "test-leagues",
             IndexUri = "http://localhost:9200/",
             Username = "-",
-            Password = "-"
+            Password = "-",
+            ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob = 10000,
+            ShouldIndexLeagues = true,
+            ShouldIndexEntries = true
         };
+    }
+
+    internal class SimpleLeagueIndexBookmarkProvider : IIndexBookmarkProvider
+    {
+        private string Path = "./bookmark.txt";
+
+        public async Task<int> GetBookmark()
+        {
+            try
+            {
+                var txt = await System.IO.File.ReadAllTextAsync(Path);
+
+                return int.TryParse(txt, out int bookmark) ? bookmark : 1;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return 1;
+            }
+        }
+
+        public Task SetBookmark(int bookmark)
+        {
+            try
+            {
+                Console.WriteLine($"Setting bookmark at {bookmark}.");
+                return System.IO.File.WriteAllTextAsync(Path, bookmark.ToString());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return Task.CompletedTask;
+            }
+        }
     }
 }
