@@ -2,6 +2,7 @@
 using Fpl.Client.Clients;
 using Fpl.Search;
 using Fpl.Search.Indexing;
+using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -30,7 +31,8 @@ namespace Fpl.SearchConsole
 
             var esClient = new ElasticClient(conn);
             var indexingClient = new IndexingClient(esClient, logger);
-            var searchClient = new SearchClient(esClient, logger, options);
+            var queryStatsIndexingService = new QueryAnalyticsIndexingService(indexingClient, options, logger);
+            var searchClient = new SearchService(esClient, queryStatsIndexingService, logger, options);
             var httpClient = new HttpClient(new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip,
@@ -66,20 +68,22 @@ namespace Fpl.SearchConsole
                 else if (command.StartsWith("searchentry"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.SearchForEntry(term, 100);
+                    var metaData = new SearchMetaData {Actor = Environment.MachineName, Client = QueryClient.Console};
+                    var result = await searchClient.SearchForEntry(term, 100, metaData);
                     Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry} {(x.VerifiedType != null ? $"({x.VerifiedType})" : null)}"))}\n");
                 }
                 else if (command.StartsWith("searchleague"))
                 {
                     var term = command.Substring(command.IndexOf(" ")).Trim();
-                    var result = await searchClient.SearchForLeague(term, 100, "no");
+                    var metaData = new SearchMetaData { Actor = Environment.MachineName, Client = QueryClient.Console };
+                    var result = await searchClient.SearchForLeague(term, 100, metaData, "no");
                     Console.WriteLine($"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
                 }
             }
         }
     }
 
-    internal class ConsoleLogger : ILogger<IndexingClient>, ILogger<SearchClient>, ILogger<IndexProviderBase>
+    internal class ConsoleLogger : ILogger<IndexingClient>, ILogger<SearchService>, ILogger<IndexProviderBase>, ILogger<QueryAnalyticsIndexingService>
     {
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {

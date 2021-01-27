@@ -1,4 +1,5 @@
-﻿using Fpl.Search.Models;
+﻿using Fpl.Search.Indexing;
+using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nest;
@@ -7,20 +8,26 @@ using System.Threading.Tasks;
 
 namespace Fpl.Search.Searching
 {
-    public class SearchClient : ISearchClient
+    public class SearchService : ISearchService
     {
         private readonly IElasticClient _elasticClient;
-        private readonly ILogger<SearchClient> _logger;
+        private readonly IQueryAnalyticsIndexingService _queryAnalyticsIndexingService;
+        private readonly ILogger<SearchService> _logger;
         private readonly SearchOptions _options;
 
-        public SearchClient(IElasticClient elasticClient, ILogger<SearchClient> logger, IOptions<SearchOptions> options)
+        public SearchService(
+            IElasticClient elasticClient,
+            IQueryAnalyticsIndexingService queryAnalyticsIndexingService,
+            ILogger<SearchService> logger, 
+            IOptions<SearchOptions> options)
         {
             _elasticClient = elasticClient;
+            _queryAnalyticsIndexingService = queryAnalyticsIndexingService;
             _logger = logger;
             _options = options.Value;
         }
 
-        public async Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits)
+        public async Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits, SearchMetaData metaData)
         {
             var response = await _elasticClient.SearchAsync<EntryItem>(x => x
                 .Index(_options.EntriesIndex)
@@ -37,10 +44,12 @@ namespace Fpl.Search.Searching
 
             _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, entryItems.Length, response.Total);
 
+            await _queryAnalyticsIndexingService.IndexQuery(query, response.Total, metaData?.Client, metaData?.Team, metaData?.Actor);
+
             return new SearchResult<EntryItem>(entryItems, response.Total);
         }
 
-        public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null)
+        public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, SearchMetaData metaData, string countryToBoost = null)
         {
             var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
                 .Index(_options.LeaguesIndex)
@@ -62,13 +71,15 @@ namespace Fpl.Search.Searching
 
             _logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, leagueItems.Count, response.Total);
 
+            await _queryAnalyticsIndexingService.IndexQuery(query, response.Total, metaData?.Client, metaData?.Team, metaData?.Actor);
+
             return new SearchResult<LeagueItem>(leagueItems, response.Total);
         }
     }
 
-    public interface ISearchClient
+    public interface ISearchService
     {
-        Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits);
-        Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, string countryToBoost = null);
+        Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits, SearchMetaData metaData);
+        Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, SearchMetaData metaData, string countryToBoost = null);
     }
 }

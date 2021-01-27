@@ -10,12 +10,13 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Fpl.Search.Models;
 
 namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     public class FplSearchHandler : HandleAppMentionBase
     {
-        private readonly ISearchClient _searchClient;
+        private readonly ISearchService _searchService;
         private readonly IGameweekClient _gameweekClient;
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
@@ -25,7 +26,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
 
         public FplSearchHandler(
-            ISearchClient searchClient,
+            ISearchService searchService,
             IGameweekClient gameweekClient,
             ISlackWorkSpacePublisher workSpacePublisher,
             ISlackTeamRepository slackTeamRepo,
@@ -33,7 +34,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             IEntryClient entryClient,
             ILogger<FplSearchHandler> logger)
         {
-            _searchClient = searchClient;
+            _searchService = searchService;
             _gameweekClient = gameweekClient;
             _workSpacePublisher = workSpacePublisher;
             _slackTeamRepo = slackTeamRepo;
@@ -50,8 +51,13 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
             string countryToBoost = await GetCountryToBoost(eventMetadata);
 
-            var entriesTask = _searchClient.SearchForEntry(term, 10);
-            var leaguesTask = _searchClient.SearchForLeague(term, 10, countryToBoost);
+            var metaData = new SearchMetaData
+            {
+                Team = eventMetadata.Team_Id, Actor = message.User, Client = QueryClient.Slack
+            };
+
+            var entriesTask = _searchService.SearchForEntry(term, 10, metaData);
+            var leaguesTask = _searchService.SearchForLeague(term, 10, metaData, countryToBoost);
 
             var entries = await entriesTask;
             var leagues = await leaguesTask;
