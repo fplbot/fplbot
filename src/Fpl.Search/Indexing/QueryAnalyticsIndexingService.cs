@@ -22,17 +22,21 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task IndexQuery(string query, long totalHits, QueryClient? client, string team, string actor)
+        public async Task IndexQuery(string query, string queriedIndex, string boostedCountry, long totalHits, long responseTimeMs, QueryClient? client, string team, string followingFplLeagueId, string actor)
         {
             try
             {
-                await _indexingClient.Index(new[]{ new QueryAnalyticsItem
+                await _indexingClient.Index(new[] { new QueryAnalyticsItem
                 {
                     TimeStamp = DateTime.UtcNow,
                     Query = query,
+                    QueriedIndex = queriedIndex,
+                    BoostedCountry = boostedCountry,
                     TotalHits = totalHits,
+                    ResponseTimeMs = responseTimeMs,
                     Client = client,
                     Team = team,
+                    FollowingFplLeagueId = followingFplLeagueId,
                     Actor = actor
                 }}, _options.AnalyticsIndex);
 
@@ -48,6 +52,6 @@ namespace Fpl.Search.Indexing
 
     public interface IQueryAnalyticsIndexingService
     {
-        Task IndexQuery(string query, long totalHits, QueryClient? client, string team, string actor);
+        Task IndexQuery(string query, string queriedIndex, string boostedCountry, long totalHits, long responseTimeMs, QueryClient? client, string team, string followingFplLeagueId, string actor);
     }
 }
