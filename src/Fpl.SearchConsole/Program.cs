@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
-using System.CommandLine;
+﻿using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Hosting;
 using System.CommandLine.Parsing;
 using System.Threading.Tasks;
+using Fpl.SearchConsole.Commands.Definitions;
 using Microsoft.Extensions.Hosting;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using Serilog;
 
 namespace Fpl.SearchConsole
 {
@@ -13,10 +13,10 @@ namespace Fpl.SearchConsole
     {
         public static async Task Main(string[] args)
         {
-            await BuildCommandLine().UseHost(
-                    _ => Host.CreateDefaultBuilder(args)
-                        .ConfigureLogging(l => l.SetMinimumLevel(LogLevel.Information))
-                        .ConfigureServices((_, services) => services.AddSearchConsole()))
+            await BuildCommandLine()
+                .UseHost(_ => Host.CreateDefaultBuilder(args)
+                                    .UseSerilog((_, conf) => conf.WriteTo.Console())
+                                    .ConfigureServices((_, services) => services.AddSearchConsole()))
                 .UseDefaults()
                 .Build()
                 .InvokeAsync(args);
@@ -26,8 +26,8 @@ namespace Fpl.SearchConsole
         private static CommandLineBuilder BuildCommandLine()
         {
             var root = new RootCommand();
-            root.AddCommand(CommandFactory.CreateIndexCommand());
-            root.AddCommand(CommandFactory.CreateSearchCommand());
+            root.AddCommand(IndexCommand.Create());
+            root.AddCommand(SearchCommand.Create());
             return new CommandLineBuilder(root);
         }
     }
