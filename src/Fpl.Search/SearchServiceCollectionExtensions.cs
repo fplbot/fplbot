@@ -24,12 +24,13 @@ namespace Fpl.Search
             });
 
             services.AddSingleton<IIndexingClient, IndexingClient>();
-            services.AddSingleton<ISearchClient, SearchClient>();
+            services.AddSingleton<ISearchService, SearchService>();
 
             services.AddSingleton<IIndexProvider<EntryItem>, EntryIndexProvider>();
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
             services.AddSingleton<IIndexBookmarkProvider, LeagueIndexBookmarkProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();
+            services.AddSingleton<IQueryAnalyticsIndexingService, QueryAnalyticsIndexingService>();
 
             return services;
         }

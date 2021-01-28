@@ -1,4 +1,5 @@
 ﻿using Fpl.Client.Abstractions;
+using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -15,7 +16,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 {
     public class FplSearchHandler : HandleAppMentionBase
     {
-        private readonly ISearchClient _searchClient;
+        private readonly ISearchService _searchService;
         private readonly IGameweekClient _gameweekClient;
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
@@ -25,7 +26,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
 
 
         public FplSearchHandler(
-            ISearchClient searchClient,
+            ISearchService searchService,
             IGameweekClient gameweekClient,
             ISlackWorkSpacePublisher workSpacePublisher,
             ISlackTeamRepository slackTeamRepo,
@@ -33,7 +34,7 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             IEntryClient entryClient,
             ILogger<FplSearchHandler> logger)
         {
-            _searchClient = searchClient;
+            _searchService = searchService;
             _gameweekClient = gameweekClient;
             _workSpacePublisher = workSpacePublisher;
             _slackTeamRepo = slackTeamRepo;
@@ -48,10 +49,22 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
         {
             var term = ParseArguments(message);
 
-            string countryToBoost = await GetCountryToBoost(eventMetadata);
+            SlackTeam slackTeam = null;
+            try
+            {
+                slackTeam = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Unable to get team {teamId} during search.", eventMetadata.Team_Id);
+            }
 
-            var entriesTask = _searchClient.SearchForEntry(term, 10);
-            var leaguesTask = _searchClient.SearchForLeague(term, 10, countryToBoost);
+            string countryToBoost = await GetCountryToBoost(slackTeam);
+
+            var searchMetaData = GetSearchMetaData(slackTeam, message);
+
+            var entriesTask = _searchService.SearchForEntry(term, 10, searchMetaData);
+            var leaguesTask = _searchService.SearchForLeague(term, 10, searchMetaData, countryToBoost);
 
             var entries = await entriesTask;
             var leagues = await leaguesTask;
@@ -106,25 +119,30 @@ namespace Slackbot.Net.Extensions.FplBot.Handlers
             return new EventHandledResponse(sb.ToString());
         }
 
-        private async Task<string> GetCountryToBoost(EventMetaData eventMetadata)
+        private static SearchMetaData GetSearchMetaData(SlackTeam slackTeam, AppMentionEvent message)
+        {
+            var metaData = new SearchMetaData
+            {
+                Team = slackTeam?.TeamId, FollowingFplLeagueId = slackTeam?.FplbotLeagueId.ToString(), Actor = message.User,
+                Client = QueryClient.Slack
+            };
+            return metaData;
+        }
+
+        private async Task<string> GetCountryToBoost(SlackTeam slackTeam)
         {
             string countryToBoost = null;
-            if (eventMetadata.Team_Id != null)
+            if (slackTeam?.FplbotLeagueId != null)
             {
-                var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
+                var league = await _leagueClient.GetClassicLeague((int)slackTeam.FplbotLeagueId);
+                var adminEntry = league?.Properties?.AdminEntry;
 
-                if (team?.FplbotLeagueId != null)
+                if (adminEntry != null)
                 {
-                    var league = await _leagueClient.GetClassicLeague((int) team.FplbotLeagueId);
-                    var adminEntry = league?.Properties?.AdminEntry;
-
-                    if (adminEntry != null)
+                    var admin = await _entryClient.Get(adminEntry.Value);
+                    if (admin != null)
                     {
-                        var admin = await _entryClient.Get(adminEntry.Value);
-                        if (admin != null)
-                        {
-                            countryToBoost = admin.PlayerRegionShortIso;
-                        }
+                        countryToBoost = admin.PlayerRegionShortIso;
                     }
                 }
             }

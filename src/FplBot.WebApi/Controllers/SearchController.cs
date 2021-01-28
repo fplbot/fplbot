@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Threading.Tasks;
+using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -10,12 +11,12 @@ namespace FplBot.WebApi.Controllers
     [Route("[controller]")]
     public class SearchController : ControllerBase
     {
-        private readonly ISearchClient _searchClient;
+        private readonly ISearchService _searchService;
         private readonly ILogger<SearchController> _logger;
 
-        public SearchController(ISearchClient searchClient, ILogger<SearchController> logger)
+        public SearchController(ISearchService searchService, ILogger<SearchController> logger)
         {
-            _searchClient = searchClient;
+            _searchService = searchService;
             _logger = logger;
         }
         
@@ -24,7 +25,12 @@ namespace FplBot.WebApi.Controllers
         {
             try
             {
-                var searchResult = await _searchClient.SearchForEntry(query, 10);
+                var metaData = new SearchMetaData
+                {
+                    Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+                };
+
+                var searchResult = await _searchService.SearchForEntry(query, 10, metaData);
                 return Ok(new
                 {
                     Hits = searchResult,
