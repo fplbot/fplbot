@@ -1,5 +1,4 @@
 ﻿using Fpl.Client;
-using Fpl.Client.Clients;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Searching;
@@ -12,10 +11,11 @@ using System.CommandLine.Builder;
 using System.CommandLine.Hosting;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
 using Fpl.Search.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,8 +30,8 @@ namespace Fpl.SearchConsole
         {
             await BuildCommandLine().UseHost(
                     _ => Host.CreateDefaultBuilder(args)
-                        .ConfigureLogging(l => l.SetMinimumLevel(LogLevel.Warning))
-                        .ConfigureServices((hostContext, services) => services.AddSearchConsole()))
+                        .ConfigureLogging(l => l.SetMinimumLevel(LogLevel.Information))
+                        .ConfigureServices((_, services) => services.AddSearchConsole()))
                 .UseDefaults()
                 .Build()
                 .InvokeAsync(args);
@@ -55,7 +55,7 @@ namespace Fpl.SearchConsole
             {
                 typeArgument
             };
-            indexCommand.Handler = CommandHandler.Create<string, IHost>(IndexDataIntoElastic);
+            indexCommand.Handler = CommandHandler.Create<string, IHost, CancellationToken>(IndexDataIntoElastic);
             return indexCommand;
         }
         
@@ -73,32 +73,60 @@ namespace Fpl.SearchConsole
                 typeArgument,
                 termArgument
             };
-            searchCommand.Handler = CommandHandler.Create<string,string, IHost>(SearchDataInElastic);
+            searchCommand.Handler = CommandHandler.Create<string, string, IHost>(SearchDataInElastic);
             return searchCommand;
         }
         
-        private static async Task IndexDataIntoElastic(string type, IHost host)
+        private static async Task IndexDataIntoElastic(string type, IHost host, CancellationToken token)
         {
-            var serviceProvider = host.Services;
-            var indexer = serviceProvider.GetRequiredService<IndexingService>();
-            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger(typeof(Program));
-            logger.LogInformation($"Indexing {type}");
-            switch (type)
+            while (true)
             {
-                case "entries":
-                    await indexer.IndexEntries();
-                    break;
-                case "leagues":
-                    await indexer.IndexLeagues();
-                    break;
-            }
+                if(token.IsCancellationRequested)
+                {
+                    return;
+                }
+                var serviceProvider = host.Services;
+                var indexer = serviceProvider.GetRequiredService<IIndexingService>();
+                var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+                var logger = loggerFactory.CreateLogger(typeof(Program));
+                logger.LogInformation($"Indexing {type}");
+
+                switch (type)
+                {
+                    case "entries":
+                        await AnsiConsole.Status()
+                            .AutoRefresh(true)
+                            .Spinner(Spinner.Known.Runner)
+                            .SpinnerStyle(Style.Parse("green bold"))
+                            .StartAsync("Indexing entries...", async ctx =>
+                            {
+                                await indexer.IndexEntries(token, page =>
+                                {
+                                    ctx.Status = $"Page {page} indexed";
+                                });
+                            });
+                        break;
+                    case "leagues":
+                        await AnsiConsole.Status()
+                            .AutoRefresh(true)
+                            .Spinner(Spinner.Known.Runner)
+                            .SpinnerStyle(Style.Parse("green bold"))
+                            .StartAsync("Indexing entries...", async ctx =>
+                            {
+                                await indexer.IndexLeagues(token, page =>
+                                {
+                                    ctx.Status = $"Page {page} indexed";
+                                });
+                            });
+                        break;
+                }
+            };
         }
 
         private static async Task SearchDataInElastic(string type, string term, IHost host)
         {
             var serviceProvider = host.Services;
-            var searchClient = serviceProvider.GetRequiredService<SearchService>();
+            var searchClient = serviceProvider.GetRequiredService<ISearchService>();
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger(typeof(Program));
             logger.LogInformation($"Searching {type} for {term}");
@@ -163,112 +191,96 @@ namespace Fpl.SearchConsole
     }
 
     public static class ServiceCollectionExtensions
+    {
+        public static IServiceCollection AddSearchConsole(this IServiceCollection services)
         {
-            public static IServiceCollection AddSearchConsole(this IServiceCollection services)
+            var options = new Options();
+            var conn = new ConnectionSettings(new Uri(options.Value.IndexUri));
+            if (!string.IsNullOrEmpty(options.Value.Username) && !string.IsNullOrEmpty(options.Value.Password))
             {
-                var logger = new ConsoleLogger();
-                var options = new Options();
-
-                var conn = new ConnectionSettings(new Uri(options.Value.IndexUri));
-                if (!string.IsNullOrEmpty(options.Value.Username) && !string.IsNullOrEmpty(options.Value.Password))
-                {
-                    conn.BasicAuthentication(options.Value.Username, options.Value.Password);
-                }
-
-                var esClient = new ElasticClient(conn);
-                var indexingClient = new IndexingClient(esClient, logger);
-                var queryStatsIndexingService = new QueryAnalyticsIndexingService(indexingClient, options, logger);
-                var searchClient = new SearchService(esClient, queryStatsIndexingService, logger, options);
-                var httpClient = new HttpClient(new HttpClientHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip,
-                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12
-                });
-                FplClientOptionsConfigurator.SetupFplClient(httpClient);
-
-                var leagueClient = new LeagueClient(httpClient);
-                var entryClient = new EntryClient(httpClient);
-                var indexingService = new IndexingService(indexingClient,
-                    new EntryIndexProvider(leagueClient, logger, options),
-                    new LeagueIndexProvider(leagueClient, entryClient, new SimpleLeagueIndexBookmarkProvider(), logger,
-                        options), logger);
-
-                services.AddSingleton(indexingService);
-                services.AddSingleton(searchClient);
-                return services;
+                conn.BasicAuthentication(options.Value.Username, options.Value.Password);
             }
+
+            var esClient = new ElasticClient(conn);
+            services.AddSingleton<IElasticClient>(esClient);
+            services.AddSingleton<IIndexingClient, IndexingClient>();
+            services.AddSingleton<IOptions<SearchOptions>>(options);
+            services.AddSingleton<IQueryAnalyticsIndexingService, QueryAnalyticsIndexingService>();
+            services.AddSingleton<ILeagueClient, LeagueClient>(_ => new LeagueClient(CreateHttpClient()));
+            services.AddHttpClient<IEntryClient, EntryClient>(_ => new EntryClient(CreateHttpClient()));
+            services.AddSingleton<IIndexBookmarkProvider, SimpleLeagueIndexBookmarkProvider>();
+            services.AddSingleton<IIndexProvider<EntryItem>, EntryIndexProvider>();
+            services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
+            services.AddSingleton<IIndexingService, IndexingService>();
+            services.AddSingleton<ISearchService, SearchService>();
+            return services;
         }
 
-
-        internal class ConsoleLogger : ILogger<IndexingClient>, ILogger<SearchService>, ILogger<IndexProviderBase>,
-            ILogger<QueryAnalyticsIndexingService>
+        private static HttpClient CreateHttpClient()
         {
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
-                Func<TState, Exception, string> formatter)
+            var httpMessageHandler = new HttpClientHandler
             {
-                if (IsEnabled(logLevel))
-                    Console.WriteLine(formatter(state, exception));
-            }
-
-            public bool IsEnabled(LogLevel logLevel)
-            {
-                return true;
-            }
-
-            public IDisposable BeginScope<TState>(TState state)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        internal class Options : IOptions<SearchOptions>
-        {
-            public SearchOptions Value => new SearchOptions
-            {
-                EntriesIndex = "test-entries",
-                LeaguesIndex = "test-leagues",
-                AnalyticsIndex = "test-analytics",
-                IndexUri = "http://localhost:9200/",
-                Username = "-",
-                Password = "-",
-                ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob = 10000,
-                ShouldIndexLeagues = true,
-                ShouldIndexEntries = true
+                AutomaticDecompression = DecompressionMethods.GZip,
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12
             };
+            var c = new HttpClient(httpMessageHandler)
+                {
+                    BaseAddress = new Uri($"https://fantasy.premierleague.com")
+                };
+                c.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+                c.DefaultRequestHeaders.Add("User-Agent", "Lol");
+                return c;
         }
+    }
 
-        internal class SimpleLeagueIndexBookmarkProvider : IIndexBookmarkProvider
+    internal class Options : IOptions<SearchOptions>
+    {
+        public SearchOptions Value => new SearchOptions
         {
-            private string Path = "./bookmark.txt";
+            EntriesIndex = "test-entries",
+            LeaguesIndex = "test-leagues",
+            AnalyticsIndex = "test-analytics",
+            IndexUri = "http://localhost:9200/",
+            Username = "-",
+            Password = "-",
+            ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob = 10000,
+            ShouldIndexLeagues = true,
+            ShouldIndexEntries = true
+        };
+    }
 
-            public async Task<int> GetBookmark()
+    internal class SimpleLeagueIndexBookmarkProvider : IIndexBookmarkProvider
+    {
+        private string Path = "./bookmark.txt";
+
+        public async Task<int> GetBookmark()
+        {
+            try
             {
-                try
-                {
-                    var txt = await System.IO.File.ReadAllTextAsync(Path);
+                var txt = await System.IO.File.ReadAllTextAsync(Path);
 
-                    return int.TryParse(txt, out int bookmark) ? bookmark : 1;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    return 1;
-                }
+                return int.TryParse(txt, out int bookmark) ? bookmark : 1;
             }
-
-            public Task SetBookmark(int bookmark)
+            catch (Exception e)
             {
-                try
-                {
-                    Console.WriteLine($"Setting bookmark at {bookmark}.");
-                    return System.IO.File.WriteAllTextAsync(Path, bookmark.ToString());
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    return Task.CompletedTask;
-                }
+                Console.WriteLine(e);
+                return 1;
             }
         }
+
+        public Task SetBookmark(int bookmark)
+        {
+            try
+            {
+                Console.WriteLine($"Setting bookmark at {bookmark}.");
+                return System.IO.File.WriteAllTextAsync(Path, bookmark.ToString());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return Task.CompletedTask;
+            }
+        }
+    }
     }
 

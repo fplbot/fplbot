@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Nest;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fpl.Search.Indexing
@@ -17,9 +18,9 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task Index<T>(IEnumerable<T> items, string index) where T : class, IIndexableItem
+        public async Task Index<T>(IEnumerable<T> items, string index, CancellationToken token) where T : class, IIndexableItem
         {
-            var response = await _elasticClient.IndexManyAsync(items, index);
+            var response = await _elasticClient.IndexManyAsync(items, index, token);
             if (response.Errors)
             {
                 foreach (var itemWithError in response.ItemsWithErrors)
@@ -32,6 +33,6 @@ namespace Fpl.Search.Indexing
 
     public interface IIndexingClient
     {
-        Task Index<T>(IEnumerable<T> items, string index) where T : class, IIndexableItem;
+        Task Index<T>(IEnumerable<T> items, string index, CancellationToken token) where T : class, IIndexableItem;
     }
 }

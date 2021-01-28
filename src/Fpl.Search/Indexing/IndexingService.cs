@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading;
 using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
@@ -11,7 +13,6 @@ namespace Fpl.Search.Indexing
         private readonly IIndexingClient _indexingClient;
         private readonly IIndexProvider<EntryItem> _entryIndexProvider;
         private readonly IIndexProvider<LeagueItem> _leagueIndexProvider;
-        private bool _isCancelled;
 
         public IndexingService(
             IIndexingClient indexingClient,
@@ -25,44 +26,38 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task IndexEntries()
+        public async Task IndexEntries(CancellationToken token, Action<int> pageProgress = null)
         {
-            await Index(_entryIndexProvider);
+            await Index(_entryIndexProvider, pageProgress,token);
         }
 
-        public async Task IndexLeagues()
+        public async Task IndexLeagues(CancellationToken token, Action<int> pageProgress = null)
         {
-            await Index(_leagueIndexProvider);
+            await Index(_leagueIndexProvider,pageProgress,token);
         }
 
-        public void Cancel()
-        {
-            _isCancelled = true;
-        }
-
-        private async Task Index<T>(IIndexProvider<T> indexProvider) where T : class, IIndexableItem
+        private async Task Index<T>(IIndexProvider<T> indexProvider, Action<int> pageProgress, CancellationToken token) where T : class, IIndexableItem
         {
             var i = await indexProvider.StartIndexingFrom;
             var batchSize = 8;
             var iteration = 1;
             var shouldContinue = true;
 
-            while (shouldContinue && !_isCancelled)
+            while (shouldContinue && !token.IsCancellationRequested)
             {
                 var (items, couldBeMore) = await indexProvider.GetBatchToIndex(i, batchSize);
 
                 if (items.Any())
                 {
-                    await _indexingClient.Index(items, indexProvider.IndexName);
+                    await _indexingClient.Index(items, indexProvider.IndexName, token);
                 }
 
                 i += batchSize;
 
                 if (iteration % 10 == 0)
                 {
-                    _logger.LogInformation("Indexed page {i}", i);
+                    pageProgress(i);
                 }
-
                 shouldContinue = couldBeMore;
                 iteration++;
             }
@@ -71,8 +66,7 @@ namespace Fpl.Search.Indexing
 
     public interface IIndexingService
     {
-        Task IndexEntries();
-        Task IndexLeagues();
-        void Cancel();
+        Task IndexEntries(CancellationToken token, Action<int> pageProgress = null);
+        Task IndexLeagues(CancellationToken token, Action<int> pageProgress = null);
     }
 }

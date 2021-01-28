@@ -32,23 +32,17 @@ namespace Slackbot.Net.Extensions.FplBot.RecurringActions
                     return;
                 }
 
-                stoppingToken.Register(() =>
-                {
-                    _logger.LogInformation("Cancelling the indexing job due to stoppingToken being cancelled");
-                    _indexingService.Cancel();
-                });
-
                 if (_options.ShouldIndexEntries)
                 {
                     _logger.LogInformation("Starting the entries indexing job");
-                    await _indexingService.IndexEntries();
+                    await _indexingService.IndexEntries(stoppingToken);
                     _logger.LogInformation("Finished indexing all entries");
                 }
 
                 if (_options.ShouldIndexLeagues)
                 {
                     _logger.LogInformation("Starting the league indexing job");
-                    await _indexingService.IndexLeagues();
+                    await _indexingService.IndexLeagues(stoppingToken);
                     _logger.LogInformation("Finished indexing all leagues");
                 }
             }
