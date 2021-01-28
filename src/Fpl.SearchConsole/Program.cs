@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Fpl.Search.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Spectre.Console;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Fpl.SearchConsole
@@ -29,6 +30,7 @@ namespace Fpl.SearchConsole
         {
             await BuildCommandLine().UseHost(
                     _ => Host.CreateDefaultBuilder(args)
+                        .ConfigureLogging(l => l.SetMinimumLevel(LogLevel.Warning))
                         .ConfigureServices((hostContext, services) => services.AddSearchConsole()))
                 .UseDefaults()
                 .Build()
@@ -66,7 +68,7 @@ namespace Fpl.SearchConsole
             Argument<string> termArgument = new("term", "Search term");
             termArgument.Suggestions.Add("Magnus Carlsen");
             
-            var searchCommand = new Command("search", "search data in ElasticSearch")
+            var searchCommand = new Command("search", "Search data in ElasticSearch")
             {
                 typeArgument,
                 termArgument
@@ -99,62 +101,64 @@ namespace Fpl.SearchConsole
             var searchClient = serviceProvider.GetRequiredService<SearchService>();
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger(typeof(Program));
-            logger.LogInformation($"Searching in {type} for {term}");
+            logger.LogInformation($"Searching {type} for {term}");
             var metaData = new SearchMetaData {Actor = Environment.MachineName, Client = QueryClient.Console};
             
             switch (type)
             {
                 case "entries":
                     var entryResult = await searchClient.SearchForEntry(term, 100, metaData);
-                    logger.LogInformation($"Top {entryResult.Count} hits:\n{string.Join("\n", entryResult.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry} {(x.VerifiedType != null ? $"({x.VerifiedType})" : null)}"))}\n");    
+                    RenderEntriesTable(entryResult);
                     break;
                 case "leagues":
                     var leagueResult = await searchClient.SearchForLeague(term, 100, metaData, "no");
-                    logger.LogInformation($"Top {leagueResult.Count} hits:\n{string.Join("\n", leagueResult.ExposedHits.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
+                    RenderLeaguesTable(leagueResult);
                     break;
             }
         }
-    }
 
-
-    public static class StuffDoer
-    {
-        public static void DoStuff()
+        private static void RenderEntriesTable(SearchResult<EntryItem> entryResult)
         {
-            // Console.WriteLine("You can either \"index <type>\" or \"searchentry/searchleague <term>\"");
-            // var command = Console.ReadLine()?.ToLower();
-            //
-            // if (command == null)
-            // {
-            //     Console.WriteLine("Wrong command");
-            // }
-            // else
-            // {
-            //     if (command == "index entries")
-            //     {
-            //         await indexingService.IndexEntries();
-            //     }
-            //     else if (command == "index leagues")
-            //     {
-            //         await indexingService.IndexLeagues();
-            //     }
-            //     else if (command.StartsWith("searchentry"))
-            //     {
-            //         var term = command.Substring(command.IndexOf(" ")).Trim();
-            //         var metaData = new SearchMetaData {Actor = Environment.MachineName, Client = QueryClient.Console};
-            //         var result = await searchClient.SearchForEntry(term, 100, metaData);
-            //         Console.WriteLine(
-            //             $"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.TeamName} ({x.RealName}) - {x.Entry} {(x.VerifiedType != null ? $"({x.VerifiedType})" : null)}"))}\n");
-            //     }
-            //     else if (command.StartsWith("searchleague"))
-            //     {
-            //         var term = command.Substring(command.IndexOf(" ")).Trim();
-            //         var metaData = new SearchMetaData {Actor = Environment.MachineName, Client = QueryClient.Console};
-            //         var result = await searchClient.SearchForLeague(term, 100, metaData, "no");
-            //         Console.WriteLine(
-            //             $"Top {result.Count} hits:\n{string.Join("\n", result.ExposedHits.Select(x => $"{x.Name} - {x.Id} (Admin: {x.AdminEntry})"))}\n");
-            //     }
-            // }
+            var entryTable = new Table();
+            entryTable.Border(TableBorder.Rounded);
+            entryTable.Collapse();
+            entryTable.AddColumn(new TableColumn("Team").Centered());
+            entryTable.AddColumn(new TableColumn("Name").Centered());
+            entryTable.AddColumn(new TableColumn("Id").Centered());
+            entryTable.AddColumn(new TableColumn("Verified type").Centered());
+
+            foreach (var entry in entryResult.ExposedHits)
+            {
+                entryTable.AddRow(entry.TeamName, entry.RealName, entry.Id.ToString(),
+                    entry.VerifiedType.ToString() ?? string.Empty);
+            }
+
+            var rule = new Rule($"[green]Top {entryResult.Count} hits[/]");
+            rule.LeftAligned();
+            AnsiConsole.Render(rule);
+            AnsiConsole.Render(entryTable);
+            AnsiConsole.Render(rule);
+        }
+
+        private static void RenderLeaguesTable(SearchResult<LeagueItem> leagueResult)
+        {
+            var leagueTable = new Table();
+            leagueTable.Border(TableBorder.Rounded);
+            leagueTable.Collapse();
+            leagueTable.AddColumn(new TableColumn("Name").Centered());
+            leagueTable.AddColumn(new TableColumn("Id").Centered());
+            leagueTable.AddColumn(new TableColumn("Admin entry").Centered());
+
+            foreach (var entry in leagueResult.ExposedHits)
+            {
+                leagueTable.AddRow(entry.Name, entry.Id.ToString(), entry.AdminEntry.ToString());
+            }
+
+            var rule = new Rule($"[green]Top {leagueResult.Count} hits[/]");
+            rule.LeftAligned();
+            AnsiConsole.Render(rule);
+            AnsiConsole.Render(leagueTable);
+            AnsiConsole.Render(rule);
         }
     }
 
