@@ -34,7 +34,7 @@ namespace Fpl.Search.Indexing
                     BoostedCountry = boostedCountry,
                     TotalHits = totalHits,
                     ResponseTimeMs = responseTimeMs,
-                    Client = client,
+                    Client = client.ToString(),
                     Team = team,
                     FollowingFplLeagueId = followingFplLeagueId,
                     Actor = actor

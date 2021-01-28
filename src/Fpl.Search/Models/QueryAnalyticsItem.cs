@@ -10,7 +10,7 @@ namespace Fpl.Search.Models
         public string BoostedCountry { get; set; }
         public long TotalHits { get; set; }
         public long ResponseTimeMs { get; set; }
-        public QueryClient? Client { get; set; }
+        public string Client { get; set; }
         public string Team { get; set; }
         public string FollowingFplLeagueId { get; set; }
         public string Actor { get; set; }
@@ -18,8 +18,8 @@ namespace Fpl.Search.Models
 
     public enum QueryClient
     {
-        Slack = 0,
-        Web = 1,
-        Console = 2
+        Slack,
+        Web,
+        Console
     }
 }
