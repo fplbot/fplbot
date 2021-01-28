@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fpl.Search.Indexing
@@ -38,7 +39,7 @@ namespace Fpl.Search.Indexing
                     Team = team,
                     FollowingFplLeagueId = followingFplLeagueId,
                     Actor = actor
-                }}, _options.AnalyticsIndex);
+                }}, _options.AnalyticsIndex, new CancellationToken());
 
                 _logger.LogInformation("Indexed query \"{query}\"", query);
 
