@@ -30,7 +30,6 @@ namespace Fpl.Search
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
             services.AddSingleton<IIndexBookmarkProvider, LeagueIndexBookmarkProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();
-            services.AddSingleton<IQueryAnalyticsIndexingService, QueryAnalyticsIndexingService>();
 
             return services;
         }

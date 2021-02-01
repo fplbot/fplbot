@@ -1,13 +1,14 @@
 ﻿using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FplBot.Messaging.Contracts.Commands.v1;
+using NServiceBus;
 
 namespace Fpl.Search.Indexing
 {
-    public class QueryAnalyticsIndexingService : IQueryAnalyticsIndexingService
+    public class QueryAnalyticsIndexingService : IHandleMessages<IndexQuery>
     {
         private readonly IIndexingClient _indexingClient;
         private readonly SearchOptions _options;
@@ -23,36 +24,10 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task IndexQuery(string query, string queriedIndex, string boostedCountry, long totalHits, long responseTimeMs, QueryClient? client, string team, string followingFplLeagueId, string actor)
+        public async Task Handle(IndexQuery message, IMessageHandlerContext context)
         {
-            try
-            {
-                await _indexingClient.Index(new[] { new QueryAnalyticsItem
-                {
-                    TimeStamp = DateTime.UtcNow,
-                    Query = query,
-                    QueriedIndex = queriedIndex,
-                    BoostedCountry = boostedCountry,
-                    TotalHits = totalHits,
-                    ResponseTimeMs = responseTimeMs,
-                    Client = client.ToString(),
-                    Team = team,
-                    FollowingFplLeagueId = followingFplLeagueId,
-                    Actor = actor
-                }}, _options.AnalyticsIndex, new CancellationToken());
-
-                _logger.LogInformation("Indexed query \"{query}\"", query);
-
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Unable to index query \"{query}\"", query);
-            }
+            await _indexingClient.Index(new[] { message }, _options.AnalyticsIndex, new CancellationToken());
+            _logger.LogInformation("Indexed query \"{query}\"", message.Query);
         }
-    }
-
-    public interface IQueryAnalyticsIndexingService
-    {
-        Task IndexQuery(string query, string queriedIndex, string boostedCountry, long totalHits, long responseTimeMs, QueryClient? client, string team, string followingFplLeagueId, string actor);
     }
 }

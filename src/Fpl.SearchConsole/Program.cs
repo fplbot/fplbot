@@ -5,6 +5,7 @@ using System.CommandLine.Parsing;
 using System.Threading.Tasks;
 using Fpl.SearchConsole.Commands.Definitions;
 using Microsoft.Extensions.Hosting;
+using NServiceBus;
 using Serilog;
 
 namespace Fpl.SearchConsole
@@ -16,7 +17,14 @@ namespace Fpl.SearchConsole
             await BuildCommandLine()
                 .UseHost(_ => Host.CreateDefaultBuilder(args)
                                     .UseSerilog((_, conf) => conf.WriteTo.Console())
-                                    .ConfigureServices((_, services) => services.AddSearchConsole()))
+                                    .UseNServiceBus(ctx =>
+                                    {
+                                        var endpointConfiguration = new EndpointConfiguration($"Fpl.SearchConsole.{ctx.HostingEnvironment.EnvironmentName}");
+                                        endpointConfiguration.UseTransport<LearningTransport>();
+                                        return endpointConfiguration;
+                                    })
+                                    .ConfigureServices((_, services) => services.AddSearchConsole())
+                )
                 .UseDefaults()
                 .Build()
                 .InvokeAsync(args);

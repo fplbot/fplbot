@@ -36,7 +36,7 @@ namespace Fpl.Search.Indexing
             await Index(_leagueIndexProvider,pageProgress,token);
         }
 
-        private async Task Index<T>(IIndexProvider<T> indexProvider, Action<int> pageProgress, CancellationToken token) where T : class, IIndexableItem
+        private async Task Index<T>(IIndexProvider<T> indexProvider, Action<int> pageProgress, CancellationToken token) where T : class
         {
             var i = await indexProvider.StartIndexingFrom;
             var batchSize = 8;
