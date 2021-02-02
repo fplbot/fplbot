@@ -1,5 +1,4 @@
-﻿using Fpl.Search.Models;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Nest;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,7 +17,7 @@ namespace Fpl.Search.Indexing
             _logger = logger;
         }
 
-        public async Task Index<T>(IEnumerable<T> items, string index, CancellationToken token) where T : class, IIndexableItem
+        public async Task Index<T>(IEnumerable<T> items, string index, CancellationToken token) where T : class
         {
             var response = await _elasticClient.IndexManyAsync(items, index, token);
             if (response.Errors)
@@ -33,6 +32,6 @@ namespace Fpl.Search.Indexing
 
     public interface IIndexingClient
     {
-        Task Index<T>(IEnumerable<T> items, string index, CancellationToken token) where T : class, IIndexableItem;
+        Task Index<T>(IEnumerable<T> items, string index, CancellationToken token) where T : class;
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Fpl.Search.Models
 {
-    public class EntryItem : IIndexableItem
+    public class EntryItem
     {
         public int Id { get; set; }
         public int Entry { get; set; }

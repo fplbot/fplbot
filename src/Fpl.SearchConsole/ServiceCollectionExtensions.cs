@@ -27,7 +27,6 @@ namespace Fpl.SearchConsole
             services.AddSingleton<IConnectionSettingsValues>(conn);
             services.AddSingleton<IElasticClient, ElasticClient>();
             services.AddSingleton<IIndexingClient, IndexingClient>();
-            services.AddSingleton<IQueryAnalyticsIndexingService, QueryAnalyticsIndexingService>();
             services.AddHttpClient<ILeagueClient, LeagueClient>(_ => new LeagueClient(CreateHttpClient()));
             services.AddHttpClient<IEntryClient, EntryClient>(_ => new EntryClient(CreateHttpClient()));
             services.AddSingleton<IIndexBookmarkProvider, SimpleLeagueIndexBookmarkProvider>();

@@ -3,7 +3,7 @@ using Fpl.Search.Models;
 
 namespace Fpl.Search.Indexing
 {
-    public interface IIndexProvider<T> where T : IIndexableItem
+    public interface IIndexProvider<T> where T : class
     {
         string IndexName { get; }
         Task<int> StartIndexingFrom { get; }

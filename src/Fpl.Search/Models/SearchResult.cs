@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Fpl.Search.Models
 {
-    public class SearchResult<T> where T : IIndexableItem
+    public class SearchResult<T> where T : class
     {
         public IReadOnlyCollection<T> ExposedHits { get; }
         public long TotalHits { get; }
