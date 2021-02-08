@@ -19,10 +19,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 	ProjectSection(SolutionItems) = preProject
 		..\buildherokuimage.sh = ..\buildherokuimage.sh
 		Directory.Build.targets = Directory.Build.targets
-		Dockerfile = Dockerfile
 		..\test.http = ..\test.http
 		.gitignore = ../.gitignore
 		..\GitVersion.yml = ..\GitVersion.yml
+		..\Dockerfile = ..\Dockerfile
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
