@@ -1,13 +1,13 @@
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
     {

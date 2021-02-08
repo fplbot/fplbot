@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     internal static class SearchHelper
     {

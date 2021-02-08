@@ -1,17 +1,15 @@
-using System;
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Models.BlockKit;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ViewPublish;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 
-
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
     {

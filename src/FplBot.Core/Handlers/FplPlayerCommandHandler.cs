@@ -1,15 +1,15 @@
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using FplBot.Core.Helpers;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models.Events;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     internal class FplPlayerCommandHandler : HandleAppMentionBase
     {

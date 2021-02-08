@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Models;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
+namespace FplBot.Core.GameweekLifecycle
 {
     public class MatchState
     {

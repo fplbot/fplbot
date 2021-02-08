@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.Models;
+using FplBot.Core.Extensions;
+using FplBot.Core.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public class LiveEventsExtractor
     {

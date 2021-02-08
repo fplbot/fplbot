@@ -3,14 +3,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Core;
+using FplBot.Core.Abstractions;
+using FplBot.Core.GameweekLifecycle;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Slackbot.Net.Abstractions.Hosting;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails

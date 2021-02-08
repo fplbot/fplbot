@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     public interface ISlackTeamRepository
     {

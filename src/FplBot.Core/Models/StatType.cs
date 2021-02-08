@@ -1,7 +1,6 @@
-﻿using System;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
+﻿using FplBot.Core.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot
+namespace FplBot.Core.Models
 {
     public enum StatType
     {

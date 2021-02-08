@@ -1,6 +1,6 @@
 using System;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public class DateTimeUtils
     {

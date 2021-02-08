@@ -2,11 +2,11 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Interactive.BlockActions;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class InteractiveBlocksActionHandler : IHandleInteractiveBlockActions
     {

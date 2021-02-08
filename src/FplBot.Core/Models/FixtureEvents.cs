@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Slackbot.Net.Extensions.FplBot.Models
+namespace FplBot.Core.Models
 {
     public class FixtureEvents
     {

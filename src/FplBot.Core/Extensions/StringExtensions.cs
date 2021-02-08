@@ -1,9 +1,9 @@
-﻿using Slackbot.Net.Extensions.FplBot.Abstractions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FplBot.Core.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Extensions
+namespace FplBot.Core.Extensions
 {
     public static class StringExtensions
     {

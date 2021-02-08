@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     public interface ISlackWorkSpacePublisher
     {

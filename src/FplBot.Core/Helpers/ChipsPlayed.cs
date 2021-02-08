@@ -1,9 +1,9 @@
-﻿using Fpl.Client.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     internal class ChipsPlayed : IChipsPlayed
     {

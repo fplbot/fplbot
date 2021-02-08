@@ -1,6 +1,6 @@
 using Fpl.Client.Clients;
 
-namespace Slackbot.Net.Extensions.FplBot
+namespace FplBot.Core
 {
     public class FplbotOptions : FplApiClientOptions
     {

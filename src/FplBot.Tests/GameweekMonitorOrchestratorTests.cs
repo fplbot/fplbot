@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using FakeItEasy;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
-using Slackbot.Net.Extensions.FplBot.RecurringActions;
+using FplBot.Core.Abstractions;
+using FplBot.Core.GameweekLifecycle;
 using Xunit;
 
 namespace FplBot.Tests

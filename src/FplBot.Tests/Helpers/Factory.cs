@@ -12,12 +12,12 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FplBot.Core;
+using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Options;
 using Nest;
 using Newtonsoft.Json;
 using NServiceBus;
-using Slackbot.Net.Extensions.FplBot;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Xunit.Abstractions;
 
 namespace FplBot.Tests.Helpers
@@ -48,7 +48,7 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            services.AddDistributedFplBot(configuration)
+            services.AddFplBot(configuration)
                 .AddFplBotEventHandlers();
 
             SlackClient = A.Fake<ISlackClient>();

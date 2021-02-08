@@ -1,9 +1,9 @@
-using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using System.Threading.Tasks;
-using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.GameweekLifecycle.Handlers;
+using Microsoft.Extensions.Logging;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
+namespace FplBot.Core.GameweekLifecycle
 {
     internal class StateEventsMonitor : IMonitorState
     {

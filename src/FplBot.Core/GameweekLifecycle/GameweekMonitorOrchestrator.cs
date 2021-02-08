@@ -1,9 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.RecurringActions;
+using FplBot.Core.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
+namespace FplBot.Core.GameweekLifecycle
 {
     public class GameweekMonitorOrchestrator : IGameweekMonitorOrchestrator
     {

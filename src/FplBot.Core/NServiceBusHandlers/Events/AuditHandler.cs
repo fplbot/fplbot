@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Events
+namespace FplBot.Core.NServiceBusHandlers.Events
 {
     public class AuditHandler : IHandleMessages<AppInstalled>, IHandleMessages<AppUninstalled>
     {

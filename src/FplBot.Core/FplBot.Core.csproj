@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
-        <RootNamespace>Slackbot.Net.Extensions.FplBot</RootNamespace>
+        <TargetFramework>net5.0</TargetFramework>        
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 

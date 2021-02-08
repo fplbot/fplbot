@@ -1,6 +1,6 @@
 using System;
 
-namespace FplBot.WebApi.Data
+namespace FplBot.Core.Data
 {
     public class RedisOptions
     {

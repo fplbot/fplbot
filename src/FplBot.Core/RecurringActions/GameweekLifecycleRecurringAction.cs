@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Microsoft.Extensions.Logging;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CronBackgroundServices;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using Microsoft.Extensions.Logging;
 
-namespace Slackbot.Net.Extensions.FplBot.RecurringActions
+namespace FplBot.Core.RecurringActions
 {
     public class GameweekLifecycleRecurringAction : IRecurringAction
     {

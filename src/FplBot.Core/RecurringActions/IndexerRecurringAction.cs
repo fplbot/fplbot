@@ -1,12 +1,12 @@
-﻿using CronBackgroundServices;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using CronBackgroundServices;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.RecurringActions
+namespace FplBot.Core.RecurringActions
 {
     public class IndexerRecurringAction : IRecurringAction
     {

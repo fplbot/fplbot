@@ -1,12 +1,12 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System.Net.Http;
+using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using System.Net.Http;
-using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class FplChangeLeagueIdHandler : HandleAppMentionBase
     {

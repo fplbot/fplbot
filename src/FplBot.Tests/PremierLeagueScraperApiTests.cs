@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using FakeItEasy;
+using FplBot.Core;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot;
 using Xunit;
 
 namespace FplBot.Tests

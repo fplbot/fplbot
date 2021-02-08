@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.RecurringActions;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using Xunit;
 
 namespace FplBot.Tests

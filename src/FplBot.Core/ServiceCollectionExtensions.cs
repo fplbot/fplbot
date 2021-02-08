@@ -1,30 +1,29 @@
 using Fpl.Client.Infra;
 using Fpl.Search;
-using FplBot.WebApi;
-using FplBot.WebApi.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
-using Slackbot.Net.Extensions.FplBot;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
-using Slackbot.Net.Extensions.FplBot.Handlers;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
 using System;
+using FplBot.Core;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Data;
+using FplBot.Core.GameweekLifecycle;
+using FplBot.Core.GameweekLifecycle.Handlers;
+using FplBot.Core.Handlers;
+using FplBot.Core.Helpers;
+using FplBot.Core.RecurringActions;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 // ReSharper disable once CheckNamespace
-namespace Slackbot.Net.Abstractions.Hosting
+namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class SlackBotBuilderExtensions
+    public static class ServiceCollectionFplBotExtensions
     {
-        public static IServiceCollection AddDistributedFplBot(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config)
         {
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config.GetSection("fpl"));
@@ -101,11 +100,5 @@ namespace Slackbot.Net.Abstractions.Hosting
                 .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>();
             return services;
         }
-    }
-
-    public class SlackAppOptions
-    {
-        public string Client_Id { get; set; }
-        public string Client_Secret { get; set; }
     }
 }

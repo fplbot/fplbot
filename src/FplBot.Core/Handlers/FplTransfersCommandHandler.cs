@@ -1,11 +1,10 @@
-﻿using System.Linq;
+﻿using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     internal class FplTransfersCommandHandler : HandleAppMentionBase
     {

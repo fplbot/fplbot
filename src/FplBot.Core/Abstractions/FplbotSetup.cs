@@ -1,4 +1,4 @@
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     public class FplbotSetup
     {

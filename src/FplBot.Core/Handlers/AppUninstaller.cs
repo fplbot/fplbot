@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class AppUninstaller : IUninstall
     {

@@ -1,12 +1,11 @@
-using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.RecurringActions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using Microsoft.Extensions.Logging;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
+namespace FplBot.Core.GameweekLifecycle.Handlers
 {
     internal class GameweekStartedHandler : IHandleGameweekStarted
     {

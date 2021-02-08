@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Helpers;
+using FplBot.Core.Helpers;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     public interface ILeagueEntriesByGameweek
     {

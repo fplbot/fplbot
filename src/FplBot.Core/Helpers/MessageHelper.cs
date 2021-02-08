@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public static class MessageHelper
     {

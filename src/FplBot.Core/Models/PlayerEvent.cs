@@ -1,4 +1,4 @@
-﻿namespace Slackbot.Net.Extensions.FplBot
+﻿namespace FplBot.Core.Models
 {
     public class PlayerEvent
     {

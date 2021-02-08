@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Slackbot.Net.Extensions.FplBot
+namespace FplBot.Core
 {
     internal static class PlayerNickNames
     {

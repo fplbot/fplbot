@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
+using FplBot.Core.GameweekLifecycle.Handlers;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
+namespace FplBot.Core.GameweekLifecycle
 {
     public class MatchStateMonitor : IMatchStateMonitor
     {

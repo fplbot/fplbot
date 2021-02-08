@@ -1,15 +1,14 @@
-using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
-using Slackbot.Net.Extensions.FplBot.Models;
-using Slackbot.Net.Extensions.FplBot.Taunts;
-using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using FplBot.Core.Models;
+using FplBot.Core.Taunts;
+using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     internal class GameweekEventsFormatter
     {

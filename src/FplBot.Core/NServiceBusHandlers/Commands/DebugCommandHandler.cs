@@ -7,14 +7,13 @@ using System.Net.Http.Json;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
 using FplBot.Messaging.Contracts.Commands.v1;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 
-namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Commands
+namespace FplBot.Core.NServiceBusHandlers.Commands
 {
     public class DebugCommandHandler : IHandleMessages<ReplyDebugInfo>
     {
@@ -67,7 +66,7 @@ namespace Slackbot.Net.Extensions.FplBot.NServiceBusHandlers.Commands
             httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue($"fplbot",$"{majorMinorPatch}"));
             try
             {
-                string? requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
+                string requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
                 
                 var res = await httpClient.GetFromJsonAsync<Release>(requestUri);
                 string resBody = res?.Body;

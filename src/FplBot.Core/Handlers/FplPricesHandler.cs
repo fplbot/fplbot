@@ -1,13 +1,13 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using FplBot.Core.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using System.Linq;
-using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     internal class FplPricesHandler : HandleAppMentionBase
     {

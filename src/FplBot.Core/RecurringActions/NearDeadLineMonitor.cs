@@ -3,10 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Core.Helpers;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Helpers;
 
-namespace Slackbot.Net.Extensions.FplBot.RecurringActions
+namespace FplBot.Core.RecurringActions
 {
     internal class NearDeadLineMonitor
     {

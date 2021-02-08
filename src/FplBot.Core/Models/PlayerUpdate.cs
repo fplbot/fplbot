@@ -1,6 +1,6 @@
 using Fpl.Client.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Models
+namespace FplBot.Core.Models
 {
     public class PlayerUpdate
     {

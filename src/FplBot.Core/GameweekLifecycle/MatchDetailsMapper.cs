@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Slackbot.Net.Extensions.FplBot.Models;
+using FplBot.Core.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle
+namespace FplBot.Core.GameweekLifecycle
 {
     public class MatchDetailsMapper
     {

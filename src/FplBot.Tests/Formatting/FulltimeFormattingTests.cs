@@ -1,6 +1,6 @@
 using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.Models;
+using FplBot.Core.Helpers;
+using FplBot.Core.Models;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -1,13 +1,13 @@
-using Fpl.Client.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public class LeagueEntriesByGameweek : ILeagueEntriesByGameweek
     {

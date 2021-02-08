@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using FplBot.Core.Helpers;
+using FplBot.Core.Models;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
+namespace FplBot.Core.GameweekLifecycle.Handlers
 {
     public class InjuryUpdateHandler
     {

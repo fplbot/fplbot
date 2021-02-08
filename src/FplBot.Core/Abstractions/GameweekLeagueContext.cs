@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
+using FplBot.Core.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
+namespace FplBot.Core.Abstractions
 {
     public class GameweekLeagueContext
     {

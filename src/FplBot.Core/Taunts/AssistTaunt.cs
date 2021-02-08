@@ -1,4 +1,4 @@
-﻿namespace Slackbot.Net.Extensions.FplBot.Taunts
+﻿namespace FplBot.Core.Taunts
 {
     public class AssistTaunt : ITaunt
     {

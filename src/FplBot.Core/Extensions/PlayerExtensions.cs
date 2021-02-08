@@ -1,6 +1,6 @@
 using Fpl.Client.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Extensions
+namespace FplBot.Core.Extensions
 {
     public static class PlayerExtensions
     {

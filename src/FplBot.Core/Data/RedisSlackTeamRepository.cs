@@ -1,15 +1,15 @@
 using System;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Slackbot.Net.Abstractions.Hosting;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Slackbot.Net.Abstractions.Hosting;
+using StackExchange.Redis;
 
-namespace FplBot.WebApi.Data
+namespace FplBot.Core.Data
 {
     public class RedisSlackTeamRepository : ISlackTeamRepository, ITokenStore
     {

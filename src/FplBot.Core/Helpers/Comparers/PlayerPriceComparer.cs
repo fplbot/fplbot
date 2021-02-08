@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Fpl.Client.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.PriceMonitoring
+namespace FplBot.Core.Helpers.Comparers
 {
     public class PlayerPriceComparer : IEqualityComparer<Player>
     {

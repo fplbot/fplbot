@@ -1,7 +1,7 @@
 ﻿using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Helpers;
+using FplBot.Core.Helpers;
 
-namespace Slackbot.Net.Extensions.FplBot.Extensions
+namespace FplBot.Core.Extensions
 {
     public static class ClassicLeagueEntryExtensions
     {

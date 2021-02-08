@@ -1,14 +1,14 @@
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Helpers;
+using FplBot.Core.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers
+namespace FplBot.Core.GameweekLifecycle
 {
     public class State : IState
     {

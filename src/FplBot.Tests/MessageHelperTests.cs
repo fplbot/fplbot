@@ -1,7 +1,7 @@
 using System;
+using FplBot.Core.Helpers;
 using Xunit;
 using Xunit.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
 
 namespace FplBot.Tests
 {

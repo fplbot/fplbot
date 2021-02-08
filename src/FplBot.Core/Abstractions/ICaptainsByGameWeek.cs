@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     internal interface ICaptainsByGameWeek
     {

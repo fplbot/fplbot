@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Helpers;
+using FplBot.Core.Helpers;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     public interface IEntryForGameweek
     {

@@ -1,6 +1,6 @@
 ﻿using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace Slackbot.Net.Extensions.FplBot.Extensions
+namespace FplBot.Core.Extensions
 {
     public static class SlackUserExtensions
     {

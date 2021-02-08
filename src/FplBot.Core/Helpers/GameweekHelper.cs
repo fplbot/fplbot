@@ -1,8 +1,8 @@
-﻿using Fpl.Client.Abstractions;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     internal class GameweekHelper : IGameweekHelper
     {

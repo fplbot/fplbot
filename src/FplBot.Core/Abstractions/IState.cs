@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Models;
+using FplBot.Core.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Abstractions
+namespace FplBot.Core.Abstractions
 {
     public interface IState
     {

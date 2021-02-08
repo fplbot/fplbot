@@ -1,10 +1,10 @@
-using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 using CronBackgroundServices;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
+using FplBot.Core.GameweekLifecycle.Handlers;
+using Microsoft.Extensions.Logging;
 
-namespace Slackbot.Net.Extensions.FplBot.RecurringActions
+namespace FplBot.Core.RecurringActions
 {
     internal class NearDeadlineRecurringAction : IRecurringAction
     {

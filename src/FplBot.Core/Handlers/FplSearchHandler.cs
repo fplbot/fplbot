@@ -1,18 +1,18 @@
-﻿using Fpl.Client.Abstractions;
-using Fpl.Search.Models;
-using Fpl.Search.Searching;
-using Microsoft.Extensions.Logging;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using Fpl.Search.Models;
+using Fpl.Search.Searching;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
+using FplBot.Core.Helpers;
+using Microsoft.Extensions.Logging;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Models.Events;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class FplSearchHandler : HandleAppMentionBase
     {

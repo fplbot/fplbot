@@ -1,17 +1,17 @@
-﻿using Fpl.Client.Models;
-using Fpl.Search.Models;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using Slackbot.Net.Extensions.FplBot.Models;
-using Slackbot.Net.Models.BlockKit;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using Fpl.Client.Models;
+using Fpl.Search.Models;
+using FplBot.Core.Extensions;
+using FplBot.Core.Models;
+using Slackbot.Net.Models.BlockKit;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public static class Formatter
     {

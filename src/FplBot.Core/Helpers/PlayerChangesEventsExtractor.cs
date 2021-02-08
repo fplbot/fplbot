@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Models;
-using Slackbot.Net.Extensions.FplBot.PriceMonitoring;
+using FplBot.Core.Helpers.Comparers;
+using FplBot.Core.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public class PlayerChangesEventsExtractor
     {

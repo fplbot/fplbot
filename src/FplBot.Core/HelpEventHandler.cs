@@ -7,7 +7,7 @@ using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 
-namespace Slackbot.Net.Extensions.FplBot
+namespace FplBot.Core
 {
     public class HelpEventHandler : IShortcutAppMentions
     {

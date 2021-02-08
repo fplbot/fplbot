@@ -1,11 +1,11 @@
-﻿using Fpl.Client.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     internal class GoalsDuringGameweek : IGoalsDuringGameweek
     {

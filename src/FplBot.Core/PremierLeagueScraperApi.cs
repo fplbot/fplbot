@@ -4,11 +4,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AngleSharp;
+using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
-namespace Slackbot.Net.Extensions.FplBot
+namespace FplBot.Core
 {
     public class PremierLeagueScraperApi : IGetMatchDetails
     {

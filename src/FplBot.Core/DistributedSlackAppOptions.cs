@@ -1,4 +1,4 @@
-namespace FplBot.WebApi
+namespace FplBot.Core
 {
     public class DistributedSlackAppOptions
     {

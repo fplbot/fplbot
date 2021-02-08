@@ -1,15 +1,15 @@
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
 using Microsoft.Extensions.Logging;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {

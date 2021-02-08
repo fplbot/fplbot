@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Slackbot.Net.Extensions.FplBot.RecurringActions
+namespace FplBot.Core.Abstractions
 {
     public interface IHandleGameweekStarted
     {

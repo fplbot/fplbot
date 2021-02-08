@@ -1,8 +1,9 @@
-﻿using Fpl.Client.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Fpl.Client.Models;
+using FplBot.Core.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Helpers
+namespace FplBot.Core.Helpers
 {
     public static class StatHelper
     {

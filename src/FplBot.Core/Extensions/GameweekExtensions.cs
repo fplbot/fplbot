@@ -1,8 +1,8 @@
-﻿using Fpl.Client.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Fpl.Client.Models;
 
-namespace Slackbot.Net.Extensions.FplBot.Extensions
+namespace FplBot.Core.Extensions
 {
     public static class GameweekExtensions
     {

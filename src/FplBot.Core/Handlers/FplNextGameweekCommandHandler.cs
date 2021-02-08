@@ -1,17 +1,14 @@
+using System.Linq;
+using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Helpers;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
 using Slackbot.Net.SlackClients.Http;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Slackbot.Net.Extensions.FplBot.Helpers;
 
-namespace Slackbot.Net.Extensions.FplBot.Handlers
+namespace FplBot.Core.Handlers
 {
     public class FplNextGameweekCommandHandler : HandleAppMentionBase
     {
