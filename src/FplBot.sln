@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Build", "..\build\Fp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Client", "Fpl.Client\Fpl.Client.csproj", "{76C6B8FB-F47B-45BA-894C-A58D48D98D56}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slackbot.Net.Extensions.FplBot", "Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Core", "FplBot.Core\FplBot.Core.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi", "FplBot.WebApi\FplBot.WebApi.csproj", "{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}"
 EndProject
@@ -45,6 +45,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Search", "Fpl.Search\Fpl.Search.csproj", "{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.SearchConsole", "Fpl.SearchConsole\Fpl.SearchConsole.csproj", "{8638EB58-F84F-43B0-9ECF-C60D8BA6B742}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8BF7B64C-7CAC-489B-B419-F5B2A20954D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{1AD92010-0595-4213-95ED-F57DF177968F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

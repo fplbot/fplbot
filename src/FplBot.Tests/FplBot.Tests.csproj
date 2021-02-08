@@ -13,10 +13,6 @@
         <PackageReference Include="FakeItEasy" Version="5.5.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Slackbot.Net.Extensions.FplBot\Slackbot.Net.Extensions.FplBot.csproj" />
-    </ItemGroup>
-
     <ItemGroup Condition="Exists('appsettings.Local.json')">
       <Content Include="appsettings.Local.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -37,6 +33,10 @@
         <AutoGen>True</AutoGen>
         <DependentUpon>TestResources.resx</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FplBot.Core\FplBot.Core.csproj" />
     </ItemGroup>
 
 </Project>
