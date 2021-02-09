@@ -1,0 +1,43 @@
+using System.Collections.Generic;
+using Fpl.Client.Models;
+
+namespace FplBot.Core.Helpers.Comparers
+{
+    public class PlayerPriceComparer : IEqualityComparer<Player>
+    {
+        public bool Equals(Player x, Player y)
+        {
+            if (x == null && y == null)
+                return true;
+            
+            if (x == null || y == null)
+                return false;
+            
+            return x.Id == y.Id && x.CostChangeEvent == y.CostChangeEvent;
+        }
+
+        public int GetHashCode(Player obj)
+        {
+            return obj.Id;
+        }
+    }
+
+    public class StatusComparer : IEqualityComparer<Player>
+    {
+        public bool Equals(Player x, Player y)
+        {
+            if (x == null && y == null)
+                return true;
+            
+            if (x == null || y == null)
+                return false;
+            
+            return x.Id == y.Id && x.Status == y.Status && x.News == y.News;
+        }
+
+        public int GetHashCode(Player obj)
+        {
+            return obj.Id;
+        }
+    }
+}

@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 using FakeItEasy;
+using FplBot.Core.Handlers;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Handlers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit;
 using Xunit.Abstractions;

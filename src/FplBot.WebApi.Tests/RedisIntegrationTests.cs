@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Search.Indexing;
-using FplBot.WebApi.Data;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using StackExchange.Redis;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class SimpleLogger : ILogger<RedisSlackTeamRepository>, ILogger<LeagueIndexBookmarkProvider>
+    public class SimpleLogger : ILogger<RedisSlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>
     {
         private readonly ITestOutputHelper _helper;
 
@@ -42,7 +42,7 @@ namespace FplBot.WebApi.Tests
     {
         private readonly ITestOutputHelper _helper;
         private RedisSlackTeamRepository _repo;
-        private LeagueIndexBookmarkProvider _bookmarkProvider;
+        private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
         private IServer _server;
 
         public RedisIntegrationTests(ITestOutputHelper helper)
@@ -64,7 +64,7 @@ namespace FplBot.WebApi.Tests
             var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
             _repo = new RedisSlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
-            _bookmarkProvider = new LeagueIndexBookmarkProvider(multiplexer, new SimpleLogger(_helper));
+            _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
         }
 
         [Fact]

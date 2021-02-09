@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Search.Indexing;
+using FplBot.Core.Abstractions;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nest;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 
 namespace FplBot.WebApi.Pages.Admin
 {

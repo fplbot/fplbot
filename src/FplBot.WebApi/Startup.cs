@@ -1,7 +1,6 @@
-using System;
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
-using FplBot.WebApi.Data;
+using Fpl.Search;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -11,14 +10,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Serilog;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Hosting;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
 using Slackbot.Net.SlackClients.Http.Extensions;
-using StackExchange.Redis;
 
 namespace FplBot.WebApi
 {
@@ -39,13 +33,12 @@ namespace FplBot.WebApi
             services.AddSlackbotOauthAccessHttpClient();
            
             services.Configure<AnalyticsOptions>(Configuration);
-            services.AddDistributedFplBot(Configuration)
+            services.AddFplBot(Configuration)
                 .AddFplBotEventHandlers(c =>
                 {
                     c.Client_Id = Configuration.GetValue<string>("CLIENT_ID");
                     c.Client_Secret = Configuration.GetValue<string>("CLIENT_SECRET");
                 });
-
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;

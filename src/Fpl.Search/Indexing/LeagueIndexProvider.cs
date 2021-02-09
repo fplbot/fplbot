@@ -3,7 +3,6 @@ using Fpl.Client.Abstractions;
 using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using StackExchange.Redis;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -87,36 +86,6 @@ namespace Fpl.Search.Indexing
             }
 
             return (items, couldBeMore);
-        }
-    }
-
-    public class LeagueIndexBookmarkProvider : IIndexBookmarkProvider
-    {
-        private readonly ILogger<LeagueIndexBookmarkProvider> _logger;
-        private readonly IDatabase _db;
-        private const string BookmarkKey = "leagueIndexBookmark";
-
-        public LeagueIndexBookmarkProvider(ConnectionMultiplexer redis, ILogger<LeagueIndexBookmarkProvider> logger)
-        {
-            _logger = logger;
-            _db = redis.GetDatabase();
-        }
-
-        public async Task<int> GetBookmark()
-        {
-            var valid = (await _db.StringGetAsync(BookmarkKey)).TryParse(out int bookmark);
-            _logger.LogError($"Unable to parse {BookmarkKey} from db");
-
-            return valid ? bookmark : 1;
-        }
-
-        public async Task SetBookmark(int bookmark)
-        {
-            var success = await _db.StringSetAsync(BookmarkKey, bookmark);
-            if (!success)
-            {
-                _logger.LogError($"Unable to set {BookmarkKey} in db");
-            }
         }
     }
 

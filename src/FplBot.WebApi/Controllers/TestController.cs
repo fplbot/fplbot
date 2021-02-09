@@ -4,14 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Core.Abstractions;
+using FplBot.Core.GameweekLifecycle;
+using FplBot.Core.GameweekLifecycle.Handlers;
+using FplBot.Core.Helpers;
+using FplBot.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Extensions.FplBot;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle;
-using Slackbot.Net.Extensions.FplBot.GameweekLifecycle.Handlers;
-using Slackbot.Net.Extensions.FplBot.Helpers;
-using Slackbot.Net.Extensions.FplBot.Models;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.WebApi.Controllers

@@ -1,7 +1,2 @@
-build:
-  docker:
-    web: /Heroku.Dockerfile
-
 run:
   web: dotnet ./FplBot.WebApi.dll
-    

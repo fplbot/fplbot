@@ -1,5 +1,5 @@
 ﻿using Fpl.Client.Models;
-using Slackbot.Net.Extensions.FplBot.Helpers;
+using FplBot.Core.Helpers;
 using Xunit;
 
 namespace FplBot.Tests.Formatting

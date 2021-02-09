@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using Slackbot.Net.Extensions.FplBot.Abstractions;
-using Slackbot.Net.Extensions.FplBot.Extensions;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Extensions;
 using Xunit;
 
 namespace FplBot.Tests
