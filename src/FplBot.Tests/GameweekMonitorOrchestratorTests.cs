@@ -64,7 +64,7 @@ namespace FplBot.Tests
 
         private static GameweekMonitorOrchestrator CreateOrchestrator()
         {
-            var orchestrator = new GameweekMonitorOrchestrator(A.Fake<IHandleGameweekStarted>(), A.Fake<IMonitorState>(), A.Fake<IMatchStateMonitor>(), A.Fake<IHandleGameweekEnded>());
+            var orchestrator = new GameweekMonitorOrchestrator();
             return orchestrator;
         }
     }

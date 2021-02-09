@@ -4,6 +4,7 @@ using System.CommandLine.Hosting;
 using System.CommandLine.Parsing;
 using System.Threading.Tasks;
 using Fpl.SearchConsole.Commands.Definitions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using NServiceBus;
 using Serilog;
@@ -23,8 +24,8 @@ namespace Fpl.SearchConsole
                                         endpointConfiguration.UseTransport<LearningTransport>();
                                         return endpointConfiguration;
                                     })
-                                    .ConfigureServices((_, services) => services.AddSearchConsole())
-                )
+                                    .ConfigureServices((_, services) => services.AddSearchConsole(_.Configuration.GetSection("Search"))
+                ))
                 .UseDefaults()
                 .Build()
                 .InvokeAsync(args);

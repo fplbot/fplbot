@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using CronBackgroundServices;
 using Fpl.Search;
@@ -19,12 +21,11 @@ namespace FplBot.Core.RecurringActions
             _indexingService = indexingService;
             _logger = logger;
             _options = options.Value;
-            _logger.LogInformation($"Registering IndexerRecurringAction. Will run at \"{_options.IndexingCron}\"");
         }
 
         public async Task Process(CancellationToken stoppingToken)
         {
-            using (_logger.BeginCorrelationScope())
+            using (_logger.BeginScope(new Dictionary<string, object> {["CorrelationId"] = Guid.NewGuid()}))
             {
                 if (!_options.ShouldIndexEntries && !_options.ShouldIndexLeagues)
                 {

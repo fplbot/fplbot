@@ -27,7 +27,9 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config.GetSection("fpl"));
-            services.AddSearch(config.GetSection("Search"));
+            services.AddSearching(config.GetSection("Search"));
+            services.AddIndexingServices(config.GetSection("Search"));
+            services.AddRecurringIndexer(config.GetSection("Search"));
             services.Configure<RedisOptions>(config);
             services.Configure<DistributedSlackAppOptions>(config);
             services.AddSingleton<ConnectionMultiplexer>(c =>
@@ -59,7 +61,25 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<InjuryUpdateHandler>();
             services.AddSingleton<FixtureFulltimeHandler>();
             services.AddSingleton<IState, State>();
-            services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>();
+            services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>(c =>
+            {
+                IHandleGameweekStarted startedNotifier = c.GetService<IHandleGameweekStarted>();
+                IMonitorState stateMonitor = c.GetService<IMonitorState>();
+                IMatchStateMonitor matchStateMonitor = c.GetService<IMatchStateMonitor>();
+                IHandleGameweekEnded endedNotifier= c.GetService<IHandleGameweekEnded>();
+                var orch = new GameweekMonitorOrchestrator();
+                orch.InitializeEventHandlers += stateMonitor.Initialize;
+                orch.InitializeEventHandlers += matchStateMonitor.Initialize;
+                orch.GameWeekJustBeganEventHandlers += stateMonitor.HandleGameweekStarted;
+                orch.GameWeekJustBeganEventHandlers += matchStateMonitor.HandleGameweekStarted;
+                orch.GameweekIsCurrentlyOngoingEventHandlers += stateMonitor.HandleGameweekOngoing;
+                orch.GameweekIsCurrentlyOngoingEventHandlers += matchStateMonitor.HandleGameweekOngoing;
+                orch.GameweekCurrentlyFinishedEventHandlers += stateMonitor.HandleGameweekCurrentlyFinished;
+                orch.GameweekCurrentlyFinishedEventHandlers += matchStateMonitor.HandleGameweekCurrentlyFinished;
+                orch.GameWeekJustBeganEventHandlers += startedNotifier.HandleGameweekStarted;
+                orch.GameweekEndedEventHandlers += endedNotifier.HandleGameweekEnded;
+                return orch;
+            });
             services.AddSingleton<DateTimeUtils>();
             services.AddHttpClient<IGetMatchDetails,PremierLeagueScraperApi>();
             services.AddSingleton<MatchState>();
@@ -69,7 +89,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<NearDeadLineMonitor>();
             services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
-                .AddRecurrer<IndexerRecurringAction>()
                 .Build();
             return services;
         }

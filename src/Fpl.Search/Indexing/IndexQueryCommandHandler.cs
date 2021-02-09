@@ -8,16 +8,16 @@ using NServiceBus;
 
 namespace Fpl.Search.Indexing
 {
-    public class QueryAnalyticsIndexingService : IHandleMessages<IndexQuery>
+    public class IndexQueryCommandHandler : IHandleMessages<IndexQuery>
     {
         private readonly IIndexingClient _indexingClient;
         private readonly SearchOptions _options;
-        private readonly ILogger<QueryAnalyticsIndexingService> _logger;
+        private readonly ILogger<IndexQueryCommandHandler> _logger;
 
-        public QueryAnalyticsIndexingService(
+        public IndexQueryCommandHandler(
             IIndexingClient indexingClient,
             IOptions<SearchOptions> options,
-            ILogger<QueryAnalyticsIndexingService> logger)
+            ILogger<IndexQueryCommandHandler> logger)
         {
             _indexingClient = indexingClient;
             _options = options.Value;

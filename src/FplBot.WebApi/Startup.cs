@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
+using Fpl.Search;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -38,7 +39,6 @@ namespace FplBot.WebApi
                     c.Client_Id = Configuration.GetValue<string>("CLIENT_ID");
                     c.Client_Secret = Configuration.GetValue<string>("CLIENT_SECRET");
                 });
-
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
