@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.Workers;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using Microsoft.Extensions.Logging;
@@ -156,8 +158,8 @@ namespace FplBot.Core.Helpers
                 {
                     var picks = await picksTask;
                     var transferCost = picks.EventEntryHistory.EventTransfersCost;
-                    var wildcardPlayed = picks.ActiveChip == Constants.ChipNames.Wildcard;
-                    var freeHitPlayed = picks.ActiveChip == Constants.ChipNames.FreeHit;
+                    var wildcardPlayed = picks.ActiveChip == FplConstants.ChipNames.Wildcard;
+                    var freeHitPlayed = picks.ActiveChip == FplConstants.ChipNames.FreeHit;
                     if (wildcardPlayed)
                     {
                         sb.Append($"{entry.GetEntryLink(gameweek)} threw a WILDCAAAAARD :fire::fire::fire::\n");

@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client;
 using Fpl.Client.Abstractions;
+using Fpl.Workers;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 
@@ -23,7 +25,7 @@ namespace FplBot.Core.Helpers
             return fixtures
                 .Select(fixture => fixture.Stats
                     .OrEmptyIfNull()
-                    .SingleOrDefault(stat => stat.Identifier == Constants.StatIdentifiers.GoalsScored))
+                    .SingleOrDefault(stat => stat.Identifier == FplConstants.StatIdentifiers.GoalsScored))
                 .WhereNotNull()
                 .SelectMany(goalStatsPrFixture =>
                     goalStatsPrFixture?.HomeStats?.OrEmptyIfNull()

@@ -1,25 +1,23 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FplBot.Core;
 using FplBot.Core.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace FplBot.Tests.Helpers
 {
     public class InMemorySlackTeamRepository : ISlackTeamRepository
     {
-        private readonly IOptions<FplbotOptions> _options;
+        private readonly long _leagueId;
 
-        public InMemorySlackTeamRepository(IOptions<FplbotOptions> options)
+        public InMemorySlackTeamRepository()
         {
-            _options = options;
+            _leagueId = 15263;
         }
 
         public Task<SlackTeam> GetTeam(string teamId)
         {
             return Task.FromResult(new SlackTeam
             {
-                FplbotLeagueId = _options.Value.LeagueId
+                FplbotLeagueId = _leagueId
             });
         }
 
@@ -43,7 +41,7 @@ namespace FplBot.Tests.Helpers
             IEnumerable<SlackTeam> teams = new []{ 
                 new SlackTeam
                 {
-                    FplbotLeagueId = _options.Value.LeagueId
+                    FplbotLeagueId = _leagueId
                 } 
             };
             return Task.FromResult(teams);

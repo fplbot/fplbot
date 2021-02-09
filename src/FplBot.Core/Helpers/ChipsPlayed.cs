@@ -1,6 +1,8 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client;
 using Fpl.Client.Abstractions;
+using Fpl.Workers;
 using FplBot.Core.Abstractions;
 
 namespace FplBot.Core.Helpers
@@ -18,7 +20,7 @@ namespace FplBot.Core.Helpers
         {
             var entryHistory = await _historyClient.GetHistory(teamCode);
 
-            var tripleCapChip = entryHistory.Chips.FirstOrDefault(chip => chip.Name == Constants.ChipNames.TripleCaptain);
+            var tripleCapChip = entryHistory.Chips.FirstOrDefault(chip => chip.Name == FplConstants.ChipNames.TripleCaptain);
             if (tripleCapChip == null)
             {
                 return false;

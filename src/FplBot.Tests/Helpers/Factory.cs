@@ -49,7 +49,7 @@ namespace FplBot.Tests.Helpers
 
             var services = new ServiceCollection();
             services.AddFplBot(configuration)
-                .AddFplBotEventHandlers();
+                .AddFplBotSlackEventHandlers();
 
             SlackClient = A.Fake<ISlackClient>();
             GameweekClient = A.Fake<IGameweekClient>();
@@ -72,7 +72,7 @@ namespace FplBot.Tests.Helpers
             services.Replace<ITeamsClient>(teamsClient);
             services.Replace<IGlobalSettingsClient>(globalClient);
             services.Replace<ITokenStore>(new DontCareRepo());
-            services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository(new OptionsWrapper<FplbotOptions>(new FplbotOptions())));
+            services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository());
             services.Replace<IElasticClient>(elasticClient);
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             services.AddSingleton<IMessageSession>(A.Fake<IMessageSession>()); // Faking NServicebus

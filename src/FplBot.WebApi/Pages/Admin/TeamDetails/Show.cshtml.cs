@@ -6,6 +6,7 @@ using Fpl.Client.Models;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Core.GameweekLifecycle;
+using FplBot.WebApi.Configurations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,17 +20,15 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 {
     public class TeamDetailsIndex : PageModel
     {
-        private readonly State _stateDetails;
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _builder;
         private readonly ILeagueClient _leagueClient;
-        private readonly IOptions<SlackAppOptions> _slackAppOptions;
+        private readonly IOptions<OAuthOptions> _slackAppOptions;
         private readonly ILogger<TeamDetailsIndex> _logger;
 
-        public TeamDetailsIndex(IState state, ISlackTeamRepository teamRepo, ITokenStore tokenStore, ILogger<TeamDetailsIndex> logger, IOptions<SlackAppOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
+        public TeamDetailsIndex(ISlackTeamRepository teamRepo, ITokenStore tokenStore, ILogger<TeamDetailsIndex> logger, IOptions<OAuthOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
         {
-            _stateDetails = state as State;
             _teamRepo = teamRepo;
             _tokenStore = tokenStore;
             _logger = logger;
@@ -67,7 +66,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
         {
             _logger.LogInformation($"Deleting {teamId}");
             var slackClient = await CreateSlackClient(teamId);
-            var res = await slackClient.AppsUninstall(_slackAppOptions.Value.Client_Id, _slackAppOptions.Value.Client_Secret);
+            var res = await slackClient.AppsUninstall(_slackAppOptions.Value.CLIENT_ID, _slackAppOptions.Value.CLIENT_SECRET);
             if (res.Ok)
             {
                 TempData["msg"] = "Uninstall queued, and will be handled at some point";

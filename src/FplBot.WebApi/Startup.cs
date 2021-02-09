@@ -1,6 +1,13 @@
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
+using Fpl.Client.Models;
 using Fpl.Search;
+using FplBot.Core;
+using FplBot.Core.Models;
+using FplBot.WebApi.Configurations;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -31,14 +38,11 @@ namespace FplBot.WebApi
             services.AddDataProtection().SetApplicationName("fplbot"); // set static so cookies are not encrypted differently after a reboot/deploy. https://github.com/dotnet/aspnetcore/issues/2513#issuecomment-354683162
             services.AddControllers();
             services.AddSlackbotOauthAccessHttpClient();
-           
+            services.Configure<OAuthOptions>(Configuration);
             services.Configure<AnalyticsOptions>(Configuration);
+            services.AddReducedHttpClientFactoryLogging();
             services.AddFplBot(Configuration)
-                .AddFplBotEventHandlers(c =>
-                {
-                    c.Client_Id = Configuration.GetValue<string>("CLIENT_ID");
-                    c.Client_Secret = Configuration.GetValue<string>("CLIENT_SECRET");
-                });
+                .AddFplBotSlackEventHandlers();
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;

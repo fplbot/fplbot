@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
@@ -7,6 +8,7 @@ using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.GameweekLifecycle;
 using FplBot.Core.Models;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -14,180 +16,97 @@ namespace FplBot.Tests
 {
     public class StateTests
     {
+        private static IMediator _Mediator;
+
+
         [Fact]
         public async Task DoesNotCrashWithNoDataReturned()
         {
             var state = CreateAllMockState();
-            var wasCalled = false;
-            state.OnNewFixtureEvents += (events) =>
-            {
-                Assert.False(true); // should not emit this event on reset
-                wasCalled = true;
-                return Task.CompletedTask;
-            };
-            state.OnPriceChanges += events =>
-            {
-                wasCalled = true;
-                Assert.False(true); // should not emit this event on reset
-                return Task.CompletedTask;
-            };
+
             await state.Reset(1);
-            Assert.False(wasCalled);
+            A.CallTo(() => _Mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
         }
 
         [Fact]
         public async Task WithGoalScoredEvent()
         {
             var state = CreateGoalScoredScenario();
-            var newFixtureEventsHappened = false;
-            state.OnNewFixtureEvents += (newEvents) =>
-            {
-                newFixtureEventsHappened = true;
-                Assert.NotEmpty(newEvents.Events);
-                Assert.Single(newEvents.Events);
-                var goalEvent = newEvents.Events.First().StatMap[StatType.GoalsScored].First();
-                Assert.Equal(PlayerEvent.TeamType.Away, goalEvent.Team);
-                Assert.Equal(TestBuilder.PlayerId, goalEvent.PlayerId);
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(newFixtureEventsHappened);
+            A.CallTo(() => _Mediator.Publish(A<FixtureEventsOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
         
         [Fact]
         public async Task WithPriceIncrease()
         {
             var state = CreatePriceIncreaseScenario();
-            var priceChangeEventEmitted = false;
-            state.OnPriceChanges += newPrices =>
-            {
-                priceChangeEventEmitted = true;
-                Assert.Single(newPrices);
-                var priceInc = newPrices.First();
-                Assert.Equal(1, priceInc.ToPlayer.CostChangeEvent);
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(priceChangeEventEmitted);
+            A.CallTo(() => _Mediator.Publish(A<PriceChangeOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
         
         [Fact]
         public async Task WithInjuryUpdate()
         {
-            var state = CreateNewInjuryScenario();
-            var statusUpdateEmitted = false;
-            state.OnInjuryUpdates += statusUpdates =>
-            {
-                statusUpdateEmitted = true;
-                Assert.Single(statusUpdates);
-                var statusUpdate = statusUpdates.First();
-                return Task.CompletedTask;
-            };
-            
+            var state = CreateNewInjuryScenario(); 
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(statusUpdateEmitted);
+            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
         
         [Fact]
         public async Task WithNewPlayer()
         {
             var state = CreateNewPlayerScenario();
-            var statusUpdateEmitted = false;
-            state.OnInjuryUpdates += statusUpdates =>
-            {
-                statusUpdateEmitted = true;
-                Assert.Single(statusUpdates);
-                var statusUpdate = statusUpdates.First();
-                Assert.Equal(statusUpdate.ToPlayer.SecondName, TestBuilder.OtherPlayer().SecondName);
-                Assert.Null(statusUpdate.FromPlayer);
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(statusUpdateEmitted);
+            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
         
         [Fact]
         public async Task WithChangeInDoubtfulnessEmitsEvent()
         {
             var state = CreateChangeInDoubtfulnessScenario();
-            var statusUpdateEmitted = false;
-            state.OnInjuryUpdates += statusUpdates =>
-            {
-                statusUpdateEmitted = true;
-                Assert.Single(statusUpdates);
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(statusUpdateEmitted);
+            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
 
         [Fact]
         public async Task WithNoFinishedFixtures_DoesNotEmitEvent()
         {
             var state = CreateNoFinishedFixturesScenario();
-            var fixtureFinishedEmitted = false;
-            state.OnFixturesProvisionalFinished += fixtures =>
-            {
-                fixtureFinishedEmitted = true;
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.False(fixtureFinishedEmitted);
+            A.CallTo(() => _Mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
         }
         
         [Fact]
         public async Task WithSingleProvisionalFinished_EmitsEvent()
         {
             var state = CreateSingleFinishedFixturesScenario();
-            var fixtureFinishedEmitted = false;
-            state.OnFixturesProvisionalFinished += fixtures =>
-            {
-                fixtureFinishedEmitted = true;
-                Assert.Single(fixtures);
-                Assert.NotEmpty(fixtures.First().BonusPoints);
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(fixtureFinishedEmitted);
+            A.CallTo(() => _Mediator.Publish(A<FixturesFinished>._, CancellationToken.None)).MustHaveHappenedOnceExactly();            
         }
         
         [Fact]
         public async Task WithMultipleProvisionalFinished_EmitsEvent()
         {
             var state = CreateMultipleFinishedFixturesScenario();
-            var fixtureFinishedEmitted = false;
-            state.OnFixturesProvisionalFinished += fixtures =>
-            {
-                fixtureFinishedEmitted = true;
-                Assert.Equal(2,fixtures.Count());
-                return Task.CompletedTask;
-            };
-            
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.True(fixtureFinishedEmitted);
+            A.CallTo(() => _Mediator.Publish(A<FixturesFinished>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
 
-        private static IState CreateAllMockState()
+        private static State CreateAllMockState()
         {
-            return new State(A.Fake<IFixtureClient>(),
-                A.Fake<IGlobalSettingsClient>());
+            _Mediator = A.Fake<IMediator>();
+            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _Mediator);
         }
         
-        private static IState CreateMultipleFinishedFixturesScenario()
+        private static State CreateMultipleFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -220,7 +139,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, playerClient);
         }
         
-        private static IState CreateSingleFinishedFixturesScenario()
+        private static State CreateSingleFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -256,7 +175,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, playerClient);
         }
         
-        private static IState CreateNoFinishedFixturesScenario()
+        private static State CreateNoFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -287,7 +206,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, playerClient);
         }
         
-        private static IState CreateGoalScoredScenario()
+        private static State CreateGoalScoredScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -318,7 +237,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, playerClient);
         }
         
-        private static IState CreateNewInjuryScenario()
+        private static State CreateNewInjuryScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -351,7 +270,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, settingsClient);
         }
         
-        private static IState CreateChangeInDoubtfulnessScenario()
+        private static State CreateChangeInDoubtfulnessScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -384,7 +303,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, settingsClient);
         }
         
-        private static IState CreateNewPlayerScenario()
+        private static State CreateNewPlayerScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -418,7 +337,7 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, settingsClient);
         }
 
-        private static IState CreatePriceIncreaseScenario()
+        private static State CreatePriceIncreaseScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(new GlobalSettings 
@@ -451,20 +370,17 @@ namespace FplBot.Tests
             return CreateBaseScenario(fixtureClient, playerClient);
         }
 
-        private static IState CreateBaseScenario(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
+        private static State CreateBaseScenario(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
         {
             var slackTeamRepository = A.Fake<ISlackTeamRepository>();
             A.CallTo(() => slackTeamRepository.GetAllTeams()).Returns(new List<SlackTeam>
             {
                 TestBuilder.SlackTeam()
             });
-
-            return new State(fixtureClient, settingsClient);
+            _Mediator = A.Fake<IMediator>();
+            return new State(fixtureClient, settingsClient, _Mediator);
         }
-
-        private static ILogger<State> FakeLogger()
-        {
-            return new Logger<State>(A.Fake<ILoggerFactory>());
-        }
+        
+        
     }
 }
