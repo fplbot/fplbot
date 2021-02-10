@@ -21,7 +21,7 @@ namespace FplBot.WebApi.Controllers
         }
         
         [HttpGet("entries/{query}")]
-        public async Task<IActionResult> GetEntries(string query)
+        public async Task<IActionResult> GetEntries(string query, int page)
         {
             try
             {
@@ -30,7 +30,14 @@ namespace FplBot.WebApi.Controllers
                     Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
                 };
 
-                var searchResult = await _searchService.SearchForEntry(query, 10, metaData);
+                var searchResult = await _searchService.SearchForEntry(query, page, 10, metaData);
+
+                if (searchResult.TotalPages < page && !searchResult.Any())
+                {
+                    ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+                    return BadRequest(ModelState);
+                }
+
                 return Ok(new
                 {
                     Hits = searchResult,

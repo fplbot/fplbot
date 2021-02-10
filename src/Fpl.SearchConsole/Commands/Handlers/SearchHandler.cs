@@ -22,11 +22,11 @@ namespace Fpl.SearchConsole.Commands.Handlers
             switch (type)
             {
                 case "entries":
-                    var entryResult = await searchClient.SearchForEntry(term, 100, metaData);
+                    var entryResult = await searchClient.SearchForEntry(term, 0, 100, metaData);
                     OutputRenderer.RenderEntriesTable(entryResult);
                     break;
                 case "leagues":
-                    var leagueResult = await searchClient.SearchForLeague(term, 100, metaData, "no");
+                    var leagueResult = await searchClient.SearchForLeague(term, 0, 100, metaData, "no");
                     OutputRenderer.RenderLeaguesTable(leagueResult);
                     break;
             }

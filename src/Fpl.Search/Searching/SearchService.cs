@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Nest;
 using System.Linq;
 using System.Threading.Tasks;
+using Elasticsearch.Net;
 using FplBot.Messaging.Contracts.Commands.v1;
 using NServiceBus;
 
@@ -29,61 +30,62 @@ namespace Fpl.Search.Searching
             _options = options.Value;
         }
 
-        public async Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits, SearchMetaData metaData)
+        public async Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData)
         {
-         
-
             var response = await _elasticClient.SearchAsync<EntryItem>(x => x
                 .Index(_options.EntriesIndex)
-                .From(0)
+                .From(page * maxHits)
                 .Size(maxHits)
                 .Query(q => q
                     .MultiMatch(m => m
                         .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName))
-                        .Query(query))));
+                        .Query(query)
+                        .Fuzziness(Fuzziness.Auto))
+                    )
+                .Sort(sd => sd
+                    .Descending(SortSpecialField.Score)
+                    .Descending(p => p.VerifiedType != null ? 1 : 0)
+                    .Ascending(SortSpecialField.DocumentIndexOrder))
+                .Preference(metaData?.Actor)
+                );
 
-            var hits = response.Hits.OrderByDescending(h => h.Score)
-                .ThenByDescending(h => h.Source.VerifiedType != null ? 1 : 0);
-            var entryItems = hits.Select(h => h.Source).ToArray();
+            _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-            _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, entryItems.Length, response.Total);
+            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, page, _options.EntriesIndex, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
-            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, _options.EntriesIndex,null,response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
-
-            return new SearchResult<EntryItem>(entryItems, response.Total);
+            return new SearchResult<EntryItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
         }
 
-        public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, SearchMetaData metaData, string countryToBoost = null)
+        public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null)
         {
             var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
                 .Index(_options.LeaguesIndex)
-                .From(0)
+                .From(page * maxHits)
                 .Size(maxHits)
                 .Query(q => q
                     .MultiMatch(m => m
-                        .Fields(f => f.Fields(y => y.Name))
-                        .Query(query))));
+                        .Fields(f => f.Field(y => y.Name, 1.5).Field(y => y.AdminName))
+                        .Query(query)
+                        .Fuzziness(Fuzziness.Auto))
+                    )
+                .Sort(sd => sd
+                    .Descending(SortSpecialField.Score)
+                    .Descending(p => p.AdminCountry == countryToBoost ? 1 : 0)
+                    .Ascending(SortSpecialField.DocumentIndexOrder))
+                .Preference(metaData?.Actor)
+                );
 
-            var leagueItems = response.Documents;
+            _logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-            if (!string.IsNullOrEmpty(countryToBoost))
-            {
-                var hits = response.Hits.OrderByDescending(h => h.Score)
-                    .ThenByDescending(h => h.Source.AdminCountry == countryToBoost ? 1 : 0);
-                leagueItems = hits.Select(h => h.Source).ToArray();
-            }
+            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex,countryToBoost,response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
-            _logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, leagueItems.Count, response.Total);
-
-            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, _options.LeaguesIndex,countryToBoost,response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
-
-            return new SearchResult<LeagueItem>(leagueItems, response.Total);
+            return new SearchResult<LeagueItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
         }
     }
 
     public interface ISearchService
     {
-        Task<SearchResult<EntryItem>> SearchForEntry(string query, int maxHits, SearchMetaData metaData);
-        Task<SearchResult<LeagueItem>> SearchForLeague(string query, int maxHits, SearchMetaData metaData, string countryToBoost = null);
+        Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
+        Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
     }
 }

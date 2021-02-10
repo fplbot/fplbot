@@ -63,8 +63,8 @@ namespace FplBot.Core.Handlers
 
             var searchMetaData = GetSearchMetaData(slackTeam, message);
 
-            var entriesTask = _searchService.SearchForEntry(term, 10, searchMetaData);
-            var leaguesTask = _searchService.SearchForLeague(term, 10, searchMetaData, countryToBoost);
+            var entriesTask = _searchService.SearchForEntry(term, 0, 10, searchMetaData);
+            var leaguesTask = _searchService.SearchForLeague(term, 0, 10, searchMetaData, countryToBoost);
 
             var entries = await entriesTask;
             var leagues = await leaguesTask;
