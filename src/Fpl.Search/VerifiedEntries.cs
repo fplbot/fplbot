@@ -149,7 +149,8 @@ namespace Fpl.Search
 
             // CommunityFame:
             { 5225, VerifiedEntryType.CommunityFame }, // Mats Mauno (@FPLPiglet)
-            { 55085, VerifiedEntryType.CommunityFame } // Pranil Sheth (@lateriser12)
+            { 55085, VerifiedEntryType.CommunityFame }, // Pranil Sheth (@lateriser12)
+            { 132073, VerifiedEntryType.CommunityFame } // Ben Crellin (@bencrellin)
         };
     }
 }
