@@ -54,7 +54,7 @@ namespace Fpl.Search.Indexing
 
                 i += batchSize;
 
-                if (iteration % 10 == 0)
+                if (pageProgress != null && iteration % 10 == 0)
                 {
                     pageProgress(i);
                 }
