@@ -16,6 +16,8 @@ namespace FplBot.WebApi
             "https://fplbot-frontend-test.herokuapp.com", 
             "https://www.fplbot.app",
             "https://test.fplbot.app",
+            "https://www.fplsearch.com",
+            "https://fplsearch.com"
         };
         
         private static Regex HerokuReviewAppsOriginRegex = new Regex("https:\\/\\/fplbotfrontend-pr-\\d+.herokuapp.com");
