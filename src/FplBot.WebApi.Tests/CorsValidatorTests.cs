@@ -11,6 +11,8 @@ namespace FplBot.WebApi.Tests
         [InlineData("https://fplbotfrontend-pr-4.herokuapp.com", true)]
         [InlineData("https://fplbotfrontend-pr-12.herokuapp.com", true)]
         [InlineData("https://someotherdomain-pr-12.herokuapp.com", false)]
+        [InlineData("https://www.fplsearch.com", true)]
+        [InlineData("https://fplsearch.com", true)]
         public void ValidatesOrigins(string origin, bool expectedResult)
         {
             var isValid = CorsOriginValidator.ValidateOrigin(origin);
