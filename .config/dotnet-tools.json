@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "nuke.globaltool": {
+      "version": "5.0.2",
+      "commands": [
+        "nuke"
+      ]
+    },
+    "nservicebus.transport.azureservicebus.commandline": {
+      "version": "1.8.0",
+      "commands": [
+        "asb-transport"
+      ]
+    }
+  }
+}

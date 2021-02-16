@@ -1,5 +1,6 @@
 using System;
 using NServiceBus;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.Hosting
@@ -31,8 +32,11 @@ namespace Microsoft.Extensions.Hosting
         private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string endpointPostfix = null)
         {
             endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-            var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}");
+            string endpointName = $"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}";
+            Console.WriteLine($"Endpoint: {endpointName}");
+            var endpointConfiguration = new EndpointConfiguration(endpointName);
             endpointConfiguration.EnableInstallers();
+            endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
             endpointConfiguration.License(context.Configuration["NSB_LICENSE"]);
             endpointConfiguration.SendHeartbeatTo(
                 serviceControlQueue: GetServiceControlQueue(context.HostingEnvironment),
