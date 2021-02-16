@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
@@ -36,7 +37,11 @@ namespace FplBot.WebApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDataProtection().SetApplicationName("fplbot"); // set static so cookies are not encrypted differently after a reboot/deploy. https://github.com/dotnet/aspnetcore/issues/2513#issuecomment-354683162
-            services.AddControllers();
+            services.AddControllers()
+                    .AddJsonOptions(opts =>
+                    {
+                        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    });
             services.AddSlackbotOauthAccessHttpClient();
             services.Configure<OAuthOptions>(Configuration);
             services.Configure<AnalyticsOptions>(Configuration);
