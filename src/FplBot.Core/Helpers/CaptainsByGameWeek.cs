@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
@@ -147,7 +148,7 @@ namespace FplBot.Core.Helpers
                     Entry = entry,
                     Captain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.Captain.PlayerId),
                     ViceCaptain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.ViceCaptain.PlayerId),
-                    IsTripleCaptain = entryPicksForGameweek.ActiveChip == Constants.ChipNames.TripleCaptain
+                    IsTripleCaptain = entryPicksForGameweek.ActiveChip == FplConstants.ChipNames.TripleCaptain
                 };
             }
             catch (Exception e)

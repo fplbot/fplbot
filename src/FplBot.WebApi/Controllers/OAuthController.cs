@@ -7,6 +7,7 @@ using Fpl.Client.Abstractions;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.WebApi.Configurations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -28,11 +29,11 @@ namespace FplBot.WebApi.Controllers
         private readonly ISlackOAuthAccessClient _oAuthAccessClient;
         private readonly ISlackTeamRepository _slackTeamRepository;
         private readonly ILeagueClient _leagueClient;
-        private readonly IOptions<DistributedSlackAppOptions> _options;
+        private readonly IOptions<OAuthOptions> _options;
         private readonly IMessageSession _messageSession;
         private readonly IWebHostEnvironment _env;
 
-        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, IOptions<DistributedSlackAppOptions> options, IMessageSession messageSession, IWebHostEnvironment env)
+        public OAuthController(ILogger<OAuthController> logger, ISlackOAuthAccessClient oAuthAccessClient, ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, IOptions<OAuthOptions> options, IMessageSession messageSession, IWebHostEnvironment env)
         {
             _logger = logger;
             _oAuthAccessClient = oAuthAccessClient;
@@ -205,5 +206,11 @@ namespace FplBot.WebApi.Controllers
                 ValidationResult.Success :
                 new ValidationResult($"{validationContext.DisplayName} must start with a `#`");
         }
+    }
+
+    public class FplbotSetup
+    {
+        public int LeagueId { get; set; }
+        public string Channel { get; set; }
     }
 }

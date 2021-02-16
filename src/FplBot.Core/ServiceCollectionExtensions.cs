@@ -1,21 +1,16 @@
 using Fpl.Client.Infra;
 using Fpl.Search;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
-using System;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Data;
-using FplBot.Core.GameweekLifecycle;
-using FplBot.Core.GameweekLifecycle.Handlers;
 using FplBot.Core.Handlers;
 using FplBot.Core.Helpers;
-using FplBot.Core.RecurringActions;
+using MediatR;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 // ReSharper disable once CheckNamespace
@@ -25,13 +20,12 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config)
         {
-            services.AddReducedHttpClientFactoryLogging();
             services.AddFplApiClient(config.GetSection("fpl"));
             services.AddSearching(config.GetSection("Search"));
             services.AddIndexingServices(config.GetSection("Search"));
             services.AddRecurringIndexer(config.GetSection("Search"));
             services.Configure<RedisOptions>(config);
-            services.Configure<DistributedSlackAppOptions>(config);
+            
             services.AddSingleton<ConnectionMultiplexer>(c =>
             {
                 var opts = c.GetService<IOptions<RedisOptions>>().Value;
@@ -53,53 +47,16 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
             services.AddSingleton<IGameweekHelper, GameweekHelper>();
             services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
-            services.AddSingleton<IHandleGameweekStarted, GameweekStartedHandler>();
-            services.AddSingleton<IHandleGameweekEnded, GameweekEndedNotifier>();
-            services.AddSingleton<IMonitorState, StateEventsMonitor>();
-            services.AddSingleton<FixtureEventsHandler>();
-            services.AddSingleton<PriceChangeHandler>();
-            services.AddSingleton<InjuryUpdateHandler>();
-            services.AddSingleton<FixtureFulltimeHandler>();
-            services.AddSingleton<IState, State>();
-            services.AddSingleton<IGameweekMonitorOrchestrator,GameweekMonitorOrchestrator>(c =>
-            {
-                IHandleGameweekStarted startedNotifier = c.GetService<IHandleGameweekStarted>();
-                IMonitorState stateMonitor = c.GetService<IMonitorState>();
-                IMatchStateMonitor matchStateMonitor = c.GetService<IMatchStateMonitor>();
-                IHandleGameweekEnded endedNotifier= c.GetService<IHandleGameweekEnded>();
-                var orch = new GameweekMonitorOrchestrator();
-                orch.InitializeEventHandlers += stateMonitor.Initialize;
-                orch.InitializeEventHandlers += matchStateMonitor.Initialize;
-                orch.GameWeekJustBeganEventHandlers += stateMonitor.HandleGameweekStarted;
-                orch.GameWeekJustBeganEventHandlers += matchStateMonitor.HandleGameweekStarted;
-                orch.GameweekIsCurrentlyOngoingEventHandlers += stateMonitor.HandleGameweekOngoing;
-                orch.GameweekIsCurrentlyOngoingEventHandlers += matchStateMonitor.HandleGameweekOngoing;
-                orch.GameweekCurrentlyFinishedEventHandlers += stateMonitor.HandleGameweekCurrentlyFinished;
-                orch.GameweekCurrentlyFinishedEventHandlers += matchStateMonitor.HandleGameweekCurrentlyFinished;
-                orch.GameWeekJustBeganEventHandlers += startedNotifier.HandleGameweekStarted;
-                orch.GameweekEndedEventHandlers += endedNotifier.HandleGameweekEnded;
-                return orch;
-            });
-            services.AddSingleton<DateTimeUtils>();
-            services.AddHttpClient<IGetMatchDetails,PremierLeagueScraperApi>();
-            services.AddSingleton<MatchState>();
-            services.AddSingleton<IMatchStateMonitor, MatchStateMonitor>();
-            services.AddSingleton<LineupReadyHandler>();
-            services.AddSingleton<NearDeadlineHandler>();
-            services.AddSingleton<NearDeadLineMonitor>();
-            services.AddRecurringActions().AddRecurrer<GameweekLifecycleRecurringAction>()
-                .AddRecurrer<NearDeadlineRecurringAction>()
-                .Build();
+
+            services.AddMediatR(typeof(FplEventHandlers));
+            services.AddFplWorkers();
             return services;
         }
 
-        public static IServiceCollection AddFplBotEventHandlers(this IServiceCollection services,
-            Action<SlackAppOptions> configuration = null) 
-        {
-            services.Configure<SlackAppOptions>(configuration ?? (c => {}));
+        public static IServiceCollection AddFplBotSlackEventHandlers(this IServiceCollection services) 
+        {            
             services.AddSingleton<IUninstall, AppUninstaller>();
-            services.AddSlackBotEvents<RedisSlackTeamRepository>()
-                
+            services.AddSlackBotEvents<RedisSlackTeamRepository>()                
                 .AddShortcut<HelpEventHandler>()
                 .AddAppMentionHandler<FplPlayerCommandHandler>()
                 .AddAppMentionHandler<FplStandingsCommandHandler>()
@@ -113,11 +70,16 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddAppMentionHandler<FplSubscriptionsCommandHandler>()
                 .AddAppMentionHandler<DebugHandler>()
                 .AddAppMentionHandler<FplSearchHandler>()
-
                 .AddMemberJoinedChannelHandler<FplBotJoinedChannelHandler>()
                 .AddInteractiveBlockActionsHandler<InteractiveBlocksActionHandler>()
                 .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>();
             return services;
         }
     }
+
+    /// <summary>
+    /// Dummy type that should always be in assembly containing public FplBot domain handlers
+    /// </summary>
+    /// <see cref="DomainEvents.cs"/>
+    public class FplEventHandlers {}
 }

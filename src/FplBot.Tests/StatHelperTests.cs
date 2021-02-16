@@ -11,21 +11,21 @@ namespace FplBot.Tests
         [Fact]
         public void NullFixtures_NoEvents()
         {
-            var events = StatHelper.DiffFixtureStats(null, null);
+            var events = FixtureDiffer.DiffFixtureStats(null, null);
             Assert.Empty(events);
         }
         
         [Fact]
         public void NullNewFixture_NoEvents()
         {
-            var events = StatHelper.DiffFixtureStats(new Fixture(), null);
+            var events = FixtureDiffer.DiffFixtureStats(new Fixture(), null);
             Assert.Empty(events);
         }
         
         [Fact]
         public void NullOldFixture_NoEvents()
         {
-            var events = StatHelper.DiffFixtureStats(null, new Fixture());
+            var events = FixtureDiffer.DiffFixtureStats(null, new Fixture());
             Assert.Empty(events);
         }
         
@@ -33,7 +33,7 @@ namespace FplBot.Tests
         public void SameFixture_NoEvents()
         {
             var fixture = new Fixture();
-            var events = StatHelper.DiffFixtureStats(fixture,fixture);
+            var events = FixtureDiffer.DiffFixtureStats(fixture,fixture);
             Assert.Empty(events);
         }
         
@@ -42,7 +42,7 @@ namespace FplBot.Tests
         {
             var fixture = TestBuilder.NoGoals(fixtureCode:10);
             var fixtureWithGoal = TestBuilder.AwayTeamGoal(fixtureCode:10,goals:1);
-            var events = StatHelper.DiffFixtureStats(newFixture:fixtureWithGoal,fixture);
+            var events = FixtureDiffer.DiffFixtureStats(newFixture:fixtureWithGoal,fixture);
             Assert.NotEmpty(events);
             Assert.Single(events);
             Assert.Equal(StatType.GoalsScored, events.First().Key);
@@ -54,7 +54,7 @@ namespace FplBot.Tests
         {
             var fixtureWithGoal = TestBuilder.AwayTeamGoal(fixtureCode:10,goals:1);
             var fixtureGoalRemoved = TestBuilder.NoGoals(fixtureCode:10);
-            var events = StatHelper.DiffFixtureStats(newFixture:fixtureGoalRemoved,fixtureWithGoal);
+            var events = FixtureDiffer.DiffFixtureStats(newFixture:fixtureGoalRemoved,fixtureWithGoal);
             Assert.NotEmpty(events);
             Assert.Single(events);
             Assert.Equal(StatType.GoalsScored, events.First().Key);
