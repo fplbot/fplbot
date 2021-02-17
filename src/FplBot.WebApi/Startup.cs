@@ -8,6 +8,7 @@ using Fpl.Search;
 using FplBot.Core;
 using FplBot.Core.Models;
 using FplBot.WebApi.Configurations;
+using FplBot.WebApi.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -48,6 +49,7 @@ namespace FplBot.WebApi
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplBot(Configuration)
                 .AddFplBotSlackEventHandlers();
+            services.AddSingleton<IVerifiedLeagueService, VerifiedLeagueService>();
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
