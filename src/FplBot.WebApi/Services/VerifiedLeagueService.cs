@@ -6,6 +6,7 @@ using FplBot.Core.Extensions;
 using FplBot.WebApi.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 
 namespace FplBot.WebApi.Services
 {
@@ -76,7 +77,7 @@ namespace FplBot.WebApi.Services
                     TeamName = info.TeamName,
                     PlName = plPlayer?.FullName,
                     PlaysForTeam = allTeams.Get(plPlayer?.TeamId)?.Name,
-                    ShirtImageUrl = $"https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_{plPlayer?.TeamCode}-66.png",
+                    ShirtImageUrl = $"https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_{plPlayer?.TeamCode}{(plPlayer.Position == FplPlayerPosition.Goalkeeper ? "_1" : null)}-66.png",
                     TotalPoints = currentGw?.TotalPoints,
                     TotalPointsLastGw = lastGw?.TotalPoints,
                     OverallRank = currentGw?.OverallRank,
