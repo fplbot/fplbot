@@ -152,5 +152,49 @@ namespace Fpl.Search
             { 55085, VerifiedEntryType.CommunityFame }, // Pranil Sheth (@lateriser12)
             { 132073, VerifiedEntryType.CommunityFame } // Ben Crellin (@bencrellin)
         };
+
+        public static readonly IDictionary<int, int> VerifiedPLEntryToPlayerIdMap = new Dictionary<int, int>
+            {
+                {3651702, 38}, // John McGinn
+                {3995410, 239}, // James Justin
+                {2956964, 412}, // Kyle Bartley
+                {4333448, 178}, // Michael Hector
+                {3949083, 528}, // Jason Steele
+                {2824860, 298}, // Harry Maguire
+                {5630688, 195}, // Liam Cooper
+                {976717,  202}, // Patrick Bamford
+                {3994143, 66}, // Adam Webster
+                {2317459, 415}, // Charlie Austin
+                {3533650, 604}, // Lee Grant
+                {3011137, 255}, // Andy Robertson
+                {5197871, 231}, // James Maddison
+                {4977097, 197}, // Luke Ayling
+                {4431216, 363}, // Alex McCarthy
+                {4869402, 503}, // Christian Walton
+                {4667259, 33}, // Conor Hourihane
+                {5621264, 214}, // Leif Davis
+                {1026172, 259}, // Trent Alexander-Ar
+                {4501590, 497}, // Jacob Murphy
+                {3204228, 28}, // Tom Heaton
+                {4973262, 554}, // Jacob Ramsey
+                {5689627, 204}, // Kalvin Philips
+                {4627487, 586}, // Jack Butland
+                {5664364, 211}, // Pascal Struijk
+                {50383,   42}, // Matt Targett
+                {5657419, 373}, // Harrison Reed
+                {5091389, 360}, // Sander Berge
+                {5639035, 181}, // Bobby Decorva-Reid
+                {6523017, 221}, // Marc Albrighton
+                {2073952, 367}, // Jack Stephens
+                {3560071, 428}, // Robert Snodgrass
+                {6297033, 201}, // Ezgjan Alioski
+                {1605584, 418}, // Conor Townsend
+                {3257654, 31}, // Neil Taylor
+                {6824049, 234}, // Hamza Choudhury
+                {5677809, 209}, // Ian Poveda
+                {5797199, 71}, // Alireza Jahanbakhs
+                {5747167, 76}, // Yves Bissouma
+                {4971020, 645}, // Martin Odegaard
+            };
     }
 }

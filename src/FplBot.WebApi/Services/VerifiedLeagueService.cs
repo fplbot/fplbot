@@ -17,17 +17,20 @@ namespace FplBot.WebApi.Services
         private readonly IEntryHistoryClient _entryHistoryClient;
         private readonly IGameweekClient _gameweekClient;
         private readonly IPlayerClient _playerClient;
+        private readonly ITeamsClient _teamsClient;
 
         public VerifiedLeagueService(
             IEntryClient entryClient, 
             IEntryHistoryClient entryHistoryClient, 
             IGameweekClient gameweekClient,
-            IPlayerClient playerClient)
+            IPlayerClient playerClient,
+            ITeamsClient teamsClient)
         {
             _entryClient = entryClient;
             _entryHistoryClient = entryHistoryClient;
             _gameweekClient = gameweekClient;
             _playerClient = playerClient;
+            _teamsClient = teamsClient;
         }
 
         public async Task<VerifiedLeagueModel> GetStandings()
@@ -37,6 +40,7 @@ namespace FplBot.WebApi.Services
 
             var gameweekTask = _gameweekClient.GetGameweeks();
             var allPlayersTask = _playerClient.GetAllPlayers();
+            var allTeamsTask = _teamsClient.GetAllTeams();
 
             var currentGameweek = (await gameweekTask).GetCurrentGameweek().Id;
 
@@ -48,6 +52,7 @@ namespace FplBot.WebApi.Services
             });
 
             var allPlayers = await allPlayersTask;
+            var allTeams = await allTeamsTask;
 
             var entries = new List<VerifiedLeagueItem>();
             foreach (int entryId in allVerifiedEntriesInPL)
@@ -60,19 +65,25 @@ namespace FplBot.WebApi.Services
                 var viceCaptainId = picks.Picks.SingleOrDefault(p => p.IsViceCaptain)?.PlayerId;
                 var currentGw = history.GameweekHistory.LastOrDefault();
                 var lastGw = history.GameweekHistory.Count > 1 ? history.GameweekHistory.ElementAtOrDefault(history.GameweekHistory.Count - 2) : currentGw;
+                var plPlayer = VerifiedEntries.VerifiedPLEntryToPlayerIdMap.ContainsKey(entryId)
+                    ? allPlayers.Get(VerifiedEntries.VerifiedPLEntryToPlayerIdMap[entryId])
+                    : null;
 
                 entries.Add(new VerifiedLeagueItem
                 {
                     EntryId = entryId,
                     RealName = info.PlayerFullName,
                     TeamName = info.TeamName,
+                    PlName = plPlayer?.FullName,
+                    PlaysForTeam = allTeams.Get(plPlayer?.TeamId)?.Name,
+                    ShirtImageUrl = $"https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_{plPlayer?.TeamCode}-66.png",
                     TotalPoints = currentGw?.TotalPoints,
                     TotalPointsLastGw = lastGw?.TotalPoints,
                     OverallRank = currentGw?.OverallRank,
                     PointsThisGw = currentGw?.Points,
                     ChipUsed = picks.ActiveChip,
-                    Captain = captainId.HasValue ? allPlayers.SingleOrDefault(p => p.Id == captainId.Value)?.WebName : null,
-                    ViceCaptain = viceCaptainId.HasValue ? allPlayers.SingleOrDefault(p => p.Id == viceCaptainId.Value)?.WebName : null
+                    Captain = captainId.HasValue ? allPlayers.Get(captainId)?.WebName : null,
+                    ViceCaptain = viceCaptainId.HasValue ? allPlayers.Get(viceCaptainId)?.WebName : null
                 });
             }
 
