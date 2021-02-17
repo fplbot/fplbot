@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Newtonsoft.Json;
 
 namespace Fpl.Client
 {

@@ -11,11 +11,14 @@ namespace FplBot.WebApi.Models
     public class VerifiedLeagueItem
     {
         public int EntryId { get; set; }
+        public string Slug { get; set; }
         public string TeamName { get; set; }
         public string RealName { get; set; }
-        public string PlName { get; set; }
+        public int? PLPlayerId { get; set; }
+        public string PLName { get; set; }
         public string PlaysForTeam { get; set; }
         public string ShirtImageUrl { get; set; }
+        public string ImageUrl { get; set; }
         public int? PointsThisGw { get; set; }
         public int? TotalPoints { get; set; }
         public int? TotalPointsLastGw { get; set; }

@@ -58,5 +58,27 @@ namespace FplBot.WebApi.Controllers
 
             return NotFound();
         }
+
+        [HttpGet("verified/{slug}")]
+        public async Task<IActionResult> GetVerifiedTeam(string slug)
+        {
+            try
+            {
+                var team = await _verifiedLeagueService.GetVerifiedTeam(slug);
+
+                if (team == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(team);
+            }
+            catch (HttpRequestException e)
+            {
+                _logger.LogWarning(e.ToString());
+            }
+
+            return NotFound();
+        }
     }
 }
