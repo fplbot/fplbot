@@ -15,6 +15,7 @@
     @if (Model.Team != null)
     {
         <p><a href="@Url.PageLink("/Admin/TeamDetails/Edit", values: new { teamId = Model.Team.TeamId})">Edit</a></p>
+        <p><a href="@Url.PageLink("/Admin/TeamDetails/PublishEvent", values: new { teamId = Model.Team.TeamId})">Publish</a></p>
         <table class="table">
             <tbody>
             <tr>

@@ -3,9 +3,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
+using FplBot.Core.Handlers;
 using FplBot.Core.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -18,19 +19,21 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         private readonly ILeagueClient _leagueClient;
         private readonly IGameweekClient _gameweekClient;
         private readonly ILogger<GameweekEndedHandler> _logger;
+        private readonly IMediator _mediator;
         private readonly ISlackTeamRepository _teamRepo;
 
         public GameweekEndedHandler(ISlackWorkSpacePublisher publisher, 
             ISlackTeamRepository teamsRepo,
             ILeagueClient leagueClient, 
             IGameweekClient gameweekClient, 
-            ILogger<GameweekEndedHandler> logger)
+            ILogger<GameweekEndedHandler> logger, IMediator mediator)
         {
             _publisher = publisher;
             _teamRepo = teamsRepo;
             _leagueClient = leagueClient;
             _gameweekClient = gameweekClient;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task Handle(GameweekFinished notification, CancellationToken cancellationToken)
@@ -55,14 +58,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
 
                 try
                 {
-                    var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
-                    var intro = Formatter.FormatGameweekFinished(gw, league);
-                    var standings = Formatter.GetStandings(league, gw);
-                    var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
-                    var worst = Formatter.GetWorstGameweekEntry(league, gw);
-
-                    await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, intro, standings, topThree, worst);
-
+                    await _mediator.Publish(new PublishStandingsCommand(team, gw), cancellationToken);
                 }
                 catch (Exception e)
                 {
@@ -71,4 +67,5 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             }
         }
     }
+
 }
