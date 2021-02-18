@@ -24,6 +24,7 @@ namespace Slackbot.Net.Endpoints
         {
             var allHandlers = _provider.GetServices<IHandleAppMentions>();
             var shortCutter = _provider.GetService<IShortcutAppMentions>();
+            var noopHandler = _provider.GetService<INoOpAppMentions>();
 
             if (shortCutter != null && shortCutter.ShouldShortcut(slackEvent))
             {
@@ -31,17 +32,23 @@ namespace Slackbot.Net.Endpoints
                 return new List<IHandleAppMentions>();
             }
 
-            return SelectHandler(allHandlers, slackEvent);
+            return SelectHandler(allHandlers, noopHandler, slackEvent);
  
         }
 
-        private IEnumerable<IHandleAppMentions> SelectHandler(IEnumerable<IHandleAppMentions> handlers, AppMentionEvent message)
+        private IEnumerable<IHandleAppMentions> SelectHandler(IEnumerable<IHandleAppMentions> handlers, INoOpAppMentions noOpAppMentions, AppMentionEvent message)
         {
             var matchingHandlers = handlers.Where(s => s.ShouldHandle(message));
             if (matchingHandlers.Any())
                 return matchingHandlers;
-
-            return new List<IHandleAppMentions> {new NoOpAppMentionEventHandler(_loggerFactory.CreateLogger<NoOpAppMentionEventHandler>())};
+            
+            if(noOpAppMentions != null)
+                return new List<IHandleAppMentions> { noOpAppMentions };
+            
+            return new List<IHandleAppMentions>
+            {
+                new NoOpAppMentionEventHandler(_loggerFactory.CreateLogger<NoOpAppMentionEventHandler>())
+            };
         }
     }
 }

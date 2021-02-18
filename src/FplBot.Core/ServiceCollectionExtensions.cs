@@ -73,7 +73,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddAppMentionHandler<FplSearchHandler>()
                 .AddMemberJoinedChannelHandler<FplBotJoinedChannelHandler>()
                 .AddInteractiveBlockActionsHandler<InteractiveBlocksActionHandler>()
-                .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>();
+                .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>()
+                .AddNoOpAppMentionHandler<UnknownAppMentionCommandHandler>();
             return services;
         }
     }
