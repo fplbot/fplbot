@@ -9,6 +9,7 @@ using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Data;
 using FplBot.Core.Handlers;
+using FplBot.Core.Handlers.SlackEvents;
 using FplBot.Core.Helpers;
 using MediatR;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
