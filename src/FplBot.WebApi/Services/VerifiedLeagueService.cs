@@ -60,7 +60,7 @@ namespace FplBot.WebApi.Services
             return new VerifiedLeagueModel { Gameweek = currentGameweek, Entries = entriesOrderedByRank };
         }
 
-        public async Task<VerifiedTeamModel> GetVerifiedTeam(string slug)
+        public async Task<VerifiedPLEntryModel> GetVerifiedTeam(string slug)
         {
             var entry = VerifiedEntries.VerifiedPLEntries.SingleOrDefault(v => v.Slug == slug);
 
@@ -74,13 +74,14 @@ namespace FplBot.WebApi.Services
 
             var selfOwnerShip = (await GetSelfOwnershipPoints(verifiedLeagueItem.EntryId, verifiedLeagueItem.PLPlayerId, currentGameweek)).ToArray();
 
-            return new VerifiedTeamModel
+            return new VerifiedPLEntryModel
             {
                 EntryId = verifiedLeagueItem.EntryId,
                 TeamName = verifiedLeagueItem.TeamName,
                 RealName = verifiedLeagueItem.RealName,
                 PlName = verifiedLeagueItem.PLName,
                 PlaysForTeam = verifiedLeagueItem.PlaysForTeam,
+                ShirtImageUrl = verifiedLeagueItem.ShirtImageUrl,
                 ImageUrl = verifiedLeagueItem.ImageUrl,
                 PointsThisGw = verifiedLeagueItem.PointsThisGw,
                 TotalPoints = verifiedLeagueItem.TotalPoints,
@@ -181,7 +182,7 @@ namespace FplBot.WebApi.Services
     public interface IVerifiedLeagueService
     {
         Task<VerifiedLeagueModel> GetStandings();
-        Task<VerifiedTeamModel> GetVerifiedTeam(string slug);
+        Task<VerifiedPLEntryModel> GetVerifiedTeam(string slug);
     }
 
     record GameweekPick(int Gameweek, EntryPicks Pick);

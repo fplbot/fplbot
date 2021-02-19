@@ -1,12 +1,13 @@
 ﻿namespace FplBot.WebApi.Models
 {
-    public class VerifiedTeamModel
+    public class VerifiedPLEntryModel
     {
         public int EntryId { get; set; }
         public string TeamName { get; set; }
         public string RealName { get; set; }
         public string PlName { get; set; }
         public string PlaysForTeam { get; set; }
+        public string ShirtImageUrl { get; set; }
         public string ImageUrl { get; set; }
         public int? PointsThisGw { get; set; }
         public int? TotalPoints { get; set; }
