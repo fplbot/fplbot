@@ -1,27 +1,22 @@
-using System.Net.Http;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 
 namespace Fpl.Client
 {
     public class GlobalSettingsClient : IGlobalSettingsClient
     {
-        private readonly HttpClient _client;
+        private readonly ICachedHttpClient _client;
 
-        public GlobalSettingsClient(HttpClient client)
+        public GlobalSettingsClient(ICachedHttpClient client)
         {
             _client = client;
         }
 
-        public async Task<GlobalSettings> GetGlobalSettings()
+        public Task<GlobalSettings> GetGlobalSettings()
         {
-            var json = await _client.GetStringAsync("/api/bootstrap-static/");
-
-            var data = JsonConvert.DeserializeObject<GlobalSettings>(json);
-
-            return data;
+            return _client.GetCachedOrFetch<GlobalSettings>("/api/bootstrap-static/", TimeSpan.FromHours(24));
         }
     }
 }

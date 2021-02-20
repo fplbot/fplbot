@@ -1,8 +1,9 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Newtonsoft.Json;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Fpl.Client
 {
@@ -22,11 +23,17 @@ namespace Fpl.Client
             return JsonConvert.DeserializeObject<BasicEntry>(json);
         }
 
-        public async Task<EntryPicks> GetPicks(int teamId, int gameweek)
+        public async Task<EntryPicks> GetPicks(int teamId, int gameweek, bool tolerate404 = false)
         {
-            var json = await _client.GetStringAsync($"/api/entry/{teamId}/event/{gameweek}/picks/");
-
-            return JsonConvert.DeserializeObject<EntryPicks>(json);
+            try
+            {
+                var json = await _client.GetStringAsync($"/api/entry/{teamId}/event/{gameweek}/picks/");
+                return JsonConvert.DeserializeObject<EntryPicks>(json);
+            }
+            catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
+            {
+                return null;
+            }
         }
     }
 }

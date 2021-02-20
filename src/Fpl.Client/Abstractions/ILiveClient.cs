@@ -1,11 +1,11 @@
+using Fpl.Client.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Client.Models;
 
 namespace Fpl.Client.Abstractions
 {
     public interface ILiveClient
     {
-        Task<ICollection<LiveItem>> GetLiveItems(int gameweek);
+        Task<ICollection<LiveItem>> GetLiveItems(int gameweek, bool isOngoingGameweek = false);
     }
 }

@@ -7,6 +7,6 @@ namespace Fpl.Client.Abstractions
     {
         Task<BasicEntry> Get(int teamId);
 
-        Task<EntryPicks> GetPicks(int teamId, int gameweek);
+        Task<EntryPicks> GetPicks(int teamId, int gameweek, bool tolerate404 = false);
     }
 }

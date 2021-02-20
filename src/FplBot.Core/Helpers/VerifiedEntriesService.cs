@@ -3,16 +3,13 @@ using Fpl.Client.Models;
 using Fpl.Search;
 using Fpl.Search.Models;
 using FplBot.Core.Extensions;
-using FplBot.WebApi.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FplBot.WebApi.Services
+namespace FplBot.Core.Helpers
 {
-
-
-    public class VerifiedLeagueService : IVerifiedLeagueService
+    public class VerifiedEntriesService : IVerifiedEntriesService
     {
         private readonly IEntryClient _entryClient;
         private readonly IEntryHistoryClient _entryHistoryClient;
@@ -21,7 +18,7 @@ namespace FplBot.WebApi.Services
         private readonly ITeamsClient _teamsClient;
         private readonly ILiveClient _liveClient;
 
-        public VerifiedLeagueService(
+        public VerifiedEntriesService(
             IEntryClient entryClient, 
             IEntryHistoryClient entryHistoryClient, 
             IGameweekClient gameweekClient,
@@ -37,14 +34,15 @@ namespace FplBot.WebApi.Services
             _liveClient = liveClient;
         }
 
-        public async Task<VerifiedLeagueModel> GetStandings()
+        public async Task<VerifiedPLEntriesModel> GetAllVerifiedPLEntries()
         {
             var allVerifiedEntriesInPL = VerifiedEntries.VerifiedEntriesMap.Keys.Where(k =>
                 VerifiedEntries.VerifiedEntriesMap[k] == VerifiedEntryType.FootballerInPL).ToArray();
 
             var (currentGameweek, allPlayers, allTeams) = await GetBootstrap();
 
-            var entries = await Task.WhenAll(allVerifiedEntriesInPL.Select(entryId => GetVerifiedLeagueItem(entryId, currentGameweek, allPlayers, allTeams)));
+            var liveItems = await GetAllLiveItems(currentGameweek);
+            var entries = await Task.WhenAll(allVerifiedEntriesInPL.Select(entryId => GetVerifiedPLEntry(entryId, currentGameweek, allPlayers, allTeams, liveItems)));
 
             var entriesOrderedByRank = entries.OrderByDescending(e => e.TotalPoints).ToArray();
             var lastGwOrder = entries.OrderByDescending(e => e.TotalPointsLastGw).ToList();
@@ -57,10 +55,17 @@ namespace FplBot.WebApi.Services
                 currentRank++;
             }
 
-            return new VerifiedLeagueModel { Gameweek = currentGameweek, Entries = entriesOrderedByRank };
+            return new VerifiedPLEntriesModel { Gameweek = currentGameweek, Entries = entriesOrderedByRank };
         }
 
-        public async Task<VerifiedPLEntryModel> GetVerifiedTeam(string slug)
+        private async Task<ICollection<LiveItem>[]> GetAllLiveItems(int currentGameweek)
+        {
+            var liveItems = await Task.WhenAll(GetGameweekNumbersUpUntilCurrent(currentGameweek)
+                .Select(gw => _liveClient.GetLiveItems(gw, gw == currentGameweek)));
+            return liveItems;
+        }
+
+        public async Task<VerifiedPLEntryModel> GetVerifiedPLEntry(string slug)
         {
             var entry = VerifiedEntries.VerifiedPLEntries.SingleOrDefault(v => v.Slug == slug);
 
@@ -70,35 +75,18 @@ namespace FplBot.WebApi.Services
             }
 
             var (currentGameweek, allPlayers, allTeams) = await GetBootstrap();
-            var verifiedLeagueItem = await GetVerifiedLeagueItem(entry.EntryId, currentGameweek, allPlayers, allTeams);
+            var liveItems = await GetAllLiveItems(currentGameweek);
+            var verifiedPLEntry = await GetVerifiedPLEntry(entry.EntryId, currentGameweek, allPlayers, allTeams, liveItems);
 
-            var selfOwnerShip = (await GetSelfOwnershipPoints(verifiedLeagueItem.EntryId, verifiedLeagueItem.PLPlayerId, currentGameweek)).ToArray();
-
-            return new VerifiedPLEntryModel
-            {
-                EntryId = verifiedLeagueItem.EntryId,
-                TeamName = verifiedLeagueItem.TeamName,
-                RealName = verifiedLeagueItem.RealName,
-                PlName = verifiedLeagueItem.PLName,
-                PlaysForTeam = verifiedLeagueItem.PlaysForTeam,
-                ShirtImageUrl = verifiedLeagueItem.ShirtImageUrl,
-                ImageUrl = verifiedLeagueItem.ImageUrl,
-                PointsThisGw = verifiedLeagueItem.PointsThisGw,
-                TotalPoints = verifiedLeagueItem.TotalPoints,
-                OverallRank = verifiedLeagueItem.OverallRank,
-                Captain = verifiedLeagueItem.Captain,
-                ViceCaptain = verifiedLeagueItem.ViceCaptain,
-                ChipUsed = verifiedLeagueItem.ChipUsed,
-                SelfOwnershipWeekCount = selfOwnerShip.Length,
-                SelfOwnershipTotalPoints = selfOwnerShip.Sum()
-            };
+            return verifiedPLEntry;
         }
 
-        private async Task<IEnumerable<int>> GetSelfOwnershipPoints(int entryId, int? plPlayerId, int gameweek)
+        private async Task<IEnumerable<int>> GetSelfOwnershipPoints(int entryId, int? plPlayerId, int gameweek, ICollection<LiveItem>[] liveItems)
         {
-            var allPicks = await Task.WhenAll(Enumerable.Range(1, gameweek).Select(gw => GetPick(entryId, gw)));
+            var allPicks = await Task.WhenAll(GetGameweekNumbersUpUntilCurrent(gameweek).Select(gw => GetPick(entryId, gw)));
 
             var selfPicks = allPicks
+                .Where(p => p.Pick != null)
                 .Select(p => (p.Gameweek, SelfPick: p.Pick.Picks.SingleOrDefault(pick => pick.PlayerId == plPlayerId)))
                 .Where(x => x.SelfPick != null)
                 .ToArray();
@@ -108,21 +96,25 @@ namespace FplBot.WebApi.Services
                 return Enumerable.Empty<int>();
             }
 
-            var gwPointsForSelfPick = await Task.WhenAll(selfPicks.Select(s => GetPickScore(s.Gameweek, s.SelfPick.PlayerId, s.SelfPick.Multiplier)));
+            var gwPointsForSelfPick = selfPicks.Select(s => GetPickScore(liveItems[s.Gameweek - 1], s.SelfPick.PlayerId, s.SelfPick.Multiplier));
             
             return gwPointsForSelfPick;
         }
 
+        private static IEnumerable<int> GetGameweekNumbersUpUntilCurrent(int gameweek)
+        {
+            return Enumerable.Range(1, gameweek);
+        }
+
         private async Task<GameweekPick> GetPick(int entryId, int gw)
         {
-            var picks = await _entryClient.GetPicks(entryId, gw);
+            var picks = await _entryClient.GetPicks(entryId, gw, tolerate404: true);
             return new GameweekPick(gw, picks);
         }
 
-        private async Task<int> GetPickScore(int gw, int playerId, int multiplier)
+        public int GetPickScore(ICollection<LiveItem> liveItems, int playerId, int multiplier)
         {
-            var liveItemsForGw = await _liveClient.GetLiveItems(gw);
-            return (liveItemsForGw.SingleOrDefault(x => x.Id == playerId)?.Stats?.TotalPoints ?? 0) * multiplier;
+            return (liveItems.SingleOrDefault(x => x.Id == playerId)?.Stats?.TotalPoints ?? 0) * multiplier;
         }
 
         private async Task<(int, ICollection<Player>, ICollection<Team>)> GetBootstrap()
@@ -138,7 +130,7 @@ namespace FplBot.WebApi.Services
             return (currentGameweek, allPlayers, allTeams);
         }
 
-        private async Task<VerifiedLeagueItem> GetVerifiedLeagueItem(int entryId, int gameweek, ICollection<Player> allPlayers, ICollection<Team> allTeams)
+        private async Task<VerifiedPLEntryModel> GetVerifiedPLEntry(int entryId, int gameweek, ICollection<Player> allPlayers, ICollection<Team> allTeams, ICollection<LiveItem>[] liveItems)
         {
             var historyTask = _entryHistoryClient.GetHistory(entryId);
             var infoTask = _entryClient.Get(entryId);
@@ -156,8 +148,9 @@ namespace FplBot.WebApi.Services
                 : currentGw;
             var verifiedPlEntry = VerifiedEntries.VerifiedPLEntries.SingleOrDefault(x => x.EntryId == entryId);
             var plPlayer = allPlayers.Get(verifiedPlEntry?.PlayerId);
+            var selfOwnerShip = (await GetSelfOwnershipPoints(entryId, plPlayer?.Id, gameweek, liveItems)).ToArray();
 
-            return new VerifiedLeagueItem
+            return new VerifiedPLEntryModel
             {
                 EntryId = entryId,
                 Slug = verifiedPlEntry?.Slug,
@@ -166,7 +159,8 @@ namespace FplBot.WebApi.Services
                 PLPlayerId = plPlayer?.Id,
                 PLName = plPlayer?.FullName,
                 PlaysForTeam = allTeams.Get(plPlayer?.TeamId)?.Name,
-                ShirtImageUrl = $"https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_{plPlayer?.TeamCode}{(plPlayer.Position == FplPlayerPosition.Goalkeeper ? "_1" : null)}-66.png",
+                ShirtImageUrl = $"https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_{plPlayer?.TeamCode}" +
+                                $"{(plPlayer?.Position == FplPlayerPosition.Goalkeeper ? "_1" : null)}-66.png",
                 ImageUrl = $"https://resources.premierleague.com/premierleague/photos/players/110x140/p{plPlayer.Code}.png",
                 TotalPoints = currentGw?.TotalPoints,
                 TotalPointsLastGw = lastGw?.TotalPoints,
@@ -174,16 +168,57 @@ namespace FplBot.WebApi.Services
                 PointsThisGw = currentGw?.Points,
                 ChipUsed = picks.ActiveChip,
                 Captain = captainId.HasValue ? allPlayers.Get(captainId)?.WebName : null,
-                ViceCaptain = viceCaptainId.HasValue ? allPlayers.Get(viceCaptainId)?.WebName : null
+                ViceCaptain = viceCaptainId.HasValue ? allPlayers.Get(viceCaptainId)?.WebName : null,
+                SelfOwnershipWeekCount = selfOwnerShip.Length,
+                SelfOwnershipTotalPoints = selfOwnerShip.Sum()
             };
         }
     }
 
-    public interface IVerifiedLeagueService
+    public interface IVerifiedEntriesService
     {
-        Task<VerifiedLeagueModel> GetStandings();
-        Task<VerifiedPLEntryModel> GetVerifiedTeam(string slug);
+        Task<VerifiedPLEntriesModel> GetAllVerifiedPLEntries();
+        Task<VerifiedPLEntryModel> GetVerifiedPLEntry(string slug);
     }
 
-    record GameweekPick(int Gameweek, EntryPicks Pick);
+    class GameweekPick
+    {
+        public int Gameweek { get; }
+        public EntryPicks Pick { get; }
+
+        public GameweekPick(int gameweek, EntryPicks pick)
+        {
+            Gameweek = gameweek;
+            Pick = pick;
+        }
+    }
+
+    public class VerifiedPLEntriesModel
+    {
+        public int Gameweek { get; set; }
+        public IEnumerable<VerifiedPLEntryModel> Entries { get; set; }
+    }
+
+    public class VerifiedPLEntryModel
+    {
+        public int EntryId { get; set; }
+        public string Slug { get; set; }
+        public string TeamName { get; set; }
+        public string RealName { get; set; }
+        public int? PLPlayerId { get; set; }
+        public string PLName { get; set; }
+        public string PlaysForTeam { get; set; }
+        public string ShirtImageUrl { get; set; }
+        public string ImageUrl { get; set; }
+        public int? PointsThisGw { get; set; }
+        public int? TotalPointsLastGw { get; set; }
+        public int? TotalPoints { get; set; }
+        public int? OverallRank { get; set; }
+        public int Movement { get; set; }
+        public string Captain { get; set; }
+        public string ViceCaptain { get; set; }
+        public string ChipUsed { get; set; }
+        public int SelfOwnershipWeekCount { get; set; }
+        public int SelfOwnershipTotalPoints { get; set; }
+    }
 }

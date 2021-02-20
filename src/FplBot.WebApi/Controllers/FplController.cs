@@ -1,10 +1,10 @@
+using Fpl.Client.Abstractions;
+using FplBot.Core.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
-using FplBot.WebApi.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace FplBot.WebApi.Controllers
 {
@@ -13,13 +13,13 @@ namespace FplBot.WebApi.Controllers
     public class FplController : ControllerBase
     {
         private readonly ILeagueClient _leagueClient;
-        private readonly IVerifiedLeagueService _verifiedLeagueService;
+        private readonly IVerifiedEntriesService _verifiedEntriesService;
         private readonly ILogger<FplController> _logger;
 
-        public FplController(ILeagueClient leagueClient, IVerifiedLeagueService verifiedLeagueService, ILogger<FplController> logger)
+        public FplController(ILeagueClient leagueClient, IVerifiedEntriesService verifiedEntriesService, ILogger<FplController> logger)
         {
             _leagueClient = leagueClient;
-            _verifiedLeagueService = verifiedLeagueService;
+            _verifiedEntriesService = verifiedEntriesService;
             _logger = logger;
         }
         
@@ -48,7 +48,7 @@ namespace FplBot.WebApi.Controllers
         {
             try
             {
-                var league = await _verifiedLeagueService.GetStandings();
+                var league = await _verifiedEntriesService.GetAllVerifiedPLEntries();
                 return Ok(league);
             }
             catch (HttpRequestException e)
@@ -64,7 +64,7 @@ namespace FplBot.WebApi.Controllers
         {
             try
             {
-                var team = await _verifiedLeagueService.GetVerifiedTeam(slug);
+                var team = await _verifiedEntriesService.GetVerifiedPLEntry(slug);
 
                 if (team == null)
                 {

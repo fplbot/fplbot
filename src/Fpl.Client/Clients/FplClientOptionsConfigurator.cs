@@ -32,14 +32,9 @@ namespace Fpl.Client.Clients
         {
             return name is nameof(IEntryClient) ||
                    name is nameof(IEntryHistoryClient) ||
-                   name is nameof(IFixtureClient) ||
-                   name is nameof(IGameweekClient) ||
                    name is nameof(ILeagueClient) ||
-                   name is nameof(ITeamsClient) ||
-                   name is nameof(IPlayerClient) ||
-                   name is nameof(ILiveClient) ||
-                   name is nameof(IGlobalSettingsClient) ||
-                   name is nameof(ITransfersClient);
+                   name is nameof(ITransfersClient) || 
+                   name is nameof(ICachedHttpClient);
         }
 
         public static void SetupFplClient(HttpClient client)

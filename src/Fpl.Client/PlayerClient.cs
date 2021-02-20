@@ -1,35 +1,32 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Fpl.Client
 {
     public class PlayerClient : IPlayerClient
     {
-        private readonly HttpClient _client;
+        private readonly ICachedHttpClient _client;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public PlayerClient(HttpClient client)
+        public PlayerClient(ICachedHttpClient client, IGlobalSettingsClient globalSettingsClient)
         {
             _client = client;
+            _globalSettingsClient = globalSettingsClient;
         }
 
         public async Task<ICollection<Player>> GetAllPlayers()
         {
-            var json = await _client.GetStringAsync("/api/bootstrap-static/");
+            var globalSettings = await _globalSettingsClient.GetGlobalSettings();
 
-            var data = JsonConvert.DeserializeObject<GlobalSettings>(json);
-
-            return data.Players;
+            return globalSettings.Players;
         }
 
-        public async Task<PlayerSummary> GetPlayer(int playerId)
+        public Task<PlayerSummary> GetPlayer(int playerId)
         {
-            var json = await _client.GetStringAsync($"/api/element-summary/{playerId}/");
-            
-            return JsonConvert.DeserializeObject<PlayerSummary>(json);
+            return _client.GetCachedOrFetch<PlayerSummary>($"/api/element-summary/{playerId}/", TimeSpan.FromMinutes(60));
         }
     }
 }
