@@ -34,7 +34,7 @@ namespace FplBot.Core.Helpers
             _liveClient = liveClient;
         }
 
-        public async Task<VerifiedPLEntriesModel> GetAllVerifiedPLEntries()
+        public async Task<IEnumerable<VerifiedPLEntryModel>> GetAllVerifiedPLEntries()
         {
             var allVerifiedEntriesInPL = VerifiedEntries.VerifiedEntriesMap.Keys.Where(k =>
                 VerifiedEntries.VerifiedEntriesMap[k] == VerifiedEntryType.FootballerInPL).ToArray();
@@ -55,7 +55,7 @@ namespace FplBot.Core.Helpers
                 currentRank++;
             }
 
-            return new VerifiedPLEntriesModel { Gameweek = currentGameweek, Entries = entriesOrderedByRank };
+            return entriesOrderedByRank;
         }
 
         private async Task<ICollection<LiveItem>[]> GetAllLiveItems(int currentGameweek)
@@ -170,14 +170,15 @@ namespace FplBot.Core.Helpers
                 Captain = captainId.HasValue ? allPlayers.Get(captainId)?.WebName : null,
                 ViceCaptain = viceCaptainId.HasValue ? allPlayers.Get(viceCaptainId)?.WebName : null,
                 SelfOwnershipWeekCount = selfOwnerShip.Length,
-                SelfOwnershipTotalPoints = selfOwnerShip.Sum()
+                SelfOwnershipTotalPoints = selfOwnerShip.Sum(),
+                Gameweek = gameweek
             };
         }
     }
 
     public interface IVerifiedEntriesService
     {
-        Task<VerifiedPLEntriesModel> GetAllVerifiedPLEntries();
+        Task<IEnumerable<VerifiedPLEntryModel>> GetAllVerifiedPLEntries();
         Task<VerifiedPLEntryModel> GetVerifiedPLEntry(string slug);
     }
 
@@ -191,12 +192,6 @@ namespace FplBot.Core.Helpers
             Gameweek = gameweek;
             Pick = pick;
         }
-    }
-
-    public class VerifiedPLEntriesModel
-    {
-        public int Gameweek { get; set; }
-        public IEnumerable<VerifiedPLEntryModel> Entries { get; set; }
     }
 
     public class VerifiedPLEntryModel
@@ -220,5 +215,6 @@ namespace FplBot.Core.Helpers
         public string ChipUsed { get; set; }
         public int SelfOwnershipWeekCount { get; set; }
         public int SelfOwnershipTotalPoints { get; set; }
+        public int Gameweek { get; set; }
     }
 }
