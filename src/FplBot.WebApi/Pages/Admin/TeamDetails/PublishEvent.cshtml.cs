@@ -15,9 +15,9 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
     {
         private readonly ISlackTeamRepository _teamRepo;
         private readonly IMediator _mediator;
-        private IGameweekClient _gameweekClient;
+        private IGlobalSettingsClient _gameweekClient;
 
-        public PublishEvent(ISlackTeamRepository teamRepo, ITokenStore tokenStore, IMediator mediator, IGameweekClient gameweekClient)
+        public PublishEvent(ISlackTeamRepository teamRepo, ITokenStore tokenStore, IMediator mediator, IGlobalSettingsClient gameweekClient)
         {
             _teamRepo = teamRepo;
             _mediator = mediator;
@@ -43,8 +43,8 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 
             if (subscriptions.Contains(EventSubscription.Standings))
             {
-                var gameweeks = await _gameweekClient.GetGameweeks();
-                var gameweek = gameweeks.GetCurrentGameweek();
+                var settings = await _gameweekClient.GetGlobalSettings();
+                var gameweek = settings.Gameweeks.GetCurrentGameweek();
                 await _mediator.Publish(new PublishStandingsCommand(team, gameweek));
                 TempData["msg"] += $"Published standings to {teamId}";
             }

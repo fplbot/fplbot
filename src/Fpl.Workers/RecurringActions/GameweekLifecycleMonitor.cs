@@ -11,13 +11,13 @@ namespace FplBot.Core.RecurringActions
 {
     internal class GameweekLifecycleMonitor
     {
-        private readonly IGameweekClient _gwClient;
+        private readonly IGlobalSettingsClient _gwClient;
         private readonly ILogger<GameweekLifecycleMonitor> _logger;
         private readonly IMediator _mediator;
 
         private Gameweek _storedCurrent;
 
-        public GameweekLifecycleMonitor(IGameweekClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator)
+        public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator)
         {
             _gwClient = gwClient;
             _logger = logger;
@@ -26,7 +26,8 @@ namespace FplBot.Core.RecurringActions
 
         public async Task EveryOtherMinuteTick(CancellationToken token)
         {
-            var gameweeks = await _gwClient.GetGameweeks();
+            var globalSettings = await _gwClient.GetGlobalSettings();
+            var gameweeks = globalSettings.Gameweeks;
             var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
             if (_storedCurrent == null)
             {

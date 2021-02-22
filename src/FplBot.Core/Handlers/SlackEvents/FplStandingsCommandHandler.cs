@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
@@ -13,21 +15,15 @@ namespace FplBot.Core.Handlers
 {
     internal class FplStandingsCommandHandler : HandleAppMentionBase
     {
-        private readonly ISlackWorkSpacePublisher _workspacePublisher;
-        private readonly IGameweekClient _gameweekClient;
-        private readonly ILeagueClient _leagueClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly ISlackTeamRepository _teamRepo;
         private readonly IMediator _mediator;
-        private readonly ILogger<FplStandingsCommandHandler> _logger;
 
-        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, ILeagueClient leagueClient, ISlackTeamRepository teamRepo, IMediator mediator, ILogger<FplStandingsCommandHandler> logger)
+        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGlobalSettingsClient globalSettingsClient, ILeagueClient leagueClient, ISlackTeamRepository teamRepo, IMediator mediator, ILogger<FplStandingsCommandHandler> logger)
         {
-            _workspacePublisher = workspacePublisher;
-            _gameweekClient = gameweekClient;
-            _leagueClient = leagueClient;
+            _globalSettingsClient = globalSettingsClient;
             _teamRepo = teamRepo;
             _mediator = mediator;
-            _logger = logger;
         }
 
         public override string[] Commands => new[] { "standings" };
@@ -35,8 +31,8 @@ namespace FplBot.Core.Handlers
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
         {
             var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
-            var gameweeks = await _gameweekClient.GetGameweeks();
-            var gameweek = gameweeks.GetCurrentGameweek();
+            var settings =  await _globalSettingsClient.GetGlobalSettings();
+            var gameweek = settings.Gameweeks.GetCurrentGameweek();
             await _mediator.Publish(new PublishStandingsCommand(team, gameweek));
             return new EventHandledResponse("OK");
         }

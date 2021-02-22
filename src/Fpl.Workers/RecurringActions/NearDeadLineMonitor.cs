@@ -10,14 +10,14 @@ namespace FplBot.Core.RecurringActions
 {
     internal class NearDeadLineMonitor
     {
-        private readonly IGameweekClient _gwClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly DateTimeUtils _dateTimeUtils;
         private readonly IMediator _mediator;
         private readonly ILogger<NearDeadLineMonitor> _logger;
         
-        public NearDeadLineMonitor(IGameweekClient gwClient, DateTimeUtils dateTimeUtils, IMediator mediator, ILogger<NearDeadLineMonitor> logger)
+        public NearDeadLineMonitor(IGlobalSettingsClient globalSettingsClient, DateTimeUtils dateTimeUtils, IMediator mediator, ILogger<NearDeadLineMonitor> logger)
         {
-            _gwClient = gwClient;
+            _globalSettingsClient = globalSettingsClient;
             _dateTimeUtils = dateTimeUtils;
             _mediator = mediator;
             _logger = logger;
@@ -25,7 +25,8 @@ namespace FplBot.Core.RecurringActions
 
         public async Task EveryMinuteTick()
         {
-            var gweeks = await _gwClient.GetGameweeks();
+            var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+            var gweeks = globalSettings.Gameweeks;
 
             var current = gweeks.FirstOrDefault(gw => gw.IsCurrent);
 

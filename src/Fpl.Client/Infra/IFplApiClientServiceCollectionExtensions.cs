@@ -29,10 +29,7 @@ namespace Fpl.Client.Infra
             services.AddHttpClient<IEntryClient, EntryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IFixtureClient, FixtureClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddSingleton<IGameweekClient, GameweekClient>();
             services.AddHttpClient<ILeagueClient, LeagueClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddSingleton<IPlayerClient, PlayerClient>();
-            services.AddSingleton<ITeamsClient, TeamsClient>();
             services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<ILiveClient, LiveClient>().AddHttpMessageHandler<FplDelegatingHandler>();
