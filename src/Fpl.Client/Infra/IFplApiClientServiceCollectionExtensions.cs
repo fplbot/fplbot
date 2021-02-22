@@ -25,17 +25,17 @@ namespace Fpl.Client.Infra
         private static void AddFplApiClient(IServiceCollection services)
         {
             services.AddTransient<FplDelegatingHandler>();
-            services.AddHttpClient<ICachedHttpClient, CachedHttpClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddSingleton<ICacheProvider, CacheProvider>();
             services.AddHttpClient<IEntryClient, EntryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddHttpClient<ILeagueClient, LeagueClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddSingleton<IFixtureClient, FixtureClient>();
+            services.AddHttpClient<IFixtureClient, FixtureClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddSingleton<IGameweekClient, GameweekClient>();
+            services.AddHttpClient<ILeagueClient, LeagueClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddSingleton<IPlayerClient, PlayerClient>();
             services.AddSingleton<ITeamsClient, TeamsClient>();
-            services.AddSingleton<ILiveClient, LiveClient>();
-            services.AddSingleton<IGlobalSettingsClient, GlobalSettingsClient>();
+            services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddHttpClient<ILiveClient, LiveClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();

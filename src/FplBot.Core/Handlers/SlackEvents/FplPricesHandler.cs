@@ -12,22 +12,22 @@ namespace FplBot.Core.Handlers
     internal class FplPricesHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
-        private readonly IPlayerClient _playerClient;
-        private readonly ITeamsClient _teamsClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public FplPricesHandler(ISlackWorkSpacePublisher workSpacePublisher, IPlayerClient playerClient, ITeamsClient teamsClient)
+        public FplPricesHandler(ISlackWorkSpacePublisher workSpacePublisher, IGlobalSettingsClient globalSettingsClient)
         {
             _workSpacePublisher = workSpacePublisher;
-            _playerClient = playerClient;
-            _teamsClient = teamsClient;
+            _globalSettingsClient = globalSettingsClient;
         }
 
         public override string[] Commands => new[] { "pricechanges" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var allPlayers = await _playerClient.GetAllPlayers();
-            var teams = await _teamsClient.GetAllTeams();
+            var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+            var allPlayers = globalSettings.Players;
+            var teams = globalSettings.Teams;
+            
             var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0 && p.IsRelevant());
             if (priceChangedPlayers.Any())
             {

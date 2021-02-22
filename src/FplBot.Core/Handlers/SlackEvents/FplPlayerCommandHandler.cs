@@ -13,30 +13,28 @@ namespace FplBot.Core.Handlers
 {
     internal class FplPlayerCommandHandler : HandleAppMentionBase
     {
-        private readonly IPlayerClient _playerClient;
-        private readonly ITeamsClient _teamsClient;
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
+        private IGlobalSettingsClient _globalSettingsClient;
 
         public FplPlayerCommandHandler(
             ISlackWorkSpacePublisher workSpacePublisher,
-            IPlayerClient playerClient, 
-            ITeamsClient teamsClient)
+            IGlobalSettingsClient globalSettingsClient) 
         {
-            _playerClient = playerClient;
-            _teamsClient = teamsClient;
             _workSpacePublisher = workSpacePublisher;
+            _globalSettingsClient = globalSettingsClient;
         }
 
         public override string[] Commands => new[] { "player" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var allPlayersTask = _playerClient.GetAllPlayers();
-            var teamsTask = _teamsClient.GetAllTeams();
-
+            var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+            var players = globalSettings.Players;
+            var teams = globalSettings.Teams;
+            
             var name = ParseArguments(message);
 
-            var allPlayers = (await allPlayersTask).OrderByDescending(player => player.OwnershipPercentage);
+            var allPlayers = players.OrderByDescending(player => player.OwnershipPercentage);
             var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
 
             if (mostPopularMatchingPlayer == null)
@@ -46,7 +44,6 @@ namespace FplBot.Core.Handlers
             }
 
             var playerName = $"{mostPopularMatchingPlayer.FirstName} {mostPopularMatchingPlayer.SecondName}";
-            var teams = await teamsTask;
             
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
             {

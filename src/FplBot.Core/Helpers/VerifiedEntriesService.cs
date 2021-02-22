@@ -1,4 +1,5 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search;
 using Fpl.Search.Models;
@@ -6,6 +7,8 @@ using FplBot.Core.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 
 namespace FplBot.Core.Helpers
 {
@@ -13,29 +16,32 @@ namespace FplBot.Core.Helpers
     {
         private readonly IEntryClient _entryClient;
         private readonly IEntryHistoryClient _entryHistoryClient;
-        private readonly IGameweekClient _gameweekClient;
-        private readonly IPlayerClient _playerClient;
-        private readonly ITeamsClient _teamsClient;
+        private readonly IGlobalSettingsClient _settingsClient;
         private readonly ILiveClient _liveClient;
+        private readonly IDistributedCache _cache;
 
         public VerifiedEntriesService(
             IEntryClient entryClient, 
             IEntryHistoryClient entryHistoryClient, 
-            IGameweekClient gameweekClient,
-            IPlayerClient playerClient,
-            ITeamsClient teamsClient,
-            ILiveClient liveClient)
+            IGlobalSettingsClient settingsClient,
+            ILiveClient liveClient,
+            IDistributedCache cache)
         {
             _entryClient = entryClient;
             _entryHistoryClient = entryHistoryClient;
-            _gameweekClient = gameweekClient;
-            _playerClient = playerClient;
-            _teamsClient = teamsClient;
+            _settingsClient = settingsClient;
             _liveClient = liveClient;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<VerifiedPLEntryModel>> GetAllVerifiedPLEntries()
         {
+            var cacheJson = await _cache.GetStringAsync("VERIFIEDENTRIES");
+            if (!string.IsNullOrEmpty(cacheJson))
+            {
+                return JsonConvert.DeserializeObject<VerifiedPLEntryModel[]>(cacheJson);
+            }
+            
             var allVerifiedEntriesInPL = VerifiedEntries.VerifiedEntriesMap.Keys.Where(k =>
                 VerifiedEntries.VerifiedEntriesMap[k] == VerifiedEntryType.FootballerInPL).ToArray();
 
@@ -44,7 +50,7 @@ namespace FplBot.Core.Helpers
             var liveItems = await GetAllLiveItems(currentGameweek);
             var entries = await Task.WhenAll(allVerifiedEntriesInPL.Select(entryId => GetVerifiedPLEntry(entryId, currentGameweek, allPlayers, allTeams, liveItems)));
 
-            var entriesOrderedByRank = entries.OrderByDescending(e => e.TotalPoints).ToArray();
+            var entriesOrderedByRank = entries.OrderByDescending(e => e.TotalPoints).ToList();
             var lastGwOrder = entries.OrderByDescending(e => e.TotalPointsLastGw).ToList();
 
             var currentRank = 0;
@@ -55,6 +61,7 @@ namespace FplBot.Core.Helpers
                 currentRank++;
             }
 
+            await _cache.SetStringAsync("VERIFIEDENTRIES", JsonConvert.SerializeObject(entriesOrderedByRank), new DistributedCacheEntryOptions{ AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
             return entriesOrderedByRank;
         }
 
@@ -67,6 +74,12 @@ namespace FplBot.Core.Helpers
 
         public async Task<VerifiedPLEntryModel> GetVerifiedPLEntry(string slug)
         {
+            var cacheJson = await _cache.GetStringAsync($"VERIFIEDENTRY-{slug}");
+            if (!string.IsNullOrEmpty(cacheJson))
+            {
+                return JsonConvert.DeserializeObject<VerifiedPLEntryModel>(cacheJson);
+            }
+            
             var entry = VerifiedEntries.VerifiedPLEntries.SingleOrDefault(v => v.Slug == slug);
 
             if (entry == null)
@@ -77,6 +90,7 @@ namespace FplBot.Core.Helpers
             var (currentGameweek, allPlayers, allTeams) = await GetBootstrap();
             var liveItems = await GetAllLiveItems(currentGameweek);
             var verifiedPLEntry = await GetVerifiedPLEntry(entry.EntryId, currentGameweek, allPlayers, allTeams, liveItems);
+            await _cache.SetStringAsync($"VERIFIEDENTRY-{slug}", JsonConvert.SerializeObject(verifiedPLEntry), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
 
             return verifiedPLEntry;
         }
@@ -119,15 +133,9 @@ namespace FplBot.Core.Helpers
 
         private async Task<(int, ICollection<Player>, ICollection<Team>)> GetBootstrap()
         {
-            var gameweekTask = _gameweekClient.GetGameweeks();
-            var allPlayersTask = _playerClient.GetAllPlayers();
-            var allTeamsTask = _teamsClient.GetAllTeams();
-
-            var currentGameweek = (await gameweekTask).GetCurrentGameweek().Id;
-            var allPlayers = await allPlayersTask;
-            var allTeams = await allTeamsTask;
-
-            return (currentGameweek, allPlayers, allTeams);
+            var globalSettings = await _settingsClient.GetGlobalSettings();
+            var currentGameweek = globalSettings.Gameweeks.GetCurrentGameweek().Id;
+            return (currentGameweek, globalSettings.Players, globalSettings.Teams);
         }
 
         private async Task<VerifiedPLEntryModel> GetVerifiedPLEntry(int entryId, int gameweek, ICollection<Player> allPlayers, ICollection<Team> allTeams, ICollection<LiveItem>[] liveItems)
