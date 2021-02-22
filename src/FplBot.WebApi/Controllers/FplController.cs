@@ -66,11 +66,12 @@ namespace FplBot.WebApi.Controllers
         {
             try
             {
-                if (VerifiedEntries.VerifiedPLEntries.All(x => x.Slug != slug))
+                var slugEntry = VerifiedEntries.VerifiedPLEntries.FirstOrDefault(x => x.Slug != slug);
+                if (slugEntry == null)
                 {
                     return NotFound();
                 }
-                var verifiedEntry = await _verifiedEntriesService.GetVerifiedPLEntry(slug);
+                var verifiedEntry = await _verifiedEntriesService.GetVerifiedPLEntry(slugEntry.Slug);
                 if (verifiedEntry == null)
                 {
                     return NotFound();

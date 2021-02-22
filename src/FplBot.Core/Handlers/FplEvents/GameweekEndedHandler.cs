@@ -17,7 +17,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ILeagueClient _leagueClient;
-        private readonly IGameweekClient _gameweekClient;
+        private readonly IGlobalSettingsClient _gameweekClient;
         private readonly ILogger<GameweekEndedHandler> _logger;
         private readonly IMediator _mediator;
         private readonly ISlackTeamRepository _teamRepo;
@@ -25,7 +25,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         public GameweekEndedHandler(ISlackWorkSpacePublisher publisher, 
             ISlackTeamRepository teamsRepo,
             ILeagueClient leagueClient, 
-            IGameweekClient gameweekClient, 
+            IGlobalSettingsClient gameweekClient, 
             ILogger<GameweekEndedHandler> logger, IMediator mediator)
         {
             _publisher = publisher;
@@ -39,7 +39,8 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         public async Task Handle(GameweekFinished notification, CancellationToken cancellationToken)
         {
             var gameweek = notification.Gameweek.Id;
-            var gameweeks = await _gameweekClient.GetGameweeks();
+            var settings = await _gameweekClient.GetGlobalSettings();
+            var gameweeks = settings.Gameweeks;
             var gw = gameweeks.SingleOrDefault(g => g.Id == gameweek);
             if (gw == null)
             {

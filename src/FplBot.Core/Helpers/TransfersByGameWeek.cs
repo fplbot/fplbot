@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Workers;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using Microsoft.Extensions.Logging;
@@ -17,20 +16,20 @@ namespace FplBot.Core.Helpers
     public class TransfersByGameWeek : ITransfersByGameWeek
     {
         private readonly ILeagueClient _leagueClient;
-        private readonly IPlayerClient _playerClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly ITransfersClient _transfersClient;
         private readonly IEntryClient _entryClient;
         private readonly ILogger<TransfersByGameWeek> _logger;
 
         public TransfersByGameWeek(
             ILeagueClient leagueClient,
-            IPlayerClient playerClient,
+            IGlobalSettingsClient globalSettingsClient,
             ITransfersClient transfersClient,
             IEntryClient entryClient,
             ILogger<TransfersByGameWeek> logger)
         {
             _leagueClient = leagueClient;
-            _playerClient = playerClient;
+            _globalSettingsClient = globalSettingsClient;
             _transfersClient = transfersClient;
             _entryClient = entryClient;
             _logger = logger;
@@ -91,10 +90,10 @@ namespace FplBot.Core.Helpers
             }
 
             var leagueTask = _leagueClient.GetClassicLeague(leagueId);
-            var playersTask = _playerClient.GetAllPlayers();
+            var settingsTask = _globalSettingsClient.GetGlobalSettings();
 
             var league = await leagueTask;
-            var players = await playersTask;
+            var settings = await settingsTask;
 
             var sb = new StringBuilder();
             sb.Append($"Transfers made for gameweek {gw}:\n\n");
@@ -103,7 +102,7 @@ namespace FplBot.Core.Helpers
 
             await Task.WhenAll(league.Standings.Entries
                 .OrderBy(x => x.Rank)
-                .Select(entry => GetTransfersTextForEntry(entry, gw, players))
+                .Select(entry => GetTransfersTextForEntry(entry, gw, settings.Players))
                 .ToArray()
                 .ForEach(async entryTransfersTask =>
                 {

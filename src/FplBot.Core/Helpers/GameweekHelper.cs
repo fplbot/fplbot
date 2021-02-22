@@ -6,9 +6,9 @@ namespace FplBot.Core.Helpers
 {
     internal class GameweekHelper : IGameweekHelper
     {
-        private readonly IGameweekClient _gameweekClient;
+        private readonly IGlobalSettingsClient _gameweekClient;
 
-        public GameweekHelper(IGameweekClient gameweekClient)
+        public GameweekHelper(IGlobalSettingsClient gameweekClient)
         {
             _gameweekClient = gameweekClient;
         }
@@ -16,7 +16,7 @@ namespace FplBot.Core.Helpers
         public async Task<int?> ExtractGameweekOrFallbackToCurrent(string messageText, string pattern)
         {
             var extractedGw = MessageHelper.ExtractGameweek(messageText, pattern);
-            return extractedGw ?? (await _gameweekClient.GetGameweeks()).SingleOrDefault(x => x.IsCurrent)?.Id;
+            return extractedGw ?? (await _gameweekClient.GetGlobalSettings()).Gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
         }
     }
 

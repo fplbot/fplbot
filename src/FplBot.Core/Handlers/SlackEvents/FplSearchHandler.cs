@@ -17,7 +17,7 @@ namespace FplBot.Core.Handlers
     public class FplSearchHandler : HandleAppMentionBase
     {
         private readonly ISearchService _searchService;
-        private readonly IGameweekClient _gameweekClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly ISlackWorkSpacePublisher _workSpacePublisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly ILeagueClient _leagueClient;
@@ -27,7 +27,7 @@ namespace FplBot.Core.Handlers
 
         public FplSearchHandler(
             ISearchService searchService,
-            IGameweekClient gameweekClient,
+            IGlobalSettingsClient globalSettingsClient,
             ISlackWorkSpacePublisher workSpacePublisher,
             ISlackTeamRepository slackTeamRepo,
             ILeagueClient leagueClient,
@@ -35,7 +35,7 @@ namespace FplBot.Core.Handlers
             ILogger<FplSearchHandler> logger)
         {
             _searchService = searchService;
-            _gameweekClient = gameweekClient;
+            _globalSettingsClient = globalSettingsClient;
             _workSpacePublisher = workSpacePublisher;
             _slackTeamRepo = slackTeamRepo;
             _leagueClient = leagueClient;
@@ -77,7 +77,8 @@ namespace FplBot.Core.Handlers
             {
                 try
                 {
-                    var gameweeks = await _gameweekClient.GetGameweeks();
+                    var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+                    var gameweeks = globalSettings.Gameweeks;
                     currentGameweek = gameweeks.GetCurrentGameweek().Id;
                 }
                 catch (Exception e)

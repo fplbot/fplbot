@@ -17,9 +17,9 @@ namespace FplBot.Tests
         [Fact]
         public async Task OnFirstProcess_NoCurrentGameweek_OrchestratesNothing()
         {
-            var gameweekClient = A.Fake<IGameweekClient>();
+            var gameweekClient = A.Fake<IGlobalSettingsClient>();
            
-            A.CallTo(() => gameweekClient.GetGameweeks()).Returns(new List<Gameweek>());
+            A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(new List<Gameweek>()));
             
             var mediator = A.Fake<IMediator>();
             var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
@@ -32,9 +32,9 @@ namespace FplBot.Tests
         [Fact]
         public async Task OnFirstProcess_OrchestratesInitializeAndGameweekOngoing()
         {
-            var gameweekClient = A.Fake<IGameweekClient>();
+            var gameweekClient = A.Fake<IGlobalSettingsClient>();
            
-            A.CallTo(() => gameweekClient.GetGameweeks()).Returns(SomeGameweeks());
+            A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
             
             var mediator = A.Fake<IMediator>();
             var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
@@ -48,8 +48,8 @@ namespace FplBot.Tests
         [Fact]
         public async Task OnGameweekTransition_CallsOrchestratorBegin()
         {
-            var gameweekClient = A.Fake<IGameweekClient>();
-            A.CallTo(() => gameweekClient.GetGameweeks())
+            var gameweekClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => gameweekClient.GetGlobalSettings())
                 .Returns(GameweeksBeforeTransition()).Once()
                 .Then.Returns(GameweeksAfterTransition());
             
@@ -69,8 +69,8 @@ namespace FplBot.Tests
         [Fact]
         public async Task OnGameweekFinished_CallsOrchestratorEnd()
         {
-            var gameweekClient = A.Fake<IGameweekClient>();
-            A.CallTo(() => gameweekClient.GetGameweeks())
+            var gameweekClient = A.Fake<IGlobalSettingsClient>();
+            A.CallTo(() => gameweekClient.GetGlobalSettings())
                 .Returns(GameweeksBeforeTransition()).Once()
                 .Then.Returns(GameweeksWithCurrentNowMarkedAsFinished());
             
@@ -89,9 +89,9 @@ namespace FplBot.Tests
         [Fact]
         public async Task OnNoChanges_CallsNothing()
         {
-            var gameweekClient = A.Fake<IGameweekClient>();
+            var gameweekClient = A.Fake<IGlobalSettingsClient>();
             
-            A.CallTo(() => gameweekClient.GetGameweeks()).Returns(GameweeksWithCurrentNowMarkedAsFinished());
+            A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GameweeksWithCurrentNowMarkedAsFinished());
             
             var mediator = A.Fake<IMediator>();
             var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
@@ -130,31 +130,36 @@ namespace FplBot.Tests
             };
         }
 
-        private static List<Gameweek> GameweeksBeforeTransition()
+        private static GlobalSettings GameweeksBeforeTransition()
         {
-            return SomeGameweeks();
+            return GlobalSettingsWithGameweeks(SomeGameweeks());
         }
 
-        private static List<Gameweek> GameweeksAfterTransition()
+        private static GlobalSettings GameweeksAfterTransition()
         {
-            return new List<Gameweek>
+            return GlobalSettingsWithGameweeks(new List<Gameweek>
             {
-                TestBuilder.OlderGameweek(1),
-                TestBuilder.PreviousGameweek(2),
+                TestBuilder.OlderGameweek(1), 
+                TestBuilder.PreviousGameweek(2), 
                 TestBuilder.CurrentGameweek(3)
-            };
+            });
         }
-        
-        private static List<Gameweek> GameweeksWithCurrentNowMarkedAsFinished()
+
+        private static GlobalSettings GameweeksWithCurrentNowMarkedAsFinished()
         {
             var currentGameweek = TestBuilder.CurrentGameweek(2);
             currentGameweek.IsFinished = true;
-            return new List<Gameweek>
+            return GlobalSettingsWithGameweeks(new List<Gameweek>
             {
                 TestBuilder.PreviousGameweek(1),
                 currentGameweek,
                 TestBuilder.NextGameweek(3)
-            };
+            });
+        }
+
+        private static GlobalSettings GlobalSettingsWithGameweeks(List<Gameweek> gameweeks)
+        {
+            return new GlobalSettings {Gameweeks = gameweeks};
         }
     }
 }

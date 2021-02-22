@@ -42,7 +42,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSlackClientBuilder();
             services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
-            services.AddSingleton<IGoalsDuringGameweek, GoalsDuringGameweek>();
             services.AddSingleton<IChipsPlayed, ChipsPlayed>();
             services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
             services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();

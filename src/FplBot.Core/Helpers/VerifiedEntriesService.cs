@@ -20,6 +20,9 @@ namespace FplBot.Core.Helpers
         private readonly ILiveClient _liveClient;
         private readonly IDistributedCache _cache;
 
+        private const string EntryCacheKeyPrefix = "VERIFIEDENTRY";
+        private const string VerifiedentriesCacheKey = "VERIFIEDENTRIES";
+
         public VerifiedEntriesService(
             IEntryClient entryClient, 
             IEntryHistoryClient entryHistoryClient, 
@@ -36,7 +39,8 @@ namespace FplBot.Core.Helpers
 
         public async Task<IEnumerable<VerifiedPLEntryModel>> GetAllVerifiedPLEntries()
         {
-            var cacheJson = await _cache.GetStringAsync("VERIFIEDENTRIES");
+            
+            var cacheJson = await _cache.GetStringAsync(VerifiedentriesCacheKey);
             if (!string.IsNullOrEmpty(cacheJson))
             {
                 return JsonConvert.DeserializeObject<VerifiedPLEntryModel[]>(cacheJson);
@@ -61,7 +65,7 @@ namespace FplBot.Core.Helpers
                 currentRank++;
             }
 
-            await _cache.SetStringAsync("VERIFIEDENTRIES", JsonConvert.SerializeObject(entriesOrderedByRank), new DistributedCacheEntryOptions{ AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
+            await _cache.SetStringAsync(VerifiedentriesCacheKey, JsonConvert.SerializeObject(entriesOrderedByRank), new DistributedCacheEntryOptions{ AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
             return entriesOrderedByRank;
         }
 
@@ -74,12 +78,12 @@ namespace FplBot.Core.Helpers
 
         public async Task<VerifiedPLEntryModel> GetVerifiedPLEntry(string slug)
         {
-            var cacheJson = await _cache.GetStringAsync($"VERIFIEDENTRY-{slug}");
+            var cacheJson = await _cache.GetStringAsync($"{EntryCacheKeyPrefix}-{slug}");
             if (!string.IsNullOrEmpty(cacheJson))
             {
                 return JsonConvert.DeserializeObject<VerifiedPLEntryModel>(cacheJson);
             }
-            
+
             var entry = VerifiedEntries.VerifiedPLEntries.SingleOrDefault(v => v.Slug == slug);
 
             if (entry == null)
@@ -90,7 +94,7 @@ namespace FplBot.Core.Helpers
             var (currentGameweek, allPlayers, allTeams) = await GetBootstrap();
             var liveItems = await GetAllLiveItems(currentGameweek);
             var verifiedPLEntry = await GetVerifiedPLEntry(entry.EntryId, currentGameweek, allPlayers, allTeams, liveItems);
-            await _cache.SetStringAsync($"VERIFIEDENTRY-{slug}", JsonConvert.SerializeObject(verifiedPLEntry), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
+            await _cache.SetStringAsync($"{EntryCacheKeyPrefix}-{slug}", JsonConvert.SerializeObject(verifiedPLEntry), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)});
 
             return verifiedPLEntry;
         }

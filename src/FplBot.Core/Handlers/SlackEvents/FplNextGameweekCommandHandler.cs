@@ -15,16 +15,16 @@ namespace FplBot.Core.Handlers
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly ISlackClientBuilder _slackClientService;
         private readonly ITokenStore _tokenStore;
-        private readonly IGameweekClient _gameweekClient;
+        private readonly IGlobalSettingsClient _gameweekClient;
         private readonly IFixtureClient _fixtureClient;
-        private readonly ITeamsClient _teamsclient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGameweekClient gameweekClient, IFixtureClient fixtureClient, ITeamsClient teamsclient, ISlackClientBuilder slackClientService, ITokenStore tokenStore)
+        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGlobalSettingsClient gameweekClient, IFixtureClient fixtureClient, IGlobalSettingsClient globalSettingsClient, ISlackClientBuilder slackClientService, ITokenStore tokenStore)
         {
             _workspacePublisher = workspacePublisher;
             _gameweekClient = gameweekClient;
             _fixtureClient = fixtureClient;
-            _teamsclient = teamsclient;
+            _globalSettingsClient = globalSettingsClient;
             _slackClientService = slackClientService;
             _tokenStore = tokenStore;
         }
@@ -36,12 +36,11 @@ namespace FplBot.Core.Handlers
             var token = await _tokenStore.GetTokenByTeamId(eventMetadata.Team_Id);
             var slackClient = _slackClientService.Build(token);
             var usersTask = slackClient.UsersList();
-            var gameweeksTask = _gameweekClient.GetGameweeks();
-            var teamsTask = _teamsclient.GetAllTeams();
+            var settings = await _globalSettingsClient.GetGlobalSettings();
 
             var users = await usersTask;
-            var gameweeks = await gameweeksTask;
-            var teams = await teamsTask;
+            var gameweeks = settings.Gameweeks;
+            var teams = settings.Teams;
 
             var nextGw = gameweeks.First(gw => gw.IsNext);
             var fixtures = await _fixtureClient.GetFixturesByGameweek(nextGw.Id);

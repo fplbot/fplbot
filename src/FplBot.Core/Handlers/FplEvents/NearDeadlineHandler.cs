@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
@@ -21,16 +22,16 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ISlackClientBuilder _builder;
         private readonly ILogger<NearDeadlineHandler> _logger;
-        private readonly ITeamsClient _teams;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly IFixtureClient _fixtures;
 
-        public NearDeadlineHandler(ISlackWorkSpacePublisher workspacePublisher, ISlackTeamRepository teamRepo, ISlackClientBuilder builder, ITeamsClient teams, IFixtureClient fixtures, ILogger<NearDeadlineHandler> logger)
+        public NearDeadlineHandler(ISlackWorkSpacePublisher workspacePublisher, ISlackTeamRepository teamRepo, ISlackClientBuilder builder, IGlobalSettingsClient globalSettingsClient, IFixtureClient fixtures, ILogger<NearDeadlineHandler> logger)
         {
             _workspacePublisher = workspacePublisher;
             _teamRepo = teamRepo;
             _builder = builder;
             _logger = logger;
-            _teams = teams;
+            _globalSettingsClient = globalSettingsClient;
             _fixtures = fixtures;
         }
         
@@ -51,7 +52,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         {
             _logger.LogInformation($"Notifying about 24h to (gw{notification.Gameweek.Id}) deadline");
             var fixtures = await _fixtures.GetFixturesByGameweek(notification.Gameweek.Id);
-            var teams = await _teams.GetAllTeams();
+            var teams = (await _globalSettingsClient.GetGlobalSettings()).Teams;
             
             var allSlackTeams = await _teamRepo.GetAllTeams();
             string message = $"⏳ Gameweek {notification.Gameweek.Id} deadline in 24 hours!";

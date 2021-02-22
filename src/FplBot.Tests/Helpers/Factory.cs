@@ -12,9 +12,7 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core;
 using FplBot.Core.Abstractions;
-using Microsoft.Extensions.Options;
 using Nest;
 using Newtonsoft.Json;
 using NServiceBus;
@@ -52,13 +50,8 @@ namespace FplBot.Tests.Helpers
                 .AddFplBotSlackEventHandlers();
 
             SlackClient = A.Fake<ISlackClient>();
-            GameweekClient = A.Fake<IGameweekClient>();
+            
             var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonConvert.DeserializeObject<GlobalSettings>(TestResources.Boostrap_Static_Json);
-            A.CallTo(() => GameweekClient.GetGameweeks()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Gameweeks);
-            var playerClient = A.Fake<IPlayerClient>();
-            A.CallTo(() => playerClient.GetAllPlayers()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Players);
-            var teamsClient = A.Fake<ITeamsClient>();
-            A.CallTo(() => teamsClient.GetAllTeams()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished.Teams);
             var globalClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => globalClient.GetGlobalSettings()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
             var elasticClient = A.Fake<IElasticClient>();
@@ -67,9 +60,6 @@ namespace FplBot.Tests.Helpers
             A.CallTo(() => slackClientServiceMock.Build(A<string>.Ignored)).Returns(SlackClient);
             
             services.Replace<ISlackClientBuilder>(slackClientServiceMock);
-            services.Replace<IGameweekClient>(GameweekClient);
-            services.Replace<IPlayerClient>(playerClient);
-            services.Replace<ITeamsClient>(teamsClient);
             services.Replace<IGlobalSettingsClient>(globalClient);
             services.Replace<ITokenStore>(new DontCareRepo());
             services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository());
@@ -81,11 +71,7 @@ namespace FplBot.Tests.Helpers
         }
         
         public static ISlackClient SlackClient { get; set; }
-        public static IGameweekClient GameweekClient { get; set; }
-       
 
-     
-        
         private static void Replace<T>(this ServiceCollection services, T replacement) where T : class
         {
             var serviceDescriptors = services.Where(descriptor => descriptor.ServiceType == typeof(T)).ToList();
