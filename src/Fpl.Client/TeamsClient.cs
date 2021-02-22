@@ -1,29 +1,25 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Fpl.Client
 {
     public class TeamsClient : ITeamsClient
     {
-        private readonly HttpClient _client;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public TeamsClient(HttpClient client)
+        public TeamsClient(IGlobalSettingsClient globalSettingsClient)
         {
-            _client = client;
+            _globalSettingsClient = globalSettingsClient;
         }
 
         public async Task<ICollection<Team>> GetAllTeams()
         {
-            var json = await _client.GetStringAsync("/api/bootstrap-static/");
+            var globalSettings = await _globalSettingsClient.GetGlobalSettings();
 
-            var data = JsonConvert.DeserializeObject<GlobalSettings>(json);
-
-            return data.Teams;
+            return globalSettings.Teams;
         }
 
         public async Task<Team> GetTeam(int teamId)

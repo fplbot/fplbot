@@ -152,5 +152,51 @@ namespace Fpl.Search
             { 55085, VerifiedEntryType.CommunityFame }, // Pranil Sheth (@lateriser12)
             { 132073, VerifiedEntryType.CommunityFame } // Ben Crellin (@bencrellin)
         };
+
+        public static readonly IEnumerable<VerifiedPLEntry> VerifiedPLEntries = new []
+            {
+                new VerifiedPLEntry(3651702, 38, "john-mcginn"), // John McGinn
+                new VerifiedPLEntry(3995410, 239, "james-justin"), // James Justin
+                new VerifiedPLEntry(2956964, 412, "kyle-bartley"), // Kyle Bartley
+                new VerifiedPLEntry(4333448, 178, "michael-hector"), // Michael Hector
+                new VerifiedPLEntry(3949083, 528, "jason-steele"), // Jason Steele
+                new VerifiedPLEntry(2824860, 298, "harry-maguire"), // Harry Maguire
+                new VerifiedPLEntry(5630688, 195, "liam-cooper"), // Liam Cooper
+                new VerifiedPLEntry(976717,  202, "patrick-bamford"), // Patrick Bamford
+                new VerifiedPLEntry(3994143, 66, "adam-webster"), // Adam Webster
+                new VerifiedPLEntry(2317459, 415, "charlie-austin"), // Charlie Austin
+                new VerifiedPLEntry(3533650, 604, "lee-grant"), // Lee Grant
+                new VerifiedPLEntry(3011137, 255, "andy-robertson"), // Andy Robertson
+                new VerifiedPLEntry(5197871, 231, "james-maddison"), // James Maddison
+                new VerifiedPLEntry(4977097, 197, "luke-ayling"), // Luke Ayling
+                new VerifiedPLEntry(4431216, 363, "alex-mccarthy"), // Alex McCarthy
+                new VerifiedPLEntry(4869402, 503, "christian-walton"), // Christian Walton
+                new VerifiedPLEntry(4667259, 33, "conor-hourihane"), // Conor Hourihane
+                new VerifiedPLEntry(5621264, 214, "leif-davis"), // Leif Davis
+                new VerifiedPLEntry(1026172, 259, "trent-alexander-arnold"), // Trent Alexander-Ar
+                new VerifiedPLEntry(4501590, 497, "jacob-murphy"), // Jacob Murphy
+                new VerifiedPLEntry(3204228, 28, "tom-heaton"), // Tom Heaton
+                new VerifiedPLEntry(4973262, 554, "jacob-ramsey"), // Jacob Ramsey
+                new VerifiedPLEntry(5689627, 204, "kalvin-philips"), // Kalvin Philips
+                new VerifiedPLEntry(4627487, 586, "jack-butland"), // Jack Butland
+                new VerifiedPLEntry(5664364, 211, "pascal-struijk"), // Pascal Struijk
+                new VerifiedPLEntry(50383,   42, "matt-targett"), // Matt Targett
+                new VerifiedPLEntry(5657419, 373, "harrison-reed"), // Harrison Reed
+                new VerifiedPLEntry(5091389, 360, "sander-berge"), // Sander Berge
+                new VerifiedPLEntry(5639035, 181, "bobby-decorva-reid"), // Bobby Decorva-Reid
+                new VerifiedPLEntry(6523017, 221, "marc-albrighton"), // Marc Albrighton
+                new VerifiedPLEntry(2073952, 367, "jack-stephens"), // Jack Stephens
+                new VerifiedPLEntry(3560071, 428, "robert-snodgrass"), // Robert Snodgrass
+                new VerifiedPLEntry(6297033, 201, "ezgjan-alioski"), // Ezgjan Alioski
+                new VerifiedPLEntry(1605584, 418, "conor-townsend"), // Conor Townsend
+                new VerifiedPLEntry(3257654, 31, "neil-taylor"), // Neil Taylor
+                new VerifiedPLEntry(6824049, 234, "hamza-choudhury"), // Hamza Choudhury
+                new VerifiedPLEntry(5677809, 209, "ian-poveda"), // Ian Poveda
+                new VerifiedPLEntry(5797199, 71, "alireza-jahanbakhs"), // Alireza Jahanbakhs
+                new VerifiedPLEntry(5747167, 76, "yves-bissouma"), // Yves Bissouma
+                new VerifiedPLEntry(4971020, 645, "martin-odegaard") // Martin Odegaard
+            };
     }
+
+    public record VerifiedPLEntry(int EntryId, int PlayerId, string Slug);
 }

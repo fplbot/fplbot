@@ -1,33 +1,31 @@
-﻿using System.Collections.Generic;
+﻿using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Newtonsoft.Json;
 
 namespace Fpl.Client
 {
     public class FixtureClient : IFixtureClient
     {
-        private readonly HttpClient _client;
+        private readonly HttpClient _httpClient;
+        private readonly ICacheProvider _client;
 
-        public FixtureClient(HttpClient client)
+        public FixtureClient(HttpClient httpClient, ICacheProvider client)
         {
+            _httpClient = httpClient;
             _client = client;
         }
 
-        public async Task<ICollection<Fixture>> GetFixtures()
+        public Task<ICollection<Fixture>> GetFixtures()
         {
-            var json = await _client.GetStringAsync("/api/fixtures/");
-
-            return JsonConvert.DeserializeObject<ICollection<Fixture>>(json);
+            return _client.GetCachedOrFetch<ICollection<Fixture>>("/api/fixtures/", url => _httpClient.GetStringAsync(url),  TimeSpan.FromMinutes(5));
         }
 
-        public async Task<ICollection<Fixture>> GetFixturesByGameweek(int id)
+        public Task<ICollection<Fixture>> GetFixturesByGameweek(int id)
         {
-            var json = await _client.GetStringAsync($"/api/fixtures/?event={id}");
-
-            return JsonConvert.DeserializeObject<ICollection<Fixture>>(json);
+            return _client.GetCachedOrFetch<ICollection<Fixture>>($"/api/fixtures/?event={id}", url => _httpClient.GetStringAsync(url), TimeSpan.FromMinutes(5));
         }
     }
 }

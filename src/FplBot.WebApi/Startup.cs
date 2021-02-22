@@ -1,14 +1,5 @@
-using System;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 using AspNet.Security.OAuth.Slack;
-using Fpl.Client.Models;
-using Fpl.Search;
-using FplBot.Core;
-using FplBot.Core.Models;
 using FplBot.WebApi.Configurations;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -21,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http.Extensions;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace FplBot.WebApi
 {

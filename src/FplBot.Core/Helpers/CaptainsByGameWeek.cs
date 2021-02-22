@@ -14,14 +14,14 @@ namespace FplBot.Core.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {
-        private readonly IPlayerClient _playerClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly ILeagueClient _leagueClient;
         private readonly IEntryForGameweek _entryForGameweek;
         private readonly ILogger<CaptainsByGameWeek> _logger;
 
-        public CaptainsByGameWeek(IPlayerClient playerClient, ILeagueClient leagueClient, IEntryForGameweek entryForGameweek, ILogger<CaptainsByGameWeek> logger)
+        public CaptainsByGameWeek(IGlobalSettingsClient globalSettingsClient, ILeagueClient leagueClient, IEntryForGameweek entryForGameweek, ILogger<CaptainsByGameWeek> logger)
         {
-            _playerClient = playerClient;
+            _globalSettingsClient = globalSettingsClient;
             _leagueClient = leagueClient;
             _entryForGameweek = entryForGameweek;
             _logger = logger;
@@ -106,7 +106,7 @@ namespace FplBot.Core.Helpers
         private async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)
         {
             var leagueTask = _leagueClient.GetClassicLeague(leagueId);
-            var playersTask = _playerClient.GetAllPlayers();
+            var playersTask = _globalSettingsClient.GetGlobalSettings();
 
             var league = await leagueTask;
             var players = await playersTask;
@@ -131,7 +131,7 @@ namespace FplBot.Core.Helpers
                 }).ToList();
             }
             
-            var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, players)));
+            var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, players.Players)));
 
             return entryCaptainPicks.WhereNotNull();
         }

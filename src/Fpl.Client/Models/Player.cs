@@ -174,6 +174,8 @@ namespace Fpl.Client.Models
 
         [JsonProperty("team")]
         public int TeamId { get; set; }
+
+        public string FullName => $"{FirstName} {SecondName}";
     }
 
     public static class PlayerStatuses

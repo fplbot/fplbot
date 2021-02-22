@@ -13,21 +13,21 @@ namespace FplBot.Core.Handlers
     internal class FplInjuryCommandHandler : HandleAppMentionBase
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
-        private readonly IPlayerClient _playerClient;
+        private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public FplInjuryCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IPlayerClient playerClient)
+        public FplInjuryCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGlobalSettingsClient globalSettingsClient)
         {
             _workspacePublisher = workspacePublisher;
-            _playerClient = playerClient;
+            _globalSettingsClient = globalSettingsClient;
         }
 
         public override string[] Commands => new[] { "injuries" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
-            var allPlayers = await _playerClient.GetAllPlayers();
+            var globalSettings = await _globalSettingsClient.GetGlobalSettings();
 
-            var injuredPlayers = FindInjuredPlayers(allPlayers);
+            var injuredPlayers = FindInjuredPlayers(globalSettings.Players);
 
             var textToSend = Formatter.GetInjuredPlayers(injuredPlayers);
 

@@ -1,8 +1,8 @@
-using System;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Fpl.Client.Infra
 {
@@ -25,15 +25,17 @@ namespace Fpl.Client.Infra
         private static void AddFplApiClient(IServiceCollection services)
         {
             services.AddTransient<FplDelegatingHandler>();
+            services.AddSingleton<ICacheProvider, CacheProvider>();
             services.AddHttpClient<IEntryClient, EntryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IFixtureClient, FixtureClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddHttpClient<IGameweekClient, GameweekClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddSingleton<IGameweekClient, GameweekClient>();
             services.AddHttpClient<ILeagueClient, LeagueClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddHttpClient<IPlayerClient, PlayerClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-            services.AddHttpClient<ITeamsClient, TeamsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddSingleton<IPlayerClient, PlayerClient>();
+            services.AddSingleton<ITeamsClient, TeamsClient>();
             services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddHttpClient<ILiveClient, LiveClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();
