@@ -14,6 +14,7 @@ using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using MediatR;
 
 namespace FplBot.WebApi
 {
@@ -39,8 +40,8 @@ namespace FplBot.WebApi
             services.Configure<OAuthOptions>(Configuration);
             services.Configure<AnalyticsOptions>(Configuration);
             services.AddReducedHttpClientFactoryLogging();
-            services.AddFplBot(Configuration)
-                .AddFplBotSlackEventHandlers();
+            services.AddFplBot(Configuration).AddFplBotSlackEventHandlers();
+            services.AddMediatR(typeof(Startup));
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
