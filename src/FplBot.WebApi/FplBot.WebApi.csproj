@@ -19,6 +19,8 @@
     <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="1.7.0" />
     <PackageReference Include="NServiceBus.Heartbeat" Version="3.0.1" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.2.0" />
+    <PackageReference Include="MediatR" Version="9.0.0" />
+
   </ItemGroup>
 
   <ItemGroup>

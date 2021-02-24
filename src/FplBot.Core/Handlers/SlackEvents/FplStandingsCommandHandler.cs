@@ -5,6 +5,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
+using FplBot.Core.Handlers.InternalCommands;
 using FplBot.Core.Helpers;
 using MediatR;
 using Microsoft.Extensions.Logging;

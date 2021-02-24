@@ -39,6 +39,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 return ConnectionMultiplexer.Connect(options);
             });
             services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
+            services.AddSingleton<IVerifiedEntriesRepository, VerifiedEntriesRepository>();
+            services.AddSingleton<IVerifiedPLEntriesRepository, VerifiedPLEntriesRepository>();
+            services.AddSingleton<SelfOwnerShipCalculator>();
             services.AddSlackClientBuilder();
             services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();

@@ -1,0 +1,111 @@
+@page
+@using Newtonsoft.Json
+@model FplBot.WebApi.Pages.Admin.Verified
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+
+<div class="col-12">
+    <h1>Admin page</h1>
+    <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
+    <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+    <p><a href="@Url.PageLink("Broadcast")">Gå til @Url.Page("Broadcast")</a></p>
+    
+    
+    @if (TempData.ContainsKey("msg"))
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            @TempData["msg"]    
+        </div>
+    }
+    
+    <h3>Verified entries (@Model.VerifiedEntries.Count())</h3>
+
+
+        @if (Model.VerifiedEntries.Any())
+        {
+            <form asp-page-handler="DeleteAll">
+                @Html.AntiForgeryToken()
+                <input type="submit" value="Delete all" class="btn btn-danger"/>
+            </form>
+            
+            <form asp-page-handler="SeedSelfishness">
+                @Html.AntiForgeryToken()
+                <input type="submit" value="Seed selfishness" class="btn btn-info"/>
+            </form>
+            
+            <form asp-page-handler="UpdateStats">
+                @Html.AntiForgeryToken()
+                <input type="submit" value="Update base stats" class="btn btn-info"/>
+            </form>
+            
+            <form asp-page-handler="IncrementSelfishStats">
+                @Html.AntiForgeryToken()
+                <input type="submit" value="INCREMENT selfish stats (no real good check for stats already added)" class="btn btn-info"/>
+            </form>
+            
+
+            
+            <form asp-page-handler="UpdateSelfPoints">
+                @Html.AntiForgeryToken()
+                <input type="number" name="entryId"/>
+                <input type="number" name="points"/>
+                <input type="submit" value="Add self-points for PL entry" class="btn btn-info"/>
+            </form>
+            
+            <form asp-page-handler="IncrementWeekCounter">
+                @Html.AntiForgeryToken()
+                <input type="number" name="entryId"/>
+                <input type="submit" value="Increment weeks ownership" class="btn btn-info"/>
+            </form>
+            
+            <table class="table">
+                <thead>
+                <th>EntryId</th>
+                <th>Name</th>
+                <th>TeamName</th>
+                <th>VerifiedEntryType</th>
+                <th>Stats</th>
+                <th>PL-entry</th>
+                <th>Action</th>
+                </thead>
+                <tbody>
+                @foreach (var entry in Model.VerifiedEntries)
+                {
+                    <tr>
+                        <td>@entry.EntryId</td>
+                        <td>@entry.FullName</td>
+                        <td>@entry.EntryTeamName</td>
+                        <td>@entry.VerifiedEntryType</td>
+                        <td>            
+                            @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats) : ""; }
+                            <code>@entryStats</code>
+                        </td>
+                        <td>
+                            @{
+                                var plEntry = Model.VerifiedPLEntries.FirstOrDefault(pl => pl.EntryId == entry.EntryId);
+                                var json = JsonConvert.SerializeObject(plEntry);
+                            }
+                            <code>@json</code>
+                        </td>
+                        <td>        
+                            <form asp-page-handler="DeleteEntry">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="entryId" value="@entry.EntryId"/>
+                                <input type="submit" value="Remove" class="btn btn-danger"/>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        
+        }
+        else
+        {
+            <p>No entries :/</p>
+            <form asp-page-handler="SeedEntries">
+                @Html.AntiForgeryToken()
+                <input type="submit" value="Import hardcoded list" class="btn btn-info"/>
+            </form>
+        }
+</div>

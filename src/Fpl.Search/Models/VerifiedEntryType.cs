@@ -2,6 +2,7 @@
 {
     public enum VerifiedEntryType
     {
+        Unknown = -1,
         FootballerInPL = 0,
         Footballer = 1,
         ChessMaster = 2,

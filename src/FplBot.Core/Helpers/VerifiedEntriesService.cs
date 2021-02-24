@@ -194,7 +194,7 @@ namespace FplBot.Core.Helpers
         Task<VerifiedPLEntryModel> GetVerifiedPLEntry(string slug);
     }
 
-    class GameweekPick
+    public class GameweekPick
     {
         public int Gameweek { get; }
         public EntryPicks Pick { get; }
@@ -227,6 +227,6 @@ namespace FplBot.Core.Helpers
         public string ChipUsed { get; set; }
         public int SelfOwnershipWeekCount { get; set; }
         public int SelfOwnershipTotalPoints { get; set; }
-        public int Gameweek { get; set; }
+        public int? Gameweek { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
 using MediatR;
 
-namespace FplBot.Core.Handlers
+namespace FplBot.Core.Handlers.InternalCommands
 {
     public record PublishStandingsCommand(SlackTeam Team, Gameweek FinishedGameweek) : INotification;
 
