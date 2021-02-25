@@ -101,7 +101,7 @@ namespace FplBot.WebApi.Handlers.Commands
             {
                 text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist. 🤷‍♂️";
             }
-            await context.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", "Verified suggestion: " + text));
+            await context.SendLocal(new PublishToSlack("T0A9QSU83", "#fplbot-notifications", "Verified suggestion: " + text));
         }
 
         public async Task Handle(PublishAggregatedPLEntrySuggestions message, IMessageHandlerContext context)
