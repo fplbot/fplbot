@@ -42,6 +42,7 @@ namespace Microsoft.Extensions.Hosting
                 serviceControlQueue: GetServiceControlQueue(context.HostingEnvironment),
                 frequency: TimeSpan.FromSeconds(15),
                 timeToLive: TimeSpan.FromSeconds(30));
+            endpointConfiguration.UsePersistence<InMemoryPersistence>();
             var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
             transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
             transport.RuleNameShortener(r =>
