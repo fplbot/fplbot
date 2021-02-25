@@ -102,3 +102,13 @@ X-Correlation-Id:bot-joined-event-test
        "inviter": "U0EJP4HTQ"
     }
 }
+
+### suggestion
+
+POST http://localhost:1337/suggestions/verified
+X-Correlation-Id:suggestion-api-test
+Content-Type: application/json
+
+{
+   "entryId" : 2
+}
