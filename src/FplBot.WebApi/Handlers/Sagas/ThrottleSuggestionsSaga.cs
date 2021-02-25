@@ -1,9 +1,11 @@
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Extensions;
+using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using NServiceBus;
 
@@ -11,11 +13,13 @@ namespace FplBot.WebApi.Handlers.Commands
 {
     public class ThrottleSuggestionConstants
     {
-        public const int ThrottleTimeoutInSeconds = 30;
+        public const int ThrottleTimeoutInSeconds = 10;
+        public const string SlackChannel = "#johntest";
+        public const string TeamId = "T0A9QSU83";
     }
     
-    public record VerifiedEntrySuggestionReceived(int EntryId) : IEvent;
-    public record VerifiedPLEntrySuggestionReceived(int EntryId, int PlayerId) : IEvent;
+    public record VerifiedEntrySuggestionReceived(int EntryId, string Description) : IEvent;
+    public record VerifiedPLEntrySuggestionReceived(int EntryId,string Description, int PlayerId) : IEvent;
     
     public record SuggestionsThrottleTimeout();
 
@@ -31,12 +35,14 @@ namespace FplBot.WebApi.Handlers.Commands
         public async Task Handle(VerifiedEntrySuggestionReceived message, IMessageHandlerContext context)
         {
             Data.SuggestionCount++;
+            if(!Data.Descriptions.Contains(message.Description))
+                Data.Descriptions.Add(message.Description);
             await RequestTimeout(context, TimeSpan.FromSeconds(ThrottleSuggestionConstants.ThrottleTimeoutInSeconds), new SuggestionsThrottleTimeout());
         }
 
         public async Task Timeout(SuggestionsThrottleTimeout state, IMessageHandlerContext context)
         {
-            await context.SendLocal(new PublishAggregatedEntrySuggestions(Data.EntryId, Data.SuggestionCount));
+            await context.SendLocal(new PublishAggregatedEntrySuggestions(Data.EntryId, Data.Descriptions.ToArray(), Data.SuggestionCount));
             MarkAsComplete();
         }
     }
@@ -54,12 +60,15 @@ namespace FplBot.WebApi.Handlers.Commands
         {
             Data.SuggestionCount++;
             Data.PlayerId = message.PlayerId;
+            if(!Data.Descriptions.Contains(message.Description))
+                Data.Descriptions.Add(message.Description);
+            
             await RequestTimeout(context, TimeSpan.FromSeconds(ThrottleSuggestionConstants.ThrottleTimeoutInSeconds), new SuggestionsThrottleTimeout());
         }
 
         public async Task Timeout(SuggestionsThrottleTimeout state, IMessageHandlerContext context)
         {
-            await context.SendLocal(new PublishAggregatedPLEntrySuggestions(Data.EntryId, Data.SuggestionCount, Data.PlayerId));
+            await context.SendLocal(new PublishAggregatedPLEntrySuggestions(Data.EntryId, Data.Descriptions.ToArray(), Data.SuggestionCount, Data.PlayerId));
             MarkAsComplete();
         }
     }
@@ -71,12 +80,19 @@ namespace FplBot.WebApi.Handlers.Commands
     
     public class AcccumulatedSuggestionsSagaData : ContainSagaData
     {
+        public AcccumulatedSuggestionsSagaData()
+        {
+            Descriptions = new List<string>();
+        }
+        
         public int EntryId { get; set; }
         public int SuggestionCount { get; set; }
+        
+        public List<string> Descriptions { get; set; }
     }
 
-    public record PublishAggregatedEntrySuggestions(int EntryId, int SuggestionCount) : ICommand;
-    public record PublishAggregatedPLEntrySuggestions(int EntryId, int SuggestionCount, int? PlayerId) : ICommand;
+    public record PublishAggregatedEntrySuggestions(int EntryId, string[] Descriptions, int SuggestionCount) : ICommand;
+    public record PublishAggregatedPLEntrySuggestions(int EntryId, string[] Descriptions, int SuggestionCount, int? PlayerId) : ICommand;
 
     public class AggregatedSuggestionsHandler : IHandleMessages<PublishAggregatedEntrySuggestions>, IHandleMessages<PublishAggregatedPLEntrySuggestions>
     {
@@ -95,13 +111,13 @@ namespace FplBot.WebApi.Handlers.Commands
             try
             {
                 var entry = await _entryClient.Get(message.EntryId);
-                text = $"{Link(entry)} for {entry.PlayerFullName}{Counting(message.SuggestionCount)}";
+                text = $"{Link(entry)} for {entry.PlayerFullName}{Counting(message.SuggestionCount)}. \n{Formatter.BulletPoints(message.Descriptions)}";
             }
             catch (Exception)
             {
-                text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist. 🤷‍♂️";
+                text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist 🤷‍♂️. \n{Formatter.BulletPoints(message.Descriptions)}";
             }
-            await context.SendLocal(new PublishToSlack("T0A9QSU83", "#fplbot-notifications", "Verified suggestion: " + text));
+            await context.SendLocal(new PublishToSlack(ThrottleSuggestionConstants.TeamId, ThrottleSuggestionConstants.SlackChannel, "Verified suggestion: " + text));
         }
 
         public async Task Handle(PublishAggregatedPLEntrySuggestions message, IMessageHandlerContext context)
@@ -127,7 +143,7 @@ namespace FplBot.WebApi.Handlers.Commands
                 text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist. 🤷‍♂️";
             }
                   
-            await context.SendLocal(new PublishToSlack("T0A9QSU83", "#fplbot-notifications", "Verified suggestion: " + text));
+            await context.SendLocal(new PublishToSlack(ThrottleSuggestionConstants.TeamId, ThrottleSuggestionConstants.SlackChannel, "Verified suggestion: " + text));
 
         }
 

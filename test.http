@@ -106,9 +106,9 @@ X-Correlation-Id:bot-joined-event-test
 ### suggestion
 
 POST http://localhost:1337/suggestions/verified
-X-Correlation-Id:suggestion-api-test
 Content-Type: application/json
 
 {
-   "entryId" : 2
+   "entryId" : 2045420,
+   "description" : "jeg tester litt 1 3"  
 }

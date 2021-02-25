@@ -79,6 +79,7 @@ namespace Microsoft.Extensions.Hosting
         {
             var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}");
             endpointConfiguration.UseTransport<LearningTransport>();
+            endpointConfiguration.UsePersistence<InMemoryPersistence>();
             return endpointConfiguration;
         }
     }

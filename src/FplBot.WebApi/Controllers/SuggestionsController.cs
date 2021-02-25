@@ -26,16 +26,22 @@ namespace FplBot.WebApi.Controllers
 
             if (suggestion.PlayerId.HasValue && suggestion.PlayerId.Value > 0)
             {
-                await _session.Publish(new VerifiedPLEntrySuggestionReceived(suggestion.EntryId, suggestion.PlayerId.Value));
+                await _session.Publish(new VerifiedPLEntrySuggestionReceived(suggestion.EntryId, suggestion.ShortDesc(), suggestion.PlayerId.Value));
             }
             else
             {
-                await _session.Publish(new VerifiedEntrySuggestionReceived(suggestion.EntryId));
+                await _session.Publish(new VerifiedEntrySuggestionReceived(suggestion.EntryId, suggestion.ShortDesc()));
             }
             
             return Ok();
         }
     }
 
-    public record Suggestion([Required, Range(1, int.MaxValue)]int EntryId, int? PlayerId);
+    public record Suggestion([Required, Range(1, int.MaxValue)]int EntryId, [MaxLength(1000)]string Description, int? PlayerId)
+    {
+        public string ShortDesc()
+        {
+            return Description.Length > 1000 ? Description.Substring(0, 1000) : Description;
+        }
+    }
 }
