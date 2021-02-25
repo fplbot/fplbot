@@ -13,8 +13,8 @@ namespace FplBot.WebApi.Handlers.Commands
 {
     public class ThrottleSuggestionConstants
     {
-        public const int ThrottleTimeoutInSeconds = 10;
-        public const string SlackChannel = "#johntest";
+        public const int ThrottleTimeoutInSeconds = 60;
+        public const string SlackChannel = "#fplbot-notifications";
         public const string TeamId = "T0A9QSU83";
     }
     
