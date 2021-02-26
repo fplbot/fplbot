@@ -197,7 +197,6 @@ namespace FplBot.WebApi.Controllers
 
         private static VerifiedPLEntryModelV2 BuildVerifiedPlEntryModelV2(VerifiedPLEntry plEntry, VerifiedEntry fplEntry)
         {
-            var baseModel = BuildVerifiedEntryModelV2(fplEntry);
             var plModel = new VerifiedPLEntryModelV2
             (
                 EntryId : fplEntry.EntryId,

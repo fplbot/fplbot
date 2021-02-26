@@ -48,6 +48,8 @@ namespace FplBot.Core.Data
         public async Task<VerifiedPLEntry> GetVerifiedPLEntry(int entryId)
         {
             var fetchedTeamData = await _db.HashGetAsync($"pl-entry-{entryId}", AllQueryFields());
+            if (fetchedTeamData[0] == RedisValue.Null)
+                return null;
             return ToVerifiedEntry(fetchedTeamData);
         }
 
