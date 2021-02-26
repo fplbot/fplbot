@@ -1,6 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Search.Models;
@@ -52,31 +53,38 @@ namespace FplBot.WebApi.Controllers
 
 
         [HttpGet("")]
-        [HttpGet("types/")]
         public async Task<IActionResult> GetLeagues()
         {
             return Ok(Enum.GetNames<VerifiedEntryType>());
         }
         
-        [HttpGet("types/{type}")]
-        public async Task<IActionResult> GetVirtualLeague(string type)
+        [HttpGet("league")]
+        public async Task<IActionResult> GetVirtualLeague()
         {
+            var type = Request.Query["type"];
             var verifiedEntries = await _repo.GetAllVerifiedEntries();
             if (verifiedEntries == null)
                 return Ok(Enumerable.Empty<string>());
 
-            if (!string.IsNullOrEmpty(type))
+            if (type.Count > 0 && !type.ToList().Any(t => string.Compare("all", t, StringComparison.InvariantCultureIgnoreCase) == 0))
             {
-                bool couldParse = Enum.TryParse(type, true, out VerifiedEntryType theType);
-                if (couldParse)
+                bool couldParse = true;
+                var filteredTypes = new List<VerifiedEntryType>();
+                foreach (string typeSing in type)
                 {
-                    verifiedEntries = verifiedEntries.Where(v => v.VerifiedEntryType == theType).ToList();    
+                    VerifiedEntryType theType = VerifiedEntryType.Unknown;
+                    couldParse = couldParse && Enum.TryParse(typeSing, true, out theType);
+                    if(couldParse)
+                        filteredTypes.Add(theType);   
                 }
-                else
+                
+                if (!couldParse)
                 {
                     ModelState.AddModelError("type", "Unknown modelType");
                     return BadRequest();
                 }
+
+                verifiedEntries = verifiedEntries.Where(v => filteredTypes.Any(f => f == v.VerifiedEntryType)).ToList();
             }
 
             var lastGwOrder = verifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ToList();
