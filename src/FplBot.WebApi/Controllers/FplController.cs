@@ -186,7 +186,7 @@ namespace FplBot.WebApi.Controllers
                 if (verifiedEntry == null)
                     return NotFound();
                 
-                return Ok(verifiedEntry);
+                return Ok(BuildVerifiedEntryModelV2(verifiedEntry));
             }
             catch (HttpRequestException e)
             {
