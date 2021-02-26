@@ -227,6 +227,7 @@ namespace FplBot.WebApi.Controllers
         {
             return new VerifiedEntryModelV2(
                 EntryId : fplEntry.EntryId,
+                VerifiedType: fplEntry.VerifiedEntryType.ToString(),
                 TeamName : fplEntry.EntryTeamName,
                 RealName : fplEntry.FullName,
                 PointsThisGw: fplEntry.EntryStats?.PointsThisGw,
@@ -267,6 +268,7 @@ namespace FplBot.WebApi.Controllers
     
     public record VerifiedEntryModelV2(
         int EntryId,
+        string VerifiedType,
         string TeamName,
         string RealName,
         int? PointsThisGw,
