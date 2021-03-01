@@ -113,10 +113,15 @@ namespace FplBot.Core.Data
                 hashEntries.Add(new("lastGwTotalPoints", entry.EntryStats.LastGwTotalPoints));
                 hashEntries.Add(new("overAllRank", entry.EntryStats.OverallRank));
                 hashEntries.Add(new("pointsThisGw", entry.EntryStats.PointsThisGw));
-                hashEntries.Add(new("activeChip", !string.IsNullOrEmpty(entry.EntryStats?.ActiveChip) ? entry.EntryStats?.ActiveChip : string.Empty));
-                hashEntries.Add(new("captain", entry.EntryStats.Captain));
-                hashEntries.Add(new("viceCaptain", entry.EntryStats.ViceCaptain));
+                hashEntries.Add(new("activeChip", ValueOrStringEmpty(entry.EntryStats.ActiveChip)));
+                hashEntries.Add(new("captain", ValueOrStringEmpty(entry.EntryStats.Captain)));
+                hashEntries.Add(new("viceCaptain", ValueOrStringEmpty(entry.EntryStats.ViceCaptain)));
                 hashEntries.Add(new("gameweek", entry.EntryStats.Gameweek));
+
+                string ValueOrStringEmpty(string value)
+                {
+                    return !string.IsNullOrEmpty(value) ? value : string.Empty;
+                }
             }
 
             return hashEntries.ToArray();
@@ -137,7 +142,7 @@ namespace FplBot.Core.Data
                 "activeChip",
                 "captain",
                 "viceCaptain",
-                "gameweek",
+                "gameweek"
             };
         }
         
