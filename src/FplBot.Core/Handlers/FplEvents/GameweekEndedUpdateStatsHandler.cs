@@ -17,7 +17,7 @@ namespace FplBot.Core.Handlers.FplEvents
 
         public async Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
         {
-            var t1 = _mediator.Publish(new UpdateEntryStats(), cancellationToken);
+            var t1 = _mediator.Publish(new UpdateAllEntryStats(), cancellationToken);
             var t2 = _mediator.Publish(new UpdateSelfishStats(Gameweek : notification.Gameweek.Id), cancellationToken);
             await Task.WhenAll(t1, t2);
         }

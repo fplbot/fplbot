@@ -73,11 +73,29 @@ namespace FplBot.Core.Data
             await Task.WhenAll(tasks);
         }
 
-        public async Task UpdateStats(int entryId, VerifiedEntryStats verifiedEntryStats)
+        public async Task UpdateAllStats(int entryId, VerifiedEntryStats verifiedEntryStats)
         {
             var entry = await GetVerifiedEntry(entryId);
             var newEntry = entry with {EntryStats = verifiedEntryStats};
             await Insert(newEntry);// insert behaves as update
+        }
+
+        public async Task UpdateLiveStats(int entryId, VerifiedEntryPointsUpdate newStats)
+        {
+            var entry = await GetVerifiedEntry(entryId);
+            var verifiedEntryStats = entry.EntryStats with
+            {
+                CurrentGwTotalPoints = newStats.CurrentGwTotalPoints,
+                OverallRank = newStats.OverallRank,
+                PointsThisGw = newStats.PointsThisGw
+            };
+            
+            var newEntry = entry with
+            {
+                EntryStats = verifiedEntryStats
+            };
+
+            await Insert(newEntry); // insert behaves as update
         }
 
         private static HashEntry[] AllWriteFields(VerifiedEntry entry)
@@ -163,6 +181,11 @@ namespace FplBot.Core.Data
         string ViceCaptain,
         int Gameweek);
 
+    public record VerifiedEntryPointsUpdate(
+        int CurrentGwTotalPoints, 
+        int OverallRank, 
+        int PointsThisGw);
+
     public interface IVerifiedEntriesRepository
     {
         Task Insert(VerifiedEntry entry);
@@ -171,6 +194,7 @@ namespace FplBot.Core.Data
         
         Task Delete(int entryId);
         Task DeleteAll();
-        Task UpdateStats(int entryId, VerifiedEntryStats verifiedEntryStats);
+        Task UpdateAllStats(int entryId, VerifiedEntryStats verifiedEntryStats);
+        Task UpdateLiveStats(int entryId, VerifiedEntryPointsUpdate newStats);
     }
 }

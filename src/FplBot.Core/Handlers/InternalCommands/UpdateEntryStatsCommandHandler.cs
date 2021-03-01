@@ -10,9 +10,9 @@ using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
-    public record UpdateEntryStats : INotification;
+    public record UpdateAllEntryStats : INotification;
 
-    public class UpdateEntryStatsCommandHandler : INotificationHandler<UpdateEntryStats>
+    public class UpdateEntryStatsCommandHandler : INotificationHandler<UpdateAllEntryStats>
     {
         private readonly IEntryHistoryClient _entryHistoryClient;
         private readonly IGlobalSettingsClient _settingsClient;
@@ -27,7 +27,7 @@ namespace FplBot.Core.Handlers.InternalCommands
             _entryClient = entryClient;
         }
 
-        public async Task Handle(UpdateEntryStats notification, CancellationToken cancellationToken)
+        public async Task Handle(UpdateAllEntryStats notification, CancellationToken cancellationToken)
         {
             var allEntries = await _verifiedEntriesRepository.GetAllVerifiedEntries();
             var settings = await _settingsClient.GetGlobalSettings();
@@ -35,7 +35,7 @@ namespace FplBot.Core.Handlers.InternalCommands
             foreach (var entry in allEntries)
             {
                 var newStats = await GetUpdatedStatsForEntry(entry, players);
-                await _verifiedEntriesRepository.UpdateStats(entry.EntryId, newStats);
+                await _verifiedEntriesRepository.UpdateAllStats(entry.EntryId, newStats);
             }
         }
 
