@@ -1,7 +1,6 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Search.Models;
@@ -34,8 +33,8 @@ namespace FplBot.WebApi.Controllers
             var plVerifiedEntries = await _plRepo.GetAllVerifiedPLEntries();
 
 
-            var lastGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ToList();
-            var currentGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.CurrentGwTotalPoints).ToList();
+            var lastGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
+            var currentGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.CurrentGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
             
             var viewModels = new List<PLVirtualLeagueEntry>();
             var lastGameweekRank = 0;
@@ -48,7 +47,7 @@ namespace FplBot.WebApi.Controllers
                 viewModels.Add(ApiModelBuilder.BuildPLVirtualLeagueEntry(currentPLEntry, currentGwItem) with { Movement = movement});
                 lastGameweekRank++;
             }
-            return Ok(viewModels.OrderByDescending(c => c.TotalPoints));
+            return Ok(viewModels.OrderByDescending(c => c.TotalPoints).ThenBy(o => o.OverallRank));
         }
 
 
@@ -87,8 +86,8 @@ namespace FplBot.WebApi.Controllers
                 verifiedEntries = verifiedEntries.Where(v => filteredTypes.Any(f => f == v.VerifiedEntryType)).ToList();
             }
 
-            var lastGwOrder = verifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ToList();
-            var currentGwOrder = verifiedEntries.OrderByDescending(c => c.EntryStats.CurrentGwTotalPoints).ToList();
+            var lastGwOrder = verifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
+            var currentGwOrder = verifiedEntries.OrderByDescending(c => c.EntryStats.CurrentGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
             
             var lastGameweekRank = 0;
             var viewModels = new List<RegularVirtualLeagueEntry>();
@@ -101,7 +100,26 @@ namespace FplBot.WebApi.Controllers
                 lastGameweekRank++;
             }
             
-            return Ok(viewModels.OrderByDescending(c => c.TotalPoints));
+            return Ok(viewModels.OrderByDescending(c => c.TotalPoints).ThenBy(o => o.OverallRank));
+        }
+        
+        [HttpGet("last-gw")]
+        public async Task<object> LastGwOrder()
+        {
+            IEnumerable<VerifiedEntry> allVerifiedEntries = await _repo.GetAllVerifiedEntries();
+            allVerifiedEntries = allVerifiedEntries.Where(v => v.VerifiedEntryType == VerifiedEntryType.FootballerInPL);
+            var lastGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
+            return Ok(lastGwOrder);
+        }
+        
+        [HttpGet("current-gw")]
+        public async Task<object> CurrentGw()
+        {
+            IEnumerable<VerifiedEntry> allVerifiedEntries = await _repo.GetAllVerifiedEntries();
+            allVerifiedEntries = allVerifiedEntries.Where(v => v.VerifiedEntryType == VerifiedEntryType.FootballerInPL);
+
+            var lastGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.CurrentGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
+            return Ok(lastGwOrder);
         }
     }
 }
