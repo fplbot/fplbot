@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Search.Indexing;
+using Fpl.Search.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Data;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,7 @@ namespace FplBot.WebApi.Tests
         private RedisSlackTeamRepository _repo;
         private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
         private IServer _server;
+        private VerifiedEntriesRepository _verifiedRepo;
 
         public RedisIntegrationTests(ITestOutputHelper helper)
         {
@@ -65,6 +67,7 @@ namespace FplBot.WebApi.Tests
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
             _repo = new RedisSlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
             _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
+            _verifiedRepo = new VerifiedEntriesRepository(multiplexer, opts, new SimpleLogger(_helper));
         }
 
         [Fact]
@@ -173,6 +176,32 @@ namespace FplBot.WebApi.Tests
             await _bookmarkProvider.SetBookmark(1337);
             var bookmark = await _bookmarkProvider.GetBookmark();
             Assert.Equal(1337, bookmark);
+        }
+
+        [Fact]
+        public async Task UpdatesDontCreateDuplicates()
+        {
+            VerifiedEntry verifiedEntry = SomeEntry() with { EntryStats = EntryStats()};
+            
+            await _verifiedRepo.Insert(verifiedEntry);
+            var allVerifiedEntries = await _verifiedRepo.GetAllVerifiedEntries();
+            Assert.Single(allVerifiedEntries);
+
+
+            await _verifiedRepo.UpdateAllStats(verifiedEntry.EntryId, EntryStats() with {PointsThisGw = 100});
+            var allVerifiedEntriesAfterUpdate = await _verifiedRepo.GetAllVerifiedEntries();
+            Assert.Single(allVerifiedEntriesAfterUpdate);
+
+        }
+
+        private static VerifiedEntry SomeEntry()
+        {
+            return new VerifiedEntry(1, "fullname", "entryteamname", VerifiedEntryType.Footballer);
+        }
+
+        private static VerifiedEntryStats EntryStats()
+        {
+            return new VerifiedEntryStats(1, 2, 3, 50, "", "", "", 1);
         }
 
         public void Dispose()
