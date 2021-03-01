@@ -33,10 +33,15 @@
                 <input type="submit" value="Seed selfishness" class="btn btn-info"/>
             </form>
             
-            <form asp-page-handler="UpdateStats">
+            <form asp-page-handler="UpdateAllBaseStats">
                 @Html.AntiForgeryToken()
-                <input type="submit" value="Update base stats" class="btn btn-info"/>
+                <input type="submit" value="Update all base stats" class="btn btn-info"/>
             </form>
+            
+            <form asp-page-handler="UpdateLiveScoreStats">
+                @Html.AntiForgeryToken()
+                <input type="submit" value="Update only live score stats" class="btn btn-info"/>
+            </form>            
             
             <form asp-page-handler="IncrementSelfishStats">
                 @Html.AntiForgeryToken()
