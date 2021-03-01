@@ -102,24 +102,5 @@ namespace FplBot.WebApi.Controllers
             
             return Ok(viewModels.OrderByDescending(c => c.TotalPoints).ThenBy(o => o.OverallRank));
         }
-        
-        [HttpGet("last-gw")]
-        public async Task<object> LastGwOrder()
-        {
-            IEnumerable<VerifiedEntry> allVerifiedEntries = await _repo.GetAllVerifiedEntries();
-            allVerifiedEntries = allVerifiedEntries.Where(v => v.VerifiedEntryType == VerifiedEntryType.FootballerInPL);
-            var lastGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.LastGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
-            return Ok(lastGwOrder);
-        }
-        
-        [HttpGet("current-gw")]
-        public async Task<object> CurrentGw()
-        {
-            IEnumerable<VerifiedEntry> allVerifiedEntries = await _repo.GetAllVerifiedEntries();
-            allVerifiedEntries = allVerifiedEntries.Where(v => v.VerifiedEntryType == VerifiedEntryType.FootballerInPL);
-
-            var lastGwOrder = allVerifiedEntries.OrderByDescending(e => e.EntryStats.CurrentGwTotalPoints).ThenBy(o => o.EntryStats.OverallRank).ToList();
-            return Ok(lastGwOrder);
-        }
     }
 }
