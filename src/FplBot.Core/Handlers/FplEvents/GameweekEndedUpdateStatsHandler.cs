@@ -4,9 +4,9 @@ using FplBot.Core.Handlers.InternalCommands;
 using FplBot.Core.Models;
 using MediatR;
 
-namespace FplBot.Core.GameweekLifecycle.Handlers
+namespace FplBot.Core.Handlers.FplEvents
 {
-    internal class GameweekEndedUpdateStatsHandler : INotificationHandler<GameweekFinished>
+    internal class GameweekEndedUpdateStatsHandler : INotificationHandler<GameweekJustBegan>
     {
         private readonly IMediator _mediator;
         
@@ -15,7 +15,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             _mediator = mediator;
         }
 
-        public async Task Handle(GameweekFinished notification, CancellationToken cancellationToken)
+        public async Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
         {
             var t1 = _mediator.Publish(new UpdateEntryStats(Gameweek: notification.Gameweek.Id), cancellationToken);
             var t2 = _mediator.Publish(new UpdateSelfishStats(Gameweek : notification.Gameweek.Id), cancellationToken);
