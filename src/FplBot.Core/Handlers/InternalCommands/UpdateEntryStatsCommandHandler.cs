@@ -10,7 +10,7 @@ using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
-    public record UpdateEntryStats(int Gameweek) : INotification;
+    public record UpdateEntryStats : INotification;
 
     public class UpdateEntryStatsCommandHandler : INotificationHandler<UpdateEntryStats>
     {
