@@ -67,11 +67,20 @@ namespace  FplBot.WebApi.Pages.Admin
             return RedirectToPage("Verified");
         }
 
-        public async Task<IActionResult> OnPostUpdateStats()
+        public async Task<IActionResult> OnPostUpdateAllBaseStats()
         {
             var settings = await _settings.GetGlobalSettings();
             var gameweek = settings.Gameweeks.GetCurrentGameweek();
-            await _mediator.Publish(new UpdateEntryStats(Gameweek: gameweek.Id));
+            await _mediator.Publish(new UpdateAllEntryStats());
+            TempData["msg"] += $"Base stats added using gw {gameweek.Id}!";
+            return RedirectToPage("Verified");
+        }
+        
+        public async Task<IActionResult> OnPostUpdateLiveScoreStats()
+        {
+            var settings = await _settings.GetGlobalSettings();
+            var gameweek = settings.Gameweeks.GetCurrentGameweek();
+            await _mediator.Publish(new UpdateEntryLiveStats());
             TempData["msg"] += $"Base stats added using gw {gameweek.Id}!";
             return RedirectToPage("Verified");
         }

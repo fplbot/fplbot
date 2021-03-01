@@ -73,11 +73,29 @@ namespace FplBot.Core.Data
             await Task.WhenAll(tasks);
         }
 
-        public async Task UpdateStats(int entryId, VerifiedEntryStats verifiedEntryStats)
+        public async Task UpdateAllStats(int entryId, VerifiedEntryStats verifiedEntryStats)
         {
             var entry = await GetVerifiedEntry(entryId);
             var newEntry = entry with {EntryStats = verifiedEntryStats};
             await Insert(newEntry);// insert behaves as update
+        }
+
+        public async Task UpdateLiveStats(int entryId, VerifiedEntryPointsUpdate newStats)
+        {
+            var entry = await GetVerifiedEntry(entryId);
+            var verifiedEntryStats = entry.EntryStats with
+            {
+                CurrentGwTotalPoints = newStats.CurrentGwTotalPoints,
+                OverallRank = newStats.OverallRank,
+                PointsThisGw = newStats.PointsThisGw
+            };
+            
+            var newEntry = entry with
+            {
+                EntryStats = verifiedEntryStats
+            };
+
+            await Insert(newEntry); // insert behaves as update
         }
 
         private static HashEntry[] AllWriteFields(VerifiedEntry entry)
@@ -95,10 +113,15 @@ namespace FplBot.Core.Data
                 hashEntries.Add(new("lastGwTotalPoints", entry.EntryStats.LastGwTotalPoints));
                 hashEntries.Add(new("overAllRank", entry.EntryStats.OverallRank));
                 hashEntries.Add(new("pointsThisGw", entry.EntryStats.PointsThisGw));
-                hashEntries.Add(new("activeChip", !string.IsNullOrEmpty(entry.EntryStats?.ActiveChip) ? entry.EntryStats?.ActiveChip : string.Empty));
-                hashEntries.Add(new("captain", entry.EntryStats.Captain));
-                hashEntries.Add(new("viceCaptain", entry.EntryStats.ViceCaptain));
+                hashEntries.Add(new("activeChip", ValueOrStringEmpty(entry.EntryStats.ActiveChip)));
+                hashEntries.Add(new("captain", ValueOrStringEmpty(entry.EntryStats.Captain)));
+                hashEntries.Add(new("viceCaptain", ValueOrStringEmpty(entry.EntryStats.ViceCaptain)));
                 hashEntries.Add(new("gameweek", entry.EntryStats.Gameweek));
+
+                string ValueOrStringEmpty(string value)
+                {
+                    return !string.IsNullOrEmpty(value) ? value : string.Empty;
+                }
             }
 
             return hashEntries.ToArray();
@@ -119,7 +142,7 @@ namespace FplBot.Core.Data
                 "activeChip",
                 "captain",
                 "viceCaptain",
-                "gameweek",
+                "gameweek"
             };
         }
         
@@ -163,6 +186,11 @@ namespace FplBot.Core.Data
         string ViceCaptain,
         int Gameweek);
 
+    public record VerifiedEntryPointsUpdate(
+        int CurrentGwTotalPoints, 
+        int OverallRank, 
+        int PointsThisGw);
+
     public interface IVerifiedEntriesRepository
     {
         Task Insert(VerifiedEntry entry);
@@ -171,6 +199,7 @@ namespace FplBot.Core.Data
         
         Task Delete(int entryId);
         Task DeleteAll();
-        Task UpdateStats(int entryId, VerifiedEntryStats verifiedEntryStats);
+        Task UpdateAllStats(int entryId, VerifiedEntryStats verifiedEntryStats);
+        Task UpdateLiveStats(int entryId, VerifiedEntryPointsUpdate newStats);
     }
 }
