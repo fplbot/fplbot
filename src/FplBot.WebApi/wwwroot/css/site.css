@@ -92,16 +92,21 @@ body {
 }
 
 .entryid {
-  width: 5.5rem;
+  width: 5.7rem;
 }
 
 .th {
   font-weight: bold;
 }
 
-.td input,
-.td textarea {
+.td input:not([type="submit"]),
+.td textarea,
+.td select{
   width: 100%;
+}
+
+.td textarea {
+  height: calc(1.5em + .75rem + 5px);
 }
 
 .code {

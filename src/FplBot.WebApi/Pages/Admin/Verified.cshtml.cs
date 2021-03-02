@@ -63,7 +63,7 @@ namespace  FplBot.WebApi.Pages.Admin
 
         public async Task<IActionResult> OnPostUpdateEntry(UpdateEntry model, UpdateAction action)
         {
-            if (action == UpdateAction.Remove)
+            if (action == UpdateAction.Del)
             {
                 _logger.LogInformation("Removing single: {entryId}", model.EntryId);
                 await _repo.Delete(model.EntryId);
@@ -143,8 +143,8 @@ namespace  FplBot.WebApi.Pages.Admin
 
     public enum UpdateAction
     {
-        Update,
-        Remove
+        Save,
+        Del
     }
     
 }
