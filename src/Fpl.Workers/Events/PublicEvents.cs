@@ -1,3 +1,4 @@
+using System;
 using Fpl.Client.Models;
 using MediatR;
 using System.Collections.Generic;
@@ -14,5 +15,6 @@ namespace FplBot.Core.Models
     public record FixtureEventsOccured(FixtureUpdates FixtureEvents) : INotification;
     public record FixturesFinished(IEnumerable<FinishedFixture> FinishedFixture) : INotification;
     public record GameweekFinished(Gameweek Gameweek) : INotification;
-    
+    public record BonusAdded(int Event, DateTime MatchDayDate) : INotification;
+    public record PointsReady(int Event, DateTime MatchDayDate) : INotification;
 }

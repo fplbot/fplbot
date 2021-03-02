@@ -20,9 +20,11 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>();
             services.AddSingleton<NearDeadLineMonitor>();
             services.AddSingleton<GameweekLifecycleMonitor>();
+            services.AddSingleton<MatchDayStatusMonitor>();
             services.AddRecurringActions()
                 .AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
+                .AddRecurrer<MatchDayStatusRecurringAction>()
                 .Build();
             return services;
         }

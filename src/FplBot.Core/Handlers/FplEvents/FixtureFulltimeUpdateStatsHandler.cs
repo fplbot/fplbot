@@ -20,7 +20,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
 
         public async Task Handle(FixturesFinished notification, CancellationToken cancellationToken)
         {
-            await _mediator.Publish(new UpdateEntryLiveStats(), cancellationToken);
+            await _mediator.Publish(new UpdateEntryLiveStatsCommand(), cancellationToken);
         }
     }
 }

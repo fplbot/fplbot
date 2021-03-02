@@ -3,15 +3,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using FplBot.Core.Data;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
-    public record UpdateEntryLiveStats : INotification;
+    public record UpdateEntryLiveStatsCommand : INotification;
     
-    public class UpdateOngoingStatsCommandHandler : INotificationHandler<UpdateEntryLiveStats>
+    public class UpdateOngoingStatsCommandHandler : INotificationHandler<UpdateEntryLiveStatsCommand>
     {
         private readonly IEntryHistoryClient _entryHistoryClient;
         private readonly IVerifiedEntriesRepository _verifiedEntriesRepository;
@@ -22,7 +21,7 @@ namespace FplBot.Core.Handlers.InternalCommands
             _verifiedEntriesRepository = verifiedEntriesRepository;
         }
 
-        public async Task Handle(UpdateEntryLiveStats notification, CancellationToken cancellationToken)
+        public async Task Handle(UpdateEntryLiveStatsCommand notification, CancellationToken cancellationToken)
         {
             var allEntries = await _verifiedEntriesRepository.GetAllVerifiedEntries();
             
