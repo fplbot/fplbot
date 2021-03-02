@@ -99,6 +99,13 @@ namespace  FplBot.WebApi.Pages.Admin
             
             await _mediator.Publish(new UpdateEntryStats(model.EntryId));
 
+            if (model.PLPlayer.HasValue)
+            {
+                var settings = await _settings.GetGlobalSettings();
+                var gameweek = settings.Gameweeks.GetCurrentGameweek();
+                await _mediator.Publish(new ConnectEntryToPLPlayer(model.EntryId, model.PLPlayer.Value, gameweek.Id));
+            }
+
             return RedirectToPage("Verified");
         }
 
