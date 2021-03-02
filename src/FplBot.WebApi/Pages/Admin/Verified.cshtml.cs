@@ -85,6 +85,21 @@ namespace  FplBot.WebApi.Pages.Admin
             return RedirectToPage("Verified");
         }
 
+        public async Task<IActionResult> OnPostAddEntry(AddEntry model)
+        {
+            _logger.LogInformation("Adding new entry: {entryId}", model.EntryId);
+            await _repo.Insert(new VerifiedEntry(
+                model.EntryId,
+                model.FullName,
+                model.EntryTeamName,
+                model.VerifiedEntryType,
+                model.Alias,
+                model.Description));
+            TempData["msg"] += $"Entry {model.EntryId} added!";
+
+            return RedirectToPage("Verified");
+        }
+
         public async Task<IActionResult> OnPostUpdateAllBaseStats()
         {
             var settings = await _settings.GetGlobalSettings();
@@ -139,6 +154,17 @@ namespace  FplBot.WebApi.Pages.Admin
         public VerifiedEntryType VerifiedEntryType { get; set; }
         public string Alias { get; set; }
         public string Description { get; set; }
+    }
+    
+    public class AddEntry
+    {
+        public int EntryId { get; set; }
+        public string FullName { get; set; }
+        public string EntryTeamName { get; set; }
+        public VerifiedEntryType VerifiedEntryType { get; set; }
+        public string Alias { get; set; }
+        public string Description { get; set; }
+        public int? PLPlayer { get; set; }
     }
 
     public enum UpdateAction
