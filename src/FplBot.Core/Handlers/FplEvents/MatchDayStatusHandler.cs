@@ -29,7 +29,7 @@ namespace FplBot.Core.Handlers.FplEvents
         public async Task Handle(PointsReady notification, CancellationToken cancellationToken)
         {
             await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", $"Points ready for matchday {notification.MatchDayDate:yyyy-MM-dd} in gw {notification.Event}"));
-            await _mediator.Publish(new UpdateEntryLiveStatsCommand(), cancellationToken);
+            await _mediator.Publish(new UpdateVerifiedEntriesCurrentGwPointsCommand(), cancellationToken);
         }
     }
 }
