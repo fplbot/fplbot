@@ -96,6 +96,8 @@ namespace  FplBot.WebApi.Pages.Admin
                 model.Alias,
                 model.Description));
             TempData["msg"] += $"Entry {model.EntryId} added!";
+            
+            await _mediator.Publish(new UpdateEntryStats(model.EntryId));
 
             return RedirectToPage("Verified");
         }
