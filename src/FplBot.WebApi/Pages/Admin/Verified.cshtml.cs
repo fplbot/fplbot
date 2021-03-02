@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Search.Models;
 using FplBot.Core.Data;
 using FplBot.Core.Extensions;
 using FplBot.Core.Handlers.InternalCommands;
@@ -59,11 +61,27 @@ namespace  FplBot.WebApi.Pages.Admin
             return RedirectToPage("Verified");
         }
 
-        public async Task<IActionResult> OnPostDeleteEntry(int entryId)
+        public async Task<IActionResult> OnPostUpdateEntry(UpdateEntry model, UpdateAction action)
         {
-            _logger.LogInformation($"Deleting single");
-            await _repo.Delete(entryId);
-            TempData["msg"] += $"Entry {entryId} deleted!";
+            if (action == UpdateAction.Remove)
+            {
+                _logger.LogInformation("Removing single: {entryId}", model.EntryId);
+                await _repo.Delete(model.EntryId);
+                TempData["msg"] += $"Entry {model.EntryId} deleted!";
+            }
+            else
+            {
+                _logger.LogInformation("Updating single: {entryId}", model.EntryId);
+                await _repo.Insert(new VerifiedEntry(
+                    model.EntryId, 
+                    model.FullName, 
+                    model.EntryTeamName, 
+                    model.VerifiedEntryType, 
+                    model.Alias, 
+                    model.Description));
+                TempData["msg"] += $"Entry {model.EntryId} updated!";
+            }
+            
             return RedirectToPage("Verified");
         }
 
@@ -113,5 +131,21 @@ namespace  FplBot.WebApi.Pages.Admin
         public IEnumerable<VerifiedPLEntry> VerifiedPLEntries { get; set; } = new List<VerifiedPLEntry>();
     }
 
+    public class UpdateEntry
+    {
+        public int EntryId { get; set; }
+        public string FullName { get; set; }
+        public string EntryTeamName { get; set; }
+        public VerifiedEntryType VerifiedEntryType { get; set; }
+        public string Alias { get; set; }
+        public string Description { get; set; }
+        public string EntryStats { get; set; }
+    }
+
+    public enum UpdateAction
+    {
+        Update,
+        Remove
+    }
     
 }

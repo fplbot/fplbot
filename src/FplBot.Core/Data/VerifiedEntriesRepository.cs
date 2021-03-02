@@ -102,9 +102,12 @@ namespace FplBot.Core.Data
         {
             var hashEntries = new List<HashEntry>
             {
-                new("entryId", entry.EntryId), new("fullName", entry.FullName),
+                new("entryId", entry.EntryId), 
+                new("fullName", entry.FullName),
                 new("entryTeamName", entry.EntryTeamName),
-                new("verifiedEntryType", entry.VerifiedEntryType.ToString())
+                new("verifiedEntryType", entry.VerifiedEntryType.ToString()),
+                new("alias", entry.Alias ?? string.Empty),
+                new("description", entry.Description ?? string.Empty),
             };
 
             if (entry.EntryStats != null)
@@ -135,6 +138,8 @@ namespace FplBot.Core.Data
                 "fullName",
                 "entryTeamName",
                 "verifiedEntryType",
+                "alias",
+                "description",
                 "currentGwTotalPoints",
                 "lastGwTotalPoints",
                 "overAllRank",
@@ -153,16 +158,18 @@ namespace FplBot.Core.Data
                 EntryId: (int)fetchedTeamData[0], 
                 FullName: fetchedTeamData[1], 
                 EntryTeamName: fetchedTeamData[2], 
-                VerifiedEntryType:verifiedEntryType, 
-                EntryStats: fetchedTeamData.Length > 3 ? new VerifiedEntryStats(
-                    CurrentGwTotalPoints: (int)fetchedTeamData[4],
-                    LastGwTotalPoints: (int)fetchedTeamData[5],
-                    OverallRank : (int)fetchedTeamData[6],
-                    PointsThisGw : (int)fetchedTeamData[7],
-                    ActiveChip : fetchedTeamData[8],
-                    Captain : fetchedTeamData[9],
-                    ViceCaptain : fetchedTeamData[10],
-                    Gameweek: (int) fetchedTeamData[11]
+                VerifiedEntryType:verifiedEntryType,
+                Alias: fetchedTeamData[4],
+                Description: fetchedTeamData[5],
+                EntryStats: fetchedTeamData.Length > 5 ? new VerifiedEntryStats(
+                    CurrentGwTotalPoints: (int)fetchedTeamData[6],
+                    LastGwTotalPoints: (int)fetchedTeamData[7],
+                    OverallRank : (int)fetchedTeamData[8],
+                    PointsThisGw : (int)fetchedTeamData[9],
+                    ActiveChip : fetchedTeamData[10],
+                    Captain : fetchedTeamData[11],
+                    ViceCaptain : fetchedTeamData[12],
+                    Gameweek: (int) fetchedTeamData[13]
                 ) : null
                 );
         }
@@ -173,8 +180,10 @@ namespace FplBot.Core.Data
         string FullName,
         string EntryTeamName,
         VerifiedEntryType VerifiedEntryType,
+        string Alias = null,
+        string Description = null,
         VerifiedEntryStats EntryStats = null
-);
+    );
 
     public record VerifiedEntryStats(
         int CurrentGwTotalPoints,

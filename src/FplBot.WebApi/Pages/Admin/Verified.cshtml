@@ -1,4 +1,5 @@
 @page
+@using FplBot.WebApi.Pages.Admin
 @using Newtonsoft.Json
 @model FplBot.WebApi.Pages.Admin.Verified
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
@@ -25,7 +26,7 @@
         {
             <form asp-page-handler="DeleteAll">
                 @Html.AntiForgeryToken()
-                <input type="submit" value="Delete all" class="btn btn-danger"/>
+                <input type="submit" value="Delete all" class="btn btn-danger" onclick="return confirm('Are you sure?')"/>
             </form>
             
             <form asp-page-handler="SeedSelfishness">
@@ -63,46 +64,47 @@
                 <input type="submit" value="Increment weeks ownership" class="btn btn-info"/>
             </form>
             
-            <table class="table">
-                <thead>
-                <th>EntryId</th>
-                <th>Name</th>
-                <th>TeamName</th>
-                <th>VerifiedEntryType</th>
-                <th>Stats</th>
-                <th>PL-entry</th>
-                <th>Action</th>
-                </thead>
-                <tbody>
-                @foreach (var entry in Model.VerifiedEntries)
-                {
-                    <tr>
-                        <td>@entry.EntryId</td>
-                        <td>@entry.FullName</td>
-                        <td>@entry.EntryTeamName</td>
-                        <td>@entry.VerifiedEntryType</td>
-                        <td>            
-                            @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats) : ""; }
-                            <code>@entryStats</code>
-                        </td>
-                        <td>
-                            @{
-                                var plEntry = Model.VerifiedPLEntries.FirstOrDefault(pl => pl.EntryId == entry.EntryId);
-                                var json = JsonConvert.SerializeObject(plEntry);
-                            }
-                            <code>@json</code>
-                        </td>
-                        <td>        
-                            <form asp-page-handler="DeleteEntry">
-                                @Html.AntiForgeryToken()
+            <div class="table">
+                   <div class="tr">
+                        <div class="th entryid">EntryId</div>
+                        <div class="th">Name</div>
+                        <div class="th">TeamName</div>
+                        <div class="th">EntryType</div>
+                        <div class="th">Alias</div>
+                        <div class="th">Description</div>
+                        <div class="th">Stats</div>
+                        <div class="th">PL-entry</div>
+                        <div class="th">Action</div>
+                    </div>
+                    @foreach (var entry in Model.VerifiedEntries)
+                    {
+                        <form class="tr" asp-page-handler="UpdateEntry" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="td entryid"><input value="@entry.EntryId" name="@(nameof(UpdateEntry.EntryId))"/></div>
+                            <div class="td"><input value="@entry.FullName" name="@(nameof(UpdateEntry.FullName))"/></div>
+                            <div class="td"><input value="@entry.EntryTeamName" name="@(nameof(UpdateEntry.EntryTeamName))"/></div>
+                            <div class="td"><input value="@entry.VerifiedEntryType" name="@(nameof(UpdateEntry.VerifiedEntryType))"/></div>
+                            <div class="td"><input value="@entry.Alias" name="@(nameof(UpdateEntry.Alias))"/></div>
+                            <div class="td"><input value="@entry.Description" name="@(nameof(UpdateEntry.Description))"/></div>
+                            <div class="td">
+                                @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats) : ""; }
+                                <textarea class="code" name="@nameof(UpdateEntry.EntryStats)">@entryStats</textarea>
+                            </div>
+                            <div class="td">
+                                @{
+                                    var plEntry = Model.VerifiedPLEntries.FirstOrDefault(pl => pl.EntryId == entry.EntryId);
+                                    var json = JsonConvert.SerializeObject(plEntry);
+                                }
+                                <textarea class="code" readonly>@json</textarea>
+                            </div>
+                            <div class="td">
                                 <input type="hidden" name="entryId" value="@entry.EntryId"/>
-                                <input type="submit" value="Remove" class="btn btn-danger"/>
-                            </form>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
+                                <input type="submit" name="action" value="@nameof(UpdateAction.Update)" class="btn btn-primary"/>
+                                <input type="submit" name="action" value="@nameof(UpdateAction.Remove)" class="btn btn-danger" onclick="return confirm('Are you sure?')"/>
+                            </div>
+                        </form>
+                    }
+                </div>
         
         }
         else
