@@ -139,7 +139,6 @@ namespace  FplBot.WebApi.Pages.Admin
         public VerifiedEntryType VerifiedEntryType { get; set; }
         public string Alias { get; set; }
         public string Description { get; set; }
-        public string EntryStats { get; set; }
     }
 
     public enum UpdateAction

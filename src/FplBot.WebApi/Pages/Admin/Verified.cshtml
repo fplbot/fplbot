@@ -88,7 +88,7 @@
                             <div class="td"><input value="@entry.Description" name="@(nameof(UpdateEntry.Description))"/></div>
                             <div class="td">
                                 @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats) : ""; }
-                                <textarea class="code" name="@nameof(UpdateEntry.EntryStats)">@entryStats</textarea>
+                                <textarea class="code" readonly>@entryStats</textarea>
                             </div>
                             <div class="td">
                                 @{
