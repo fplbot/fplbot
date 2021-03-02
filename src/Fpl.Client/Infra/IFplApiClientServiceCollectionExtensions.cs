@@ -33,6 +33,7 @@ namespace Fpl.Client.Infra
             services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.AddHttpClient<ILiveClient, LiveClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+            services.AddHttpClient<IEventStatusClient, EventStatusClient>().AddHttpMessageHandler<FplDelegatingHandler>();
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();

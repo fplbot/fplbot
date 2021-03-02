@@ -80,7 +80,7 @@ namespace  FplBot.WebApi.Pages.Admin
         {
             var settings = await _settings.GetGlobalSettings();
             var gameweek = settings.Gameweeks.GetCurrentGameweek();
-            await _mediator.Publish(new UpdateEntryLiveStats());
+            await _mediator.Publish(new UpdateVerifiedEntriesCurrentGwPointsCommand());
             TempData["msg"] += $"Base stats added using gw {gameweek.Id}!";
             return RedirectToPage("Verified");
         }

@@ -1,28 +1,26 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using FplBot.Core.Data;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
-    public record UpdateEntryLiveStats : INotification;
+    public record UpdateVerifiedEntriesCurrentGwPointsCommand : INotification;
     
-    public class UpdateOngoingStatsCommandHandler : INotificationHandler<UpdateEntryLiveStats>
+    public class UpdateVerifiedEntriesCurrentGwPointsCommandHandler : INotificationHandler<UpdateVerifiedEntriesCurrentGwPointsCommand>
     {
         private readonly IEntryHistoryClient _entryHistoryClient;
         private readonly IVerifiedEntriesRepository _verifiedEntriesRepository;
 
-        public UpdateOngoingStatsCommandHandler(IEntryHistoryClient entryHistoryClient, IVerifiedEntriesRepository verifiedEntriesRepository)
+        public UpdateVerifiedEntriesCurrentGwPointsCommandHandler(IEntryHistoryClient entryHistoryClient, IVerifiedEntriesRepository verifiedEntriesRepository)
         {
             _entryHistoryClient = entryHistoryClient;
             _verifiedEntriesRepository = verifiedEntriesRepository;
         }
 
-        public async Task Handle(UpdateEntryLiveStats notification, CancellationToken cancellationToken)
+        public async Task Handle(UpdateVerifiedEntriesCurrentGwPointsCommand notification, CancellationToken cancellationToken)
         {
             var allEntries = await _verifiedEntriesRepository.GetAllVerifiedEntries();
             

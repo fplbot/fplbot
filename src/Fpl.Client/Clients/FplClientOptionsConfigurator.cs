@@ -36,7 +36,8 @@ namespace Fpl.Client.Clients
                    name is nameof(ILeagueClient) ||
                    name is nameof(IGlobalSettingsClient) ||
                    name is nameof(ITransfersClient) ||
-                   name is nameof(ILiveClient);
+                   name is nameof(ILiveClient) ||
+                   name is nameof(IEventStatusClient);
         }
 
         public static void SetupFplClient(HttpClient client)
