@@ -52,7 +52,7 @@ namespace FplBot.WebApi.Controllers
 
 
         [HttpGet("")]
-        public async Task<IActionResult> GetLeagues()
+        public IActionResult GetLeagues()
         {
             return Ok(Enum.GetNames<VerifiedEntryType>());
         }
