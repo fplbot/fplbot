@@ -25,6 +25,12 @@
             @TempData["msg"]
         </div>
     }
+    @if (TempData.ContainsKey("error"))
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            @TempData["error"]
+        </div>
+    }
 
     <h3>Verified entries (@Model.VerifiedEntries.Count())</h3>
 

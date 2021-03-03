@@ -90,12 +90,23 @@ namespace  FplBot.WebApi.Pages.Admin
 
         public async Task<IActionResult> OnPostAddEntry(AddEntry model)
         {
+            if (!model.VerifiedEntryType.HasValue)
+            {
+                TempData["error"] += $"You must specify a {nameof(model.VerifiedEntryType)}";
+                return RedirectToPage("Verified");
+            }
+            if (model.VerifiedEntryType == VerifiedEntryType.FootballerInPL && !model.PLPlayer.HasValue)
+            {
+                TempData["error"] += $"Cannot add {nameof(VerifiedEntryType.FootballerInPL)} without {nameof(model.PLPlayer)}";
+                return RedirectToPage("Verified");
+            }
+
             _logger.LogInformation("Adding new entry: {entryId}", model.EntryId);
             await _repo.Insert(new VerifiedEntry(
                 model.EntryId,
                 model.FullName,
                 model.EntryTeamName,
-                model.VerifiedEntryType,
+                model.VerifiedEntryType.Value,
                 model.Alias,
                 model.Description));
             TempData["msg"] += $"Entry {model.EntryId} added!";
@@ -175,7 +186,7 @@ namespace  FplBot.WebApi.Pages.Admin
         public int EntryId { get; set; }
         public string FullName { get; set; }
         public string EntryTeamName { get; set; }
-        public VerifiedEntryType VerifiedEntryType { get; set; }
+        public VerifiedEntryType? VerifiedEntryType { get; set; }
         public string Alias { get; set; }
         public string Description { get; set; }
         public int? PLPlayer { get; set; }
