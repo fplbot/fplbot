@@ -83,6 +83,8 @@ namespace  FplBot.WebApi.Pages.Admin
                 TempData["msg"] += $"Entry {model.EntryId} updated!";
             }
 
+            await _mediator.Publish(new IndexEntry(model.EntryId));
+
             return RedirectToPage("Verified");
         }
 
@@ -106,6 +108,8 @@ namespace  FplBot.WebApi.Pages.Admin
                 var gameweek = settings.Gameweeks.GetCurrentGameweek();
                 await _mediator.Publish(new ConnectEntryToPLPlayer(model.EntryId, model.PLPlayer.Value, gameweek.Id));
             }
+
+            await _mediator.Publish(new IndexEntry(model.EntryId));
 
             return RedirectToPage("Verified");
         }
