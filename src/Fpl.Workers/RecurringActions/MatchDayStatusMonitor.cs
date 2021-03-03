@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ using FplBot.Core.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.RecurringActions
+namespace Fpl.Workers.RecurringActions
 {
     public class MatchDayStatusMonitor
     {
@@ -23,11 +24,11 @@ namespace FplBot.Core.RecurringActions
             _mediator = mediator;
             _logger = logger;
         }
-        
+
         public async Task EveryFiveMinutesTick(CancellationToken token)
         {
             var fetched = await _eventStatusClient.GetEventStatus();
-            
+
             // init/ app-startup
             if (_storedCurrent == null)
             {
@@ -35,6 +36,7 @@ namespace FplBot.Core.RecurringActions
                 _storedCurrent = fetched;
                 return;
             }
+
             _logger.LogInformation("Checking status");
             var bonusAdded = GetBonusAdded(fetched, _storedCurrent);
 
@@ -42,8 +44,7 @@ namespace FplBot.Core.RecurringActions
             {
                 _logger.LogInformation("Bonus added!");
                 await _mediator.Publish(bonusAdded, token);
-            } 
-                
+            }
 
             var pointsReady = GetPointsReady(fetched, _storedCurrent);
 
@@ -52,41 +53,38 @@ namespace FplBot.Core.RecurringActions
                 _logger.LogInformation("Points ready!");
                 await _mediator.Publish(pointsReady, token);
             }
+
+            _storedCurrent = fetched;
         }
 
         public static BonusAdded GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)
         {
-            DateTime utcNowDate = DateTime.UtcNow.Date;
-            var today = utcNowDate.ToString("yyyy-MM-dd");
-            var fetchedStatusForToday = fetched.Status.FirstOrDefault(m => m.Date == today);
-            if (fetchedStatusForToday != null)
+            var fetchedStatus = fetched.Status;
+            var currentStatus = current.Status;
+
+            foreach (EventStatus eventStatus in fetchedStatus)
             {
-                var currentStatusForMatchDay = current.Status.FirstOrDefault(m => m.Date == today);
-                if (currentStatusForMatchDay?.BonusAdded == false && fetchedStatusForToday.BonusAdded)
-                {
-                    return new BonusAdded(Event: fetchedStatusForToday.Event, MatchDayDate: utcNowDate);
-                }
+                var currentEventStatus = currentStatus.FirstOrDefault(c => c.Date == eventStatus.Date);
+                if (currentEventStatus?.BonusAdded == false && eventStatus.BonusAdded)
+                    return new BonusAdded(eventStatus.Event, DateTime.ParseExact(eventStatus.Date,"yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo).Date);
             }
 
             return null;
         }
-        
+
         public static PointsReady GetPointsReady(EventStatusResponse fetched, EventStatusResponse current)
         {
-            DateTime utcNowDate = DateTime.UtcNow.Date;
-            var today = utcNowDate.ToString("yyyy-MM-dd");
-            var fetchedStatusForToday = fetched.Status.FirstOrDefault(m => m.Date == today);
-            if (fetchedStatusForToday != null)
+            var fetchedStatus = fetched.Status;
+            var currentStatus = current.Status;
+
+            foreach (EventStatus eventStatus in fetchedStatus)
             {
-                var currentStatusForMatchDay = current.Status.FirstOrDefault(m => m.Date == today);
-                if (currentStatusForMatchDay?.PointsStatus != EventStatusConstants.PointStatus.Ready && fetchedStatusForToday.PointsStatus == EventStatusConstants.PointStatus.Ready)
-                {
-                    return new PointsReady(Event: fetchedStatusForToday.Event, MatchDayDate: utcNowDate);
-                }
+                var currentEventStatus = currentStatus.FirstOrDefault(c => c.Date == eventStatus.Date);
+                if (currentEventStatus?.PointsStatus != EventStatusConstants.PointStatus.Ready && eventStatus.PointsStatus == EventStatusConstants.PointStatus.Ready)
+                    return new PointsReady(eventStatus.Event, DateTime.ParseExact(eventStatus.Date,"yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo).Date);
             }
 
             return null;
         }
     }
-
 }

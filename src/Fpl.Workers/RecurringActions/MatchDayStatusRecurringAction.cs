@@ -1,10 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using CronBackgroundServices;
-using Fpl.Workers;
+using FplBot.Core;
+using FplBot.Core.RecurringActions;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.RecurringActions
+namespace Fpl.Workers.RecurringActions
 {
     internal class MatchDayStatusRecurringAction : IRecurringAction 
     {
