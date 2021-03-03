@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
+using Fpl.Data.Repositories;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;

@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Data;
+using Fpl.Data.Models;
+using Fpl.Data.Repositories;
 using Fpl.Search.Models;
-using FplBot.Core.Data;
 using FplBot.Core.Extensions;
 using FplBot.Core.Handlers.InternalCommands;
 using FplBot.WebApi.Handlers.Commands;
@@ -21,13 +23,13 @@ namespace  FplBot.WebApi.Pages.Admin
         private readonly IGlobalSettingsClient _settings;
         private readonly IMediator _mediator;
         private readonly ILogger<Verified> _logger;
-        
+
         public Verified(
-            IVerifiedEntriesRepository repo, 
-            IVerifiedPLEntriesRepository plRepo, 
-            IEntryClient entryClient, 
-            IGlobalSettingsClient settings, 
-            IMediator mediator, 
+            IVerifiedEntriesRepository repo,
+            IVerifiedPLEntriesRepository plRepo,
+            IEntryClient entryClient,
+            IGlobalSettingsClient settings,
+            IMediator mediator,
             ILogger<Verified> logger)
         {
             _repo = repo;
@@ -36,7 +38,7 @@ namespace  FplBot.WebApi.Pages.Admin
             _mediator = mediator;
             _logger = logger;
         }
-        
+
         public async Task OnGet()
         {
             _logger.LogInformation("Getting all");
@@ -44,14 +46,7 @@ namespace  FplBot.WebApi.Pages.Admin
             VerifiedPLEntries = await _plRepo.GetAllVerifiedPLEntries();
             _logger.LogInformation("All fetched");
         }
-        
-        public async Task<IActionResult> OnPostSeedEntries()
-        {
-            await _mediator.Publish(new SeedVerifiedEntries());
-            TempData["msg"] += $"List imported!";
-            return RedirectToPage("Verified");
-        }
-        
+
         public async Task<IActionResult> OnPostSeedSelfishness()
         {
             await _mediator.Publish(new SeedSelfishness());
@@ -79,15 +74,15 @@ namespace  FplBot.WebApi.Pages.Admin
             {
                 _logger.LogInformation("Updating single: {entryId}", model.EntryId);
                 await _repo.Insert(new VerifiedEntry(
-                    model.EntryId, 
-                    model.FullName, 
-                    model.EntryTeamName, 
-                    model.VerifiedEntryType, 
-                    model.Alias, 
+                    model.EntryId,
+                    model.FullName,
+                    model.EntryTeamName,
+                    model.VerifiedEntryType,
+                    model.Alias,
                     model.Description));
                 TempData["msg"] += $"Entry {model.EntryId} updated!";
             }
-            
+
             return RedirectToPage("Verified");
         }
 
@@ -102,7 +97,7 @@ namespace  FplBot.WebApi.Pages.Admin
                 model.Alias,
                 model.Description));
             TempData["msg"] += $"Entry {model.EntryId} added!";
-            
+
             await _mediator.Publish(new UpdateEntryStats(model.EntryId));
 
             if (model.PLPlayer.HasValue)
@@ -123,7 +118,7 @@ namespace  FplBot.WebApi.Pages.Admin
             TempData["msg"] += $"Base stats added using gw {gameweek.Id}!";
             return RedirectToPage("Verified");
         }
-        
+
         public async Task<IActionResult> OnPostUpdateLiveScoreStats()
         {
             var settings = await _settings.GetGlobalSettings();
@@ -132,7 +127,7 @@ namespace  FplBot.WebApi.Pages.Admin
             TempData["msg"] += $"Base stats added using gw {gameweek.Id}!";
             return RedirectToPage("Verified");
         }
-        
+
         public async Task<IActionResult> OnPostIncrementSelfishStats()
         {
             var settings = await _settings.GetGlobalSettings();
@@ -141,14 +136,14 @@ namespace  FplBot.WebApi.Pages.Admin
             TempData["msg"] += $"Selfish stats incremented using gw {gameweek.Id} numbers!";
             return RedirectToPage("Verified");
         }
-        
+
         public async Task<IActionResult> OnPostUpdateSelfPoints(int entryId, int points)
         {
             await _mediator.Publish(new IncrementPointsFromSelfOwnership(entryId, points));
             TempData["msg"] += $"Selfishness updated!";
             return RedirectToPage("Verified");
         }
-        
+
         public async Task<IActionResult> OnPostIncrementWeekCounter(int entryId)
         {
             await _mediator.Publish(new IncrementSelfOwnershipWeekCounter(entryId));
@@ -170,7 +165,7 @@ namespace  FplBot.WebApi.Pages.Admin
         public string Alias { get; set; }
         public string Description { get; set; }
     }
-    
+
     public class AddEntry
     {
         public int EntryId { get; set; }
@@ -187,5 +182,5 @@ namespace  FplBot.WebApi.Pages.Admin
         Save,
         Del
     }
-    
+
 }

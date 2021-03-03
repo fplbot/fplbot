@@ -7,7 +7,6 @@
   <ItemGroup>
     <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
     <PackageReference Include="AngleSharp" Version="1.0.0-alpha-844" />
-    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
     <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
   
@@ -18,6 +17,7 @@
     <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
     <ProjectReference Include="..\ext\Slackbot.Net.SlackClients.Http\Slackbot.Net.SlackClients.Http.csproj" />
     <ProjectReference Include="..\ext\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
+    <ProjectReference Include="..\Fpl.Data\Fpl.Data.csproj" />
     <ProjectReference Include="..\Fpl.Workers\Fpl.Workers.csproj" />
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />     
     <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj" />

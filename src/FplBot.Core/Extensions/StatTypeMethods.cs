@@ -1,3 +1,5 @@
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 
 namespace FplBot.Core.Models

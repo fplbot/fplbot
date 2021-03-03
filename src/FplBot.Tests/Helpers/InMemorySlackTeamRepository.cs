@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 
 namespace FplBot.Tests.Helpers

@@ -31,10 +31,10 @@ namespace FplBot.Core.Helpers
             }
 
             var gwPointsForSelfPick = selfPicks.Select(s => GetPickScore(liveItems[s.Gameweek - 1], s.SelfPick.PlayerId, s.SelfPick.Multiplier));
-            
+
             return gwPointsForSelfPick;
         }
-        
+
         private async Task<GameweekPick> GetPick(int entryId, int gw)
         {
             var picks = await _entryClient.GetPicks(entryId, gw, tolerate404: true);
@@ -44,6 +44,18 @@ namespace FplBot.Core.Helpers
         public int GetPickScore(ICollection<LiveItem> liveItems, int playerId, int multiplier)
         {
             return (liveItems.SingleOrDefault(x => x.Id == playerId)?.Stats?.TotalPoints ?? 0) * multiplier;
+        }
+    }
+
+    public class GameweekPick
+    {
+        public int Gameweek { get; }
+        public EntryPicks Pick { get; }
+
+        public GameweekPick(int gameweek, EntryPicks pick)
+        {
+            Gameweek = gameweek;
+            Pick = pick;
         }
     }
 }

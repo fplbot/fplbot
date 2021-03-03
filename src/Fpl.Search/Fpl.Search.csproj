@@ -9,12 +9,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="NEST" Version="7.10.0" />
     <PackageReference Include="NServiceBus" Version="7.2.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
     <PackageReference Include="CronBackgroundServices" Version="$(SlackbotNetVersion)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+    <ProjectReference Include="..\Fpl.Data\Fpl.Data.csproj" />
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
   </ItemGroup>
 

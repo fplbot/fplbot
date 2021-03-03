@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
 using NServiceBus;

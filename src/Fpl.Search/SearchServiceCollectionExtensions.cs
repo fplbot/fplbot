@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;
 using System;
+using Fpl.Data.Repositories;
 using FplBot.Core.RecurringActions;
 using Microsoft.Extensions.Options;
 
@@ -35,7 +36,6 @@ namespace Fpl.Search
             services.AddSingleton<IIndexingClient, IndexingClient>();
             services.AddSingleton<IIndexProvider<EntryItem>, EntryIndexProvider>();
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
-            services.AddSingleton<IIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();
             return services;
         }

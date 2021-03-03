@@ -15,13 +15,13 @@
 
         public void Validate()
         {
-            if (string.IsNullOrEmpty(IndexUri) || 
-                string.IsNullOrEmpty(Username) || 
+            if (string.IsNullOrEmpty(IndexUri) ||
+                string.IsNullOrEmpty(Username) ||
                 string.IsNullOrEmpty(Password) ||
                 string.IsNullOrEmpty(EntriesIndex) ||
-                string.IsNullOrEmpty(LeaguesIndex) || 
-                string.IsNullOrEmpty(AnalyticsIndex) || 
-                ((ShouldIndexEntries || ShouldIndexLeagues) && string.IsNullOrEmpty(IndexingCron)) || 
+                string.IsNullOrEmpty(LeaguesIndex) ||
+                string.IsNullOrEmpty(AnalyticsIndex) ||
+                ((ShouldIndexEntries || ShouldIndexLeagues) && string.IsNullOrEmpty(IndexingCron)) ||
                 (ShouldIndexLeagues && ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob == 0))
                 throw new FplSearchException("Misconfigured search config");
         }

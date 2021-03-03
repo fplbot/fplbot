@@ -1,4 +1,4 @@
-﻿namespace Fpl.Search.Models
+﻿namespace Fpl.Data.Models
 {
     public enum VerifiedEntryType
     {

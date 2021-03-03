@@ -7,6 +7,7 @@ namespace Fpl.Search.Indexing
     {
         string IndexName { get; }
         Task<int> StartIndexingFrom { get; }
+        Task Init();
         Task<(T[], bool)> GetBatchToIndex(int i, int batchSize);
     }
 }

@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Search.Models;
+using Fpl.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace FplBot.Core.Data
+namespace Fpl.Data.Repositories
 {
     internal class VerifiedEntriesRepository : IVerifiedEntriesRepository
     {
@@ -22,7 +22,7 @@ namespace FplBot.Core.Data
             _db = _redis.GetDatabase();
             _server = redisOptions.Value.GetRedisServerHostAndPort;
         }
-        
+
         public async Task Insert(VerifiedEntry entry)
         {
             await _db.HashSetAsync($"entry-{entry.EntryId}", AllWriteFields(entry));
@@ -89,7 +89,7 @@ namespace FplBot.Core.Data
                 OverallRank = newStats.OverallRank,
                 PointsThisGw = newStats.PointsThisGw
             };
-            
+
             var newEntry = entry with
             {
                 EntryStats = verifiedEntryStats
@@ -102,7 +102,7 @@ namespace FplBot.Core.Data
         {
             var hashEntries = new List<HashEntry>
             {
-                new("entryId", entry.EntryId), 
+                new("entryId", entry.EntryId),
                 new("fullName", entry.FullName),
                 new("entryTeamName", entry.EntryTeamName),
                 new("verifiedEntryType", entry.VerifiedEntryType.ToString()),
@@ -134,7 +134,7 @@ namespace FplBot.Core.Data
         {
             return new RedisValue[]
             {
-                "entryId", 
+                "entryId",
                 "fullName",
                 "entryTeamName",
                 "verifiedEntryType",
@@ -150,14 +150,14 @@ namespace FplBot.Core.Data
                 "gameweek"
             };
         }
-        
+
         private static VerifiedEntry ToVerifiedEntry(RedisValue[] fetchedTeamData)
         {
             Enum.TryParse(fetchedTeamData[3], out VerifiedEntryType verifiedEntryType);
             return new(
-                EntryId: (int)fetchedTeamData[0], 
-                FullName: fetchedTeamData[1], 
-                EntryTeamName: fetchedTeamData[2], 
+                EntryId: (int)fetchedTeamData[0],
+                FullName: fetchedTeamData[1],
+                EntryTeamName: fetchedTeamData[2],
                 VerifiedEntryType:verifiedEntryType,
                 Alias: fetchedTeamData[4],
                 Description: fetchedTeamData[5],
@@ -196,8 +196,8 @@ namespace FplBot.Core.Data
         int Gameweek);
 
     public record VerifiedEntryPointsUpdate(
-        int CurrentGwTotalPoints, 
-        int OverallRank, 
+        int CurrentGwTotalPoints,
+        int OverallRank,
         int PointsThisGw);
 
     public interface IVerifiedEntriesRepository
@@ -205,7 +205,7 @@ namespace FplBot.Core.Data
         Task Insert(VerifiedEntry entry);
         Task<IEnumerable<VerifiedEntry>> GetAllVerifiedEntries();
         Task<VerifiedEntry> GetVerifiedEntry(int entryId);
-        
+
         Task Delete(int entryId);
         Task DeleteAll();
         Task UpdateAllStats(int entryId, VerifiedEntryStats verifiedEntryStats);

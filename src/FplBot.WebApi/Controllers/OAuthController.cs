@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
