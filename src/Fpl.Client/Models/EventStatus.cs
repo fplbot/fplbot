@@ -41,6 +41,7 @@ namespace Fpl.Client.Models
         public class PointStatus
         {
             public const string Nothing = "";
+            public const string Live = "l";
             public const string Ready = "r";
         }
     }
