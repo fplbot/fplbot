@@ -34,7 +34,12 @@ namespace Fpl.Search
         {
             services.Configure<SearchOptions>(config);
             services.AddSingleton<IIndexingClient, IndexingClient>();
-            services.AddSingleton<IIndexProvider<EntryItem>, EntryIndexProvider>();
+
+            services.AddSingleton<EntryIndexProvider>();
+            services.AddSingleton<IIndexProvider<EntryItem>>(x => x.GetRequiredService<EntryIndexProvider>());
+            services.AddSingleton<ISingleEntryIndexProvider>(x => x.GetRequiredService<EntryIndexProvider>());
+            services.AddSingleton<IVerifiedEntryIndexProvider>(x => x.GetRequiredService<EntryIndexProvider>());
+
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();
             return services;
