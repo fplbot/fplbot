@@ -11,8 +11,9 @@ using MediatR;
 namespace FplBot.Core.Handlers.InternalCommands
 {
     public record UpdateSelfishStats(int Gameweek) : INotification;
+    public record UpdateSelfishStatsForPLEntry(int Gameweek, int PLEntryId) : INotification;
 
-    internal class UpdateSelfishStatsCommandHandler : INotificationHandler<UpdateSelfishStats>
+    internal class UpdateSelfishStatsCommandHandler : INotificationHandler<UpdateSelfishStats>, INotificationHandler<UpdateSelfishStatsForPLEntry>
     { 
         private readonly IVerifiedPLEntriesRepository _repo;
         private readonly ILiveClient _liveClient;
@@ -33,15 +34,34 @@ namespace FplBot.Core.Handlers.InternalCommands
             var liveItems = await _liveClient.GetLiveItems(notification.Gameweek);
             foreach (VerifiedPLEntry plEntry in plEntries)
             {
-                var gameweeks = Enumerable.Range(notification.Gameweek, 1);
-                var nullFillers = Enumerable.Repeat<ICollection<LiveItem>>(null, notification.Gameweek - 1).ToList();
-                nullFillers.Add(liveItems);
-                var pointsForSelfPick = await _calculator.CalculateSelfOwnershipPoints(plEntry.EntryId, plEntry.PlayerId, gameweeks, nullFillers.ToArray());
-                await _mediator.Publish(new IncrementPointsFromSelfOwnership(EntryId:plEntry.EntryId, PointsFromSelf: pointsForSelfPick.Sum()), cancellationToken);
-                if (pointsForSelfPick.Any())
-                {
-                    await _mediator.Publish(new IncrementSelfOwnershipWeekCounter(EntryId:plEntry.EntryId), cancellationToken);    
-                }
+                await UpdateSelfishStatsForPLEntry(notification.Gameweek, cancellationToken, liveItems, plEntry);
+            }
+        }
+        
+        public async Task Handle(UpdateSelfishStatsForPLEntry notification, CancellationToken cancellationToken)
+        {
+            var plEntries = await _repo.GetAllVerifiedPLEntries();
+            var liveItems = await _liveClient.GetLiveItems(notification.Gameweek);
+
+            var plEntry = plEntries.Single(p => p.EntryId == notification.PLEntryId);
+
+            await UpdateSelfishStatsForPLEntry(notification.Gameweek, cancellationToken, liveItems, plEntry);
+        }
+
+        private async Task UpdateSelfishStatsForPLEntry(int gameweek, CancellationToken cancellationToken, ICollection<LiveItem> liveItems, VerifiedPLEntry plEntry)
+        {
+            var gameweeks = Enumerable.Range(gameweek, 1);
+            var nullFillers = Enumerable.Repeat<ICollection<LiveItem>>(null, gameweek - 1).ToList();
+            nullFillers.Add(liveItems);
+            var pointsForSelfPick =
+                await _calculator.CalculateSelfOwnershipPoints(plEntry.EntryId, plEntry.PlayerId, gameweeks,
+                    nullFillers.ToArray());
+            await _mediator.Publish(
+                new IncrementPointsFromSelfOwnership(EntryId: plEntry.EntryId, PointsFromSelf: pointsForSelfPick.Sum()),
+                cancellationToken);
+            if (pointsForSelfPick.Any())
+            {
+                await _mediator.Publish(new IncrementSelfOwnershipWeekCounter(EntryId: plEntry.EntryId), cancellationToken);
             }
         }
     }

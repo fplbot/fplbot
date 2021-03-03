@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Search.Models;
 using FplBot.Core.Data;
 using FplBot.Core.Extensions;
 using FplBot.Core.Handlers.InternalCommands;
@@ -20,7 +22,13 @@ namespace  FplBot.WebApi.Pages.Admin
         private readonly IMediator _mediator;
         private readonly ILogger<Verified> _logger;
         
-        public Verified(IVerifiedEntriesRepository repo, IVerifiedPLEntriesRepository plRepo, IEntryClient entryClient, IGlobalSettingsClient settings, IMediator mediator, ILogger<Verified> logger)
+        public Verified(
+            IVerifiedEntriesRepository repo, 
+            IVerifiedPLEntriesRepository plRepo, 
+            IEntryClient entryClient, 
+            IGlobalSettingsClient settings, 
+            IMediator mediator, 
+            ILogger<Verified> logger)
         {
             _repo = repo;
             _plRepo = plRepo;
@@ -32,7 +40,7 @@ namespace  FplBot.WebApi.Pages.Admin
         public async Task OnGet()
         {
             _logger.LogInformation("Getting all");
-            VerifiedEntries = await _repo.GetAllVerifiedEntries();
+            VerifiedEntries = (await _repo.GetAllVerifiedEntries()).OrderBy(x => x.FullName);
             VerifiedPLEntries = await _plRepo.GetAllVerifiedPLEntries();
             _logger.LogInformation("All fetched");
         }
@@ -59,11 +67,51 @@ namespace  FplBot.WebApi.Pages.Admin
             return RedirectToPage("Verified");
         }
 
-        public async Task<IActionResult> OnPostDeleteEntry(int entryId)
+        public async Task<IActionResult> OnPostUpdateEntry(UpdateEntry model, UpdateAction action)
         {
-            _logger.LogInformation($"Deleting single");
-            await _repo.Delete(entryId);
-            TempData["msg"] += $"Entry {entryId} deleted!";
+            if (action == UpdateAction.Del)
+            {
+                _logger.LogInformation("Removing single: {entryId}", model.EntryId);
+                await _repo.Delete(model.EntryId);
+                TempData["msg"] += $"Entry {model.EntryId} deleted!";
+            }
+            else
+            {
+                _logger.LogInformation("Updating single: {entryId}", model.EntryId);
+                await _repo.Insert(new VerifiedEntry(
+                    model.EntryId, 
+                    model.FullName, 
+                    model.EntryTeamName, 
+                    model.VerifiedEntryType, 
+                    model.Alias, 
+                    model.Description));
+                TempData["msg"] += $"Entry {model.EntryId} updated!";
+            }
+            
+            return RedirectToPage("Verified");
+        }
+
+        public async Task<IActionResult> OnPostAddEntry(AddEntry model)
+        {
+            _logger.LogInformation("Adding new entry: {entryId}", model.EntryId);
+            await _repo.Insert(new VerifiedEntry(
+                model.EntryId,
+                model.FullName,
+                model.EntryTeamName,
+                model.VerifiedEntryType,
+                model.Alias,
+                model.Description));
+            TempData["msg"] += $"Entry {model.EntryId} added!";
+            
+            await _mediator.Publish(new UpdateEntryStats(model.EntryId));
+
+            if (model.PLPlayer.HasValue)
+            {
+                var settings = await _settings.GetGlobalSettings();
+                var gameweek = settings.Gameweeks.GetCurrentGameweek();
+                await _mediator.Publish(new ConnectEntryToPLPlayer(model.EntryId, model.PLPlayer.Value, gameweek.Id));
+            }
+
             return RedirectToPage("Verified");
         }
 
@@ -113,5 +161,31 @@ namespace  FplBot.WebApi.Pages.Admin
         public IEnumerable<VerifiedPLEntry> VerifiedPLEntries { get; set; } = new List<VerifiedPLEntry>();
     }
 
+    public class UpdateEntry
+    {
+        public int EntryId { get; set; }
+        public string FullName { get; set; }
+        public string EntryTeamName { get; set; }
+        public VerifiedEntryType VerifiedEntryType { get; set; }
+        public string Alias { get; set; }
+        public string Description { get; set; }
+    }
+    
+    public class AddEntry
+    {
+        public int EntryId { get; set; }
+        public string FullName { get; set; }
+        public string EntryTeamName { get; set; }
+        public VerifiedEntryType VerifiedEntryType { get; set; }
+        public string Alias { get; set; }
+        public string Description { get; set; }
+        public int? PLPlayer { get; set; }
+    }
+
+    public enum UpdateAction
+    {
+        Save,
+        Del
+    }
     
 }

@@ -75,3 +75,51 @@ body {
 .content{
   background: #ffffff;
 }
+
+.table {
+  display: table;
+  table-layout: fixed;
+}
+
+.tr {
+  display: table-row;
+}
+
+.td, .th {
+  display: table-cell;
+  padding: .25rem;
+  vertical-align: top;
+}
+
+.entryid {
+  width: 5.7rem;
+}
+
+.th {
+  font-weight: bold;
+}
+
+.td input:not([type="submit"]),
+.td textarea,
+.td select{
+  width: 100%;
+}
+
+.td textarea {
+  height: calc(1.5em + .75rem + 5px);
+}
+
+.code {
+  font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  font-size: .75rem;
+  color: #e83e8c;
+  word-break: break-word;
+}
+
+textarea.code:focus {
+  z-index: 1;
+  position: absolute;
+  width: 18rem;
+  height: 13rem;
+  resize: both;
+}

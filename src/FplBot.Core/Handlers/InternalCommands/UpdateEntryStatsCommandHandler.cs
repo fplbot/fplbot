@@ -11,8 +11,9 @@ using MediatR;
 namespace FplBot.Core.Handlers.InternalCommands
 {
     public record UpdateAllEntryStats : INotification;
+    public record UpdateEntryStats(int EntryId) : INotification;
 
-    public class UpdateEntryStatsCommandHandler : INotificationHandler<UpdateAllEntryStats>
+    public class UpdateEntryStatsCommandHandler : INotificationHandler<UpdateAllEntryStats>, INotificationHandler<UpdateEntryStats>
     {
         private readonly IEntryHistoryClient _entryHistoryClient;
         private readonly IGlobalSettingsClient _settingsClient;
@@ -34,16 +35,24 @@ namespace FplBot.Core.Handlers.InternalCommands
             var players = settings.Players;
             foreach (var entry in allEntries)
             {
-                var newStats = await GetUpdatedStatsForEntry(entry, players);
+                var newStats = await GetUpdatedStatsForEntry(entry.EntryId, players);
                 await _verifiedEntriesRepository.UpdateAllStats(entry.EntryId, newStats);
             }
         }
-
-        private async Task<VerifiedEntryStats> GetUpdatedStatsForEntry(VerifiedEntry entry, ICollection<Player> players)
+        
+        public async Task Handle(UpdateEntryStats notification, CancellationToken cancellationToken)
         {
-            var history = await _entryHistoryClient.GetHistory(entry.EntryId);
+            var settings = await _settingsClient.GetGlobalSettings();
+            var players = settings.Players;
+            var newStats = await GetUpdatedStatsForEntry(notification.EntryId, players);
+            await _verifiedEntriesRepository.UpdateAllStats(notification.EntryId, newStats);
+        }
+
+        private async Task<VerifiedEntryStats> GetUpdatedStatsForEntry(int entryId, ICollection<Player> players)
+        {
+            var history = await _entryHistoryClient.GetHistory(entryId);
             var latestReportedGameweek = history.GameweekHistory.LastOrDefault();
-            var picks = await _entryClient.GetPicks(entry.EntryId, latestReportedGameweek.Event);
+            var picks = await _entryClient.GetPicks(entryId, latestReportedGameweek.Event);
             var captainId = picks.Picks.SingleOrDefault(p => p.IsCaptain)?.PlayerId;
             var viceCaptainId = picks.Picks.SingleOrDefault(p => p.IsViceCaptain)?.PlayerId;
             var lastGw = history.GameweekHistory.Count > 1 ? history.GameweekHistory.ElementAtOrDefault(history.GameweekHistory.Count - 2) : latestReportedGameweek;
