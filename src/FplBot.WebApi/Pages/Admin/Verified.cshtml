@@ -120,13 +120,13 @@
                         <div class="td"><input class="form-control" value="@entry.Alias" name="@(nameof(UpdateEntry.Alias))"/></div>
                         <div class="td"><input class="form-control" value="@entry.Description" name="@(nameof(UpdateEntry.Description))"/></div>
                         <div class="td">
-                            @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats) : ""; }
+                            @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats, Formatting.Indented) : ""; }
                             <textarea class="code form-control" readonly>@entryStats</textarea>
                         </div>
                         <div class="td">
                             @{
                                 var plEntry = Model.VerifiedPLEntries.FirstOrDefault(pl => pl.EntryId == entry.EntryId);
-                                var json = JsonConvert.SerializeObject(plEntry);
+                                var json = JsonConvert.SerializeObject(plEntry, Formatting.Indented);
                             }
                             <textarea class="code form-control" readonly>@json</textarea>
                         </div>

@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Search.Models;
@@ -22,7 +22,13 @@ namespace  FplBot.WebApi.Pages.Admin
         private readonly IMediator _mediator;
         private readonly ILogger<Verified> _logger;
         
-        public Verified(IVerifiedEntriesRepository repo, IVerifiedPLEntriesRepository plRepo, IEntryClient entryClient, IGlobalSettingsClient settings, IMediator mediator, ILogger<Verified> logger)
+        public Verified(
+            IVerifiedEntriesRepository repo, 
+            IVerifiedPLEntriesRepository plRepo, 
+            IEntryClient entryClient, 
+            IGlobalSettingsClient settings, 
+            IMediator mediator, 
+            ILogger<Verified> logger)
         {
             _repo = repo;
             _plRepo = plRepo;
@@ -34,7 +40,7 @@ namespace  FplBot.WebApi.Pages.Admin
         public async Task OnGet()
         {
             _logger.LogInformation("Getting all");
-            VerifiedEntries = await _repo.GetAllVerifiedEntries();
+            VerifiedEntries = (await _repo.GetAllVerifiedEntries()).OrderBy(x => x.FullName);
             VerifiedPLEntries = await _plRepo.GetAllVerifiedPLEntries();
             _logger.LogInformation("All fetched");
         }
