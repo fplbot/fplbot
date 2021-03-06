@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
-using FplBot.Core.Data;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands

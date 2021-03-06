@@ -21,7 +21,7 @@ namespace Fpl.Search.Searching
         public SearchService(
             IElasticClient elasticClient,
             IMessageSession messageSession,
-            ILogger<SearchService> logger, 
+            ILogger<SearchService> logger,
             IOptions<SearchOptions> options)
         {
             _elasticClient = elasticClient;
@@ -38,7 +38,7 @@ namespace Fpl.Search.Searching
                 .Size(maxHits)
                 .Query(q => q
                     .MultiMatch(m => m
-                        .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName))
+                        .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName).Field(y => y.Alias).Field(y => y.Description, 0.5))
                         .Query(query)
                         .Fuzziness(Fuzziness.Auto))
                     )

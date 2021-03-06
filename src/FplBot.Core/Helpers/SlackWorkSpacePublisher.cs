@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;

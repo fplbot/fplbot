@@ -3,6 +3,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Core.Abstractions;

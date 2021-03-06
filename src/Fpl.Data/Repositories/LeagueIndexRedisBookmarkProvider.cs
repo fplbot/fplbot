@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace Fpl.Search.Indexing
+namespace Fpl.Data.Repositories
 {
     public class LeagueIndexRedisBookmarkProvider : IIndexBookmarkProvider
     {
@@ -32,5 +32,11 @@ namespace Fpl.Search.Indexing
                 _logger.LogError($"Unable to set {BookmarkKey} in db");
             }
         }
+    }
+
+    public interface IIndexBookmarkProvider
+    {
+        Task<int> GetBookmark();
+        Task SetBookmark(int bookmark);
     }
 }

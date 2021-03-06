@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Http;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
@@ -19,12 +21,13 @@ namespace Fpl.SearchConsole
     {
         public static IServiceCollection AddSearchConsole(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSearching(configuration);
-            services.AddIndexingServices(configuration);
-            
+            services.AddSearching(configuration.GetSection("Search"));
+            services.AddData(configuration);
+            services.AddIndexingServices(configuration.GetSection("Search"));
+
             services.RemoveAll<IIndexBookmarkProvider>();
             services.AddSingleton<IIndexBookmarkProvider, SimpleLeagueIndexBookmarkProvider>();
-            
+
             services.AddHttpClient<ILeagueClient, LeagueClient>(_ => new LeagueClient(CreateHttpClient()));
             services.AddHttpClient<IEntryClient, EntryClient>(_ => new EntryClient(CreateHttpClient()));
             return services;

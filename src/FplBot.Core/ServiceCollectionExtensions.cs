@@ -1,18 +1,17 @@
 using Fpl.Client.Infra;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using Fpl.Search;
-using Microsoft.Extensions.Options;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Hosting;
-using Slackbot.Net.SlackClients.Http.Extensions;
-using StackExchange.Redis;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
-using FplBot.Core.Data;
 using FplBot.Core.Handlers;
 using FplBot.Core.Handlers.SlackEvents;
 using FplBot.Core.Helpers;
 using MediatR;
-using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
+using Microsoft.Extensions.Configuration;
+using Slackbot.Net.Endpoints.Abstractions;
+using Slackbot.Net.Endpoints.Hosting;
+using Slackbot.Net.SlackClients.Http.Extensions;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -22,25 +21,11 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config)
         {
             services.AddFplApiClient(config.GetSection("fpl"));
+            services.AddData(config);
             services.AddSearching(config.GetSection("Search"));
             services.AddIndexingServices(config.GetSection("Search"));
             services.AddRecurringIndexer(config.GetSection("Search"));
-            services.Configure<RedisOptions>(config);
-            
-            services.AddSingleton<ConnectionMultiplexer>(c =>
-            {
-                var opts = c.GetService<IOptions<RedisOptions>>().Value;
-                var options = new ConfigurationOptions
-                {
-                    ClientName = opts.GetRedisUsername,
-                    Password = opts.GetRedisPassword,
-                    EndPoints = {opts.GetRedisServerHostAndPort}
-                };
-                return ConnectionMultiplexer.Connect(options);
-            });
-            services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
-            services.AddSingleton<IVerifiedEntriesRepository, VerifiedEntriesRepository>();
-            services.AddSingleton<IVerifiedPLEntriesRepository, VerifiedPLEntriesRepository>();
+
             services.AddSingleton<SelfOwnerShipCalculator>();
             services.AddSlackClientBuilder();
             services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
@@ -49,7 +34,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
             services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
             services.AddSingleton<IGameweekHelper, GameweekHelper>();
-            services.AddSingleton<IVerifiedEntriesService, VerifiedEntriesService>();
             services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
 
             services.AddMediatR(typeof(FplEventHandlers));
@@ -57,10 +41,10 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        public static IServiceCollection AddFplBotSlackEventHandlers(this IServiceCollection services) 
-        {            
+        public static IServiceCollection AddFplBotSlackEventHandlers(this IServiceCollection services)
+        {
             services.AddSingleton<IUninstall, AppUninstaller>();
-            services.AddSlackBotEvents<RedisSlackTeamRepository>()                
+            services.AddSlackBotEvents<RedisSlackTeamRepository>()
                 .AddShortcut<HelpEventHandler>()
                 .AddAppMentionHandler<FplPlayerCommandHandler>()
                 .AddAppMentionHandler<FplStandingsCommandHandler>()

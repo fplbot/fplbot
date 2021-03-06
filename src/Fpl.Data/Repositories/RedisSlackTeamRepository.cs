@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
 
-namespace FplBot.Core.Data
+namespace Fpl.Data.Repositories
 {
     public class RedisSlackTeamRepository : ISlackTeamRepository, ITokenStore
     {
@@ -39,7 +37,7 @@ namespace FplBot.Core.Data
             var hashEntries = new List<HashEntry>
             {
                 new HashEntry(_accessTokenField, slackTeam.AccessToken),
-                new HashEntry(_channelField, slackTeam.FplBotSlackChannel), 
+                new HashEntry(_channelField, slackTeam.FplBotSlackChannel),
                 new HashEntry(_leagueField, slackTeam.FplbotLeagueId),
                 new HashEntry(_teamNameField, slackTeam.TeamName),
                 new HashEntry(_teamIdField, slackTeam.TeamId)
@@ -50,14 +48,14 @@ namespace FplBot.Core.Data
                 var hashEntry = new HashEntry(_subscriptionsField, string.Join(" ", slackTeam.Subscriptions));
                 hashEntries.Add(hashEntry);
             }
-            
+
             await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), hashEntries.ToArray());
         }
 
         public async Task Delete(string token)
         {
             var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
-            
+
             foreach (var key in allTeamKeys)
             {
                 var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamIdField});
@@ -69,7 +67,7 @@ namespace FplBot.Core.Data
         public async Task<SlackTeam> GetTeam(string teamId)
         {
             var fetchedTeamData = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField});
-            
+
             var team = new SlackTeam
             {
                 AccessToken = fetchedTeamData[0],
@@ -93,7 +91,7 @@ namespace FplBot.Core.Data
             {
                 return new List<EventSubscription>();
             }
-                
+
             (var subs, var unableToParse) = fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ");
 
             if (unableToParse.Any())
@@ -114,7 +112,7 @@ namespace FplBot.Core.Data
 
             await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_leagueField, newLeagueId) });
         }
-        
+
         public async Task UpdateChannel(string teamId, string newChannel)
         {
             if(string.IsNullOrEmpty(teamId))
@@ -154,7 +152,7 @@ namespace FplBot.Core.Data
         {
             return $"TeamId-{teamId}";
         }
-        
+
         private static string FromKeyToTeamId(string key)
         {
             return key.Split('-')[1];
@@ -167,9 +165,9 @@ namespace FplBot.Core.Data
             foreach (var key in allTeamKeys)
             {
                 var teamId = FromKeyToTeamId(key);
-                
+
                 var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField});
-                
+
                 var slackTeam = new SlackTeam
                 {
                     AccessToken = fetchedTeamData[0],

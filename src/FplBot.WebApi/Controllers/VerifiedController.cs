@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
-using FplBot.Core.Data;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FplBot.WebApi.Controllers

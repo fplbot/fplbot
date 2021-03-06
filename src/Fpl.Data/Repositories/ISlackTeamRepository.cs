@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace FplBot.Core.Abstractions
+namespace Fpl.Data.Repositories
 {
     public interface ISlackTeamRepository
     {
@@ -13,21 +13,21 @@ namespace FplBot.Core.Abstractions
         Task UpdateChannel(string teamId, string newChannel);
         Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions);
     }
-    
+
     public class SlackTeam
     {
         public SlackTeam()
         {
             Subscriptions = new List<EventSubscription>();
         }
-        
+
         public string TeamId { get; set; }
         public string TeamName { get; set; }
         public string Scope { get; set; }
         public string AccessToken { get; set; }
         public string FplBotSlackChannel { get; set; }
         public long FplbotLeagueId { get; set; }
-        
+
         /// <summary>
         /// WIP
         /// </summary>

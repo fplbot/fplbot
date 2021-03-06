@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fpl.Client.Models;
+using Fpl.Data;
+using Fpl.Data.Models;
 using Fpl.Search.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Models;
@@ -18,7 +20,7 @@ namespace FplBot.Core.Helpers
         public static string GetStandings(ClassicLeague league, Gameweek gameweek)
         {
             var sb = new StringBuilder();
-         
+
             var sortedByRank = league.Standings.Entries.OrderBy(x => x.Rank);
 
             var numPlayers = league.Standings.Entries.Count;
@@ -47,7 +49,7 @@ namespace FplBot.Core.Helpers
                 .OrderByDescending(g => g.Key)
                 .Take(3)
                 .ToArray();
-            
+
             if (!topThree.Any())
             {
                 return null;
@@ -269,7 +271,7 @@ namespace FplBot.Core.Helpers
         {
             if (!priceChangesPlayers.Any())
                 return "No players with price changes.";
-            
+
             var messageToSend = "";
             var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
             foreach (var group in grouped)
@@ -288,12 +290,12 @@ namespace FplBot.Core.Helpers
 
             return messageToSend;
         }
-        
+
         public static string FormatPriceChanged(IEnumerable<PlayerUpdate> priceChangesPlayers)
         {
             if (!priceChangesPlayers.Any())
                 return "No players with price changes.";
-            
+
             var messageToSend = "";
             var grouped = priceChangesPlayers.OrderByDescending(p => p.ToPlayer.CostChangeEvent).ThenByDescending(p => p.ToPlayer.NowCost).GroupBy(p => p.ToPlayer.CostChangeEvent);
             foreach (var group in grouped)
@@ -313,7 +315,7 @@ namespace FplBot.Core.Helpers
                 }
             }
 
-            return messageToSend;        
+            return messageToSend;
         }
 
         public static string BulletPoints<T>(IEnumerable<T> list)
@@ -337,7 +339,7 @@ namespace FplBot.Core.Helpers
                         chance += chanceOfPlayingChange > 0 ? $"[+" : "[";
                         chance += $"{chanceOfPlayingChange}%]";
                     }
-                         
+
                     sb.Append($"• {gUpdate.ToPlayer.WebName} ({gUpdate.Team.ShortName}). {gUpdate.ToPlayer.News} {chance}\n");
                 }
             }
@@ -353,7 +355,7 @@ namespace FplBot.Core.Helpers
                 (_, _) s when s.FromPlayer.News == null && s.ToPlayer.News == null => null,
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) > 0 => "📈️ Increased chance of playing",
                 (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) < 0 => "📉️ Decreased chance of playing",
-                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when NewsAdded(s) => "ℹ️ News update", 
+                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when NewsAdded(s) => "ℹ️ News update",
                 (_, _) s when s.ToPlayer.News.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
                 (_, _) s when s.FromPlayer.Status == s.ToPlayer.Status => null,
                 (_, _) s when s.FromPlayer == null => "👋 New player!",
@@ -388,7 +390,7 @@ namespace FplBot.Core.Helpers
             }
             return null;
         }
-        
+
         public static string FormatLineup(Lineups details)
         {
             var formattedOutput = "";
@@ -403,13 +405,13 @@ namespace FplBot.Core.Helpers
             var formationSegments = playerInLineup.Segments;
             if (reverse)
                 formationSegments.Reverse();
-            
+
             foreach (var segment in formationSegments)
             {
                 formattedOutput += $"{PositionEmoji(segment.SegmentPosition)}  ";
                 var segmentPlayersInSegment = segment.PlayersInSegment;
                 var playersInSegment = segmentPlayersInSegment.Select(player => player.Captain ? $"{player.Name}:copyright:" : $"{player.Name}");
-                
+
                 if (reverse)
                 {
                     playersInSegment = playersInSegment.Reverse();
@@ -476,11 +478,11 @@ namespace FplBot.Core.Helpers
                     }
                     pallenCount = bonusGroup.Count();
                     bonusPointsOutput.Add(BonusPointRank(3, bonusGroup.Select(p => p.Player)));
-                } 
+                }
 
                 if (points == 2)
                 {
-                    if (pallenCount > 1) 
+                    if (pallenCount > 1)
                     {
                         bonusPointsOutput.Add(BonusPointRank(1, bonusGroup.Select(p => p.Player)));
                     }
@@ -533,7 +535,7 @@ namespace FplBot.Core.Helpers
             if (leagueAverage > globalAverage)
             {
                 introText += $" Your league did {nuance}better than this, though - with *{leagueAverage}* points average.";
-            } 
+            }
             else if (leagueAverage == globalAverage)
             {
                 introText += $" I guess your league is pretty mediocre, since you got the exact same *{leagueAverage}* points average.";
@@ -561,7 +563,7 @@ namespace FplBot.Core.Helpers
         {
             var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
             textToSend += $"\nDeadline: {gameweek.Deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
-            
+
             var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
 
             foreach (var group in groupedByDay)
@@ -583,7 +585,7 @@ namespace FplBot.Core.Helpers
 
         public static string FormatEntryItem(EntryItem entryItem, int? gameweek)
         {
-            return GetEntryLink(entryItem.Entry, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})" + (entryItem.VerifiedType != null ? $" {GetVerifiedTypeEmoji(entryItem.VerifiedType)}" : null);
+            return GetEntryLink(entryItem.Id, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})" + (entryItem.VerifiedType != null ? $" {GetVerifiedTypeEmoji(entryItem.VerifiedType)}" : null);
         }
 
         private static string GetVerifiedTypeEmoji(VerifiedEntryType? entryItemVerifiedType)
@@ -628,9 +630,9 @@ namespace FplBot.Core.Helpers
 
         public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)
         {
-            return GetLeagueLink(leagueItem.Id, leagueItem.Name) + 
-                   (leagueItem.AdminEntry.HasValue ? 
-                       $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), gameweek)})" 
+            return GetLeagueLink(leagueItem.Id, leagueItem.Name) +
+                   (leagueItem.AdminEntry.HasValue ?
+                       $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), gameweek)})"
                        : null);
         }
 

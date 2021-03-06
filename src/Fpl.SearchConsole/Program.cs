@@ -24,7 +24,7 @@ namespace Fpl.SearchConsole
                                         endpointConfiguration.UseTransport<LearningTransport>();
                                         return endpointConfiguration;
                                     })
-                                    .ConfigureServices((_, services) => services.AddSearchConsole(_.Configuration.GetSection("Search"))
+                                    .ConfigureServices((_, services) => services.AddSearchConsole(_.Configuration)
                 ))
                 .UseDefaults()
                 .Build()

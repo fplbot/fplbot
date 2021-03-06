@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Models;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using Slackbot.Net.Endpoints.Models;

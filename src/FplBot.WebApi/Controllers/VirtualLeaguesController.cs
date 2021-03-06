@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Data;
+using Fpl.Data.Models;
+using Fpl.Data.Repositories;
 using Fpl.Search.Models;
-using FplBot.Core.Data;
 
 namespace FplBot.WebApi.Controllers
 {

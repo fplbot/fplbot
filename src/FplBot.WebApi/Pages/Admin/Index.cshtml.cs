@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Fpl.Data;
+using Fpl.Data.Repositories;
 using Fpl.Search.Indexing;
 using FplBot.Core.Abstractions;
 using Microsoft.AspNetCore.Mvc.RazorPages;

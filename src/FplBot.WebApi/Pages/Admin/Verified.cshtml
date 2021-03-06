@@ -1,4 +1,6 @@
 @page
+@using Fpl.Data
+@using Fpl.Data.Models
 @using Fpl.Search.Models
 @using FplBot.WebApi.Pages.Admin
 @using Newtonsoft.Json
@@ -9,142 +11,161 @@
 <div class="col-12">
     <h1>Admin page</h1>
     <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
-    <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
-    <p><a href="@Url.PageLink("Broadcast")">Gå til @Url.Page("Broadcast")</a></p>
-    
-    
+    <p>
+        <a href="@Url.Action("Logout", "Account")">Log out</a>
+    </p>
+    <p>
+        <a href="@Url.PageLink("Broadcast")">Gå til @Url.Page("Broadcast")</a>
+    </p>
+
+
     @if (TempData.ContainsKey("msg"))
     {
         <div class="alert alert-warning alert-dismissible" role="alert">
-            @TempData["msg"]    
+            @TempData["msg"]
         </div>
     }
-    
+    @if (TempData.ContainsKey("error"))
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            @TempData["error"]
+        </div>
+    }
+
     <h3>Verified entries (@Model.VerifiedEntries.Count())</h3>
 
 
-        @if (Model.VerifiedEntries.Any())
-        {
-            <form asp-page-handler="DeleteAll">
-                @Html.AntiForgeryToken()
-                <input type="submit" value="Delete all" class="btn btn-danger" onclick="return confirm('Are you sure?')"/>
-            </form>
-            
-            <form asp-page-handler="SeedSelfishness">
-                @Html.AntiForgeryToken()
-                <input type="submit" value="Seed selfishness" class="btn btn-info"/>
-            </form>
-            
-            <form asp-page-handler="UpdateAllBaseStats">
-                @Html.AntiForgeryToken()
-                <input type="submit" value="Update all base stats" class="btn btn-info"/>
-            </form>
-            
-            <form asp-page-handler="UpdateLiveScoreStats">
-                @Html.AntiForgeryToken()
-                <input type="submit" value="Update only live score stats" class="btn btn-info"/>
-            </form>            
-            
-            <form asp-page-handler="IncrementSelfishStats">
-                @Html.AntiForgeryToken()
-                <input type="submit" value="INCREMENT selfish stats (no real good check for stats already added)" class="btn btn-info"/>
-            </form>
-            
+    <form asp-page-handler="DeleteAll">
+        @Html.AntiForgeryToken()
+        <input type="submit" value="Delete all" class="btn btn-danger" onclick="return confirm('Are you sure?')"/>
+    </form>
 
-            
-            <form asp-page-handler="UpdateSelfPoints">
-                @Html.AntiForgeryToken()
-                <input type="number" name="entryId"/>
-                <input type="number" name="points"/>
-                <input type="submit" value="Add self-points for PL entry" class="btn btn-info"/>
-            </form>
-            
-            <form asp-page-handler="IncrementWeekCounter">
-                @Html.AntiForgeryToken()
-                <input type="number" name="entryId"/>
-                <input type="submit" value="Increment weeks ownership" class="btn btn-info"/>
-            </form>
-            
-            <div class="table">
-                <div class="tr">
-                    <div class="th entryid">EntryId</div>
-                    <div class="th">Name</div>
-                    <div class="th">TeamName</div>
-                    <div class="th">EntryType</div>
-                    <div class="th">Alias</div>
-                    <div class="th">Description</div>
-                    <div class="th">Stats</div>
-                    <div class="th">PL-entry</div>
-                    <div class="th">Action</div>
-                </div>
-                <form class="tr" asp-page-handler="AddEntry" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="td entryid"><input class="form-control" name="@(nameof(AddEntry.EntryId))" placeholder="@(nameof(AddEntry.EntryId))"/></div>
-                    <div class="td"><input class="form-control" name="@(nameof(AddEntry.FullName))" placeholder="@(nameof(AddEntry.FullName))"/></div>
-                    <div class="td"><input class="form-control" name="@(nameof(AddEntry.EntryTeamName))" placeholder="@(nameof(AddEntry.EntryTeamName))"/></div>
-                    <div class="td">
-                        <select class="custom-select" name="@(nameof(AddEntry.VerifiedEntryType))">
-                            <option selected>Choose...</option>
-                            @foreach (var type in Enum.GetValues<VerifiedEntryType>())
-                            {
-                                <option value="@type">@type</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="td"><input class="form-control" name="@(nameof(AddEntry.Alias))" placeholder="@(nameof(AddEntry.Alias))"/></div>
-                    <div class="td"><input class="form-control" name="@(nameof(AddEntry.Description))" placeholder="@(nameof(AddEntry.Description))"/></div>
-                    <div class="td"></div>
-                   
-                    <div class="td">
-                        <input class="form-control" name="@(nameof(AddEntry.PLPlayer))" placeholder="@(nameof(AddEntry.PLPlayer))"/>
-                    </div>
-                    <div class="td">
-                        <input type="submit" name="action" value="Add" class="btn btn-primary"/>
-                    </div>
-                </form>
-                @foreach (var entry in Model.VerifiedEntries)
-                {
-                    <form class="tr" asp-page-handler="UpdateEntry" method="post">
-                        @Html.AntiForgeryToken()
-                        <div class="td entryid"><input class="form-control" value="@entry.EntryId" name="@(nameof(UpdateEntry.EntryId))" readonly/></div>
-                        <div class="td"><input class="form-control" value="@entry.FullName" name="@(nameof(UpdateEntry.FullName))"/></div>
-                        <div class="td"><input class="form-control" value="@entry.EntryTeamName" name="@(nameof(UpdateEntry.EntryTeamName))"/></div>
-                        <div class="td">
-                            <select class="custom-select" name="@(nameof(UpdateEntry.VerifiedEntryType))">
-                                @foreach (var type in Enum.GetValues<VerifiedEntryType>())
-                                {
-                                    <option selected="@(type == entry.VerifiedEntryType)" value="@type">@type</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="td"><input class="form-control" value="@entry.Alias" name="@(nameof(UpdateEntry.Alias))"/></div>
-                        <div class="td"><input class="form-control" value="@entry.Description" name="@(nameof(UpdateEntry.Description))"/></div>
-                        <div class="td">
-                            @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats, Formatting.Indented) : ""; }
-                            <textarea class="code form-control" readonly>@entryStats</textarea>
-                        </div>
-                        <div class="td">
-                            @{
-                                var plEntry = Model.VerifiedPLEntries.FirstOrDefault(pl => pl.EntryId == entry.EntryId);
-                                var json = JsonConvert.SerializeObject(plEntry, Formatting.Indented);
-                            }
-                            <textarea class="code form-control" readonly>@json</textarea>
-                        </div>
-                        <div class="td">
-                            <input type="submit" name="action" value="@nameof(UpdateAction.Save)" class="btn btn-primary"/>
-                            <input type="submit" name="action" value="@nameof(UpdateAction.Del)" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete it?')"/>
-                        </div>
-                    </form>
-                }
-                </div>
-        
-        }
-        else
+    <form asp-page-handler="SeedSelfishness">
+        @Html.AntiForgeryToken()
+        <input type="submit" value="Seed selfishness" class="btn btn-info"/>
+    </form>
+
+    <form asp-page-handler="UpdateAllBaseStats">
+        @Html.AntiForgeryToken()
+        <input type="submit" value="Update all base stats" class="btn btn-info"/>
+    </form>
+
+    <form asp-page-handler="UpdateLiveScoreStats">
+        @Html.AntiForgeryToken()
+        <input type="submit" value="Update only live score stats" class="btn btn-info"/>
+    </form>
+
+    <form asp-page-handler="IncrementSelfishStats">
+        @Html.AntiForgeryToken()
+        <input type="submit" value="INCREMENT selfish stats (no real good check for stats already added)" class="btn btn-info"/>
+    </form>
+
+
+    <form asp-page-handler="UpdateSelfPoints">
+        @Html.AntiForgeryToken()
+        <input type="number" name="entryId"/>
+        <input type="number" name="points"/>
+        <input type="submit" value="Add self-points for PL entry" class="btn btn-info"/>
+    </form>
+
+    <form asp-page-handler="IncrementWeekCounter">
+        @Html.AntiForgeryToken()
+        <input type="number" name="entryId"/>
+        <input type="submit" value="Increment weeks ownership" class="btn btn-info"/>
+    </form>
+
+    <div class="table">
+        <div class="tr">
+            <div class="th entryid">EntryId</div>
+            <div class="th">Name</div>
+            <div class="th">TeamName</div>
+            <div class="th">EntryType</div>
+            <div class="th">Alias</div>
+            <div class="th">Description</div>
+            <div class="th">Stats</div>
+            <div class="th">PL-entry</div>
+            <div class="th">Action</div>
+        </div>
+        <form class="tr" asp-page-handler="AddEntry" method="post">
+            @Html.AntiForgeryToken()
+            <div class="td entryid">
+                <input class="form-control" name="@(nameof(AddEntry.EntryId))" placeholder="@(nameof(AddEntry.EntryId))"/>
+            </div>
+            <div class="td">
+                <input class="form-control" name="@(nameof(AddEntry.FullName))" placeholder="@(nameof(AddEntry.FullName))"/>
+            </div>
+            <div class="td">
+                <input class="form-control" name="@(nameof(AddEntry.EntryTeamName))" placeholder="@(nameof(AddEntry.EntryTeamName))"/>
+            </div>
+            <div class="td">
+                <select class="custom-select" name="@(nameof(AddEntry.VerifiedEntryType))">
+                    <option selected>Choose...</option>
+                    @foreach (var type in Enum.GetValues<VerifiedEntryType>())
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+            </div>
+            <div class="td">
+                <input class="form-control" name="@(nameof(AddEntry.Alias))" placeholder="@(nameof(AddEntry.Alias))"/>
+            </div>
+            <div class="td">
+                <input class="form-control" name="@(nameof(AddEntry.Description))" placeholder="@(nameof(AddEntry.Description))"/>
+            </div>
+            <div class="td"></div>
+
+            <div class="td">
+                <input class="form-control" name="@(nameof(AddEntry.PLPlayer))" placeholder="@(nameof(AddEntry.PLPlayer))"/>
+            </div>
+            <div class="td">
+                <input type="submit" name="action" value="Add" class="btn btn-primary"/>
+            </div>
+        </form>
+        @foreach (var entry in Model.VerifiedEntries)
         {
-            <p>No entries :/</p>
-            <form asp-page-handler="SeedEntries">
+            <form class="tr" asp-page-handler="UpdateEntry" method="post">
                 @Html.AntiForgeryToken()
-                <input type="submit" value="Import hardcoded list" class="btn btn-info"/>
+                <div class="td entryid">
+                    <input class="form-control" value="@entry.EntryId" name="@(nameof(UpdateEntry.EntryId))" readonly/>
+                </div>
+                <div class="td">
+                    <input class="form-control" value="@entry.FullName" name="@(nameof(UpdateEntry.FullName))"/>
+                </div>
+                <div class="td">
+                    <input class="form-control" value="@entry.EntryTeamName" name="@(nameof(UpdateEntry.EntryTeamName))"/>
+                </div>
+                <div class="td">
+                    <select class="custom-select" name="@(nameof(UpdateEntry.VerifiedEntryType))">
+                        @foreach (var type in Enum.GetValues<VerifiedEntryType>())
+                        {
+                            <option selected="@(type == entry.VerifiedEntryType)" value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+                <div class="td">
+                    <input class="form-control" value="@entry.Alias" name="@(nameof(UpdateEntry.Alias))"/>
+                </div>
+                <div class="td">
+                    <input class="form-control" value="@entry.Description" name="@(nameof(UpdateEntry.Description))"/>
+                </div>
+                <div class="td">
+                    @{ var entryStats = entry.EntryStats != null ? JsonConvert.SerializeObject(entry.EntryStats, Formatting.Indented) : ""; }
+                    <textarea class="code form-control" readonly>@entryStats</textarea>
+                </div>
+                <div class="td">
+                    @{
+                        var plEntry = Model.VerifiedPLEntries.FirstOrDefault(pl => pl.EntryId == entry.EntryId);
+                        var json = JsonConvert.SerializeObject(plEntry, Formatting.Indented);
+                    }
+                    <textarea class="code form-control" readonly>@json</textarea>
+                </div>
+                <div class="td">
+                    <input type="submit" name="action" value="@nameof(UpdateAction.Save)" class="btn btn-primary"/>
+                    <input type="submit" name="action" value="@nameof(UpdateAction.Del)" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete it?')"/>
+                </div>
             </form>
         }
+    </div>
+
+
 </div>
