@@ -1,4 +1,3 @@
-using Fpl.Data;
 using Fpl.Data.Repositories;
 
 namespace FplBot.WebApi.Controllers
@@ -12,6 +11,8 @@ namespace FplBot.WebApi.Controllers
                 Slug: plEntry.PlayerFullName.ToLower().Replace(" ", "-"),
                 TeamName : fplEntry.EntryTeamName,
                 RealName : fplEntry.FullName,
+                Alias: fplEntry.Alias,
+                Description: fplEntry.Description,
                 PointsThisGw: fplEntry.EntryStats?.PointsThisGw,
                 TotalPoints: fplEntry.EntryStats?.CurrentGwTotalPoints,
                 OverallRank: fplEntry.EntryStats?.OverallRank,
@@ -37,6 +38,8 @@ namespace FplBot.WebApi.Controllers
                 VerifiedType: fplEntry.VerifiedEntryType.ToString(),
                 TeamName : fplEntry.EntryTeamName,
                 RealName : fplEntry.FullName,
+                Alias: fplEntry.Alias,
+                Description: fplEntry.Description,
                 PointsThisGw: fplEntry.EntryStats?.PointsThisGw,
                 TotalPoints: fplEntry.EntryStats?.CurrentGwTotalPoints,
                 OverallRank: fplEntry.EntryStats?.OverallRank,
@@ -55,6 +58,8 @@ namespace FplBot.WebApi.Controllers
                 VerifiedType: fplEntry.VerifiedEntryType.ToString(),
                 TeamName : fplEntry.EntryTeamName,
                 RealName : fplEntry.FullName,
+                Alias: fplEntry.Alias,
+                Description: fplEntry.Description,
                 PointsThisGw: fplEntry.EntryStats?.PointsThisGw,
                 TotalPoints: fplEntry.EntryStats?.CurrentGwTotalPoints,
                 OverallRank: fplEntry.EntryStats?.OverallRank,
@@ -72,6 +77,8 @@ namespace FplBot.WebApi.Controllers
                 Slug: plEntry.PlayerFullName.ToLower().Replace(" ", "-"),
                 TeamName : fplEntry.EntryTeamName,
                 RealName : fplEntry.FullName,
+                Alias: fplEntry.Alias,
+                Description: fplEntry.Description,
                 PointsThisGw: fplEntry.EntryStats?.PointsThisGw,
                 TotalPoints: fplEntry.EntryStats?.CurrentGwTotalPoints,
                 OverallRank: fplEntry.EntryStats?.OverallRank,
@@ -94,6 +101,8 @@ namespace FplBot.WebApi.Controllers
         string Slug,
         string TeamName,
         string RealName,
+        string Alias,
+        string Description,
         int? PLPlayerId,
         string PLName,
         string PlaysForTeam,
@@ -110,12 +119,14 @@ namespace FplBot.WebApi.Controllers
         int SelfOwnershipTotalPoints,
         int? Gameweek
     );
-    
+
     public record PLEntry(
         int EntryId,
         string Slug,
         string TeamName,
         string RealName,
+        string Alias,
+        string Description,
         int? PLPlayerId,
         string PLName,
         string PlaysForTeam,
@@ -131,13 +142,15 @@ namespace FplBot.WebApi.Controllers
         int SelfOwnershipTotalPoints,
         int? Gameweek
     );
-    
-    
+
+
     public record RegularVirtualLeagueEntry(
         int EntryId,
         string VerifiedType,
         string TeamName,
         string RealName,
+        string Alias,
+        string Description,
         int? PointsThisGw,
         int? TotalPoints,
         int? OverallRank,
@@ -147,12 +160,14 @@ namespace FplBot.WebApi.Controllers
         string ChipUsed,
         int? Gameweek
     );
-    
+
     public record RegularEntry(
         int EntryId,
         string VerifiedType,
         string TeamName,
         string RealName,
+        string Alias,
+        string Description,
         int? PointsThisGw,
         int? TotalPoints,
         int? OverallRank,
