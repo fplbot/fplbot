@@ -19,8 +19,21 @@ namespace FplBot.WebApi.Controllers
             _searchService = searchService;
             _logger = logger;
         }
-        
-        [HttpGet("entries/{query}")]
+
+        [HttpGet("entries/{id:int}")]
+        public async Task<IActionResult> GetEntry(int id)
+        {
+            var entry = await _searchService.GetEntry(id);
+
+            if (entry == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(entry);
+        }
+
+        [HttpGet("entries")]
         public async Task<IActionResult> GetEntries(string query, int page)
         {
             try
@@ -49,5 +62,7 @@ namespace FplBot.WebApi.Controllers
             }
             return NotFound();
         }
+
+
     }
 }

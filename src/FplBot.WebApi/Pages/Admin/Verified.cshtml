@@ -89,13 +89,13 @@
         <form class="tr" asp-page-handler="AddEntry" method="post">
             @Html.AntiForgeryToken()
             <div class="td entryid">
-                <input class="form-control" name="@(nameof(AddEntry.EntryId))" placeholder="@(nameof(AddEntry.EntryId))"/>
+                <input class="form-control" id="addentry-entryid" name="@(nameof(AddEntry.EntryId))" placeholder="@(nameof(AddEntry.EntryId))"/>
             </div>
             <div class="td">
-                <input class="form-control" name="@(nameof(AddEntry.FullName))" placeholder="@(nameof(AddEntry.FullName))"/>
+                <input class="form-control" id="addentry-fullname" name="@(nameof(AddEntry.FullName))" placeholder="@(nameof(AddEntry.FullName))"/>
             </div>
             <div class="td">
-                <input class="form-control" name="@(nameof(AddEntry.EntryTeamName))" placeholder="@(nameof(AddEntry.EntryTeamName))"/>
+                <input class="form-control" id="addentry-teamname" name="@(nameof(AddEntry.EntryTeamName))" placeholder="@(nameof(AddEntry.EntryTeamName))"/>
             </div>
             <div class="td">
                 <select class="custom-select" name="@(nameof(AddEntry.VerifiedEntryType))">
@@ -169,3 +169,24 @@
 
 
 </div>
+
+@section Scripts
+{
+    <script>
+        const entryIdInput = document.getElementById('addentry-entryid');
+        entryIdInput.addEventListener('focusout', e => {
+            const val = e.currentTarget.value;
+            fetch(`/search/entries/${decodeURIComponent(val)}`)
+            .then((response) => {
+                  if (response.ok) {
+                    return response.json();
+                  }
+                  return Promise.reject(response);
+                })
+            .then(json => {
+                document.getElementById('addentry-fullname').value = json.realName;
+                document.getElementById('addentry-teamname').value = json.teamName;
+            });
+        });
+    </script>
+}

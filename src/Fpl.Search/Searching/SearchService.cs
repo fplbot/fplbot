@@ -56,6 +56,13 @@ namespace Fpl.Search.Searching
             return new SearchResult<EntryItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
         }
 
+        public async Task<EntryItem> GetEntry(int id)
+        {
+            var response = await _elasticClient.GetAsync<EntryItem>(id, desc => desc.Index(_options.EntriesIndex));
+
+            return response.Found ? response.Source : null;
+        }
+
         public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null)
         {
             var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
@@ -86,6 +93,7 @@ namespace Fpl.Search.Searching
     public interface ISearchService
     {
         Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
+        Task<EntryItem> GetEntry(int id);
         Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
     }
 }
