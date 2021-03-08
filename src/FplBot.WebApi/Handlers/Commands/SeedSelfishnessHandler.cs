@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Data;
+using Fpl.Data.Abstractions;
 using Fpl.Data.Repositories;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;

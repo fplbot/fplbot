@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Fpl.Data.Models;
 using Fpl.Data.Repositories;
 
 namespace Fpl.Data

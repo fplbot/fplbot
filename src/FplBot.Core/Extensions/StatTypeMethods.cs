@@ -1,4 +1,5 @@
 using Fpl.Data;
+using Fpl.Data.Models;
 using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 
