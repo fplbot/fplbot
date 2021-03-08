@@ -4,6 +4,7 @@ using System.Net.Http;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Data;
+using Fpl.Data.Abstractions;
 using Fpl.Data.Repositories;
 using Fpl.Search;
 using Fpl.Search.Indexing;
@@ -22,7 +23,7 @@ namespace Fpl.SearchConsole
         public static IServiceCollection AddSearchConsole(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSearching(configuration.GetSection("Search"));
-            services.AddData(configuration);
+            services.AddRedisData(configuration);
             services.AddIndexingServices(configuration.GetSection("Search"));
 
             services.RemoveAll<IIndexBookmarkProvider>();

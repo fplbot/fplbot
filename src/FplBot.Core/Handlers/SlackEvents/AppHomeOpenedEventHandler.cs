@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Fpl.Data;
+using Fpl.Data.Abstractions;
 using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;

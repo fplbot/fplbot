@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Data;
+using Fpl.Data.Abstractions;
+using Fpl.Data.Models;
 using Fpl.Data.Repositories;
 using FplBot.Core.Extensions;
 using MediatR;

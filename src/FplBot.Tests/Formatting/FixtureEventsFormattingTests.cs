@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Fpl.Client.Models;
 using Fpl.Data;
+using Fpl.Data.Models;
 using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;

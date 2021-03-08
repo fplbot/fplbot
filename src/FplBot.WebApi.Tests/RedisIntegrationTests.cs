@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Fpl.Data;
 using Fpl.Data.Models;
 using Fpl.Data.Repositories;
+using Fpl.Data.Repositories.Redis;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using FplBot.Core.Abstractions;
@@ -16,7 +17,7 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class SimpleLogger : ILogger<RedisSlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>
+    public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>
     {
         private readonly ITestOutputHelper _helper;
 
@@ -44,7 +45,7 @@ namespace FplBot.WebApi.Tests
     public class RedisIntegrationTests : IDisposable
     {
         private readonly ITestOutputHelper _helper;
-        private RedisSlackTeamRepository _repo;
+        private SlackTeamRepository _repo;
         private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
         private IServer _server;
         private VerifiedEntriesRepository _verifiedRepo;
@@ -67,7 +68,7 @@ namespace FplBot.WebApi.Tests
             
             var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
-            _repo = new RedisSlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
+            _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
             _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
             _verifiedRepo = new VerifiedEntriesRepository(multiplexer, opts, new SimpleLogger(_helper));
         }

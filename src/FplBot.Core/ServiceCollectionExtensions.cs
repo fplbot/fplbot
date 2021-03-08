@@ -1,6 +1,7 @@
 using Fpl.Client.Infra;
 using Fpl.Data;
 using Fpl.Data.Repositories;
+using Fpl.Data.Repositories.Redis;
 using Fpl.Search;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
@@ -21,7 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config)
         {
             services.AddFplApiClient(config.GetSection("fpl"));
-            services.AddData(config);
+            services.AddRedisData(config);
             services.AddSearching(config.GetSection("Search"));
             services.AddIndexingServices(config.GetSection("Search"));
             services.AddRecurringIndexer(config.GetSection("Search"));
@@ -44,7 +45,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddFplBotSlackEventHandlers(this IServiceCollection services)
         {
             services.AddSingleton<IUninstall, AppUninstaller>();
-            services.AddSlackBotEvents<RedisSlackTeamRepository>()
+            services.AddSlackBotEvents<SlackTeamRepository>()
                 .AddShortcut<HelpEventHandler>()
                 .AddAppMentionHandler<FplPlayerCommandHandler>()
                 .AddAppMentionHandler<FplStandingsCommandHandler>()

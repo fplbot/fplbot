@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Fpl.Data.Abstractions;
 using Fpl.Data.Repositories;
 using Fpl.Search.Indexing;
 using Microsoft.Extensions.Logging;

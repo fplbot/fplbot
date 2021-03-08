@@ -1,4 +1,5 @@
-using Fpl.Data.Repositories;
+using Fpl.Data.Abstractions;
+using Fpl.Data.Repositories.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -8,7 +9,7 @@ namespace Fpl.Data
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddData(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddRedisData(this IServiceCollection services, IConfiguration config)
         {
             services.Configure<RedisOptions>(config);
 
@@ -26,7 +27,7 @@ namespace Fpl.Data
 
             services.AddSingleton<IVerifiedEntriesRepository, VerifiedEntriesRepository>();
             services.AddSingleton<IVerifiedPLEntriesRepository, VerifiedPLEntriesRepository>();
-            services.AddSingleton<ISlackTeamRepository, RedisSlackTeamRepository>();
+            services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
             services.AddSingleton<IIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
 
             return services;

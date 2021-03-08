@@ -1,19 +1,21 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Fpl.Data.Abstractions;
+using Fpl.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace Fpl.Data.Repositories
+namespace Fpl.Data.Repositories.Redis
 {
     internal class VerifiedPLEntriesRepository : IVerifiedPLEntriesRepository
     {
         private ConnectionMultiplexer _redis;
-        private readonly ILogger<RedisSlackTeamRepository> _logger;
+        private readonly ILogger<SlackTeamRepository> _logger;
         private IDatabase _db;
         private string _server;
 
-        public VerifiedPLEntriesRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<RedisSlackTeamRepository> logger)
+        public VerifiedPLEntriesRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
         {
             _redis = redis;
             _logger = logger;
@@ -140,28 +142,4 @@ namespace Fpl.Data.Repositories
         }
     }
 
-    public record VerifiedPLEntry(
-        int EntryId,
-        long TeamId,
-        long TeamCode,
-        string TeamName,
-        int PlayerId,
-        int PlayerCode,
-        string PlayerWebName,
-        string PlayerFullName,
-        SelfOwnershipStats SelfOwnershipStats = null
-    );
-
-    public record SelfOwnershipStats(int WeekCount, int TotalPoints, int Gameweek);
-
-    public interface IVerifiedPLEntriesRepository
-    {
-        Task Insert(VerifiedPLEntry entry);
-        Task<IEnumerable<VerifiedPLEntry>> GetAllVerifiedPLEntries();
-        Task<VerifiedPLEntry> GetVerifiedPLEntry(int entryId);
-
-        Task Delete(int entryId);
-        Task DeleteAll();
-        Task UpdateStats(int entryId, SelfOwnershipStats selfOwnershipStats);
-    }
 }

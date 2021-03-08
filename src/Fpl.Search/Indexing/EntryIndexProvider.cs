@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using Fpl.Data.Abstractions;
+using Fpl.Data.Models;
 using Fpl.Data.Repositories;
 using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;

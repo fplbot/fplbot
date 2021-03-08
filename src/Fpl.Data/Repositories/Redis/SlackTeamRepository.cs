@@ -2,16 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Data.Abstractions;
+using Fpl.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
 
-namespace Fpl.Data.Repositories
+namespace Fpl.Data.Repositories.Redis
 {
-    public class RedisSlackTeamRepository : ISlackTeamRepository, ITokenStore
+    public class SlackTeamRepository : ISlackTeamRepository, ITokenStore
     {
-        private readonly ILogger<RedisSlackTeamRepository> _logger;
+        private readonly ILogger<SlackTeamRepository> _logger;
 
         private readonly ConnectionMultiplexer _redis;
         private IDatabase _db;
@@ -24,7 +26,7 @@ namespace Fpl.Data.Repositories
         private string _teamIdField = "teamId";
         private string _subscriptionsField = "subscriptions";
 
-        public RedisSlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<RedisSlackTeamRepository> logger)
+        public SlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
         {
             _redis = redis;
             _db = _redis.GetDatabase();

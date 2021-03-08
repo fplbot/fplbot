@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Data;
+using Fpl.Data.Abstractions;
+using Fpl.Data.Models;
 using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 

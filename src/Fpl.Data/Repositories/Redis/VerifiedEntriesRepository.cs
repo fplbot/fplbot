@@ -1,21 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Fpl.Data.Abstractions;
 using Fpl.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace Fpl.Data.Repositories
+namespace Fpl.Data.Repositories.Redis
 {
     internal class VerifiedEntriesRepository : IVerifiedEntriesRepository
     {
         private ConnectionMultiplexer _redis;
-        private readonly ILogger<RedisSlackTeamRepository> _logger;
+        private readonly ILogger<SlackTeamRepository> _logger;
         private IDatabase _db;
         private string _server;
 
-        public VerifiedEntriesRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<RedisSlackTeamRepository> logger)
+        public VerifiedEntriesRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
         {
             _redis = redis;
             _logger = logger;
@@ -173,42 +174,5 @@ namespace Fpl.Data.Repositories
                 ) : null
                 );
         }
-    }
-
-    public record VerifiedEntry(
-        int EntryId,
-        string FullName,
-        string EntryTeamName,
-        VerifiedEntryType VerifiedEntryType,
-        string Alias = null,
-        string Description = null,
-        VerifiedEntryStats EntryStats = null
-    );
-
-    public record VerifiedEntryStats(
-        int CurrentGwTotalPoints,
-        int LastGwTotalPoints,
-        int OverallRank,
-        int PointsThisGw,
-        string ActiveChip,
-        string Captain,
-        string ViceCaptain,
-        int Gameweek);
-
-    public record VerifiedEntryPointsUpdate(
-        int CurrentGwTotalPoints,
-        int OverallRank,
-        int PointsThisGw);
-
-    public interface IVerifiedEntriesRepository
-    {
-        Task Insert(VerifiedEntry entry);
-        Task<IEnumerable<VerifiedEntry>> GetAllVerifiedEntries();
-        Task<VerifiedEntry> GetVerifiedEntry(int entryId);
-
-        Task Delete(int entryId);
-        Task DeleteAll();
-        Task UpdateAllStats(int entryId, VerifiedEntryStats verifiedEntryStats);
-        Task UpdateLiveStats(int entryId, VerifiedEntryPointsUpdate newStats);
     }
 }
