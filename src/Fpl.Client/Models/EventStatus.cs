@@ -35,6 +35,7 @@ namespace Fpl.Client.Models
         public class LeaguesStatus
         {
             public const string Nothing = "";
+            public const string Updating = "Updating";
             public const string Updated = "Updated";
         }
 
