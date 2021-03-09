@@ -1,14 +1,12 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -28,7 +26,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         }
 
         public async Task Handle(InjuryUpdateOccured notification, CancellationToken cancellationToken)
-        {    
+        {
             _logger.LogInformation($"Handling player {notification.PlayersWithInjuryUpdates.Count()} status updates");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)

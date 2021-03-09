@@ -2,20 +2,16 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails
 {
-    
+
     public class Edit : PageModel
     {
         private readonly ISlackTeamRepository _teamRepo;
@@ -45,7 +41,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             {
             }
         }
-        
+
         public async Task<IActionResult> OnPost(string teamId, int leagueId, string channel, EventSubscription[] subscriptions)
         {
             try
@@ -57,7 +53,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
                 TempData["msg"] = e.ToString();
                 return RedirectToPage("Edit");
             }
-            
+
             var slackClient = await CreateSlackClient(teamId);
             var channelsRes = await slackClient.ConversationsListPublicChannels(500);
 
@@ -71,7 +67,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             await _teamRepo.UpdateLeagueId(teamId, leagueId);
             await _teamRepo.UpdateChannel(teamId, channel);
             await _teamRepo.UpdateSubscriptions(teamId, subscriptions);
-            
+
             TempData["msg"]+= "Updated!";
             return RedirectToPage("Edit");
         }

@@ -4,11 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Extensions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
@@ -42,7 +40,7 @@ namespace FplBot.Core.Handlers.InternalCommands
                 await _verifiedEntriesRepository.UpdateAllStats(entry.EntryId, newStats);
             }
         }
-        
+
         public async Task Handle(UpdateEntryStats notification, CancellationToken cancellationToken)
         {
             var settings = await _settingsClient.GetGlobalSettings();

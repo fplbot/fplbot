@@ -1,9 +1,7 @@
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -16,7 +14,7 @@ namespace FplBot.Core.Handlers
     {
         private const string FplBotProdAppId = "AREFP62B1";
         private const string FplBotTestAppId = "ATDD4SFQ9";
-        
+
         private readonly ILogger<FplBotJoinedChannelHandler> _logger;
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackClientBuilder _slackClientService;
@@ -50,7 +48,7 @@ namespace FplBot.Core.Handlers
                 var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
                 var setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
-                return new EventHandledResponse("OK"); 
+                return new EventHandledResponse("OK");
             }
             return new EventHandledResponse($"IGNORED FOR {userProfile.Profile.Real_Name}");
         }

@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -26,14 +24,14 @@ namespace FplBot.Core.Handlers
             _repo = repo;
             _logger = logger;
         }
-        
+
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppHomeOpenedEvent appHomeEvent)
         {
             var team = await _repo.GetTeam(eventMetadata.Team_Id);
             var client = _builder.Build(team.AccessToken);
-            
-            
-            
+
+
+
             var viewPublishRequest = BuildViewRequest(appHomeEvent.User, team.FplbotLeagueId);
             ViewPublishResponse res = null;
             try
@@ -47,14 +45,14 @@ namespace FplBot.Core.Handlers
                 return new EventHandledResponse(se.Message);
             }
         }
-        
+
         private static ViewPublishRequest BuildViewRequest(string userId, long leagueId)
         {
             return new ViewPublishRequest(userId)
             {
                 View = new View
                 {
-                    Type = PublishViewConstants.Home,    
+                    Type = PublishViewConstants.Home,
                     Blocks = new IBlock[]
                     {
                         new Block
@@ -78,7 +76,7 @@ namespace FplBot.Core.Handlers
                                 type = TextTypes.PlainText,
                                 text = "Here you can update your teams FPL League ID"
                             }
-                        
+
                         },
                         new InputBlock
                         {
@@ -87,14 +85,14 @@ namespace FplBot.Core.Handlers
                             {
                                 type = TextTypes.PlainText,
                                 text = "FPL League Id"
-                                
+
                             },
                             element = new PlainTextInputElement
                             {
                                 action_id = "fpl_league_id_action",
                                 initial_value = leagueId.ToString()
                             }
-                            
+
                         }
                     }
                 }

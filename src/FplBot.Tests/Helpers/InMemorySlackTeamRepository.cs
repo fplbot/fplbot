@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 
 namespace FplBot.Tests.Helpers
 {
@@ -42,11 +40,11 @@ namespace FplBot.Tests.Helpers
 
         public Task<IEnumerable<SlackTeam>> GetAllTeams()
         {
-            IEnumerable<SlackTeam> teams = new []{ 
+            IEnumerable<SlackTeam> teams = new []{
                 new SlackTeam
                 {
                     FplbotLeagueId = _leagueId
-                } 
+                }
             };
             return Task.FromResult(teams);
         }

@@ -1,11 +1,11 @@
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories.Redis;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Repositories.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace Fpl.Data
+namespace FplBot.Data
 {
     public static class ServiceCollectionExtensions
     {

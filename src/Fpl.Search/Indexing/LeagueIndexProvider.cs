@@ -5,8 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
+using FplBot.Data.Abstractions;
 
 namespace Fpl.Search.Indexing
 {

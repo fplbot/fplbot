@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Fpl.Data.Abstractions
+namespace FplBot.Data.Abstractions
 {
     public interface IIndexBookmarkProvider
     {

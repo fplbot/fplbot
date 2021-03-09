@@ -1,6 +1,6 @@
 using System;
 
-namespace Fpl.Data
+namespace FplBot.Data
 {
     public class RedisOptions
     {

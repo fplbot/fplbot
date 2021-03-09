@@ -1,10 +1,8 @@
 ﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -40,7 +38,7 @@ namespace FplBot.Core.Handlers
             }
 
             var couldParse = int.TryParse(newLeagueId, out var theLeagueId);
-            
+
             if (!couldParse)
             {
                 var res = $"Could not update league to id '{newLeagueId}'. Make sure it's a valid number.";
@@ -52,13 +50,13 @@ namespace FplBot.Core.Handlers
             try
             {
                 var league = await _leagueClient.GetClassicLeague(theLeagueId);
-                
+
                 if (league?.Properties != null)
                 {
                     await _slackTeamRepository.UpdateLeagueId(eventMetadata.Team_Id, theLeagueId);
                     var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId})";
                     await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, success);
-                    return new EventHandledResponse(success);    
+                    return new EventHandledResponse(success);
                 }
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
                 return new EventHandledResponse(failure);

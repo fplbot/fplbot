@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Fpl.Data.Repositories;
 
-namespace Fpl.Data.Models
+namespace FplBot.Data.Models
 {
     public class SlackTeam
     {

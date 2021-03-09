@@ -1,7 +1,5 @@
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
+using FplBot.Data.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FplBot.WebApi.Controllers
@@ -18,7 +16,7 @@ namespace FplBot.WebApi.Controllers
             _plRepo = plRepo;
             _repo = repo;
         }
-        
+
         [HttpGet("pl/{entryId:int}")]
         public async Task<IActionResult> GetPL(int entryId)
         {
@@ -29,17 +27,17 @@ namespace FplBot.WebApi.Controllers
             var verifiedEntry = await _repo.GetVerifiedEntry(entryId);
             if (verifiedEntry == null)
                 return NotFound();
-            
+
             return Ok(ApiModelBuilder.BuildPLEntry(verifiedEntry,plVerifiedEntry));
         }
-        
+
         [HttpGet("{entryId:int}")]
         public async Task<IActionResult> GetRegular(int entryId)
         {
             var verifiedEntry = await _repo.GetVerifiedEntry(entryId);
             if (verifiedEntry == null)
                 return NotFound();
-            
+
             return Ok(ApiModelBuilder.BuildRegularEntry(verifiedEntry));
         }
     }

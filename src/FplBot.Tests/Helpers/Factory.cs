@@ -12,10 +12,8 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
 using Nest;
 using Newtonsoft.Json;
 using NServiceBus;
@@ -39,7 +37,7 @@ namespace FplBot.Tests.Helpers
         {
             return GetAllHandlers(logger).First(h => h is T);
         }
-   
+
         private static ServiceProvider BuildServiceProvider(ITestOutputHelper logger)
         {
             var config = new ConfigurationBuilder();
@@ -53,15 +51,15 @@ namespace FplBot.Tests.Helpers
                 .AddFplBotSlackEventHandlers();
 
             SlackClient = A.Fake<ISlackClient>();
-            
+
             var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonConvert.DeserializeObject<GlobalSettings>(TestResources.Boostrap_Static_Json);
             var globalClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => globalClient.GetGlobalSettings()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
             var elasticClient = A.Fake<IElasticClient>();
-            
+
             var slackClientServiceMock = A.Fake<ISlackClientBuilder>();
             A.CallTo(() => slackClientServiceMock.Build(A<string>.Ignored)).Returns(SlackClient);
-            
+
             services.Replace<ISlackClientBuilder>(slackClientServiceMock);
             services.Replace<IGlobalSettingsClient>(globalClient);
             services.Replace<ITokenStore>(new DontCareRepo());
@@ -72,7 +70,7 @@ namespace FplBot.Tests.Helpers
             var provider = services.BuildServiceProvider();
             return provider;
         }
-        
+
         public static ISlackClient SlackClient { get; set; }
 
         private static void Replace<T>(this ServiceCollection services, T replacement) where T : class
@@ -91,19 +89,19 @@ namespace FplBot.Tests.Helpers
             return (new EventMetaData
             {
                 Team_Id =  "123",
-            }, 
+            },
                 new AppMentionEvent()
             {
                 Text = input
             });
         }
-        
+
         public static (EventMetaData meta, AppMentionEvent @event) CreateDummyEventByUser(string input, string userId)
         {
             return (new EventMetaData
                 {
                     Team_Id =  "123",
-                }, 
+                },
                 new AppMentionEvent()
                 {
                     Text = input,

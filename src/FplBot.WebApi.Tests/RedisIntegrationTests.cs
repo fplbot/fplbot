@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using Fpl.Data.Repositories.Redis;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using FplBot.Core.Abstractions;
+using FplBot.Data;
+using FplBot.Data.Models;
+using FplBot.Data.Repositories.Redis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -41,7 +40,7 @@ namespace FplBot.WebApi.Tests
             _helper.WriteLine(formatter(state, exception));
         }
     }
-    
+
     public class RedisIntegrationTests : IDisposable
     {
         private readonly ITestOutputHelper _helper;
@@ -65,7 +64,7 @@ namespace FplBot.WebApi.Tests
                 EndPoints = { opts.Value.GetRedisServerHostAndPort },
                 AllowAdmin = true
             };
-            
+
             var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
             _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
@@ -79,11 +78,11 @@ namespace FplBot.WebApi.Tests
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription>{ EventSubscription.FixtureGoals, EventSubscription.Captains}});
 
             var tokenFromRedis = await _repo.GetTokenByTeamId("teamId1");
-            
+
             Assert.Equal("accessToken1", tokenFromRedis);
 
             var team = await _repo.GetTeam("teamId1");
-            
+
             Assert.Equal("teamId1", team.TeamId);
             Assert.Equal("teamName1", team.TeamName);
             Assert.Equal("accessToken1", team.AccessToken);
@@ -111,11 +110,11 @@ namespace FplBot.WebApi.Tests
 
 
             await _repo.Delete("accessToken2");
-            
+
             var tokensAfterDelete = await _repo.GetTokens();
             Assert.Single(tokensAfterDelete);
         }
-        
+
         [Fact]
         public async Task UpdatesLeagueId()
         {
@@ -125,7 +124,7 @@ namespace FplBot.WebApi.Tests
 
             Assert.Equal(456,updated.FplbotLeagueId);
         }
-        
+
         [Fact]
         public async Task Unsubscribe()
         {
@@ -136,7 +135,7 @@ namespace FplBot.WebApi.Tests
             Assert.Single(updated.Subscriptions);
             Assert.DoesNotContain(EventSubscription.FixtureAssists,updated.Subscriptions);
         }
-        
+
         [Fact]
         public async Task Subscribe()
         {
@@ -146,20 +145,20 @@ namespace FplBot.WebApi.Tests
             Assert.Equal(3,updated.Subscriptions.Count());
             Assert.Contains(EventSubscription.FixturePenaltyMisses, updated.Subscriptions);
         }
-        
+
         [Fact]
         public async Task GetTeamWithNullSubs_ReturnsEmptySubsList()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null});
-            var team = await _repo.GetTeam("teamId1"); 
+            var team = await _repo.GetTeam("teamId1");
             Assert.Empty(team.Subscriptions);
         }
-        
+
         [Fact]
         public async Task GetTeamWithNullSubs_UpdateToEmptyList_ReturnsEmptySubsList()
         {
             await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null});
-            await _repo.GetTeam("teamId1"); 
+            await _repo.GetTeam("teamId1");
             await _repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { });
             var updated = await _repo.GetTeam("teamId1");
             Assert.Empty(updated.Subscriptions);
@@ -185,7 +184,7 @@ namespace FplBot.WebApi.Tests
         public async Task UpdatesDontCreateDuplicates()
         {
             VerifiedEntry verifiedEntry = SomeEntry() with { EntryStats = EntryStats()};
-            
+
             await _verifiedRepo.Insert(verifiedEntry);
             var allVerifiedEntries = await _verifiedRepo.GetAllVerifiedEntries();
             Assert.Single(allVerifiedEntries);

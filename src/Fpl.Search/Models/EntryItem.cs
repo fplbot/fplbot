@@ -1,4 +1,4 @@
-﻿using Fpl.Data.Models;
+﻿using FplBot.Data.Models;
 
 namespace Fpl.Search.Models
 {

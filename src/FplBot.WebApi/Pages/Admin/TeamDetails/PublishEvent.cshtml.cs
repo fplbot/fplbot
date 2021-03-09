@@ -1,14 +1,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
-using FplBot.Core.Handlers;
 using FplBot.Core.Handlers.InternalCommands;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -28,7 +24,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             _mediator = mediator;
             _gameweekClient = gameweekClient;
         }
-        
+
         public async Task OnGet(string teamId)
         {
             var teamIdToUpper = teamId.ToUpper();
@@ -42,7 +38,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
                 TempData["msg"] += $"No subs selected..";
                 return RedirectToPage(nameof(PublishEvent));
             }
-            
+
             var teamIdToUpper = teamId.ToUpper();
             var team = await _teamRepo.GetTeam(teamIdToUpper);
 
@@ -57,10 +53,10 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             {
                 TempData["msg"] += $"Unsupported event. Nothing published.";
             }
-            
+
             return RedirectToPage(nameof(PublishEvent));
         }
-        
+
         public SlackTeam Team { get; set; }
     }
 }

@@ -4,14 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
@@ -19,7 +17,7 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.Core.GameweekLifecycle.Handlers
 {
-    public class NearDeadlineHandler : INotificationHandler<OneHourToDeadline>, 
+    public class NearDeadlineHandler : INotificationHandler<OneHourToDeadline>,
                                        INotificationHandler<TwentyFourHoursToDeadline>
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
@@ -38,7 +36,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             _globalSettingsClient = globalSettingsClient;
             _fixtures = fixtures;
         }
-        
+
         public async Task Handle(OneHourToDeadline notification, CancellationToken cancellationToken)
         {
             _logger.LogInformation($"Notifying about 60 minutes to (gw{notification.Gameweek.Id}) deadline");
@@ -57,14 +55,14 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             _logger.LogInformation($"Notifying about 24h to (gw{notification.Gameweek.Id}) deadline");
             var fixtures = await _fixtures.GetFixturesByGameweek(notification.Gameweek.Id);
             var teams = (await _globalSettingsClient.GetGlobalSettings()).Teams;
-            
+
             var allSlackTeams = await _teamRepo.GetAllTeams();
             string message = $"⏳ Gameweek {notification.Gameweek.Id} deadline in 24 hours!";
             foreach (var team in allSlackTeams)
             {
                 if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
                 {
-                    await PublishToTeam(team);    
+                    await PublishToTeam(team);
                 }
             }
 

@@ -4,11 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
+using FplBot.Data.Abstractions;
 using MediatR;
 
 namespace FplBot.WebApi.Handlers.Commands
@@ -34,11 +32,11 @@ namespace FplBot.WebApi.Handlers.Commands
         {
             var settings = await _settingsClient.GetGlobalSettings();
             var allPlayers = settings.Players;
-            
+
             var allPlEntries = await _plRepo.GetAllVerifiedPLEntries();
             int currentGameweekId = settings.Gameweeks.GetCurrentGameweek().Id;
             var liveItems = await GetAllLiveItems(currentGameweekId);
-            
+
             foreach (var verifiedPlEntry in allPlEntries)
             {
                 var player = allPlayers.Get(verifiedPlEntry.PlayerId);
@@ -51,14 +49,14 @@ namespace FplBot.WebApi.Handlers.Commands
                 });
             }
         }
-        
+
         private async Task<ICollection<LiveItem>[]> GetAllLiveItems(int currentGameweek)
         {
             var liveItems = await Task.WhenAll(GetGameweekNumbersUpUntilCurrent(currentGameweek)
                 .Select(gw => _liveClient.GetLiveItems(gw, gw == currentGameweek)));
             return liveItems;
         }
-            
+
         private static IEnumerable<int> GetGameweekNumbersUpUntilCurrent(int gameweek)
         {
             return Enumerable.Range(1, gameweek);

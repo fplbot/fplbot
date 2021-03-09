@@ -2,10 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Interactive.BlockActions;
 
@@ -15,7 +13,7 @@ namespace FplBot.Core.Handlers
     {
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ILeagueClient _leagueClient;
-        
+
         public InteractiveBlocksActionHandler(ISlackTeamRepository teamRepo, ILeagueClient leagueClient)
         {
             _teamRepo = teamRepo;
@@ -29,9 +27,9 @@ namespace FplBot.Core.Handlers
             {
                 return new EventHandledResponse("IGNORE. THIS IS NOT FOR ME");
             }
-            
+
             var leagueId = actionsBlock.value;
-            
+
             if (!int.TryParse(leagueId, out var newLeagueID))
             {
                 return new EventHandledResponse("VALIDATION_ERRORS");
@@ -45,9 +43,9 @@ namespace FplBot.Core.Handlers
             {
                 return new EventHandledResponse("VALIDATION_ERRORS");
             }
-            
+
             await _teamRepo.UpdateLeagueId(blockActionEvent.Team.Id, newLeagueID);
-            
+
 
 
             return new EventHandledResponse("League ID updated");

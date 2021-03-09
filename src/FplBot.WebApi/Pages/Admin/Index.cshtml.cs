@@ -1,13 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using Fpl.Search.Indexing;
-using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Nest;
 
 namespace FplBot.WebApi.Pages.Admin
 {
@@ -25,7 +20,7 @@ namespace FplBot.WebApi.Pages.Admin
             _indexBookmarkProvider = indexBookmarkProvider;
             Workspaces = new List<SlackTeam>();
         }
-        
+
         public async Task OnGet()
         {
             var teams = await _teamRepo.GetAllTeams();

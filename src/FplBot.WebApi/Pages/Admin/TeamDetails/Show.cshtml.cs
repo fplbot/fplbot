@@ -3,20 +3,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using FplBot.Core;
-using FplBot.Core.Abstractions;
-using FplBot.Core.GameweekLifecycle;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using FplBot.WebApi.Configurations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
 
@@ -40,7 +33,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             _builder = builder;
             _leagueClient = leagueClient;
         }
-        
+
         public async Task OnGet(string teamId)
         {
             var teamIdToUpper = teamId.ToUpper();
@@ -79,7 +72,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             {
                 TempData["msg"] = $"Uninstall failed '{res.Error}'";
             }
-            
+
             return RedirectToPage("Index");
         }
 

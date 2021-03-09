@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Helpers;
+using FplBot.Data.Models;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace FplBot.Core.Abstractions

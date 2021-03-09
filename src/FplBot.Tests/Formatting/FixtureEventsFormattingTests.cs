@@ -2,13 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
 using FplBot.Core.Taunts;
+using FplBot.Data.Models;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit;
@@ -24,7 +22,7 @@ namespace FplBot.Tests
         {
             _helper = helper;
         }
-        
+
         [Theory]
         [InlineData("Kohn Jorsnes", "kors", "Magnus Carlsen", "Magnus Carlsen")]
         [InlineData("Magnus Carlsen", "carlsen", "Magnus Carlsen", "carlsen")]
@@ -34,8 +32,8 @@ namespace FplBot.Tests
         public void ProducesCorrectTauntString(string slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
         {
             // Arrange
-     
-        
+
+
             // Act
             var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
             foreach (var formatttedEvent in formattedEvents)
@@ -47,7 +45,7 @@ namespace FplBot.Tests
             var regex = new Regex("\\{0\\}.*");
             CustomAssert.AnyOfContains(new GoalTaunt().JokePool.Select(x => regex.Replace(x, string.Empty)), formattedEvent);
             Assert.Contains(expectedTauntName, formattedEvent);
-            
+
         }
 
         [Fact]
@@ -103,7 +101,7 @@ namespace FplBot.Tests
                 }
             };
         }
-        
+
         private GameweekLeagueContext CreateNoTransfersForGoalScorer()
         {
             return new GameweekLeagueContext

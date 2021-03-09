@@ -1,13 +1,12 @@
 using Fpl.Client.Infra;
-using Fpl.Data;
-using Fpl.Data.Repositories;
-using Fpl.Data.Repositories.Redis;
 using Fpl.Search;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Handlers;
 using FplBot.Core.Handlers.SlackEvents;
 using FplBot.Core.Helpers;
+using FplBot.Data;
+using FplBot.Data.Repositories.Redis;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Slackbot.Net.Endpoints.Abstractions;

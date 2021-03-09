@@ -2,11 +2,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
+using FplBot.Data.Models;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
@@ -23,7 +21,7 @@ namespace FplBot.Core.Handlers.InternalCommands
             _leagueClient = leagueClient;
             _publisher = publisher;
         }
-        
+
         public async Task Handle(PublishStandingsCommand command, CancellationToken cancellationToken)
         {
             var league = await _leagueClient.GetClassicLeague((int) command.Team.FplbotLeagueId);
