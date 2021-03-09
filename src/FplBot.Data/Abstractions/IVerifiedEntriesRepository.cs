@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+using FplBot.Data.Models;
 
-namespace Fpl.Data.Abstractions
+namespace FplBot.Data.Abstractions
 {
     public interface IVerifiedEntriesRepository
     {

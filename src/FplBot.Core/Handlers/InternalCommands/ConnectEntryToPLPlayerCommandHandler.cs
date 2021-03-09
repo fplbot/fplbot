@@ -2,18 +2,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Extensions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
     public record ConnectEntryToPLPlayer(int EntryId, int PlayerId, int Gameweek) : INotification;
-    
+
     public class ConnectEntryToPLPlayerCommandHandler : INotificationHandler<ConnectEntryToPLPlayer>
     {
         private readonly IVerifiedPLEntriesRepository _repo;
@@ -32,7 +30,7 @@ namespace FplBot.Core.Handlers.InternalCommands
             _mediator = mediator;
             _logger = logger;
         }
-        
+
         public async Task Handle(ConnectEntryToPLPlayer notification, CancellationToken cancellationToken)
         {
             var settings = await _settings.GetGlobalSettings();
@@ -60,7 +58,7 @@ namespace FplBot.Core.Handlers.InternalCommands
                 ));
 
                 _logger.LogInformation($"{notification.EntryId} inserted");
-                
+
                 await _mediator.Publish(new UpdateSelfishStatsForPLEntry(notification.Gameweek, notification.EntryId), cancellationToken);
             }
             else

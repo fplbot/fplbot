@@ -4,12 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using FplBot.Core;
-using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Configurations;
 using Microsoft.AspNetCore.Hosting;
@@ -84,12 +80,12 @@ namespace FplBot.WebApi.Controllers
             var urlencodedState = WebUtility.UrlEncode($"{install.Channel},{install.LeagueId}");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
             var redirect_uri = new Uri(original, "/oauth/authorize");
-            
+
             return Ok(new {
                 redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}"
             });
         }
-        
+
         [HttpPost("install-url")]
         public async Task<IActionResult> PostCreateInstallUrl([FromBody] InstallParameters install, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
         {
@@ -107,7 +103,7 @@ namespace FplBot.WebApi.Controllers
             var urlencodedState = WebUtility.UrlEncode($"{install.Channel},{install.LeagueId}");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
             var redirect_uri = new Uri(original, "/oauth/authorize");
-            
+
             return Ok(new {
                 redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}"
             });
@@ -146,7 +142,7 @@ namespace FplBot.WebApi.Controllers
                 await _messageSession.Publish(new AppInstalled(response.Team.Id, response.Team.Name, setup.LeagueId, setup.Channel));
                 if (_env.IsProduction())
                 {
-                    return Redirect("https://www.fplbot.app/success");    
+                    return Redirect("https://www.fplbot.app/success");
                 }
                 return Redirect("https://test.fplbot.app/success");
             }
@@ -169,7 +165,7 @@ namespace FplBot.WebApi.Controllers
                 scheme = HttpContext.Request.Scheme
             });
         }
-    
+
         private FplbotSetup ParseState(string urlencodedState)
         {
             var state = WebUtility.UrlDecode(urlencodedState);
@@ -186,7 +182,7 @@ namespace FplBot.WebApi.Controllers
     {
         [Required, SlackChannel]
         public string Channel { get; set; }
-        
+
         [Required, LeagueId]
         public int LeagueId { get; set; }
     }
@@ -205,7 +201,7 @@ namespace FplBot.WebApi.Controllers
         {
             if (value == null)
                 return new ValidationResult($"{validationContext.DisplayName} must start with a `#`");
-            
+
             return value.ToString().StartsWith("#") ?
                 ValidationResult.Success :
                 new ValidationResult($"{validationContext.DisplayName} must start with a `#`");

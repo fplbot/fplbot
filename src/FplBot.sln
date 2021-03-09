@@ -55,7 +55,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Workers", "Fpl.Workers\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Functions", "FplBot.Functions\FplBot.Functions.csproj", "{4233A87D-825B-4CE7-8548-A367FF54E852}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Data", "Fpl.Data\Fpl.Data.csproj", "{A393275B-3D56-45B4-AD54-E5C673B0A4EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Data", "FplBot.Data\FplBot.Data.csproj", "{A393275B-3D56-45B4-AD54-E5C673B0A4EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

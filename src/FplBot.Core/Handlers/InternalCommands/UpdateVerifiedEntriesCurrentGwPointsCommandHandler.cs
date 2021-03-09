@@ -2,16 +2,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
     public record UpdateVerifiedEntriesCurrentGwPointsCommand : INotification;
-    
+
     public class UpdateVerifiedEntriesCurrentGwPointsCommandHandler : INotificationHandler<UpdateVerifiedEntriesCurrentGwPointsCommand>
     {
         private readonly IEntryHistoryClient _entryHistoryClient;
@@ -26,7 +24,7 @@ namespace FplBot.Core.Handlers.InternalCommands
         public async Task Handle(UpdateVerifiedEntriesCurrentGwPointsCommand notification, CancellationToken cancellationToken)
         {
             var allEntries = await _verifiedEntriesRepository.GetAllVerifiedEntries();
-            
+
             foreach (var entry in allEntries)
             {
                 var newStats = await GetLiveStatsForEntry(entry);

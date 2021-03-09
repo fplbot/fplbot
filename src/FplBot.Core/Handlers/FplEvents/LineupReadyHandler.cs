@@ -1,14 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
@@ -30,7 +27,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         }
 
         public async Task Handle(LineupReady notification, CancellationToken cancellationToken)
-        {     
+        {
             _logger.LogInformation("Handling new lineups");
             var lineups = notification.Lineups;
             var slackTeams = await _slackTeamRepo.GetAllTeams();
@@ -40,10 +37,10 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
                 {
-                    await PublishLineupToTeam(slackTeam);    
+                    await PublishLineupToTeam(slackTeam);
                 }
             }
-            
+
             async Task PublishLineupToTeam(SlackTeam team)
             {
                 var slackClient = _builder.Build(team.AccessToken);

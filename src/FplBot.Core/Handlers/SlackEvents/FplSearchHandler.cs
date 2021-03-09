@@ -3,15 +3,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -120,7 +119,7 @@ namespace FplBot.Core.Handlers
             }
 
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, sb.ToString());
-            
+
             return new EventHandledResponse(sb.ToString());
         }
 

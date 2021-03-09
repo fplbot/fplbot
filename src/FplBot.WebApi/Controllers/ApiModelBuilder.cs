@@ -1,5 +1,4 @@
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+using FplBot.Data.Models;
 
 namespace FplBot.WebApi.Controllers
 {

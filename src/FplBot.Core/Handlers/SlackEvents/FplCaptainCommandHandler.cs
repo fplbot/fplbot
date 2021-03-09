@@ -1,10 +1,8 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
+using FplBot.Data.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
@@ -18,7 +16,7 @@ namespace FplBot.Core.Handlers
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
 
         public FplCaptainCommandHandler(
-            ICaptainsByGameWeek captainsByGameWeek,  
+            ICaptainsByGameWeek captainsByGameWeek,
             IGameweekHelper gameweekHelper,
             ISlackTeamRepository slackTeamsRepo,
             ISlackWorkSpacePublisher workspacePublisher
@@ -51,12 +49,12 @@ namespace FplBot.Core.Handlers
 
             var setup = await _slackTeamsRepo.GetTeam(eventMetadata.Team_Id);
 
-            var outgoingMessage = isChartRequest ? 
-                await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, (int)setup.FplbotLeagueId) : 
+            var outgoingMessage = isChartRequest ?
+                await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, (int)setup.FplbotLeagueId) :
                 await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, (int)setup.FplbotLeagueId);
 
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, outgoingMessage);
-       
+
             return new EventHandledResponse(outgoingMessage);
         }
 

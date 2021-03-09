@@ -1,14 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
-using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
@@ -33,7 +30,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         {
             _logger.LogInformation("Handling fixture full time");
             var teams = await _slackTeamRepo.GetAllTeams();
-            
+
             foreach (var slackTeam in teams)
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureFullTime))
@@ -46,7 +43,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
                     }
                 }
             }
-            
+
             async Task PublishFulltimeMessage(SlackTeam team, string title, string thread)
             {
                 var slackClient = _builder.Build(team.AccessToken);

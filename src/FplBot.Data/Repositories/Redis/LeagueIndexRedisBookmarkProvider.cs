@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-using Fpl.Data.Abstractions;
+using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace Fpl.Data.Repositories.Redis
+namespace FplBot.Data.Repositories.Redis
 {
     public class LeagueIndexRedisBookmarkProvider : IIndexBookmarkProvider
     {

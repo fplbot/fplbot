@@ -2,11 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+
 using FplBot.Core;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Models;
 using Slackbot.Net.Endpoints.Models;
 
 namespace FplBot.Tests
@@ -16,13 +15,13 @@ namespace FplBot.Tests
         private const int HomeTeamId = 10;
         private const int AwayTeamId = 20;
         internal const int LeagueId = 111;
-        
+
         internal const int PlayerId = 123;
         internal const int PlayerCode = 123;
-        
+
         internal const int OtherPlayerId = 456;
         internal const int OtherPlayerCode = 456;
-        
+
         internal const string SlackTeamId = "@T01337";
 
         public static Fixture NoGoals(int fixtureCode)
@@ -40,13 +39,13 @@ namespace FplBot.Tests
                         Identifier = "goals_scored",
                         HomeStats = new List<FixtureStatValue>
                         {
-                            
+
                         },
                         AwayStats = new List<FixtureStatValue>
                         {
                         }
                     }
-                }, 
+                },
                 PulseId = fixtureCode
             };
         }
@@ -101,7 +100,7 @@ namespace FplBot.Tests
                 Identifier = "goals_scored",
                 HomeStats = new List<FixtureStatValue>
                 {
-                            
+
                 },
                 AwayStats = new List<FixtureStatValue>
                 {
@@ -113,7 +112,7 @@ namespace FplBot.Tests
                 }
             };
         }
-        
+
         public static Team HomeTeam()
         {
             return new Team
@@ -152,7 +151,7 @@ namespace FplBot.Tests
                 SecondName = "PlayerSecondName"
             };
         }
-        
+
         public static Player OtherPlayer()
         {
             return new Player
@@ -163,7 +162,7 @@ namespace FplBot.Tests
                 SecondName = "OtherPlayerSecondName"
             };
         }
-        
+
         public static Player WithCostChangeEvent(this Player player, int cost)
         {
             player.CostChangeEvent = cost;
@@ -175,13 +174,13 @@ namespace FplBot.Tests
             player.Status = playerStatus;
             return player;
         }
-        
+
         public static Player WithNews(this Player player, string news)
         {
             player.News = news;
             return player;
         }
-        
+
         public static Gameweek OlderGameweek(int id)
         {
             return new Gameweek
@@ -198,7 +197,7 @@ namespace FplBot.Tests
                 IsCurrent = true
             };
         }
-        
+
         public static Gameweek PreviousGameweek(int id)
         {
             return new Gameweek
@@ -207,7 +206,7 @@ namespace FplBot.Tests
                 IsPrevious = true
             };
         }
-        
+
         public static Gameweek NextGameweek(int id)
         {
             return new Gameweek
@@ -233,14 +232,14 @@ namespace FplBot.Tests
             {
                 Id = pulseFixtureId,
                 Teams = SomeHomeAndAwayTeams(),
-                
+
                 TeamLists = new []
                 {
                     new LineupContainer
                     {
                         Formation = new Formation { Players = new IEnumerable<int>[0]},
                         Lineup = new []{ new PlayerInLineup() }
-                    }, 
+                    },
                     new LineupContainer
                     {
                         Formation = new Formation { Players = new IEnumerable<int>[0]},

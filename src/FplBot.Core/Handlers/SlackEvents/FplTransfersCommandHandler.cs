@@ -1,9 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
+using FplBot.Data.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
@@ -30,10 +28,10 @@ namespace FplBot.Core.Handlers
         {
             var gameweek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, $"{CommandsFormatted} {{gw}}");
 
-            
+
             var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
             var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek ?? 1, (int)team.FplbotLeagueId);
-            
+
 
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
             return new EventHandledResponse(messageToSend);

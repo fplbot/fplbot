@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;
 using System;
-using Fpl.Data.Repositories;
 using FplBot.Core.RecurringActions;
 using Microsoft.Extensions.Options;
 

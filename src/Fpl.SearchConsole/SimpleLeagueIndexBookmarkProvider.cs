@@ -1,8 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Repositories;
 using Fpl.Search.Indexing;
+using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.SearchConsole
@@ -16,7 +15,7 @@ namespace Fpl.SearchConsole
         {
             _logger = logger;
         }
-        
+
         public async Task<int> GetBookmark()
         {
             try

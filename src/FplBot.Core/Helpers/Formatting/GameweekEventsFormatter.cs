@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Models;
 using FplBot.Core.Taunts;
+using FplBot.Data.Models;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace FplBot.Core.Helpers
@@ -184,8 +182,8 @@ namespace FplBot.Core.Helpers
 
         private static IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId, IEnumerable<TransfersByGameWeek.Transfer> transfersForCurrentGameweek, IEnumerable<User> users)
         {
-            return transfersForCurrentGameweek == null ? 
-                Enumerable.Empty<string>() : 
+            return transfersForCurrentGameweek == null ?
+                Enumerable.Empty<string>() :
                 transfersForCurrentGameweek.Where(x => x.PlayerTransferredOut == playerId).Select(x => SlackHandleHelper.GetSlackHandleOrFallback(users, x.EntryName));
         }
 

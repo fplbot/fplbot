@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
@@ -26,7 +24,7 @@ namespace FplBot.WebApi.Pages.Admin
             Workspaces = new List<SlackTeam>();
 
         }
-        
+
         public async Task OnGet()
         {
             var teams = await _teamRepo.GetAllTeams();
@@ -35,7 +33,7 @@ namespace FplBot.WebApi.Pages.Admin
                 Workspaces.Add(t);
             }
         }
-        
+
         public async Task<IActionResult> OnPost(string message)
         {
             _logger.LogInformation($"BROADCASTING TO ALL WORKSPACES");
@@ -51,7 +49,7 @@ namespace FplBot.WebApi.Pages.Admin
 
             return RedirectToPage("Broadcast");
         }
-        
+
         public List<SlackTeam> Workspaces { get; set; }
     }
 }

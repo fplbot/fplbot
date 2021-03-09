@@ -4,11 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+
 using FplBot.Core.Helpers;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 
 namespace FplBot.Core.Handlers.InternalCommands
@@ -17,7 +16,7 @@ namespace FplBot.Core.Handlers.InternalCommands
     public record UpdateSelfishStatsForPLEntry(int Gameweek, int PLEntryId) : INotification;
 
     internal class UpdateSelfishStatsCommandHandler : INotificationHandler<UpdateSelfishStats>, INotificationHandler<UpdateSelfishStatsForPLEntry>
-    { 
+    {
         private readonly IVerifiedPLEntriesRepository _repo;
         private readonly ILiveClient _liveClient;
         private readonly SelfOwnerShipCalculator _calculator;
@@ -40,7 +39,7 @@ namespace FplBot.Core.Handlers.InternalCommands
                 await UpdateSelfishStatsForPLEntry(notification.Gameweek, cancellationToken, liveItems, plEntry);
             }
         }
-        
+
         public async Task Handle(UpdateSelfishStatsForPLEntry notification, CancellationToken cancellationToken)
         {
             var plEntries = await _repo.GetAllVerifiedPLEntries();

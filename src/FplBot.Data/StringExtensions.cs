@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
+using FplBot.Data.Models;
 
-namespace Fpl.Data
+namespace FplBot.Data
 {
     public static class StringExtensions
     {

@@ -4,15 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Handlers;
 using FplBot.Core.Handlers.InternalCommands;
 using FplBot.Core.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -27,10 +25,10 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
         private readonly IMediator _mediator;
         private readonly ISlackTeamRepository _teamRepo;
 
-        public GameweekEndedHandler(ISlackWorkSpacePublisher publisher, 
+        public GameweekEndedHandler(ISlackWorkSpacePublisher publisher,
             ISlackTeamRepository teamsRepo,
-            ILeagueClient leagueClient, 
-            IGlobalSettingsClient gameweekClient, 
+            ILeagueClient leagueClient,
+            IGlobalSettingsClient gameweekClient,
             ILogger<GameweekEndedHandler> logger, IMediator mediator)
         {
             _publisher = publisher;

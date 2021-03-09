@@ -1,4 +1,4 @@
-namespace Fpl.Data.Models
+namespace FplBot.Data.Models
 {
     public record VerifiedEntryStats(
         int CurrentGwTotalPoints,

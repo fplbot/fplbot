@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace Fpl.Data.Repositories.Redis
+namespace FplBot.Data.Repositories.Redis
 {
     internal class VerifiedEntriesRepository : IVerifiedEntriesRepository
     {

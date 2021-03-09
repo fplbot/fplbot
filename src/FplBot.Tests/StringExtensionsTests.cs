@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Linq;
-using Fpl.Data;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
+using FplBot.Data;
+using FplBot.Data.Models;
 using Xunit;
 
 namespace FplBot.Tests
@@ -15,7 +14,7 @@ namespace FplBot.Tests
         [InlineData("fixtureassists, bøler", new []{EventSubscription.FixtureAssists}, new []{"bøler"})]
         [InlineData("fixtureassists, fixturegoals", new []{EventSubscription.FixtureAssists, EventSubscription.FixtureGoals}, null)]
         [InlineData("fixtureassists, fixturegoals, all, cardss", new []{EventSubscription.FixtureAssists, EventSubscription.FixtureGoals, EventSubscription.All}, new []{"cardss"})]
-        public void ParseSubscriptionString_ShouldWork(string input, EventSubscription[] expected, string[] unableToParse) 
+        public void ParseSubscriptionString_ShouldWork(string input, EventSubscription[] expected, string[] unableToParse)
         {
             // Act
             var (result, errors) = input.ParseSubscriptionString(",");

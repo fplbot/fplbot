@@ -6,11 +6,10 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Models;
 using Fpl.Search.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Models;
+using FplBot.Data.Models;
 using Slackbot.Net.Models.BlockKit;
 
 namespace FplBot.Core.Helpers

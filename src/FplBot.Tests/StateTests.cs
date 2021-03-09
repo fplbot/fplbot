@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Data;
-using Fpl.Data.Abstractions;
-using Fpl.Data.Models;
-using Fpl.Data.Repositories;
 using FplBot.Core.Abstractions;
 using FplBot.Core.GameweekLifecycle;
 using FplBot.Core.Models;
+using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -40,7 +38,7 @@ namespace FplBot.Tests
             await state.Refresh(1);
             A.CallTo(() => _Mediator.Publish(A<FixtureEventsOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
-        
+
         [Fact]
         public async Task WithPriceIncrease()
         {
@@ -49,16 +47,16 @@ namespace FplBot.Tests
             await state.Refresh(1);
             A.CallTo(() => _Mediator.Publish(A<PriceChangeOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
-        
+
         [Fact]
         public async Task WithInjuryUpdate()
         {
-            var state = CreateNewInjuryScenario(); 
+            var state = CreateNewInjuryScenario();
             await state.Reset(1);
             await state.Refresh(1);
             A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
-        
+
         [Fact]
         public async Task WithNewPlayer()
         {
@@ -67,7 +65,7 @@ namespace FplBot.Tests
             await state.Refresh(1);
             A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
-        
+
         [Fact]
         public async Task WithChangeInDoubtfulnessEmitsEvent()
         {
@@ -85,16 +83,16 @@ namespace FplBot.Tests
             await state.Refresh(1);
             A.CallTo(() => _Mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
         }
-        
+
         [Fact]
         public async Task WithSingleProvisionalFinished_EmitsEvent()
         {
             var state = CreateSingleFinishedFixturesScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<FixturesFinished>._, CancellationToken.None)).MustHaveHappenedOnceExactly();            
+            A.CallTo(() => _Mediator.Publish(A<FixturesFinished>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
-        
+
         [Fact]
         public async Task WithMultipleProvisionalFinished_EmitsEvent()
         {
@@ -109,12 +107,12 @@ namespace FplBot.Tests
             _Mediator = A.Fake<IMediator>();
             return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _Mediator);
         }
-        
+
         private static State CreateMultipleFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
-                new GlobalSettings 
+                new GlobalSettings
                 {
                     Teams =  new List<Team>
                     {
@@ -126,7 +124,7 @@ namespace FplBot.Tests
                         TestBuilder.Player()
                     }
                 });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
                 {
@@ -139,15 +137,15 @@ namespace FplBot.Tests
                         TestBuilder.AwayTeamGoal(888, 1).FinishedProvisional(),
                         TestBuilder.AwayTeamGoal(999, 1).FinishedProvisional(),
                     });
-            
+
             return CreateBaseScenario(fixtureClient, playerClient);
         }
-        
+
         private static State CreateSingleFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
-                new GlobalSettings 
+                new GlobalSettings
                 {
                     Teams =  new List<Team>
                     {
@@ -160,7 +158,7 @@ namespace FplBot.Tests
                         TestBuilder.OtherPlayer()
                     }
                 });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
                 {
@@ -175,15 +173,15 @@ namespace FplBot.Tests
                             .WithProvisionalBonus(TestBuilder.Player().Id, 10)
                             .WithProvisionalBonus(TestBuilder.OtherPlayer().Id, 20)
                     });
-            
+
             return CreateBaseScenario(fixtureClient, playerClient);
         }
-        
+
         private static State CreateNoFinishedFixturesScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
-                new GlobalSettings 
+                new GlobalSettings
                 {
                     Teams =  new List<Team>
                     {
@@ -195,7 +193,7 @@ namespace FplBot.Tests
                         TestBuilder.Player()
                     }
                 });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
                 {
@@ -206,15 +204,15 @@ namespace FplBot.Tests
                     {
                         TestBuilder.AwayTeamGoal(888, 2)
                     });
-            
+
             return CreateBaseScenario(fixtureClient, playerClient);
         }
-        
+
         private static State CreateGoalScoredScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
-                new GlobalSettings 
+                new GlobalSettings
                 {
                     Teams =  new List<Team>
                     {
@@ -226,7 +224,7 @@ namespace FplBot.Tests
                         TestBuilder.Player()
                     }
                 });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
             A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
                 {
@@ -237,15 +235,15 @@ namespace FplBot.Tests
                     {
                         TestBuilder.AwayTeamGoal(888, 2)
                     });
-            
+
             return CreateBaseScenario(fixtureClient, playerClient);
         }
-        
+
         private static State CreateNewInjuryScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
-            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
-                { 
+            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+                {
                     Teams = new List<Team>
                     {
                         TestBuilder.HomeTeam(),
@@ -256,8 +254,8 @@ namespace FplBot.Tests
                         TestBuilder.Player().WithStatus(PlayerStatuses.Available)
                     }
                 }
-            ).Once().Then.Returns(new GlobalSettings 
-            { 
+            ).Once().Then.Returns(new GlobalSettings
+            {
                 Teams = new List<Team>
                 {
                     TestBuilder.HomeTeam(),
@@ -273,12 +271,12 @@ namespace FplBot.Tests
 
             return CreateBaseScenario(fixtureClient, settingsClient);
         }
-        
+
         private static State CreateChangeInDoubtfulnessScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
-            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
-                { 
+            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+                {
                     Teams = new List<Team>
                     {
                         TestBuilder.HomeTeam(),
@@ -289,8 +287,8 @@ namespace FplBot.Tests
                         TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 75% chance of playing"),
                     }
                 }
-            ).Once().Then.Returns(new GlobalSettings 
-            { 
+            ).Once().Then.Returns(new GlobalSettings
+            {
                 Teams = new List<Team>
                 {
                     TestBuilder.HomeTeam(),
@@ -306,12 +304,12 @@ namespace FplBot.Tests
 
             return CreateBaseScenario(fixtureClient, settingsClient);
         }
-        
+
         private static State CreateNewPlayerScenario()
         {
             var settingsClient = A.Fake<IGlobalSettingsClient>();
-            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings 
-                { 
+            A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+                {
                     Teams = new List<Team>
                     {
                         TestBuilder.HomeTeam(),
@@ -322,8 +320,8 @@ namespace FplBot.Tests
                         TestBuilder.Player().WithStatus(PlayerStatuses.Available)
                     }
                 }
-            ).Once().Then.Returns(new GlobalSettings 
-            { 
+            ).Once().Then.Returns(new GlobalSettings
+            {
                 Teams = new List<Team>
                 {
                     TestBuilder.HomeTeam(),
@@ -332,7 +330,7 @@ namespace FplBot.Tests
                 Players = new List<Player>
                 {
                     TestBuilder.Player().WithStatus(PlayerStatuses.Available),
-                    TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)                
+                    TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)
                 }
             });
 
@@ -344,8 +342,8 @@ namespace FplBot.Tests
         private static State CreatePriceIncreaseScenario()
         {
             var playerClient = A.Fake<IGlobalSettingsClient>();
-            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(new GlobalSettings 
-            { 
+            A.CallTo(() => playerClient.GetGlobalSettings()).Returns(new GlobalSettings
+            {
                 Teams = new List<Team>
                 {
                     TestBuilder.HomeTeam(),
@@ -356,8 +354,8 @@ namespace FplBot.Tests
                     TestBuilder.Player()
                 }
             }
-            ).Once().Then.Returns(new GlobalSettings 
-            { 
+            ).Once().Then.Returns(new GlobalSettings
+            {
                 Teams = new List<Team>
                 {
                     TestBuilder.HomeTeam(),
@@ -368,7 +366,7 @@ namespace FplBot.Tests
                     TestBuilder.Player().WithCostChangeEvent(1)
                 }
             });
-            
+
             var fixtureClient = A.Fake<IFixtureClient>();
 
             return CreateBaseScenario(fixtureClient, playerClient);
@@ -384,7 +382,7 @@ namespace FplBot.Tests
             _Mediator = A.Fake<IMediator>();
             return new State(fixtureClient, settingsClient, _Mediator);
         }
-        
-        
+
+
     }
 }
