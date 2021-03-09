@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -12,12 +11,12 @@ namespace FplBot.Core.Handlers.InternalCommands
 
     public class UpdateVerifiedEntriesCurrentGwPointsCommandHandler : INotificationHandler<UpdateVerifiedEntriesCurrentGwPointsCommand>
     {
-        private readonly IEntryHistoryClient _entryHistoryClient;
+        private readonly IEntryClient _entryClient;
         private readonly IVerifiedEntriesRepository _verifiedEntriesRepository;
 
-        public UpdateVerifiedEntriesCurrentGwPointsCommandHandler(IEntryHistoryClient entryHistoryClient, IVerifiedEntriesRepository verifiedEntriesRepository)
+        public UpdateVerifiedEntriesCurrentGwPointsCommandHandler(IEntryClient entryClient, IVerifiedEntriesRepository verifiedEntriesRepository)
         {
-            _entryHistoryClient = entryHistoryClient;
+            _entryClient = entryClient;
             _verifiedEntriesRepository = verifiedEntriesRepository;
         }
 
@@ -34,12 +33,12 @@ namespace FplBot.Core.Handlers.InternalCommands
 
         private async Task<VerifiedEntryPointsUpdate> GetLiveStatsForEntry(VerifiedEntry entry)
         {
-            var history = await _entryHistoryClient.GetHistory(entry.EntryId);
-            var latestReportedGameweek = history.GameweekHistory.LastOrDefault();
+            var basicEntry = await _entryClient.Get(entry.EntryId);
+
             return new VerifiedEntryPointsUpdate(
-                CurrentGwTotalPoints: latestReportedGameweek.TotalPoints,
-                OverallRank: latestReportedGameweek.OverallRank ?? 0,
-                PointsThisGw: latestReportedGameweek.Points);
+                CurrentGwTotalPoints: basicEntry.SummaryOverallPoints ?? 0,
+                OverallRank: basicEntry.SummaryOverallRank ?? 0,
+                PointsThisGw: basicEntry.SummaryEventPoints ?? 0);
         }
     }
 }
