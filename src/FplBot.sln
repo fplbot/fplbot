@@ -31,6 +31,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA5
 		CI.yml = ..\.github\workflows\CI.yml
 		DeployToProd.yml = ..\.github\workflows\DeployToProd.yml
 		DeployToTest.yml = ..\.github\workflows\DeployToTest.yml
+		..\.github\workflows\PulumiUpProd.yml = ..\.github\workflows\PulumiUpProd.yml
+		..\.github\workflows\PulumiUpTest.yml = ..\.github\workflows\PulumiUpTest.yml
+		..\.github\workflows\PulumiPreview.yml = ..\.github\workflows\PulumiPreview.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ext", "ext", "{51FD3283-052A-4E69-B969-B487BF5BBA69}"
@@ -56,6 +59,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Functions", "FplBot.Functions\FplBot.Functions.csproj", "{4233A87D-825B-4CE7-8548-A367FF54E852}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Data", "FplBot.Data\FplBot.Data.csproj", "{A393275B-3D56-45B4-AD54-E5C673B0A4EF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infra", "infra", "{7DF3DBD2-A528-4CFE-9F09-8225D0AC437C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Infrastructure", "FplBot.Infrastructure\FplBot.Infrastructure.csproj", "{78C54E1D-8B99-473E-AAC3-4B2399B7B949}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -245,6 +252,18 @@ Global
 		{A393275B-3D56-45B4-AD54-E5C673B0A4EF}.Release|x64.Build.0 = Release|Any CPU
 		{A393275B-3D56-45B4-AD54-E5C673B0A4EF}.Release|x86.ActiveCfg = Release|Any CPU
 		{A393275B-3D56-45B4-AD54-E5C673B0A4EF}.Release|x86.Build.0 = Release|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Debug|x64.Build.0 = Debug|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Debug|x86.Build.0 = Debug|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Release|x64.ActiveCfg = Release|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Release|x64.Build.0 = Release|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Release|x86.ActiveCfg = Release|Any CPU
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -266,6 +285,7 @@ Global
 		{33EA9DA6-8216-4AFF-9BE0-057F0CCCEFF9} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{4233A87D-825B-4CE7-8548-A367FF54E852} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{A393275B-3D56-45B4-AD54-E5C673B0A4EF} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{78C54E1D-8B99-473E-AAC3-4B2399B7B949} = {7DF3DBD2-A528-4CFE-9F09-8225D0AC437C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}

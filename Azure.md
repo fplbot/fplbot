@@ -74,3 +74,34 @@ Then run `func start host` in the `FplBot.Functions` directory.
 
 
 **NB!** Remember to setup subscriptions for test and production endpoints before release!
+
+
+# Managing fplbot infrastructure in the Azure
+
+.. (unfortunately not managing Heroku resources)
+
+## Requirements
+
+- Pulumi SDK: https://www.pulumi.com/docs/get-started/azure/begin/
+- .NET SDK: https://dotnet.microsoft.com/download
+- Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+
+### Start
+
+Login to Azure
+
+```shell
+$ az login
+```
+
+Two stacks are defined — `Test` and `Prod`.
+
+Select stack via `$ pulumi stack select Test`
+
+
+### Modify/add Azure resources
+
+- Modify [AzureStack]('./src/FplBot.Infrastructure/AzureStack.cs) and modify/add resources.
+- Run `$ pulumi up`
+
+Once verified in test, `$ pulumi stack select Prod` && `$ pulumi up` to update production.
