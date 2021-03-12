@@ -41,14 +41,22 @@ jobs:
           useConfigFile: true
       - name: Build Function
         run: dotnet build ./src/FplBot.Functions -o ./output -c Release /p:Version=${{ steps.gitversion.outputs.fullSemVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
+      - uses: pulumi/actions@v2
+        id: pulumi
+        with:
+          command: up
+          stack-name: Test
+          work-dir: ./src/FplBot.Infrastructure
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       - uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Deploy to fn-test-fplbot
+      - name: Deploy function to test
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: fn-test-fplbot
+          app-name: ${{ steps.pulumi.outputs.FunctionName }}
           package: './output'
       - name: Build docker images
         run: docker build -t registry.heroku.com/blank-fplbot-test/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f Dockerfile .
