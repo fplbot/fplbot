@@ -1,0 +1,22 @@
+name: Pulumi preview
+
+on:
+  push:
+    branches:
+      - master
+jobs:
+  preview:
+    name: Preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-dotnet@v1
+      - uses: pulumi/action-install-pulumi-cli@v1.0.1
+      - run: dotnet restore ./FplBot.Infrastructure
+      - uses: pulumi/actions@v2
+        with:
+          command: preview
+          stack-name: Test
+          work-dir: ./src/FplBot.Infrastructure
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

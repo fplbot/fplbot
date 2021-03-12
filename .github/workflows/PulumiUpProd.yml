@@ -1,0 +1,22 @@
+name: Pulumi up Prod
+
+on:
+  workflow_dispatch:
+
+jobs:
+  preview:
+    name: Up
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-dotnet@v1
+      - uses: pulumi/action-install-pulumi-cli@v1.0.1
+      - uses: pulumi/actions@v2
+        id: pulumi
+        with:
+          command: up
+          stack-name: Test
+          work-dir: ./src/FplBot.Infrastructure
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      - run: echo "My function endpoint is ${{ steps.pulumi.outputs.Endpoint }}"
