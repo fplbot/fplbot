@@ -77,7 +77,6 @@ namespace Fpl.Search.Searching
                     )
                 .Sort(sd => sd
                     .Descending(SortSpecialField.Score)
-                    .Descending(p => p.AdminCountry == countryToBoost ? 1 : 0)
                     .Ascending(SortSpecialField.DocumentIndexOrder))
                 .Preference(metaData?.Actor)
                 );
