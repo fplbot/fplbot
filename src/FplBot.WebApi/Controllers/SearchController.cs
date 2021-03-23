@@ -56,14 +56,14 @@ namespace FplBot.WebApi.Controllers
         }
 
         [HttpGet("leagues")]
-        public async Task<IActionResult> GetLeagues(string query, int page)
+        public async Task<IActionResult> GetLeagues(string query, int page, string countryToBoost)
         {
             var metaData = new SearchMetaData
             {
                 Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
             };
 
-            var searchResult = await _searchService.SearchForLeague(query, page, 10, metaData);
+            var searchResult = await _searchService.SearchForLeague(query, page, 10, metaData, countryToBoost);
 
             if (searchResult.TotalPages < page && !searchResult.Any())
             {

@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using Fpl.Search.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nest;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Elasticsearch.Net;
 using FplBot.Messaging.Contracts.Commands.v1;
 using NServiceBus;
 
@@ -17,6 +18,7 @@ namespace Fpl.Search.Searching
         private readonly IMessageSession _messageSession;
         private readonly ILogger<SearchService> _logger;
         private readonly SearchOptions _options;
+        private readonly Regex _adminCountryRegex = new Regex("^[a-zA-Z]{2}$");
 
         public SearchService(
             IElasticClient elasticClient,
@@ -75,9 +77,7 @@ namespace Fpl.Search.Searching
                         .Query(query)
                         .Fuzziness(Fuzziness.Auto))
                     )
-                .Sort(sd => sd
-                    .Descending(SortSpecialField.Score)
-                    .Ascending(SortSpecialField.DocumentIndexOrder))
+                .Sort(GetLeagueSortDescriptor(countryToBoost))
                 .Preference(metaData?.Actor)
                 );
 
@@ -86,6 +86,28 @@ namespace Fpl.Search.Searching
             await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex,countryToBoost,response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
             return new SearchResult<LeagueItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
+        }
+
+        private Func<SortDescriptor<LeagueItem>, IPromise<IList<ISort>>> GetLeagueSortDescriptor(string countryToBoost)
+        {
+            if (countryToBoost != null && _adminCountryRegex.IsMatch(countryToBoost))
+            {
+                countryToBoost = countryToBoost.ToUpper();
+                return sd => sd
+                    .Descending(SortSpecialField.Score)
+                    .Script(descriptor => descriptor
+                        .Type("number")
+                        .Order(SortOrder.Descending)
+                        .Script(scriptDescriptor => scriptDescriptor
+                            .Source("doc['adminCountry.keyword'].value == params.country ? 1 : 0")
+                            .Params(p => p.Add("country", countryToBoost))
+                            .Lang("painless")))
+                    .Ascending(SortSpecialField.DocumentIndexOrder);
+            }
+
+            return sd => sd
+                .Descending(SortSpecialField.Score)
+                .Ascending(SortSpecialField.DocumentIndexOrder);
         }
     }
 
