@@ -110,9 +110,9 @@ namespace Fpl.Search.Searching
                 .Ascending(SortSpecialField.DocumentIndexOrder);
         }
 
-        public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData)
+        public async Task<SearchResult<UnifiedSearchHit>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData)
         {
-            var response = await _elasticClient.SearchAsync<dynamic>(s => s
+            var response = await _elasticClient.SearchAsync<UnifiedSearchHit>(s => s
                 .Index($"{_options.EntriesIndex},{_options.LeaguesIndex}")
                 .From(page * maxHits)
                 .Size(maxHits)
@@ -120,11 +120,11 @@ namespace Fpl.Search.Searching
                 {
                     q.MultiMatch(a => a
                         .Fields(f => f
-                            .Field("realName", 10) // entry
-                            .Field("name", 8) // league
-                            .Field("teamName", 3) // league
-                            .Field("adminName", 2) // league
-                            .Field("adminTeamName")) // league
+                            .Field(field => field.RealName, 10) // entry
+                            .Field(field => field.Name, 8) // league
+                            .Field(field => field.TeamName, 3) // league
+                            .Field(field => field.AdminName, 2) // league
+                            .Field(field => field.AdminTeamName)) // league
                         .Query(query)
                         .Fuzziness(Fuzziness.Auto)
                     );
@@ -133,11 +133,15 @@ namespace Fpl.Search.Searching
                 .Sort(sd => sd
                     .Descending(SortSpecialField.Score))
                     .Preference(metaData?.Actor));
-            return new SearchResult<dynamic>(response.Hits.Select(h =>
+
+            var hits = response.Hits.Select(h =>
             {
-                (h.Source as Dictionary<string, object>)?.Add("type", h.Index.Split("-")[1] == "entries" ? "entry" : "league");
-                return h.Source;
-            }).ToArray(), response.Total, page, maxHits);
+                var toReturn = h.Source;
+                toReturn.Type = h.Index == _options.EntriesIndex ? SearchHitType.Entry : SearchHitType.League;
+                return toReturn;
+            }).ToArray();
+
+            return new SearchResult<UnifiedSearchHit>(hits, response.Total, page, maxHits);
         }
     }
 
@@ -146,6 +150,6 @@ namespace Fpl.Search.Searching
         Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
         Task<EntryItem> GetEntry(int id);
         Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
-        Task<SearchResult<dynamic>> SearchAny(string query, int page, int i, SearchMetaData metaData);
+        Task<SearchResult<UnifiedSearchHit>> SearchAny(string query, int page, int i, SearchMetaData metaData);
     }
 }
