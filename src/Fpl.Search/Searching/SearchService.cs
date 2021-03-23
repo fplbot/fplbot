@@ -116,11 +116,23 @@ namespace Fpl.Search.Searching
                 .Index($"{_options.EntriesIndex},{_options.LeaguesIndex}")
                 .From(page * maxHits)
                 .Size(maxHits)
-                .QueryOnQueryString(query)
+                .Query(q =>
+                {
+                    q.MultiMatch(a => a
+                        .Fields(f => f
+                            .Field("realName", 10) // entry
+                            .Field("name", 8) // league
+                            .Field("teamName", 3) // league
+                            .Field("adminName", 2) // league
+                            .Field("adminTeamName")) // league
+                        .Query(query)
+                        .Fuzziness(Fuzziness.Auto)
+                    );
+                    return q;
+                })
                 .Sort(sd => sd
-                    .Descending(SortSpecialField.Score)
-                    .Ascending(SortSpecialField.DocumentIndexOrder))
-                .Preference(metaData?.Actor));
+                    .Descending(SortSpecialField.Score))
+                    .Preference(metaData?.Actor));
             return new SearchResult<dynamic>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
         }
     }
