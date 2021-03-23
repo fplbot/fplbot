@@ -43,13 +43,13 @@ namespace Fpl.Search.Searching
                         .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName).Field(y => y.Alias).Field(y => y.Description, 0.5))
                         .Query(query)
                         .Fuzziness(Fuzziness.Auto))
-                    )
+                )
                 .Sort(sd => sd
                     .Descending(SortSpecialField.Score)
                     .Descending(p => p.VerifiedType != null ? 1 : 0)
                     .Ascending(SortSpecialField.DocumentIndexOrder))
                 .Preference(metaData?.Actor)
-                );
+            );
 
             _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
@@ -76,14 +76,14 @@ namespace Fpl.Search.Searching
                         .Fields(f => f.Field(y => y.Name, 1.5).Field(y => y.AdminName))
                         .Query(query)
                         .Fuzziness(Fuzziness.Auto))
-                    )
+                )
                 .Sort(GetLeagueSortDescriptor(countryToBoost))
                 .Preference(metaData?.Actor)
-                );
+            );
 
             _logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex,countryToBoost,response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex, countryToBoost, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
             return new SearchResult<LeagueItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
         }
@@ -112,33 +112,65 @@ namespace Fpl.Search.Searching
 
         public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData)
         {
-            var response = await _elasticClient.SearchAsync<dynamic>(s => s
+            var response = await _elasticClient.SearchAsync<ILazyDocument>(s => s
                 .Index($"{_options.EntriesIndex},{_options.LeaguesIndex}")
                 .From(page * maxHits)
                 .Size(maxHits)
                 .Query(q =>
                 {
-                    q.MultiMatch(a => a
-                        .Fields(f => f
-                            .Field("realName", 10) // entry
-                            .Field("name", 8) // league
-                            .Field("teamName", 3) // league
-                            .Field("adminName", 2) // league
-                            .Field("adminTeamName")) // league
-                        .Query(query)
-                        .Fuzziness(Fuzziness.Auto)
-                    );
+                    // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-boosting-query.html#boosting-top-level-params
+                    q.Boosting(a => a
+                        .Positive(p =>
+                        {
+                            return p.MultiMatch(dog => dog
+                                .Fields(f => f
+                                    .Field("realName", 10) // entry
+                                    .Field("name", 8) // league
+                                    .Field("teamName", 3) // league
+                                    .Field("adminName", 2) // league
+                                    .Field("adminTeamName")) // league
+                                .Query(string.IsNullOrEmpty(query) ? "*" : query)
+                                .Fuzziness(Fuzziness.Auto));
+                        })
+                        .NegativeBoost(0.3).Negative(p => !p.Exists(e => e.Field("verifiedType"))));
                     return q;
                 })
                 .Sort(sd => sd
-                    .Descending(SortSpecialField.Score))
-                    .Preference(metaData?.Actor));
+                    .Descending(SortSpecialField.Score)
+                    .Ascending(SortSpecialField.DocumentIndexOrder)
+                )
+                .Preference(metaData?.Actor));
+
+            if (!response.IsValid)
+                throw new Exception(response.DebugInformation, response.OriginalException);
+
             return new SearchResult<dynamic>(response.Hits.Select(h =>
             {
-                (h.Source as Dictionary<string, object>)?.Add("type", h.Index.Split("-")[1] == "entries" ? "entry" : "league");
-                return h.Source;
+                string type = h.Index.Split("-")[1] == "entries" ? "entry" : "league";
+                if (h.Index == _options.EntriesIndex)
+                {
+                    return new SearchContainer
+                    {
+                        Type = type,
+                        Source = h.Source.As<EntryItem>()
+                    };
+                }
+
+                if (h.Index == _options.LeaguesIndex)
+                    return new SearchContainer
+                    {
+                        Type = type,
+                        Source = h.Source.As<LeagueItem>()
+                    };
+                return new SearchContainer {Source = h.Source};
             }).ToArray(), response.Total, page, maxHits);
         }
+    }
+
+    public class SearchContainer
+    {
+        public object Source { get; set; }
+        public string Type { get; set; }
     }
 
     public interface ISearchService
@@ -146,6 +178,6 @@ namespace Fpl.Search.Searching
         Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
         Task<EntryItem> GetEntry(int id);
         Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
-        Task<SearchResult<dynamic>> SearchAny(string query, int page, int i, SearchMetaData metaData);
+        Task<SearchResult<object>> SearchAny(string query, int page, int i, SearchMetaData metaData);
     }
 }
