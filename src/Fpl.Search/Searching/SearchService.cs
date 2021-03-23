@@ -38,15 +38,19 @@ namespace Fpl.Search.Searching
                 .Index(_options.EntriesIndex)
                 .From(page * maxHits)
                 .Size(maxHits)
-                .Query(q => q
-                    .MultiMatch(m => m
-                        .Fields(f => f.Field(y => y.RealName, 1.5).Field(y => y.TeamName).Field(y => y.Alias).Field(y => y.Description, 0.5))
-                        .Query(query)
-                        .Fuzziness(Fuzziness.Auto))
-                )
+                .Query(q =>
+                    q.Boosting(a => a
+                        .Positive(p =>
+                            p.MultiMatch(m => m
+                                .Fields(f =>
+                                    f.Field(y => y.RealName, 1.5).Field(y => y.TeamName).Field(y => y.Alias).Field(y => y.Description, 0.5))
+                                .Query(query)
+                                .Fuzziness(Fuzziness.Auto)
+                            ))
+                        .NegativeBoost(0.3)
+                        .Negative(p => !p.Exists(e => e.Field("verifiedType")))))
                 .Sort(sd => sd
                     .Descending(SortSpecialField.Score)
-                    .Descending(p => p.VerifiedType != null ? 1 : 0)
                     .Ascending(SortSpecialField.DocumentIndexOrder))
                 .Preference(metaData?.Actor)
             );
