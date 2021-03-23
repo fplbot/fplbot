@@ -112,7 +112,7 @@ namespace Fpl.Search.Searching
 
         public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData)
         {
-            var response = await _elasticClient.SearchAsync<object>(s => s
+            var response = await _elasticClient.SearchAsync<dynamic>(s => s
                 .Index($"{_options.EntriesIndex},{_options.LeaguesIndex}")
                 .From(page * maxHits)
                 .Size(maxHits)
@@ -133,7 +133,11 @@ namespace Fpl.Search.Searching
                 .Sort(sd => sd
                     .Descending(SortSpecialField.Score))
                     .Preference(metaData?.Actor));
-            return new SearchResult<dynamic>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
+            return new SearchResult<dynamic>(response.Hits.Select(h =>
+            {
+                (h.Source as Dictionary<string, object>)?.Add("type", h.Index.Split("-")[1] == "entries" ? "entry" : "league");
+                return h.Source;
+            }).ToArray(), response.Total, page, maxHits);
         }
     }
 
