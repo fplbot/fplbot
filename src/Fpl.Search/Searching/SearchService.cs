@@ -109,6 +109,20 @@ namespace Fpl.Search.Searching
                 .Descending(SortSpecialField.Score)
                 .Ascending(SortSpecialField.DocumentIndexOrder);
         }
+
+        public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData)
+        {
+            var response = await _elasticClient.SearchAsync<object>(s => s
+                .Index($"{_options.EntriesIndex},{_options.LeaguesIndex}")
+                .From(page * maxHits)
+                .Size(maxHits)
+                .QueryOnQueryString(query)
+                .Sort(sd => sd
+                    .Descending(SortSpecialField.Score)
+                    .Ascending(SortSpecialField.DocumentIndexOrder))
+                .Preference(metaData?.Actor));
+            return new SearchResult<dynamic>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
+        }
     }
 
     public interface ISearchService
@@ -116,5 +130,6 @@ namespace Fpl.Search.Searching
         Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
         Task<EntryItem> GetEntry(int id);
         Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
+        Task<SearchResult<dynamic>> SearchAny(string query, int page, int i, SearchMetaData metaData);
     }
 }

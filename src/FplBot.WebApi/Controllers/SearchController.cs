@@ -76,5 +76,27 @@ namespace FplBot.WebApi.Controllers
                 Hits = searchResult,
             });
         }
+
+        [HttpGet("any")]
+        public async Task<IActionResult> GetAny(string query, int page)
+        {
+            var metaData = new SearchMetaData
+            {
+                Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+            };
+
+            var searchResult = await _searchService.SearchAny(query, page, 10, metaData);
+
+            if (searchResult.TotalPages < page && !searchResult.Any())
+            {
+                ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+                return BadRequest(ModelState);
+            }
+
+            return Ok(new
+            {
+                Hits = searchResult,
+            });
+        }
     }
 }
