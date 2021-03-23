@@ -36,33 +36,45 @@ namespace FplBot.WebApi.Controllers
         [HttpGet("entries")]
         public async Task<IActionResult> GetEntries(string query, int page)
         {
-            try
+            var metaData = new SearchMetaData
             {
-                var metaData = new SearchMetaData
-                {
-                    Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
-                };
+                Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+            };
 
-                var searchResult = await _searchService.SearchForEntry(query, page, 10, metaData);
+            var searchResult = await _searchService.SearchForEntry(query, page, 10, metaData);
 
-                if (searchResult.TotalPages < page && !searchResult.Any())
-                {
-                    ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
-                    return BadRequest(ModelState);
-                }
-
-                return Ok(new
-                {
-                    Hits = searchResult,
-                });
-            }
-            catch (HttpRequestException e)
+            if (searchResult.TotalPages < page && !searchResult.Any())
             {
-                _logger.LogWarning(e.ToString());
+                ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+                return BadRequest(ModelState);
             }
-            return NotFound();
+
+            return Ok(new
+            {
+                Hits = searchResult,
+            });
         }
 
+        [HttpGet("leagues")]
+        public async Task<IActionResult> GetLeagues(string query, int page)
+        {
+            var metaData = new SearchMetaData
+            {
+                Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+            };
 
+            var searchResult = await _searchService.SearchForLeague(query, page, 10, metaData);
+
+            if (searchResult.TotalPages < page && !searchResult.Any())
+            {
+                ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+                return BadRequest(ModelState);
+            }
+
+            return Ok(new
+            {
+                Hits = searchResult,
+            });
+        }
     }
 }
