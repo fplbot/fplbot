@@ -57,7 +57,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
                 if (!team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
                 {
                     _logger.LogInformation("Team {team} hasn't subscribed for gw standings, so bypassing it", team.TeamId);
-                    return;
+                    continue;
                 }
 
                 try
