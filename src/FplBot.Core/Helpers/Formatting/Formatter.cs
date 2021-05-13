@@ -304,7 +304,7 @@ namespace FplBot.Core.Helpers
                 {
                     var p when p > 0 => $"*Price up {priceChange} 📈*",
                     var p when p < 0 => $"*Price down {priceChange} 📉*",
-                    var p when p == 0 => $"*Back to status quo.. 🙃*",
+                    var p when p == 0 => $"*Back to status quo… 🙃*",
                     _ => "*No idea*"
                 };
                 messageToSend += $"\n\n{header}";
