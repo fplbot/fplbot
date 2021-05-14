@@ -41,7 +41,7 @@ jobs:
           useConfigFile: true
       - name: Build Function
         run: dotnet build ./src/FplBot.Functions -o ./output -c Release /p:Version=${{ steps.gitversion.outputs.fullSemVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
-      - uses: pulumi/actions@v2
+      - uses: pulumi/actions@v3
         id: pulumi
         with:
           command: up
