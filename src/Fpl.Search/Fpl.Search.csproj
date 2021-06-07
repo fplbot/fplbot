@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Fpl.Search</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MediatR" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="$(AspNetVersion)" />
     <PackageReference Include="NEST" Version="7.14.1" />
     <PackageReference Include="NServiceBus" Version="7.5.0" />
     <PackageReference Include="CronBackgroundServices" Version="7.0.0" />

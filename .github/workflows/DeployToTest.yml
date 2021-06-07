@@ -20,7 +20,11 @@ jobs:
           dotnet-version: "3.1.x"
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "5.0.400"
+          dotnet-version: "5.0.x"
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.x"
+          include-prerelease: true
       - name: start deployment
         uses: bobheadxi/deployments@v0.4.3
         id: deployment
@@ -31,12 +35,12 @@ jobs:
           ref: ${{ github.head_ref }}
       - run: echo "ACTIONS_ALLOW_UNSECURE_COMMANDS=true" >> $GITHUB_ENV
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0.9.7
+        uses: gittools/actions/gitversion/setup@v0.9.9
         with:
           versionSpec: "5.x"
       - name: Determine Version
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v0.9.7
+        uses: gittools/actions/gitversion/execute@v0.9.9
         with:
           useConfigFile: true
       - name: Build Function

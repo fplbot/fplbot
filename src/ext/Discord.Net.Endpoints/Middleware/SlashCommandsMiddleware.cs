@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -105,7 +106,7 @@ namespace Discord.Net.Endpoints.Middleware
         private JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
         {
             PropertyNamingPolicy = new Lowercase(),
-            IgnoreNullValues = true
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
     }
 

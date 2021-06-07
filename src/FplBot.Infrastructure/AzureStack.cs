@@ -23,10 +23,10 @@ public class AzureStack : Stack
             Kind = Pulumi.AzureNative.Storage.Kind.StorageV2,
         });
 
-        var appServicePlan = new AppServicePlan($"pl-{stack}-windows-asp", new AppServicePlanArgs
+        var appServicePlan = new AppServicePlan($"pl-{stack}-linux-asp", new AppServicePlanArgs
         {
             ResourceGroupName = resourceGroup.Name,
-            Kind = "Windows",
+            Kind = "Linux",
             Sku = new SkuDescriptionArgs
             {
                 Tier = "Dynamic",
@@ -62,7 +62,12 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "FUNCTIONS_EXTENSION_VERSION",
-                        Value = "~3",
+                        Value = "~4",
+                    },
+                    new NameValuePairArgs
+                    {
+                        Name = "linuxFxVersion",
+                        Value= "DOTNET|6.0"
                     },
                     new NameValuePairArgs
                     {
