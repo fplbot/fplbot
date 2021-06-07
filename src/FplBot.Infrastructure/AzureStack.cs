@@ -62,7 +62,7 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "FUNCTIONS_EXTENSION_VERSION",
-                        Value = "~3",
+                        Value = "~4",
                     },
                     new NameValuePairArgs
                     {
