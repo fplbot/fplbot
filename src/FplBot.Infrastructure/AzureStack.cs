@@ -114,6 +114,11 @@ public class AzureStack : Stack
                         Name = "SlackWebHookUrl",
                         Value = config.RequireSecret("SlackWebHookUrl")
                     },
+                    new NameValuePairArgs()
+                    {
+                        Name ="SlackToken_FplBot_Workspace",
+                        Value = config.RequireSecret("SlackToken_FplBot_Workspace")
+                    },
                     new NameValuePairArgs
                     {
                         Name = "AZURE_STORAGE_CONNECTIONSTRING",
