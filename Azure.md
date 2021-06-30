@@ -43,8 +43,8 @@ Create a `local.settings.json` file in the `FplBot.Functions` directory:
         "ASB_CONNECTIONSTRING" : "<test-connectionstring>",
         "NSB_LICENSE" : "<license>(optional)",
         "DOTNET_ENVIRONMENT": "Development",
-        "SlackWebHookUrl" : "<slack webhook-url>",
-        "QueueName": "fplbot.functions.development.<your-machinename>"
+        "SlackToken_FplBot_Workspace" : "<slack token>",
+        "QueueName": "FplBot.Functions.Development.<your-machinename>"
     },
     "bindings": [
         {
@@ -61,13 +61,13 @@ Azure Functions do not work with NServiceBus auto-install features (auto subscri
 
 ```bash
 # Create a new local dev endpoint
-$ asb-transport endpoint create FplBot.Functions.Development.<your-machinename> -c "$ASB_CONNECTIONSTRING"
+$ asb-transport endpoint create FplBot.Functions.Development.<your-machinename> -c "$ASB_CONNECTIONSTRING" -t bundle-1.<your-machinename>
 ```
 
 
 ```bash
 # Add subscribtion of a new event to the new local dev endpoint
-$ asb-transport endpoint subscribe FplBot.Functions.Development.<your-machinename> SomeNewEvent -c "$ASB_CONNECTIONSTRING"
+$ asb-transport endpoint subscribe FplBot.Functions.Development.<your-machinename> SomeNewEvent -c "$ASB_CONNECTIONSTRING" -t bundle-1.<your-machinename>
 ```
 
 Then run `func start host` in the `FplBot.Functions` directory.

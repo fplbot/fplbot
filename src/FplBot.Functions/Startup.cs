@@ -33,7 +33,11 @@ namespace FplBot.Functions
 
                 string endpointName = $"FplBot.Functions.{environmentName}{endpointPostfix}";
                 var configuration = new ServiceBusTriggeredEndpointConfiguration(endpointName, "ASB_CONNECTIONSTRING");
+                var topicName = $"bundle-1{endpointPostfix}";
+                configuration.Transport.TopicName(topicName);
                 Console.WriteLine($"ENDPOINTNAME: {endpointName}");
+                Console.WriteLine($"TOPICNAME: {topicName}");
+
                 configuration.Transport.SubscriptionRuleNamingConvention(t =>
                 {
                     return Shorten(t.ToString());
