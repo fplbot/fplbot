@@ -92,7 +92,7 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "DOTNET_ENVIRONMENT",
-                        Value = stack == "Prod" ? "Production" : "Test"
+                        Value = stack == "prod" ? "Production" : "Test"
                     },
                     new NameValuePairArgs
                     {
