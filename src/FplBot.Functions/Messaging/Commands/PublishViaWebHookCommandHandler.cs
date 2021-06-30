@@ -1,29 +1,27 @@
-using System.Net.Http;
 using System.Threading.Tasks;
 using FplBot.Functions.Messaging.Internal;
 using Microsoft.Extensions.Configuration;
 using NServiceBus;
+using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.Functions
 {
     public class PublishViaWebHookCommandHandler : IHandleMessages<PublishViaWebHook>
     {
-        private readonly string _webhookUrl;
-        private static readonly HttpClient HttpClient = new HttpClient();
+        private readonly ISlackClient _client;
+        private readonly string _prefix;
 
-
-        public PublishViaWebHookCommandHandler(IConfiguration config)
+        public PublishViaWebHookCommandHandler(IConfiguration config, ISlackClientBuilder builder)
         {
-            _webhookUrl = config.GetValue<string>("SlackWebHookUrl");
+            var token = config.GetValue<string>("SlackToken_FplBot_Workspace");
+            var env = config.GetValue<string>("DOTNET_ENVIRONMENT");
+            _prefix = env == "Production" ? "" : env;
+            _client = builder.Build(token);
         }
-        
+
         public async Task Handle(PublishViaWebHook publish, IMessageHandlerContext context)
         {
-            await HttpClient.PostAsJsonAsync(_webhookUrl, new
-            {
-                channel = "#johntester",
-                text = publish.Message
-            });
+            await _client.ChatPostMessage("#fplbot-notifications", $"{_prefix}{publish.Message}");
         }
     }
 }

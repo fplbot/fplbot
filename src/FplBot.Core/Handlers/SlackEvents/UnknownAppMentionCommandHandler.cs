@@ -16,7 +16,7 @@ namespace FplBot.Core.Handlers.SlackEvents
         }
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
-            await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#fplbot-notifications", $"Unhandled app_mention:\n * [{eventMetadata.Team_Id}-{slackEvent.User}] \"{slackEvent.Text}\""));
+            await _session.SendLocal(new PublishToSlack("T016B9N3U7P", "#fplbot-notifications", $"Unhandled app_mention:\n * [{eventMetadata.Team_Id}-{slackEvent.User}] \"{slackEvent.Text}\""));
             return new EventHandledResponse("OK");
         }
     }

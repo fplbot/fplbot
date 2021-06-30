@@ -18,6 +18,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ext\Slackbot.Net.SlackClients.Http\Slackbot.Net.SlackClients.Http.csproj" />
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
   </ItemGroup>
 </Project>

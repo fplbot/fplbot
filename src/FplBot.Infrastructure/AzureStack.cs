@@ -92,7 +92,7 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "DOTNET_ENVIRONMENT",
-                        Value = stack == "Prod" ? "Production" : "Test"
+                        Value = stack == "prod" ? "Production" : "Test"
                     },
                     new NameValuePairArgs
                     {
@@ -113,6 +113,11 @@ public class AzureStack : Stack
                     {
                         Name = "SlackWebHookUrl",
                         Value = config.RequireSecret("SlackWebHookUrl")
+                    },
+                    new NameValuePairArgs()
+                    {
+                        Name ="SlackToken_FplBot_Workspace",
+                        Value = config.RequireSecret("SlackToken_FplBot_Workspace")
                     },
                     new NameValuePairArgs
                     {

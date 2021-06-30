@@ -45,6 +45,9 @@ namespace Microsoft.Extensions.Hosting
             endpointConfiguration.UsePersistence<InMemoryPersistence>();
             var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
             transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
+            var topicName = $"bundle-1{endpointPostfix}";
+            transport.TopicName(topicName);
+            Console.WriteLine($"Using topic {topicName}");
             transport.RuleNameShortener(r =>
             {
                 return Shorten(r);
@@ -53,13 +56,13 @@ namespace Microsoft.Extensions.Hosting
                 {
                     if (current.Length <= 50)
                         return current;
-                    
+
                     var strings = current.Split('.');
                     if (strings.Length == 1)
                     {
                         return current.Length > 48 ? $"Z.{current[^48..]}" : $"Z.{current}";
                     }
-                        
+
                     var values = strings[1..(strings.Length)];
                     var newRuleName = string.Join(".", values);
                     return newRuleName.Length > 48 ? Shorten(newRuleName) : $"Z.{newRuleName}";
