@@ -3,6 +3,7 @@ using FplBot.Functions;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using NServiceBus;
+using Slackbot.Net.SlackClients.Http.Extensions;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -12,12 +13,13 @@ namespace FplBot.Functions
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
+            builder.Services.AddSlackClientBuilder();
             var context = builder.GetContext();
             builder.UseNServiceBus(() =>
             {
                 string endpointPostfix = "";
 
-                // Workaround for unstable EnvironmentName in Azure 
+                // Workaround for unstable EnvironmentName in Azure
                 // (see https://github.com/Azure/azure-functions-host/issues/6239)
                 var environmentName = context.Configuration.GetValue<string>("DOTNET_ENVIRONMENT") ??
                                       Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") ??
@@ -40,13 +42,13 @@ namespace FplBot.Functions
                     {
                         if (current.Length <= 50)
                             return current;
-                    
+
                         var strings = current.Split('.');
                         if (strings.Length == 1)
                         {
                             return current.Length > 48 ? $"Z.{current[^48..]}" : $"Z.{current}";
                         }
-                        
+
                         var values = strings[1..(strings.Length)];
                         var newRuleName = string.Join(".", values);
                         return newRuleName.Length > 48 ? Shorten(newRuleName) : $"Z.{newRuleName}";
