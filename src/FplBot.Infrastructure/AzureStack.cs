@@ -9,7 +9,7 @@ public class AzureStack : Stack
 {
     public AzureStack()
     {
-        var stack = Pulumi.Deployment.Instance.StackName.ToLower(); // Test or Prod
+        var stack = Pulumi.Deployment.Instance.StackName.ToLower(); // "test" or "prod"
 
         var resourceGroup = new ResourceGroup($"fplbot-{stack}");
 
@@ -102,7 +102,7 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "QueueName",
-                        Value = stack == "Prod" ? "fplbot.functions.production" : "fplbot.functions.test"
+                        Value = stack == "prod" ? "fplbot.functions.production" : "fplbot.functions.test"
                     },
                     new NameValuePairArgs
                     {
