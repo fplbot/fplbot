@@ -131,7 +131,7 @@ namespace Fpl.Search.Searching
                                     .Field("realName", 10) // entry
                                     .Field("name", 8) // league
                                     .Field("teamName", 3) // league
-                                    .Field("adminName", 2) // league
+                                    .Field("adminName", 10) // league
                                     .Field("adminTeamName")) // league
                                 .Query(string.IsNullOrEmpty(query) ? "*" : query)
                                 .Fuzziness(Fuzziness.Auto));
