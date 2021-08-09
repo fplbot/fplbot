@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  ubuntu-16_04:
-    name: ubuntu-16_04
-    runs-on: ubuntu-16.04
+  deploy-ubuntu-prod:
+    name: deploy-to-prod
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
         with:
