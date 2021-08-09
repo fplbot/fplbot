@@ -53,6 +53,20 @@ namespace FplBot.Core.Handlers.InternalCommands
         {
             var history = await _entryHistoryClient.GetHistory(entryId);
             var latestReportedGameweek = history.GameweekHistory.LastOrDefault();
+
+            if (latestReportedGameweek == null)
+            {
+                return new VerifiedEntryStats(
+                    CurrentGwTotalPoints: 0,
+                    LastGwTotalPoints: 0,
+                    OverallRank: 0,
+                    PointsThisGw: 0,
+                    ActiveChip: null,
+                    Captain: null,
+                    ViceCaptain: null,
+                    Gameweek: 0);
+            }
+
             var picks = await _entryClient.GetPicks(entryId, latestReportedGameweek.Event);
             var captainId = picks.Picks.SingleOrDefault(p => p.IsCaptain)?.PlayerId;
             var viceCaptainId = picks.Picks.SingleOrDefault(p => p.IsViceCaptain)?.PlayerId;
