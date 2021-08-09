@@ -122,21 +122,22 @@ namespace Fpl.Search.Searching
                 .Size(maxHits)
                 .Query(q =>
                 {
-                    // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-boosting-query.html#boosting-top-level-params
-                    q.Boosting(a => a
-                        .Positive(p =>
-                        {
-                            return p.MultiMatch(dog => dog
-                                .Fields(f => f
-                                    .Field("realName", 10) // entry
-                                    .Field("name", 8) // league
-                                    .Field("teamName", 3) // league
-                                    .Field("adminName", 10) // league
-                                    .Field("adminTeamName")) // league
-                                .Query(string.IsNullOrEmpty(query) ? "*" : query)
-                                .Fuzziness(Fuzziness.Auto));
-                        })
-                        .NegativeBoost(0.3).Negative(p => !p.Exists(e => e.Field("verifiedType"))));
+                // https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-boosting-query.html#boosting-top-level-params
+                q.Boosting(a => a
+                    .Positive(p =>
+                    {
+                        return p.MultiMatch(dog => dog
+                            .Fields(f => f
+                                .Field("realName", 10) // entry
+                                .Field("name", 1) // league
+                                .Field("teamName", 3) // league
+                                .Field("adminName", 6) // league
+                                .Field("adminTeamName")) // league
+                            .Query(string.IsNullOrEmpty(query) ? "*" : query)
+                        .Fuzziness(Fuzziness.Auto));
+                    })
+                    .Negative(p => !p.Exists(e => e.Field("verifiedType")))
+                    .NegativeBoost(0.2));
                     return q;
                 })
                 .Sort(sd => sd
