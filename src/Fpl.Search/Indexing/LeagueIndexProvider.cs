@@ -21,7 +21,7 @@ namespace Fpl.Search.Indexing
         public LeagueIndexProvider(
             ILeagueClient leagueClient,
             IEntryClient entryClient,
-            IIndexBookmarkProvider indexBookmarkProvider,
+            ILeagueIndexBookmarkProvider indexBookmarkProvider,
             ILogger<IndexProviderBase> logger,
             IOptions<SearchOptions> options) : base(leagueClient, logger)
         {

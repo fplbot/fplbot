@@ -1,19 +1,14 @@
-using System;
-using System.Net;
-using System.Net.Http;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Search;
-using Fpl.Search.Indexing;
-using Fpl.Search.Models;
-using Fpl.Search.Searching;
 using FplBot.Data;
 using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
-using Nest;
+using System;
+using System.Net;
+using System.Net.Http;
 
 namespace Fpl.SearchConsole
 {
