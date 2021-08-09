@@ -150,12 +150,11 @@ namespace Fpl.Search.Searching
 
             return new SearchResult<dynamic>(response.Hits.Select(h =>
             {
-                string type = h.Index.Split("-")[1] == "entries" ? "entry" : "league";
                 if (h.Index == _options.EntriesIndex)
                 {
                     return new SearchContainer
                     {
-                        Type = type,
+                        Type = "entry",
                         Source = h.Source.As<EntryItem>()
                     };
                 }
@@ -163,7 +162,7 @@ namespace Fpl.Search.Searching
                 if (h.Index == _options.LeaguesIndex)
                     return new SearchContainer
                     {
-                        Type = type,
+                        Type = "league",
                         Source = h.Source.As<LeagueItem>()
                     };
                 return new SearchContainer {Source = h.Source};
