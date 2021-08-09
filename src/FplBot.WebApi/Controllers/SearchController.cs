@@ -78,14 +78,14 @@ namespace FplBot.WebApi.Controllers
         }
 
         [HttpGet("any")]
-        public async Task<IActionResult> GetAny(string query, int page)
+        public async Task<IActionResult> GetAny(string query, int page, SearchType type = SearchType.All)
         {
             var metaData = new SearchMetaData
             {
                 Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
             };
 
-            var searchResult = await _searchService.SearchAny(query, page, 10, metaData);
+            var searchResult = await _searchService.SearchAny(query, page, 10, metaData, type);
 
             if (searchResult.TotalPages < page && !searchResult.Any())
             {
