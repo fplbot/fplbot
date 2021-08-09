@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
-    public record ConnectEntryToPLPlayer(int EntryId, int PlayerId, int Gameweek) : INotification;
+    public record ConnectEntryToPLPlayer(int EntryId, int PlayerId, int? Gameweek) : INotification;
 
     public class ConnectEntryToPLPlayerCommandHandler : INotificationHandler<ConnectEntryToPLPlayer>
     {
@@ -59,7 +59,10 @@ namespace FplBot.Core.Handlers.InternalCommands
 
                 _logger.LogInformation($"{notification.EntryId} inserted");
 
-                await _mediator.Publish(new UpdateSelfishStatsForPLEntry(notification.Gameweek, notification.EntryId), cancellationToken);
+                if (notification.Gameweek.HasValue)
+                {
+                    await _mediator.Publish(new UpdateSelfishStatsForPLEntry(notification.Gameweek.Value, notification.EntryId), cancellationToken);
+                }
             }
             else
             {
