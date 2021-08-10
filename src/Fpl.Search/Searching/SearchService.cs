@@ -130,6 +130,7 @@ namespace Fpl.Search.Searching
                             .Fields(f => f
                                 .Field("realName", 15) // entry
                                 .Field("name", 1) // league
+                                .Field("alias", 5) // league
                                 .Field("teamName", 3) // league
                                 .Field("adminName", 5) // league
                                 .Field("adminTeamName")) // league
