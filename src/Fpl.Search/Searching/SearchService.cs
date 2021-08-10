@@ -126,7 +126,7 @@ namespace Fpl.Search.Searching
                 q.Boosting(a => a
                     .Positive(p =>
                     {
-                        return p.MultiMatch(dog => dog
+                        return p.QueryString(dog => dog
                             .Fields(f => f
                                 .Field("realName", 15) // entry
                                 .Field("name", 1) // league
