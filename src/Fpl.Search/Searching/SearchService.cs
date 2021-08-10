@@ -116,8 +116,9 @@ namespace Fpl.Search.Searching
 
         public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData, SearchType searchType = SearchType.All)
         {
+            var indexPattern = GetIndexPatternToSearch(searchType);
             var response = await _elasticClient.SearchAsync<ILazyDocument>(s => s
-                .Index(GetIndexPatternToSearch(searchType))
+                .Index(indexPattern)
                 .From(page * maxHits)
                 .Size(maxHits)
                 .Query(q =>
@@ -149,6 +150,8 @@ namespace Fpl.Search.Searching
 
             if (!response.IsValid)
                 throw new Exception(response.DebugInformation, response.OriginalException);
+
+            await _messageSession.SendLocal(new IndexQuery(DateTime.UtcNow, query, page, indexPattern, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
             return new SearchResult<dynamic>(response.Hits.Select(h =>
             {
