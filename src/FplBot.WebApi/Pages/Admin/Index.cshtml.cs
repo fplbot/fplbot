@@ -9,15 +9,17 @@ namespace FplBot.WebApi.Pages.Admin
     public class Index : PageModel
     {
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly IIndexBookmarkProvider _indexBookmarkProvider;
-
+        private readonly ILeagueIndexBookmarkProvider _leagueIndexBookmarkProvider;
+        private readonly IEntryIndexBookmarkProvider _entryIndexBookmarkProvider;
 
         public Index(
             ISlackTeamRepository teamRepo,
-            IIndexBookmarkProvider indexBookmarkProvider)
+            ILeagueIndexBookmarkProvider leagueIndexBookmarkProvider,
+            IEntryIndexBookmarkProvider entryIndexBookmarkProvider)
         {
             _teamRepo = teamRepo;
-            _indexBookmarkProvider = indexBookmarkProvider;
+            _leagueIndexBookmarkProvider = leagueIndexBookmarkProvider;
+            _entryIndexBookmarkProvider = entryIndexBookmarkProvider;
             Workspaces = new List<SlackTeam>();
         }
 
@@ -29,10 +31,12 @@ namespace FplBot.WebApi.Pages.Admin
                 Workspaces.Add(t);
             }
 
-            CurrentLeagueIndexingBookmark = await _indexBookmarkProvider.GetBookmark();
+            CurrentLeagueIndexingBookmark = await _leagueIndexBookmarkProvider.GetBookmark();
+            CurrentEntryIndexingBookmark = await _entryIndexBookmarkProvider.GetBookmark();
         }
 
         public List<SlackTeam> Workspaces { get; set; }
         public int CurrentLeagueIndexingBookmark { get; set; }
+        public int CurrentEntryIndexingBookmark { get; set; }
     }
 }
