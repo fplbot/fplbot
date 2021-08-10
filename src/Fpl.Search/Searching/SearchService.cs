@@ -114,10 +114,10 @@ namespace Fpl.Search.Searching
                 .Ascending(SortSpecialField.DocumentIndexOrder);
         }
 
-        public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData)
+        public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData, SearchType searchType = SearchType.All)
         {
             var response = await _elasticClient.SearchAsync<ILazyDocument>(s => s
-                .Index($"{_options.EntriesIndex},{_options.LeaguesIndex}")
+                .Index(GetIndexPatternToSearch(searchType))
                 .From(page * maxHits)
                 .Size(maxHits)
                 .Query(q =>
@@ -128,16 +128,16 @@ namespace Fpl.Search.Searching
                     {
                         return p.MultiMatch(dog => dog
                             .Fields(f => f
-                                .Field("realName", 10) // entry
+                                .Field("realName", 15) // entry
                                 .Field("name", 1) // league
                                 .Field("teamName", 3) // league
-                                .Field("adminName", 6) // league
+                                .Field("adminName", 5) // league
                                 .Field("adminTeamName")) // league
                             .Query(string.IsNullOrEmpty(query) ? "*" : query)
                         .Fuzziness(Fuzziness.Auto));
                     })
                     .Negative(p => !p.Exists(e => e.Field("verifiedType")))
-                    .NegativeBoost(0.2));
+                    .NegativeBoost(0.1));
                     return q;
                 })
                 .Sort(sd => sd
@@ -169,6 +169,17 @@ namespace Fpl.Search.Searching
                 return new SearchContainer {Source = h.Source};
             }).ToArray(), response.Total, page, maxHits);
         }
+
+        private string GetIndexPatternToSearch(SearchType searchType)
+        {
+            return searchType switch
+            {
+                SearchType.All => $"{_options.EntriesIndex},{_options.LeaguesIndex}",
+                SearchType.Entries => _options.EntriesIndex,
+                SearchType.Leagues => _options.LeaguesIndex,
+                _ => throw new ArgumentOutOfRangeException(nameof(searchType), searchType, null)
+            };
+        }
     }
 
     public class SearchContainer
@@ -182,6 +193,6 @@ namespace Fpl.Search.Searching
         Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
         Task<EntryItem> GetEntry(int id);
         Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
-        Task<SearchResult<object>> SearchAny(string query, int page, int i, SearchMetaData metaData);
+        Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData, SearchType searchType = SearchType.All);
     }
 }
