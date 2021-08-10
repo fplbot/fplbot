@@ -7,4 +7,7 @@ namespace FplBot.Data.Abstractions
         Task<int> GetBookmark();
         Task SetBookmark(int bookmark);
     }
+
+    public interface ILeagueIndexBookmarkProvider : IIndexBookmarkProvider { }
+    public interface IEntryIndexBookmarkProvider : IIndexBookmarkProvider { }
 }

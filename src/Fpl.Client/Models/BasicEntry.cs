@@ -60,5 +60,9 @@ namespace Fpl.Client.Models
         public string Kit { get; set; }
 
         public string PlayerFullName => $"{PlayerFirstName} {PlayerLastName}";
+
+        [JsonProperty("detail")]
+        public string Detail { get; set; }
+        public bool Exists => Detail != "Not found.";
     }
 }

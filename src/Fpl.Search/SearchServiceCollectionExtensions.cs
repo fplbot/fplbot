@@ -1,12 +1,12 @@
 ﻿using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
+using FplBot.Core.RecurringActions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Nest;
 using System;
-using FplBot.Core.RecurringActions;
-using Microsoft.Extensions.Options;
 
 namespace Fpl.Search
 {
@@ -34,10 +34,10 @@ namespace Fpl.Search
             services.Configure<SearchOptions>(config);
             services.AddSingleton<IIndexingClient, IndexingClient>();
 
-            services.AddSingleton<EntryIndexProvider>();
-            services.AddSingleton<IIndexProvider<EntryItem>>(x => x.GetRequiredService<EntryIndexProvider>());
-            services.AddSingleton<ISingleEntryIndexProvider>(x => x.GetRequiredService<EntryIndexProvider>());
-            services.AddSingleton<IVerifiedEntryIndexProvider>(x => x.GetRequiredService<EntryIndexProvider>());
+            services.AddSingleton<SlowEntryIndexProvider>();
+            services.AddSingleton<IIndexProvider<EntryItem>>(x => x.GetRequiredService<SlowEntryIndexProvider>());
+            services.AddSingleton<ISingleEntryIndexProvider>(x => x.GetRequiredService<SlowEntryIndexProvider>());
+            services.AddSingleton<IVerifiedEntryIndexProvider>(x => x.GetRequiredService<SlowEntryIndexProvider>());
 
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();

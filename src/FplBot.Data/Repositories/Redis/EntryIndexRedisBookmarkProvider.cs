@@ -1,17 +1,17 @@
-using System.Threading.Tasks;
 using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Threading.Tasks;
 
 namespace FplBot.Data.Repositories.Redis
 {
-    public class LeagueIndexRedisBookmarkProvider : ILeagueIndexBookmarkProvider
+    public class EntryIndexRedisBookmarkProvider : IEntryIndexBookmarkProvider
     {
-        private readonly ILogger<LeagueIndexRedisBookmarkProvider> _logger;
+        private readonly ILogger<EntryIndexRedisBookmarkProvider> _logger;
         private readonly IDatabase _db;
-        private const string BookmarkKey = "leagueIndexBookmark";
+        private const string BookmarkKey = "entryIndexBookmark";
 
-        public LeagueIndexRedisBookmarkProvider(ConnectionMultiplexer redis, ILogger<LeagueIndexRedisBookmarkProvider> logger)
+        public EntryIndexRedisBookmarkProvider(ConnectionMultiplexer redis, ILogger<EntryIndexRedisBookmarkProvider> logger)
         {
             _logger = logger;
             _db = redis.GetDatabase();

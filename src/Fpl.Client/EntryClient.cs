@@ -16,11 +16,18 @@ namespace Fpl.Client
             _client = client;
         }
 
-        public async Task<BasicEntry> Get(int teamId)
+        public async Task<BasicEntry> Get(int teamId, bool tolerate404 = false)
         {
-            var json = await _client.GetStringAsync($"/api/entry/{teamId}/");
+            try
+            {
+                var json = await _client.GetStringAsync($"/api/entry/{teamId}/");
 
-            return JsonConvert.DeserializeObject<BasicEntry>(json);
+                return JsonConvert.DeserializeObject<BasicEntry>(json);
+            }
+            catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
+            {
+                return null;
+            }
         }
 
         public async Task<EntryPicks> GetPicks(int teamId, int gameweek, bool tolerate404 = false)

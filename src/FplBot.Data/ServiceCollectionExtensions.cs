@@ -28,7 +28,8 @@ namespace FplBot.Data
             services.AddSingleton<IVerifiedEntriesRepository, VerifiedEntriesRepository>();
             services.AddSingleton<IVerifiedPLEntriesRepository, VerifiedPLEntriesRepository>();
             services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
-            services.AddSingleton<IIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
+            services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
+            services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
 
             return services;
         }
