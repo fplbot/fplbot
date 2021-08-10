@@ -115,7 +115,7 @@ namespace  FplBot.WebApi.Pages.Admin
             {
                 var settings = await _settings.GetGlobalSettings();
                 var gameweek = settings.Gameweeks.GetCurrentGameweek();
-                await _mediator.Publish(new ConnectEntryToPLPlayer(model.EntryId, model.PLPlayer.Value, gameweek.Id));
+                await _mediator.Publish(new ConnectEntryToPLPlayer(model.EntryId, model.PLPlayer.Value, gameweek?.Id));
             }
 
             await _mediator.Publish(new IndexEntry(model.EntryId));
