@@ -90,6 +90,7 @@ namespace FplBot.Data.Repositories.Redis
                 new("teamName", entry.TeamName),
                 new("playerId", entry.PlayerId),
                 new("playerCode", entry.PlayerCode),
+                new("playerWebName", entry.PlayerWebName),
                 new("playerFullname", entry.PlayerFullName)
             };
 
