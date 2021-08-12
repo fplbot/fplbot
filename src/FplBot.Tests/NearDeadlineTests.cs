@@ -1,6 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using FakeItEasy;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Core.Helpers;
+using FplBot.Core.Models;
+using FplBot.Core.RecurringActions;
 using FplBot.Tests.Helpers;
+using MediatR;
+using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -16,7 +26,7 @@ namespace FplBot.Tests
             _helper = helper;
             _deadlineChecker = Factory.Create<DateTimeUtils>();
         }
-        
+
         [Fact]
         public void WhenDayBefore()
         {
@@ -24,7 +34,7 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
         }
-        
+
         [Fact]
         public void WhenBeforeTheMinute()
         {
@@ -32,12 +42,12 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
         }
-        
+
         [Fact]
         public void WhenIsAnySecondWithTheMinute()
         {
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
-            
+
             for(var i = 0; i < 60; i++)
             {
                 _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 25, 19, 0, i);
@@ -46,11 +56,11 @@ namespace FplBot.Tests
                 {
                     _helper.WriteLine($"Not true for {i} - {_deadlineChecker.NowUtcOverride-deadline}");
                 }
-                
+
                 Assert.True(isTheMinute);
             }
         }
-        
+
         [Fact]
         public void WhenIs()
         {
@@ -67,7 +77,7 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
         }
-        
+
         [Fact]
         public void WhenAnotherHourTheSameDayButSameMinute()
         {
@@ -91,7 +101,7 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60, deadline));
         }
-        
+
         [Fact]
         public void When24hBefore()
         {
@@ -99,13 +109,32 @@ namespace FplBot.Tests
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.True(_deadlineChecker.IsWithinMinutesToDate(60*24, deadline));
         }
-        
+
         [Fact]
         public void When23hBefore()
         {
             _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 24, 21, 0, 30);
             var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
             Assert.False(_deadlineChecker.IsWithinMinutesToDate(60*24, deadline));
+        }
+
+        [Fact]
+        public async Task OnlyPublishesOnceForFirstGameweek()
+        {
+            var fakeSettingsClient = A.Fake<IGlobalSettingsClient>();
+            var gameweek = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,15,10,0,0)};
+            var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek } };
+            A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
+            var mediatorMock = A.Fake<IMediator>();
+            var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
+            var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
+
+            var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, mediatorMock, dontCareLogger);
+
+            await handler.EveryMinuteTick();
+
+            A.CallTo(() => mediatorMock.Publish(A<TwentyFourHoursToDeadline>._, CancellationToken.None))
+                .MustHaveHappenedOnceExactly();
         }
     }
 }

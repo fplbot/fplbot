@@ -14,7 +14,7 @@ namespace FplBot.Core.RecurringActions
         private readonly DateTimeUtils _dateTimeUtils;
         private readonly IMediator _mediator;
         private readonly ILogger<NearDeadLineMonitor> _logger;
-        
+
         public NearDeadLineMonitor(IGlobalSettingsClient globalSettingsClient, DateTimeUtils dateTimeUtils, IMediator mediator, ILogger<NearDeadLineMonitor> logger)
         {
             _globalSettingsClient = globalSettingsClient;
@@ -42,6 +42,8 @@ namespace FplBot.Core.RecurringActions
 
                 if (_dateTimeUtils.IsWithinMinutesToDate(24*60, current.Deadline))
                     await _mediator.Publish(new TwentyFourHoursToDeadline(current));
+
+                return;
             }
 
             var next = gweeks.FirstOrDefault(gw => gw.IsNext);
@@ -50,7 +52,7 @@ namespace FplBot.Core.RecurringActions
             {
                 if (_dateTimeUtils.IsWithinMinutesToDate(60, next.Deadline))
                     await _mediator.Publish(new OneHourToDeadline(next));
-                
+
                 if (_dateTimeUtils.IsWithinMinutesToDate(24*60, next.Deadline))
                     await _mediator.Publish(new TwentyFourHoursToDeadline(next));
             }
