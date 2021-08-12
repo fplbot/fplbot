@@ -11,6 +11,7 @@
         public bool ShouldIndexEntries { get; set; }
         public bool ShouldIndexLeagues { get; set; }
         public int ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob { get; set; }
+        public bool ResetIndexingBookmarkWhenDone { get; set; }
         public string IndexingCron { get; set; }
 
         public void Validate()

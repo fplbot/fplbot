@@ -21,10 +21,12 @@
     }
     
     <h3>Search/indexing info</h3>
-    <p>
+    <div>
         Current league indexing bookmark: @Model.CurrentLeagueIndexingBookmark<br/>
-        Current entry indexing bookmark: @Model.CurrentEntryIndexingBookmark
-    </p>
+        Current entry indexing bookmark: @Model.CurrentEntryIndexingBookmark<br/>
+        <a href="@Url.PageLink("Indexing")">More indexing settings</a>
+    </div>
+ 
 
     <h3>Workspaces that have installed fplbot (@Model.Workspaces.Count)</h3>
 

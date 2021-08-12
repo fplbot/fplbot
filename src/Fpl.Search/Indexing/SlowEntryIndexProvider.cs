@@ -73,7 +73,15 @@ namespace Fpl.Search.Indexing
 
             if (!couldBeMore)
             {
-                await _indexBookmarkProvider.SetBookmark(1);
+                if (_options.ResetIndexingBookmarkWhenDone)
+                {
+                    await _indexBookmarkProvider.SetBookmark(1);
+                }
+                else
+                {
+                    var resetBookmarkTo = i - _options.ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob;
+                    await _indexBookmarkProvider.SetBookmark(resetBookmarkTo > 1 ? resetBookmarkTo : 1);
+                }
             }
             else if (_bookmarkCounter > 50) // Set a bookmark at every 50th batch
             {
