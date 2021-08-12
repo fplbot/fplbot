@@ -1,0 +1,53 @@
+@page
+@using FplBot.WebApi.Pages.Admin
+@model FplBot.WebApi.Pages.Admin.Indexing
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Admin";
+
+}
+
+<div class="col-12">
+    <h1>Admin page</h1>
+    <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
+    <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+
+    @if (TempData.ContainsKey("msg"))
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            @TempData["msg"]
+        </div>
+    }
+
+    <h3>Search/indexing info</h3>
+    <h2>
+        League indexer
+    </h2>
+    <div>
+        <form asp-page-handler="ChangeLeagueIndexingBookmark">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label for="leaguebookmark">Current league indexing bookmark: </label>
+                <input id="leaguebookmark" class="form-control" value="@Model.CurrentLeagueIndexingBookmark" name="@(nameof(ChangeBookmarkModel.Bookmark))" />
+            </div>
+            <input type="submit" value="Update bookmark" class="btn btn-primary" />
+        </form>
+        <br />
+    </div>
+    <h2>
+        Entry indexer
+    </h2>
+    <div>
+        <form asp-page-handler="ChangeEntryIndexingBookmark">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label for="entrybookmark">Current entry indexing bookmark: </label>
+                <input id="entrybookmark" class="form-control" value="@Model.CurrentEntryIndexingBookmark" name="@(nameof(ChangeBookmarkModel.Bookmark))" />
+            </div>
+            <input type="submit" value="Update bookmark" class="btn btn-primary" />
+        </form>
+        <br />
+    </div>
+
+</div>
