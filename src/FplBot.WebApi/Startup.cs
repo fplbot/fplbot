@@ -73,13 +73,17 @@ namespace FplBot.WebApi
                 });
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("IsHeltBlankSlackUser", b => b.RequireClaim("urn:slack:team_id", "T0A9QSU83"));
+                options.AddPolicy("IsAdmin", b =>
+                {
+                    b.RequireClaim("urn:slack:team_id", "T016B9N3U7P");
+                    b.RequireClaim("urn:slack:user_id", "U016CP6EPR8", "U0172HKTB08", "U016CSWNXAP");
+                });
             });
             services
                 .AddRazorPages()
                 .AddRazorPagesOptions(options =>
                 {
-                    options.Conventions.AuthorizeFolder("/admin", "IsHeltBlankSlackUser");
+                    options.Conventions.AuthorizeFolder("/admin", "IsAdmin");
                     options.Conventions.AllowAnonymousToPage("/*");
                 })
                 .AddRazorRuntimeCompilation();
@@ -97,7 +101,7 @@ namespace FplBot.WebApi
             });
             services.AddCors(options =>
             {
-                options.AddPolicy(CorsOriginValidator.CustomCorsPolicyName, p => 
+                options.AddPolicy(CorsOriginValidator.CustomCorsPolicyName, p =>
                     p.SetIsOriginAllowed(CorsOriginValidator.ValidateOrigin).AllowAnyHeader().AllowAnyMethod()
                 );
             });
