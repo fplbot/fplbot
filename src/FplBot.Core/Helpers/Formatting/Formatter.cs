@@ -34,7 +34,7 @@ namespace FplBot.Core.Helpers
 
             foreach (var player in sortedByRank)
             {
-                var arrow = GetRankChangeEmoji(player, numPlayers);
+                var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
                 sb.Append($"{player.Rank}. {player.GetEntryLink(gameweek.Id)} - {player.Total} {arrow} \n");
             }
 
@@ -76,8 +76,11 @@ namespace FplBot.Core.Helpers
             return worst == null ? null : $":poop: {worst.GetEntryLink(gameweek.Id)} only got {worst.EventTotal} points. Wow.";
         }
 
-        private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers)
+        private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers, int gameweekId)
         {
+            if (gameweekId == 1)
+                return string.Empty;
+
             if (player.LastRank == 0)
             {
                 return ":wave: (joined this gameweek)";
