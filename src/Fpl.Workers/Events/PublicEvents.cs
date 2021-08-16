@@ -17,4 +17,5 @@ namespace FplBot.Core.Models
     public record GameweekFinished(Gameweek Gameweek) : INotification;
     public record BonusAdded(int Event, DateTime MatchDayDate) : INotification;
     public record PointsReady(int Event, DateTime MatchDayDate) : INotification;
+    public record LeagueStatusChanged(string prevState, string newState) : INotification;
 }

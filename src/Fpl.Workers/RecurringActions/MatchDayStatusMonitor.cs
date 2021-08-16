@@ -54,6 +54,14 @@ namespace Fpl.Workers.RecurringActions
                 await _mediator.Publish(pointsReady, token);
             }
 
+            var leaguesStatusChanged = fetched.Leagues != _storedCurrent.Leagues;
+
+            if (leaguesStatusChanged)
+            {
+                _logger.LogInformation($"League status changed from ${_storedCurrent.Leagues} to ${fetched.Leagues}");
+                await _mediator.Publish(new LeagueStatusChanged(_storedCurrent.Leagues, fetched.Leagues), token);
+            }
+
             _storedCurrent = fetched;
         }
 
