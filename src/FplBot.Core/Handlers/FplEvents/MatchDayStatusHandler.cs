@@ -8,9 +8,10 @@ using NServiceBus;
 
 namespace FplBot.Core.Handlers.FplEvents
 {
-    public class MatchDayStatusHandler : 
+    public class MatchDayStatusHandler :
         INotificationHandler<BonusAdded>,
-        INotificationHandler<PointsReady>
+        INotificationHandler<PointsReady>,
+        INotificationHandler<LeagueStatusChanged>
     {
         private readonly IMessageSession _session;
         private readonly IMediator _mediator;
@@ -30,6 +31,11 @@ namespace FplBot.Core.Handlers.FplEvents
         {
             await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", $"Points ready for matchday {notification.MatchDayDate:yyyy-MM-dd} in gw {notification.Event}"));
             await _mediator.Publish(new UpdateVerifiedEntriesCurrentGwPointsCommand(), cancellationToken);
+        }
+
+        public async Task Handle(LeagueStatusChanged notification, CancellationToken cancellationToken)
+        {
+            await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", $"League status changed from `{notification.prevState}` to `{notification.newState}`"));
         }
     }
 }
