@@ -28,6 +28,8 @@ namespace FplBot.Tests
         [InlineData("<@BOTID123> standings", typeof(FplStandingsCommandHandler))]
         [InlineData("<@BOTID123> transfers", typeof(FplTransfersCommandHandler))]
         [InlineData("<@BOTID123> pricechanges", typeof(FplPricesHandler))]
+        [InlineData("<@BOTID123> pricechanges", typeof(FplPricesHandler))] // NB: non breaking white space
+        [InlineData("<@BOTID123> unsubscribe FixtureGoals", typeof(FplSubscribeCommandHandler))] // NB: non breaking white space
         public void OnlyExpectedSupportedHandlersShouldHandleCommand(string input, Type expectedSupportedHandler)
         {
             // Arrange
