@@ -12,6 +12,7 @@ namespace FplBot.Data.Abstractions
 
         Task Delete(int entryId);
         Task DeleteAll();
+        Task DeleteAllOfThese(int[] entryIds);
         Task UpdateStats(int entryId, SelfOwnershipStats selfOwnershipStats);
     }
 }
