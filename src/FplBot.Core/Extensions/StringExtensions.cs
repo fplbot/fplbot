@@ -19,7 +19,13 @@ namespace FplBot.Core.Extensions
                 return string.Empty;
             }
 
-            var firstSpaceIndex = s.IndexOf(' ');
+            // non breaking white space may occur if text is copy pasted
+            var firstSpaceIndex = s.IndexOf("\u00a0", StringComparison.InvariantCultureIgnoreCase);
+            if (firstSpaceIndex == -1)
+            {
+                firstSpaceIndex = s.IndexOf(' ');
+            }
+
             if (s.Length <= firstSpaceIndex + 1)
             {
                 return string.Empty;
