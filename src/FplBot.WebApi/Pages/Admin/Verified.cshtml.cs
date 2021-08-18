@@ -56,7 +56,21 @@ namespace  FplBot.WebApi.Pages.Admin
         {
             _logger.LogInformation($"Deleting all");
             await _repo.DeleteAll();
+            await _plRepo.DeleteAll();
             TempData["msg"] += $"All deleted";
+            return RedirectToPage("Verified");
+        }
+
+        public async Task<IActionResult> OnPostCleanUpDbMess()
+        {
+            _logger.LogInformation("Cleaning up db mess");
+
+            var entries = await _repo.GetAllVerifiedEntries();
+            var plEntries = await _plRepo.GetAllVerifiedPLEntries();
+            var diff = plEntries.Select(x => x.EntryId).Except(entries.Select(x => x.EntryId)).ToArray();
+            await _plRepo.DeleteAllOfThese(diff);
+
+            TempData["msg"] += $"Deleted these pl entries: : {string.Join(", ", diff)}";
             return RedirectToPage("Verified");
         }
 
@@ -66,6 +80,7 @@ namespace  FplBot.WebApi.Pages.Admin
             {
                 _logger.LogInformation("Removing single: {entryId}", model.EntryId);
                 await _repo.Delete(model.EntryId);
+                await _plRepo.Delete(model.EntryId);
                 TempData["msg"] += $"Entry {model.EntryId} deleted!";
             }
             else

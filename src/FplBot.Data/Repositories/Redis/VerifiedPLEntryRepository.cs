@@ -1,10 +1,10 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FplBot.Data.Repositories.Redis
 {
@@ -68,6 +68,18 @@ namespace FplBot.Data.Repositories.Redis
             {
                 _logger.LogDebug($"Deleting key {key}");
                 tasks.Add(_db.KeyDeleteAsync($"{key}"));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
+        public async Task DeleteAllOfThese(int[] entryIds)
+        {
+            var tasks = new List<Task>();
+            foreach (var key in entryIds)
+            {
+                _logger.LogDebug($"Deleting key {key}");
+                tasks.Add(_db.KeyDeleteAsync($"pl-entry-{key}"));
             }
 
             await Task.WhenAll(tasks);
