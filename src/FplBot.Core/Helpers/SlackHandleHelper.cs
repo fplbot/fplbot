@@ -40,6 +40,6 @@ namespace FplBot.Core.Helpers
             return string.Equals(s1, s2, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        private static string GetSlackHandle(User user) => $"@{user.Name}";
+        private static string GetSlackHandle(User user) => $"<@{user.Id}>";
     }
 }

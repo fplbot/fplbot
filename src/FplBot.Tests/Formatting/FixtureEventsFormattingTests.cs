@@ -25,9 +25,9 @@ namespace FplBot.Tests
 
         [Theory]
         [InlineData("Kohn Jorsnes", "kors", "Magnus Carlsen", "Magnus Carlsen")]
-        [InlineData("Magnus Carlsen", "carlsen", "Magnus Carlsen", "carlsen")]
-        [InlineData("Magnus", "carlsen", "Magnus Carlsen", "carlsen")]
-        [InlineData("Carlsen", "carlsen", "Magnus Carlsen", "carlsen")]
+        [InlineData("Magnus Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
+        [InlineData("Magnus", "carlsen", "Magnus Carlsen", "<@U123>")]
+        [InlineData("Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
         [InlineData(null, "carlsen", "Magnus Carlsen", "Magnus Carlsen")]
         public void ProducesCorrectTauntString(string slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
         {
@@ -85,7 +85,7 @@ namespace FplBot.Tests
             {
                 Users = new[]
                 {
-                    new User {Real_name = slackUserRealName, Name = slackUserHandle}
+                    new User {Id = "U123", Real_name = slackUserRealName, Name = slackUserHandle}
                 },
                 Players = new List<Player>{ TestBuilder.Player() },
                 Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()},
