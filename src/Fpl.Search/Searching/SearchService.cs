@@ -136,6 +136,7 @@ namespace Fpl.Search.Searching
                                 .Field("adminName", 5) // league
                                 .Field("adminTeamName")) // league
                             .Query(string.IsNullOrEmpty(query) ? "*" : query)
+                            .Escape()
                         .Fuzziness(Fuzziness.Auto));
                     })
                     .Negative(p => !p.Exists(e => e.Field("verifiedType")))
