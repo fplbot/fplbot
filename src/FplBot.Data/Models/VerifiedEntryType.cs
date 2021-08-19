@@ -10,6 +10,7 @@
         CommunityFame = 4,
         Actor = 5,
         TvFace = 6,
-        Athlete = 7
+        Athlete = 7,
+        PastWinner = 8
     }
 }

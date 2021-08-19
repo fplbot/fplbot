@@ -623,6 +623,9 @@ namespace FplBot.Core.Helpers
                 case VerifiedEntryType.Athlete:
                     emojis += ":sports_medal:";
                     break;
+                case VerifiedEntryType.PastWinner:
+                    emojis += ":trophy:";
+                    break;
                 default:
                     break;
             }
