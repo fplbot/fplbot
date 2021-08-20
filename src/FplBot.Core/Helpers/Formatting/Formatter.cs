@@ -293,6 +293,22 @@ namespace FplBot.Core.Helpers
             return messageToSend;
         }
 
+        public static string FormatNewPlayers(IEnumerable<NewPlayer> newPlayers)
+        {
+            var header = $"🆕 New player!";
+            if (newPlayers.Count() > 1)
+            {
+                header = "🆕 New players!";
+            }
+            var nameAndCost = newPlayers.Select(NameAndCost);
+            return $"{header}\n{BulletPoints(nameAndCost)}";
+
+            string NameAndCost(NewPlayer p)
+            {
+                return $"{p.Player.WebName}({p.Team.ShortName}) {FormatCurrency(p.Player.NowCost)}";
+            }
+        }
+
         public static string FormatPriceChanged(IEnumerable<PlayerUpdate> priceChangesPlayers)
         {
             if (!priceChangesPlayers.Any())

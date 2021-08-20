@@ -8,15 +8,15 @@ namespace FplBot.Core.Helpers
 {
     public class PlayerChangesEventsExtractor
     {
-        
+
         public static IEnumerable<PlayerUpdate> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
             if(players == null)
                 return new List<PlayerUpdate>();
-            
+
             if (after == null)
                 return new List<PlayerUpdate>();
-            
+
             return ComparePlayers(after, players, teams, new PlayerPriceComparer());
         }
 
@@ -24,11 +24,31 @@ namespace FplBot.Core.Helpers
         {
             if(players == null)
                 return new List<PlayerUpdate>();
-            
+
             if (after == null)
                 return new List<PlayerUpdate>();
-            
+
             return ComparePlayers(after, players, teams, new StatusComparer());
+        }
+
+        public static IEnumerable<NewPlayer> GetNewPlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        {
+            if (players == null)
+                return new List<NewPlayer>();
+            if (after == null)
+                return new List<NewPlayer>();
+
+            var diff = after.Except(players, new PlayerIdComparer());
+
+            if (!diff.Any())
+                return new List<NewPlayer>();
+
+            var updates = diff.Select(newPlayer => new NewPlayer
+            {
+                Player = newPlayer,
+                Team = teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode),
+            });
+            return updates;
         }
 
         private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)

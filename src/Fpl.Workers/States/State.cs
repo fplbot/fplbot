@@ -36,7 +36,7 @@ namespace FplBot.Core.GameweekLifecycle
         }
 
         public async Task Reset(int newGameweek)
-        {            
+        {
             _currentGameweek = newGameweek;
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             var settings = await _settingsClient.GetGlobalSettings();
@@ -45,7 +45,7 @@ namespace FplBot.Core.GameweekLifecycle
         }
 
         public async Task Refresh(int currentGameweek)
-        {           
+        {
             var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
             var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures);
             var finishedFixtures = LiveEventsExtractor.GetProvisionalFinishedFixtures(latest, _currentGameweekFixtures, _teams, _players);
@@ -55,15 +55,17 @@ namespace FplBot.Core.GameweekLifecycle
             var after = globalSettings.Players;
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
             var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, _teams);
+            var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, _teams);
+
             _players = after;
-            
+
             if (fixtureEvents.Any())
             {
                 var fixtureUpdates = new FixtureUpdates
                 {
-                    CurrentGameweek = _currentGameweek.Value, 
-                    Teams = _teams, 
-                    Players = _players, 
+                    CurrentGameweek = _currentGameweek.Value,
+                    Teams = _teams,
+                    Players = _players,
                     Events = fixtureEvents
                 };
                 await _mediator.Publish(new FixtureEventsOccured(fixtureUpdates));
@@ -74,9 +76,12 @@ namespace FplBot.Core.GameweekLifecycle
 
             if (injuryUpdates.Any())
                 await _mediator.Publish(new InjuryUpdateOccured(injuryUpdates));
-            
+
             if (finishedFixtures.Any())
                 await _mediator.Publish(new FixturesFinished(finishedFixtures.ToList()));
+
+            if (newPlayers.Any())
+                await _mediator.Publish(new NewPlayersRegistered(newPlayers));
         }
     }
 }

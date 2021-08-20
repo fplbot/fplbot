@@ -3,7 +3,7 @@ using Fpl.Client.Models;
 
 namespace FplBot.Core.Helpers.Comparers
 {
-    public class PlayerPriceComparer : IEqualityComparer<Player>
+    public class PlayerIdComparer : IEqualityComparer<Player>
     {
         public bool Equals(Player x, Player y)
         {
@@ -13,7 +13,7 @@ namespace FplBot.Core.Helpers.Comparers
             if (x == null || y == null)
                 return false;
 
-            return x.Id == y.Id && x.CostChangeEvent == y.CostChangeEvent;
+            return x.Id == y.Id;
         }
 
         public int GetHashCode(Player obj)

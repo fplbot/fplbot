@@ -15,6 +15,7 @@ namespace FplBot.Data.Models
         PriceChanges,
         InjuryUpdates,
         Deadlines,
-        Lineups
+        Lineups,
+        NewPlayers
     }
 }
