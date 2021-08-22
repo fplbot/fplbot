@@ -1,10 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 using FplBot.Core.Handlers.InternalCommands;
 using FplBot.Core.Models;
-using FplBot.Messaging.Contracts.Commands.v1;
 using MediatR;
-using NServiceBus;
+using Microsoft.Extensions.Logging;
 
 namespace FplBot.Core.Handlers.FplEvents
 {
@@ -13,29 +13,36 @@ namespace FplBot.Core.Handlers.FplEvents
         INotificationHandler<PointsReady>,
         INotificationHandler<LeagueStatusChanged>
     {
-        private readonly IMessageSession _session;
+
         private readonly IMediator _mediator;
+        private readonly ILogger<MatchDayStatusHandler> _logger;
 
-        public MatchDayStatusHandler(IMessageSession session, IMediator mediator)
+        public MatchDayStatusHandler(IMediator mediator, ILogger<MatchDayStatusHandler> logger)
         {
-            _session = session;
+
             _mediator = mediator;
+            _logger = logger;
         }
 
-        public async Task Handle(BonusAdded notification, CancellationToken cancellationToken)
+        public Task Handle(BonusAdded notification, CancellationToken cancellationToken)
         {
-            await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", $"Bonus added for matchday {notification.MatchDayDate:yyyy-MM-dd} in gw {notification.Event}"));
+            _logger.LogInformation($"Bonus added for matchday {notification.MatchDayDate:yyyy-MM-dd} in gw {notification.Event}");
+            return Task.CompletedTask;
         }
 
-        public async Task Handle(PointsReady notification, CancellationToken cancellationToken)
+        public Task Handle(PointsReady notification, CancellationToken cancellationToken)
         {
-            await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", $"Points ready for matchday {notification.MatchDayDate:yyyy-MM-dd} in gw {notification.Event}"));
-            await _mediator.Publish(new UpdateVerifiedEntriesCurrentGwPointsCommand(), cancellationToken);
+            _logger.LogInformation($"Points ready for matchday {notification.MatchDayDate:yyyy-MM-dd} in gw {notification.Event}");
+            return Task.CompletedTask;
         }
 
         public async Task Handle(LeagueStatusChanged notification, CancellationToken cancellationToken)
         {
-            await _session.SendLocal(new PublishToSlack("T0A9QSU83", "#johntest", $"League status changed from `{notification.prevState}` to `{notification.newState}`"));
+            _logger.LogInformation($"League status changed from `{notification.prevState}` to `{notification.newState}`");
+            if (notification.newState == EventStatusConstants.LeaguesStatus.Updated)
+            {
+                await _mediator.Publish(new UpdateVerifiedEntriesCurrentGwPointsCommand(), cancellationToken);
+            }
         }
     }
 }
