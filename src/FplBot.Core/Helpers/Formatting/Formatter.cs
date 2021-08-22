@@ -305,7 +305,7 @@ namespace FplBot.Core.Helpers
 
             string NameAndCost(NewPlayer p)
             {
-                return $"{p.Player.WebName}({p.Team.ShortName}) {FormatCurrency(p.Player.NowCost)}";
+                return $"{p.Player.WebName} ({p.Team.ShortName}) {FormatCurrency(p.Player.NowCost)}";
             }
         }
 
