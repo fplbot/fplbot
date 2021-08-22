@@ -9,6 +9,7 @@ using FplBot.Core.Helpers;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
@@ -21,17 +22,20 @@ namespace FplBot.Core.Handlers.InternalCommands
         private readonly ILiveClient _liveClient;
         private readonly SelfOwnerShipCalculator _calculator;
         private readonly IMediator _mediator;
+        private readonly ILogger<UpdateSelfishStatsCommandHandler> _logger;
 
-        public UpdateSelfishStatsCommandHandler(IVerifiedPLEntriesRepository repo, ILiveClient liveClient, SelfOwnerShipCalculator calculator, IMediator mediator)
+        public UpdateSelfishStatsCommandHandler(IVerifiedPLEntriesRepository repo, ILiveClient liveClient, SelfOwnerShipCalculator calculator, IMediator mediator, ILogger<UpdateSelfishStatsCommandHandler> logger)
         {
             _repo = repo;
             _liveClient = liveClient;
             _calculator = calculator;
             _mediator = mediator;
+            _logger = logger;
         }
 
         public async Task Handle(UpdateSelfishStats notification, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Updating selfishness stats for verified entries");
             var plEntries = await _repo.GetAllVerifiedPLEntries();
             var liveItems = await _liveClient.GetLiveItems(notification.Gameweek);
             foreach (VerifiedPLEntry plEntry in plEntries)
