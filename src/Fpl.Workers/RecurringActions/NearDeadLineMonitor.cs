@@ -28,24 +28,6 @@ namespace FplBot.Core.RecurringActions
             var globalSettings = await _globalSettingsClient.GetGlobalSettings();
             var gweeks = globalSettings.Gameweeks;
 
-            var current = gweeks.FirstOrDefault(gw => gw.IsCurrent);
-
-            if (current == null)
-            {
-                current = gweeks.First();
-            }
-
-            if (current != null)
-            {
-                if (_dateTimeUtils.IsWithinMinutesToDate(60, current.Deadline))
-                    await _mediator.Publish(new OneHourToDeadline(current));
-
-                if (_dateTimeUtils.IsWithinMinutesToDate(24*60, current.Deadline))
-                    await _mediator.Publish(new TwentyFourHoursToDeadline(current));
-
-                return;
-            }
-
             var next = gweeks.FirstOrDefault(gw => gw.IsNext);
 
             if (next != null)

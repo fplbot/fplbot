@@ -16,12 +16,12 @@ using Xunit.Abstractions;
 
 namespace FplBot.Tests
 {
-    public class DateTimeUtilsTests
+    public class NearDeadlineTests
     {
         private readonly ITestOutputHelper _helper;
         private DateTimeUtils _deadlineChecker;
 
-        public DateTimeUtilsTests(ITestOutputHelper helper)
+        public NearDeadlineTests(ITestOutputHelper helper)
         {
             _helper = helper;
             _deadlineChecker = Factory.Create<DateTimeUtils>();
@@ -122,12 +122,33 @@ namespace FplBot.Tests
         public async Task OnlyPublishesOnceForFirstGameweek()
         {
             var fakeSettingsClient = A.Fake<IGlobalSettingsClient>();
-            var gameweek = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,15,10,0,0)};
-            var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek } };
+            var gameweek1 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,15,10,0,0)};
+            var gameweek2 = new Gameweek { IsCurrent = false, IsNext = false, Deadline = new DateTime(2021,8,22,10,0,0)};
+            var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
             A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
             var mediatorMock = A.Fake<IMediator>();
             var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
             var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
+
+            var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, mediatorMock, dontCareLogger);
+
+            await handler.EveryMinuteTick();
+
+            A.CallTo(() => mediatorMock.Publish(A<TwentyFourHoursToDeadline>._, CancellationToken.None))
+                .MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task OnlyPublishesOnceForSecondGameweekWhenFirstGameweekIsCurrent()
+        {
+            var fakeSettingsClient = A.Fake<IGlobalSettingsClient>();
+            var gameweek1 = new Gameweek { IsCurrent = true, IsNext = false, Deadline = new DateTime(2021,8,15,10,0,0)};
+            var gameweek2 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,22,10,0,0)};
+            var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
+            A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
+            var mediatorMock = A.Fake<IMediator>();
+            var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
+            var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 21, 10, 0, 0) };
 
             var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, mediatorMock, dontCareLogger);
 
