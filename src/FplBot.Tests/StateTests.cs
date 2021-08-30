@@ -8,8 +8,10 @@ using FplBot.Core.GameweekLifecycle;
 using FplBot.Core.Models;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
 using NServiceBus;
+using NServiceBus.Testing;
 using Xunit;
 
 namespace FplBot.Tests
@@ -17,6 +19,7 @@ namespace FplBot.Tests
     public class StateTests
     {
         private static IMediator _Mediator;
+        private static TestableMessageSession _MessageSession;
 
 
         [Fact]
@@ -43,7 +46,8 @@ namespace FplBot.Tests
             var state = CreatePriceIncreaseScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<PriceChangeOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(_MessageSession.PublishedMessages);
+            Assert.IsType<PlayersPriceChanged>(_MessageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -103,7 +107,8 @@ namespace FplBot.Tests
         private static State CreateAllMockState()
         {
             _Mediator = A.Fake<IMediator>();
-            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _Mediator, A.Fake<IMessageSession>());
+            _MessageSession = new TestableMessageSession();
+            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _Mediator, _MessageSession);
         }
 
         private static State CreateMultipleFinishedFixturesScenario()
@@ -378,7 +383,8 @@ namespace FplBot.Tests
                 TestBuilder.SlackTeam()
             });
             _Mediator = A.Fake<IMediator>();
-            return new State(fixtureClient, settingsClient, _Mediator, A.Fake<IMessageSession>());
+            _MessageSession = new TestableMessageSession();
+            return new State(fixtureClient, settingsClient, _Mediator, _MessageSession);
         }
 
 

@@ -310,13 +310,13 @@ namespace FplBot.Core.Helpers
             }
         }
 
-        public static string FormatPriceChanged(IEnumerable<PlayerUpdate> priceChangesPlayers)
+        public static string FormatPriceChanged(IEnumerable<PlayerWithPriceChange> priceChangesPlayers)
         {
             if (!priceChangesPlayers.Any())
                 return "No players with price changes.";
 
             var messageToSend = "";
-            var grouped = priceChangesPlayers.OrderByDescending(p => p.ToPlayer.CostChangeEvent).ThenByDescending(p => p.ToPlayer.NowCost).GroupBy(p => p.ToPlayer.CostChangeEvent);
+            var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
             foreach (var group in grouped)
             {
                 var priceChange = $"{FormatCurrency(group.Key)}";
@@ -330,7 +330,7 @@ namespace FplBot.Core.Helpers
                 messageToSend += $"\n\n{header}";
                 foreach (var p in group)
                 {
-                    messageToSend += $"\n• {p.ToPlayer.FirstName} {p.ToPlayer.SecondName} ({p.Team.ShortName}) {FormatCurrency(p.ToPlayer.NowCost)}";
+                    messageToSend += $"\n• {p.FirstName} {p.SecondName} ({p.TeamShortName}) {FormatCurrency(p.NowCost)}";
                 }
             }
 

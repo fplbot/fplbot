@@ -118,6 +118,7 @@ namespace FplBot.Tests
             return new Team
             {
                 Id = HomeTeamId,
+                Code = HomeTeamId,
                 ShortName = "HoMeTeam"
             };
         }
@@ -127,6 +128,7 @@ namespace FplBot.Tests
             return new Team
             {
                 Id = AwayTeamId,
+                Code = AwayTeamId,
                 ShortName = "AwAyTeam"
             };
         }
@@ -148,7 +150,8 @@ namespace FplBot.Tests
                 Id = PlayerId,
                 Code = PlayerCode,
                 FirstName = "PlayerFirstName",
-                SecondName = "PlayerSecondName"
+                SecondName = "PlayerSecondName",
+                TeamCode = HomeTeamId
             };
         }
 
@@ -159,7 +162,8 @@ namespace FplBot.Tests
                 Id = OtherPlayerId,
                 Code = OtherPlayerCode,
                 FirstName = "OtherPlayerFirstName",
-                SecondName = "OtherPlayerSecondName"
+                SecondName = "OtherPlayerSecondName",
+                TeamCode = AwayTeamId
             };
         }
 

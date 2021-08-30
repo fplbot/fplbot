@@ -15,18 +15,18 @@ namespace FplBot.Tests
         {
             _helper = helper;
         }
-        
+
         [Fact]
         public void GetChangedPlayers_WhenNoPlayers_ReturnsNoChanges()
         {
             var before = new List<Player>{ };
             var after = new List<Player>{ };
-            
+
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
-            
+
             Assert.Empty(priceChanges);
         }
-        
+
         [Fact]
         public void GetChangedPlayers_WhenSamePlayersWithPriceChange_ReturnsNoChanges()
         {
@@ -34,48 +34,48 @@ namespace FplBot.Tests
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
 
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
-            
+
             Assert.Empty(priceChanges);
         }
-        
+
         [Fact]
         public void GetChangedPlayers_WhenSamePlayersWithChangeInPriceChange_ReturnsChanges()
         {
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
-            
-            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
             Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().ToPlayer.SecondName);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().SecondName);
         }
-        
+
         [Fact]
         public void GetChangedPlayers_WhenSamePlayersDuplicateWithChangeInPriceChange_ReturnsSingleChanges()
         {
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
-            
-            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
+
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
             Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().ToPlayer.SecondName);
-            
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().SecondName);
+
             var before2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
             var after2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
-            
-            var priceChanges2 = PlayerChangesEventsExtractor.GetPriceChanges(after2,before2, new List<Team>());
+
+            var priceChanges2 = PlayerChangesEventsExtractor.GetPriceChanges(after2,before2, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
             Assert.Single(priceChanges2);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges2.First().ToPlayer.SecondName);
-            
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges2.First().SecondName);
+
             var before3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
             var after3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
-            
-            var priceChanges3 = PlayerChangesEventsExtractor.GetPriceChanges(after3,before3, new List<Team>());
+
+            var priceChanges3 = PlayerChangesEventsExtractor.GetPriceChanges(after3,before3, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
             Assert.Single(priceChanges3);
-            Assert.Equal(TestBuilder.Player().SecondName, priceChanges3.First().ToPlayer.SecondName);
+            Assert.Equal(TestBuilder.Player().SecondName, priceChanges3.First().SecondName);
         }
 
         [Fact]
@@ -83,12 +83,12 @@ namespace FplBot.Tests
         {
             var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
             var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
-            
-            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { new Team()});
-            _helper.WriteLine(Formatter.FormatPriceChanged(priceChanges));
+
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
+
             Assert.Single(priceChanges);
         }
-        
+
         [Fact]
         public void GetChangedPlayers_OneNewPlayerWithCostChange_ReturnsNewPlayer()
         {
@@ -99,12 +99,12 @@ namespace FplBot.Tests
                 TestBuilder.OtherPlayer().WithCostChangeEvent(1)
             };
 
-            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
+            var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
             Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.OtherPlayer().SecondName, priceChanges.First().ToPlayer.SecondName);
+            Assert.Equal(TestBuilder.OtherPlayer().SecondName, priceChanges.First().SecondName);
         }
-        
+
         [Fact]
         public void GetChangedPlayers_OnePlayerRemoved_ReturnsNoChanges()
         {
@@ -113,7 +113,7 @@ namespace FplBot.Tests
                 TestBuilder.Player().WithCostChangeEvent(1),
                 TestBuilder.OtherPlayer().WithCostChangeEvent(1)
             };
-            
+
             var after = new List<Player>
             {
                 TestBuilder.Player().WithCostChangeEvent(1)
