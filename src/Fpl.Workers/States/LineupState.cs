@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -26,7 +27,7 @@ namespace FplBot.Core.GameweekLifecycle
         }
 
         public async Task Reset(int gw)
-        {            
+        {
             _matchDetails.Clear();
             var fixtures = await _fixtureClient.GetFixturesByGameweek(gw);
             foreach (var fixture in fixtures)
@@ -49,33 +50,42 @@ namespace FplBot.Core.GameweekLifecycle
         }
 
         public async Task Refresh(int gw)
-        {            
+        {
             var fixtures = await _fixtureClient.GetFixturesByGameweek(gw);
 
             foreach (var fixture in fixtures)
             {
-                var updatedMatchDetails = await _scraperApi.GetMatchDetails(fixture.PulseId);
-                if (_matchDetails.ContainsKey(fixture.PulseId) && updatedMatchDetails != null)
+                try
                 {
-                    var storedDetails = _matchDetails[fixture.PulseId];
-                    var updates = MatchDetailsDiffer.Diff(updatedMatchDetails, storedDetails);
-                    if (updates.LineupsConfirmed)
+                    var updatedMatchDetails = await _scraperApi.GetMatchDetails(fixture.PulseId);
+                    if (_matchDetails.ContainsKey(fixture.PulseId) && updatedMatchDetails != null)
                     {
-                        var lineups = MatchDetailsMapper.ToLineup(updatedMatchDetails);
-                        await _mediator.Publish(new LineupReady(lineups));
+                        var storedDetails = _matchDetails[fixture.PulseId];
+                        var updates = MatchDetailsDiffer.Diff(updatedMatchDetails, storedDetails);
+                        if (updates.LineupsConfirmed)
+                        {
+                            var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails);
+
+                            if (lineups != null)
+                            {
+                                _matchDetails[fixture.PulseId] = updatedMatchDetails;
+                                await _mediator.Publish(new LineupReady(lineups));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
+                        _logger.LogInformation($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
+                        _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
                     }
                 }
-                else
+                catch (Exception e)
                 {
-                    _logger.LogWarning("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
-                    _logger.LogInformation($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
-                    _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
+                    _logger.LogError(e, e.Message);
                 }
-
-                if(updatedMatchDetails != null)
-                    _matchDetails[fixture.PulseId] = updatedMatchDetails;
             }
-        }        
+        }
     }
 
     public class MatchDetailsDiffer
