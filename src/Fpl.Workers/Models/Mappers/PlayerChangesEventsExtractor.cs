@@ -10,15 +10,26 @@ namespace FplBot.Core.Helpers
     public class PlayerChangesEventsExtractor
     {
 
-        public static IEnumerable<PlayerUpdate> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        public static IEnumerable<PlayerWithPriceChange> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
             if(players == null)
-                return new List<PlayerUpdate>();
+                return new List<PlayerWithPriceChange>();
 
             if (after == null)
-                return new List<PlayerUpdate>();
+                return new List<PlayerWithPriceChange>();
 
-            return ComparePlayers(after, players, teams, new PlayerPriceComparer());
+            var compared = ComparePlayers(after, players, teams, new PlayerPriceComparer());
+            return compared.Select(p => new PlayerWithPriceChange
+            {
+                PlayerId = p.ToPlayer.Id,
+                FirstName = p.ToPlayer.FirstName,
+                SecondName = p.ToPlayer.SecondName,
+                NowCost = p.ToPlayer.NowCost,
+                OwnershipPercentage = p.ToPlayer.OwnershipPercentage,
+                CostChangeEvent = p.ToPlayer.CostChangeEvent,
+                TeamId = p.Team.Id,
+                TeamShortName = p.Team.ShortName
+            });
         }
 
         public static IEnumerable<PlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
