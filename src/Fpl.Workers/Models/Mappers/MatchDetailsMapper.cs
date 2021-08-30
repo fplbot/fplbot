@@ -5,23 +5,30 @@ using FplBot.Core.Models;
 namespace FplBot.Core.GameweekLifecycle
 {
     internal class MatchDetailsMapper
-    {   
-        public static Lineups ToLineup(MatchDetails details)
+    {
+        public static Lineups TryMapToLineup(MatchDetails details)
         {
-            var homeTeam = details.Teams.First().Team;
-            var awayTeam = details.Teams.Last().Team;
-
-            var homeTeamLineup = details.TeamLists.First(l => l.TeamId == homeTeam.Id);
-            var awayTeamLineup = details.TeamLists.First(l => l.TeamId == awayTeam.Id);
-            
-            return new Lineups
+            try
             {
-                FixturePulseId = details.Id,
-                HomeTeamNameAbbr = homeTeam.Club.Abbr,
-                AwayTeamNameAbbr = awayTeam.Club.Abbr,
-                HomeTeamLineup = OrderByFormation(homeTeamLineup),
-                AwayTeamLineup = OrderByFormation(awayTeamLineup)
-            };
+                var homeTeam = details.Teams.First().Team;
+                var awayTeam = details.Teams.Last().Team;
+
+                var homeTeamLineup = details.TeamLists.First(l => l.TeamId == homeTeam.Id);
+                var awayTeamLineup = details.TeamLists.First(l => l.TeamId == awayTeam.Id);
+
+                return new Lineups
+                {
+                    FixturePulseId = details.Id,
+                    HomeTeamNameAbbr = homeTeam.Club.Abbr,
+                    AwayTeamNameAbbr = awayTeam.Club.Abbr,
+                    HomeTeamLineup = OrderByFormation(homeTeamLineup),
+                    AwayTeamLineup = OrderByFormation(awayTeamLineup)
+                };
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static FormationDetails OrderByFormation(LineupContainer teamLineup)
