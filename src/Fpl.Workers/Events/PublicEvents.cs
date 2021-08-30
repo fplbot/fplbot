@@ -5,12 +5,11 @@ using System.Collections.Generic;
 
 namespace FplBot.Core.Models
 {
-    // Public events:
+    // Public events using in-mem MediatR handling:
     public record TwentyFourHoursToDeadline(Gameweek Gameweek) : INotification;
     public record OneHourToDeadline(Gameweek Gameweek) : INotification;
     public record PriceChangeOccured(IEnumerable<PlayerUpdate> PlayerWithPriceChanges) : INotification;
     public record InjuryUpdateOccured(IEnumerable<PlayerUpdate> PlayersWithInjuryUpdates) : INotification;
-    public record NewPlayersRegistered(IEnumerable<NewPlayer> NewPlayers) : INotification;
     public record GameweekJustBegan(Gameweek Gameweek) : INotification;
     public record LineupReady(Lineups Lineups) : INotification;
     public record FixtureEventsOccured(FixtureUpdates FixtureEvents) : INotification;

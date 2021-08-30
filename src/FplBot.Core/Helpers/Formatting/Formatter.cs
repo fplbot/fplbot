@@ -10,6 +10,7 @@ using Fpl.Search.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Models;
 using FplBot.Data.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Models.BlockKit;
 
 namespace FplBot.Core.Helpers
@@ -305,7 +306,7 @@ namespace FplBot.Core.Helpers
 
             string NameAndCost(NewPlayer p)
             {
-                return $"{p.Player.WebName} ({p.Team.ShortName}) {FormatCurrency(p.Player.NowCost)}";
+                return $"{p.WebName} ({p.TeamShortName}) {FormatCurrency(p.NowCost)}";
             }
         }
 
