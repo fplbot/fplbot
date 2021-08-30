@@ -14,10 +14,4 @@ namespace FplBot.Core.Models
             toStatus = ToPlayer?.Status;
         }
     }
-
-    public class NewPlayer
-    {
-        public Player Player { get; set; }
-        public Team Team { get; set; }
-    }
 }

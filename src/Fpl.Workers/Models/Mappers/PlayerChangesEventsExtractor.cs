@@ -3,6 +3,7 @@ using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Core.Helpers.Comparers;
 using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Helpers
 {
@@ -45,8 +46,11 @@ namespace FplBot.Core.Helpers
 
             var updates = diff.Select(newPlayer => new NewPlayer
             {
-                Player = newPlayer,
-                Team = teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode),
+                PlayerId = newPlayer.Id,
+                WebName = newPlayer.WebName,
+                NowCost = newPlayer.NowCost,
+                TeamId = teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Id,
+                TeamShortName = teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Name
             });
             return updates;
         }

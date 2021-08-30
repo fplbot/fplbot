@@ -1,18 +1,18 @@
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
-using FplBot.Core.Models;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
-using MediatR;
+using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace FplBot.Core.Handlers.FplEvents
 {
-    public class NewPlayerHandler : INotificationHandler<NewPlayersRegistered>
+    public class NewPlayerHandler : IHandleMessages<NewPlayersRegistered>, IHandleMessages<PublishNewPlayersToSlackWorkspace>
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
@@ -25,7 +25,7 @@ namespace FplBot.Core.Handlers.FplEvents
             _logger = logger;
         }
 
-        public async Task Handle(NewPlayersRegistered notification, CancellationToken cancellationToken)
+        public async Task Handle(NewPlayersRegistered notification, IMessageHandlerContext context)
         {
             _logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
@@ -33,10 +33,17 @@ namespace FplBot.Core.Handlers.FplEvents
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers))
                 {
-                    var formatted = Formatter.FormatNewPlayers(notification.NewPlayers);
-                    await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                    await context.SendLocal(new PublishNewPlayersToSlackWorkspace(slackTeam.TeamId, notification.NewPlayers));
                 }
             }
+        }
+
+        public async Task Handle(PublishNewPlayersToSlackWorkspace message, IMessageHandlerContext context)
+        {
+            _logger.LogInformation($"Publishing message to {message.WorkspaceId}");
+            var workspace = await _slackTeamRepo.GetTeam(message.WorkspaceId);
+            var formatted = Formatter.FormatNewPlayers(message.NewPlayers);
+            await _publisher.PublishToWorkspace(message.WorkspaceId, workspace.FplBotSlackChannel, formatted);
         }
     }
 }

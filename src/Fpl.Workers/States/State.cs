@@ -3,11 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace FplBot.Core.GameweekLifecycle
 {
@@ -16,6 +17,7 @@ namespace FplBot.Core.GameweekLifecycle
         private readonly IFixtureClient _fixtureClient;
         private readonly IGlobalSettingsClient _settingsClient;
         private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
         private readonly ILogger<State> _logger;
 
         private ICollection<Player> _players;
@@ -23,11 +25,12 @@ namespace FplBot.Core.GameweekLifecycle
         private ICollection<Team> _teams;
         private int? _currentGameweek;
 
-        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMediator mediator, ILogger<State> logger = null)
+        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMediator mediator, IMessageSession session, ILogger<State> logger = null)
         {
             _fixtureClient = fixtureClient;
             _settingsClient = settingsClient;
             _mediator = mediator;
+            _session = session;
             _logger = logger;
 
             _currentGameweekFixtures = new List<Fixture>();
@@ -81,7 +84,7 @@ namespace FplBot.Core.GameweekLifecycle
                 await _mediator.Publish(new FixturesFinished(finishedFixtures.ToList()));
 
             if (newPlayers.Any())
-                await _mediator.Publish(new NewPlayersRegistered(newPlayers));
+                await _session.Publish(new NewPlayersRegistered(newPlayers));
         }
     }
 }
