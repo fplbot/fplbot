@@ -101,8 +101,7 @@ namespace FplBot.Tests
 
             var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
-            Assert.Single(priceChanges);
-            Assert.Equal(TestBuilder.OtherPlayer().SecondName, priceChanges.First().SecondName);
+            Assert.Empty(priceChanges);
         }
 
         [Fact]

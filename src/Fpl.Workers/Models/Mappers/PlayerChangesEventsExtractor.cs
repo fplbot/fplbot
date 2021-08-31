@@ -73,12 +73,16 @@ namespace FplBot.Core.Helpers
             foreach (var player in playersWithChanges)
             {
                 var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
-                updates.Add(new PlayerUpdate
+                if (fromPlayer != null)
                 {
-                    FromPlayer = fromPlayer,
-                    ToPlayer = player,
-                    Team = teams.FirstOrDefault(t => t.Code == player.TeamCode),
-                });
+                    updates.Add(new PlayerUpdate
+                    {
+                        FromPlayer = fromPlayer,
+                        ToPlayer = player,
+                        Team = teams.FirstOrDefault(t => t.Code == player.TeamCode),
+                    });
+                }
+
             }
 
             return updates;
