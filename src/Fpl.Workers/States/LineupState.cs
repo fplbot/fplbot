@@ -68,7 +68,6 @@ namespace FplBot.Core.GameweekLifecycle
 
                             if (lineups != null)
                             {
-                                _matchDetails[fixture.PulseId] = updatedMatchDetails;
                                 await _mediator.Publish(new LineupReady(lineups));
                             }
                         }
@@ -78,6 +77,12 @@ namespace FplBot.Core.GameweekLifecycle
                         _logger.LogWarning("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
                         _logger.LogInformation($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
                         _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
+                    }
+
+                    var mapped = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails);
+                    if (updatedMatchDetails != null && mapped != null)
+                    {
+                        _matchDetails[fixture.PulseId] = updatedMatchDetails;
                     }
                 }
                 catch (Exception e)
