@@ -79,8 +79,7 @@ namespace FplBot.Core.GameweekLifecycle
                         _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
                     }
 
-                    var mapped = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails);
-                    if (updatedMatchDetails != null && mapped != null)
+                    if (updatedMatchDetails != null)
                     {
                         _matchDetails[fixture.PulseId] = updatedMatchDetails;
                     }
