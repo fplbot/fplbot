@@ -65,7 +65,9 @@ namespace FplBot.Tests
             var state = CreateNewPlayerScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustNotHaveHappened();
+            Assert.Single(_MessageSession.PublishedMessages);
+            Assert.IsType<NewPlayersRegistered>(_MessageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
