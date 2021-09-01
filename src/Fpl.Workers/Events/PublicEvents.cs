@@ -10,7 +10,6 @@ namespace FplBot.Core.Models
     public record OneHourToDeadline(Gameweek Gameweek) : INotification;
     public record InjuryUpdateOccured(IEnumerable<PlayerUpdate> PlayersWithInjuryUpdates) : INotification;
     public record GameweekJustBegan(Gameweek Gameweek) : INotification;
-    public record LineupReady(Lineups Lineups) : INotification;
     public record FixtureEventsOccured(FixtureUpdates FixtureEvents) : INotification;
     public record FixturesFinished(IEnumerable<FinishedFixture> FinishedFixture) : INotification;
     public record GameweekFinished(Gameweek Gameweek) : INotification;

@@ -44,7 +44,7 @@ namespace FplBot.Core
         public int Id { get; set; }
         // The two teams participating
         public IEnumerable<TeamDetails> Teams { get; set; } = new List<TeamDetails>();
-    
+
         // The lineup
         public IEnumerable<LineupContainer> TeamLists { get; set; } = new List<LineupContainer>();
 
@@ -79,8 +79,8 @@ namespace FplBot.Core
     {
         public int TeamId { get; set; }
         public IEnumerable<PlayerInLineup> Lineup { get; set; } = new List<PlayerInLineup>();
-        
-        public Formation Formation { get; set; } 
+
+        public Formation Formation { get; set; }
 
         public bool HasLineups()
         {
@@ -100,20 +100,8 @@ namespace FplBot.Core
         public const string MatchPositionDefender = "D";
         public const string MatchPositionMidfielder = "M";
         public const string MatchPositionForward = "F";
-        
+
         public int Id { get; set; }
-        
-        public int GetPositionWeight()
-        {
-            return MatchPosition switch
-            {
-                MatchPositionGoalie => 1,
-                MatchPositionDefender => 2,
-                MatchPositionMidfielder => 3,
-                MatchPositionForward => 4,
-                _ => -1
-            };
-        }
         public string MatchPosition { get; set; }
         public Name Name { get; set; }
         public bool Captain { get; set; }

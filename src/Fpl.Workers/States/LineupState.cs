@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Core.Abstractions;
-using FplBot.Core.Models;
-using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace FplBot.Core.GameweekLifecycle
 {
@@ -13,15 +12,15 @@ namespace FplBot.Core.GameweekLifecycle
     {
         private readonly IFixtureClient _fixtureClient;
         private readonly IGetMatchDetails _scraperApi;
-        private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
         private readonly ILogger<LineupState> _logger;
-        private Dictionary<int, MatchDetails> _matchDetails;
+        private readonly Dictionary<int, MatchDetails> _matchDetails;
 
-        public LineupState(IFixtureClient fixtureClient, IGetMatchDetails scraperApi, IMediator mediator, ILogger<LineupState> logger)
+        public LineupState(IFixtureClient fixtureClient, IGetMatchDetails scraperApi, IMessageSession session, ILogger<LineupState> logger)
         {
             _fixtureClient = fixtureClient;
             _scraperApi = scraperApi;
-            _mediator = mediator;
+            _session = session;
             _logger = logger;
             _matchDetails = new Dictionary<int, MatchDetails>();
         }
@@ -68,7 +67,7 @@ namespace FplBot.Core.GameweekLifecycle
 
                             if (lineups != null)
                             {
-                                await _mediator.Publish(new LineupReady(lineups));
+                                await _session.Publish(lineups);
                             }
                         }
                     }

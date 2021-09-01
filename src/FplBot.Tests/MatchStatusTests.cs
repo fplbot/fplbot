@@ -7,48 +7,52 @@ using Fpl.Client.Models;
 using FplBot.Core.Abstractions;
 using FplBot.Core.GameweekLifecycle;
 using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus.Testing;
 using Xunit;
 
 namespace FplBot.Tests
 {
     public class MatchStatusTests
     {
-        private IMediator _mediator;
+        private TestableMessageSession _session;
 
         [Fact]
         public async Task DoesNotEmitInInitPhase()
         {
-            var monitor = CreateNewLineupScenario();            
+            var monitor = CreateNewLineupScenario();
             await monitor.Reset(1);
-            
-            A.CallTo(() => _mediator.Publish(A<LineupReady>._, A<CancellationToken>._)).MustNotHaveHappened();
+
+            Assert.Empty(_session.PublishedMessages);
         }
 
         [Fact]
         public async Task WhenLineupsInAFixture_EmitsEvent()
         {
-            var monitor = CreateNewLineupScenario();    
+            var monitor = CreateNewLineupScenario();
             await monitor.Reset(1);
             await monitor.Refresh(1);
-            
-            A.CallTo(() => _mediator.Publish(A<LineupReady>._, A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+
+            Assert.Single(_session.PublishedMessages);
+            Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
         }
-        
+
         [Fact]
         public async Task WhenLineupsInSingleFixture_SequencialRefreshes_EmitsEventOnlyOnce()
         {
-            var monitor = CreateNewLineupScenario(); 
-            
+            var monitor = CreateNewLineupScenario();
+
             await monitor.Reset(1);
-            
+
             await monitor.Refresh(1);
             await monitor.Refresh(1);
-            
-            A.CallTo(() => _mediator.Publish(A<LineupReady>._, A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+
+            Assert.Single(_session.PublishedMessages);
+            Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
         }
-        
+
         [Fact]
         public async Task WhenLineupsInTwoFixtures_SequencialRefreshes_EmitsOneEventPrFixture()
         {
@@ -56,7 +60,8 @@ namespace FplBot.Tests
             await monitor.Reset(1);
             await monitor.Refresh(1);
 
-            A.CallTo(() => _mediator.Publish(A<LineupReady>._, A<CancellationToken>._)).MustHaveHappenedTwiceExactly();
+            Assert.Equal(2, _session.PublishedMessages.Length);
+            Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
         }
 
         private LineupState CreateNewLineupScenario()
@@ -69,14 +74,14 @@ namespace FplBot.Tests
                 testFixture1,
                 testFixture2
             });
-            
+
             var scraperFake = A.Fake<IGetMatchDetails>();
             A.CallTo(() => scraperFake.GetMatchDetails(testFixture1.PulseId)).Returns(TestBuilder.NoLineup(testFixture1.PulseId));
             A.CallTo(() => scraperFake.GetMatchDetails(testFixture2.PulseId)).Returns(TestBuilder.NoLineup(testFixture2.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.PulseId));
-            _mediator = A.Fake<IMediator>();
-            return new LineupState(fixtureClient, scraperFake, _mediator, A.Fake<ILogger<LineupState>>());
+            _session = new TestableMessageSession();
+            return new LineupState(fixtureClient, scraperFake, _session, A.Fake<ILogger<LineupState>>());
         }
-        
+
         private LineupState CreateTwoNewLineupsScenario()
         {
             var fixtureClient = A.Fake<IFixtureClient>();
@@ -87,12 +92,12 @@ namespace FplBot.Tests
                 testFixture1,
                 testFixture2
             });
-            
+
             var scraperFake = A.Fake<IGetMatchDetails>();
             A.CallTo(() => scraperFake.GetMatchDetails(testFixture1.PulseId)).Returns(TestBuilder.NoLineup(testFixture1.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.PulseId));;
             A.CallTo(() => scraperFake.GetMatchDetails(testFixture2.PulseId)).Returns(TestBuilder.NoLineup(testFixture2.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.PulseId));
-            _mediator = A.Fake<IMediator>();
-            return new LineupState(fixtureClient, scraperFake, _mediator, A.Fake<ILogger<LineupState>>());
+            _session = new TestableMessageSession();
+            return new LineupState(fixtureClient, scraperFake, _session, A.Fake<ILogger<LineupState>>());
         }
     }
 }
