@@ -49,7 +49,11 @@ namespace FplBot.Core.GameweekLifecycle
                 p.Add(new FormationSegment
                 {
                     SegmentPosition =  playersInSegment.First().MatchPosition ,
-                    PlayersInSegment = playersInSegment.Select(i => new SegmentPlayer { Name = i.Name.ToString()}).ToList()
+                    PlayersInSegment = playersInSegment.Select(i => new SegmentPlayer
+                    {
+                        Name = i.Name.ToString(),
+                        Captain = i.Captain
+                    }).ToList()
                 });
             }
 
