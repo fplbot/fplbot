@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
@@ -33,7 +34,8 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
                 {
-                    await context.SendLocal(new PublishLineupsToSlackWorkspace { WorkspaceId = slackTeam.TeamId, Lineups = message.Lineup });
+                    var command = new PublishLineupsToSlackWorkspace { WorkspaceId = slackTeam.TeamId, Lineups = message.Lineup };
+                    await context.SendLocal(command);
                 }
             }
         }

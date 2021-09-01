@@ -37,8 +37,6 @@ namespace FplBot.Messaging.Contracts.Events.v1
         public const string MatchPositionMidfielder = "M";
         public const string MatchPositionForward = "F";
 
-        public int Id { get; set; }
-        public string MatchPosition { get; set; }
         public string Name { get; set; }
         public bool Captain { get; set; }
     }
