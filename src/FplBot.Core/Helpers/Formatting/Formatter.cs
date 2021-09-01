@@ -12,7 +12,6 @@ using FplBot.Core.Models;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Models.BlockKit;
-using LineupReady = FplBot.Messaging.Contracts.Events.v1.LineupReady;
 
 namespace FplBot.Core.Helpers
 {
