@@ -61,8 +61,8 @@ namespace FplBot.Core.GameweekLifecycle
                     if (_matchDetails.ContainsKey(fixture.PulseId) && updatedMatchDetails != null)
                     {
                         var storedDetails = _matchDetails[fixture.PulseId];
-                        var updates = MatchDetailsDiffer.Diff(updatedMatchDetails, storedDetails);
-                        if (updates.LineupsConfirmed)
+                        var lineupsConfirmed = !storedDetails.HasLineUps() && updatedMatchDetails.HasLineUps();
+                        if (lineupsConfirmed)
                         {
                             var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails);
 
@@ -90,21 +90,5 @@ namespace FplBot.Core.GameweekLifecycle
                 }
             }
         }
-    }
-
-    public class MatchDetailsDiffer
-    {
-        public static MatchDetailsDiff Diff(MatchDetails after, MatchDetails before)
-        {
-            return new MatchDetailsDiff
-            {
-                LineupsConfirmed = !before.HasLineUps() && after.HasLineUps()
-            };
-        }
-    }
-
-    public class MatchDetailsDiff
-    {
-        public bool LineupsConfirmed { get; set; }
     }
 }
