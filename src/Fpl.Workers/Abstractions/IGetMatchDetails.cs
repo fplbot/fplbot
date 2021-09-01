@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 
 namespace FplBot.Core.Abstractions
 {
-    internal interface IGetMatchDetails
+    public interface IGetMatchDetails
     {
         Task<MatchDetails> GetMatchDetails(int pulseId);
     }

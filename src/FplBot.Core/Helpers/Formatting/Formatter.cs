@@ -411,7 +411,7 @@ namespace FplBot.Core.Helpers
             return null;
         }
 
-        public static string FormatLineup(LineupReady details)
+        public static string FormatLineup(Lineups details)
         {
             var formattedOutput = "";
             FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);

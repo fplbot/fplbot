@@ -68,6 +68,9 @@ namespace Microsoft.Extensions.Hosting
                     return newRuleName.Length > 48 ? Shorten(newRuleName) : $"Z.{newRuleName}";
                 }
             });
+            var recoverabilty = endpointConfiguration.Recoverability();
+            recoverabilty.Immediate(s => s.NumberOfRetries(0));
+            recoverabilty.Delayed(s => s.NumberOfRetries(3).TimeIncrease(TimeSpan.FromSeconds(20)));
             return endpointConfiguration;
         }
 
