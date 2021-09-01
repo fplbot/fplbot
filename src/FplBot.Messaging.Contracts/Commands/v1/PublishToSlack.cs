@@ -13,9 +13,17 @@ namespace FplBot.Messaging.Contracts.Commands.v1
         }
 
         public string TeamId { get; set; }
-        
+
         public string Channel { get; set; }
-        
+
+        public string Message { get; set; }
+    }
+
+    public class PublishSlackThreadMessage : ICommand
+    {
+        public string TeamId { get; set; }
+        public string Channel { get; set; }
+        public string Timestamp { get; set; }
         public string Message { get; set; }
     }
 }

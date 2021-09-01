@@ -5,13 +5,17 @@ namespace FplBot.Messaging.Contracts.Events.v1
 {
     public class LineupReady : IEvent
     {
+        public Lineups Lineup { get; set; }
+    }
+
+    public class Lineups
+    {
         public int FixturePulseId { get; set; }
         public string HomeTeamNameAbbr { get; set; }
         public string AwayTeamNameAbbr { get; set; }
 
         public FormationDetails  HomeTeamLineup { get; set; }
         public FormationDetails  AwayTeamLineup { get; set; }
-
     }
 
     public class FormationDetails

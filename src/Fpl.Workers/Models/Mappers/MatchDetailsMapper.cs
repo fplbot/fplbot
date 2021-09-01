@@ -4,7 +4,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.GameweekLifecycle
 {
-    internal class MatchDetailsMapper
+    public class MatchDetailsMapper
     {
         public static LineupReady TryMapToLineup(MatchDetails details)
         {
@@ -13,17 +13,26 @@ namespace FplBot.Core.GameweekLifecycle
                 var homeTeam = details.Teams.First().Team;
                 var awayTeam = details.Teams.Last().Team;
 
-                var homeTeamLineup = details.TeamLists.First(l => l.TeamId == homeTeam.Id);
-                var awayTeamLineup = details.TeamLists.First(l => l.TeamId == awayTeam.Id);
+                var homeTeamLineup = details.TeamLists.FirstOrDefault(l => l.TeamId == homeTeam.Id);
+                var awayTeamLineup = details.TeamLists.FirstOrDefault(l => l.TeamId == awayTeam.Id);
 
-                return new LineupReady
+                if (homeTeamLineup != null && homeTeamLineup.HasLineups() && awayTeamLineup != null && awayTeamLineup.HasLineups())
                 {
-                    FixturePulseId = details.Id,
-                    HomeTeamNameAbbr = homeTeam.Club.Abbr,
-                    AwayTeamNameAbbr = awayTeam.Club.Abbr,
-                    HomeTeamLineup = OrderByFormation(homeTeamLineup),
-                    AwayTeamLineup = OrderByFormation(awayTeamLineup)
-                };
+                    return new LineupReady
+                    {
+                        Lineup = new Lineups
+                        {
+                            FixturePulseId = details.Id,
+                            HomeTeamNameAbbr = homeTeam.Club.Abbr,
+                            AwayTeamNameAbbr = awayTeam.Club.Abbr,
+                            HomeTeamLineup = OrderByFormation(homeTeamLineup),
+                            AwayTeamLineup = OrderByFormation(awayTeamLineup)
+                        }
+                    };
+                }
+
+                return null;
+
             }
             catch
             {
