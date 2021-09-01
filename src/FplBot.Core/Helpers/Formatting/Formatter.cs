@@ -430,7 +430,7 @@ namespace FplBot.Core.Helpers
             {
                 formattedOutput += $"{PositionEmoji(segment.SegmentPosition)}  ";
                 var segmentPlayersInSegment = segment.PlayersInSegment;
-                var playersInSegment = segmentPlayersInSegment.Select(player => player.Captain ? $"{player.Name}:copyright:" : $"{player.Name}");
+                var playersInSegment = segmentPlayersInSegment.Select(player => player.Captain ? $"{player.Name}©" : $"{player.Name}");
 
                 if (reverse)
                 {
