@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.GameweekLifecycle
 {
     internal class MatchDetailsMapper
     {
-        public static Lineups TryMapToLineup(MatchDetails details)
+        public static LineupReady TryMapToLineup(MatchDetails details)
         {
             try
             {
@@ -16,7 +16,7 @@ namespace FplBot.Core.GameweekLifecycle
                 var homeTeamLineup = details.TeamLists.First(l => l.TeamId == homeTeam.Id);
                 var awayTeamLineup = details.TeamLists.First(l => l.TeamId == awayTeam.Id);
 
-                return new Lineups
+                return new LineupReady
                 {
                     FixturePulseId = details.Id,
                     HomeTeamNameAbbr = homeTeam.Club.Abbr,
@@ -39,8 +39,8 @@ namespace FplBot.Core.GameweekLifecycle
                 var playersInSegment = segment.Select(playerId => teamLineup.Lineup.First(p => p.Id == playerId));
                 p.Add(new FormationSegment
                 {
-                    SegmentPosition = playersInSegment.First().MatchPosition,
-                    PlayersInSegment = playersInSegment
+                    SegmentPosition =  playersInSegment.First().MatchPosition ,
+                    PlayersInSegment = playersInSegment.Select(i => new SegmentPlayer { Name = i.Name.ToString()}).ToList()
                 });
             }
 

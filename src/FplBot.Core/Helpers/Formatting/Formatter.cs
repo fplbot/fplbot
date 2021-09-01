@@ -12,6 +12,7 @@ using FplBot.Core.Models;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Models.BlockKit;
+using LineupReady = FplBot.Messaging.Contracts.Events.v1.LineupReady;
 
 namespace FplBot.Core.Helpers
 {
@@ -410,7 +411,7 @@ namespace FplBot.Core.Helpers
             return null;
         }
 
-        public static string FormatLineup(Lineups details)
+        public static string FormatLineup(LineupReady details)
         {
             var formattedOutput = "";
             FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);

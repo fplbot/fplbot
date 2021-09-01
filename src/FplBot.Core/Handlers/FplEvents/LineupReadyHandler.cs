@@ -1,19 +1,18 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
-using FplBot.Core.Models;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
-using MediatR;
+using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.Core.GameweekLifecycle.Handlers
 {
-    public class LineupReadyHandler : INotificationHandler<LineupReady>
+    public class LineupReadyHandler : IHandleMessages<LineupReady>
     {
         private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly ISlackClientBuilder _builder;
@@ -26,10 +25,9 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             _logger = logger;
         }
 
-        public async Task Handle(LineupReady notification, CancellationToken cancellationToken)
+        public async Task Handle(LineupReady lineups, IMessageHandlerContext context)
         {
             _logger.LogInformation("Handling new lineups");
-            var lineups = notification.Lineups;
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             var firstMessage = $"*Lineups {lineups.HomeTeamNameAbbr}-{lineups.AwayTeamNameAbbr} ready* 👇";
             var formattedLineup = Formatter.FormatLineup(lineups);
