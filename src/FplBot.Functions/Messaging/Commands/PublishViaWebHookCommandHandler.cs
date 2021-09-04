@@ -15,7 +15,7 @@ namespace FplBot.Functions
         {
             var token = config.GetValue<string>("SlackToken_FplBot_Workspace");
             var env = config.GetValue<string>("DOTNET_ENVIRONMENT");
-            _prefix = env == "Production" ? "" : env;
+            _prefix = env == "Production" ? "" : $"{env}: ";
             _client = builder.Build(token);
         }
 

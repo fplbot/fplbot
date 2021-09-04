@@ -4,8 +4,6 @@ using Microsoft.Extensions.Hosting;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http.Extensions;
 
-[assembly: NServiceBusTriggerFunction("%QueueName%")]
-
 namespace FplBot.Functions
 {
     public class Program
@@ -22,25 +20,22 @@ namespace FplBot.Functions
                 {
                     string endpointPostfix = "";
 
-
                     // Workaround for unstable EnvironmentName in Azure
                     // (see https://github.com/Azure/azure-functions-host/issues/6239)
                     string environmentName = appConfig.GetValue<string>("DOTNET_ENVIRONMENT") ??
-                                              Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") ??
-                                              Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+                                             Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") ??
+                                             Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
 
+                    var connectionString = appConfig.GetValue<string>("ASB_CONNECTIONSTRING");
+                    endpointConfig.Transport.ConnectionString(connectionString);
 
                     if (environmentName == "Development")
                     {
                         endpointPostfix += $".{Environment.MachineName}";
                     }
 
-                    string endpointName = $"FplBot.Functions.{environmentName}{endpointPostfix}";
-                    //var configuration = new ServiceBusTriggeredEndpointConfiguration(endpointName, "ASB_CONNECTIONSTRING");
                     string topicName = $"bundle-1{endpointPostfix}";
                     endpointConfig.Transport.TopicName(topicName);
-                    Console.WriteLine($"ENDPOINTNAME: {endpointName}");
-                    Console.WriteLine($"TOPICNAME: {topicName}");
 
                     endpointConfig.Transport.SubscriptionRuleNamingConvention(t =>
                     {
