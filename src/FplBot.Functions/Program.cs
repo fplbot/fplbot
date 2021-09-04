@@ -26,7 +26,7 @@ namespace FplBot.Functions
                                              Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") ??
                                              Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
 
-                    var connectionString = appConfig.GetValue<string>("ASB_CONNECTIONSTRING");
+                    var connectionString = appConfig.GetValue<string>("AzureWebJobsServiceBus");
                     endpointConfig.Transport.ConnectionString(connectionString);
 
                     if (environmentName == "Development")
