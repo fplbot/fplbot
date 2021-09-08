@@ -4,6 +4,7 @@
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
     <OutputType>Exe</OutputType>
     <LangVersion>latest</LangVersion>
+    <WarningsAsErrors>CS8032</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.*" />
