@@ -18,7 +18,7 @@ namespace FplBot.Functions
                 {
                     s.AddSlackClientBuilder();
                 })
-                .UseNServiceBus((appConfig,endpointConfig) =>
+                .UseNServiceBus(Environment.GetEnvironmentVariable("ENDPOINT_NAME"),(appConfig,endpointConfig) =>
                 {
 
                     // Workaround for unstable EnvironmentName in Azure
