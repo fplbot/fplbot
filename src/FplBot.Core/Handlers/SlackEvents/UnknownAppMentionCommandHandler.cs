@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Messaging.Contracts.Events.v1;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -16,7 +16,7 @@ namespace FplBot.Core.Handlers.SlackEvents
         }
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
-            await _session.SendLocal(new PublishToSlack("T016B9N3U7P", "#fplbot-notifications", $"Unhandled app_mention:\n * [{eventMetadata.Team_Id}-{slackEvent.User}] \"{slackEvent.Text}\""));
+            await _session.Publish(new UnknownAppMentionReceived { Team_Id = eventMetadata.Team_Id, User = slackEvent.User, Text = slackEvent.Text});
             return new EventHandledResponse("OK");
         }
     }

@@ -57,7 +57,7 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "FUNCTIONS_WORKER_RUNTIME",
-                        Value = "dotnet",
+                        Value = "dotnet-isolated",
                     },
                     new NameValuePairArgs
                     {
@@ -101,12 +101,12 @@ public class AzureStack : Stack
                     },
                     new NameValuePairArgs
                     {
-                        Name = "QueueName",
+                        Name = "ENDPOINT_NAME",
                         Value = stack == "prod" ? "fplbot.functions.production" : "fplbot.functions.test"
                     },
                     new NameValuePairArgs
                     {
-                        Name = "ASB_CONNECTIONSTRING",
+                        Name = "AzureWebJobsServiceBus",
                         Value = config.RequireSecret("ASB_CONNECTIONSTRING")
                     },
                     new NameValuePairArgs
