@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http.Extensions;
 
-[assembly: NServiceBusTriggerFunction("%ENDPOINT_NAME%", TriggerFunctionName = "FplBotHandlers")]
+[assembly: NServiceBusTriggerFunction("FplBot.Functions.Test", TriggerFunctionName = "FplBotHandlers")]
 
 namespace FplBot.Functions
 {
