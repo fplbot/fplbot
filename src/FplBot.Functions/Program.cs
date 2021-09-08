@@ -18,7 +18,7 @@ namespace FplBot.Functions
                 {
                     s.AddSlackClientBuilder();
                 })
-                .UseNServiceBus(Environment.GetEnvironmentVariable("ENDPOINT_NAME"),(appConfig,endpointConfig) =>
+                .UseNServiceBus((appConfig,endpointConfig) =>
                 {
                     endpointConfig.LogDiagnostics();
 
