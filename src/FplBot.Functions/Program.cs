@@ -20,6 +20,8 @@ namespace FplBot.Functions
                 })
                 .UseNServiceBus(Environment.GetEnvironmentVariable("ENDPOINT_NAME"),(appConfig,endpointConfig) =>
                 {
+                    endpointConfig.LogDiagnostics();
+
 
                     // Workaround for unstable EnvironmentName in Azure
                     // (see https://github.com/Azure/azure-functions-host/issues/6239)
