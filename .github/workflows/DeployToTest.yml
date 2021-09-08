@@ -20,7 +20,7 @@ jobs:
           dotnet-version: "3.1.x"
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "5.0.100"
+          dotnet-version: "5.0.400"
       - name: start deployment
         uses: bobheadxi/deployments@v0.4.3
         id: deployment
