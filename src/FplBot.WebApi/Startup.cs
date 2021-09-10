@@ -20,8 +20,11 @@ namespace FplBot.WebApi
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IWebHostEnvironment _env;
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
+            _env = env;
             Configuration = configuration;
         }
 
@@ -30,12 +33,14 @@ namespace FplBot.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDataProtection().SetApplicationName("fplbot"); // set static so cookies are not encrypted differently after a reboot/deploy. https://github.com/dotnet/aspnetcore/issues/2513#issuecomment-354683162
+            services.AddDataProtection()
+                .SetApplicationName(
+                    "fplbot"); // set static so cookies are not encrypted differently after a reboot/deploy. https://github.com/dotnet/aspnetcore/issues/2513#issuecomment-354683162
             services.AddControllers()
-                    .AddJsonOptions(opts =>
-                    {
-                        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                    });
+                .AddJsonOptions(opts =>
+                {
+                    opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
             services.AddSlackbotOauthAccessHttpClient();
             services.Configure<OAuthOptions>(Configuration);
             services.Configure<AnalyticsOptions>(Configuration);
@@ -48,7 +53,6 @@ namespace FplBot.WebApi
                     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultSignOutScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
                 })
                 .AddCookie(o =>
                 {
@@ -79,14 +83,18 @@ namespace FplBot.WebApi
                     b.RequireClaim("urn:slack:user_id", "U016CP6EPR8", "U0172HKTB08", "U016CSWNXAP");
                 });
             });
-            services
+            var mvcBuilder = services
                 .AddRazorPages()
                 .AddRazorPagesOptions(options =>
                 {
                     options.Conventions.AuthorizeFolder("/admin", "IsAdmin");
                     options.Conventions.AllowAnonymousToPage("/*");
-                })
-                .AddRazorRuntimeCompilation();
+                });
+
+            if (_env.IsDevelopment())
+            {
+                mvcBuilder.AddRazorRuntimeCompilation();
+            }
 
             services.Configure<RouteOptions>(o =>
             {
@@ -106,8 +114,6 @@ namespace FplBot.WebApi
                 );
             });
             services.AddHttpContextAccessor();
-
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -118,8 +124,11 @@ namespace FplBot.WebApi
             {
                 app.UseDeveloperExceptionPage();
             }
+
             app.UseForwardedHeaders();
-            app.UseHttpsRedirection();
+            if(!env.IsDevelopment())
+                app.UseHttpsRedirection();
+
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors(CorsOriginValidator.CustomCorsPolicyName);
