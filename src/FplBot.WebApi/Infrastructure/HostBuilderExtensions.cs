@@ -1,4 +1,5 @@
 using System;
+using FplBot.Messaging.Contracts.Events.v1;
 using NServiceBus;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -47,10 +48,11 @@ namespace Microsoft.Extensions.Hosting
             transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
             var topicName = $"bundle-1{endpointPostfix}";
             transport.TopicName(topicName);
-            Console.WriteLine($"Using topic {topicName}");
-            transport.RuleNameShortener(r =>
+            Console.WriteLine($"Topic: {topicName}");
+
+            transport.SubscriptionRuleNamingConvention((Type t) =>
             {
-                return Shorten(r);
+                return Shorten(t.ToString());
 
                 static string Shorten(string current)
                 {

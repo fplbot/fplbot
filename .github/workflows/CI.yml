@@ -18,8 +18,9 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: "5.0.400"
-      - name: Run './build/build.sh Test'
-        run: ./build/build.sh Test
+      - name: Test
+        run: dotnet test src
         env:
           fpl__login: ${{ secrets.fpl__login }}
           fpl__password: ${{ secrets.fpl__password }}
+          HEROKU_REDIS_COPPER_URL: ${{ secrets.HEROKU_REDIS_COPPER_URL }}

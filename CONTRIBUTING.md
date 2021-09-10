@@ -1,5 +1,5 @@
 # Contributing
-### Requirements: 
+### Requirements:
 - .NET Core 5.0 SDK (5.0.100 or above): https://dotnet.microsoft.com/download/dotnet/5.0
 - Or Docker
 
@@ -29,19 +29,8 @@ Set the same config using environment variables. A special mention for .NET conf
 
 ```
 export fpl__login=username
-export fpl__password=pwd 
+export fpl__password=pwd
 ```
-
-### Build scripts
-The project is using [Nuke](http://www.nuke.build/) to setup builds.
-
-It can be run via the build scripts: `/build/build.sh` or `/build/build.ps1`   
-
-or using the Nuke CLI:    
-
-Install: `$ dotnet tool install Nuke.GlobalTool -g`   
-Run: `$ nuke`
-
 
 # Slack app setup
 
