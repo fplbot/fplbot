@@ -6,10 +6,13 @@ namespace Slackbot.Net.Endpoints.Hosting
 {
     public static class IAppBuilderExtensions
     {
-        public static IApplicationBuilder UseSlackbot(this IApplicationBuilder app, string path = "/events")
+        public static IApplicationBuilder UseSlackbot(this IApplicationBuilder app, string path = "/events", bool enableAuth = true)
         {
             app.MapWhen(c => IsSlackRequest(c, path), a =>
             {
+                if(enableAuth)
+                    a.UseMiddleware<SlackbotEventAuthMiddleware>();
+
                 a.UseMiddleware<HttpItemsManager>();
                 a.MapWhen(Challenge.ShouldRun, b => b.UseMiddleware<Challenge>());
                 a.MapWhen(Uninstall.ShouldRun, b => b.UseMiddleware<Uninstall>());
@@ -18,7 +21,7 @@ namespace Slackbot.Net.Endpoints.Hosting
                 a.MapWhen(AppHomeOpenedEvents.ShouldRun, b => b.UseMiddleware<AppHomeOpenedEvents>());
                 a.MapWhen(InteractiveEvents.ShouldRun, b => b.UseMiddleware<InteractiveEvents>());
             });
-   
+
             return app;
         }
 
@@ -28,3 +31,4 @@ namespace Slackbot.Net.Endpoints.Hosting
         }
     }
 }
+

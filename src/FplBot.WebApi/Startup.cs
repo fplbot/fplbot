@@ -15,6 +15,7 @@ using Slackbot.Net.SlackClients.Http.Extensions;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MediatR;
+using Slackbot.Net.Endpoints.Authentication;
 
 namespace FplBot.WebApi
 {
@@ -74,7 +75,12 @@ namespace FplBot.WebApi
                         r.HandleResponse();
                         return Task.FromResult(0);
                     };
+                })
+                .AddSlackbotEvents(c =>
+                {
+                    c.SigningSecret = Configuration.GetValue<string>("CLIENT_SIGNING_SECRET");
                 });
+
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("IsAdmin", b =>
@@ -135,7 +141,7 @@ namespace FplBot.WebApi
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseSlackbot("/events");
+            app.UseSlackbot("/events", enableAuth: !_env.IsDevelopment());
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
