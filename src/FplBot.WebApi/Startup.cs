@@ -141,7 +141,7 @@ namespace FplBot.WebApi
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseSlackbot("/events", enableAuth: !_env.IsDevelopment());
+            app.Map("/events", a => a.UseSlackbot(enableAuth: !_env.IsDevelopment()));
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
