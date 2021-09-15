@@ -26,7 +26,7 @@ namespace Slackbot.Net.Endpoints.Middlewares
             }
             catch (InvalidOperationException ioe)
             {
-                throw new InvalidOperationException("Did you forget to call AddAuthentication().AddSlackbotEvents()", ioe);
+                throw new InvalidOperationException("Did you forget to call services.AddAuthentication().AddSlackbotEvents()?", ioe);
             }
 
             if (success)
