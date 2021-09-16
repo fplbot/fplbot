@@ -75,7 +75,7 @@ namespace FplBot.Core.GameweekLifecycle
             }
 
             if (priceChanges.Any())
-                await _session.Publish(new PlayersPriceChanged { PlayersWithPriceChanges = priceChanges.ToList() });
+                await _session.Publish(new PlayersPriceChanged(priceChanges.ToList()));
 
             if (injuryUpdates.Any())
                 await _mediator.Publish(new InjuryUpdateOccured(injuryUpdates));

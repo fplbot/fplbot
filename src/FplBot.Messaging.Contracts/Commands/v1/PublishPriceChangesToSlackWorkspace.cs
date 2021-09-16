@@ -5,9 +5,5 @@ using NServiceBus;
 
 namespace FplBot.Messaging.Contracts.Commands.v1
 {
-    public class PublishPriceChangesToSlackWorkspace : ICommand
-    {
-        public string WorkspaceId { get; set; }
-        public List<PlayerWithPriceChange> PlayersWithPriceChanges { get; set; }
-    }
+    public record PublishPriceChangesToSlackWorkspace(string WorkspaceId, List<PlayerWithPriceChange> PlayersWithPriceChanges) : ICommand;
 }

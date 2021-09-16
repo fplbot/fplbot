@@ -413,14 +413,14 @@ namespace FplBot.Core.Helpers
         public static string FormatLineup(Lineups details)
         {
             var formattedOutput = "";
-            FormatTeamLineup(details.HomeTeamLineup, details.HomeTeamNameAbbr, ref formattedOutput);
-            FormatTeamLineup(details.AwayTeamLineup, details.AwayTeamNameAbbr, ref formattedOutput, true);
+            FormatTeamLineup(details.HomeTeamLineup, ref formattedOutput);
+            FormatTeamLineup(details.AwayTeamLineup, ref formattedOutput, true);
             return formattedOutput;
         }
 
-        private static void FormatTeamLineup(FormationDetails playerInLineup, string teamName, ref string formattedOutput, bool reverse = false)
+        private static void FormatTeamLineup(FormationDetails playerInLineup, ref string formattedOutput, bool reverse = false)
         {
-            formattedOutput += $"*{teamName}* ({playerInLineup.Label})\n";
+            formattedOutput += $"*{playerInLineup.TeamName}* ({playerInLineup.Formation})\n";
             var formationSegments = playerInLineup.Segments;
             if (reverse)
                 formationSegments.Reverse();

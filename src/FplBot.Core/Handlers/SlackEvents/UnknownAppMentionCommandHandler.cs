@@ -16,7 +16,7 @@ namespace FplBot.Core.Handlers.SlackEvents
         }
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
-            await _session.Publish(new UnknownAppMentionReceived { Team_Id = eventMetadata.Team_Id, User = slackEvent.User, Text = slackEvent.Text});
+            await _session.Publish(new UnknownAppMentionReceived(eventMetadata.Team_Id, slackEvent.User, slackEvent.Text));
             return new EventHandledResponse("OK");
         }
     }

@@ -33,7 +33,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
                 {
-                    await context.SendLocal(new PublishPriceChangesToSlackWorkspace { WorkspaceId = slackTeam.TeamId, PlayersWithPriceChanges = notification.PlayersWithPriceChanges.ToList() });
+                    await context.SendLocal(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()));
                 }
             }
         }

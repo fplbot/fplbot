@@ -19,17 +19,18 @@ namespace FplBot.Core.Helpers
                 return new List<PlayerWithPriceChange>();
 
             var compared = ComparePlayers(after, players, teams, new PlayerPriceComparer());
+
             return compared.Select(p => new PlayerWithPriceChange
-            {
-                PlayerId = p.ToPlayer.Id,
-                FirstName = p.ToPlayer.FirstName,
-                SecondName = p.ToPlayer.SecondName,
-                NowCost = p.ToPlayer.NowCost,
-                OwnershipPercentage = p.ToPlayer.OwnershipPercentage,
-                CostChangeEvent = p.ToPlayer.CostChangeEvent,
-                TeamId = p.Team.Id,
-                TeamShortName = p.Team.ShortName
-            });
+            (
+                p.ToPlayer.Id,
+                p.ToPlayer.FirstName,
+                p.ToPlayer.SecondName,
+                p.ToPlayer.CostChangeEvent,
+                p.ToPlayer.NowCost,
+                p.ToPlayer.OwnershipPercentage,
+                p.Team.Id,
+                p.Team.ShortName
+            ));
         }
 
         public static IEnumerable<PlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
@@ -56,13 +57,13 @@ namespace FplBot.Core.Helpers
                 return new List<NewPlayer>();
 
             var updates = diff.Select(newPlayer => new NewPlayer
-            {
-                PlayerId = newPlayer.Id,
-                WebName = newPlayer.WebName,
-                NowCost = newPlayer.NowCost,
-                TeamId = teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Id,
-                TeamShortName = teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Name
-            });
+            (
+                newPlayer.Id,
+                newPlayer.WebName,
+                newPlayer.NowCost,
+                teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Id,
+                teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Name
+            ));
             return updates;
         }
 
