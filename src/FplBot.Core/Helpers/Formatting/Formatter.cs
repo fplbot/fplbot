@@ -578,10 +578,10 @@ namespace FplBot.Core.Helpers
             };
         }
 
-        public static string FixturesForGameweek(Gameweek gameweek, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
+        public static string FixturesForGameweek(int gwId, string name, DateTime deadline, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
         {
-            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gameweek.Id}|{gameweek.Name.ToUpper()}>";
-            textToSend += $"\nDeadline: {gameweek.Deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
+            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gwId}|{name.ToUpper()}>";
+            textToSend += $"\nDeadline: {deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
 
             var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
 

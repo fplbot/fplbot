@@ -2,9 +2,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Core.Helpers;
-using FplBot.Core.Models;
-using MediatR;
+using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace FplBot.Core.RecurringActions
 {
@@ -12,14 +12,14 @@ namespace FplBot.Core.RecurringActions
     {
         private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly DateTimeUtils _dateTimeUtils;
-        private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
         private readonly ILogger<NearDeadLineMonitor> _logger;
 
-        public NearDeadLineMonitor(IGlobalSettingsClient globalSettingsClient, DateTimeUtils dateTimeUtils, IMediator mediator, ILogger<NearDeadLineMonitor> logger)
+        public NearDeadLineMonitor(IGlobalSettingsClient globalSettingsClient, DateTimeUtils dateTimeUtils, IMessageSession session, ILogger<NearDeadLineMonitor> logger)
         {
             _globalSettingsClient = globalSettingsClient;
             _dateTimeUtils = dateTimeUtils;
-            _mediator = mediator;
+            _session = session;
             _logger = logger;
         }
 
@@ -33,10 +33,10 @@ namespace FplBot.Core.RecurringActions
             if (next != null)
             {
                 if (_dateTimeUtils.IsWithinMinutesToDate(60, next.Deadline))
-                    await _mediator.Publish(new OneHourToDeadline(next));
+                    await _session.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name,next.Deadline)));
 
                 if (_dateTimeUtils.IsWithinMinutesToDate(24*60, next.Deadline))
-                    await _mediator.Publish(new TwentyFourHoursToDeadline(next));
+                    await _session.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name,next.Deadline)));
             }
             else
             {
