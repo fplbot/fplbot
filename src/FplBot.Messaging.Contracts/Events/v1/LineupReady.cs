@@ -3,41 +3,13 @@ using NServiceBus;
 
 namespace FplBot.Messaging.Contracts.Events.v1
 {
-    public class LineupReady : IEvent
-    {
-        public Lineups Lineup { get; set; }
-    }
+    public record LineupReady(Lineups Lineup) : IEvent;
 
-    public class Lineups
-    {
-        public int FixturePulseId { get; set; }
-        public string HomeTeamNameAbbr { get; set; }
-        public string AwayTeamNameAbbr { get; set; }
+    public record Lineups(int FixturePulseId, FormationDetails HomeTeamLineup, FormationDetails AwayTeamLineup);
 
-        public FormationDetails  HomeTeamLineup { get; set; }
-        public FormationDetails  AwayTeamLineup { get; set; }
-    }
+    public record FormationDetails(string TeamName, string Formation, List<FormationSegment> Segments);
 
-    public class FormationDetails
-    {
-        public string Label { get; set; }
-        public List<FormationSegment> Segments { get; set; }
-    }
+    public record FormationSegment(string SegmentPosition, List<SegmentPlayer> PlayersInSegment);
 
-    public class FormationSegment
-    {
-        public List<SegmentPlayer>  PlayersInSegment { get; set; }
-        public string SegmentPosition { get; set; }
-    }
-
-    public class SegmentPlayer
-    {
-        public const string MatchPositionGoalie = "G";
-        public const string MatchPositionDefender = "D";
-        public const string MatchPositionMidfielder = "M";
-        public const string MatchPositionForward = "F";
-
-        public string Name { get; set; }
-        public bool Captain { get; set; }
-    }
+    public record SegmentPlayer(string Name, bool Captain);
 }

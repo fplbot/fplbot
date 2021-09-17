@@ -34,7 +34,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
                 {
-                    var command = new PublishLineupsToSlackWorkspace { WorkspaceId = slackTeam.TeamId, Lineups = message.Lineup };
+                    var command = new PublishLineupsToSlackWorkspace(slackTeam.TeamId, message.Lineup);
                     await context.SendLocal(command);
                 }
             }
@@ -45,19 +45,19 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var team = await _slackTeamRepo.GetTeam(message.WorkspaceId);
             var slackClient = _builder.Build(team.AccessToken);
             var lineups = message.Lineups;
-            var firstMessage = $"*Lineups {lineups.HomeTeamNameAbbr}-{lineups.AwayTeamNameAbbr} ready* 👇";
+            var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* 👇";
 
             var res = await slackClient.ChatPostMessage(team.FplBotSlackChannel, firstMessage);
             if (res.Ok)
             {
                 var formattedLineup = Formatter.FormatLineup(lineups);
                 await context.SendLocal(new PublishSlackThreadMessage
-                {
-                    TeamId = message.WorkspaceId,
-                    Channel = team.FplBotSlackChannel,
-                    Message = formattedLineup,
-                    Timestamp = res.ts
-                });
+                (
+                    message.WorkspaceId,
+                    team.FplBotSlackChannel,
+                    res.ts,
+                    formattedLineup
+                ));
             }
         }
     }

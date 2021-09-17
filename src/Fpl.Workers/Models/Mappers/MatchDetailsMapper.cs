@@ -19,16 +19,14 @@ namespace FplBot.Core.GameweekLifecycle
                 if (homeTeamLineup != null && homeTeamLineup.HasLineups() && awayTeamLineup != null && awayTeamLineup.HasLineups())
                 {
                     return new LineupReady
-                    {
-                        Lineup = new Lineups
-                        {
-                            FixturePulseId = details.Id,
-                            HomeTeamNameAbbr = homeTeam.Club.Abbr,
-                            AwayTeamNameAbbr = awayTeam.Club.Abbr,
-                            HomeTeamLineup = OrderByFormation(homeTeamLineup),
-                            AwayTeamLineup = OrderByFormation(awayTeamLineup)
-                        }
-                    };
+                    (
+                        new Lineups
+                        (
+                            details.Id,
+                            OrderByFormation(homeTeam.Club.Abbr, homeTeamLineup),
+                            OrderByFormation(awayTeam.Club.Abbr, awayTeamLineup)
+                        )
+                    );
                 }
 
                 return null;
@@ -40,28 +38,29 @@ namespace FplBot.Core.GameweekLifecycle
             }
         }
 
-        private static FormationDetails OrderByFormation(LineupContainer teamLineup)
+        private static FormationDetails OrderByFormation(string teamName, LineupContainer teamLineup)
         {
             var p = new List<FormationSegment>();
             foreach (var segment in teamLineup.Formation.Players)
             {
                 var playersInSegment = segment.Select(playerId => teamLineup.Lineup.First(p => p.Id == playerId));
                 p.Add(new FormationSegment
-                {
-                    SegmentPosition =  playersInSegment.First().MatchPosition ,
-                    PlayersInSegment = playersInSegment.Select(i => new SegmentPlayer
-                    {
-                        Name = i.Name.ToString(),
-                        Captain = i.Captain
-                    }).ToList()
-                });
+                (
+                    playersInSegment.First().MatchPosition ,
+                    playersInSegment.Select(i => new SegmentPlayer
+                    (
+                        i.Name.ToString(),
+                        i.Captain
+                    )).ToList()
+                ));
             }
 
             return new FormationDetails
-            {
-                Label = teamLineup.Formation.Label,
-                Segments = p
-            };
+            (
+                teamName,
+                teamLineup.Formation.Label,
+                p
+            );
         }
     }
 }

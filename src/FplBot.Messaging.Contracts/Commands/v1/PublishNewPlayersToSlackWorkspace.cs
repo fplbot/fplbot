@@ -4,15 +4,5 @@ using NServiceBus;
 
 namespace FplBot.Messaging.Contracts.Commands.v1
 {
-    public class PublishNewPlayersToSlackWorkspace : ICommand
-    {
-        public IEnumerable<NewPlayer> NewPlayers { get; }
-        public string WorkspaceId { get; }
-
-        public PublishNewPlayersToSlackWorkspace(string workspaceId, IEnumerable<NewPlayer> newPlayers)
-        {
-            NewPlayers = newPlayers;
-            WorkspaceId = workspaceId;
-        }
-    }
+    public record PublishNewPlayersToSlackWorkspace(string WorkspaceId, IEnumerable<NewPlayer> NewPlayers) : ICommand;
 }
