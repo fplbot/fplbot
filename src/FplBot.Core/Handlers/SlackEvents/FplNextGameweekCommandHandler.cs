@@ -48,10 +48,10 @@ namespace FplBot.Core.Handlers
             var user = users.Members.FirstOrDefault(x => x.Id == slackEvent.User);
             var userTzOffset = user?.Tz_Offset ?? 0;
 
-            var textToSend = Formatter.FixturesForGameweek(nextGw, fixtures, teams, userTzOffset);
+            var textToSend = Formatter.FixturesForGameweek(nextGw.Id, nextGw.Name, nextGw.Deadline, fixtures, teams, userTzOffset);
 
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, slackEvent.Channel, textToSend);
-            
+
             return new EventHandledResponse(textToSend);
         }
 

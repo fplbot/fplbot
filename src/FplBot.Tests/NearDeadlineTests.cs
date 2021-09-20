@@ -8,9 +8,11 @@ using Fpl.Client.Models;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
 using FplBot.Core.RecurringActions;
+using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus.Testing;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -126,16 +128,16 @@ namespace FplBot.Tests
             var gameweek2 = new Gameweek { IsCurrent = false, IsNext = false, Deadline = new DateTime(2021,8,22,10,0,0)};
             var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
             A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
-            var mediatorMock = A.Fake<IMediator>();
+            var session = new TestableMessageSession();
             var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
             var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
 
-            var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, mediatorMock, dontCareLogger);
+            var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, session, dontCareLogger);
 
             await handler.EveryMinuteTick();
 
-            A.CallTo(() => mediatorMock.Publish(A<TwentyFourHoursToDeadline>._, CancellationToken.None))
-                .MustHaveHappenedOnceExactly();
+            Assert.Equal(1, session.PublishedMessages.Length);
+            Assert.IsType<TwentyFourHoursToDeadline>(session.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -146,16 +148,16 @@ namespace FplBot.Tests
             var gameweek2 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,22,10,0,0)};
             var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
             A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
-            var mediatorMock = A.Fake<IMediator>();
+            var session = new TestableMessageSession();
             var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
             var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 21, 10, 0, 0) };
 
-            var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, mediatorMock, dontCareLogger);
+            var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, session, dontCareLogger);
 
             await handler.EveryMinuteTick();
 
-            A.CallTo(() => mediatorMock.Publish(A<TwentyFourHoursToDeadline>._, CancellationToken.None))
-                .MustHaveHappenedOnceExactly();
+            Assert.Equal(1, session.PublishedMessages.Length);
+            Assert.IsType<TwentyFourHoursToDeadline>(session.PublishedMessages[0].Message);
         }
     }
 }
