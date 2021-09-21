@@ -359,7 +359,7 @@ namespace FplBot.Core.Helpers
                         chance += $"{chanceOfPlayingChange}%]";
                     }
 
-                    sb.Append($"• {gUpdate.Player.WebName} ({gUpdate.Player.Team.ShortName}). {gUpdate.UpdatedStatus.News} {chance}\n");
+                    sb.Append($"• {gUpdate.Player.WebName} ({gUpdate.Player.Team.ShortName}). {gUpdate.Updated.News} {chance}\n");
                 }
             }
             return sb.ToString();
@@ -367,17 +367,18 @@ namespace FplBot.Core.Helpers
 
         public static string Change(InjuredPlayerUpdate update)
         {
-            return (update.PreviousStatus, update.UpdatedStatus) switch
+            return (PreviousStatus: update.Previous, UpdatedStatus: update.Updated) switch
             {
                 (null, null) => null,
-                ({ News: null}, { News: null}) => null,
-                (_,_) when update.PreviousStatus == update.UpdatedStatus => null,
-                (_,_) => (update.PreviousStatus.Status, update.UpdatedStatus.Status) switch
+                (null,_) => null,
+                (_, null) => null,
+                (_,_) when update.Previous == update.Updated => null,
+                (_,_) => (update.Previous.Status, update.Updated.Status) switch
                 {
                     (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
                     (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
                     (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
-                    (_, _) when update.UpdatedStatus.Status.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
+                    (_, _) when update.Updated.Status.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
                     (_, PlayerStatuses.Injured) => "🤕 Injured",
                     (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
                     (_, PlayerStatuses.Suspended) => "❌ Suspended",
@@ -391,17 +392,17 @@ namespace FplBot.Core.Helpers
 
         private static bool NewsAdded(InjuredPlayerUpdate playerStatusUpdate)
         {
-            return playerStatusUpdate.PreviousStatus.News == null && playerStatusUpdate.UpdatedStatus.News != null;
+            return playerStatusUpdate.Previous.News == null && playerStatusUpdate.Updated.News != null;
         }
 
         private const string ChanceOfPlayingPattern = "(\\d+)\\% chance of playing";
 
         private static int? ChanceOfPlayingChange(InjuredPlayerUpdate playerStatusUpdate)
         {
-            if (playerStatusUpdate.PreviousStatus?.News != null && playerStatusUpdate.UpdatedStatus.News != null)
+            if (playerStatusUpdate.Previous?.News != null && playerStatusUpdate.Updated.News != null)
             {
-                var fromChanceMatch = Regex.Matches(playerStatusUpdate.PreviousStatus.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
-                var toChanceMatch = Regex.Matches(playerStatusUpdate.UpdatedStatus.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                var fromChanceMatch = Regex.Matches(playerStatusUpdate.Previous.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                var toChanceMatch = Regex.Matches(playerStatusUpdate.Updated.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
                 if (fromChanceMatch.Any() && toChanceMatch.Any())
                 {
                     var fromChance = int.Parse(fromChanceMatch.First().Groups[1].Value);
