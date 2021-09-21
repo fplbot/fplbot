@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Core.Helpers.Comparers;

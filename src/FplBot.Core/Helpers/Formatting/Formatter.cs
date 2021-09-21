@@ -367,30 +367,25 @@ namespace FplBot.Core.Helpers
 
         public static string Change(InjuredPlayerUpdate update)
         {
-            var nullChecks = (prev: update.PreviousStatus, updated: update.UpdatedStatus) switch
+            return (update.PreviousStatus, update.UpdatedStatus) switch
             {
                 (null, null) => null,
                 ({ News: null}, { News: null}) => null,
                 (_,_) when update.PreviousStatus == update.UpdatedStatus => null,
-                (_,_) => "notNull"
-            };
-
-            if (string.IsNullOrEmpty(nullChecks))
-                return null;
-
-            return (PreviousStatus: update.PreviousStatus.Status, UpdatedStatus: update.UpdatedStatus.Status) switch
-            {
-                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
-                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
-                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
-                (_, _) s when s.UpdatedStatus.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
-                (_, PlayerStatuses.Injured) => "🤕 Injured",
-                (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
-                (_, PlayerStatuses.Suspended) => "❌ Suspended",
-                (_, PlayerStatuses.Unavailable) => "👀 Unavailable",
-                (_, PlayerStatuses.NotInSquad) => "😐 Not in squad",
-                (_, PlayerStatuses.Available) => "✅ Available",
-                (_, _) => null
+                (_,_) => (update.PreviousStatus.Status, update.UpdatedStatus.Status) switch
+                {
+                    (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
+                    (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
+                    (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
+                    (_, _) when update.UpdatedStatus.Status.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
+                    (_, PlayerStatuses.Injured) => "🤕 Injured",
+                    (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
+                    (_, PlayerStatuses.Suspended) => "❌ Suspended",
+                    (_, PlayerStatuses.Unavailable) => "👀 Unavailable",
+                    (_, PlayerStatuses.NotInSquad) => "😐 Not in squad",
+                    (_, PlayerStatuses.Available) => "✅ Available",
+                    (_, _) => null
+                }
             };
         }
 
