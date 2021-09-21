@@ -78,7 +78,7 @@ namespace FplBot.Core.GameweekLifecycle
                 await _session.Publish(new PlayersPriceChanged(priceChanges.ToList()));
 
             if (injuryUpdates.Any())
-                await _mediator.Publish(new InjuryUpdateOccured(injuryUpdates));
+                await _session.Publish(new InjuryUpdateOccured(injuryUpdates));
 
             if (finishedFixtures.Any())
                 await _mediator.Publish(new FixturesFinished(finishedFixtures.ToList()));
