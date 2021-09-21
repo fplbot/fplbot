@@ -359,7 +359,7 @@ namespace FplBot.Core.Helpers
                         chance += $"{chanceOfPlayingChange}%]";
                     }
 
-                    sb.Append($"• {gUpdate.Player.WebName} ({gUpdate.Team.ShortName}). {gUpdate.UpdatedStatus.News} {chance}\n");
+                    sb.Append($"• {gUpdate.Player.WebName} ({gUpdate.Player.Team.ShortName}). {gUpdate.UpdatedStatus.News} {chance}\n");
                 }
             }
             return sb.ToString();

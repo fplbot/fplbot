@@ -99,14 +99,13 @@ namespace FplBot.Core.Helpers
                 var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
                 if (fromPlayer != null)
                 {
-                    Team? team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
+                    Team team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
                     updates.Add(new InjuredPlayerUpdate
                     (
-                        new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName, fromPlayer.OwnershipPercentage),
+                        new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName, fromPlayer.OwnershipPercentage, new TeamDescription(team.Id, team.ShortName, team.Name)),
                         new InjuryStatus(fromPlayer.Status, fromPlayer.News),
-                        new InjuryStatus(player.Status, player.News),
-                        new TeamDescription(team.Id, team.ShortName, team.Name))
-                    );
+                        new InjuryStatus(player.Status, player.News)
+                    ));
                 }
             }
 

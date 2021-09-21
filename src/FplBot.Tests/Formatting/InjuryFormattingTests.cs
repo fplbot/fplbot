@@ -22,7 +22,7 @@ namespace FplBot.Tests.Formatting
         {
             var change = Formatter.Change(new InjuredPlayerUpdate(
 
-                new InjuredPlayer(1,"WebName", 13),
+                new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
                 new InjuryStatus(
                     PlayerStatuses.Doubtful,
                     fromNews
@@ -30,8 +30,7 @@ namespace FplBot.Tests.Formatting
                 new InjuryStatus(
                     PlayerStatuses.Doubtful,
                     toNews
-                ),
-                new TeamDescription(1, "TEA", "Team United")
+                )
             ));
             Assert.Contains(expected, change);
         }
@@ -41,7 +40,7 @@ namespace FplBot.Tests.Formatting
         {
             var change = Formatter.Change(new InjuredPlayerUpdate(
 
-                new InjuredPlayer(1,"WebName", 13),
+                new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
                 new InjuryStatus(
                     PlayerStatuses.Doubtful,
                     "some string not containing percentage of playing"
@@ -49,8 +48,7 @@ namespace FplBot.Tests.Formatting
                 new InjuryStatus(
                     PlayerStatuses.Doubtful,
                     "some string not containing percentage of playing"
-                ),
-                new TeamDescription(1, "TEA", "Team United")
+                )
             ));
             Assert.Null(change);
         }
@@ -66,7 +64,7 @@ namespace FplBot.Tests.Formatting
         {
             var change = Formatter.Change(new InjuredPlayerUpdate(
 
-                new InjuredPlayer(1,"WebName", 13),
+                new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
                 new InjuryStatus(
                     fromStatus,
                     "dontcare"
@@ -74,8 +72,7 @@ namespace FplBot.Tests.Formatting
                 new InjuryStatus(
                     toStatus,
                     "dontcare"
-                ),
-                new TeamDescription(1, "TEA", "Team United")
+                )
             ));
             Assert.Contains(expected, change);
         }
@@ -87,7 +84,7 @@ namespace FplBot.Tests.Formatting
         {
             var change = Formatter.Change(new InjuredPlayerUpdate(
 
-                new InjuredPlayer(1,"WebName", 13),
+                new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
                 new InjuryStatus(
                     PlayerStatuses.Doubtful,
                     fromNews
@@ -95,8 +92,7 @@ namespace FplBot.Tests.Formatting
                 new InjuryStatus(
                     PlayerStatuses.Doubtful,
                     toNews
-                ),
-                new TeamDescription(1, "TEA", "Team United")
+                )
             ));
 
             if (expected == null)
@@ -113,7 +109,7 @@ namespace FplBot.Tests.Formatting
         [Fact]
         public void ErronousUpdateHandling()
         {
-            var change = Formatter.Change(new InjuredPlayerUpdate(null, null, null, null));
+            var change = Formatter.Change(new InjuredPlayerUpdate(null, null, null));
             Assert.Null(change);
         }
 
@@ -122,7 +118,7 @@ namespace FplBot.Tests.Formatting
         {
             var change = Formatter.Change(new InjuredPlayerUpdate(
 
-                new InjuredPlayer(1,"WebName", 13),
+                new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
                 new InjuryStatus(
                     "dontCareStatus",
                     "dontCareNews"
@@ -130,8 +126,7 @@ namespace FplBot.Tests.Formatting
                 new InjuryStatus(
                     "Self-isolating",
                     "dontCareNews"
-                ),
-                new TeamDescription(1, "TEA", "Team United")
+                )
             ));
 
             Assert.Contains("🦇", change);
@@ -153,10 +148,9 @@ namespace FplBot.Tests.Formatting
         {
             return new InjuredPlayerUpdate
             (
-                new InjuredPlayer(1, $"Dougie Doubter {from}",13),
+                new InjuredPlayer(1, $"Dougie Doubter {from}",13,new TeamDescription(1,"TEA", "TEAM UTD")),
                 new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - {from}% chance of playing"),
-                new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - {to}% chance of playing"),
-                new TeamDescription(1,"TEA", "TEAM UTD")
+                new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - {to}% chance of playing")
             );
         }
 
@@ -164,10 +158,9 @@ namespace FplBot.Tests.Formatting
         {
             return new InjuredPlayerUpdate
             (
-                new InjuredPlayer(2, $"Able Availbleu",13),
+                new InjuredPlayer(2, $"Able Availbleu",13, new TeamDescription(1,"TEA", "TEAM UTD")),
                 new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - 1337% chance of playing"),
-                new InjuryStatus(PlayerStatuses.Available,""),
-                new TeamDescription(1,"TEA", "TEAM UTD")
+                new InjuryStatus(PlayerStatuses.Available,"")
             );
         }
     }
