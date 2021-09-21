@@ -342,7 +342,7 @@ namespace FplBot.Core.Helpers
             return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
         }
 
-        public static string FormatInjuryStatusUpdates(IEnumerable<PlayerUpdate> statusUpdates)
+        public static string FormatInjuryStatusUpdates(IEnumerable<InjuredPlayerUpdate> statusUpdates)
         {
             var grouped = statusUpdates.GroupBy(Change).Where(c => c.Key != null);
             var sb = new StringBuilder();
@@ -359,41 +359,64 @@ namespace FplBot.Core.Helpers
                         chance += $"{chanceOfPlayingChange}%]";
                     }
 
-                    sb.Append($"• {gUpdate.ToPlayer.WebName} ({gUpdate.Team.ShortName}). {gUpdate.ToPlayer.News} {chance}\n");
+                    sb.Append($"• {gUpdate.Player.WebName} ({gUpdate.Team.ShortName}). {gUpdate.UpdatedStatus.News} {chance}\n");
                 }
             }
             return sb.ToString();
         }
 
-        public static string Change(PlayerUpdate update)
+        public static string Change(InjuredPlayerUpdate update)
         {
-            return update switch
+            if (update.PreviousStatus == null)
+                return null;
+            if (update.UpdatedStatus == null)
+                return null;
+
+            if (update.PreviousStatus.News == null && update.UpdatedStatus.News == null)
+                return null;
+
+            if (update.PreviousStatus == update.UpdatedStatus)
+                return null;
+
+            return (PreviousStatus: update.PreviousStatus.Status, UpdatedStatus: update.UpdatedStatus.Status) switch
             {
-                (_, _) s when s.FromPlayer == null && s.ToPlayer == null => null,
-                (_, _) s when s.FromPlayer == null && s.ToPlayer == null => null,
-                (_, _) s when s.FromPlayer.News == null && s.ToPlayer.News == null => null,
-                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) > 0 => "📈️ Increased chance of playing",
-                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when ChanceOfPlayingChange(s) < 0 => "📉️ Decreased chance of playing",
-                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) s when NewsAdded(s) => "ℹ️ News update",
-                (_, _) s when s.ToPlayer.News.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
-                (_, _) s when s.FromPlayer.Status == s.ToPlayer.Status => null,
-                (_, _) s when s.FromPlayer == null => "👋 New player!",
+                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
+                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
+                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
+                (_, _) s when s.UpdatedStatus.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
                 (_, PlayerStatuses.Injured) => "🤕 Injured",
-                (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful️",
+                (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
                 (_, PlayerStatuses.Suspended) => "❌ Suspended",
                 (_, PlayerStatuses.Unavailable) => "👀 Unavailable",
                 (_, PlayerStatuses.NotInSquad) => "😐 Not in squad",
                 (_, PlayerStatuses.Available) => "✅ Available",
-                (_, _) => $"⁉️"
+                (_, _) => null
             };
         }
 
-        private static bool NewsAdded(PlayerUpdate playerStatusUpdate)
+        private static bool NewsAdded(InjuredPlayerUpdate playerStatusUpdate)
         {
-            return playerStatusUpdate.FromPlayer.News == null && playerStatusUpdate.ToPlayer.News != null;
+            return playerStatusUpdate.PreviousStatus.News == null && playerStatusUpdate.UpdatedStatus.News != null;
         }
 
         private const string ChanceOfPlayingPattern = "(\\d+)\\% chance of playing";
+
+        private static int? ChanceOfPlayingChange(InjuredPlayerUpdate playerStatusUpdate)
+        {
+            if (playerStatusUpdate.PreviousStatus?.News != null && playerStatusUpdate.UpdatedStatus.News != null)
+            {
+                var fromChanceMatch = Regex.Matches(playerStatusUpdate.PreviousStatus.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                var toChanceMatch = Regex.Matches(playerStatusUpdate.UpdatedStatus.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
+                if (fromChanceMatch.Any() && toChanceMatch.Any())
+                {
+                    var fromChance = int.Parse(fromChanceMatch.First().Groups[1].Value);
+                    var toChance = int.Parse(toChanceMatch.First().Groups[1].Value);
+                    return toChance - fromChance;
+                }
+            }
+            return null;
+        }
+
         private static int? ChanceOfPlayingChange(PlayerUpdate playerStatusUpdate)
         {
             if (playerStatusUpdate.FromPlayer?.News != null && playerStatusUpdate.ToPlayer.News != null)

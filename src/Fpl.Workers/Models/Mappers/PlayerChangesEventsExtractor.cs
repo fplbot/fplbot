@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Core.Helpers.Comparers;
@@ -33,15 +34,15 @@ namespace FplBot.Core.Helpers
             ));
         }
 
-        public static IEnumerable<PlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
+        public static IEnumerable<InjuredPlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
         {
             if(players == null)
-                return new List<PlayerUpdate>();
+                return new List<InjuredPlayerUpdate>();
 
             if (after == null)
-                return new List<PlayerUpdate>();
+                return new List<InjuredPlayerUpdate>();
 
-            return ComparePlayers(after, players, teams, new StatusComparer());
+            return CompareInjuredPlayers(after, players, teams, new StatusComparer());
         }
 
         public static IEnumerable<NewPlayer> GetNewPlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
@@ -84,6 +85,29 @@ namespace FplBot.Core.Helpers
                     });
                 }
 
+            }
+
+            return updates;
+        }
+
+        private static IEnumerable<InjuredPlayerUpdate> CompareInjuredPlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
+        {
+            var playersWithChanges = after.Except(players, changeComparer).ToList();
+            var updates = new List<InjuredPlayerUpdate>();
+            foreach (var player in playersWithChanges)
+            {
+                var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
+                if (fromPlayer != null)
+                {
+                    Team? team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
+                    updates.Add(new InjuredPlayerUpdate
+                    (
+                        new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName, fromPlayer.OwnershipPercentage),
+                        new InjuryStatus(fromPlayer.Status, fromPlayer.News),
+                        new InjuryStatus(player.Status, player.News),
+                        new TeamDescription(team.Id, team.ShortName, team.Name))
+                    );
+                }
             }
 
             return updates;

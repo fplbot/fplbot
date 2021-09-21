@@ -10,9 +10,9 @@ using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
-using NServiceBus;
 using NServiceBus.Testing;
 using Xunit;
+
 
 namespace FplBot.Tests
 {
