@@ -56,7 +56,8 @@ namespace FplBot.Tests
             var state = CreateNewInjuryScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(_MessageSession.PublishedMessages);
+            Assert.IsType<InjuryUpdateOccured>(_MessageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -76,7 +77,8 @@ namespace FplBot.Tests
             var state = CreateChangeInDoubtfulnessScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(_MessageSession.PublishedMessages);
+            Assert.IsType<InjuryUpdateOccured>(_MessageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -86,6 +88,7 @@ namespace FplBot.Tests
             await state.Reset(1);
             await state.Refresh(1);
             A.CallTo(() => _Mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
+            Assert.Empty(_MessageSession.PublishedMessages);
         }
 
         [Fact]
