@@ -124,8 +124,8 @@ namespace FplBot.Tests.Formatting
                     "dontCareNews"
                 ),
                 new InjuryStatus(
-                    "Self-isolating",
-                    "dontCareNews"
+                    "dontCareStatus",
+                    "Self-isolating"
                 )
             ));
 

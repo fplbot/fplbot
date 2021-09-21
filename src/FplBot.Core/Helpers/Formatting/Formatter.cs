@@ -367,18 +367,18 @@ namespace FplBot.Core.Helpers
 
         public static string Change(InjuredPlayerUpdate update)
         {
-            return (PreviousStatus: update.Previous, UpdatedStatus: update.Updated) switch
+            return (update.Previous, update.Updated) switch
             {
                 (null, null) => null,
                 (null,_) => null,
                 (_, null) => null,
-                (_,_) when update.Previous == update.Updated => null,
+                (_,_) s when s.Previous == s.Updated => null,
                 (_,_) => (update.Previous.Status, update.Updated.Status) switch
                 {
                     (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
                     (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
                     (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
-                    (_, _) when update.Updated.Status.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
+                    (_, _) when update.Updated.News.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
                     (_, PlayerStatuses.Injured) => "🤕 Injured",
                     (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
                     (_, PlayerStatuses.Suspended) => "❌ Suspended",
@@ -392,7 +392,7 @@ namespace FplBot.Core.Helpers
 
         private static bool NewsAdded(InjuredPlayerUpdate playerStatusUpdate)
         {
-            return playerStatusUpdate.Previous.News == null && playerStatusUpdate.Updated.News != null;
+            return string.IsNullOrEmpty(playerStatusUpdate.Previous.News) && !string.IsNullOrEmpty(playerStatusUpdate.Updated.News);
         }
 
         private const string ChanceOfPlayingPattern = "(\\d+)\\% chance of playing";
