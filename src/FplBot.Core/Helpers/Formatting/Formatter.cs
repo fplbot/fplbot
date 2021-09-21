@@ -367,15 +367,15 @@ namespace FplBot.Core.Helpers
 
         public static string Change(InjuredPlayerUpdate update)
         {
-            if (update.PreviousStatus == null)
-                return null;
-            if (update.UpdatedStatus == null)
-                return null;
+            var nullChecks = (prev: update.PreviousStatus, updated: update.UpdatedStatus) switch
+            {
+                (null, null) => null,
+                ({ News: null}, { News: null}) => null,
+                (_,_) when update.PreviousStatus == update.UpdatedStatus => null,
+                (_,_) => "notNull"
+            };
 
-            if (update.PreviousStatus.News == null && update.UpdatedStatus.News == null)
-                return null;
-
-            if (update.PreviousStatus == update.UpdatedStatus)
+            if (string.IsNullOrEmpty(nullChecks))
                 return null;
 
             return (PreviousStatus: update.PreviousStatus.Status, UpdatedStatus: update.UpdatedStatus.Status) switch
