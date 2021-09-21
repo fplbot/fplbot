@@ -136,7 +136,7 @@ namespace FplBot.Tests
 
             await handler.EveryMinuteTick();
 
-            Assert.Equal(1, session.PublishedMessages.Length);
+            Assert.Single(session.PublishedMessages);
             Assert.IsType<TwentyFourHoursToDeadline>(session.PublishedMessages[0].Message);
         }
 
@@ -156,7 +156,7 @@ namespace FplBot.Tests
 
             await handler.EveryMinuteTick();
 
-            Assert.Equal(1, session.PublishedMessages.Length);
+            Assert.Single(session.PublishedMessages);
             Assert.IsType<TwentyFourHoursToDeadline>(session.PublishedMessages[0].Message);
         }
     }

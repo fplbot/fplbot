@@ -1,18 +1,18 @@
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
-using FplBot.Core.Models;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
-using MediatR;
+using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace FplBot.Core.GameweekLifecycle.Handlers
 {
-    public class InjuryUpdateHandler : INotificationHandler<InjuryUpdateOccured>
+    public class InjuryUpdateHandler : IHandleMessages<InjuryUpdateOccured>
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _slackTeamRepo;
@@ -25,7 +25,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             _logger = logger;
         }
 
-        public async Task Handle(InjuryUpdateOccured notification, CancellationToken cancellationToken)
+        public async Task Handle(InjuryUpdateOccured notification, IMessageHandlerContext context)
         {
             _logger.LogInformation($"Handling player {notification.PlayersWithInjuryUpdates.Count()} status updates");
             var slackTeams = await _slackTeamRepo.GetAllTeams();
@@ -33,11 +33,11 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             {
                 if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
                 {
-                    var filtered = notification.PlayersWithInjuryUpdates.Where(c => c.ToPlayer.IsRelevant());
+                    var filtered = notification.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
                     if (filtered.Any())
                     {
                         var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-                        await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                        await context.SendLocal(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
                     }
                     else
                     {
