@@ -8,6 +8,7 @@ using FplBot.Core.Extensions;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace FplBot.Core.Handlers.InternalCommands
 {
@@ -19,18 +20,21 @@ namespace FplBot.Core.Handlers.InternalCommands
         private readonly IEntryHistoryClient _entryHistoryClient;
         private readonly IGlobalSettingsClient _settingsClient;
         private readonly IVerifiedEntriesRepository _verifiedEntriesRepository;
+        private readonly ILogger<UpdateEntryStatsCommandHandler> _logger;
         private readonly IEntryClient _entryClient;
 
-        public UpdateEntryStatsCommandHandler(IEntryHistoryClient entryHistoryClient, IGlobalSettingsClient settingsClient, IEntryClient entryClient, IVerifiedEntriesRepository verifiedEntriesRepository)
+        public UpdateEntryStatsCommandHandler(IEntryHistoryClient entryHistoryClient, IGlobalSettingsClient settingsClient, IEntryClient entryClient, IVerifiedEntriesRepository verifiedEntriesRepository, ILogger<UpdateEntryStatsCommandHandler> logger)
         {
             _entryHistoryClient = entryHistoryClient;
             _settingsClient = settingsClient;
             _verifiedEntriesRepository = verifiedEntriesRepository;
+            _logger = logger;
             _entryClient = entryClient;
         }
 
         public async Task Handle(UpdateAllEntryStats notification, CancellationToken cancellationToken)
         {
+            _logger.LogInformation($"Handling UpdateAllEntryStats");
             var allEntries = await _verifiedEntriesRepository.GetAllVerifiedEntries();
             var settings = await _settingsClient.GetGlobalSettings();
             var players = settings.Players;
@@ -43,6 +47,7 @@ namespace FplBot.Core.Handlers.InternalCommands
 
         public async Task Handle(UpdateEntryStats notification, CancellationToken cancellationToken)
         {
+            _logger.LogInformation($"Handling UpdateEntryStats");
             var settings = await _settingsClient.GetGlobalSettings();
             var players = settings.Players;
             var newStats = await GetUpdatedStatsForEntry(notification.EntryId, players);

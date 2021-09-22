@@ -8,6 +8,8 @@ using FplBot.Core.Models;
 using FplBot.Core.RecurringActions;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
+using NServiceBus.Testing;
 using Xunit;
 
 namespace FplBot.Tests
@@ -18,33 +20,36 @@ namespace FplBot.Tests
         public async Task OnFirstProcess_NoCurrentGameweek_OrchestratesNothing()
         {
             var gameweekClient = A.Fake<IGlobalSettingsClient>();
-           
+
             A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(new List<Gameweek>()));
-            
+
             var mediator = A.Fake<IMediator>();
-            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
-            
+            var session = new TestableMessageSession();
+            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
-            
+
             A.CallTo(() => mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
+            Assert.Empty(session.PublishedMessages);
         }
 
         [Fact]
         public async Task OnFirstProcess_OrchestratesInitializeAndGameweekOngoing()
         {
             var gameweekClient = A.Fake<IGlobalSettingsClient>();
-           
+
             A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
-            
+
             var mediator = A.Fake<IMediator>();
-            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
-            
+            var session = new TestableMessageSession();
+            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
 
             A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.CurrentGameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-            A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();            
+            A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
-        
+
         [Fact]
         public async Task OnGameweekTransition_CallsOrchestratorBegin()
         {
@@ -52,18 +57,21 @@ namespace FplBot.Tests
             A.CallTo(() => gameweekClient.GetGlobalSettings())
                 .Returns(GameweeksBeforeTransition()).Once()
                 .Then.Returns(GameweeksAfterTransition());
-            
+
             var mediator = A.Fake<IMediator>();
-            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
-            
-            await action.EveryOtherMinuteTick(CancellationToken.None);            
-            
-            A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.CurrentGameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-            A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();  
-            
+            var session = new TestableMessageSession();
+            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
 
-            A.CallTo(() => mediator.Publish(A<GameweekJustBegan>.That.Matches(a => a.Gameweek.Id == 3), CancellationToken.None)).MustHaveHappenedOnceExactly();  
+            A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.CurrentGameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+
+            await action.EveryOtherMinuteTick(CancellationToken.None);
+
+            A.CallTo(() => mediator.Publish(A<GameweekJustBegan>.That.Matches(a => a.Gameweek.Id == 3), CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(session.PublishedMessages);
+            Assert.IsType<Messaging.Contracts.Events.v1.GameweekJustBegan>(session.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -73,32 +81,34 @@ namespace FplBot.Tests
             A.CallTo(() => gameweekClient.GetGlobalSettings())
                 .Returns(GameweeksBeforeTransition()).Once()
                 .Then.Returns(GameweeksWithCurrentNowMarkedAsFinished());
-            
+
             var mediator = A.Fake<IMediator>();
-            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
-            
+            var session = new TestableMessageSession();
+            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
 
             A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.CurrentGameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-            A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();  
-            
+            A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
-            
+
             A.CallTo(() => mediator.Publish(A<GameweekFinished>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();          }
 
         [Fact]
         public async Task OnNoChanges_CallsNothing()
         {
             var gameweekClient = A.Fake<IGlobalSettingsClient>();
-            
+
             A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GameweeksWithCurrentNowMarkedAsFinished());
-            
+
             var mediator = A.Fake<IMediator>();
-            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator);
-            
+            var session = new TestableMessageSession();
+            var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
-            
-            
+
+
             A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.CurrentGameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
 
             A.CallTo(() => mediator.Publish(A<GameweekJustBegan>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
@@ -112,9 +122,9 @@ namespace FplBot.Tests
             A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
             A.CallTo(() => mediator.Publish(A<GameweekFinished>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
 
-            
+
             await action.EveryOtherMinuteTick(CancellationToken.None);
-            
+
             A.CallTo(() => mediator.Publish(A<GameweekJustBegan>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
             A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
             A.CallTo(() => mediator.Publish(A<GameweekFinished>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
@@ -139,8 +149,8 @@ namespace FplBot.Tests
         {
             return GlobalSettingsWithGameweeks(new List<Gameweek>
             {
-                TestBuilder.OlderGameweek(1), 
-                TestBuilder.PreviousGameweek(2), 
+                TestBuilder.OlderGameweek(1),
+                TestBuilder.PreviousGameweek(2),
                 TestBuilder.CurrentGameweek(3)
             });
         }

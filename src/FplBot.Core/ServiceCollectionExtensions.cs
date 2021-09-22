@@ -35,9 +35,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
             services.AddSingleton<IGameweekHelper, GameweekHelper>();
             services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
-
-            services.AddMediatR(typeof(FplEventHandlers));
-            services.AddFplWorkers();
             return services;
         }
 

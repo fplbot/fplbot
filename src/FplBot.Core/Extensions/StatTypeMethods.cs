@@ -1,3 +1,4 @@
+using Fpl.Client.Models;
 using FplBot.Data.Models;
 
 namespace FplBot.Core.Models

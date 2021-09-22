@@ -47,6 +47,8 @@ namespace FplBot.WebApi
             services.Configure<AnalyticsOptions>(Configuration);
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplBot(Configuration).AddFplBotSlackEventHandlers();
+            services.AddFplWorkers();
+            services.AddMediatR(typeof(FplEventHandlers));
             services.AddMediatR(typeof(Startup));
             services.AddAuthentication(options =>
                 {
