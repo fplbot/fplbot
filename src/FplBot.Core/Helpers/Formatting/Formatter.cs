@@ -12,6 +12,7 @@ using FplBot.Core.Models;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Models.BlockKit;
+using FinishedFixture = FplBot.Core.Models.FinishedFixture;
 
 namespace FplBot.Core.Helpers
 {

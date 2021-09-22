@@ -18,8 +18,8 @@ namespace FplBot.Tests
 {
     public class StateTests
     {
-        private static IMediator _Mediator;
-        private static TestableMessageSession _MessageSession;
+        private static IMediator _mediator;
+        private static TestableMessageSession _messageSession;
 
 
         [Fact]
@@ -28,7 +28,7 @@ namespace FplBot.Tests
             var state = CreateAllMockState();
 
             await state.Reset(1);
-            A.CallTo(() => _Mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
+            A.CallTo(() => _mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace FplBot.Tests
             var state = CreateGoalScoredScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<FixtureEventsOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => _mediator.Publish(A<FixtureEventsOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
         }
 
         [Fact]
@@ -46,8 +46,8 @@ namespace FplBot.Tests
             var state = CreatePriceIncreaseScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.Single(_MessageSession.PublishedMessages);
-            Assert.IsType<PlayersPriceChanged>(_MessageSession.PublishedMessages[0].Message);
+            Assert.Single(_messageSession.PublishedMessages);
+            Assert.IsType<PlayersPriceChanged>(_messageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -56,8 +56,8 @@ namespace FplBot.Tests
             var state = CreateNewInjuryScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.Single(_MessageSession.PublishedMessages);
-            Assert.IsType<InjuryUpdateOccured>(_MessageSession.PublishedMessages[0].Message);
+            Assert.Single(_messageSession.PublishedMessages);
+            Assert.IsType<InjuryUpdateOccured>(_messageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -66,9 +66,9 @@ namespace FplBot.Tests
             var state = CreateNewPlayerScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustNotHaveHappened();
-            Assert.Single(_MessageSession.PublishedMessages);
-            Assert.IsType<NewPlayersRegistered>(_MessageSession.PublishedMessages[0].Message);
+            A.CallTo(() => _mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustNotHaveHappened();
+            Assert.Single(_messageSession.PublishedMessages);
+            Assert.IsType<NewPlayersRegistered>(_messageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -77,8 +77,8 @@ namespace FplBot.Tests
             var state = CreateChangeInDoubtfulnessScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            Assert.Single(_MessageSession.PublishedMessages);
-            Assert.IsType<InjuryUpdateOccured>(_MessageSession.PublishedMessages[0].Message);
+            Assert.Single(_messageSession.PublishedMessages);
+            Assert.IsType<InjuryUpdateOccured>(_messageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -87,8 +87,8 @@ namespace FplBot.Tests
             var state = CreateNoFinishedFixturesScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-            Assert.Empty(_MessageSession.PublishedMessages);
+            A.CallTo(() => _mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
+            Assert.Empty(_messageSession.PublishedMessages);
         }
 
         [Fact]
@@ -97,7 +97,8 @@ namespace FplBot.Tests
             var state = CreateSingleFinishedFixturesScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<FixturesFinished>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(_messageSession.PublishedMessages);
+            Assert.IsType<FixtureFinished>(_messageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -106,14 +107,16 @@ namespace FplBot.Tests
             var state = CreateMultipleFinishedFixturesScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _Mediator.Publish(A<FixturesFinished>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Equal(2, _messageSession.PublishedMessages.Length);
+            Assert.IsType<FixtureFinished>(_messageSession.PublishedMessages[0].Message);
+            Assert.IsType<FixtureFinished>(_messageSession.PublishedMessages[1].Message);
         }
 
         private static State CreateAllMockState()
         {
-            _Mediator = A.Fake<IMediator>();
-            _MessageSession = new TestableMessageSession();
-            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _Mediator, _MessageSession);
+            _mediator = A.Fake<IMediator>();
+            _messageSession = new TestableMessageSession();
+            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _mediator, _messageSession);
         }
 
         private static State CreateMultipleFinishedFixturesScenario()
@@ -387,9 +390,9 @@ namespace FplBot.Tests
             {
                 TestBuilder.SlackTeam()
             });
-            _Mediator = A.Fake<IMediator>();
-            _MessageSession = new TestableMessageSession();
-            return new State(fixtureClient, settingsClient, _Mediator, _MessageSession);
+            _mediator = A.Fake<IMediator>();
+            _messageSession = new TestableMessageSession();
+            return new State(fixtureClient, settingsClient, _mediator, _messageSession);
         }
 
 
