@@ -58,6 +58,7 @@ namespace FplBot.Core.RecurringActions
             }
             else if (IsChangeToFinishedGameweek(fetchedCurrent))
             {
+                await _session.Publish(new Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
                 await _mediator.Publish(new GameweekFinished(fetchedCurrent), token);
             }
             else

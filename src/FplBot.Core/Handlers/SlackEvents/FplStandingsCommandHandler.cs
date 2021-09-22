@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
-using FplBot.Core.Handlers.InternalCommands;
-using FplBot.Core.Helpers;
 using FplBot.Data.Abstractions;
-using MediatR;
+using FplBot.Messaging.Contracts.Commands.v1;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
@@ -19,13 +14,13 @@ namespace FplBot.Core.Handlers
     {
         private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
 
-        public FplStandingsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGlobalSettingsClient globalSettingsClient, ILeagueClient leagueClient, ISlackTeamRepository teamRepo, IMediator mediator, ILogger<FplStandingsCommandHandler> logger)
+        public FplStandingsCommandHandler(IGlobalSettingsClient globalSettingsClient, ISlackTeamRepository teamRepo, IMessageSession session, ILogger<FplStandingsCommandHandler> logger)
         {
             _globalSettingsClient = globalSettingsClient;
             _teamRepo = teamRepo;
-            _mediator = mediator;
+            _session = session;
         }
 
         public override string[] Commands => new[] { "standings" };
@@ -35,7 +30,7 @@ namespace FplBot.Core.Handlers
             var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
             var settings =  await _globalSettingsClient.GetGlobalSettings();
             var gameweek = settings.Gameweeks.GetCurrentGameweek();
-            await _mediator.Publish(new PublishStandingsCommand(team, gameweek));
+            await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, (int)team.FplbotLeagueId, gameweek.Id));
             return new EventHandledResponse("OK");
         }
         public override (string,string) GetHelpDescription() => (CommandsFormatted, "Get current league standings");

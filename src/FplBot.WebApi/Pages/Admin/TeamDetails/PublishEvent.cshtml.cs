@@ -5,9 +5,11 @@ using FplBot.Core.Extensions;
 using FplBot.Core.Handlers.InternalCommands;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
+using FplBot.Messaging.Contracts.Commands.v1;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NServiceBus;
 using Slackbot.Net.Abstractions.Hosting;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails
@@ -15,13 +17,13 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
     public class PublishEvent : PageModel
     {
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
         private IGlobalSettingsClient _gameweekClient;
 
-        public PublishEvent(ISlackTeamRepository teamRepo, ITokenStore tokenStore, IMediator mediator, IGlobalSettingsClient gameweekClient)
+        public PublishEvent(ISlackTeamRepository teamRepo, ITokenStore tokenStore, IMessageSession session, IGlobalSettingsClient gameweekClient)
         {
             _teamRepo = teamRepo;
-            _mediator = mediator;
+            _session = session;
             _gameweekClient = gameweekClient;
         }
 
@@ -46,7 +48,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             {
                 var settings = await _gameweekClient.GetGlobalSettings();
                 var gameweek = settings.Gameweeks.GetCurrentGameweek();
-                await _mediator.Publish(new PublishStandingsCommand(team, gameweek));
+                await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, (int)team.FplbotLeagueId, gameweek.Id));
                 TempData["msg"] += $"Published standings to {teamId}";
             }
             else

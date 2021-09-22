@@ -8,4 +8,5 @@ namespace FplBot.Core.Models
     internal record GameweekCurrentlyOnGoing(Gameweek Gameweek) : INotification;
     internal record GameweekCurrentlyFinished(Gameweek Gameweek) : INotification;
     internal record GameweekJustBegan(Gameweek Gameweek) : INotification;
+    internal record GameweekFinished(Gameweek Gameweek) : INotification;
 }
