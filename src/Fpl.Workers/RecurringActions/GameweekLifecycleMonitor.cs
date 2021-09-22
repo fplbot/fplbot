@@ -6,6 +6,7 @@ using Fpl.Client.Models;
 using FplBot.Core.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace FplBot.Core.RecurringActions
 {
@@ -14,14 +15,16 @@ namespace FplBot.Core.RecurringActions
         private readonly IGlobalSettingsClient _gwClient;
         private readonly ILogger<GameweekLifecycleMonitor> _logger;
         private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
 
         private Gameweek _storedCurrent;
 
-        public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator)
+        public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator, IMessageSession session)
         {
             _gwClient = gwClient;
             _logger = logger;
             _mediator = mediator;
+            _session = session;
         }
 
         public async Task EveryOtherMinuteTick(CancellationToken token)
@@ -49,8 +52,9 @@ namespace FplBot.Core.RecurringActions
 
             if (IsChangeToNewGameweek(fetchedCurrent) || IsFirstGameweekChangingToCurrent(fetchedCurrent))
             {
+                await _session.Publish(new Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
                 await _mediator.Publish(new GameweekJustBegan(fetchedCurrent), token);
-                
+
             }
             else if (IsChangeToFinishedGameweek(fetchedCurrent))
             {
@@ -59,7 +63,7 @@ namespace FplBot.Core.RecurringActions
             else
             {
                 if (!_storedCurrent.IsFinished)
-                {                    
+                {
                     await _mediator.Publish(new GameweekCurrentlyOnGoing(_storedCurrent), token);
                 }
                 else
@@ -69,7 +73,7 @@ namespace FplBot.Core.RecurringActions
             }
 
             _storedCurrent = fetchedCurrent;
-            
+
         }
 
         private bool IsChangeToNewGameweek(Gameweek fetchedCurrent)
@@ -81,7 +85,7 @@ namespace FplBot.Core.RecurringActions
         {
             return fetchedCurrent.Id == _storedCurrent.Id && !_storedCurrent.IsFinished && fetchedCurrent.IsFinished;
         }
-        
+
         private bool IsFirstGameweekChangingToCurrent(Gameweek fetchedCurrent)
         {
             var isFirstGameweekBeginning = _storedCurrent.Id == 1 && fetchedCurrent.Id == 1;

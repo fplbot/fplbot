@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
+using MediatR;
 using Nest;
 using Newtonsoft.Json;
 using NServiceBus;
@@ -67,6 +68,7 @@ namespace FplBot.Tests.Helpers
             services.Replace<IElasticClient>(elasticClient);
             services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
             services.AddSingleton<IMessageSession>(A.Fake<IMessageSession>()); // Faking NServicebus
+            services.AddFplWorkers();
             var provider = services.BuildServiceProvider();
             return provider;
         }

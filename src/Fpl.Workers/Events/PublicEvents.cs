@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace FplBot.Core.Models
 {
     // Public events using in-mem MediatR handling:
-    public record GameweekJustBegan(Gameweek Gameweek) : INotification;
+
     public record FixtureEventsOccured(FixtureUpdates FixtureEvents) : INotification;
     public record FixturesFinished(IEnumerable<FinishedFixture> FinishedFixture) : INotification;
     public record GameweekFinished(Gameweek Gameweek) : INotification;

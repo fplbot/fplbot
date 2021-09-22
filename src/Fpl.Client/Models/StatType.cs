@@ -1,4 +1,4 @@
-﻿namespace FplBot.Core.Models
+namespace Fpl.Client.Models
 {
     public enum StatType
     {
