@@ -80,8 +80,10 @@ namespace FplBot.Core.GameweekLifecycle
             if (injuryUpdates.Any())
                 await _session.Publish(new InjuryUpdateOccured(injuryUpdates));
 
-            if (finishedFixtures.Any())
-                await _mediator.Publish(new FixturesFinished(finishedFixtures.ToList()));
+            foreach (var fixture in finishedFixtures)
+            {
+                await _session.Publish(new FixtureFinished(fixture.Fixture.Id));
+            }
 
             if (newPlayers.Any())
                 await _session.Publish(new NewPlayersRegistered(newPlayers));

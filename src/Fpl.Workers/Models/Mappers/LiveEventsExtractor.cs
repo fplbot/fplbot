@@ -13,10 +13,10 @@ namespace FplBot.Core.Helpers
         {
             if(latestFixtures == null)
                 return new List<FixtureEvents>();
-            
+
             if (current == null)
                 return new List<FixtureEvents>();
-            
+
             return latestFixtures.Where(f => f.Stats.Any()).Select(fixture =>
             {
                 var oldFixture = current.FirstOrDefault(f => f.Code == fixture.Code);
@@ -43,12 +43,12 @@ namespace FplBot.Core.Helpers
                 return null;
             }).WhereNotNull();
         }
-        
+
         public static IEnumerable<FinishedFixture> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams, ICollection<Player> players)
         {
             if(latestFixtures == null)
                 return new List<FinishedFixture>();
-            
+
             if (current == null)
                 return new List<FinishedFixture>();
 
@@ -56,14 +56,19 @@ namespace FplBot.Core.Helpers
             var currentFinished = current.Where(f => f.FinishedProvisional);
             var newFinished = latestFinished.Except(currentFinished, new FixtureComparer());
             if (newFinished.Any())
-                return newFinished.Select(n => new FinishedFixture
-                {
-                    Fixture = n,
-                    HomeTeam = teams.First(t => t.Id == n.HomeTeamId),
-                    AwayTeam = teams.First(t => t.Id == n.AwayTeamId),
-                    BonusPoints = CreateBonusPlayers(players, n)
-                });
+                return newFinished.Select(n => CreateFinishedFixture(teams, players, n));
             return new List<FinishedFixture>();
+        }
+
+        public static FinishedFixture CreateFinishedFixture(ICollection<Team> teams, ICollection<Player> players, Fixture n)
+        {
+            return new FinishedFixture
+            {
+                Fixture = n,
+                HomeTeam = teams.First(t => t.Id == n.HomeTeamId),
+                AwayTeam = teams.First(t => t.Id == n.AwayTeamId),
+                BonusPoints = CreateBonusPlayers(players, n)
+            };
         }
 
         public static IEnumerable<BonusPointsPlayer> CreateBonusPlayers(ICollection<Player> players, Fixture fixture)
