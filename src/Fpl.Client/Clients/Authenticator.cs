@@ -17,8 +17,8 @@ namespace Fpl.Client.Clients
             _options = options.Value;
             _options.Validate();
         }
-        
-        public async Task<List<Cookie>> Authenticate()
+
+        public async Task<CookieCollection> Authenticate()
         {
             var request = new HttpRequestMessage
             {
@@ -53,13 +53,13 @@ namespace Fpl.Client.Clients
             }
 
             var usersCookies = cookieJar.GetAllCookies();
-            
+
             VerifyAuthCookies(usersCookies, "sessionid", "pl_profile", "csrftoken");
 
             return usersCookies;
         }
 
-        private static void VerifyAuthCookies(List<Cookie> usersCookies, params string[] cookieNames)
+        private static void VerifyAuthCookies(CookieCollection usersCookies, params string[] cookieNames)
         {
             if(!usersCookies.Any())
                 throw new FplApiException("No cookies returned!");
