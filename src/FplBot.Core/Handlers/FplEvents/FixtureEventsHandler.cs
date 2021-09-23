@@ -66,7 +66,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             }
 
             var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, slackTeam.Subscriptions, tauntData);
-            await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
+            await _publisher.PublishToWorkspace("T0A9QSU83", "C92QZTVEF", formattedStr.ToArray());
         }
 
         private async Task<IEnumerable<User>> GetSlackUsers(SlackTeam t)

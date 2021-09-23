@@ -7,16 +7,17 @@ namespace FplBot.Core.Taunts
 {
     public class AssistFormatter : IFormatWithTaunts
     {
-        private readonly TauntyFormatter _formatter;
+        private readonly IFormat _formatter;
 
         public AssistFormatter(TauntData tauntData)
         {
-            _formatter = new TauntyFormatter(this,tauntData);
+            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
         }
 
         public TauntType Type => TauntType.OutTransfers;
 
-        public string EventDescription => "got an assist!";
+        public string EventDescriptionSingular => "{0} got an assist! {1}";
+        public string EventDescriptionPlural => "{0} got {1} assists! {2}";
         public string EventEmoji => ":handshake:";
 
         public string[] JokePool => new []

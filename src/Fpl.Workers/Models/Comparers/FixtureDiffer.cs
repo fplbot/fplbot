@@ -59,7 +59,13 @@ namespace FplBot.Core.Helpers
                 // Player had no stats from last check, so we add as new stat
                 if (oldStat == null)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, false));
+                    var count = newStat.Value;
+                    while (count > 0)
+                    {
+                        diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, false));
+                        count--;
+                    }
+
                     continue;
                 }
 
@@ -70,16 +76,27 @@ namespace FplBot.Core.Helpers
                 }
 
                 // New stat for player is higher than old stat, so we add as new stat
-                if (newStat.Value > oldStat.Value)
+                int newStatsCount = newStat.Value - oldStat.Value;
+                if (newStatsCount > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, false));
+                    while (newStatsCount > 0)
+                    {
+                        diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, false));
+                        newStatsCount--;
+                    }
+
                     continue;
                 }
 
                 // New stat for player is lower than old stat, so we add as removed stat
+                int removedStats = oldStat.Value - newStat.Value;
                 if (newStat.Value < oldStat.Value)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, true));
+                    while (removedStats > 0)
+                    {
+                        diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, true));
+                        removedStats--;
+                    }
                 }
             }
 
@@ -93,7 +110,12 @@ namespace FplBot.Core.Helpers
                     // Player had a stat previously that is now removed, so we add as removed stat
                     if (newStat == null)
                     {
-                        diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, true));
+                        var oldStatCount = oldStat.Value;
+                        while (oldStatCount > 0)
+                        {
+                            diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, true));
+                            oldStatCount--;
+                        }
                     }
                 }
             }

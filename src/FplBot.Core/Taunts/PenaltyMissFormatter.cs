@@ -7,11 +7,11 @@ namespace FplBot.Core.Taunts
 {
     public class PenaltyMissFormatter : IFormatWithTaunts
     {
-        private readonly TauntyFormatter _formatter;
+        private readonly IFormat _formatter;
 
         public PenaltyMissFormatter(TauntData tauntData)
         {
-            _formatter = new TauntyFormatter(this, tauntData);
+            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
         }
         public TauntType Type => TauntType.HasPlayerInTeam;
 
@@ -26,7 +26,8 @@ namespace FplBot.Core.Taunts
             return _formatter.Format(events);
         }
 
-        public string EventDescription => "missed a penalty!";
+        public string EventDescriptionSingular => "{0} missed a penalty! {1}";
+        public string EventDescriptionPlural => "{0} missed {1} penalties! {2}";
         public string EventEmoji => ":dizzy_face:";
     }
 }

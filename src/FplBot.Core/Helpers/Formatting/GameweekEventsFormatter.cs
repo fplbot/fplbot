@@ -19,7 +19,9 @@ namespace FplBot.Core.Helpers
             {
                 var eventMessages = newFixtureEvent.StatMap
                     .Where(stat => subscriptions.ContainsStat(stat.Key))
-                    .SelectMany(stat => statFormatterFactory.Create(stat.Key).Format(stat.Value)).MaterializeToArray();
+                    .SelectMany(stat => statFormatterFactory.Create(stat.Key).Format(stat.Value))
+                    .WhereNotNull()
+                    .MaterializeToArray();
                 if (eventMessages.Any())
                 {
                     formattedStrings.Add($"{GetScore(newFixtureEvent)}\n" + Formatter.BulletPoints(eventMessages));

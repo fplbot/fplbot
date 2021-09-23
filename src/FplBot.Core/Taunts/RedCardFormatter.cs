@@ -7,11 +7,11 @@ namespace FplBot.Core.Taunts
 {
     public class RedCardFormatter : IFormatWithTaunts
     {
-        private readonly TauntyFormatter _formatter;
+        private readonly IFormat _formatter;
 
         public RedCardFormatter(TauntData tauntData)
         {
-            _formatter = new TauntyFormatter(this, tauntData);
+            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
         }
         public TauntType Type => TauntType.InTransfers;
 
@@ -27,7 +27,9 @@ namespace FplBot.Core.Taunts
             return _formatter.Format(events);
         }
 
-        public string EventDescription => "got a red card!";
+        public string EventDescriptionSingular => "{0} got a red card! {1}";
+        public string EventDescriptionPlural => "{0} got {1} red cards!? {2}";
+
         public string EventEmoji => ":red_circle:";
     }
 }

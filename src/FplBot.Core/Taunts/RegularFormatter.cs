@@ -1,33 +1,38 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Taunts
 {
-    internal class RegularFormatter
+    internal class RegularFormatter : IFormat
     {
-        private readonly IFormatWithTaunts _formatter;
+        private readonly IFormatEvents _formatter;
 
-        public RegularFormatter(IFormatWithTaunts formatter)
+        public RegularFormatter(IFormatEvents formatter)
         {
             _formatter = formatter;
         }
 
-        public IEnumerable<string> Format(IEnumerable<PlayerEvent> goalEvents)
+        public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
         {
-            return goalEvents.Select(g =>
+            return events.GroupBy(g => g.Player).Select( g =>
             {
-                var message = $"{g.Player.FirstName} {g.Player.SecondName} {_formatter.EventDescription} {_formatter.EventEmoji} ";
+                var message = string.Format(_formatter.EventDescriptionSingular, $"{g.Key.FirstName} {g.Key.SecondName}", _formatter.EventEmoji);
+                if (g.Count() > 1)
+                {
+                    var multipleEmojis = String.Concat(Enumerable.Repeat(_formatter.EventEmoji, g.Count()));
+                    message = string.Format(_formatter.EventDescriptionPlural, $"{g.Key.FirstName} {g.Key.SecondName} {multipleEmojis}", g.Count(), _formatter.EventEmoji);
+                }
 
-                if (g.IsRemoved)
+                if (g.Any(g => g.IsRemoved))
                 {
                     message = $"~{message.TrimEnd()}~ (VAR? :shrug:)";
                 }
                 return message;
 
-            }).WhereNotNull().ToList();
+            });
         }
     }
 }

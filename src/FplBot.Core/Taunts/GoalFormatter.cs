@@ -7,7 +7,7 @@ namespace FplBot.Core.Taunts
 {
     public class GoalFormatter: IFormatWithTaunts
     {
-        private readonly TauntyFormatter _formatter;
+        private readonly IFormat _formatter;
 
         public static string[] GoalJokes = new []
         {
@@ -19,14 +19,15 @@ namespace FplBot.Core.Taunts
 
         public GoalFormatter(TauntData tauntData)
         {
-            _formatter = new TauntyFormatter(this, tauntData);
+            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
         }
 
         public TauntType Type => TauntType.OutTransfers;
 
         public string[] JokePool => GoalJokes;
 
-        public string EventDescription => "scored a goal!";
+        public string EventDescriptionSingular => "{0} scored a goal! {1}";
+        public string EventDescriptionPlural => "{0} scored {1} goals! {2}";
 
         public string EventEmoji => ":soccer:";
 

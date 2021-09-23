@@ -7,11 +7,11 @@ namespace FplBot.Core.Taunts
 {
     public class OwnGoalFormatter : IFormatWithTaunts
     {
-        private readonly TauntyFormatter _formatter;
+        private readonly IFormat _formatter;
 
         public OwnGoalFormatter(TauntData tauntData)
         {
-            _formatter = new TauntyFormatter(this, tauntData);
+            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
         }
 
         public TauntType Type => TauntType.HasPlayerInTeam;
@@ -27,7 +27,8 @@ namespace FplBot.Core.Taunts
         {
             return _formatter.Format(events);
         }
-        public string EventDescription => "scored a goal! In his own goal!";
+        public string EventDescriptionSingular => "{0} scored a goal! In his own goal! {1}";
+        public string EventDescriptionPlural => "{0} scored {1} own goals! {2}";
         public string EventEmoji => ":face_palm:";
     }
 }

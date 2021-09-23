@@ -15,23 +15,18 @@ namespace FplBot.Core.Helpers
 
         public IFormatEvents Create(StatType type)
         {
-            switch (type)
+            return type switch
             {
-                case StatType.GoalsScored:
-                    return new GoalFormatter(_tauntData);
-                case StatType.Assists:
-                    return new AssistFormatter(_tauntData);
-                case StatType.OwnGoals:
-                    return new OwnGoalFormatter(_tauntData);
-                case StatType.RedCards:
-                    return new RedCardFormatter(_tauntData);
-                case StatType.PenaltiesMissed:
-                    return new PenaltyMissFormatter(_tauntData);
-                case StatType.PenaltiesSaved:
-                    return new PentaltySavedFormatter(_tauntData);
-                default:
-                    return new NoOpFormatter();
-            }
+                StatType.GoalsScored => new GoalFormatter(_tauntData),
+                StatType.Assists => new AssistFormatter(_tauntData),
+                StatType.OwnGoals => new OwnGoalFormatter(_tauntData),
+                StatType.RedCards => new RedCardFormatter(_tauntData),
+                StatType.PenaltiesMissed => new PenaltyMissFormatter(_tauntData),
+                StatType.PenaltiesSaved => new PentaltySavedFormatter(_tauntData),
+                StatType.YellowCards => new NoOpFormatter(),
+                StatType.Unknown => new NoOpFormatter(),
+                _ => new NoOpFormatter()
+            };
         }
 
 

@@ -7,11 +7,11 @@ namespace FplBot.Core.Taunts
 {
     public class PentaltySavedFormatter : IFormatWithTaunts
     {
-        private readonly TauntyFormatter _formatter;
+        private readonly IFormat _formatter;
 
         public PentaltySavedFormatter(TauntData tauntData)
         {
-            _formatter = new TauntyFormatter(this, tauntData);
+            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
         }
 
         public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
@@ -29,7 +29,8 @@ namespace FplBot.Core.Taunts
             "Goddammit, really? You couldn't hold on to him just one more gameweek, {0}?"
         };
 
-        public string EventDescription => "saved a penalty!";
+        public string EventDescriptionSingular => "{0} saved a penalty! {1}";
+        public string EventDescriptionPlural => "{0} saved {1} penalties! {2}";
         public string EventEmoji => ":man-cartwheeling:";
     }
 }
