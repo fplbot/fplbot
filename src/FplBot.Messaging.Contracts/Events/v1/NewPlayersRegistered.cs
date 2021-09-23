@@ -3,7 +3,7 @@ using NServiceBus;
 
 namespace FplBot.Messaging.Contracts.Events.v1
 {
-    public record NewPlayersRegistered(IEnumerable<NewPlayer> NewPlayers) : IEvent;
+    public record NewPlayersRegistered(List<NewPlayer> NewPlayers) : IEvent;
 
     public record NewPlayer(int PlayerId, string WebName, int NowCost, long TeamId, string TeamShortName);
 }
