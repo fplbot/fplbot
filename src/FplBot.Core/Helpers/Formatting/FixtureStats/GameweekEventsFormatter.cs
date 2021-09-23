@@ -5,7 +5,6 @@ using FplBot.Core.Extensions;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 
-
 namespace FplBot.Core.Helpers
 {
     internal class GameweekEventsFormatter

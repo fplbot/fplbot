@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Taunts
+namespace FplBot.Core.Helpers.Formatting.Taunts
 {
     internal class RegularFormatter : IFormat
     {

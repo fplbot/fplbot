@@ -1,5 +1,6 @@
 using FplBot.Core.Abstractions;
-using FplBot.Core.Taunts;
+using FplBot.Core.Helpers.Formatting.FixtureStats;
+using FplBot.Core.Helpers.Formatting.Taunts;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Helpers

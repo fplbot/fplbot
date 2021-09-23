@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Taunts
+namespace FplBot.Core.Helpers.Formatting.Taunts
 {
     internal class TauntyFormatter : IFormat
     {

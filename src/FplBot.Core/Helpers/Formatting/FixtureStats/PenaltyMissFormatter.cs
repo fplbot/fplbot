@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using FplBot.Core.Abstractions;
-using FplBot.Core.Helpers;
+using FplBot.Core.Helpers.Formatting.Taunts;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Taunts
+namespace FplBot.Core.Helpers.Formatting.FixtureStats
 {
     public class PenaltyMissFormatter : IFormatWithTaunts
     {
