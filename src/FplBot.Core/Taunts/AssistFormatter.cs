@@ -1,0 +1,35 @@
+﻿using System.Collections.Generic;
+using FplBot.Core.Abstractions;
+using FplBot.Core.Helpers;
+using FplBot.Messaging.Contracts.Events.v1;
+
+namespace FplBot.Core.Taunts
+{
+    public class AssistFormatter : IFormatWithTaunts
+    {
+        private readonly TauntyFormatter _formatter;
+
+        public AssistFormatter(TauntData tauntData)
+        {
+            _formatter = new TauntyFormatter(this,tauntData);
+        }
+
+        public TauntType Type => TauntType.OutTransfers;
+
+        public string EventDescription => "got an assist!";
+        public string EventEmoji => ":handshake:";
+
+        public string[] JokePool => new []
+        {
+            "You can't spell \"assist\" without \"ass\". Think about that before you transfer players out, {0}",
+            "I just checked whether anyone transferred him out. You did, didn't you {0}? Hahaha",
+            "Hey everyone, someone transferred him out before this gameweek: {0}",
+            "Kinda stupid decision tossing him out of your team, {0}"
+        };
+
+        public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
+        {
+            return _formatter.Format(events);
+        }
+    }
+}

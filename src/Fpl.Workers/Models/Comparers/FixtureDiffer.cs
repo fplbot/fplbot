@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
-using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Helpers
 {
     public static class FixtureDiffer
     {
-        public static IDictionary<StatType, List<PlayerEvent>> DiffFixtureStats(Fixture newFixture, Fixture oldFixture)
+        public static Dictionary<StatType, List<PlayerEvent>> DiffFixtureStats(Fixture newFixture, Fixture oldFixture, ICollection<Player> players)
         {
             var newFixtureStats = new Dictionary<StatType, List<PlayerEvent>>();
 
@@ -23,7 +23,7 @@ namespace FplBot.Core.Helpers
                 }
 
                 var oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
-                var newPlayerEvents = DiffStat(stat, oldStat);
+                var newPlayerEvents = DiffStat(stat, oldStat, players);
 
                 if (newPlayerEvents.Any())
                 {
@@ -33,32 +33,33 @@ namespace FplBot.Core.Helpers
 
             return newFixtureStats;
         }
-        
-         private static List<PlayerEvent> DiffStat(FixtureStat newStat, FixtureStat oldStat)
+
+         private static List<PlayerEvent> DiffStat(FixtureStat newStat, FixtureStat oldStat, ICollection<Player> players)
         {
             var diffs = new List<PlayerEvent>();
 
-            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Home, newStat.HomeStats, oldStat?.HomeStats));
-            diffs.AddRange(DiffStat(PlayerEvent.TeamType.Away, newStat.AwayStats, oldStat?.AwayStats));
+            diffs.AddRange(DiffStat(TeamType.Home, newStat.HomeStats, oldStat?.HomeStats, players));
+            diffs.AddRange(DiffStat(TeamType.Away, newStat.AwayStats, oldStat?.AwayStats, players));
 
             return diffs;
         }
 
         private static List<PlayerEvent> DiffStat(
-            PlayerEvent.TeamType teamType,
+            TeamType teamType,
             ICollection<FixtureStatValue> newStats,
-            ICollection<FixtureStatValue> oldStats)
+            ICollection<FixtureStatValue> oldStats,
+            ICollection<Player> players)
         {
             var diffs = new List<PlayerEvent>();
 
             foreach (var newStat in newStats)
             {
                 var oldStat = oldStats?.FirstOrDefault(old => old.Element == newStat.Element);
-
+                var player = players.FirstOrDefault(p => p.Id == newStat.Element);
                 // Player had no stats from last check, so we add as new stat
                 if (oldStat == null)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, teamType, false));
+                    diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, false));
                     continue;
                 }
 
@@ -71,14 +72,14 @@ namespace FplBot.Core.Helpers
                 // New stat for player is higher than old stat, so we add as new stat
                 if (newStat.Value > oldStat.Value)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, teamType, false));
+                    diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, false));
                     continue;
                 }
 
                 // New stat for player is lower than old stat, so we add as removed stat
                 if (newStat.Value < oldStat.Value)
                 {
-                    diffs.Add(new PlayerEvent(newStat.Element, teamType, true));
+                    diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, true));
                 }
             }
 
@@ -86,12 +87,13 @@ namespace FplBot.Core.Helpers
             {
                 foreach (var oldStat in oldStats)
                 {
+                    var player = players.FirstOrDefault(p => p.Id == oldStat.Element);
                     var newStat = newStats.FirstOrDefault(x => x.Element == oldStat.Element);
 
                     // Player had a stat previously that is now removed, so we add as removed stat
                     if (newStat == null)
                     {
-                        diffs.Add(new PlayerEvent(oldStat.Element, teamType, true));
+                        diffs.Add(new PlayerEvent(new (player.Id, player.FirstName, player.SecondName, player.WebName), teamType, true));
                     }
                 }
             }

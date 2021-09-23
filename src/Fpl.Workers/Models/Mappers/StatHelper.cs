@@ -2,6 +2,7 @@
 using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Helpers
 {

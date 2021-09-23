@@ -7,10 +7,10 @@ namespace FplBot.Core.Helpers
 {
     public static class EnumarableExtensions
     {
-        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enumerable)
-        {
-            return enumerable.Where(x => x != null);
-        }
+        // public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enumerable)
+        // {
+        //     return enumerable.Where(x => x != null);
+        // }
 
         public static async Task ForEach<T>(this IEnumerable<T> enumerable, Func<T, Task> func)
         {

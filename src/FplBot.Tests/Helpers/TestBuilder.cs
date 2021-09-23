@@ -6,6 +6,7 @@ using Fpl.Client.Models;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
 using FplBot.Data.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Endpoints.Models;
 
 namespace FplBot.Tests
@@ -119,7 +120,8 @@ namespace FplBot.Tests
             {
                 Id = HomeTeamId,
                 Code = HomeTeamId,
-                ShortName = "HoMeTeam"
+                Name = "HomeTeam",
+                ShortName = "HOM"
             };
         }
 
@@ -129,7 +131,8 @@ namespace FplBot.Tests
             {
                 Id = AwayTeamId,
                 Code = AwayTeamId,
-                ShortName = "AwAyTeam"
+                Name = "AwAyTeam",
+                ShortName = "AWA"
             };
         }
 
@@ -260,6 +263,12 @@ namespace FplBot.Tests
                 new TeamDetails { Team = new PulseTeam { Club = new Club()}},
                 new TeamDetails { Team = new PulseTeam { Club = new Club()}}
             };
+        }
+
+        public static PlayerDetails PlayerDetails()
+        {
+            var player = Player();
+            return new PlayerDetails(player.Id, player.FirstName, player.SecondName, player.WebName);
         }
     }
 }

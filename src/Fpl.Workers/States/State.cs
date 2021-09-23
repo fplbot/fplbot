@@ -4,9 +4,7 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Helpers;
-using FplBot.Core.Models;
 using FplBot.Messaging.Contracts.Events.v1;
-using MediatR;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 
@@ -16,20 +14,17 @@ namespace FplBot.Core.GameweekLifecycle
     {
         private readonly IFixtureClient _fixtureClient;
         private readonly IGlobalSettingsClient _settingsClient;
-        private readonly IMediator _mediator;
         private readonly IMessageSession _session;
         private readonly ILogger<State> _logger;
 
         private ICollection<Player> _players;
         private ICollection<Fixture> _currentGameweekFixtures;
         private ICollection<Team> _teams;
-        private int? _currentGameweek;
 
-        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMediator mediator, IMessageSession session, ILogger<State> logger = null)
+        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<State> logger = null)
         {
             _fixtureClient = fixtureClient;
             _settingsClient = settingsClient;
-            _mediator = mediator;
             _session = session;
             _logger = logger;
 
@@ -40,7 +35,6 @@ namespace FplBot.Core.GameweekLifecycle
 
         public async Task Reset(int newGameweek)
         {
-            _currentGameweek = newGameweek;
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             var settings = await _settingsClient.GetGlobalSettings();
             _players = settings.Players;
@@ -50,7 +44,7 @@ namespace FplBot.Core.GameweekLifecycle
         public async Task Refresh(int currentGameweek)
         {
             var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
-            var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures);
+            var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures, _players, _teams);
             var finishedFixtures = LiveEventsExtractor.GetProvisionalFinishedFixtures(latest, _currentGameweekFixtures, _teams, _players);
             _currentGameweekFixtures = latest;
 
@@ -64,14 +58,7 @@ namespace FplBot.Core.GameweekLifecycle
 
             if (fixtureEvents.Any())
             {
-                var fixtureUpdates = new FixtureUpdates
-                {
-                    CurrentGameweek = _currentGameweek.Value,
-                    Teams = _teams,
-                    Players = _players,
-                    Events = fixtureEvents
-                };
-                await _mediator.Publish(new FixtureEventsOccured(fixtureUpdates));
+                await _session.Publish(new FixtureEventsOccured(fixtureEvents.ToList()));
             }
 
             if (priceChanges.Any())
