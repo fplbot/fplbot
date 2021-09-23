@@ -5,8 +5,10 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Workers.RecurringActions;
 using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NServiceBus.Testing;
 using Xunit;
 
 namespace FplBot.Tests
@@ -22,7 +24,7 @@ namespace FplBot.Tests
             var monitor = CreateMatchDayStatusMonitor();
             monitor.EveryFiveMinutesTick(CancellationToken.None);
 
-            A.CallTo(() => Mediator.Publish(A<object>._, A<CancellationToken>._)).MustNotHaveHappened();
+            Assert.Empty(Mediator.PublishedMessages);
         }
 
         [Fact]
@@ -36,7 +38,7 @@ namespace FplBot.Tests
             monitor.EveryFiveMinutesTick(CancellationToken.None);
             monitor.EveryFiveMinutesTick(CancellationToken.None);
 
-            A.CallTo(() => Mediator.Publish(A<object>._, A<CancellationToken>._)).MustNotHaveHappened();
+            Assert.Empty(Mediator.PublishedMessages);
         }
 
         [Fact]
@@ -52,7 +54,8 @@ namespace FplBot.Tests
             monitor.EveryFiveMinutesTick(CancellationToken.None);
             monitor.EveryFiveMinutesTick(CancellationToken.None);
 
-            A.CallTo(() => Mediator.Publish(A<BonusAdded>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(Mediator.PublishedMessages);
+            Assert.IsType<MatchdayBonusPointsAdded>(Mediator.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -70,7 +73,8 @@ namespace FplBot.Tests
             monitor.EveryFiveMinutesTick(CancellationToken.None);
             monitor.EveryFiveMinutesTick(CancellationToken.None);
 
-            A.CallTo(() => Mediator.Publish(A<BonusAdded>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(Mediator.PublishedMessages);
+            Assert.IsType<MatchdayBonusPointsAdded>(Mediator.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -87,7 +91,8 @@ namespace FplBot.Tests
             monitor.EveryFiveMinutesTick(CancellationToken.None);
             monitor.EveryFiveMinutesTick(CancellationToken.None);
 
-            A.CallTo(() => Mediator.Publish(A<PointsReady>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(Mediator.PublishedMessages);
+            Assert.IsType<MatchdayMatchPointsAdded>(Mediator.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -105,7 +110,8 @@ namespace FplBot.Tests
             monitor.EveryFiveMinutesTick(CancellationToken.None);
             monitor.EveryFiveMinutesTick(CancellationToken.None);
 
-            A.CallTo(() => Mediator.Publish(A<PointsReady>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(Mediator.PublishedMessages);
+            Assert.IsType<MatchdayMatchPointsAdded>(Mediator.PublishedMessages[0].Message);
         }
 
         public MatchDayStatusMonitor CreateMatchDayStatusMonitor( )
@@ -114,7 +120,7 @@ namespace FplBot.Tests
         }
 
         private IEventStatusClient EventStatusClient = A.Fake<IEventStatusClient>();
-        private IMediator Mediator = A.Fake<IMediator>();
+        private TestableMessageSession Mediator = new();
 
         private static class Some
         {

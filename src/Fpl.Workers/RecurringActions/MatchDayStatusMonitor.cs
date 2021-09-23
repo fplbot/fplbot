@@ -1,27 +1,25 @@
-using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Models;
-using MediatR;
+using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
+using NServiceBus;
 
 namespace Fpl.Workers.RecurringActions
 {
     public class MatchDayStatusMonitor
     {
         private readonly IEventStatusClient _eventStatusClient;
-        private readonly IMediator _mediator;
+        private readonly IMessageSession _session;
         private EventStatusResponse _storedCurrent;
         private ILogger<MatchDayStatusMonitor> _logger;
 
-        public MatchDayStatusMonitor(IEventStatusClient eventStatusClient, IMediator mediator, ILogger<MatchDayStatusMonitor> logger)
+        public MatchDayStatusMonitor(IEventStatusClient eventStatusClient, IMessageSession session, ILogger<MatchDayStatusMonitor> logger)
         {
             _eventStatusClient = eventStatusClient;
-            _mediator = mediator;
+            _session = session;
             _logger = logger;
         }
 
@@ -43,7 +41,7 @@ namespace Fpl.Workers.RecurringActions
             if (bonusAdded != null)
             {
                 _logger.LogInformation("Bonus added!");
-                await _mediator.Publish(bonusAdded, token);
+                await _session.Publish(bonusAdded);
             }
 
             var pointsReady = GetPointsReady(fetched, _storedCurrent);
@@ -51,21 +49,21 @@ namespace Fpl.Workers.RecurringActions
             if (pointsReady != null)
             {
                 _logger.LogInformation("Points ready!");
-                await _mediator.Publish(pointsReady, token);
+                await _session.Publish(pointsReady);
             }
 
             var leaguesStatusChanged = fetched.Leagues != _storedCurrent.Leagues;
 
-            if (leaguesStatusChanged)
+            if (leaguesStatusChanged && fetched.Leagues == EventStatusConstants.LeaguesStatus.Updated)
             {
                 _logger.LogInformation($"League status changed from ${_storedCurrent.Leagues} to ${fetched.Leagues}");
-                await _mediator.Publish(new LeagueStatusChanged(_storedCurrent.Leagues, fetched.Leagues), token);
+                await _session.Publish(new MatchdayLeaguesUpdated());
             }
 
             _storedCurrent = fetched;
         }
 
-        public static BonusAdded GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)
+        private static MatchdayBonusPointsAdded GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)
         {
             var fetchedStatus = fetched.Status;
             var currentStatus = current.Status;
@@ -74,13 +72,13 @@ namespace Fpl.Workers.RecurringActions
             {
                 var currentEventStatus = currentStatus.FirstOrDefault(c => c.Date == eventStatus.Date);
                 if (currentEventStatus?.BonusAdded == false && eventStatus.BonusAdded)
-                    return new BonusAdded(eventStatus.Event, DateTime.ParseExact(eventStatus.Date,"yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo).Date);
+                    return new MatchdayBonusPointsAdded(eventStatus.Event, eventStatus.Date);
             }
 
             return null;
         }
 
-        public static PointsReady GetPointsReady(EventStatusResponse fetched, EventStatusResponse current)
+        private static MatchdayMatchPointsAdded GetPointsReady(EventStatusResponse fetched, EventStatusResponse current)
         {
             var fetchedStatus = fetched.Status;
             var currentStatus = current.Status;
@@ -89,7 +87,7 @@ namespace Fpl.Workers.RecurringActions
             {
                 var currentEventStatus = currentStatus.FirstOrDefault(c => c.Date == eventStatus.Date);
                 if (currentEventStatus?.PointsStatus != EventStatusConstants.PointStatus.Ready && eventStatus.PointsStatus == EventStatusConstants.PointStatus.Ready)
-                    return new PointsReady(eventStatus.Event, DateTime.ParseExact(eventStatus.Date,"yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo).Date);
+                    return new MatchdayMatchPointsAdded(eventStatus.Event, eventStatus.Date);
             }
 
             return null;

@@ -86,7 +86,7 @@ namespace FplBot.Core.GameweekLifecycle
             }
 
             if (newPlayers.Any())
-                await _session.Publish(new NewPlayersRegistered(newPlayers));
+                await _session.Publish(new NewPlayersRegistered(newPlayers.ToList()));
         }
     }
 }
