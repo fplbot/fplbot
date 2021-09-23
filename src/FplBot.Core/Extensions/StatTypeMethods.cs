@@ -1,5 +1,5 @@
-using Fpl.Client.Models;
 using FplBot.Data.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Models
 {

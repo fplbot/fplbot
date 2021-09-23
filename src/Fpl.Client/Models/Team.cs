@@ -14,7 +14,7 @@ namespace Fpl.Client.Models
         public object Form { get; set; }
 
         [JsonProperty("id")]
-        public long Id { get; set; }
+        public int Id { get; set; }
 
         [JsonProperty("link_url")]
         public string LinkUrl { get; set; }

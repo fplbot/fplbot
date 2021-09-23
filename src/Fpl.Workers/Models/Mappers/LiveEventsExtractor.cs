@@ -4,12 +4,14 @@ using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
+
 
 namespace FplBot.Core.Helpers
 {
     public class LiveEventsExtractor
     {
-        public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current)
+        public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Player> players, ICollection<Team> teams)
         {
             if(latestFixtures == null)
                 return new List<FixtureEvents>();
@@ -19,23 +21,25 @@ namespace FplBot.Core.Helpers
 
             return latestFixtures.Where(f => f.Stats.Any()).Select(fixture =>
             {
+                var homeTeam = teams.FirstOrDefault(t => t.Id == fixture.HomeTeamId);
+                var awayTeam = teams.FirstOrDefault(t => t.Id == fixture.AwayTeamId);
                 var oldFixture = current.FirstOrDefault(f => f.Code == fixture.Code);
                 if (oldFixture != null)
                 {
-                    var newFixtureStats = FixtureDiffer.DiffFixtureStats(fixture, oldFixture);
+                    var newFixtureStats = FixtureDiffer.DiffFixtureStats(fixture, oldFixture, players);
 
                     if (newFixtureStats.Values.Any())
                         return new FixtureEvents
-                        {
-                            GameScore = new GameScore
-                            {
-                                HomeTeamId = fixture.HomeTeamId,
-                                AwayTeamId = fixture.AwayTeamId,
-                                HomeTeamScore = fixture.HomeTeamScore,
-                                AwayTeamScore = fixture.AwayTeamScore,
-                            },
-                            StatMap = newFixtureStats
-                        };
+                        (
+                            new FixtureScore(
+
+                                new FixtureTeam(homeTeam.Id, homeTeam.Name, homeTeam.ShortName),
+                                new FixtureTeam(awayTeam.Id, awayTeam.Name, awayTeam.ShortName),
+                                fixture.HomeTeamScore,
+                                fixture.AwayTeamScore
+                            ),
+                            newFixtureStats
+                        );
                     else
                         return null;
                 }

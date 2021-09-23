@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FplBot.Core.Models;
 using FplBot.Data.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Extensions
 {
@@ -13,6 +15,12 @@ namespace FplBot.Core.Extensions
             var events = eventSubscriptions as EventSubscription[] ?? eventSubscriptions.ToArray();
 
             return events.Contains(EventSubscription.All) || events.Contains(eventSubscription);
+        }
+
+        public static bool ContainsStat(this IEnumerable<EventSubscription> subscriptions, StatType statType)
+        {
+            var subscriptionType = statType.GetSubscriptionType();
+            return subscriptionType.HasValue && subscriptions.ContainsSubscriptionFor(subscriptionType.Value);
         }
     }
 

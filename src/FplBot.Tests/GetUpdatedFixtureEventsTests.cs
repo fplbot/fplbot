@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Core.Helpers;
-using FplBot.Core.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using Xunit;
 
 namespace FplBot.Tests
@@ -24,21 +24,21 @@ namespace FplBot.Tests
             {
                 TestBuilder.NoGoals(fixtureCode:1)
             };
-            
+
             var latest = new List<Fixture>
             {
                 TestBuilder.AwayTeamGoal(fixtureCode:1, goals: 1)
             };
-          
-            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current);
+
+            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player> { TestBuilder.Player()}, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
             var awayGoalEvent = events.First();
-            Assert.Equal(123, awayGoalEvent.StatMap[StatType.GoalsScored].First().PlayerId);
-            Assert.Equal(PlayerEvent.TeamType.Away, awayGoalEvent.StatMap[StatType.GoalsScored].First().Team);
+            Assert.Equal(123, awayGoalEvent.StatMap[StatType.GoalsScored].First().Player.Id);
+            Assert.Equal(TeamType.Away, awayGoalEvent.StatMap[StatType.GoalsScored].First().Team);
         }
 
         private static void AssertEmpty(ICollection<Fixture> latest, ICollection<Fixture> current)
         {
-            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current);
+            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player>(), new List<Team>());
             Assert.Empty(events);
         }
     }

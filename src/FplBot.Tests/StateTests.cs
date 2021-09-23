@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
@@ -9,7 +8,6 @@ using FplBot.Core.Models;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
-using MediatR;
 using NServiceBus.Testing;
 using Xunit;
 
@@ -18,9 +16,7 @@ namespace FplBot.Tests
 {
     public class StateTests
     {
-        private static IMediator _mediator;
         private static TestableMessageSession _messageSession;
-
 
         [Fact]
         public async Task DoesNotCrashWithNoDataReturned()
@@ -28,7 +24,7 @@ namespace FplBot.Tests
             var state = CreateAllMockState();
 
             await state.Reset(1);
-            A.CallTo(() => _mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
+            Assert.Empty(_messageSession.PublishedMessages);
         }
 
         [Fact]
@@ -37,7 +33,8 @@ namespace FplBot.Tests
             var state = CreateGoalScoredScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _mediator.Publish(A<FixtureEventsOccured>._, CancellationToken.None)).MustHaveHappenedOnceExactly();
+            Assert.Single(_messageSession.PublishedMessages);
+            Assert.IsType<FixtureEventsOccured>(_messageSession.PublishedMessages[0].Message);
         }
 
         [Fact]
@@ -66,7 +63,7 @@ namespace FplBot.Tests
             var state = CreateNewPlayerScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _mediator.Publish(A<InjuryUpdateOccured>._, CancellationToken.None)).MustNotHaveHappened();
+
             Assert.Single(_messageSession.PublishedMessages);
             Assert.IsType<NewPlayersRegistered>(_messageSession.PublishedMessages[0].Message);
         }
@@ -87,8 +84,8 @@ namespace FplBot.Tests
             var state = CreateNoFinishedFixturesScenario();
             await state.Reset(1);
             await state.Refresh(1);
-            A.CallTo(() => _mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-            Assert.Empty(_messageSession.PublishedMessages);
+
+            Assert.Empty(_messageSession.PublishedMessages.Containing<FixtureFinished>());
         }
 
         [Fact]
@@ -114,9 +111,8 @@ namespace FplBot.Tests
 
         private static State CreateAllMockState()
         {
-            _mediator = A.Fake<IMediator>();
             _messageSession = new TestableMessageSession();
-            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _mediator, _messageSession);
+            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession);
         }
 
         private static State CreateMultipleFinishedFixturesScenario()
@@ -390,9 +386,9 @@ namespace FplBot.Tests
             {
                 TestBuilder.SlackTeam()
             });
-            _mediator = A.Fake<IMediator>();
+
             _messageSession = new TestableMessageSession();
-            return new State(fixtureClient, settingsClient, _mediator, _messageSession);
+            return new State(fixtureClient, settingsClient, _messageSession);
         }
 
 
