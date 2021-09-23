@@ -15,6 +15,8 @@ namespace FplBot.Core.Helpers
                 "red_cards" => StatType.RedCards,
                 "penalties_saved" => StatType.PenaltiesSaved,
                 "penalties_missed" => StatType.PenaltiesMissed,
+                "saves" => StatType.Saves,
+                "bonus" => StatType.Bonus,
                 _ => StatType.Unknown
             };
         }

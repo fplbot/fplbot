@@ -20,6 +20,8 @@ namespace FplBot.Messaging.Contracts.Events.v1
         RedCards,
         PenaltiesSaved,
         PenaltiesMissed,
+        Saves,
+        Bonus,
         Unknown
     }
 
