@@ -1,4 +1,5 @@
 using Fpl.Client.Models;
+using FplBot.Core.GameweekLifecycle.Handlers;
 using FplBot.Core.Helpers;
 using FplBot.Core.Models;
 using Xunit;
@@ -14,7 +15,7 @@ namespace FplBot.Tests.Formatting
         {
             _helper = helper;
         }
-        
+
         [Fact]
         public void Distributed()
         {
@@ -27,7 +28,7 @@ namespace FplBot.Tests.Formatting
                 BonusPointsPlayer("player-A", 50)
             })));
         }
-        
+
         [Fact]
         public void SharedFirstPlace()
         {
@@ -40,7 +41,7 @@ namespace FplBot.Tests.Formatting
                 BonusPointsPlayer("player-A", 40)
             })));
         }
-        
+
         [Fact]
         public void AllSharedFirstPlace()
         {
@@ -53,7 +54,7 @@ namespace FplBot.Tests.Formatting
                 BonusPointsPlayer("player-A", 40)
             })));
         }
-        
+
         [Fact]
         public void TiedSecondPlace()
         {
@@ -66,7 +67,7 @@ namespace FplBot.Tests.Formatting
                 BonusPointsPlayer("player-A", 40)
             })));
         }
-        
+
         [Fact]
         public void TiedSecondPlaceForThreePlayers()
         {
@@ -79,7 +80,7 @@ namespace FplBot.Tests.Formatting
                 BonusPointsPlayer("player-A", 40)
             })));
         }
-        
+
         [Fact]
         public void TiedThirdPlace()
         {
@@ -92,7 +93,7 @@ namespace FplBot.Tests.Formatting
                 BonusPointsPlayer("player-A", 40)
             })));
         }
-        
+
         [Fact]
         public void TiedThirdPlaceForMultiplePlayers()
         {

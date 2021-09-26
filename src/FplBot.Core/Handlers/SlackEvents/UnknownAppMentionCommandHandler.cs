@@ -55,9 +55,9 @@ namespace FplBot.Core.Handlers.SlackEvents
                 //     fixture.Stats.First(s => s.Identifier == "goals_scored").HomeStats = newl.ToList();
                 // }
             }
-
-            var allFixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(updated,previous, settings.Players, settings.Teams);
-            await _session.Publish(new FixtureEventsOccured(allFixtureEvents.ToArray()[0..1].ToList()));
+            //
+            // var allFixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(updated,previous, settings.Players, settings.Teams);
+            // await _session.Publish(new FixtureEventsOccured(allFixtureEvents.ToArray()[0..1].ToList()));
         }
     }
 }

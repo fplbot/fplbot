@@ -69,7 +69,7 @@ namespace FplBot.Core.GameweekLifecycle
 
             foreach (var fixture in finishedFixtures)
             {
-                await _session.Publish(new FixtureFinished(fixture.Fixture.Id));
+                await _session.Publish(new FixtureFinished(fixture));
             }
 
             if (newPlayers.Any())
