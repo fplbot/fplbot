@@ -17,24 +17,5 @@ namespace FplBot.Core.Extensions
         {
             return enumerable as T[] ?? enumerable.ToArray();
         }
-
-        public static T GetRandom<T>(this IEnumerable<T> enumerable)
-        {
-            var array = enumerable.MaterializeToArray();
-            if (!array.Any())
-            {
-                return default;
-            }
-
-            if (array.Length == 1)
-            {
-                return array.Single();
-            }
-
-            var random = new Random();
-            return array[random.Next(0, array.Length)];
-        }
-
-
     }
 }

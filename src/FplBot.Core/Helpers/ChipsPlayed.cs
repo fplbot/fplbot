@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
-using Fpl.Workers;
 using FplBot.Core.Abstractions;
 
 namespace FplBot.Core.Helpers

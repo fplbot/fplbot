@@ -7,10 +7,10 @@ namespace FplBot.Core.Helpers
 {
     public static class EnumarableExtensions
     {
-        // public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enumerable)
-        // {
-        //     return enumerable.Where(x => x != null);
-        // }
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enumerable)
+        {
+            return enumerable.Where(x => x != null);
+        }
 
         public static async Task ForEach<T>(this IEnumerable<T> enumerable, Func<T, Task> func)
         {
@@ -47,6 +47,23 @@ namespace FplBot.Core.Helpers
             }
 
             return string.Join(separator, array.Take(array.Length - 1)) + lastSeparator + array.Last();
+        }
+
+        public static T GetRandom<T>(this IEnumerable<T> enumerable)
+        {
+            var array = enumerable.MaterializeToArray();
+            if (!array.Any())
+            {
+                return default;
+            }
+
+            if (array.Length == 1)
+            {
+                return array.Single();
+            }
+
+            var random = new Random();
+            return array[random.Next(0, array.Length)];
         }
     }
 }

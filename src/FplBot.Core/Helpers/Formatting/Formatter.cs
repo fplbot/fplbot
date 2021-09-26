@@ -8,11 +8,10 @@ using System.Text.RegularExpressions;
 using Fpl.Client.Models;
 using Fpl.Search.Models;
 using FplBot.Core.Extensions;
-using FplBot.Core.Models;
+using FplBot.Core.GameweekLifecycle.Handlers;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Models.BlockKit;
-using FinishedFixture = FplBot.Core.Models.FinishedFixture;
 
 namespace FplBot.Core.Helpers
 {
@@ -108,42 +107,6 @@ namespace FplBot.Core.Helpers
             }
 
             return emojiString.ToString();
-        }
-
-        public static string GetPlayer(Player player, ICollection<Team> teams)
-        {
-            var sb = new StringBuilder();
-
-            sb.Append($":male_mage: *{player.FirstName} {player.SecondName}*\n");
-
-            var team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
-
-            if (team != null)
-            {
-                sb.Append(GetTeamData(team));
-            }
-
-            sb.Append($"Points: {player.TotalPoints}\n");
-
-            sb.Append($"Cost: {FormatCurrency(player.NowCost)}\n");
-
-            sb.Append($"Goals: {player.GoalsScored}\n");
-
-            sb.Append($"Assists: {player.Assists}\n");
-
-            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
-            if (chanceOfPlaying != null)
-            {
-                sb.Append(chanceOfPlaying);
-                sb.Append("\n");
-            }
-
-            return sb.ToString();
-        }
-
-        public static string GetTeamData(Team team)
-        {
-            return $"Team: {team.Name}\n";
         }
 
         public static string GetChanceOfPlayingWarningIfRelevant(string chanceOfPlaying, string news)
@@ -414,22 +377,6 @@ namespace FplBot.Core.Helpers
             return null;
         }
 
-        private static int? ChanceOfPlayingChange(PlayerUpdate playerStatusUpdate)
-        {
-            if (playerStatusUpdate.FromPlayer?.News != null && playerStatusUpdate.ToPlayer.News != null)
-            {
-                var fromChanceMatch = Regex.Matches(playerStatusUpdate.FromPlayer.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
-                var toChanceMatch = Regex.Matches(playerStatusUpdate.ToPlayer.News, ChanceOfPlayingPattern, RegexOptions.IgnoreCase);
-                if (fromChanceMatch.Any() && toChanceMatch.Any())
-                {
-                    var fromChance = int.Parse(fromChanceMatch.First().Groups[1].Value);
-                    var toChance = int.Parse(toChanceMatch.First().Groups[1].Value);
-                    return toChance - fromChance;
-                }
-            }
-            return null;
-        }
-
         public static string FormatLineup(Lineups details)
         {
             var formattedOutput = "";
@@ -460,14 +407,20 @@ namespace FplBot.Core.Helpers
             formattedOutput += "\n";
         }
 
+        private const string MatchPositionGoalie = "G";
+        private const string MatchPositionDefender = "D";
+        private const string MatchPositionMidfielder = "M";
+        private const string MatchPositionForward = "F";
+
         private static string PositionEmoji(string position)
         {
+
             return position switch
             {
-                PlayerInLineup.MatchPositionGoalie => "🧤",
-                PlayerInLineup.MatchPositionDefender => "🛡",
-                PlayerInLineup.MatchPositionMidfielder => "⚙️",
-                PlayerInLineup.MatchPositionForward => "⚡️️",
+                MatchPositionGoalie => "🧤",
+                MatchPositionDefender => "🛡",
+                MatchPositionMidfielder => "⚙️",
+                MatchPositionForward => "⚡️️",
                 _ => "⁇"
             };
         }
@@ -663,6 +616,10 @@ namespace FplBot.Core.Helpers
                 case VerifiedEntryType.PastWinner:
                     emojis += ":trophy:";
                     break;
+                case VerifiedEntryType.Unknown:
+                    break;
+                case null:
+                    break;
                 default:
                     break;
             }
@@ -695,20 +652,13 @@ namespace FplBot.Core.Helpers
                 return null;
             }
 
-            countryIso = countryIso.ToLower();
-
-            switch (countryIso)
+            countryIso = countryIso switch
             {
-                case "en":
-                    countryIso = "england";
-                    break;
-                case "s1":
-                    countryIso = "scotland";
-                    break;
-                case "wa":
-                    countryIso = "wales";
-                    break;
-            }
+                "en" => "england",
+                "s1" => "scotland",
+                "wa" => "wales",
+                _ => countryIso.ToLower()
+            };
 
             return $":flag-{countryIso}:";
         }
