@@ -64,48 +64,24 @@ namespace FplBot.WebApi.Controllers
         }
 
         [HttpGet("install-url")]
-        public async Task<IActionResult> InstallUrl([FromQuery] InstallParameters install, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
+        public IActionResult InstallUrl()
         {
-            _logger.LogInformation($"Installing using channel {install.Channel} and league {install.LeagueId}!");
-            try
-            {
-                await _leagueClient.GetClassicLeague(install.LeagueId);
-            }
-            catch (Exception)
-            {
-                var msg = $"Could not find FPL league with id `{install.LeagueId}`. Only classic leagues are currently supported (not draft leagues)";
-                ModelState.AddModelError("leagueId", msg);
-                return apiBehaviorOptions.Value.InvalidModelStateResponseFactory(ControllerContext);
-            }
-            var urlencodedState = WebUtility.UrlEncode($"{install.Channel},{install.LeagueId}");
+            _logger.LogInformation($"Installing");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
             var redirect_uri = new Uri(original, "/oauth/authorize");
-
             return Ok(new {
-                redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}"
+                redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&redirect_uri={redirect_uri}"
             });
         }
 
         [HttpPost("install-url")]
-        public async Task<IActionResult> PostCreateInstallUrl([FromBody] InstallParameters install, [FromServices] IOptions<ApiBehaviorOptions> apiBehaviorOptions)
+        public IActionResult PostCreateInstallUrl()
         {
-            _logger.LogInformation($"Installing using channel {install.Channel} and league {install.LeagueId}!");
-            try
-            {
-                await _leagueClient.GetClassicLeague((int)install.LeagueId);
-            }
-            catch (Exception)
-            {
-                var msg = $"Could not find FPL league with id `{install.LeagueId}`. Only classic leagues are currently supported (not draft leagues)";
-                ModelState.AddModelError("leagueId", msg);
-                return apiBehaviorOptions.Value.InvalidModelStateResponseFactory(ControllerContext);
-            }
-            var urlencodedState = WebUtility.UrlEncode($"{install.Channel},{install.LeagueId}");
+            _logger.LogInformation($"Installing");
             var original = new Uri(HttpContext.Request.GetDisplayUrl());
             var redirect_uri = new Uri(original, "/oauth/authorize");
-
             return Ok(new {
-                redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&state={urlencodedState}&redirect_uri={redirect_uri}"
+                redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={_options.Value.CLIENT_ID}&redirect_uri={redirect_uri}"
             });
         }
 
@@ -128,18 +104,15 @@ namespace FplBot.WebApi.Controllers
             if (response.Ok)
             {
                 _logger.LogInformation($"Oauth response! {response.Ok}");
-                var setup = ParseState(state);
                 await _slackTeamRepository.Insert(new SlackTeam
                 {
                     TeamId = response.Team.Id,
                     TeamName = response.Team.Name,
                     Scope = response.Scope,
                     AccessToken = response.Access_Token,
-                    FplBotSlackChannel = setup.Channel,
-                    FplbotLeagueId = setup.LeagueId,
                     Subscriptions = new List<EventSubscription> { EventSubscription.All }
                 });
-                await _messageSession.Publish(new AppInstalled(response.Team.Id, response.Team.Name, setup.LeagueId, setup.Channel));
+                await _messageSession.Publish(new AppInstalled(response.Team.Id, response.Team.Name));
                 if (_env.IsProduction())
                 {
                     return Redirect("https://www.fplbot.app/success");

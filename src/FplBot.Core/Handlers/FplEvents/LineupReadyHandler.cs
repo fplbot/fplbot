@@ -32,7 +32,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
 
             foreach (var slackTeam in slackTeams)
             {
-                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
+                if (slackTeam.HasRegisteredFor(EventSubscription.Lineups))
                 {
                     var command = new PublishLineupsToSlackWorkspace(slackTeam.TeamId, message.Lineup);
                     await context.SendLocal(command);

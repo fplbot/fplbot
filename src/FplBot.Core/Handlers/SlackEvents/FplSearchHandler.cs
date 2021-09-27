@@ -138,7 +138,7 @@ namespace FplBot.Core.Handlers
             string countryToBoost = null;
             if (slackTeam?.FplbotLeagueId != null)
             {
-                var league = await _leagueClient.GetClassicLeague((int)slackTeam.FplbotLeagueId);
+                var league = await _leagueClient.GetClassicLeague(slackTeam.FplbotLeagueId.Value);
                 var adminEntry = league?.Properties?.AdminEntry;
 
                 if (adminEntry != null)

@@ -45,8 +45,13 @@ namespace FplBot.Core.Handlers
             if (userProfile.Profile.Api_App_Id == FplBotProdAppId || userProfile.Profile.Api_App_Id == FplBotTestAppId)
             {
                 var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
-                var league = await _leagueClient.GetClassicLeague((int)team.FplbotLeagueId);
-                var setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
+                var setupMessage = "To get notifications for a league, use my `@fplbot follow` command";
+                if (team.FplbotLeagueId.HasValue)
+                {
+                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
+                    setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
+                }
+
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
                 return new EventHandledResponse("OK");
             }

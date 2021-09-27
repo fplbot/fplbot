@@ -46,7 +46,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
 
             foreach (var slackTeam in teams)
             {
-                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureFullTime))
+                if (slackTeam.HasRegisteredFor(EventSubscription.FixtureFullTime))
                 {
                     await context.SendLocal(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage));
                 }

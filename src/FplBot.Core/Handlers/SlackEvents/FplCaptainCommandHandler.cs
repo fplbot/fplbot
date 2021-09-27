@@ -49,9 +49,18 @@ namespace FplBot.Core.Handlers
 
             var setup = await _slackTeamsRepo.GetTeam(eventMetadata.Team_Id);
 
-            var outgoingMessage = isChartRequest ?
-                await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, (int)setup.FplbotLeagueId) :
-                await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, (int)setup.FplbotLeagueId);
+            string outgoingMessage;
+            if (setup.FplbotLeagueId.HasValue)
+            {
+                outgoingMessage = isChartRequest
+                    ? await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, setup.FplbotLeagueId.Value)
+                    : await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, setup.FplbotLeagueId.Value);
+            }
+            else
+            {
+                outgoingMessage = "No league. Follow a league first via `@fplbot follow`";
+            }
+
 
             await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, outgoingMessage);
 

@@ -31,7 +31,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)
             {
-                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
+                if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
                 {
                     var filtered = notification.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
                     if (filtered.Any())

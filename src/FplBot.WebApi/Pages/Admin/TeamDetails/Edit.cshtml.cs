@@ -35,7 +35,8 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             LeagueName = "Unknown league / league not found!";
             try
             {
-                LeagueName = (await _leagueClient.GetClassicLeague((int) team.FplbotLeagueId)).Properties.Name;
+                if(team.FplbotLeagueId.HasValue)
+                    LeagueName = (await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value)).Properties.Name;
             }
             catch (Exception)
             {

@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -46,7 +45,7 @@ namespace FplBot.Core.Handlers
             }
         }
 
-        private static ViewPublishRequest BuildViewRequest(string userId, long leagueId)
+        private static ViewPublishRequest BuildViewRequest(string userId, long? leagueId)
         {
             return new ViewPublishRequest(userId)
             {
@@ -90,7 +89,7 @@ namespace FplBot.Core.Handlers
                             element = new PlainTextInputElement
                             {
                                 action_id = "fpl_league_id_action",
-                                initial_value = leagueId.ToString()
+                                initial_value = leagueId?.ToString()
                             }
 
                         }

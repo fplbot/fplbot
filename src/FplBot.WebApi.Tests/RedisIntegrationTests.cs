@@ -193,6 +193,25 @@ namespace FplBot.WebApi.Tests
 
         }
 
+        [Fact]
+        public async Task TestInsertWithOutFplData()
+        {
+            await _repo.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1"});
+
+            var tokenFromRedis = await _repo.GetTokenByTeamId("teamId1");
+
+            Assert.Equal("accessToken1", tokenFromRedis);
+
+            var team = await _repo.GetTeam("teamId1");
+
+            Assert.Equal("teamId1", team.TeamId);
+            Assert.Equal("teamName1", team.TeamName);
+            Assert.Equal("accessToken1", team.AccessToken);
+            Assert.Null(team.FplBotSlackChannel);
+            Assert.Null(team.FplbotLeagueId);
+            Assert.Empty(team.Subscriptions);
+        }
+
         private static VerifiedEntry SomeEntry()
         {
             return new VerifiedEntry(1, "fullname", "entryteamname", VerifiedEntryType.Footballer);

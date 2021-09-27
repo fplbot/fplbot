@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
 using FplBot.Data.Abstractions;
 using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -46,24 +45,24 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var newGameweek = message.GameweekId;
 
             var team = await _teamRepo.GetTeam(message.WorkspaceId);
-            if(team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains) || team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+            if(team.HasRegisteredFor(EventSubscription.Captains) || team.HasRegisteredFor(EventSubscription.Transfers))
                 await _publisher.PublishToWorkspace($"Gameweek {message.GameweekId}!");
 
             var messages = new List<string>();
 
-            if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+            if (team.HasRegisteredFor(EventSubscription.Captains))
             {
-                messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, (int)team.FplbotLeagueId));
-                messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, (int)team.FplbotLeagueId));
+                messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, team.FplbotLeagueId.Value));
+                messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, team.FplbotLeagueId.Value));
             }
             else
             {
                 _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
             }
 
-            if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+            if (team.HasRegisteredFor(EventSubscription.Transfers))
             {
-                messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)team.FplbotLeagueId));
+                messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.FplbotLeagueId.Value));
             }
             else
             {
