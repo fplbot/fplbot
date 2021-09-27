@@ -31,7 +31,7 @@ namespace FplBot.Core.Handlers.FplEvents
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)
             {
-                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers))
+                if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
                 {
                     await context.SendLocal(new PublishNewPlayersToSlackWorkspace(slackTeam.TeamId, notification.NewPlayers));
                 }

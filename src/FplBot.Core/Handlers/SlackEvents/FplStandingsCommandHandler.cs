@@ -30,7 +30,11 @@ namespace FplBot.Core.Handlers
             var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
             var settings =  await _globalSettingsClient.GetGlobalSettings();
             var gameweek = settings.Gameweeks.GetCurrentGameweek();
-            await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, (int)team.FplbotLeagueId, gameweek.Id));
+            if (team.HasChannelAndLeagueSetup())
+            {
+                await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, appMentioned.Channel, team.FplbotLeagueId.Value, gameweek.Id));
+            }
+
             return new EventHandledResponse("OK");
         }
         public override (string,string) GetHelpDescription() => (CommandsFormatted, "Get current league standings");

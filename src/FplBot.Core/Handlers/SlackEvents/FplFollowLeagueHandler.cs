@@ -9,14 +9,14 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Core.Handlers
 {
-    public class FplChangeLeagueIdHandler : HandleAppMentionBase
+    public class FplFollowLeagueHandler : HandleAppMentionBase
     {
         private readonly ISlackTeamRepository _slackTeamRepository;
         private readonly ILeagueClient _leagueClient;
         private readonly ISlackWorkSpacePublisher _publisher;
-        private readonly ILogger<FplChangeLeagueIdHandler> _logger;
+        private readonly ILogger<FplFollowLeagueHandler> _logger;
 
-        public FplChangeLeagueIdHandler(ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, ISlackWorkSpacePublisher publisher, ILogger<FplChangeLeagueIdHandler> logger)
+        public FplFollowLeagueHandler(ISlackTeamRepository slackTeamRepository, ILeagueClient leagueClient, ISlackWorkSpacePublisher publisher, ILogger<FplFollowLeagueHandler> logger)
         {
             _slackTeamRepository = slackTeamRepository;
             _leagueClient = leagueClient;
@@ -24,7 +24,7 @@ namespace FplBot.Core.Handlers
             _logger = logger;
         }
 
-        public override string[] Commands => new[] { "updateleagueid" };
+        public override string[] Commands => new[] { "follow" };
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
         {
@@ -32,7 +32,7 @@ namespace FplBot.Core.Handlers
 
             if (string.IsNullOrEmpty(newLeagueId))
             {
-                var help = $"No leagueId provided. Usage: `@fplbot updateleagueid 123`";
+                var help = $"No leagueId provided. Usage: `@fplbot follow 123`";
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, help);
                 return new EventHandledResponse(help);
             }
@@ -54,7 +54,8 @@ namespace FplBot.Core.Handlers
                 if (league?.Properties != null)
                 {
                     await _slackTeamRepository.UpdateLeagueId(eventMetadata.Team_Id, theLeagueId);
-                    var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId})";
+                    await _slackTeamRepository.UpdateChannel(eventMetadata.Team_Id, message.Channel);
+                    var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in <#{message.Channel}>";
                     await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, success);
                     return new EventHandledResponse(success);
                 }
@@ -69,6 +70,6 @@ namespace FplBot.Core.Handlers
             }
         }
 
-        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{new league id}}", "Change which league to follow");
+        public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{new league id}}", "Set league to follow");
     }
 }

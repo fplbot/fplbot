@@ -31,7 +31,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var slackTeams = await _slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)
             {
-                if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges))
+                if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
                 {
                     await context.SendLocal(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()));
                 }

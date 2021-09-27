@@ -39,11 +39,19 @@ namespace FplBot.Data.Repositories.Redis
             var hashEntries = new List<HashEntry>
             {
                 new HashEntry(_accessTokenField, slackTeam.AccessToken),
-                new HashEntry(_channelField, slackTeam.FplBotSlackChannel),
-                new HashEntry(_leagueField, slackTeam.FplbotLeagueId),
                 new HashEntry(_teamNameField, slackTeam.TeamName),
                 new HashEntry(_teamIdField, slackTeam.TeamId)
             };
+
+            if (!string.IsNullOrEmpty(slackTeam.FplBotSlackChannel))
+            {
+                hashEntries.Add(new HashEntry(_channelField, slackTeam.FplBotSlackChannel));
+            }
+
+            if (slackTeam.FplbotLeagueId > 0)
+            {
+                hashEntries.Add(new HashEntry(_leagueField, slackTeam.FplbotLeagueId));
+            }
 
             if (slackTeam.Subscriptions != null)
             {
@@ -73,11 +81,19 @@ namespace FplBot.Data.Repositories.Redis
             var team = new SlackTeam
             {
                 AccessToken = fetchedTeamData[0],
-                FplBotSlackChannel = fetchedTeamData[1],
-                FplbotLeagueId = int.Parse(fetchedTeamData[2]),
                 TeamName = fetchedTeamData[3],
                 TeamId = teamId
             };
+
+            if (fetchedTeamData[1].HasValue)
+            {
+                team.FplBotSlackChannel = fetchedTeamData[1];
+            }
+
+            if (fetchedTeamData[2].HasValue)
+            {
+                team.FplbotLeagueId = int.Parse(fetchedTeamData[2]);
+            }
 
             var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
 
@@ -173,11 +189,19 @@ namespace FplBot.Data.Repositories.Redis
                 var slackTeam = new SlackTeam
                 {
                     AccessToken = fetchedTeamData[0],
-                    FplBotSlackChannel = fetchedTeamData[1],
-                    FplbotLeagueId = int.Parse(fetchedTeamData[2]),
                     TeamName = fetchedTeamData[3],
                     TeamId = teamId
                 };
+
+                if (fetchedTeamData[1].HasValue)
+                {
+                    slackTeam.FplBotSlackChannel = fetchedTeamData[1];
+                }
+
+                if (fetchedTeamData[2].HasValue)
+                {
+                    slackTeam.FplbotLeagueId = int.Parse(fetchedTeamData[2]);
+                }
 
                 var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
 

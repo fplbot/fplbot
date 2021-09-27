@@ -8,7 +8,7 @@ namespace FplBot.Tests.Helpers
 {
     public class InMemorySlackTeamRepository : ISlackTeamRepository
     {
-        private readonly long _leagueId;
+        private readonly int _leagueId;
 
         public InMemorySlackTeamRepository()
         {

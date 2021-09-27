@@ -45,7 +45,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var allSlackTeams = await _teamRepo.GetAllTeams();
             foreach (var team in allSlackTeams)
             {
-                if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+                if (team.HasRegisteredFor(EventSubscription.Deadlines))
                 {
                     var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
                     var command = new PublishToSlack(team.TeamId, team.FplBotSlackChannel, text);
@@ -61,7 +61,7 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var allSlackTeams = await _teamRepo.GetAllTeams();
             foreach (var team in allSlackTeams)
             {
-                if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+                if (team.HasRegisteredFor(EventSubscription.Deadlines))
                 {
                     var command = new PublishDeadlineNotificationToSlackWorkspace(team.TeamId, message.GameweekNearingDeadline);
                     await context.SendLocal(command);

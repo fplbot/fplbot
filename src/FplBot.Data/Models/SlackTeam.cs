@@ -14,7 +14,17 @@ namespace FplBot.Data.Models
         public string Scope { get; set; }
         public string AccessToken { get; set; }
         public string FplBotSlackChannel { get; set; }
-        public long FplbotLeagueId { get; set; }
+        public int? FplbotLeagueId { get; set; }
+
+        public bool HasRegisteredFor(EventSubscription subscription)
+        {
+            return HasChannelAndLeagueSetup() && Subscriptions.ContainsSubscriptionFor(subscription);
+        }
+
+        public bool HasChannelAndLeagueSetup()
+        {
+            return !string.IsNullOrEmpty(FplBotSlackChannel) && FplbotLeagueId.HasValue;
+        }
 
         /// <summary>
         /// WIP

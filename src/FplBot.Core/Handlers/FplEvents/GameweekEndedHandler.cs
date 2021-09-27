@@ -41,9 +41,9 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var teams = await _teamRepo.GetAllTeams();
             foreach (var team in teams)
             {
-                if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
+                if (team.HasRegisteredFor(EventSubscription.Standings))
                 {
-                    await context.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, (int)team.FplbotLeagueId, notification.FinishedGameweek.Id));
+                    await context.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, notification.FinishedGameweek.Id));
                 }
             }
         }

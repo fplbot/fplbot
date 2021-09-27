@@ -55,18 +55,19 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
 
             TauntData tauntData = null;
-            if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
+            if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts) && slackTeam.FplbotLeagueId.HasValue)
             {
                 var gws = await _globalSettingsClient.GetGlobalSettings();
                 var currentGw = gws.Gameweeks.GetCurrentGameweek();
                 var slackUsers = await GetSlackUsers(slackTeam);
-                var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, (int) slackTeam.FplbotLeagueId);
-                var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, (int) slackTeam.FplbotLeagueId);
+                var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
+                var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
                 tauntData = new TauntData(transfers, entries, slackUsers);
             }
 
             var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, slackTeam.Subscriptions, tauntData);
-            await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
+            if(!string.IsNullOrEmpty(slackTeam.FplBotSlackChannel))
+                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
         }
 
         private async Task<IEnumerable<User>> GetSlackUsers(SlackTeam t)

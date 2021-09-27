@@ -22,7 +22,7 @@ namespace FplBot.Core.Handlers
         {
             var team = await _slackTeamRepo.GetTeam(teamId);
             await _slackTeamRepo.DeleteByTeamId(teamId);
-            await _messageSession.Publish(new AppUninstalled(team.TeamId, team.TeamName, (int)team.FplbotLeagueId, team.FplBotSlackChannel));
+            await _messageSession.Publish(new AppUninstalled(team.TeamId, team.TeamName));
         }
     }
 }

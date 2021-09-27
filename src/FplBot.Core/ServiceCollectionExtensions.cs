@@ -50,7 +50,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddAppMentionHandler<FplCaptainCommandHandler>()
                 .AddAppMentionHandler<FplTransfersCommandHandler>()
                 .AddAppMentionHandler<FplPricesHandler>()
-                .AddAppMentionHandler<FplChangeLeagueIdHandler>()
+                .AddAppMentionHandler<FplFollowLeagueHandler>()
                 .AddAppMentionHandler<FplSubscribeCommandHandler>()
                 .AddAppMentionHandler<FplSubscriptionsCommandHandler>()
                 .AddAppMentionHandler<DebugHandler>()

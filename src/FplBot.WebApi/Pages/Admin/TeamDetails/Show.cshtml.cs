@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http.Exceptions;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails
 {
@@ -41,8 +42,12 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
             if (team != null)
             {
                 Team = team;
-                var league = await _leagueClient.GetClassicLeague((int) team.FplbotLeagueId);
-                League = league;
+                if (team.FplbotLeagueId.HasValue)
+                {
+                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
+                    League = league;
+                }
+
                 var slackClient = await CreateSlackClient(teamIdToUpper);
                 try
                 {
@@ -63,17 +68,26 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
         {
             _logger.LogInformation($"Deleting {teamId}");
             var slackClient = await CreateSlackClient(teamId);
-            var res = await slackClient.AppsUninstall(_slackAppOptions.Value.CLIENT_ID, _slackAppOptions.Value.CLIENT_SECRET);
-            if (res.Ok)
+            try
             {
-                TempData["msg"] = "Uninstall queued, and will be handled at some point";
+                var res = await slackClient.AppsUninstall(_slackAppOptions.Value.CLIENT_ID, _slackAppOptions.Value.CLIENT_SECRET);
+                if (res.Ok)
+                {
+                    TempData["msg"] = "Uninstall queued, and will be handled at some point";
+                }
+                else
+                {
+                    TempData["msg"] = $"Uninstall failed '{res.Error}'";
+                }
             }
-            else
+            catch (WellKnownSlackApiException e) when (e.Message == "account_inactive")
             {
-                TempData["msg"] = $"Uninstall failed '{res.Error}'";
+                await _teamRepo.DeleteByTeamId(teamId);
+                TempData["msg"] = "Token no longer valid. Team deleted.";
             }
 
-            return RedirectToPage("Index");
+
+            return RedirectToPage("../Index");
         }
 
         private async Task<ISlackClient> CreateSlackClient(string teamId)
