@@ -34,6 +34,17 @@ namespace FplBot.Data.Repositories.Redis
             _logger = logger;
         }
 
+        public async Task Insert(Workspace workspace)
+        {
+            await Insert(new SlackTeam
+            {
+                TeamId = workspace.TeamId,
+                TeamName = workspace.TeamName,
+                AccessToken = workspace.Token,
+                Scope = workspace.Scope
+            });
+        }
+
         public async Task Insert(SlackTeam slackTeam)
         {
             var hashEntries = new List<HashEntry>

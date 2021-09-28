@@ -128,5 +128,10 @@ namespace FplBot.Tests.Helpers
         {
             return Task.CompletedTask;
         }
+
+        public Task Insert(Workspace slackTeam)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

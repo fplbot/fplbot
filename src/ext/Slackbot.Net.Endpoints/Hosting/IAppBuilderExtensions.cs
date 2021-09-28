@@ -20,6 +20,19 @@ namespace Slackbot.Net.Endpoints.Hosting
 
             return app;
         }
+
+        /// <summary>
+        /// NB! The path you run this middleware must:
+        /// - match redirect_uri in your 1st redirect to Slack
+        /// - be a valid redirect_uri in your Slack app configuration
+        /// </summary>
+        /// <param name="app"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseSlackbotDistribution(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<SlackbotCodeTokenExchangeMiddleware>();
+            return app;
+        }
     }
 }
 

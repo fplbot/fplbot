@@ -11,10 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
-using Slackbot.Net.SlackClients.Http.Extensions;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
+using NServiceBus;
 using Slackbot.Net.Endpoints.Authentication;
 
 namespace FplBot.WebApi
@@ -42,8 +43,19 @@ namespace FplBot.WebApi
                 {
                     opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
-            services.AddSlackbotOauthAccessHttpClient();
-            services.Configure<OAuthOptions>(Configuration);
+
+            var successUri = _env.IsProduction() ? "https://www.fplbot.app/success" : "https://test.fplbot.app/success";
+            services.AddSlackbotDistribution(c =>
+            {
+                c.CLIENT_ID = Configuration["CLIENT_ID"];
+                c.CLIENT_SECRET = Configuration["CLIENT_SECRET"];
+                c.SuccessRedirectUri = successUri;
+                c.OnSuccess = async (teamId,teamName, s) =>
+                {
+                    var msg = s.GetService<IMessageSession>();
+                    await msg.Publish(new AppInstalled(teamId, teamName));
+                };
+            });
             services.Configure<AnalyticsOptions>(Configuration);
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplBot(Configuration).AddFplBotSlackEventHandlers();
@@ -123,6 +135,7 @@ namespace FplBot.WebApi
                 );
             });
             services.AddHttpContextAccessor();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -144,6 +157,7 @@ namespace FplBot.WebApi
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.Map("/oauth/authorize", a => a.UseSlackbotDistribution());
             app.Map("/events", a => a.UseSlackbot(enableAuth: !_env.IsDevelopment()));
             app.UseEndpoints(endpoints =>
             {
