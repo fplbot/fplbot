@@ -1,8 +1,10 @@
-﻿using System.Net.Http;
+﻿using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
+using FplBot.Data.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -53,8 +55,13 @@ namespace FplBot.Core.Handlers
 
                 if (league?.Properties != null)
                 {
+                    var team = await _slackTeamRepository.GetTeam(eventMetadata.Team_Id);
                     await _slackTeamRepository.UpdateLeagueId(eventMetadata.Team_Id, theLeagueId);
                     await _slackTeamRepository.UpdateChannel(eventMetadata.Team_Id, message.Channel);
+                    if (!team.Subscriptions.Any())
+                    {
+                        await _slackTeamRepository.UpdateSubscriptions(eventMetadata.Team_Id, new[] { EventSubscription.All });
+                    }
                     var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in <#{message.Channel}>";
                     await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, success);
                     return new EventHandledResponse(success);
