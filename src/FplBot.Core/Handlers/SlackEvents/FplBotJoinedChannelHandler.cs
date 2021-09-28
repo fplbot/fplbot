@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Core.Abstractions;
@@ -45,11 +46,34 @@ namespace FplBot.Core.Handlers
             if (userProfile.Profile.Api_App_Id == FplBotProdAppId || userProfile.Profile.Api_App_Id == FplBotTestAppId)
             {
                 var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
-                var setupMessage = "To get notifications for a league, use my `@fplbot follow` command";
+                var setupMessage = "";
                 if (team.FplbotLeagueId.HasValue)
                 {
-                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
-                    setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {team.FplBotSlackChannel}";
+                    try
+                    {
+                        var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
+                        if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
+                        {
+                            setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {ChannelName()}";
+
+                            // Back-compat as we currently have a mix of:
+                            // - display names (#name)
+                            // - channel_ids (C12351)
+                            // Man be removed next season when we require updates to leagueids
+                            string ChannelName()
+                            {
+                                return team.FplBotSlackChannel.StartsWith("#") ? team.FplBotSlackChannel : $"<#{team.FplBotSlackChannel}>";
+                            }
+                        }
+                    }
+                    catch (HttpRequestException e) when (e.Message.Contains("404"))
+                    {
+                        setupMessage = $"I'm currently following no valid league. The invalid leagueid is `{team.FplbotLeagueId}`. Use `@fplbot follow` to setup a new valid leagueid.";
+                    }
+                }
+                else
+                {
+                    setupMessage = "To get notifications for a league, use my `@fplbot follow` command";
                 }
 
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
