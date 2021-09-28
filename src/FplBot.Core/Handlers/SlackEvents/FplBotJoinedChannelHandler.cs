@@ -54,7 +54,11 @@ namespace FplBot.Core.Handlers
                         var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
                         if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
                         {
-                            setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {ChannelName()}";
+                            setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {ChannelName()}. ";
+                            if (team.FplBotSlackChannel != joinedEvent.Channel)
+                            {
+                                setupMessage += "If you want to have notifications in this channel instead, use the `@fplbot follow` command in this channel.";
+                            }
 
                             // Back-compat as we currently have a mix of:
                             // - display names (#name)
