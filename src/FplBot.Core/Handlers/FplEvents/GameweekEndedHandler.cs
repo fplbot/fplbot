@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
@@ -53,12 +54,20 @@ namespace FplBot.Core.GameweekLifecycle.Handlers
             var settings = await _gameweekClient.GetGlobalSettings();
             var gameweeks = settings.Gameweeks;
             var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
-            var league = await _leagueClient.GetClassicLeague(message.LeagueId);
-            var intro = Formatter.FormatGameweekFinished(gw, league);
-            var standings = Formatter.GetStandings(league, gw);
-            var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
-            var worst = Formatter.GetWorstGameweekEntry(league, gw);
-            await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, intro, standings, topThree, worst);
+            ClassicLeague league = null;
+            try
+            {
+                league = await _leagueClient.GetClassicLeague(message.LeagueId);
+                var intro = Formatter.FormatGameweekFinished(gw, league);
+                var standings = Formatter.GetStandings(league, gw);
+                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
+                var worst = Formatter.GetWorstGameweekEntry(league, gw);
+                await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, intro, standings, topThree, worst);
+            }
+            catch (HttpRequestException e) when (e.Message.Contains("404"))
+            {
+                await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
+            }
         }
     }
 
