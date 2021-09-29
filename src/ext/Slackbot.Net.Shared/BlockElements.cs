@@ -22,12 +22,12 @@ namespace Slackbot.Net.Models.BlockKit
     }
     public class DividerBlock : IBlock
     {
-        public string type { get; } = BlockTypes.Divider;
+        public string type { get; set; } = BlockTypes.Divider;
         public string block_id { get; set; }
     }
     public class ImageBlock : IBlock
     {
-        public string type { get; } = BlockTypes.Image;
+        public string type { get;set;} = BlockTypes.Image;
         public string block_id { get; set; }
         public Text title { get; set; }
         public string image_url { get; set; }
@@ -36,26 +36,26 @@ namespace Slackbot.Net.Models.BlockKit
     public class ActionsBlock : IBlock
     {
         public string action_id { get; set; }
-        public string type { get; } = BlockTypes.Actions;
+        public string type { get; set;} = BlockTypes.Actions;
         public string block_id { get; set; }
         public string value { get; set; }
         public IElement[] elements { get; set; }
     }
     public class ContextBlock : IBlock
     {
-        public string type { get; } = BlockTypes.Context;
+        public string type { get; set;} = BlockTypes.Context;
         public string block_id { get; set; }
         public IElement[] elements { get; set; }
     }
-    
+
     public class InputBlock : IBlock
-    { 
-        public string type { get; } = BlockTypes.Input;
+    {
+        public string type { get; set;} = BlockTypes.Input;
         public IElement element { get; set; }
         public Text label { get; set; }
-        public bool dispatch_action { get; set; }     
+        public bool dispatch_action { get; set; }
     }
-    
+
     public class Text : IElement
     {
         public string type { get; set; } = TextTypes.PlainText;
@@ -108,20 +108,20 @@ namespace Slackbot.Net.Models.BlockKit
 
     public class PlainTextInputElement : IElement
     {
-        public string type { get; } = ElementTypes.PlainTextInput; 
+        public string type { get; set;} = ElementTypes.PlainTextInput;
         public string initial_value { get; set;}
         public string action_id { get; set; }
     }
 
     public class ImageElement : IElement
     {
-        public string type { get; } = ElementTypes.Image;
+        public string type { get; set;} = ElementTypes.Image;
         public string image_url { get; set; }
         public string alt_text { get; set; }
     }
     public class ButtonElement : IElement
     {
-        public string type { get; } = ElementTypes.Button;
+        public string type { get; set;} = ElementTypes.Button;
         public string action_id { get; set; }
         public Text text { get; set; }
         public string value { get; set; }
@@ -134,7 +134,7 @@ namespace Slackbot.Net.Models.BlockKit
     }
     public class StaticSelectElement : IElement
     {
-        public string type { get; } = ElementTypes.StaticSelect;
+        public string type { get; set;} = ElementTypes.StaticSelect;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
         public Option[] options { get; set; }
@@ -144,7 +144,7 @@ namespace Slackbot.Net.Models.BlockKit
     }
     public class ExternalSelectElement : IElement
     {
-        public string type { get; } = ElementTypes.ExternalSelect;
+        public string type { get; set;} = ElementTypes.ExternalSelect;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
         public string initial_option { get; set; }
@@ -155,7 +155,7 @@ namespace Slackbot.Net.Models.BlockKit
 
     public class UserSelectElement : IElement
     {
-        public string type { get; } = ElementTypes.UserSelect;
+        public string type { get; set;} = ElementTypes.UserSelect;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
         public string initial_user { get; set; }
@@ -163,7 +163,7 @@ namespace Slackbot.Net.Models.BlockKit
     }
     public class ConversationSelectElement : IElement
     {
-        public string type { get; } = ElementTypes.ChannelSelect;
+        public string type { get; set;} = ElementTypes.ChannelSelect;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
         public string initial_conversation { get; set; }
@@ -171,7 +171,7 @@ namespace Slackbot.Net.Models.BlockKit
     }
     public class ChannelSelectElement : IElement
     {
-        public string type { get; } = ElementTypes.ChannelSelect;
+        public string type { get; set;} = ElementTypes.ChannelSelect;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
         public string initial_channel { get; set; }
@@ -179,7 +179,7 @@ namespace Slackbot.Net.Models.BlockKit
     }
     public class OverflowElement : IElement
     {
-        public string type { get; } = ElementTypes.Overflow;
+        public string type { get; set;} = ElementTypes.Overflow;
         public string action_id { get; set; }
         public Option[] options { get; set; }
         public Confirm confirm { get; set; }
@@ -187,7 +187,7 @@ namespace Slackbot.Net.Models.BlockKit
 
     public class DatePickerElement : IElement
     {
-        public string type { get; } = ElementTypes.DatePicker;
+        public string type { get; set;} = ElementTypes.DatePicker;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
         public string initial_date { get; set; }
@@ -196,7 +196,7 @@ namespace Slackbot.Net.Models.BlockKit
 
     public class PlainTextElement : IElement
     {
-        public string type { get; } = ElementTypes.PlainTextInput;
+        public string type { get; set;} = ElementTypes.PlainTextInput;
         public string action_id { get; set; }
         public Text placeholder { get; set; }
     }
