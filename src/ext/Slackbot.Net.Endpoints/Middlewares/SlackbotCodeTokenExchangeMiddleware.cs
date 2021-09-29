@@ -42,7 +42,6 @@ namespace Slackbot.Net.Endpoints.Middlewares
                 (
                     response.Team.Id,
                     response.Team.Name,
-                    response.Scope,
                     response.Access_Token
                 ));
                 await options.Value.OnSuccess(response.Team.Id, response.Team.Name, provider);

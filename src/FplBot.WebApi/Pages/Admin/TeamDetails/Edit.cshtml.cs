@@ -15,15 +15,13 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
     public class Edit : PageModel
     {
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _builder;
         private readonly ILeagueClient _leagueClient;
 
-        public Edit(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, ITokenStore tokenStore, ISlackClientBuilder builder)
+        public Edit(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, ISlackClientBuilder builder)
         {
             _teamRepo = teamRepo;
             _leagueClient = leagueClient;
-            _tokenStore = tokenStore;
             _builder = builder;
         }
 
@@ -78,8 +76,8 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 
         private async Task<ISlackClient> CreateSlackClient(string teamId)
         {
-            var token = await _tokenStore.GetTokenByTeamId(teamId);
-            var slackClient = _builder.Build(token: token);
+            var token = await _teamRepo.GetTeam(teamId);
+            var slackClient = _builder.Build(token: token.AccessToken);
             return slackClient;
         }
     }

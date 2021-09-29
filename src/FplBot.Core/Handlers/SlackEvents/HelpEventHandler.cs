@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Models;
+using FplBot.Data.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
@@ -17,10 +18,10 @@ namespace FplBot.Core
     {
         private readonly IEnumerable<IHandleAppMentions> _handlers;
         private readonly ISlackClientBuilder _slackClientService;
-        private readonly ITokenStore _tokenStore;
+        private readonly ISlackTeamRepository _tokenStore;
         private readonly ILogger<HelpEventHandler> _logger;
 
-        public HelpEventHandler(IEnumerable<IHandleAppMentions> allHandlers, ISlackClientBuilder slackClientService, ITokenStore tokenStore, ILogger<HelpEventHandler> logger)
+        public HelpEventHandler(IEnumerable<IHandleAppMentions> allHandlers, ISlackClientBuilder slackClientService, ISlackTeamRepository tokenStore, ILogger<HelpEventHandler> logger)
         {
             _handlers = allHandlers;
             _slackClientService = slackClientService;
@@ -34,8 +35,8 @@ namespace FplBot.Core
                 .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
                 .Aggregate("*HALP:*", (current, tuple) => current + $"\n• `{tuple.HandlerTrigger}` : _{tuple.Description}_");
 
-            var token = await _tokenStore.GetTokenByTeamId(eventMetadata.Team_Id);
-            var slackClient = _slackClientService.Build(token);
+            var team = await _tokenStore.GetTeam(eventMetadata.Team_Id);
+            var slackClient = _slackClientService.Build(team.AccessToken);
             await slackClient.ChatPostMessage(@event.Channel, text);
         }
 

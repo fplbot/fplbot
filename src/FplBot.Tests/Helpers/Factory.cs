@@ -12,9 +12,7 @@ using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
-using MediatR;
 using Nest;
 using Newtonsoft.Json;
 using NServiceBus;
@@ -114,19 +112,9 @@ namespace FplBot.Tests.Helpers
 
     internal class DontCareRepo : ITokenStore
     {
-        public Task<IEnumerable<string>> GetTokens()
+        public Task<Workspace> Delete(string token)
         {
-            return Task.FromResult(new List<string>().AsEnumerable());
-        }
-
-        public Task<string> GetTokenByTeamId(string teamId)
-        {
-            return Task.FromResult(string.Empty);
-        }
-
-        public Task Delete(string token)
-        {
-            return Task.CompletedTask;
+            return Task.FromResult<Workspace>(null);
         }
 
         public Task Insert(Workspace slackTeam)

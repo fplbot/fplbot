@@ -74,7 +74,7 @@ POST http://localhost:1337/events
 X-Correlation-Id:NSB
 
 {
-    "team_id": "T016B9N3U7P",
+    "team_id": "T0A9QSU83",
     "event": {
         "type": "app_uninstalled"
     }

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
+using FplBot.Data.Abstractions;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -14,15 +15,13 @@ namespace FplBot.Core.Handlers
     {
         private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly ISlackClientBuilder _slackClientService;
-        private readonly ITokenStore _tokenStore;
-        private readonly IGlobalSettingsClient _gameweekClient;
+        private readonly ISlackTeamRepository _tokenStore;
         private readonly IFixtureClient _fixtureClient;
         private readonly IGlobalSettingsClient _globalSettingsClient;
 
-        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGlobalSettingsClient gameweekClient, IFixtureClient fixtureClient, IGlobalSettingsClient globalSettingsClient, ISlackClientBuilder slackClientService, ITokenStore tokenStore)
+        public FplNextGameweekCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IFixtureClient fixtureClient, IGlobalSettingsClient globalSettingsClient, ISlackClientBuilder slackClientService, ISlackTeamRepository tokenStore)
         {
             _workspacePublisher = workspacePublisher;
-            _gameweekClient = gameweekClient;
             _fixtureClient = fixtureClient;
             _globalSettingsClient = globalSettingsClient;
             _slackClientService = slackClientService;
@@ -33,8 +32,8 @@ namespace FplBot.Core.Handlers
 
         public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
-            var token = await _tokenStore.GetTokenByTeamId(eventMetadata.Team_Id);
-            var slackClient = _slackClientService.Build(token);
+            var team = await _tokenStore.GetTeam(eventMetadata.Team_Id);
+            var slackClient = _slackClientService.Build(team.AccessToken);
             var usersTask = slackClient.UsersList();
             var settings = await _globalSettingsClient.GetGlobalSettings();
 

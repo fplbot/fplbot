@@ -20,16 +20,14 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
     public class TeamDetailsIndex : PageModel
     {
         private readonly ISlackTeamRepository _teamRepo;
-        private readonly ITokenStore _tokenStore;
         private readonly ISlackClientBuilder _builder;
         private readonly ILeagueClient _leagueClient;
         private readonly IOptions<OAuthOptions> _slackAppOptions;
         private readonly ILogger<TeamDetailsIndex> _logger;
 
-        public TeamDetailsIndex(ISlackTeamRepository teamRepo, ITokenStore tokenStore, ILogger<TeamDetailsIndex> logger, IOptions<OAuthOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
+        public TeamDetailsIndex(ISlackTeamRepository teamRepo, ILogger<TeamDetailsIndex> logger, IOptions<OAuthOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
         {
             _teamRepo = teamRepo;
-            _tokenStore = tokenStore;
             _logger = logger;
             _slackAppOptions = slackAppOptions;
             _builder = builder;
@@ -93,8 +91,8 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 
         private async Task<ISlackClient> CreateSlackClient(string teamId)
         {
-            var token = await _tokenStore.GetTokenByTeamId(teamId);
-            var slackClient = _builder.Build(token: token);
+            var team = await _teamRepo.GetTeam(teamId);
+            var slackClient = _builder.Build(token: team.AccessToken);
             return slackClient;
         }
         public SlackTeam Team { get; set; }
