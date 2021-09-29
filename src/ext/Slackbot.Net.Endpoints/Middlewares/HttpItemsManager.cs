@@ -94,10 +94,11 @@ namespace Slackbot.Net.Endpoints.Middlewares
         private static Interaction ToInteractiveType(JsonElement payloadJson, string raw)
         {
             var eventType = GetEventType(payloadJson);
+            string json = payloadJson.ToString();
             switch (eventType)
             {
                 case InteractionTypes.ViewSubmission:
-                    var viewSubmission = JsonSerializer.Deserialize<ViewSubmission>(payloadJson.GetString(), WebOptions);
+                    var viewSubmission = JsonSerializer.Deserialize<ViewSubmission>(json, WebOptions);
 
                     var view = payloadJson.GetProperty("view");
                     var viewState = view.GetProperty("state");
@@ -105,9 +106,9 @@ namespace Slackbot.Net.Endpoints.Middlewares
                     viewSubmission.ViewState = viewState;
                     return viewSubmission;
                 case InteractionTypes.BlockActions:
-                    return JsonSerializer.Deserialize<BlockActionInteraction>(payloadJson.GetString(), WebOptions);
+                    return JsonSerializer.Deserialize<BlockActionInteraction>(json, WebOptions);
                 default:
-                    var unknownSlackEvent = JsonSerializer.Deserialize<UnknownInteractiveMessage>(payloadJson.GetString(), WebOptions);
+                    var unknownSlackEvent = JsonSerializer.Deserialize<UnknownInteractiveMessage>(json, WebOptions);
                     unknownSlackEvent.RawJson = raw;
                     return unknownSlackEvent;
             }
