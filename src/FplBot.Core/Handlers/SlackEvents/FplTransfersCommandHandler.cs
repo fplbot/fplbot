@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+using System.Net.Http;
+using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
 using FplBot.Core.Helpers;
 using FplBot.Data.Abstractions;
@@ -30,8 +31,19 @@ namespace FplBot.Core.Handlers
 
 
             var team = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
-            var messageToSend = await _transfersClient.GetTransfersByGameweekTexts(gameweek ?? 1, (int)team.FplbotLeagueId);
-
+            var messageToSend = "You don't follow any league yet. Use the `@fplbot follow` command first.";
+            if (team.FplbotLeagueId.HasValue)
+            {
+                try
+                {
+                    messageToSend =
+                        await _transfersClient.GetTransfersByGameweekTexts(gameweek ?? 1, team.FplbotLeagueId.Value);
+                }
+                catch (HttpRequestException e) when (e.Message.Contains("429"))
+                {
+                    messageToSend = "It seems fetching transfers was a bit heavy for this league. Try again later. 🤷‍️";
+                }
+            }
 
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
             return new EventHandledResponse(messageToSend);
