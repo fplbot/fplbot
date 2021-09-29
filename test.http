@@ -24,7 +24,7 @@ X-Correlation-Id:testtool
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : "<@BOT123> player salah",
+        "text" : "<@BOT123> injuries",
         "channel": "C92QZTVEF"
     }
 }

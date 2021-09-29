@@ -43,12 +43,12 @@ namespace FplBot.Core.Handlers
 
         private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)
         {
-            return players.Where(p => p.OwnershipPercentage > 5 && IsInjured(p));
+            return players.Where(p => p.OwnershipPercentage > 5 && IsInjured(p)).OrderByDescending(p => p.OwnershipPercentage);
         }
 
         private static bool IsInjured(Player player)
         {
-            return player.ChanceOfPlayingNextRound != 100 && player.ChanceOfPlayingNextRound != 0;
+            return (player.ChanceOfPlayingNextRound.HasValue && player.ChanceOfPlayingNextRound != 100);
         }
 
         public override (string,string) GetHelpDescription() => (CommandsFormatted, "See injured players owned by more than 5 %");

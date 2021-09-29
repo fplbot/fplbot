@@ -130,7 +130,7 @@ namespace FplBot.Core.Helpers
 
             foreach (var player in players)
             {
-                var text = player.News == "" ? $"Chance of playing next round: {player.ChanceOfPlayingNextRound}%" : player.News;
+                var text = player.ChanceOfPlayingNextRound.HasValue ? $"Chance of playing next round: {player.ChanceOfPlayingNextRound.Value}%" : player.News;
                 sb.Append($"*{player.FirstName} {player.SecondName}* - {text} (_Owned by {player.OwnershipPercentage}%_)\n");
             }
 
