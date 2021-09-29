@@ -19,7 +19,7 @@ namespace Fpl.Client.Models
         public int? Rank { get; set; }
 
         [JsonPropertyName("rank_sort")]
-        public string RankSort { get; set; }
+        public int? RankSort { get; set; }
 
         [JsonPropertyName("overall_rank")]
         public int? OverallRank { get; set; }
