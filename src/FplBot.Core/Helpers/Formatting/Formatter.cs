@@ -109,9 +109,9 @@ namespace FplBot.Core.Helpers
             return emojiString.ToString();
         }
 
-        public static string GetChanceOfPlayingWarningIfRelevant(string chanceOfPlaying, string news)
+        public static string GetChanceOfPlayingWarningIfRelevant(int? chanceOfPlaying, string news)
         {
-            if (chanceOfPlaying == "100" || chanceOfPlaying == null)
+            if (!chanceOfPlaying.HasValue || chanceOfPlaying.Value == 100)
             {
                 return null;
             }
@@ -206,7 +206,7 @@ namespace FplBot.Core.Helpers
 
             playerCard.Add(new DividerBlock { });
 
-            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound.ToString(), player.News);
+            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
             if (chanceOfPlaying != null)
             {
                 playerCard.Add(new SectionBlock
