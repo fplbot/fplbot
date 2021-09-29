@@ -13,12 +13,12 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage
         public string unfurl_links { get; set; }
         public string unfurl_media { get; set; }
         public string as_user { get; set; }
-        
+
         public Attachment[] attachments { get; set; }
-        
-        public IBlock[] Blocks { get; set; }
+
+        public object[] Blocks { get; set; }
     }
-    
+
     public class Attachment
     {
         public string callback_id{ get; set; }
@@ -39,14 +39,14 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage
         public string footer { get; set; }
         public string footer_icon { get; set; }
     }
-    
+
     public class Field
     {
         public string title { get; set; }
         public string value { get; set; }
         public bool @short { get; set; }
     }
-    
+
     public class AttachmentAction
     {
         public string type = "button";
@@ -64,7 +64,7 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage
 
         public string text { get; }
     }
-    
+
     public class ActionConfirm
     {
         public string title { get; set; }
