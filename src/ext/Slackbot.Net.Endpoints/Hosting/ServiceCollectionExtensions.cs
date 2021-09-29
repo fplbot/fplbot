@@ -14,7 +14,7 @@ namespace Slackbot.Net.Endpoints.Hosting
             services.AddSingleton<ISelectAppMentionEventHandlers, AppMentionEventHandlerSelector>();
             return new SlackBotHandlersBuilder(services);
         }
-
+        
         public static ISlackbotHandlersBuilder AddSlackBotEvents<T>(this IServiceCollection services) where T: class, ITokenStore
         {
             services.AddSingleton<ITokenStore, T>();

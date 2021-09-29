@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net5.0</TargetFrameworks>
+        <TargetFramework>net5.0</TargetFramework>
         <RootNamespace>Slackbot.Net.Endpoints</RootNamespace>
         <PackageId>Slackbot.Net.Endpoints</PackageId>
         <Authors>John Korsnes</Authors>
@@ -16,15 +16,16 @@
         <PackageIconUrl>images/slack.png</PackageIconUrl>
         <PackageIcon>slack.png</PackageIcon>
         <RepositoryType>git</RepositoryType>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />        
     </ItemGroup>
 
     <ItemGroup>
         <None Include="images/slack.png" Pack="true" PackagePath="" />
+        <None Include="../../../readme.md" Pack="true" PackagePath=""/>
     </ItemGroup>
 
     <ItemGroup>

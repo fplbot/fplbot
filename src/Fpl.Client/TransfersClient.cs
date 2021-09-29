@@ -1,6 +1,6 @@
 ﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Newtonsoft.Json;
+
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;

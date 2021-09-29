@@ -1,29 +1,30 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+
 
 namespace Fpl.Client.Models
 {
     public class EntryHistoryChip
     {
-        [JsonProperty("played_time_formatted")]
+        [JsonPropertyName("played_time_formatted")]
         public string FormattedPlayedTime { get; set; }
 
-        [JsonProperty("status")]
+        [JsonPropertyName("status")]
         public string Status { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonProperty("time")]
+        [JsonPropertyName("time")]
         public DateTime Time { get; set; }
 
-        [JsonProperty("chip")]
+        [JsonPropertyName("chip")]
         public int Chip { get; set; }
 
-        [JsonProperty("entry")]
+        [JsonPropertyName("entry")]
         public int Entry { get; set; }
 
-        [JsonProperty("event")]
+        [JsonPropertyName("event")]
         public int Event { get; set; }
     }
 }

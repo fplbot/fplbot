@@ -4,7 +4,7 @@ using Fpl.Client.Abstractions;
 using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
@@ -38,8 +38,6 @@ namespace FplBot.Core.Handlers
 
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, MemberJoinedChannelEvent joinedEvent)
         {
-            _logger.LogInformation(JsonConvert.SerializeObject(joinedEvent));
-            _logger.LogInformation(JsonConvert.SerializeObject(eventMetadata));
             var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
             var slackClient = _slackClientService.Build(team.AccessToken);
             var userProfile = await slackClient.UserProfile(joinedEvent.User);

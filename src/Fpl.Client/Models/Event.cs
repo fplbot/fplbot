@@ -1,49 +1,51 @@
-﻿using Newtonsoft.Json;
+﻿
+
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class Event
     {
-        [JsonProperty("average_entry_score")]
+        [JsonPropertyName("average_entry_score")]
         public int AverageEntryScore { get; set; }
 
-        [JsonProperty("data_checked")]
+        [JsonPropertyName("data_checked")]
         public bool DataChecked { get; set; }
 
-        [JsonProperty("deadline_time")]
+        [JsonPropertyName("deadline_time")]
         public string DeadlineTime { get; set; }
 
-        [JsonProperty("deadline_time_epoch")]
+        [JsonPropertyName("deadline_time_epoch")]
         public long DeadlineTimeEpoch { get; set; }
 
-        [JsonProperty("deadline_time_formatted")]
+        [JsonPropertyName("deadline_time_formatted")]
         public string DeadlineTimeFormatted { get; set; }
 
-        [JsonProperty("deadline_time_game_offset")]
+        [JsonPropertyName("deadline_time_game_offset")]
         public int DeadlineTimeGameOffset { get; set; }
 
-        [JsonProperty("finished")]
+        [JsonPropertyName("finished")]
         public bool Finished { get; set; }
 
-        [JsonProperty("highest_score")]
+        [JsonPropertyName("highest_score")]
         public int? HighestScore { get; set; }
 
-        [JsonProperty("highest_scoring_entry")]
+        [JsonPropertyName("highest_scoring_entry")]
         public int? HighestScoringEntry { get; set; }
 
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("is_current")]
+        [JsonPropertyName("is_current")]
         public bool IsCurrent { get; set; }
 
-        [JsonProperty("is_next")]
+        [JsonPropertyName("is_next")]
         public bool IsNext { get; set; }
 
-        [JsonProperty("is_previous")]
+        [JsonPropertyName("is_previous")]
         public bool IsPrevious { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
     }
 }

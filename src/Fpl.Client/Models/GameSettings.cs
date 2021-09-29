@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class GameSettings
     {
-        [JsonProperty("game")]
+        [JsonPropertyName("game")]
         public Game Game { get; set; }
     }
 }

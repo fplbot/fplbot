@@ -1,22 +1,22 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class HeadToHeadLeague
     {
-        [JsonProperty("new_entries")]
+        [JsonPropertyName("new_entries")]
         public NewLeagueEntries NewEntries { get; set; }
 
-        [JsonProperty("league")]
+        [JsonPropertyName("league")]
         public HeadToHeadLeagueProperties Properties { get; set; }
 
-        [JsonProperty("standings")]
+        [JsonPropertyName("standings")]
         public HeadToHeadLeagueStandings Standings { get; set; }
 
-        [JsonProperty("matches_next")]
+        [JsonPropertyName("matches_next")]
         public HeadToHeadLeagueMatches Next { get; set; }
 
-        [JsonProperty("matches_this")]
+        [JsonPropertyName("matches_this")]
         public HeadToHeadLeagueMatches Current { get; set; }
     }
 }

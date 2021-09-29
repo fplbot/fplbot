@@ -1,62 +1,62 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class PlayerFixture
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("kickoff_time_formatted")]
+        [JsonPropertyName("kickoff_time_formatted")]
         public string FormattedKickoffTime { get; set; }
 
-        [JsonProperty("event_name")]
+        [JsonPropertyName("event_name")]
         public string EventName { get; set; }
 
-        [JsonProperty("opponent_name")]
+        [JsonPropertyName("opponent_name")]
         public string OpponentName { get; set; }
 
-        [JsonProperty("opponent_short_name")]
+        [JsonPropertyName("opponent_short_name")]
         public string OpponentShortName { get; set; }
 
-        [JsonProperty("is_home")]
+        [JsonPropertyName("is_home")]
         public bool IsHome { get; set; }
 
-        [JsonProperty("difficulty")]
+        [JsonPropertyName("difficulty")]
         public int Difficulty { get; set; }
 
-        [JsonProperty("code")]
+        [JsonPropertyName("code")]
         public int Code { get; set; }
 
-        [JsonProperty("kickoff_time")]
+        [JsonPropertyName("kickoff_time")]
         public DateTime? KickoffTime { get; set; }
 
-        [JsonProperty("team_h_score")]
+        [JsonPropertyName("team_h_score")]
         public int? HomeTeamScore { get; set; }
 
-        [JsonProperty("team_a_score")]
+        [JsonPropertyName("team_a_score")]
         public int? AwayTeamScore { get; set; }
 
-        [JsonProperty("finished")]
+        [JsonPropertyName("finished")]
         public bool Finished { get; set; }
 
-        [JsonProperty("minutes")]
+        [JsonPropertyName("minutes")]
         public int Minutes { get; set; }
 
-        [JsonProperty("provisional_start_time")]
+        [JsonPropertyName("provisional_start_time")]
         public bool ProvisionalStartTime { get; set; }
 
-        [JsonProperty("finished_provisional")]
+        [JsonPropertyName("finished_provisional")]
         public bool FinishedProvisional { get; set; }
 
-        [JsonProperty("event")]
+        [JsonPropertyName("event")]
         public int? Event { get; set; }
 
-        [JsonProperty("team_a")]
+        [JsonPropertyName("team_a")]
         public int AwayTeamId { get; set; }
 
-        [JsonProperty("team_h")]
+        [JsonPropertyName("team_h")]
         public int HomeTeamId { get; set; }
     }
 }

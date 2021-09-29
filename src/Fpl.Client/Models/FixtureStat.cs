@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class FixtureStat
     {
-        [JsonProperty("identifier")]
+        [JsonPropertyName("identifier")]
         public string Identifier { get; set; }
 
-        [JsonProperty("a")]
+        [JsonPropertyName("a")]
         public ICollection<FixtureStatValue> AwayStats { get; set; }
 
-        [JsonProperty("h")]
+        [JsonPropertyName("h")]
         public ICollection<FixtureStatValue> HomeStats { get; set; }
     }
 }

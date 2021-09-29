@@ -1,19 +1,19 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class Phase
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public long Id { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonProperty("start_event")]
+        [JsonPropertyName("start_event")]
         public long StartEvent { get; set; }
 
-        [JsonProperty("stop_event")]
+        [JsonPropertyName("stop_event")]
         public long StopEvent { get; set; }
     }
 }

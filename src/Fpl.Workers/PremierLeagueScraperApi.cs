@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AngleSharp;
 using FplBot.Core.Abstractions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+
 
 namespace FplBot.Core
 {
@@ -30,7 +32,7 @@ namespace FplBot.Core
                 var document = await context.OpenAsync(req => req.Content(res));
                 var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
                 var json = fixture.Attributes.GetNamedItem("data-fixture").Value;
-                return JsonConvert.DeserializeObject<MatchDetails>(json);
+                return JsonSerializer.Deserialize<MatchDetails>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
             }
             catch (Exception)
             {

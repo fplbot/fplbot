@@ -1,61 +1,61 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class HeadToHeadLeagueEntry
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("entry_name")]
+        [JsonPropertyName("entry_name")]
         public string EntryName { get; set; }
 
-        [JsonProperty("player_name")]
+        [JsonPropertyName("player_name")]
         public string PlayerName { get; set; }
 
-        [JsonProperty("movement")]
+        [JsonPropertyName("movement")]
         public string Movement { get; set; }
 
-        [JsonProperty("own_entry")]
+        [JsonPropertyName("own_entry")]
         public bool OwnEntry { get; set; }
 
-        [JsonProperty("rank")]
+        [JsonPropertyName("rank")]
         public int Rank { get; set; }
 
-        [JsonProperty("last_rank")]
+        [JsonPropertyName("last_rank")]
         public int LastRank { get; set; }
 
-        [JsonProperty("rank_sort")]
+        [JsonPropertyName("rank_sort")]
         public int RankSort { get; set; }
 
-        [JsonProperty("total")]
+        [JsonPropertyName("total")]
         public int Total { get; set; }
 
-        [JsonProperty("matches_played")]
+        [JsonPropertyName("matches_played")]
         public int MatchesPlayed { get; set; }
 
-        [JsonProperty("matches_won")]
+        [JsonPropertyName("matches_won")]
         public int MatchesWon { get; set; }
 
-        [JsonProperty("matches_drawn")]
+        [JsonPropertyName("matches_drawn")]
         public int MatchesDrawn { get; set; }
 
-        [JsonProperty("matches_lost")]
+        [JsonPropertyName("matches_lost")]
         public int MatchesLost { get; set; }
 
-        [JsonProperty("points_for")]
+        [JsonPropertyName("points_for")]
         public int PointsFor { get; set; }
 
-        [JsonProperty("points_against")]
+        [JsonPropertyName("points_against")]
         public int PointsAgainst { get; set; }
 
-        [JsonProperty("points_total")]
+        [JsonPropertyName("points_total")]
         public int PointsTotal { get; set; }
 
-        [JsonProperty("division")]
+        [JsonPropertyName("division")]
         public int Division { get; set; }
 
-        [JsonProperty("entry")]
+        [JsonPropertyName("entry")]
         public int Entry { get; set; }
     }
 }

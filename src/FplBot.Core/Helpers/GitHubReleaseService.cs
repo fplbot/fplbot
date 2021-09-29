@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
+
 
 namespace FplBot.Core.Helpers
 {
     public static class GitHubReleaseService
     {
         class Release { public string Body { get; set; }}
-        
+
         public static async Task<string> GetReleaseNotes(string majorMinorPatch)
         {
             var httpClient = new HttpClient();
@@ -22,7 +24,7 @@ namespace FplBot.Core.Helpers
                 string requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
 
                 var json = await httpClient.GetStringAsync(requestUri);
-                var res = JsonConvert.DeserializeObject<Release>(json);
+                var res = JsonSerializer.Deserialize<Release>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
                 string resBody = res?.Body;
                 var splitted = resBody?.Split("\n");
                 var listed = splitted?.Select(s =>

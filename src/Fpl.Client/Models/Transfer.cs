@@ -1,31 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class Transfer
     {
-        [JsonProperty("element_in")]
+        [JsonPropertyName("element_in")]
         public int ElementIn { get; set; }
 
-        [JsonProperty("element_in_cost")]
+        [JsonPropertyName("element_in_cost")]
         public int ElementInCost { get; set; }
 
-        [JsonProperty("element_out")]
+        [JsonPropertyName("element_out")]
         public int ElementOut { get; set; }
 
-        [JsonProperty("element_out_cost")]
+        [JsonPropertyName("element_out_cost")]
         public int ElementOutCost { get; set; }
 
-        [JsonProperty("entry")]
+        [JsonPropertyName("entry")]
         public int Entry { get; set; }
 
-        [JsonProperty("event")]
+        [JsonPropertyName("event")]
         public int Event { get; set; }
 
-        [JsonProperty("time")]
+        [JsonPropertyName("time")]
         public DateTime Time { get; set; }
     }
 }

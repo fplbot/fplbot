@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+
 
 namespace Fpl.Client.Models
 {
     public class EntryHistory
     {
-        [JsonProperty("chips")]
+        [JsonPropertyName("chips")]
         public ICollection<EntryHistoryChip> Chips { get; set; }
 
-        [JsonProperty("past")]
+        [JsonPropertyName("past")]
         public ICollection<EntrySeasonHistory> SeasonHistory { get; set; }
 
-        [JsonProperty("current")]
+        [JsonPropertyName("current")]
         public ICollection<EventEntryHistory> GameweekHistory { get; set; }
     }
 }

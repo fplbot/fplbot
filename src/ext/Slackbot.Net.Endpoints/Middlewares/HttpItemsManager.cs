@@ -1,10 +1,9 @@
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.Endpoints.Models.Interactive;
 using Slackbot.Net.Endpoints.Models.Interactive.BlockActions;
@@ -32,21 +31,23 @@ namespace Slackbot.Net.Endpoints.Middlewares
 
                 if (body.StartsWith("{"))
                 {
-                    var jObject = JObject.Parse(body);
+                    var jObject = JsonDocument.Parse(body);
                     _logger.LogTrace(body);
-                    if (jObject.ContainsKey("challenge"))
+                    JsonElement challengeValue;
+                    bool isChallenge = jObject.RootElement.TryGetProperty("challenge", out challengeValue);
+                    if (isChallenge)
                     {
-                        context.Items.Add(HttpItemKeys.ChallengeKey, jObject["challenge"]);
+                        context.Items.Add(HttpItemKeys.ChallengeKey, challengeValue);
                     }
                     else
                     {
-                        var metadata = JsonConvert.DeserializeObject<EventMetaData>(body);
-                        if (jObject["event"] is JObject @event)
+                        var metadata = JsonSerializer.Deserialize<EventMetaData>(body, WebOptions);
+                        if (jObject.RootElement.GetProperty("event") is JsonElement @event)
                         {
                             var slackEvent = ToEventType(@event, body);
                             context.Items.Add(HttpItemKeys.EventMetadataKey, metadata);
                             context.Items.Add(HttpItemKeys.SlackEventKey, slackEvent);
-                            context.Items.Add(HttpItemKeys.EventTypeKey, @event["type"]);
+                            context.Items.Add(HttpItemKeys.EventTypeKey, @event.GetProperty("type"));
                         }
                     }
                 }
@@ -58,7 +59,7 @@ namespace Slackbot.Net.Endpoints.Middlewares
                     _logger.LogTrace(body);
                     var payloadJsonUrlEncoded = body.Remove(0,8);
                     var decodedJson = System.Net.WebUtility.UrlDecode(payloadJsonUrlEncoded);
-                    var payload = JObject.Parse(decodedJson);
+                    var payload = JsonDocument.Parse(decodedJson).RootElement;
                     var interactivePayloadTyped = ToInteractiveType(payload, body);
                     context.Items.Add(HttpItemKeys.InteractivePayloadKey, interactivePayloadTyped);
                 }
@@ -69,51 +70,54 @@ namespace Slackbot.Net.Endpoints.Middlewares
             await _next(context);
         }
 
-        private static SlackEvent ToEventType(JObject eventJson, string raw)
+        private static JsonSerializerOptions WebOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        private static SlackEvent ToEventType(JsonElement eventJson, string raw)
         {
             var eventType = GetEventType(eventJson);
+            string json = eventJson.ToString();
             switch (eventType)
             {
                 case EventTypes.AppMention:
-                    return eventJson.ToObject<AppMentionEvent>();
+                    return JsonSerializer.Deserialize<AppMentionEvent>(json, WebOptions);
                 case EventTypes.MemberJoinedChannel:
-                    return eventJson.ToObject<MemberJoinedChannelEvent>();
+                    return JsonSerializer.Deserialize<MemberJoinedChannelEvent>(json, WebOptions);
                 case EventTypes.AppHomeOpened:
-                    return eventJson.ToObject<AppHomeOpenedEvent>();
+                    return JsonSerializer.Deserialize<AppHomeOpenedEvent>(json, WebOptions);
                 default:
-                    UnknownSlackEvent unknownSlackEvent = eventJson.ToObject<UnknownSlackEvent>();
+                    UnknownSlackEvent unknownSlackEvent = JsonSerializer.Deserialize<UnknownSlackEvent>(json, WebOptions);
                     unknownSlackEvent.RawJson = raw;
                     return unknownSlackEvent;
             }
         }
 
-        private static Interaction ToInteractiveType(JObject payloadJson, string raw)
+        private static Interaction ToInteractiveType(JsonElement payloadJson, string raw)
         {
             var eventType = GetEventType(payloadJson);
             switch (eventType)
             {
                 case InteractionTypes.ViewSubmission:
-                    var viewSubmission = payloadJson.ToObject<ViewSubmission>();
+                    var viewSubmission = JsonSerializer.Deserialize<ViewSubmission>(payloadJson.GetString(), WebOptions);
 
-                    var view = payloadJson["view"] as JObject;
-                    var viewState = view["state"] as JObject;;
-                    viewSubmission.ViewId = view.Value<string>("id");
+                    var view = payloadJson.GetProperty("view");
+                    var viewState = view.GetProperty("state");
+                    viewSubmission.ViewId = view.GetProperty("id").GetString();
                     viewSubmission.ViewState = viewState;
                     return viewSubmission;
                 case InteractionTypes.BlockActions:
-                    return payloadJson.ToObject<BlockActionInteraction>();
+                    return JsonSerializer.Deserialize<BlockActionInteraction>(payloadJson.GetString(), WebOptions);
                 default:
-                    var unknownSlackEvent = payloadJson.ToObject<UnknownInteractiveMessage>();
+                    var unknownSlackEvent = JsonSerializer.Deserialize<UnknownInteractiveMessage>(payloadJson.GetString(), WebOptions);
                     unknownSlackEvent.RawJson = raw;
                     return unknownSlackEvent;
             }
         }
 
-        public static string GetEventType(JObject eventJson)
+        public static string GetEventType(JsonElement eventJson)
         {
-            if (eventJson != null)
+            if (eventJson.ValueKind != JsonValueKind.Null)
             {
-                return eventJson["type"].Value<string>();
+                return eventJson.GetProperty("type").GetString();
             }
 
             return "unknown";

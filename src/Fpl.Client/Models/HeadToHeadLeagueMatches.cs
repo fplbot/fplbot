@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+
 
 namespace Fpl.Client.Models
 {
     public class HeadToHeadLeagueMatches
     {
-        [JsonProperty("has_next")]
+        [JsonPropertyName("has_next")]
         public bool HasNext { get; set; }
 
-        [JsonProperty("number")]
+        [JsonPropertyName("number")]
         public int Number { get; set; }
 
-        [JsonProperty("results")]
+        [JsonPropertyName("results")]
         public ICollection<HeadToHeadLeagueMatch> Matches { get; set; }
     }
 }

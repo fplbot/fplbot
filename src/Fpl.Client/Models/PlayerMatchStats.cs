@@ -1,170 +1,170 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class PlayerMatchStats
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("kickoff_time")]
+        [JsonPropertyName("kickoff_time")]
         public DateTime KickoffTime { get; set; }
 
-        [JsonProperty("kickoff_time_formatted")]
+        [JsonPropertyName("kickoff_time_formatted")]
         public string FormattedKickoffTime { get; set; }
 
-        [JsonProperty("team_h_score")]
+        [JsonPropertyName("team_h_score")]
         public int? HomeTeamScore { get; set; }
 
-        [JsonProperty("team_a_score")]
+        [JsonPropertyName("team_a_score")]
         public int? AwayTeamScore { get; set; }
 
-        [JsonProperty("was_home")]
+        [JsonPropertyName("was_home")]
         public bool WasHome { get; set; }
 
-        [JsonProperty("round")]
+        [JsonPropertyName("round")]
         public int Round { get; set; }
 
-        [JsonProperty("total_points")]
+        [JsonPropertyName("total_points")]
         public int TotalPoints { get; set; }
 
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public int Value { get; set; }
 
-        [JsonProperty("transfers_balance")]
+        [JsonPropertyName("transfers_balance")]
         public int TransfersBalance { get; set; }
 
-        [JsonProperty("selected")]
+        [JsonPropertyName("selected")]
         public int Selected { get; set; }
 
-        [JsonProperty("transfers_in")]
+        [JsonPropertyName("transfers_in")]
         public int TransfersIn { get; set; }
 
-        [JsonProperty("transfers_out")]
+        [JsonPropertyName("transfers_out")]
         public int TransfersOut { get; set; }
 
-        [JsonProperty("loaned_in")]
+        [JsonPropertyName("loaned_in")]
         public int LoanedIn { get; set; }
 
-        [JsonProperty("loaned_out")]
+        [JsonPropertyName("loaned_out")]
         public int LoanedOut { get; set; }
 
-        [JsonProperty("minutes")]
+        [JsonPropertyName("minutes")]
         public int Minutes { get; set; }
 
-        [JsonProperty("goals_scored")]
+        [JsonPropertyName("goals_scored")]
         public int GoalsScored { get; set; }
 
-        [JsonProperty("assists")]
+        [JsonPropertyName("assists")]
         public int Assists { get; set; }
 
-        [JsonProperty("clean_sheets")]
+        [JsonPropertyName("clean_sheets")]
         public int CleanSheets { get; set; }
 
-        [JsonProperty("goals_conceded")]
+        [JsonPropertyName("goals_conceded")]
         public int GoalsConceded { get; set; }
 
-        [JsonProperty("own_goals")]
+        [JsonPropertyName("own_goals")]
         public int OwnGoals { get; set; }
 
-        [JsonProperty("penalties_saved")]
+        [JsonPropertyName("penalties_saved")]
         public int PenaltiesSaved { get; set; }
 
-        [JsonProperty("penalties_missed")]
+        [JsonPropertyName("penalties_missed")]
         public int PenaltiesMissed { get; set; }
 
-        [JsonProperty("yellow_cards")]
+        [JsonPropertyName("yellow_cards")]
         public int YellowCards { get; set; }
 
-        [JsonProperty("red_cards")]
+        [JsonPropertyName("red_cards")]
         public int RedCards { get; set; }
 
-        [JsonProperty("saves")]
+        [JsonPropertyName("saves")]
         public int Saves { get; set; }
 
-        [JsonProperty("bonus")]
+        [JsonPropertyName("bonus")]
         public int Bonus { get; set; }
 
-        [JsonProperty("bps")]
+        [JsonPropertyName("bps")]
         public int Bps { get; set; }
 
-        [JsonProperty("influence")]
+        [JsonPropertyName("influence")]
         public double Influence { get; set; }
 
-        [JsonProperty("creativity")]
+        [JsonPropertyName("creativity")]
         public double Creativity { get; set; }
 
-        [JsonProperty("threat")]
+        [JsonPropertyName("threat")]
         public double Threat { get; set; }
 
-        [JsonProperty("ict_index")]
+        [JsonPropertyName("ict_index")]
         public double IctIndex { get; set; }
 
-        [JsonProperty("ea_index")]
+        [JsonPropertyName("ea_index")]
         public double EaIndex { get; set; }
 
-        [JsonProperty("open_play_crosses")]
+        [JsonPropertyName("open_play_crosses")]
         public int OpenPlayCrosses { get; set; }
 
-        [JsonProperty("big_chances_created")]
+        [JsonPropertyName("big_chances_created")]
         public int BigChancesCreated { get; set; }
 
-        [JsonProperty("clearances_blocks_interceptions")]
+        [JsonPropertyName("clearances_blocks_interceptions")]
         public int ClearancesBlocksInterceptions { get; set; }
 
-        [JsonProperty("recoveries")]
+        [JsonPropertyName("recoveries")]
         public int Recoveries { get; set; }
 
-        [JsonProperty("key_passes")]
+        [JsonPropertyName("key_passes")]
         public int KeyPasses { get; set; }
 
-        [JsonProperty("tackles")]
+        [JsonPropertyName("tackles")]
         public int Tackles { get; set; }
 
-        [JsonProperty("winning_goals")]
+        [JsonPropertyName("winning_goals")]
         public int WinningGoals { get; set; }
 
-        [JsonProperty("attempted_passes")]
+        [JsonPropertyName("attempted_passes")]
         public int AttemptedPasses { get; set; }
 
-        [JsonProperty("completed_passes")]
+        [JsonPropertyName("completed_passes")]
         public int CompletedPasses { get; set; }
 
-        [JsonProperty("penalties_conceded")]
+        [JsonPropertyName("penalties_conceded")]
         public int PenaltiesConceded { get; set; }
 
-        [JsonProperty("big_chances_missed")]
+        [JsonPropertyName("big_chances_missed")]
         public int BigChancesMissed { get; set; }
 
-        [JsonProperty("errors_leading_to_goal")]
+        [JsonPropertyName("errors_leading_to_goal")]
         public int ErrorsLeadingToGoal { get; set; }
 
-        [JsonProperty("errors_leading_to_goal_attempt")]
+        [JsonPropertyName("errors_leading_to_goal_attempt")]
         public int ErrorsLeadingToGoalAttempt { get; set; }
 
-        [JsonProperty("tackled")]
+        [JsonPropertyName("tackled")]
         public int Tackled { get; set; }
 
-        [JsonProperty("offside")]
+        [JsonPropertyName("offside")]
         public int Offside { get; set; }
 
-        [JsonProperty("target_missed")]
+        [JsonPropertyName("target_missed")]
         public int TargetMissed { get; set; }
 
-        [JsonProperty("fouls")]
+        [JsonPropertyName("fouls")]
         public int Fouls { get; set; }
 
-        [JsonProperty("dribbles")]
+        [JsonPropertyName("dribbles")]
         public int Dribbles { get; set; }
 
-        [JsonProperty("element")]
+        [JsonPropertyName("element")]
         public int Element { get; set; }
 
-        [JsonProperty("fixture")]
+        [JsonPropertyName("fixture")]
         public int Fixture { get; set; }
 
-        [JsonProperty("opponent_team")]
+        [JsonPropertyName("opponent_team")]
         public int OpponentTeam { get; set; }
     }
 }

@@ -1,16 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿
+
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class EntrySeasonHistory
     {
-        [JsonProperty("season_name")]
+        [JsonPropertyName("season_name")]
         public string SeasonName { get; set; }
 
-        [JsonProperty("total_points")]
+        [JsonPropertyName("total_points")]
         public int TotalPoints { get; set; }
 
-        [JsonProperty("rank")]
+        [JsonPropertyName("rank")]
         public int? Rank { get; set; }
     }
 }

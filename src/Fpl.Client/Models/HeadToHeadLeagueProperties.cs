@@ -1,56 +1,56 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class HeadToHeadLeagueProperties
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonProperty("has_started")]
+        [JsonPropertyName("has_started")]
         public bool HasStarted { get; set; }
 
-        [JsonProperty("can_delete")]
+        [JsonPropertyName("can_delete")]
         public bool CanDelete { get; set; }
 
-        [JsonProperty("short_name")]
+        [JsonPropertyName("short_name")]
         public string ShortName { get; set; }
 
-        [JsonProperty("created")]
+        [JsonPropertyName("created")]
         public DateTime CreatedAt { get; set; }
 
-        [JsonProperty("closed")]
+        [JsonPropertyName("closed")]
         public bool Closed { get; set; }
 
-        [JsonProperty("forum_disabled")]
+        [JsonPropertyName("forum_disabled")]
         public bool ForumDisabled { get; set; }
 
-        [JsonProperty("make_code_public")]
+        [JsonPropertyName("make_code_public")]
         public bool MakeCodePublic { get; set; }
 
-        [JsonProperty("rank")]
+        [JsonPropertyName("rank")]
         public int? Rank { get; set; }
 
-        [JsonProperty("size")]
+        [JsonPropertyName("size")]
         public int? Size { get; set; }
 
-        [JsonProperty("league_type")]
+        [JsonPropertyName("league_type")]
         public string LeagueType { get; set; }
 
-        [JsonProperty("_scoring")]
+        [JsonPropertyName("_scoring")]
         public string Scoring { get; set; }
 
-        [JsonProperty("ko_rounds")]
+        [JsonPropertyName("ko_rounds")]
         public int ReprocessStandings { get; set; }
 
-        [JsonProperty("admin_entry")]
+        [JsonPropertyName("admin_entry")]
         public int AdminEntry { get; set; }
 
-        [JsonProperty("start_event")]
+        [JsonPropertyName("start_event")]
         public int StartEvent { get; set; }
     }
 }

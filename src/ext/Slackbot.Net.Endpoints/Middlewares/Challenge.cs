@@ -1,7 +1,8 @@
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+
 
 namespace Slackbot.Net.Endpoints.Middlewares
 {
@@ -20,7 +21,7 @@ namespace Slackbot.Net.Endpoints.Middlewares
             _logger.LogInformation($"Handling challenge request. Challenge: {challenge}");
             context.Response.StatusCode = 200;
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(JsonConvert.SerializeObject(new {challenge}));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new {challenge}));
         }
 
         public static bool ShouldRun(HttpContext ctx)

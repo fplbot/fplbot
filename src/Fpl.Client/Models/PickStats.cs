@@ -1,64 +1,64 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class PickStats
     {
-        [JsonProperty("yellow_cards")]
+        [JsonPropertyName("yellow_cards")]
         public int YellowCards { get; set; }
 
-        [JsonProperty("own_goals")]
+        [JsonPropertyName("own_goals")]
         public int OwnGoals { get; set; }
 
-        [JsonProperty("creativity")]
+        [JsonPropertyName("creativity")]
         public double Creativity { get; set; }
 
-        [JsonProperty("goals_conceded")]
+        [JsonPropertyName("goals_conceded")]
         public int GoalsConceded { get; set; }
 
-        [JsonProperty("bonus")]
+        [JsonPropertyName("bonus")]
         public int Bonus { get; set; }
 
-        [JsonProperty("red_cards")]
+        [JsonPropertyName("red_cards")]
         public int RedCards { get; set; }
 
-        [JsonProperty("saves")]
+        [JsonPropertyName("saves")]
         public int Saves { get; set; }
 
-        [JsonProperty("influence")]
+        [JsonPropertyName("influence")]
         public double Influence { get; set; }
 
-        [JsonProperty("bps")]
+        [JsonPropertyName("bps")]
         public int Bps { get; set; }
 
-        [JsonProperty("clean_sheets")]
+        [JsonPropertyName("clean_sheets")]
         public int CleanSheets { get; set; }
 
-        [JsonProperty("assists")]
+        [JsonPropertyName("assists")]
         public int Assists { get; set; }
 
-        [JsonProperty("ict_index")]
+        [JsonPropertyName("ict_index")]
         public double IctIndex { get; set; }
 
-        [JsonProperty("goals_scored")]
+        [JsonPropertyName("goals_scored")]
         public int GoalsScored { get; set; }
 
-        [JsonProperty("threat")]
+        [JsonPropertyName("threat")]
         public double Threat { get; set; }
 
-        [JsonProperty("penalties_missed")]
+        [JsonPropertyName("penalties_missed")]
         public int PenaltiesMissed { get; set; }
 
-        [JsonProperty("total_points")]
+        [JsonPropertyName("total_points")]
         public int TotalPoints { get; set; }
 
-        [JsonProperty("penalties_saved")]
+        [JsonPropertyName("penalties_saved")]
         public int PenaltiesSaved { get; set; }
 
-        [JsonProperty("in_dreamteam")]
+        [JsonPropertyName("in_dreamteam")]
         public bool InDreamteam { get; set; }
 
-        [JsonProperty("minutes")]
+        [JsonPropertyName("minutes")]
         public int Minutes { get; set; }
     }
 }

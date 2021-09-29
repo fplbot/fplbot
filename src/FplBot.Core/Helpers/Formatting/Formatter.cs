@@ -206,7 +206,7 @@ namespace FplBot.Core.Helpers
 
             playerCard.Add(new DividerBlock { });
 
-            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
+            var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound.ToString(), player.News);
             if (chanceOfPlaying != null)
             {
                 playerCard.Add(new SectionBlock

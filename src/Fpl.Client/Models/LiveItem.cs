@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
@@ -16,7 +16,7 @@ namespace Fpl.Client.Models
 
     public class LiveItemStat
     {
-        [JsonProperty("total_points")]
+        [JsonPropertyName("total_points")]
         public int TotalPoints { get; set; }
     }
 }
