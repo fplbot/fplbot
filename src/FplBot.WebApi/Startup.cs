@@ -1,3 +1,4 @@
+using System;
 using AspNet.Security.OAuth.Slack;
 using FplBot.WebApi.Configurations;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -13,10 +14,13 @@ using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using FplBot.Data;
 using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
+using Microsoft.Extensions.Options;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Authentication;
+using StackExchange.Redis;
 
 namespace FplBot.WebApi
 {
@@ -35,7 +39,16 @@ namespace FplBot.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var opts = new RedisOptions { REDIS_URL = Environment.GetEnvironmentVariable("REDIS_URL") };
+            var options = new ConfigurationOptions
+            {
+                ClientName = opts.GetRedisUsername,
+                Password = opts.GetRedisPassword,
+                EndPoints = {opts.GetRedisServerHostAndPort}
+            };
+            var conn =  ConnectionMultiplexer.Connect(options);
             services.AddDataProtection()
+                .PersistKeysToStackExchangeRedis(conn)
                 .SetApplicationName(
                     "fplbot"); // set static so cookies are not encrypted differently after a reboot/deploy. https://github.com/dotnet/aspnetcore/issues/2513#issuecomment-354683162
             services.AddControllers()
