@@ -54,7 +54,7 @@ namespace FplBot.Core.Handlers
                     Type = PublishViewConstants.Home,
                     Blocks = new IBlock[]
                     {
-                        new Block
+                        new SectionBlock
                         {
                             type = BlockTypes.Section,
                             text = new Text
@@ -63,11 +63,11 @@ namespace FplBot.Core.Handlers
                                 text = "Welcome to the home!!"
                             }
                         },
-                        new Block
+                        new DividerBlock()
                         {
                             type = BlockTypes.Divider
                         },
-                        new Block
+                        new SectionBlock()
                         {
                             type = BlockTypes.Section,
                             text = new Text
