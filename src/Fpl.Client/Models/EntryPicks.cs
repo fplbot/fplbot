@@ -1,20 +1,21 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+
 
 namespace Fpl.Client.Models
 {
     public class EntryPicks
     {
-        [JsonProperty("entry_history")]
+        [JsonPropertyName("entry_history")]
         public EventEntryHistory EventEntryHistory { get; set; }
 
-        [JsonProperty("automatic_subs")]
+        [JsonPropertyName("automatic_subs")]
         public ICollection<AutomaticSub> AutomaticSubs { get; set; }
 
-        [JsonProperty("picks")]
+        [JsonPropertyName("picks")]
         public ICollection<Pick> Picks { get; set; }
 
-        [JsonProperty("active_chip")]
+        [JsonPropertyName("active_chip")]
         public string ActiveChip { get; set; }
     }
 }

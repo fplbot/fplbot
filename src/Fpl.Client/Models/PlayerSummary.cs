@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class PlayerSummary
     {
-        [JsonProperty("history_past")]
+        [JsonPropertyName("history_past")]
         public ICollection<PlayerSeasonHistory> SeasonHistory { get; set; }
 
-        [JsonProperty("fixtures")]
+        [JsonPropertyName("fixtures")]
         public ICollection<PlayerFixture> Fixtures { get; set; }
 
-        [JsonProperty("history")]
+        [JsonPropertyName("history")]
         public ICollection<PlayerMatchStats> MatchStats { get; set; }
     }
 }

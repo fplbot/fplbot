@@ -1,32 +1,32 @@
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public record EventStatusResponse
     {
-        [JsonProperty("status")]
+        [JsonPropertyName("status")]
         public ICollection<EventStatus> Status { get; set; } = new List<EventStatus>();
 
-        [JsonProperty("leagues")]
+        [JsonPropertyName("leagues")]
         public string Leagues { get; set; }
     }
 
     public record EventStatus
     {
-        [JsonProperty("bonus_added")]
+        [JsonPropertyName("bonus_added")]
         public bool BonusAdded { get; set; }
 
         /// <summary>
         /// YYYY-MM-dd
         /// </summary>
-        [JsonProperty("date")]
+        [JsonPropertyName("date")]
         public string Date { get; set; }
 
-        [JsonProperty("event")]
+        [JsonPropertyName("event")]
         public int Event { get; set; }
 
-        [JsonProperty("points")]
+        [JsonPropertyName("points")]
         public string PointsStatus { get; set; }
     }
 

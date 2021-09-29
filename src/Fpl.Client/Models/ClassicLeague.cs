@@ -1,19 +1,21 @@
-﻿using Newtonsoft.Json;
+﻿
+
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class ClassicLeague
     {
-        [JsonProperty("new_entries")]
+        [JsonPropertyName("new_entries")]
         public NewLeagueEntries NewEntries { get; set; }
 
-        [JsonProperty("league")]
+        [JsonPropertyName("league")]
         public ClassicLeagueProperties Properties { get; set; }
 
-        [JsonProperty("standings")]
+        [JsonPropertyName("standings")]
         public ClassicLeagueStandings Standings { get; set; }
 
-        [JsonProperty("detail")]
+        [JsonPropertyName("detail")]
         public string Detail { get; set; }
 
         public bool Exists => Detail != "Not found.";

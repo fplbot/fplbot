@@ -48,7 +48,7 @@ namespace FplBot.Core.Handlers
 
         private static bool IsInjured(Player player)
         {
-            return player.ChanceOfPlayingNextRound != "100" && player.ChanceOfPlayingNextRound != null;
+            return player.ChanceOfPlayingNextRound != 100 && player.ChanceOfPlayingNextRound != 0;
         }
 
         public override (string,string) GetHelpDescription() => (CommandsFormatted, "See injured players owned by more than 5 %");

@@ -40,8 +40,7 @@ namespace FplBot.Data.Repositories.Redis
             {
                 TeamId = workspace.TeamId,
                 TeamName = workspace.TeamName,
-                AccessToken = workspace.Token,
-                Scope = workspace.Scope
+                AccessToken = workspace.Token
             });
         }
 
@@ -73,16 +72,23 @@ namespace FplBot.Data.Repositories.Redis
             await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), hashEntries.ToArray());
         }
 
-        public async Task Delete(string token)
+        public async Task<Workspace> Delete(string teamId)
         {
             var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
 
             foreach (var key in allTeamKeys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamIdField});
-                if (fetchedTeamData[0] == token)
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_teamIdField, _teamNameField, _accessTokenField});
+                if (fetchedTeamData[0] == teamId)
+                {
+                    var workspace = new Workspace(TeamId: fetchedTeamData[0], TeamName: fetchedTeamData[1], Token: fetchedTeamData[2]);
                     await _db.KeyDeleteAsync(key);
+                    return workspace;
+                }
+
             }
+
+            return null;
         }
 
         public async Task<SlackTeam> GetTeam(string teamId)

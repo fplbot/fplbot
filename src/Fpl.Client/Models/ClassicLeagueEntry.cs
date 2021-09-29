@@ -1,49 +1,49 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class ClassicLeagueEntry
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("entry_name")]
+        [JsonPropertyName("entry_name")]
         public string EntryName { get; set; }
 
-        [JsonProperty("event_total")]
+        [JsonPropertyName("event_total")]
         public int EventTotal { get; set; }
 
-        [JsonProperty("player_name")]
+        [JsonPropertyName("player_name")]
         public string PlayerName { get; set; }
 
-        [JsonProperty("movement")]
+        [JsonPropertyName("movement")]
         public string Movement { get; set; }
 
-        [JsonProperty("own_entry")]
+        [JsonPropertyName("own_entry")]
         public bool OwnEntry { get; set; }
 
-        [JsonProperty("rank")]
+        [JsonPropertyName("rank")]
         public int Rank { get; set; }
 
-        [JsonProperty("last_rank")]
+        [JsonPropertyName("last_rank")]
         public int LastRank { get; set; }
 
-        [JsonProperty("rank_sort")]
+        [JsonPropertyName("rank_sort")]
         public int RankSort { get; set; }
 
-        [JsonProperty("total")]
+        [JsonPropertyName("total")]
         public int Total { get; set; }
 
-        [JsonProperty("entry")]
+        [JsonPropertyName("entry")]
         public int Entry { get; set; }
 
-        [JsonProperty("league")]
+        [JsonPropertyName("league")]
         public int League { get; set; }
 
-        [JsonProperty("start_event")]
+        [JsonPropertyName("start_event")]
         public int StartEvent { get; set; }
 
-        [JsonProperty("stop_event")]
+        [JsonPropertyName("stop_event")]
         public int StopEvent { get; set; }
     }
 }

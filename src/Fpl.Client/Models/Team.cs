@@ -1,70 +1,70 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class Team
     {
-        [JsonProperty("code")]
+        [JsonPropertyName("code")]
         public long Code { get; set; }
 
-        [JsonProperty("draw")]
+        [JsonPropertyName("draw")]
         public long Draw { get; set; }
 
-        [JsonProperty("form")]
+        [JsonPropertyName("form")]
         public object Form { get; set; }
 
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("link_url")]
+        [JsonPropertyName("link_url")]
         public string LinkUrl { get; set; }
 
-        [JsonProperty("loss")]
+        [JsonPropertyName("loss")]
         public long Loss { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonProperty("played")]
+        [JsonPropertyName("played")]
         public long Played { get; set; }
 
-        [JsonProperty("points")]
+        [JsonPropertyName("points")]
         public long Points { get; set; }
 
-        [JsonProperty("position")]
+        [JsonPropertyName("position")]
         public long Position { get; set; }
 
-        [JsonProperty("short_name")]
+        [JsonPropertyName("short_name")]
         public string ShortName { get; set; }
 
-        [JsonProperty("strength")]
+        [JsonPropertyName("strength")]
         public long Strength { get; set; }
 
-        [JsonProperty("strength_attack_away")]
+        [JsonPropertyName("strength_attack_away")]
         public long StrengthAttackAway { get; set; }
 
-        [JsonProperty("strength_attack_home")]
+        [JsonPropertyName("strength_attack_home")]
         public long StrengthAttackHome { get; set; }
 
-        [JsonProperty("strength_defence_away")]
+        [JsonPropertyName("strength_defence_away")]
         public long StrengthDefenceAway { get; set; }
 
-        [JsonProperty("strength_defence_home")]
+        [JsonPropertyName("strength_defence_home")]
         public long StrengthDefenceHome { get; set; }
 
-        [JsonProperty("strength_overall_away")]
+        [JsonPropertyName("strength_overall_away")]
         public long StrengthOverallAway { get; set; }
 
-        [JsonProperty("strength_overall_home")]
+        [JsonPropertyName("strength_overall_home")]
         public long StrengthOverallHome { get; set; }
 
-        [JsonProperty("team_division")]
+        [JsonPropertyName("team_division")]
         public long? TeamDivision { get; set; }
 
-        [JsonProperty("unavailable")]
+        [JsonPropertyName("unavailable")]
         public bool Unavailable { get; set; }
 
-        [JsonProperty("win")]
+        [JsonPropertyName("win")]
         public long Win { get; set; }
 
     }

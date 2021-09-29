@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
@@ -12,17 +13,20 @@ namespace Slackbot.Net.Endpoints.Middlewares
     {
         private readonly ILogger<Uninstall> _logger;
         private readonly IUninstall _uninstaller;
+        private readonly ITokenStore _tokenStore;
 
         public Uninstall(RequestDelegate next, ILogger<Uninstall> logger, IServiceProvider provider)
         {
             _logger = logger;
             _uninstaller = provider.GetService<IUninstall>() ?? new NoopUninstaller(provider.GetService<ILogger<NoopUninstaller>>());
+            _tokenStore = provider.GetService<ITokenStore>();
         }
 
         public async Task Invoke(HttpContext context)
         {
             var metadata = context.Items[HttpItemKeys.EventMetadataKey] as EventMetaData;
-            await _uninstaller.Uninstall(metadata.Team_Id);
+            var deleted = await _tokenStore.Delete(metadata.Team_Id);
+            await _uninstaller.OnUninstalled(deleted.TeamId, deleted.TeamName);
             _logger.LogInformation($"Deleted team with TeamId: `{metadata.Team_Id}`");
             context.Response.StatusCode = 200;
         }
@@ -43,9 +47,9 @@ namespace Slackbot.Net.Endpoints.Middlewares
         {
             _logger = logger;
         }
-        public Task Uninstall(string metadataTeamId)
+        public Task OnUninstalled(string teamId, string teamName)
         {
-            _logger.LogWarning("No uninstall provider registered! No uninstall will be executed");
+            _logger.LogDebug("No OnUninstall function registered. No-op.");
             return Task.CompletedTask;
         }
     }

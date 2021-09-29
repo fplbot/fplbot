@@ -1,5 +1,4 @@
-
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
 {
@@ -9,6 +8,6 @@ namespace Slackbot.Net.Endpoints.Models.Interactive.ViewSubmissions
         public User User { get; set; }
         
         public string ViewId { get; set; }
-        public JObject ViewState { get; set; }
+        public JsonElement ViewState { get; set; }
     }
 }

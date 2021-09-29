@@ -1,43 +1,43 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class Pick
     {
-        [JsonProperty("element")]
+        [JsonPropertyName("element")]
         public int PlayerId { get; set; }
 
-        [JsonProperty("element_type")]
+        [JsonPropertyName("element_type")]
         public int ElementType { get; set; }
 
-        [JsonProperty("position")]
+        [JsonPropertyName("position")]
         public int TeamPosition { get; set; }
 
-        [JsonProperty("points")]
+        [JsonPropertyName("points")]
         public int Points { get; set; }
 
-        [JsonProperty("can_captain")]
+        [JsonPropertyName("can_captain")]
         public bool? CanCaptain { get; set; }
 
-        [JsonProperty("is_captain")]
+        [JsonPropertyName("is_captain")]
         public bool IsCaptain { get; set; }
 
-        [JsonProperty("is_vice_captain")]
+        [JsonPropertyName("is_vice_captain")]
         public bool IsViceCaptain { get; set; }
 
-        [JsonProperty("can_sub")]
+        [JsonPropertyName("can_sub")]
         public bool? CanSub { get; set; }
 
-        [JsonProperty("is_sub")]
+        [JsonPropertyName("is_sub")]
         public bool IsSub { get; set; }
 
-        [JsonProperty("has_played")]
+        [JsonPropertyName("has_played")]
         public bool HasPlayed { get; set; }
 
-        [JsonProperty("stats")]
+        [JsonPropertyName("stats")]
         public PickStats Stats { get; set; }
 
-        [JsonProperty("multiplier")]
+        [JsonPropertyName("multiplier")]
         public int Multiplier { get; set; }
     }
 }

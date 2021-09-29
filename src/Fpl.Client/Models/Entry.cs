@@ -1,98 +1,98 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class Entry
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("player_first_name")]
+        [JsonPropertyName("player_first_name")]
         public string PlayerFirstName { get; set; }
 
-        [JsonProperty("player_last_name")]
+        [JsonPropertyName("player_last_name")]
         public string PlayerLastName { get; set; }
 
-        [JsonProperty("player_region_id")]
+        [JsonPropertyName("player_region_id")]
         public int PlayerRegionId { get; set; }
 
-        [JsonProperty("player_region_name")]
+        [JsonPropertyName("player_region_name")]
         public string PlayerRegionName { get; set; }
 
-        [JsonProperty("player_region_short_iso")]
+        [JsonPropertyName("player_region_short_iso")]
         public string PlayerRegionShortIso { get; set; }
 
-        [JsonProperty("summary_overall_points")]
+        [JsonPropertyName("summary_overall_points")]
         public int? SummaryOverallPoints { get; set; }
 
-        [JsonProperty("summary_overall_rank")]
+        [JsonPropertyName("summary_overall_rank")]
         public int? SummaryOverallRank { get; set; }
 
-        [JsonProperty("summary_event_points")]
+        [JsonPropertyName("summary_event_points")]
         public int? SummaryEventPoints { get; set; }
 
-        [JsonProperty("summary_event_rank")]
+        [JsonPropertyName("summary_event_rank")]
         public int? SummaryEventRank { get; set; }
 
-        [JsonProperty("joined_seconds")]
+        [JsonPropertyName("joined_seconds")]
         public long JoinedSeconds { get; set; }
 
-        [JsonProperty("current_event")]
+        [JsonPropertyName("current_event")]
         public int CurrentEvent { get; set; }
 
-        [JsonProperty("total_transfers")]
+        [JsonPropertyName("total_transfers")]
         public int TotalTransfers { get; set; }
 
-        [JsonProperty("total_loans")]
+        [JsonPropertyName("total_loans")]
         public int TotalLoans { get; set; }
 
-        [JsonProperty("total_loans_active")]
+        [JsonPropertyName("total_loans_active")]
         public int TotalLoansActive { get; set; }
 
-        [JsonProperty("transfers_or_loans")]
+        [JsonPropertyName("transfers_or_loans")]
         public string TransfersOrLoans { get; set; }
 
-        [JsonProperty("deleted")]
+        [JsonPropertyName("deleted")]
         public bool Deleted { get; set; }
 
-        [JsonProperty("Email")]
+        [JsonPropertyName("Email")]
         public bool Email { get; set; }
 
-        [JsonProperty("joined_time")]
+        [JsonPropertyName("joined_time")]
         public DateTime JoinedTime { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string TeamName { get; set; }
 
-        [JsonProperty("bank")]
+        [JsonPropertyName("bank")]
         public int Bank { get; set; }
 
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public int Value { get; set; }
 
-        [JsonProperty("kit")]
+        [JsonPropertyName("kit")]
         public string Kit { get; set; }
 
-        [JsonProperty("event_transfers")]
+        [JsonPropertyName("event_transfers")]
         public int EventTransfers { get; set; }
 
-        [JsonProperty("event_transfers_cost")]
+        [JsonPropertyName("event_transfers_cost")]
         public int EventTransfersCost { get; set; }
 
-        [JsonProperty("extra_free_transfers")]
+        [JsonPropertyName("extra_free_transfers")]
         public int ExtraFreeTransfers { get; set; }
 
-        [JsonProperty("strategy")]
+        [JsonPropertyName("strategy")]
         public string Strategy { get; set; }
 
-        [JsonProperty("favourite_team")]
+        [JsonPropertyName("favourite_team")]
         public int? FavouriteTeamId { get; set; }
 
-        [JsonProperty("started_event")]
+        [JsonPropertyName("started_event")]
         public int StartEvent { get; set; }
 
-        [JsonProperty("player")]
+        [JsonPropertyName("player")]
         public int Player { get; set; }
     }
 }

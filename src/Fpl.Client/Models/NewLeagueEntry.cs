@@ -1,29 +1,29 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class NewLeagueEntry
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("entry_name")]
+        [JsonPropertyName("entry_name")]
         public string EntryName { get; set; }
 
-        [JsonProperty("player_first_name")]
+        [JsonPropertyName("player_first_name")]
         public string PlayerFirstName { get; set; }
 
-        [JsonProperty("player_last_name")]
+        [JsonPropertyName("player_last_name")]
         public string PlayerLastName { get; set; }
 
-        [JsonProperty("joined_time")]
+        [JsonPropertyName("joined_time")]
         public DateTime JoinedAt { get; set; }
 
-        [JsonProperty("entry")]
+        [JsonPropertyName("entry")]
         public int Entry { get; set; }
 
-        [JsonProperty("league")]
+        [JsonPropertyName("league")]
         public int League { get; set; }
     }
 }

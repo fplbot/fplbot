@@ -1,32 +1,32 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class GlobalSettings
     {
-        [JsonProperty("teams")]
+        [JsonPropertyName("teams")]
         public ICollection<Team> Teams { get; set; }
 
-        [JsonProperty("elements")]
+        [JsonPropertyName("elements")]
         public ICollection<Player> Players { get; set; }
 
-        [JsonProperty("events")]
+        [JsonPropertyName("events")]
         public ICollection<Gameweek> Gameweeks { get; set; }
 
-        [JsonProperty("element_types")]
+        [JsonPropertyName("element_types")]
         public ICollection<PlayerType> PlayerTypes { get; set; }
 
-        [JsonProperty("game_settings")]
+        [JsonPropertyName("game_settings")]
         public GameSettings GameSettings { get; set; }
 
-        [JsonProperty("phases")]
+        [JsonPropertyName("phases")]
         public ICollection<Phase> Phases { get; set; }
 
-        [JsonProperty("element_stats")]
+        [JsonPropertyName("element_stats")]
         public ICollection<ElementStats> StatsOptions { get; set; }
 
-        [JsonProperty("total_players")]
+        [JsonPropertyName("total_players")]
         public long TotalPlayers { get; set; }
     }
 }

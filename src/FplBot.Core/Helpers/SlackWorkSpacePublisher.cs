@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
@@ -12,14 +11,13 @@ namespace FplBot.Core.Helpers
 {
     internal class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
     {
-        private readonly ITokenStore _tokenStore;
+
         private readonly ISlackTeamRepository _repository;
         private readonly ISlackClientBuilder _slackClientBuilder;
         private readonly ILogger<SlackWorkSpacePublisher> _logger;
 
-        public SlackWorkSpacePublisher(ITokenStore tokenStore, ISlackTeamRepository repository, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
+        public SlackWorkSpacePublisher(ISlackTeamRepository repository, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
         {
-            _tokenStore = tokenStore;
             _repository = repository;
             _slackClientBuilder = builder;
             _logger = logger;
@@ -50,8 +48,8 @@ namespace FplBot.Core.Helpers
 
         public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
         {
-            var token = await _tokenStore.GetTokenByTeamId(teamId);
-            await PublishUsingToken(token,messages);
+            var team = await _repository.GetTeam(teamId);
+            await PublishUsingToken(team.AccessToken,messages);
         }
 
         private async Task PublishUsingToken(string token, params ChatPostMessageRequest[] messages)
@@ -72,8 +70,7 @@ namespace FplBot.Core.Helpers
                 {
                     if (sae.Error == "account_inactive")
                     {
-                        await _tokenStore.Delete(token);
-                        _logger.LogInformation($"Deleted inactive token");
+                        _logger.LogWarning(sae, $"Inactive token!");
                     }
                     else
                     {

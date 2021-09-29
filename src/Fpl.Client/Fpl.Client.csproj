@@ -11,8 +11,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(AspNetVersion)" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="$(AspNetVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(AspNetVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(AspNetVersion)" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(AspNetVersion)" />    
   </ItemGroup>
 
   <ItemGroup>

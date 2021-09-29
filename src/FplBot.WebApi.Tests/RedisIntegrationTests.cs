@@ -106,7 +106,7 @@ namespace FplBot.WebApi.Tests
             await _repo.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
 
 
-            await _repo.Delete("accessToken2");
+            await _repo.Delete("teamId2");
 
             var tokensAfterDelete = await _repo.GetTokens();
             Assert.Single(tokensAfterDelete);

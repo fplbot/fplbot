@@ -21,38 +21,38 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage
     
     public class Attachment
     {
-        public string callback_id;
-        public string fallback;
-        public string color;
-        public string pretext;
-        public string author_name;
-        public string author_link;
-        public string author_icon;
-        public string title;
-        public string title_link;
-        public string text;
-        public Field[] fields;
-        public string image_url;
-        public string thumb_url;
-        public string[] mrkdwn_in;
-        public AttachmentAction[] actions;
-        public string footer;
-        public string footer_icon;
+        public string callback_id{ get; set; }
+        public string fallback { get; set; }
+        public string color { get; set; }
+        public string pretext { get; set; }
+        public string author_name { get; set; }
+        public string author_link { get; set; }
+        public string author_icon { get; set; }
+        public string title { get; set; }
+        public string title_link { get; set; }
+        public string text { get; set; }
+        public Field[] fields { get; set; }
+        public string image_url { get; set; }
+        public string thumb_url { get; set; }
+        public string[] mrkdwn_in { get; set; }
+        public AttachmentAction[] actions { get; set; }
+        public string footer { get; set; }
+        public string footer_icon { get; set; }
     }
     
     public class Field
     {
-        public string title;
-        public string value;
-        public bool @short;
+        public string title { get; set; }
+        public string value { get; set; }
+        public bool @short { get; set; }
     }
     
     public class AttachmentAction
     {
         public string type = "button";
-        public string style;
-        public string value;
-        public ActionConfirm confirm;
+        public string style { get; set; }
+        public string value { get; set; }
+        public ActionConfirm confirm { get; set; }
 
         public AttachmentAction(string name, string text)
         {
@@ -67,9 +67,9 @@ namespace Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage
     
     public class ActionConfirm
     {
-        public string title;
-        public string text;
-        public string ok_text;
-        public string dismiss_text;
+        public string title { get; set; }
+        public string text { get; set; }
+        public string ok_text { get; set; }
+        public string dismiss_text { get; set; }
     }
 }

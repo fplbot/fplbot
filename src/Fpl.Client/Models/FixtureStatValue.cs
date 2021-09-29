@@ -1,13 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class FixtureStatValue
     {
-        [JsonProperty("element")]
+        [JsonPropertyName("element")]
         public int Element { get; set; }
 
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public int Value { get; set; }
     }
 }

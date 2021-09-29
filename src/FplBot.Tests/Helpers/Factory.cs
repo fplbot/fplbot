@@ -11,14 +11,15 @@ using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
 using FplBot.Data.Abstractions;
-using MediatR;
 using Nest;
-using Newtonsoft.Json;
+
 using NServiceBus;
 using Xunit.Abstractions;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace FplBot.Tests.Helpers
 {
@@ -53,7 +54,7 @@ namespace FplBot.Tests.Helpers
 
             SlackClient = A.Fake<ISlackClient>();
 
-            var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonConvert.DeserializeObject<GlobalSettings>(TestResources.Boostrap_Static_Json);
+            var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonSerializer.Deserialize<GlobalSettings>(TestResources.Boostrap_Static_Json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
             var globalClient = A.Fake<IGlobalSettingsClient>();
             A.CallTo(() => globalClient.GetGlobalSettings()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
             var elasticClient = A.Fake<IElasticClient>();
@@ -114,19 +115,9 @@ namespace FplBot.Tests.Helpers
 
     internal class DontCareRepo : ITokenStore
     {
-        public Task<IEnumerable<string>> GetTokens()
+        public Task<Workspace> Delete(string token)
         {
-            return Task.FromResult(new List<string>().AsEnumerable());
-        }
-
-        public Task<string> GetTokenByTeamId(string teamId)
-        {
-            return Task.FromResult(string.Empty);
-        }
-
-        public Task Delete(string token)
-        {
-            return Task.CompletedTask;
+            return Task.FromResult<Workspace>(null);
         }
 
         public Task Insert(Workspace slackTeam)

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Slackbot.Net.Abstractions.Hosting
@@ -8,11 +7,9 @@ namespace Slackbot.Net.Abstractions.Hosting
     /// </summary>
     public interface ITokenStore
     {
-        Task<IEnumerable<string>> GetTokens();
-        Task<string> GetTokenByTeamId(string teamId);
-        Task Delete(string token);
+        Task<Workspace> Delete(string teamId);
         Task Insert(Workspace slackTeam);
     }
 
-    public record Workspace(string TeamId, string TeamName, string Scope, string Token);
+    public record Workspace(string TeamId, string TeamName, string Token);
 }

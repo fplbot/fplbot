@@ -1,22 +1,24 @@
-﻿using Newtonsoft.Json;
+﻿
+
+using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class AutomaticSub
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonProperty("element_in")]
+        [JsonPropertyName("element_in")]
         public int ElementIn { get; set; }
 
-        [JsonProperty("element_out")]
+        [JsonPropertyName("element_out")]
         public int ElementOut { get; set; }
 
-        [JsonProperty("entry")]
+        [JsonPropertyName("entry")]
         public int Entry { get; set; }
 
-        [JsonProperty("event")]
+        [JsonPropertyName("event")]
         public int Event { get; set; }
     }
 }

@@ -16,12 +16,12 @@ namespace Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsList
     
     public class Conversation
     {
-        public string Name;
-        public string Id;
-        public bool Is_Channel;
-        public bool Is_Group;
-        public bool Is_Im;
-        public bool Is_General;
-        public bool Is_Archived;
+        public string Name { get; set; }
+        public string Id { get; set; }
+        public bool Is_Channel { get; set; }
+        public bool Is_Group { get; set; }
+        public bool Is_Im { get; set; }
+        public bool Is_General { get; set; }
+        public bool Is_Archived { get; set; }
     }
 }

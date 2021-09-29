@@ -9,20 +9,16 @@ namespace FplBot.Core.Handlers
 {
     public class AppUninstaller : IUninstall
     {
-        private readonly ISlackTeamRepository _slackTeamRepo;
         private readonly IMessageSession _messageSession;
 
-        public AppUninstaller(ISlackTeamRepository slackTeamRepo, IMessageSession messageSession)
+        public AppUninstaller(IMessageSession messageSession)
         {
-            _slackTeamRepo = slackTeamRepo;
             _messageSession = messageSession;
         }
 
-        public async Task Uninstall(string teamId)
+        public async Task OnUninstalled(string teamId, string teamName)
         {
-            var team = await _slackTeamRepo.GetTeam(teamId);
-            await _slackTeamRepo.DeleteByTeamId(teamId);
-            await _messageSession.Publish(new AppUninstalled(team.TeamId, team.TeamName));
+            await _messageSession.Publish(new AppUninstalled(teamId, teamName));
         }
     }
 }

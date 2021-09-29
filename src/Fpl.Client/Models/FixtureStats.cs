@@ -1,37 +1,37 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fpl.Client.Models
 {
     public class FixtureStats
     {
-        [JsonProperty("goals_scored")]
+        [JsonPropertyName("goals_scored")]
         public FixtureStat GoalsScored { get; set; }
 
-        [JsonProperty("assists")]
+        [JsonPropertyName("assists")]
         public FixtureStat Assists { get; set; }
 
-        [JsonProperty("own_goals")]
+        [JsonPropertyName("own_goals")]
         public FixtureStat OwnGoals { get; set; }
 
-        [JsonProperty("penalties_saved")]
+        [JsonPropertyName("penalties_saved")]
         public FixtureStat PenaltiesSaved { get; set; }
 
-        [JsonProperty("penalties_missed")]
+        [JsonPropertyName("penalties_missed")]
         public FixtureStat PenaltiesMissed { get; set; }
 
-        [JsonProperty("yellow_cards")]
+        [JsonPropertyName("yellow_cards")]
         public FixtureStat YellowCards { get; set; }
 
-        [JsonProperty("red_cards")]
+        [JsonPropertyName("red_cards")]
         public FixtureStat RedCards { get; set; }
 
-        [JsonProperty("saves")]
+        [JsonPropertyName("saves")]
         public FixtureStat Saves { get; set; }
 
-        [JsonProperty("bonus")]
+        [JsonPropertyName("bonus")]
         public FixtureStat Bonus { get; set; }
 
-        [JsonProperty("bps")]
+        [JsonPropertyName("bps")]
         public FixtureStat Bps { get; set; }
     }
 }
