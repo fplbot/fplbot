@@ -51,9 +51,12 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
                 if (team.FplbotLeagueId.HasValue && !string.IsNullOrEmpty(team.FplBotSlackChannel))
                 {
                     await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, gameweek.Id));
-                    TempData["msg"] += $"Published standings to {teamId}";
+                    TempData["msg"] = $"Published standings to {teamId}";
                 }
-                TempData["msg"] += $"Did not publish. Missing fpl league id for {teamId}";
+                else
+                {
+                    TempData["msg"] = $"Did not publish. Missing fpl league id for {teamId}";
+                }
             }
             else
             {
