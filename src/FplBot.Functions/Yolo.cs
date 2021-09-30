@@ -10,7 +10,7 @@ namespace FplBot.Functions
     {
         [Function("Yolo")]
         public static HttpResponseData Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
             FunctionContext executionContext)
         {
             var logger = executionContext.GetLogger("Yolo");
