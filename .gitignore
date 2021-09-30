@@ -333,7 +333,7 @@ appsettings.Local.json
 releases/
 appsettings.Development.json
 appsettings.Test.json
-appsettings.Production.json
+src/Fpl.SearchConsole/appsettings.Production.json
 local.settings.json
 .learningtransport/
 .vscode/
