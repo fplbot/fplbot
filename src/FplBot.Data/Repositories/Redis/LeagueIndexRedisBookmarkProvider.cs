@@ -20,7 +20,9 @@ namespace FplBot.Data.Repositories.Redis
         public async Task<int> GetBookmark()
         {
             var valid = (await _db.StringGetAsync(BookmarkKey)).TryParse(out int bookmark);
-            _logger.LogError($"Unable to parse {BookmarkKey} from db");
+
+            if(!valid)
+                _logger.LogWarning($"Unable to parse {BookmarkKey} from db");
 
             return valid ? bookmark : 1;
         }
