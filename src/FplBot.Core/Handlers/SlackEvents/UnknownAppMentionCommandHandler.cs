@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -30,9 +31,9 @@ namespace FplBot.Core.Handlers.SlackEvents
         }
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
-            await _session.Publish(new UnknownAppMentionReceived(eventMetadata.Team_Id, slackEvent.User, slackEvent.Text));
+            string mentionTextStripped = Regex.Replace(slackEvent.Text, "<@(\\w+)>", "$1");
+            await _session.Publish(new UnknownAppMentionReceived(eventMetadata.Team_Id, slackEvent.User, mentionTextStripped));
             return new EventHandledResponse("OK");
-
         }
 
         // To test fixture event:
