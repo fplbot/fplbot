@@ -24,7 +24,7 @@ X-Correlation-Id:testtool
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : "<@BOT123> transfers",
+        "text" : "<@BOT123> strip test",
         "channel": "C92QZTVEF"
     }
 }
