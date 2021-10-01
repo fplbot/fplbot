@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Fpl.Client.Models;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
 
@@ -18,6 +19,8 @@ namespace FplBot.Tests.Helpers
         {
             return Task.FromResult(new SlackTeam
             {
+                Subscriptions = new EventSubscription[0],
+                FplBotSlackChannel = "#lol",
                 FplbotLeagueId = _leagueId
             });
         }
@@ -32,17 +35,14 @@ namespace FplBot.Tests.Helpers
             throw new System.NotImplementedException();
         }
 
-        public Task Insert(SlackTeam slackTeam)
-        {
-            return Task.CompletedTask;
-        }
-
         public Task<IEnumerable<SlackTeam>> GetAllTeams()
         {
             IEnumerable<SlackTeam> teams = new []{
                 new SlackTeam
                 {
-                    FplbotLeagueId = _leagueId
+                    FplbotLeagueId = _leagueId,
+                    FplBotSlackChannel = "#lol",
+                    Subscriptions = new EventSubscription[0]
                 }
             };
             return Task.FromResult(teams);

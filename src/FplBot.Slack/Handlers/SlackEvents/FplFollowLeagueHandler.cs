@@ -67,7 +67,7 @@ namespace FplBot.Slack.Handlers.SlackEvents
                     return new EventHandledResponse(success);
                     string ChannelName()
                     {
-                        return team.FplBotSlackChannel.StartsWith("#") ? team.FplBotSlackChannel : $"<#{team.FplBotSlackChannel}>";
+                        return $"<#{message.Channel}>";
                     }
                 }
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
