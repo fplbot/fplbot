@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Indexing;
-using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.SearchConsole

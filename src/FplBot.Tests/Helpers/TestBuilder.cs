@@ -5,7 +5,7 @@ using Fpl.Client.Models;
 
 using FplBot.Core;
 using FplBot.Core.Abstractions;
-using FplBot.Data.Models;
+using FplBot.Core.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using Slackbot.Net.Endpoints.Models;
 

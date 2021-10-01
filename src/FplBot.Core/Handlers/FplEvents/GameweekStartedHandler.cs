@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
-using FplBot.Data.Abstractions;
-using FplBot.Data.Models;
+using FplBot.Core.Data.Abstractions;
+using FplBot.Core.Data.Models;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;

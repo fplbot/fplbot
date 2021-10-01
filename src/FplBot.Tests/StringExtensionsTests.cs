@@ -1,9 +1,6 @@
-﻿using System;
-using System.Linq;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
-using FplBot.Data;
-using FplBot.Data.Models;
+﻿using System.Linq;
+using FplBot.Core.Data;
+using FplBot.Core.Data.Models;
 using Xunit;
 
 namespace FplBot.Tests

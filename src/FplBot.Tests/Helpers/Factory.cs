@@ -14,7 +14,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using FplBot.Data.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using Nest;
 
 using NServiceBus;
@@ -49,8 +49,8 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            services.AddFplBot(configuration)
-                .AddFplBotSlackEventHandlers();
+            services.AddFplBot(configuration);
+
 
             SlackClient = A.Fake<ISlackClient>();
 

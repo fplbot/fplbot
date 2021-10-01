@@ -1,13 +1,14 @@
 ﻿using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Search.Models;
-using FplBot.Data.Abstractions;
-using FplBot.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Fpl.Search.Data.Abstractions;
+using FplBot.VerifiedEntries.Data.Abstractions;
+using FplBot.VerifiedEntries.Data.Models;
 
 namespace Fpl.Search.Indexing
 {

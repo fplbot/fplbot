@@ -14,10 +14,10 @@ using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using FplBot.Data;
+using Fpl.Search;
+using FplBot.Core.Data;
 using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
-using Microsoft.Extensions.Options;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Authentication;
 using StackExchange.Redis;
@@ -47,6 +47,7 @@ namespace FplBot.WebApi
                 EndPoints = {opts.GetRedisServerHostAndPort}
             };
             var conn =  ConnectionMultiplexer.Connect(options);
+
             services.AddDataProtection()
                 .PersistKeysToStackExchangeRedis(conn)
                 .SetApplicationName(
@@ -71,11 +72,14 @@ namespace FplBot.WebApi
             });
             services.Configure<AnalyticsOptions>(Configuration);
             services.AddReducedHttpClientFactoryLogging();
-            services.AddFplBot(Configuration).AddFplBotSlackEventHandlers();
+            services.AddFplBot(Configuration);
+            services.AddVerifiedEntries(Configuration);
             if(!_env.IsDevelopment())
                 services.AddFplWorkers();
-            services.AddMediatR(typeof(FplEventHandlers));
+
             services.AddMediatR(typeof(Startup));
+            services.AddRecurringIndexer(Configuration);
+
             services.AddAuthentication(options =>
                 {
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;

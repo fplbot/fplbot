@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Data;
-using FplBot.Data.Models;
-using FplBot.Data.Repositories.Redis;
+using Fpl.Search.Data.Repositories;
+using FplBot.Core.Data;
+using FplBot.Core.Data.Models;
+using FplBot.Core.Data.Repositories.Redis;
+using FplBot.VerifiedEntries.Data;
+using FplBot.VerifiedEntries.Data.Models;
+using FplBot.VerifiedEntries.Data.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -13,7 +17,7 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>
+    public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<VerifiedEntriesRepository>
     {
         private readonly ITestOutputHelper _helper;
 
@@ -54,6 +58,11 @@ namespace FplBot.WebApi.Tests
                 REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
             });
 
+            var verifiedOpts = new OptionsWrapper<VerifiedRedisOptions>(new VerifiedRedisOptions
+            {
+                REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
+            });
+
             var configurationOptions = new ConfigurationOptions
             {
                 ClientName = opts.Value.GetRedisUsername,
@@ -66,7 +75,7 @@ namespace FplBot.WebApi.Tests
             _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
             _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
             _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
-            _verifiedRepo = new VerifiedEntriesRepository(multiplexer, opts, new SimpleLogger(_helper));
+            _verifiedRepo = new VerifiedEntriesRepository(multiplexer, verifiedOpts, new SimpleLogger(_helper));
         }
 
         [Fact]

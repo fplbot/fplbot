@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Data.Abstractions;
-using FplBot.Data.Models;
+using FplBot.VerifiedEntries.Data.Abstractions;
+using FplBot.VerifiedEntries.Data.Models;
 
 namespace FplBot.WebApi.Controllers
 {

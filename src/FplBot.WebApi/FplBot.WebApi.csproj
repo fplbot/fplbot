@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FplBot.Core\FplBot.Core.csproj" />
     <ProjectReference Include="..\Fpl.Workers\Fpl.Workers.csproj" />
+    <ProjectReference Include="..\FplBot.VerifiedEntries\FplBot.VerifiedEntries.csproj" />
   </ItemGroup>
 
 </Project>

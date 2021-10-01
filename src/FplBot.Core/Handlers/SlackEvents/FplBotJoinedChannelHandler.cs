@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Core.Abstractions;
-using FplBot.Data.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 

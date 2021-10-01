@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using FplBot.Core.Abstractions;
+using FplBot.Core.Data.Models;
 using FplBot.Core.Extensions;
-using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Helpers

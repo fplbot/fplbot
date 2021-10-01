@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Search.Models;
-using FplBot.Data.Abstractions;
-using FplBot.Data.Models;
+using FplBot.VerifiedEntries.Data.Abstractions;
+using FplBot.VerifiedEntries.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

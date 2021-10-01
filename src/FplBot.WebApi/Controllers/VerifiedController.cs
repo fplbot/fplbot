@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FplBot.Data.Abstractions;
+using FplBot.VerifiedEntries.Data.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FplBot.WebApi.Controllers

@@ -1,4 +1,4 @@
-using FplBot.Data.Models;
+using FplBot.VerifiedEntries.Data.Models;
 
 namespace FplBot.WebApi.Controllers
 {
