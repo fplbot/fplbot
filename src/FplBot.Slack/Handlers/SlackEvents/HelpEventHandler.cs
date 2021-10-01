@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core.Data.Abstractions;
+using FplBot.Slack.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     public class HelpEventHandler : IShortcutAppMentions
     {

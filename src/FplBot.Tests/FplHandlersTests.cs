@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core.Handlers;
-using FplBot.Core.Handlers.SlackEvents;
+using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;

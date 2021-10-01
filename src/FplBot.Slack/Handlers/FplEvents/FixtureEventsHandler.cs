@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers.Formatting.FixtureStats;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers.Formatting.FixtureStats;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace FplBot.Core.Handlers.FplEvents
+namespace FplBot.Slack.Handlers.FplEvents
 {
     public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHandleMessages<PublishFixtureEventsToSlackWorkspace>
     {

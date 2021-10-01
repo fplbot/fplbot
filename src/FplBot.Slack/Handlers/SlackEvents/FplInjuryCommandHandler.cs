@@ -3,12 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Helpers.Formatting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     internal class FplInjuryCommandHandler : HandleAppMentionBase
     {

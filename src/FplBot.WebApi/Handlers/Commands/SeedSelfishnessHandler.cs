@@ -6,6 +6,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
+using FplBot.Slack.Extensions;
 using FplBot.VerifiedEntries.Data.Abstractions;
 using FplBot.VerifiedEntries.Helpers;
 using MediatR;

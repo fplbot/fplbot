@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Abstractions;
 
-namespace FplBot.Core.Extensions
+namespace FplBot.Slack.Extensions
 {
     public static class StringExtensions
     {

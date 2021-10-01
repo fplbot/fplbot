@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Helpers;
-using FplBot.Core.Helpers.Formatting.FixtureStats;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Helpers;
+using FplBot.Slack.Helpers.Formatting.FixtureStats;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace FplBot.Core.Abstractions
+namespace FplBot.Slack.Abstractions
 {
     public record TauntData(IEnumerable<TransfersByGameWeek.Transfer> TransfersForLeague, IEnumerable<GameweekEntry> GameweekEntries, IEnumerable<User> Users)
     {

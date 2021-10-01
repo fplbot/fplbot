@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
+using FplBot.Slack.Abstractions;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     public class LeagueEntriesByGameweek : ILeagueEntriesByGameweek
     {
@@ -27,7 +27,7 @@ namespace FplBot.Core.Helpers
             try
             {
                 var league = await _leagueClient.GetClassicLeague(leagueId);
-            
+
                 var entries = league.Standings.Entries;
 
                 var entryDictionary = new ConcurrentBag<GameweekEntry>();

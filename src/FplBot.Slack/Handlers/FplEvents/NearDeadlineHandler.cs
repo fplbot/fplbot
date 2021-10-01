@@ -1,18 +1,18 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
-using FplBot.Core.Helpers.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.Core.Handlers.FplEvents
+namespace FplBot.Slack.Handlers.FplEvents
 {
     public class NearDeadlineHandler :
         IHandleMessages<OneHourToDeadline>,

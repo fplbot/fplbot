@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     internal class GameweekHelper : IGameweekHelper
     {

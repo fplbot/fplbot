@@ -3,7 +3,7 @@ using System.Linq;
 using Fpl.Client.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Extensions
+namespace FplBot.Slack.Extensions
 {
     public static class PlayerExtensions
     {

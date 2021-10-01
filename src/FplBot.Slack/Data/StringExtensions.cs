@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Data.Models;
 
-namespace FplBot.Core.Data
+namespace FplBot.Slack.Data
 {
     public static class StringExtensions
     {

@@ -3,15 +3,15 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
-using FplBot.Core.Helpers.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Helpers.Formatting;
 using NServiceBus;
 
-namespace FplBot.Core.Handlers.FplEvents
+namespace FplBot.Slack.Handlers.FplEvents
 {
     internal class GameweekEndedHandler : IHandleMessages<GameweekFinished>, IHandleMessages<PublishStandingsToSlackWorkspace>
     {

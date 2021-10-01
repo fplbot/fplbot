@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     public static class MessageHelper
     {
@@ -15,7 +15,7 @@ namespace FplBot.Core.Helpers
             var gameweek = FindMatch(messageText, $"{pattern.Replace("{gw}", "(\\d+?)(?:\\s|$)")}");
             return gameweek == null ? (int?) null : int.Parse(gameweek);
         }
-        
+
         /// <summary>
         /// Extracts arguments from message text using pattern "some text here {args}". E.g. "player {args}".
         /// </summary>
@@ -26,7 +26,7 @@ namespace FplBot.Core.Helpers
         {
             return FindMatch(messageText, $"{pattern.Replace("{args}", "(.+)?")}");
         }
-        
+
         /// <summary>
         /// Extracts arguments from message text using pattern "some text here {args}". E.g. "player {args}".
         /// </summary>

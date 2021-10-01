@@ -1,10 +1,11 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
 using FplBot.Core.Extensions;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;

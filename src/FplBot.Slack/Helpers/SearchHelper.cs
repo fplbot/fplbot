@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     internal static class SearchHelper
     {
@@ -13,7 +13,7 @@ namespace FplBot.Core.Helpers
         public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
         {
             var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new {Pri = idx, Prop = prop}).ToArray();
-            
+
             var searchResultsForProps = new ConcurrentBag<SearchResultWithPri<T>>();
             Parallel.ForEach(searchPropertiesWithPri, x =>
             {
@@ -27,7 +27,7 @@ namespace FplBot.Core.Helpers
             {
                 return perfectMatch.SearchResult;
             }
-            
+
             foreach (var searchResult in searchResultsForPropsOrderedByPri)
             {
                 if (searchResult.SearchResult.LevenshteinDistance <= LevenshteinDistanceThreshold)
@@ -73,7 +73,7 @@ namespace FplBot.Core.Helpers
         {
             public int Pri { get; }
             public SearchResult<T> SearchResult { get; }
-   
+
             public SearchResultWithPri(int pri, SearchResult<T> searchResult)
             {
                 Pri = pri;

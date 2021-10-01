@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FplBot.Core.Extensions
+namespace FplBot.Slack.Extensions
 {
     public static class DateTimeExtensions
     {

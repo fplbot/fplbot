@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     public class TransfersByGameWeek : ITransfersByGameWeek
     {
@@ -46,7 +46,7 @@ namespace FplBot.Core.Helpers
             try
             {
                 var league = await _leagueClient.GetClassicLeague(leagueId);
-            
+
                 var playerTransfers = new ConcurrentBag<Transfer>();
                 var entries = league.Standings.Entries;
 
@@ -81,7 +81,7 @@ namespace FplBot.Core.Helpers
             }
         }
 
-       
+
 
         public async Task<string> GetTransfersByGameweekTexts(int gw, int leagueId)
         {
@@ -134,7 +134,7 @@ namespace FplBot.Core.Helpers
             return sb.ToString();
         }
 
-        
+
         private async Task<EntryTranfers> GetTransfersTextForEntry(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players)
         {
             var transfersTask = _transfersClient.GetTransfers(entry.Entry);
@@ -163,7 +163,7 @@ namespace FplBot.Core.Helpers
                     if (wildcardPlayed)
                     {
                         sb.Append($"{entry.GetEntryLink(gameweek)} threw a WILDCAAAAARD :fire::fire::fire::\n");
-                    } 
+                    }
                     else if (freeHitPlayed)
                     {
                         sb.Append($"{entry.GetEntryLink(gameweek)} went all in with the Free Hit chip:\n");

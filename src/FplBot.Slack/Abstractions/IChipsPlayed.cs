@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace FplBot.Core.Abstractions
+namespace FplBot.Slack.Abstractions
 {
     internal interface IChipsPlayed
     {

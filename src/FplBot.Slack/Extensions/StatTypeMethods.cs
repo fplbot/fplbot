@@ -1,7 +1,7 @@
-using FplBot.Core.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Data.Models;
 
-namespace FplBot.Core.Extensions
+namespace FplBot.Slack.Extensions
 {
     public static class StatTypeMethods
     {

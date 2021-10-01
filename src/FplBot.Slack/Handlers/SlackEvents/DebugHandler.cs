@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
-using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Slack.Helpers;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     public class DebugHandler : IHandleAppMentions
     {
@@ -15,7 +15,7 @@ namespace FplBot.Core.Handlers.SlackEvents
         {
             _session = session;
         }
-        
+
         public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
         {
             var debugDetails = MetaService.DebugInfo();

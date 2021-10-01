@@ -1,8 +1,7 @@
 using System;
 using FplBot.Tests.Helpers;
 using System.Threading.Tasks;
-using FplBot.Core.Handlers;
-using FplBot.Core.Handlers.SlackEvents;
+using FplBot.Slack.Handlers.SlackEvents;
 using Slackbot.Net.Endpoints.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,7 +16,7 @@ namespace FplBot.Tests
         {
             _client = Factory.GetHandler<FplTransfersCommandHandler>(logger);
         }
-        
+
         [Theory]
         [InlineData("@fplbot transfers")]
         [InlineData("<@UREFQD887> transfers")]
@@ -27,7 +26,7 @@ namespace FplBot.Tests
             var transfers = await _client.Handle(dummy.meta, dummy.@event);
             Assert.Contains("Transfers", transfers.Response, StringComparison.InvariantCultureIgnoreCase);
         }
-        
+
         [Theory]
         [InlineData("<@UREFQD887> transfers 20")]
         public async Task GetTransfersForExplicitGwShouldPostTransfersForGameweek(string input)

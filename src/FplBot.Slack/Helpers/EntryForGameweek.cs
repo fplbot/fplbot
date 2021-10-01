@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
+using FplBot.Slack.Abstractions;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     internal class EntryForGameweek: IEntryForGameweek
     {

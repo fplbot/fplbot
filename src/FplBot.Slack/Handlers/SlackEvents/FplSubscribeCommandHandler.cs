@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers;
+using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     internal class FplSubscribeCommandHandler : HandleAppMentionBase
     {

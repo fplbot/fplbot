@@ -1,6 +1,6 @@
 using System;
 
-namespace FplBot.Core.Data
+namespace FplBot.Slack.Data
 {
     public class RedisOptions
     {

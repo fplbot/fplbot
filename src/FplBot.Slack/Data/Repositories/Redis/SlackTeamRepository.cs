@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
 
-namespace FplBot.Core.Data.Repositories.Redis
+namespace FplBot.Slack.Data.Repositories.Redis
 {
     public class SlackTeamRepository : ISlackTeamRepository, ITokenStore
     {

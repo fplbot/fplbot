@@ -5,11 +5,10 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
-
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     public static class GitHubReleaseService
     {

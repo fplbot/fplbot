@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.Core.Abstractions
+namespace FplBot.Slack.Abstractions
 {
     public interface ISlackWorkSpacePublisher
     {
@@ -14,7 +14,7 @@ namespace FplBot.Core.Abstractions
         /// Publishes to single workspaces to the channel provided
         /// </summary>
         Task PublishToWorkspace(string teamId, string channel, params string[] messages);
-        
+
         /// <summary>
         /// Publishes to single workspaces to the channel provided
         /// </summary>

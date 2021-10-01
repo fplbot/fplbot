@@ -1,13 +1,13 @@
 using System;
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Abstractions;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     internal class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
     {

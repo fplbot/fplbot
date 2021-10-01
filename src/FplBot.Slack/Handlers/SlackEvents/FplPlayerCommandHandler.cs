@@ -2,15 +2,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers;
+using FplBot.Slack.Helpers.Formatting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     internal class FplPlayerCommandHandler : HandleAppMentionBase
     {
@@ -19,7 +19,7 @@ namespace FplBot.Core.Handlers.SlackEvents
 
         public FplPlayerCommandHandler(
             ISlackWorkSpacePublisher workSpacePublisher,
-            IGlobalSettingsClient globalSettingsClient) 
+            IGlobalSettingsClient globalSettingsClient)
         {
             _workSpacePublisher = workSpacePublisher;
             _globalSettingsClient = globalSettingsClient;
@@ -32,7 +32,7 @@ namespace FplBot.Core.Handlers.SlackEvents
             var globalSettings = await _globalSettingsClient.GetGlobalSettings();
             var players = globalSettings.Players;
             var teams = globalSettings.Teams;
-            
+
             var name = ParseArguments(message);
 
             var allPlayers = players.OrderByDescending(player => player.OwnershipPercentage);
@@ -45,13 +45,13 @@ namespace FplBot.Core.Handlers.SlackEvents
             }
 
             var playerName = $"{mostPopularMatchingPlayer.FirstName} {mostPopularMatchingPlayer.SecondName}";
-            
+
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
             {
                 Channel = message.Channel,
                 Blocks = Formatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
             });
-            
+
             return new EventHandledResponse($"Found matching player for {name}: " + playerName);
         }
 
@@ -63,10 +63,10 @@ namespace FplBot.Core.Handlers.SlackEvents
             }
 
             var bestMatchInRegularSearch = SearchHelper.Find(
-                players, 
-                name, 
+                players,
+                name,
                 x => $"{x.FirstName} {x.SecondName}".Searchable(),
-                x => x.SecondName.Searchable(), 
+                x => x.SecondName.Searchable(),
                 x => x.FirstName.Searchable(),
                 x => x.WebName.Searchable());
 
@@ -96,7 +96,7 @@ namespace FplBot.Core.Handlers.SlackEvents
             }
 
             var bestMatchInAbbreviationSearch = SearchHelper.Find(
-                players, 
+                players,
                 name,
                 x => $"{x.FirstName} {x.SecondName}".Abbreviated().Searchable());
 

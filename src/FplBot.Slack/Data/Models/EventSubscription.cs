@@ -1,4 +1,4 @@
-namespace FplBot.Core.Data.Models
+namespace FplBot.Slack.Data.Models
 {
     public enum EventSubscription
     {

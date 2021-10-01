@@ -1,19 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     public class UnknownAppMentionCommandHandler : INoOpAppMentions
     {

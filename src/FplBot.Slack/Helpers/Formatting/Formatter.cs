@@ -7,13 +7,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Fpl.Client.Models;
 using Fpl.Search.Models;
-using FplBot.Core.Extensions;
-using FplBot.Core.Handlers.FplEvents;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Handlers.FplEvents;
 using FplBot.VerifiedEntries.Data.Models;
 using Slackbot.Net.Models.BlockKit;
 
-namespace FplBot.Core.Helpers.Formatting
+namespace FplBot.Slack.Helpers.Formatting
 {
     public static class Formatter
     {

@@ -1,8 +1,8 @@
 ﻿using Fpl.Client.Models;
-using FplBot.Core.Helpers;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Helpers;
+using FplBot.Slack.Helpers.Formatting;
 
-namespace FplBot.Core.Extensions
+namespace FplBot.Slack.Extensions
 {
     public static class ClassicLeagueEntryExtensions
     {
@@ -10,12 +10,12 @@ namespace FplBot.Core.Extensions
         {
             return Formatter.GetEntryLink(entry.Entry, entry.EntryName, gameweek);
         }
-        
+
         public static string GetEntryLink(this ClassicLeagueEntry entry, int? gameweek)
         {
             return Formatter.GetEntryLink(entry.Entry, entry.EntryName, gameweek);
         }
 
-        
+
     }
 }

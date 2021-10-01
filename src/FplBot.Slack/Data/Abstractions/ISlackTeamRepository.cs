@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Data.Models;
 
-namespace FplBot.Core.Data.Abstractions
+namespace FplBot.Slack.Data.Abstractions
 {
     public interface ISlackTeamRepository
     {

@@ -1,6 +1,6 @@
 ﻿using Fpl.Client.Models;
 using FplBot.Core.Helpers;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Helpers.Formatting;
 using Xunit;
 
 namespace FplBot.Tests.Formatting
@@ -73,9 +73,9 @@ namespace FplBot.Tests.Formatting
 
             // Assert
             Assert.Equal("Top three this gameweek was:\n" +
-                         ":first_place_medal: <https://fantasy.premierleague.com/entry/2/event/1|L> - 90\n" + 
-                         ":first_place_medal: <https://fantasy.premierleague.com/entry/3/event/1|La> - 90\n" + 
-                         ":second_place_medal: <https://fantasy.premierleague.com/entry/1/event/1|K> - 50\n" + 
+                         ":first_place_medal: <https://fantasy.premierleague.com/entry/2/event/1|L> - 90\n" +
+                         ":first_place_medal: <https://fantasy.premierleague.com/entry/3/event/1|La> - 90\n" +
+                         ":second_place_medal: <https://fantasy.premierleague.com/entry/1/event/1|K> - 50\n" +
                          ":third_place_medal: <https://fantasy.premierleague.com/entry/4/event/1|M> - 10\n" +
                          ":third_place_medal: <https://fantasy.premierleague.com/entry/5/event/1|J> - 10\n", message);
         }

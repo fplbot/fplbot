@@ -1,7 +1,6 @@
 using FplBot.Tests.Helpers;
 using System.Threading.Tasks;
-using FplBot.Core.Handlers;
-using FplBot.Core.Handlers.SlackEvents;
+using FplBot.Slack.Handlers.SlackEvents;
 using Slackbot.Net.Endpoints.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
@@ -16,7 +15,7 @@ namespace FplBot.Tests
         {
             _client = Factory.GetHandler<FplCaptainCommandHandler>(logger);
         }
-        
+
         [Theory]
         [InlineData("@fplbot captains")]
         [InlineData("<@UREFQD887> captains")]
@@ -47,7 +46,7 @@ namespace FplBot.Tests
             var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);
             Assert.StartsWith(":bar_chart:", playerData.Response);
         }
-        
+
         [Theory]
         [InlineData("<@UREFQD887> captains chart 19")]
         [InlineData("<@UREFQD887> captains 19 chart")]

@@ -3,7 +3,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     public class AppUninstaller : IUninstall
     {

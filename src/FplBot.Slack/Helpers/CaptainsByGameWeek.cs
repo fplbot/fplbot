@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     internal class CaptainsByGameWeek : ICaptainsByGameWeek
     {
@@ -27,12 +27,12 @@ namespace FplBot.Core.Helpers
             _entryForGameweek = entryForGameweek;
             _logger = logger;
         }
-        
+
         public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId)
         {
-            
+
                 var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
-                
+
                 var sb = new StringBuilder();
                 sb.Append($":boom: *Captain picks for gameweek {gameweek}*\n");
 
@@ -51,13 +51,13 @@ namespace FplBot.Core.Helpers
                 }
 
                 return sb.ToString();
-            
-         
+
+
         }
 
         public async Task<string> GetCaptainsChartByGameWeek(int gameweek, int leagueId)
         {
-            
+
                 var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
                 var captainGroups = entryCaptainPicks
                     .GroupBy(x => x.Captain.Id, el => el.Captain)
@@ -100,8 +100,8 @@ namespace FplBot.Core.Helpers
                 }
 
                 return sb.ToString();
-            
-           
+
+
         }
 
         private async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)
@@ -119,7 +119,7 @@ namespace FplBot.Core.Helpers
                 {
                     Entry = e.Entry,
                     EntryName = e.EntryName
-                
+
                 }).ToList();
             }
             else
@@ -128,10 +128,10 @@ namespace FplBot.Core.Helpers
                 {
                     Entry = e.Entry,
                     EntryName = e.EntryName
-                
+
                 }).ToList();
             }
-            
+
             var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, players.Players)));
 
             return entryCaptainPicks.WhereNotNull();

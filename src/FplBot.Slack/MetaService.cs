@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace FplBot.Core
+namespace FplBot.Slack
 {
     internal record DebugInfo(string MajorMinorPatch, string Informational, string Sha);
     internal static class MetaService

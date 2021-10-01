@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
 
 namespace FplBot.Tests.Helpers
 {

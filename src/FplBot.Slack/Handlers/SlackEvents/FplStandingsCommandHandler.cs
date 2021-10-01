@@ -1,14 +1,14 @@
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Extensions;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Extensions;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     internal class FplStandingsCommandHandler : HandleAppMentionBase
     {

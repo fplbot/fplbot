@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
+using FplBot.Slack.Abstractions;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     internal class ChipsPlayed : IChipsPlayed
     {

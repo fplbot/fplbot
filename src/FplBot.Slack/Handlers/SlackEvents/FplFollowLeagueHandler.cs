@@ -2,14 +2,14 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     public class FplFollowLeagueHandler : HandleAppMentionBase
     {

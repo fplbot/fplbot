@@ -1,14 +1,14 @@
 using System.Threading.Tasks;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
-using FplBot.Core.Helpers.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.Core.Handlers.FplEvents
+namespace FplBot.Slack.Handlers.FplEvents
 {
     public class LineupReadyHandler : IHandleMessages<LineupReady>, IHandleMessages<PublishLineupsToSlackWorkspace>
     {

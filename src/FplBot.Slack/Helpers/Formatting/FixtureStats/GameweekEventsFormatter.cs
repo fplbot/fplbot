@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Data.Models;
-using FplBot.Core.Extensions;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Data.Models;
+using FplBot.Slack.Extensions;
 
-namespace FplBot.Core.Helpers.Formatting.FixtureStats
+namespace FplBot.Slack.Helpers.Formatting.FixtureStats
 {
     internal class GameweekEventsFormatter
     {

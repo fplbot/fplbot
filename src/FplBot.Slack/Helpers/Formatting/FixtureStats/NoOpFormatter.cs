@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Helpers.Formatting.FixtureStats
+namespace FplBot.Slack.Helpers.Formatting.FixtureStats
 {
     internal class NoOpFormatter : IFormatEvents
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace FplBot.Core.Helpers
+namespace FplBot.Slack.Helpers
 {
     public static class SlackHandleHelper
     {

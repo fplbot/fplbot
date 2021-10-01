@@ -1,13 +1,13 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers.Formatting;
+using FplBot.Slack.Abstractions;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers.Formatting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     internal class FplPricesHandler : HandleAppMentionBase
     {
@@ -27,18 +27,18 @@ namespace FplBot.Core.Handlers.SlackEvents
             var globalSettings = await _globalSettingsClient.GetGlobalSettings();
             var allPlayers = globalSettings.Players;
             var teams = globalSettings.Teams;
-            
+
             var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0 && p.IsRelevant());
             if (priceChangedPlayers.Any())
             {
                 var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers, teams);
-                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);    
+                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
             }
             else
             {
-                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, "No relevant price changes yet"); 
+                await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, "No relevant price changes yet");
             }
-            
+
             return new EventHandledResponse("Ok");
         }
 

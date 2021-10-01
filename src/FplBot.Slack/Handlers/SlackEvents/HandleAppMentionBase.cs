@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.Core.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents
 {
     public abstract class HandleAppMentionBase : IHandleAppMentions
     {
