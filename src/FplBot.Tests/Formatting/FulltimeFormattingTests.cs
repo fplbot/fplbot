@@ -1,6 +1,7 @@
 using Fpl.Client.Models;
-using FplBot.Core.GameweekLifecycle.Handlers;
+using FplBot.Core.Handlers.FplEvents;
 using FplBot.Core.Helpers;
+using FplBot.Core.Helpers.Formatting;
 using FplBot.Core.Models;
 using Xunit;
 using Xunit.Abstractions;

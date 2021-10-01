@@ -6,7 +6,6 @@ using FplBot.Core.Abstractions;
 using FplBot.Core.Data.Models;
 using FplBot.Core.Helpers;
 using FplBot.Core.Helpers.Formatting.FixtureStats;
-using FplBot.Core.Helpers.Formatting.Taunts;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;

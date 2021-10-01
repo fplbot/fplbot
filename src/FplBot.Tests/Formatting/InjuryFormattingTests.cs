@@ -1,5 +1,6 @@
 using Fpl.Client.Models;
 using FplBot.Core.Helpers;
+using FplBot.Core.Helpers.Formatting;
 using FplBot.Messaging.Contracts.Events.v1;
 using Xunit;
 using Xunit.Abstractions;

@@ -44,7 +44,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FplBot.Core\FplBot.Core.csproj" />
+      <ProjectReference Include="..\FplBot.Slack\FplBot.Slack.csproj" />
       <ProjectReference Include="..\Fpl.Workers\Fpl.Workers.csproj" />
     </ItemGroup>
 

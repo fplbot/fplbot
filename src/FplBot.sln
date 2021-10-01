@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Tests", "FplBot.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Client", "Fpl.Client\Fpl.Client.csproj", "{76C6B8FB-F47B-45BA-894C-A58D48D98D56}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Core", "FplBot.Core\FplBot.Core.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Slack", "FplBot.Slack\FplBot.Slack.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi", "FplBot.WebApi\FplBot.WebApi.csproj", "{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}"
 EndProject

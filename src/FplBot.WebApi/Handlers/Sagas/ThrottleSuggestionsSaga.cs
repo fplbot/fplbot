@@ -6,6 +6,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
+using FplBot.Core.Helpers.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using NServiceBus;
 
