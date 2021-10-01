@@ -21,7 +21,7 @@ namespace FplBot.Core.GameweekLifecycle
         private ICollection<Fixture> _currentGameweekFixtures;
         private ICollection<Team> _teams;
 
-        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<State> logger = null)
+        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<State> logger)
         {
             _fixtureClient = fixtureClient;
             _settingsClient = settingsClient;
@@ -35,6 +35,7 @@ namespace FplBot.Core.GameweekLifecycle
 
         public async Task Reset(int newGameweek)
         {
+            _logger.LogInformation($"Running reset for gw {newGameweek}");
             _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
             var settings = await _settingsClient.GetGlobalSettings();
             _players = settings.Players;
@@ -43,6 +44,7 @@ namespace FplBot.Core.GameweekLifecycle
 
         public async Task Refresh(int currentGameweek)
         {
+            _logger.LogInformation($"Refreshing {currentGameweek}");
             var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
             var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures, _players, _teams);
             var finishedFixtures = LiveEventsExtractor.GetProvisionalFinishedFixtures(latest, _currentGameweekFixtures, _teams, _players);

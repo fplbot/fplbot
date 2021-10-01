@@ -10,7 +10,7 @@ namespace FplBot.Core.GameweekLifecycle
     /// <summary>
     /// This class is wired up by MediatR, do not delete
     /// </summary>
-    internal class StateEventsHandler : 
+    internal class StateEventsHandler :
         INotificationHandler<GameweekMonitoringStarted>,
         INotificationHandler<GameweekJustBegan>,
         INotificationHandler<GameweekCurrentlyOnGoing>,
@@ -25,7 +25,7 @@ namespace FplBot.Core.GameweekLifecycle
             _state = state;
         }
 
-        Task INotificationHandler<GameweekMonitoringStarted>.Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
+        public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Init");
             return _state.Reset(notification.CurrentGameweek.Id);

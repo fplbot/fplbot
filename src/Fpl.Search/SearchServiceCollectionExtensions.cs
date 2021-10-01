@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Nest;
 using System;
+using CronBackgroundServices;
 using Fpl.Search.Data;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Data.Repositories;
@@ -68,7 +69,7 @@ namespace Fpl.Search
         public static IServiceCollection AddRecurringIndexer(this IServiceCollection services, IConfiguration config)
         {
             services.AddIndexingServices(config);
-            services.AddRecurringActions().AddRecurrer<IndexerRecurringAction>().Build();
+            services.AddRecurrer<IndexerRecurringAction>();
             return services;
         }
     }
