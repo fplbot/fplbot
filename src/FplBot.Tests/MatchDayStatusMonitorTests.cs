@@ -4,7 +4,6 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Workers.RecurringActions;
-using FplBot.Core.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using MediatR;
 using Microsoft.Extensions.Logging;

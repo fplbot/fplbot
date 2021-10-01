@@ -1,7 +1,6 @@
 using Fpl.Client.Models;
-using FplBot.Core.GameweekLifecycle.Handlers;
-using FplBot.Core.Helpers;
-using FplBot.Core.Models;
+using FplBot.Slack.Handlers.FplEvents;
+using FplBot.Slack.Helpers.Formatting;
 using Xunit;
 using Xunit.Abstractions;
 

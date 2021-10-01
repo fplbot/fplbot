@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Core.Extensions;
+using Fpl.Workers.Extensions;
 using Xunit.Sdk;
 
 namespace FplBot.Tests.Helpers

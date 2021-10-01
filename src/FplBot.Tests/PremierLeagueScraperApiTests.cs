@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using FakeItEasy;
+using Fpl.Workers;
 using FplBot.Core;
 using Microsoft.Extensions.Logging;
 using Xunit;

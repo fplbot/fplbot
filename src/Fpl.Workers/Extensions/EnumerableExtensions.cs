@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
-namespace FplBot.Core.Extensions
+namespace Fpl.Workers.Extensions
 {
     public static class EnumerableExtensions
     {

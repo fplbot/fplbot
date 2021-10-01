@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Search.Data.Abstractions;
-using FplBot.Core.Data.Abstractions;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Data.Models;
 
 namespace FplBot.WebApi.Pages.Admin
 {

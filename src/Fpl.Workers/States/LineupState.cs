@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Abstractions;
+using Fpl.Workers.Abstractions;
+using Fpl.Workers.Models.Mappers;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 
-namespace FplBot.Core.GameweekLifecycle
+namespace Fpl.Workers.States
 {
     internal class LineupState
     {

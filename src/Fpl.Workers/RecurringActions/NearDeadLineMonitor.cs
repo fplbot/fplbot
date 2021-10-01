@@ -1,12 +1,12 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Helpers;
+using Fpl.Workers.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 
-namespace FplBot.Core.RecurringActions
+namespace Fpl.Workers.RecurringActions
 {
     internal class NearDeadLineMonitor
     {

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using FakeItEasy;
-using FplBot.Core.Handlers;
+
+using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
@@ -17,7 +18,7 @@ namespace FplBot.Tests
         {
             _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
         }
-        
+
         [Theory(Skip = "Disable it temporary until ihaztimetofix")]
         [InlineData("@fplbot nextgw")]
         public async Task GetPlayerHandler(string input)
@@ -35,7 +36,7 @@ namespace FplBot.Tests
                 });
             var dummy = Factory.CreateDummyEventByUser(input, "123");
             var playerData = await _client.Handle(dummy.meta, dummy.@event);
-            
+
             Assert.NotEmpty(playerData.Response);
         }
     }

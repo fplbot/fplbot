@@ -1,8 +1,8 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using CronBackgroundServices;
-using FplBot.Core;
-using FplBot.Core.RecurringActions;
+using Fpl.Workers.Extensions;
+using Fpl.Workers.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.Workers.RecurringActions

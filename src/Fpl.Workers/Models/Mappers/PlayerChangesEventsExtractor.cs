@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
-using FplBot.Core.Helpers.Comparers;
-using FplBot.Core.Models;
+using Fpl.Workers.Models.Comparers;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Helpers
+namespace Fpl.Workers.Models.Mappers
 {
     public class PlayerChangesEventsExtractor
     {

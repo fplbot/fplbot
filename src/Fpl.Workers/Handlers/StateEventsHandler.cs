@@ -1,11 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
-using FplBot.Core.Abstractions;
-using FplBot.Core.Models;
+using Fpl.Workers.Events;
+using Fpl.Workers.States;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.GameweekLifecycle
+namespace Fpl.Workers.Handlers
 {
     /// <summary>
     /// This class is wired up by MediatR, do not delete

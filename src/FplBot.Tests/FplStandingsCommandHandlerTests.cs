@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FplBot.Core.Handlers;
+using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Xunit;

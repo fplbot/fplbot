@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Extensions;
-using FplBot.Core.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers.Formatting;
 using NServiceBus;
 
 namespace FplBot.WebApi.Handlers.Commands

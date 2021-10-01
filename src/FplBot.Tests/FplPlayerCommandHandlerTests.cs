@@ -1,6 +1,6 @@
 using FplBot.Tests.Helpers;
 using System.Threading.Tasks;
-using FplBot.Core.Handlers;
+using FplBot.Slack.Handlers.SlackEvents;
 using Slackbot.Net.Endpoints.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
@@ -36,7 +36,7 @@ namespace FplBot.Tests
 
             Assert.Equal("Found no matching player for nonexistant: ", playerData.Response);
         }
-        
+
         [Theory]
         [InlineData("Mohamed Salah", "Mohamed Salah")]
         [InlineData("mohamed salah", "Mohamed Salah")]
@@ -71,7 +71,7 @@ namespace FplBot.Tests
         [InlineData("Kun", "Sergio Agüero")]
         [InlineData("Kun Agüero", "Sergio Agüero")]
         public async Task GetPlayer(string input, string expectedPlayer)
-        
+
         {
             var dummy = Factory.CreateDummyEvent($"player {input}");
             var playerData = await _client.Handle(dummy.meta, dummy.@event);

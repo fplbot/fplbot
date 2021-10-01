@@ -1,10 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CronBackgroundServices;
-using Fpl.Workers;
+using Fpl.Workers.Extensions;
+using Fpl.Workers.Helpers;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core.RecurringActions
+namespace Fpl.Workers.RecurringActions
 {
     internal class NearDeadlineRecurringAction : IRecurringAction
     {

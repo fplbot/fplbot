@@ -14,7 +14,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using FplBot.Core.Data.Abstractions;
+using FplBot.Slack.Data.Abstractions;
 using Nest;
 
 using NServiceBus;

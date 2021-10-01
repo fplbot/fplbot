@@ -1,6 +1,6 @@
 ﻿using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Helpers
+namespace Fpl.Workers.Models.Mappers
 {
     public static class StatHelper
     {

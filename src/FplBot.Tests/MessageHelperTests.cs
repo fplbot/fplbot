@@ -1,5 +1,5 @@
 using System;
-using FplBot.Core.Helpers;
+using FplBot.Slack.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 

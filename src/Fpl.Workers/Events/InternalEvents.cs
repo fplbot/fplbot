@@ -1,7 +1,7 @@
 using Fpl.Client.Models;
 using MediatR;
 
-namespace FplBot.Core.Models
+namespace Fpl.Workers.Events
 {
     // Only used for internal state in Workers
     internal record GameweekMonitoringStarted(Gameweek CurrentGameweek) : INotification;

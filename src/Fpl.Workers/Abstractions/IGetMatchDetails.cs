@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace FplBot.Core.Abstractions
+namespace Fpl.Workers.Abstractions
 {
     public interface IGetMatchDetails
     {

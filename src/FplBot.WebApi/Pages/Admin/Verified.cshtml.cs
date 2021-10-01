@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Extensions;
+using FplBot.Slack.Extensions;
 using FplBot.VerifiedEntries.Data.Abstractions;
 using FplBot.VerifiedEntries.Data.Models;
 using FplBot.VerifiedEntries.InternalCommands;

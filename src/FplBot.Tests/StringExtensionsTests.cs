@@ -1,6 +1,6 @@
 ﻿using System.Linq;
-using FplBot.Core.Data;
-using FplBot.Core.Data.Models;
+using FplBot.Slack.Data;
+using FplBot.Slack.Data.Models;
 using Xunit;
 
 namespace FplBot.Tests

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.GameweekLifecycle
+namespace Fpl.Workers.Models.Mappers
 {
     public class MatchDetailsMapper
     {

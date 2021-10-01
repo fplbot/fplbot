@@ -15,8 +15,8 @@ using Slackbot.Net.Endpoints.Hosting;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Fpl.Search;
-using FplBot.Core.Data;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Slack.Data;
 using MediatR;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Authentication;
@@ -78,7 +78,8 @@ namespace FplBot.WebApi
                 services.AddFplWorkers();
 
             services.AddMediatR(typeof(Startup));
-            services.AddRecurringIndexer(Configuration);
+            if(!_env.IsDevelopment())
+                services.AddRecurringIndexer(Configuration);
 
             services.AddAuthentication(options =>
                 {
