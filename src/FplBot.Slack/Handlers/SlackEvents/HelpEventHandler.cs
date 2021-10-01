@@ -1,7 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
 using FplBot.Slack.Data.Abstractions;
+using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -15,23 +20,53 @@ namespace FplBot.Slack.Handlers.SlackEvents
         private readonly ISlackClientBuilder _slackClientService;
         private readonly ISlackTeamRepository _tokenStore;
         private readonly ILogger<HelpEventHandler> _logger;
+        private readonly ILeagueClient _leagueClient;
 
-        public HelpEventHandler(IEnumerable<IHandleAppMentions> allHandlers, ISlackClientBuilder slackClientService, ISlackTeamRepository tokenStore, ILogger<HelpEventHandler> logger)
+        public HelpEventHandler(IEnumerable<IHandleAppMentions> allHandlers, ISlackClientBuilder slackClientService, ISlackTeamRepository tokenStore, ILogger<HelpEventHandler> logger, ILeagueClient leagueClient)
         {
             _handlers = allHandlers;
             _slackClientService = slackClientService;
             _tokenStore = tokenStore;
             _logger = logger;
+            _leagueClient = leagueClient;
         }
 
         public async Task Handle(EventMetaData eventMetadata, AppMentionEvent @event)
         {
-            var text = _handlers.Select(handler => handler.GetHelpDescription())
-                .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
-                .Aggregate("*HALP:*", (current, tuple) => current + $"\n• `{tuple.HandlerTrigger}` : _{tuple.Description}_");
-
             var team = await _tokenStore.GetTeam(eventMetadata.Team_Id);
             var slackClient = _slackClientService.Build(team.AccessToken);
+            var text = "*HELP:*\n";
+            if (team.HasChannelAndLeagueSetup())
+            {
+                try
+                {
+                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
+                    text += $"Currently following {league.Properties.Name} in {ChannelName()}\n";
+                }
+                catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
+                {
+                    text += $"Currently following {team.FplbotLeagueId} in {ChannelName()}\n";
+                }
+
+                string ChannelName()
+                {
+                    return team.FplBotSlackChannel.StartsWith("#") ? team.FplBotSlackChannel : $"<#{team.FplBotSlackChannel}>";
+                }
+            }
+            else
+            {
+                text += "Currently not following any leagues\n";
+            }
+
+            if(team.Subscriptions.Any())
+                text += $"Active subscriptions:\n{Formatter.BulletPoints(team.Subscriptions)}\n";
+
+            var handlerHelp = _handlers.Select(handler => handler.GetHelpDescription())
+                .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
+                .Aggregate("\n*Available commands:*", (current, tuple) => current + $"\n• `@fplbot {tuple.HandlerTrigger}` : _{tuple.Description}_");
+
+            text += handlerHelp;
+
             await slackClient.ChatPostMessage(@event.Channel, text);
         }
 

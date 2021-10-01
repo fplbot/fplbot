@@ -32,6 +32,7 @@ namespace Fpl.Search
             });
 
             services.AddSingleton<ISearchService, SearchService>();
+            services.AddSingleton<IIndexingClient, IndexingClient>();
             return services;
         }
 
