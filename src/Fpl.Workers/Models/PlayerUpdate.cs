@@ -1,6 +1,6 @@
 using Fpl.Client.Models;
 
-namespace FplBot.Core.Models
+namespace Fpl.Workers.Models
 {
     public class PlayerUpdate
     {

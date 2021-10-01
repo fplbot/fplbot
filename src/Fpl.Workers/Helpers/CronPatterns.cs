@@ -1,4 +1,4 @@
-namespace Fpl.Workers
+namespace Fpl.Workers.Helpers
 {
     public static class CronPatterns
     {

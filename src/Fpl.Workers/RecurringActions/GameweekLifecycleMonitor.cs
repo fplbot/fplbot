@@ -3,12 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Core.Models;
+using Fpl.Workers.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 
-namespace FplBot.Core.RecurringActions
+namespace Fpl.Workers.RecurringActions
 {
     internal class GameweekLifecycleMonitor
     {
@@ -52,13 +52,13 @@ namespace FplBot.Core.RecurringActions
 
             if (IsChangeToNewGameweek(fetchedCurrent) || IsFirstGameweekChangingToCurrent(fetchedCurrent))
             {
-                await _session.Publish(new Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
+                await _session.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
                 await _mediator.Publish(new GameweekJustBegan(fetchedCurrent), token);
 
             }
             else if (IsChangeToFinishedGameweek(fetchedCurrent))
             {
-                await _session.Publish(new Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
+                await _session.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
                 await _mediator.Publish(new GameweekFinished(fetchedCurrent), token);
             }
             else

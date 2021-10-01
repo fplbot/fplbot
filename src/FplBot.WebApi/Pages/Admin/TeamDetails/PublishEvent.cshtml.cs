@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Core.Extensions;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;

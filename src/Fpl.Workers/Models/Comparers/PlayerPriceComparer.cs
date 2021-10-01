@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Fpl.Client.Models;
 
-namespace FplBot.Core.Helpers.Comparers
+namespace Fpl.Workers.Models.Comparers
 {
     public class PlayerPriceComparer : IEqualityComparer<Player>
     {

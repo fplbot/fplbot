@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Core
+namespace Fpl.Workers.Extensions
 {
     internal static class ILoggerExtensions
     {

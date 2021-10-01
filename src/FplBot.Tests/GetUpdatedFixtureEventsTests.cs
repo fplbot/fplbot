@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
-using FplBot.Core.Helpers;
+using Fpl.Workers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using Xunit;
 

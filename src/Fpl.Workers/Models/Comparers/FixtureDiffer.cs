@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fpl.Client.Models;
+using Fpl.Workers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Core.Helpers
+namespace Fpl.Workers.Models.Comparers
 {
     public static class FixtureDiffer
     {

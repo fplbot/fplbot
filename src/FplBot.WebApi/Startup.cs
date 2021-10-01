@@ -78,7 +78,8 @@ namespace FplBot.WebApi
                 services.AddFplWorkers();
 
             services.AddMediatR(typeof(Startup));
-            services.AddRecurringIndexer(Configuration);
+            if(!_env.IsDevelopment())
+                services.AddRecurringIndexer(Configuration);
 
             services.AddAuthentication(options =>
                 {

@@ -1,6 +1,6 @@
 using System;
 
-namespace FplBot.Core.Helpers
+namespace Fpl.Workers.Helpers
 {
     public class DateTimeUtils
     {

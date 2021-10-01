@@ -6,11 +6,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AngleSharp;
-using FplBot.Core.Abstractions;
+using Fpl.Workers.Abstractions;
 using Microsoft.Extensions.Logging;
 
-
-namespace FplBot.Core
+namespace Fpl.Workers
 {
     internal class PremierLeagueScraperApi : IGetMatchDetails
     {
