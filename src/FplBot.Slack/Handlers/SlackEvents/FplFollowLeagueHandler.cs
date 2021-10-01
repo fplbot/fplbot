@@ -62,9 +62,13 @@ namespace FplBot.Slack.Handlers.SlackEvents
                     {
                         await _slackTeamRepository.UpdateSubscriptions(eventMetadata.Team_Id, new[] { EventSubscription.All });
                     }
-                    var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in <#{message.Channel}>";
+                    var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in {ChannelName()}>";
                     await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, success);
                     return new EventHandledResponse(success);
+                    string ChannelName()
+                    {
+                        return $"<#{message.Channel}>";
+                    }
                 }
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
                 return new EventHandledResponse(failure);
@@ -75,6 +79,7 @@ namespace FplBot.Slack.Handlers.SlackEvents
                 await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
                 return new EventHandledResponse(failure);
             }
+
         }
 
         public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{new league id}}", "Set league to follow");
