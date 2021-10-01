@@ -1,3 +1,4 @@
+using CronBackgroundServices;
 using Fpl.Workers.RecurringActions;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
@@ -22,12 +23,10 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<NearDeadLineMonitor>();
             services.AddSingleton<GameweekLifecycleMonitor>();
             services.AddSingleton<MatchDayStatusMonitor>();
-            services.AddRecurringActions()
-                .AddRecurrer<GameweekLifecycleRecurringAction>()
+            services.AddRecurrer<GameweekLifecycleRecurringAction>()
                 .AddRecurrer<NearDeadlineRecurringAction>()
-                .AddRecurrer<MatchDayStatusRecurringAction>()
-                .Build();
+                .AddRecurrer<MatchDayStatusRecurringAction>();
             return services;
         }
-    }    
+    }
 }
