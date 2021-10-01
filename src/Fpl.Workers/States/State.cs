@@ -21,7 +21,7 @@ namespace FplBot.Core.GameweekLifecycle
         private ICollection<Fixture> _currentGameweekFixtures;
         private ICollection<Team> _teams;
 
-        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<State> logger = null)
+        public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<State> logger)
         {
             _fixtureClient = fixtureClient;
             _settingsClient = settingsClient;

@@ -8,6 +8,7 @@ using FplBot.Core.Data.Models;
 using FplBot.Core.GameweekLifecycle;
 using FplBot.Core.Models;
 using FplBot.Messaging.Contracts.Events.v1;
+using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;
 using Xunit;
 
@@ -112,7 +113,7 @@ namespace FplBot.Tests
         private static State CreateAllMockState()
         {
             _messageSession = new TestableMessageSession();
-            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession);
+            return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession, A.Fake<ILogger<State>>());
         }
 
         private static State CreateMultipleFinishedFixturesScenario()
@@ -388,7 +389,7 @@ namespace FplBot.Tests
             });
 
             _messageSession = new TestableMessageSession();
-            return new State(fixtureClient, settingsClient, _messageSession);
+            return new State(fixtureClient, settingsClient, _messageSession, A.Fake<ILogger<State>>());
         }
 
 
