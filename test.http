@@ -24,7 +24,7 @@ X-Correlation-Id:testtool
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : "<@BOT123> strip test",
+        "text" : "<@BOT123> search korsnes",
         "channel": "C92QZTVEF"
     }
 }
@@ -112,3 +112,11 @@ Content-Type: application/json
    "entryId" : 2045420,
    "description" : "jeg tester litt 1 3"
 }
+
+### get verified account
+GET http://localhost:1337/verified/2116623
+Content-Type: application/json
+
+### search
+GET http://localhost:1337/search/entries?query=korsnes
+Content-Type: application/json

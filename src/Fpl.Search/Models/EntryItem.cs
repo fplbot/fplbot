@@ -1,4 +1,4 @@
-﻿using FplBot.Data.Models;
+﻿using FplBot.VerifiedEntries.Data.Models;
 
 namespace Fpl.Search.Models
 {

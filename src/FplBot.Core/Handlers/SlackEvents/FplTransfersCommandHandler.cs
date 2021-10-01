@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using FplBot.Core.Helpers;
-using FplBot.Data.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 

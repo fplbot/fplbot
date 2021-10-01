@@ -7,6 +7,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Nest;
 using System;
+using Fpl.Search.Data;
+using Fpl.Search.Data.Abstractions;
+using Fpl.Search.Data.Repositories;
+
+using StackExchange.Redis;
 
 namespace Fpl.Search
 {
@@ -31,7 +36,21 @@ namespace Fpl.Search
 
         public static IServiceCollection AddIndexingServices(this IServiceCollection services, IConfiguration config)
         {
-            services.Configure<SearchOptions>(config);
+            services.Configure<SearchRedisOptions>(config);
+
+            services.AddSingleton<ConnectionMultiplexer>(c =>
+            {
+                var opts = c.GetService<IOptions<SearchRedisOptions>>().Value;
+                var options = new ConfigurationOptions
+                {
+                    ClientName = opts.GetRedisUsername,
+                    Password = opts.GetRedisPassword,
+                    EndPoints = {opts.GetRedisServerHostAndPort}
+                };
+                return ConnectionMultiplexer.Connect(options);
+            });
+
+            services.Configure<SearchOptions>(config.GetSection("search"));
             services.AddSingleton<IIndexingClient, IndexingClient>();
 
             services.AddSingleton<SlowEntryIndexProvider>();
@@ -41,6 +60,8 @@ namespace Fpl.Search
 
             services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
             services.AddSingleton<IIndexingService, IndexingService>();
+            services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
+            services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
             return services;
         }
 

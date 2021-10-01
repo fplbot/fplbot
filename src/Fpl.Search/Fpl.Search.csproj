@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="NEST" Version="7.14.1" />
     <PackageReference Include="NServiceBus" Version="7.5.0" />
@@ -13,9 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
-    <ProjectReference Include="..\FplBot.Data\FplBot.Data.csproj" />
+    <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />    
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\FplBot.VerifiedEntries\FplBot.VerifiedEntries.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+  
+    <ItemGroup>
+      <PackageReference Include="MediatR" Version="9.0.0" />
+      <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+      <PackageReference Include="NServiceBus" Version="7.5.0" />
+      <PackageReference Include="StackExchange.Redis" Version="2.2.50" />
+    </ItemGroup>
+  
+    <ItemGroup>
+      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+      <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>

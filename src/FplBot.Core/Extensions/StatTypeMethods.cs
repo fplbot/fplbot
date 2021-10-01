@@ -1,4 +1,4 @@
-using FplBot.Data.Models;
+using FplBot.Core.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Core.Models

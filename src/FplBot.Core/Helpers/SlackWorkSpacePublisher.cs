@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
-using FplBot.Data.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;

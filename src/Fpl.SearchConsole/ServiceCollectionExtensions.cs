@@ -1,14 +1,13 @@
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Search;
-using FplBot.Data;
-using FplBot.Data.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Net;
 using System.Net.Http;
+using Fpl.Search.Data.Abstractions;
 
 namespace Fpl.SearchConsole
 {
@@ -17,8 +16,7 @@ namespace Fpl.SearchConsole
         public static IServiceCollection AddSearchConsole(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSearching(configuration.GetSection("Search"));
-            services.AddRedisData(configuration);
-            services.AddIndexingServices(configuration.GetSection("Search"));
+            services.AddIndexingServices(configuration);
 
             services.RemoveAll<IIndexBookmarkProvider>();
             services.AddSingleton<IIndexBookmarkProvider, SimpleLeagueIndexBookmarkProvider>();

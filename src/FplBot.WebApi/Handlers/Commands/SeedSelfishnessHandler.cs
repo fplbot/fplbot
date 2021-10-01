@@ -6,7 +6,8 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
-using FplBot.Data.Abstractions;
+using FplBot.VerifiedEntries.Data.Abstractions;
+using FplBot.VerifiedEntries.Helpers;
 using MediatR;
 
 namespace FplBot.WebApi.Handlers.Commands

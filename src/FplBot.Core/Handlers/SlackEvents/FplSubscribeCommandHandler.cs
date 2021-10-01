@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
+using FplBot.Core.Data;
+using FplBot.Core.Data.Abstractions;
+using FplBot.Core.Data.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.Helpers;
-using FplBot.Data;
-using FplBot.Data.Abstractions;
-using FplBot.Data.Models;
+
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Models;
-using FplBot.Data.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus;

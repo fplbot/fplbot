@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using FplBot.Core.Extensions;
-using FplBot.Data.Abstractions;
 using FplBot.Messaging.Contracts.Commands.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus;

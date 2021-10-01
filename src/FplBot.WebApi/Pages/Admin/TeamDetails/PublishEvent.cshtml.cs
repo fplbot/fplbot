@@ -1,10 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Core.Data.Abstractions;
+using FplBot.Core.Data.Models;
 using FplBot.Core.Extensions;
-using FplBot.Core.Handlers.InternalCommands;
-using FplBot.Data.Abstractions;
-using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

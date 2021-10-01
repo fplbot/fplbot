@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using FplBot.Core.Abstractions;
-using FplBot.Data.Abstractions;
 using FplBot.Messaging.Contracts.Events.v1;
 using NServiceBus;
 using Slackbot.Net.Endpoints.Abstractions;

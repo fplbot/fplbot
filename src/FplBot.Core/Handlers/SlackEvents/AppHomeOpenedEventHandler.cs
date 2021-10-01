@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FplBot.Data.Abstractions;
+using FplBot.Core.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;

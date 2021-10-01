@@ -9,8 +9,8 @@ using Fpl.Client.Models;
 using Fpl.Search.Models;
 using FplBot.Core.Extensions;
 using FplBot.Core.GameweekLifecycle.Handlers;
-using FplBot.Data.Models;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.VerifiedEntries.Data.Models;
 using Slackbot.Net.Models.BlockKit;
 
 namespace FplBot.Core.Helpers

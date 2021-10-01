@@ -2,16 +2,18 @@ using Fpl.Client.Infra;
 using Fpl.Search;
 using FplBot.Core;
 using FplBot.Core.Abstractions;
+using FplBot.Core.Data;
+using FplBot.Core.Data.Abstractions;
+using FplBot.Core.Data.Repositories.Redis;
 using FplBot.Core.Handlers;
 using FplBot.Core.Handlers.SlackEvents;
 using FplBot.Core.Helpers;
-using FplBot.Data;
-using FplBot.Data.Repositories.Redis;
-using MediatR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http.Extensions;
+using StackExchange.Redis;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -20,13 +22,23 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config)
         {
-            services.AddFplApiClient(config.GetSection("fpl"));
-            services.AddRedisData(config);
-            services.AddSearching(config.GetSection("Search"));
-            services.AddIndexingServices(config.GetSection("Search"));
-            services.AddRecurringIndexer(config.GetSection("Search"));
+            services.Configure<RedisOptions>(config);
 
-            services.AddSingleton<SelfOwnerShipCalculator>();
+            services.AddSingleton<ConnectionMultiplexer>(c =>
+            {
+                var opts = c.GetService<IOptions<RedisOptions>>().Value;
+                var options = new ConfigurationOptions
+                {
+                    ClientName = opts.GetRedisUsername,
+                    Password = opts.GetRedisPassword,
+                    EndPoints = {opts.GetRedisServerHostAndPort}
+                };
+                return ConnectionMultiplexer.Connect(options);
+            });
+
+            services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
+            services.AddFplApiClient(config.GetSection("fpl"));
+            services.AddSearching(config.GetSection("Search"));
             services.AddSlackClientBuilder();
             services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
             services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
@@ -35,11 +47,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
             services.AddSingleton<IGameweekHelper, GameweekHelper>();
             services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
-            return services;
-        }
-
-        public static IServiceCollection AddFplBotSlackEventHandlers(this IServiceCollection services)
-        {
             services.AddSingleton<IUninstall, AppUninstaller>();
             services.AddSlackBotEvents<SlackTeamRepository>()
                 .AddShortcut<HelpEventHandler>()
@@ -62,10 +69,4 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
     }
-
-    /// <summary>
-    /// Dummy type that should always be in assembly containing public FplBot domain handlers
-    /// </summary>
-    /// <see cref="DomainEvents.cs"/>
-    public class FplEventHandlers {}
 }
