@@ -28,6 +28,7 @@ namespace Slackbot.Net.SlackClients.Http.Extensions
         {
             var serializedObject = JsonSerializer.Serialize(payload, JsonSerializerSettings);
             var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
+            logger?.Invoke(serializedObject);
             var request = new HttpRequestMessage(HttpMethod.Post, api)
             {
                 Content = httpContent

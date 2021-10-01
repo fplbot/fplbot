@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.Slack.Handlers.SlackEvents
 {
@@ -35,7 +36,7 @@ namespace FplBot.Slack.Handlers.SlackEvents
         {
             var team = await _tokenStore.GetTeam(eventMetadata.Team_Id);
             var slackClient = _slackClientService.Build(team.AccessToken);
-            var text = "*HELP:*\n";
+            var text = $"*HELP:*\n";
             if (team.HasChannelAndLeagueSetup())
             {
                 try
@@ -61,13 +62,14 @@ namespace FplBot.Slack.Handlers.SlackEvents
             if(team.Subscriptions.Any())
                 text += $"Active subscriptions:\n{Formatter.BulletPoints(team.Subscriptions)}\n";
 
+            await slackClient.ChatPostMessage(@event.Channel, text);
             var handlerHelp = _handlers.Select(handler => handler.GetHelpDescription())
                 .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
-                .Aggregate("\n*Available commands:*", (current, tuple) => current + $"\n• `@fplbot {tuple.HandlerTrigger}` : _{tuple.Description}_");
+                .Aggregate($"\n*Available commands:*", (current, tuple) => current + $"\n• `@fplbot {tuple.HandlerTrigger}` : _{tuple.Description}_");
 
-            text += handlerHelp;
 
-            await slackClient.ChatPostMessage(@event.Channel, text);
+
+            await slackClient.ChatPostMessage(new ChatPostMessageRequest { Channel = @event.Channel, Text = handlerHelp, link_names = false });
         }
 
         public bool ShouldShortcut(AppMentionEvent @event)=> @event.Text.Contains("help");
