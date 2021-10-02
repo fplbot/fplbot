@@ -21,14 +21,15 @@ namespace Slackbot.Net.SlackClients.Http.Extensions
             {
                 new TypeDiscriminatorConverter<IBlock>(),
                 new TypeDiscriminatorConverter<IElement>()
-            }
+            },
+            PropertyNamingPolicy = new LowerCaseNaming()
         };
 
         public static async Task<T> PostJson<T>(this HttpClient httpClient, object payload, string api, Action<string> logger = null) where T:Response
         {
             var serializedObject = JsonSerializer.Serialize(payload, JsonSerializerSettings);
-            var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
             logger?.Invoke(serializedObject);
+            var httpContent = new StringContent(serializedObject, Encoding.UTF8, "application/json");
             var request = new HttpRequestMessage(HttpMethod.Post, api)
             {
                 Content = httpContent
@@ -87,6 +88,14 @@ namespace Slackbot.Net.SlackClients.Http.Extensions
                 throw new WellKnownSlackApiException(error: $"{resObj.Error}", responseContent:responseContent);
 
             return resObj;
+        }
+    }
+
+    internal class LowerCaseNaming : JsonNamingPolicy
+    {
+        public override string ConvertName(string name)
+        {
+            return name.ToLower();
         }
     }
 

@@ -69,7 +69,7 @@ namespace FplBot.Slack.Handlers.SlackEvents
 
 
 
-            await slackClient.ChatPostMessage(new ChatPostMessageRequest { Channel = @event.Channel, Text = handlerHelp, link_names = false });
+            await slackClient.ChatPostMessage(new ChatPostMessageRequest { Channel = @event.Channel, Text = handlerHelp, Link_Names = false });
         }
 
         public bool ShouldShortcut(AppMentionEvent @event)=> @event.Text.Contains("help");
