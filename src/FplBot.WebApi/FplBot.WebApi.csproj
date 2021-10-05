@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FplBot.Discord\FplBot.Discord.csproj" />
     <ProjectReference Include="..\FplBot.Slack\FplBot.Slack.csproj" />
     <ProjectReference Include="..\Fpl.Workers\Fpl.Workers.csproj" />
     <ProjectReference Include="..\FplBot.VerifiedEntries\FplBot.VerifiedEntries.csproj" />

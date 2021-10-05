@@ -120,3 +120,42 @@ Content-Type: application/json
 ### search
 GET http://localhost:1337/search/entries?query=korsnes
 Content-Type: application/json
+
+### discord invalid challenge
+POST http://localhost:1337/discord/events
+Content-Type: application/json
+
+{
+  "type": 1
+}
+
+### discord unknown type
+POST http://localhost:1337/discord/events
+Content-Type: application/json
+
+{
+  "type": 1337
+}
+
+
+### discord challenge with headers
+POST http://localhost:1337/discord/events
+X-Signature-Timestamp: 1231231
+X-Signature-Ed25519: abc123defg
+Content-Type: application/json
+
+{
+  "type": 1
+}
+
+### discord slash help command
+POST http://localhost:1337/discord/events
+Content-Type: application/json
+
+{
+  "type": 2,
+  "data" : {
+    "type" : 1,
+    "name" : "help"
+  }
+}

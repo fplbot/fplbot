@@ -9,7 +9,8 @@ namespace FplBot.Functions
     {
         public async Task Handle(AppInstalled message, IMessageHandlerContext context)
         {
-            await PublishToAuditChannel(context, $"🎉 A new workspace ('{message.TeamName}') installed @fplbot!");
+            string definition = message.TeamId.StartsWith("T") ? "Slack workspace": "Discord guild";
+            await PublishToAuditChannel(context, $"🎉 A new {definition} ('{message.TeamName}') installed @fplbot!");
         }
 
         public async Task Handle(AppUninstalled message, IMessageHandlerContext context)

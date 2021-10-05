@@ -15,6 +15,9 @@ using Slackbot.Net.Endpoints.Hosting;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Fpl.Search;
+using Discord.Net.Endpoints.Authentication;
+using Discord.Net.Endpoints.Hosting;
+using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Data;
 using MediatR;
@@ -70,9 +73,23 @@ namespace FplBot.WebApi
                     await msg.Publish(new AppInstalled(teamId, teamName));
                 };
             });
+            services.AddDiscordBotDistribution(c =>
+            {
+                c.CLIENT_ID = Configuration["DISCORD_CLIENT_ID"];
+                c.CLIENT_SECRET = Configuration["DISCORD_CLIENT_SECRET"];
+                c.SuccessRedirectUri = successUri;
+                c.OnSuccess = async (guildId,guildName, s) =>
+                {
+                    var msg = s.GetService<IMessageSession>();
+                    await msg.Publish(new AppInstalled(guildId, guildName));
+                };
+            });
             services.Configure<AnalyticsOptions>(Configuration);
             services.AddReducedHttpClientFactoryLogging();
             services.AddFplBot(Configuration);
+
+            services.AddFplBotDiscord(Configuration);
+
             services.AddVerifiedEntries(Configuration);
             if(!_env.IsDevelopment())
                 services.AddFplWorkers();
@@ -112,6 +129,10 @@ namespace FplBot.WebApi
                 .AddSlackbotEvents(c =>
                 {
                     c.SigningSecret = Configuration.GetValue<string>("CLIENT_SIGNING_SECRET");
+                })
+                .AddDiscordbotEvents(c =>
+                {
+                    c.PublicKey = Configuration.GetValue<string>("DISCORD_PUBLICKEY");
                 });
 
             services.AddAuthorization(options =>
@@ -177,6 +198,8 @@ namespace FplBot.WebApi
             app.UseAuthorization();
             app.Map("/oauth/authorize", a => a.UseSlackbotDistribution());
             app.Map("/events", a => a.UseSlackbot(enableAuth: !_env.IsDevelopment()));
+            app.Map("/oauth/discord/authorize", a => a.UseDiscordDistribution());
+            app.Map("/discord/events", a => a.UseDiscordbot());
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);

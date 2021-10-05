@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Slack.Abstractions;
