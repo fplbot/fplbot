@@ -76,10 +76,10 @@ namespace FplBot.Discord.Data
             var guilds = new List<GuildFplSubscription>();
             foreach (var key in allKeys)
             {
-                var teamId = FromGuildIdToGuildSubKey(key);
+                var guildId = FromKeyToGuildId(key);
                 var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _subscriptionsField });
                 var subs = ParseSubscriptionString(fetchedTeamData[1], " ");
-                guilds.Add(new GuildFplSubscription(teamId, fetchedTeamData[1], subs));
+                guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], subs));
             }
 
             return guilds;
