@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Fpl.Client.Abstractions;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
@@ -17,11 +19,13 @@ namespace FplBot.Slack.Handlers.FplEvents
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ILogger<GameweekStartedHandler> _logger;
+        private readonly ILeagueClient _leagueClient;
 
         public GameweekStartedHandler(ICaptainsByGameWeek captainsByGameweek,
             ITransfersByGameWeek transfersByGameweek,
             ISlackWorkSpacePublisher publisher,
             ISlackTeamRepository teamsRepo,
+            ILeagueClient leagueClient,
             ILogger<GameweekStartedHandler> logger)
         {
             _captainsByGameweek = captainsByGameweek;
@@ -29,6 +33,7 @@ namespace FplBot.Slack.Handlers.FplEvents
             _publisher = publisher;
             _teamRepo = teamsRepo;
             _logger = logger;
+            _leagueClient = leagueClient;
         }
 
         public async Task Handle(GameweekJustBegan notification, IMessageHandlerContext context)
@@ -50,19 +55,34 @@ namespace FplBot.Slack.Handlers.FplEvents
 
             var messages = new List<string>();
 
-            if (team.HasRegisteredFor(EventSubscription.Captains))
+            var leagueExists = false;
+            if (team.FplbotLeagueId.HasValue)
+            {
+                var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
+                leagueExists = league != null;
+            }
+
+            if (leagueExists && team.HasRegisteredFor(EventSubscription.Captains))
             {
                 messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, team.FplbotLeagueId.Value));
                 messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, team.FplbotLeagueId.Value));
+            }
+            else if (team.FplbotLeagueId.HasValue && !leagueExists && team.HasRegisteredFor(EventSubscription.Captains))
+            {
+                messages.Add($"⚠️ You're subscribing to captains notifications, but following a league ({team.FplbotLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future.");
             }
             else
             {
                 _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
             }
 
-            if (team.HasRegisteredFor(EventSubscription.Transfers))
+            if (leagueExists && team.HasRegisteredFor(EventSubscription.Transfers))
             {
                 messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.FplbotLeagueId.Value));
+            }
+            else if (team.FplbotLeagueId.HasValue && !leagueExists && team.HasRegisteredFor(EventSubscription.Transfers))
+            {
+                messages.Add($"⚠️ You're subscribing to transfers notifications, but following a league ({team.FplbotLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future.");
             }
             else
             {
