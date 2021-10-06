@@ -43,7 +43,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
                 Team = team;
                 if (team.FplbotLeagueId.HasValue)
                 {
-                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
+                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
                     League = league;
                 }
 
@@ -51,7 +51,7 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
                 try
                 {
                     var channels = await slackClient.ConversationsListPublicChannels(500);
-                    ChannelStatus = channels.Channels.FirstOrDefault(c => team.FplBotSlackChannel == $"#{c.Name}") != null;
+                    ChannelStatus = channels.Channels.FirstOrDefault(c => team.FplBotSlackChannel == $"#{c.Name}" || team.FplBotSlackChannel == c.Id) != null;
                 }
                 catch (Exception e)
                 {

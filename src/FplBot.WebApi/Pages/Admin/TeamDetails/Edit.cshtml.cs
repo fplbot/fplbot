@@ -6,7 +6,6 @@ using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails
@@ -43,20 +42,16 @@ namespace FplBot.WebApi.Pages.Admin.TeamDetails
 
         public async Task<IActionResult> OnPost(string teamId, int leagueId, string channel, EventSubscription[] subscriptions)
         {
-            try
+            var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+            if(league == null)
             {
-                await _leagueClient.GetClassicLeague(leagueId);
-            }
-            catch (Exception e)
-            {
-                TempData["msg"] = e.ToString();
-                return RedirectToPage("Edit");
+                TempData["msg"] = "⚠️ League does not exist.\n";
             }
 
             var slackClient = await CreateSlackClient(teamId);
             var channelsRes = await slackClient.ConversationsListPublicChannels(500);
 
-            var channelsFound = channelsRes.Channels.Any(c => channel == $"#{c.Name}");
+            var channelsFound = channelsRes.Channels.Any(c => channel == $"#{c.Name}" || channel == c.Id);
             if (!channelsFound)
             {
                 var channelsText = string.Join(',', channelsRes.Channels.Select(c => c.Name));

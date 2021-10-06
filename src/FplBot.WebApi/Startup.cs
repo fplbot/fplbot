@@ -17,6 +17,8 @@ using System.Threading.Tasks;
 using Fpl.Search;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
+using Fpl.Search.Data.Abstractions;
+using Fpl.Search.Data.Repositories;
 using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Data;
@@ -95,8 +97,16 @@ namespace FplBot.WebApi
                 services.AddFplWorkers();
 
             services.AddMediatR(typeof(Startup));
-            if(!_env.IsDevelopment())
+            if (!_env.IsDevelopment())
+            {
                 services.AddRecurringIndexer(Configuration);
+            }
+            else
+            {
+                // Used in admin pages:
+                services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
+                services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
+            }
 
             services.AddAuthentication(options =>
                 {

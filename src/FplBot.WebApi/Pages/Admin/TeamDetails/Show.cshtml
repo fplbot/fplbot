@@ -34,7 +34,14 @@
                         @Model.Team.FplbotLeagueId
                     </a>
                     
-                    <i>(@Model.League?.Properties?.Name)</i>
+                    @if (Model.League != null)
+                       {
+                           <i class="text-success">✅ @Model.League.Properties?.Name</i>
+                       }
+                       else
+                       {
+                            <i class="text-danger">❌️</i>
+                       }
                 </td>
             </tr>
             <tr>
