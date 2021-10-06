@@ -43,9 +43,15 @@ namespace Discord.Net.Endpoints.Middleware
             {
                 var array = opts.EnumerateArray();
                 var chosenOption = array.First();
+                if (chosenOption.TryGetProperty("options", out JsonElement innerOpts))
+                {
+                    chosenOption = innerOpts.EnumerateArray().First();
+                }
                 _logger.LogInformation($"Selected option: {chosenOption}");
                 var name = chosenOption.GetProperty("name").GetString();
-                string value = chosenOption.GetProperty("value").GetRawText();
+                JsonElement valueElement = chosenOption.GetProperty("value");
+                JsonValueKind jsonValueKind = valueElement.ValueKind;
+                string value = jsonValueKind == JsonValueKind.Number ? valueElement.GetInt32().ToString() : valueElement.GetString();
                 slashCommandInput = new SlashCommandInput(name, value);
             }
             var handler = _handlers.FirstOrDefault(h => h.Name == commandName);

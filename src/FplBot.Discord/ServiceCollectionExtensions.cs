@@ -28,6 +28,7 @@ namespace FplBot.Discord
             services.AddDiscordBotEvents<DiscordGuildStore>()
                 .AddSlashCommandHandler<HelpSlashCommandHandler>()
                 .AddSlashCommandHandler<FollowSlashCommandHandler>()
+                .AddSlashCommandHandler<SubscribeSlashCommandHandler>()
                 .AddSlashCommandHandler<SubscriptionsSlashCommandHandler>();
             return services;
         }

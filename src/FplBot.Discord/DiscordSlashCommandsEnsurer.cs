@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord.Net.HttpClients;
+using FplBot.Discord.Data;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -41,28 +43,67 @@ namespace FplBot.Discord
         {
             string fplBotGuildId = "893932860162064414"; // test guild
 
-            await _client.ApplicationsCommandForGuildPost(
-                "subscriptions",
-                "Shows active subscriptions",
-                fplBotGuildId);
+            // await _client.ApplicationsCommandForGuildPost(
+            //     "subscriptions",
+            //     "Shows active subscriptions",
+            //     fplBotGuildId);
+            //
+            // await _client.ApplicationsCommandForGuildPost(
+            //     "help",
+            //     "Shows help",
+            //     fplBotGuildId);
+            //
+            // var applicationCommandOptions = new ApplicationCommandOptions
+            // {
+            //     Type = 4, // leagueId as int
+            //     Name = "leagueid",
+            //     Description = "A FPL League Id.",
+            //     Required = true
+            // };
+            //
+            // await _client.ApplicationsCommandForGuildPost("follow",
+            //     "Follow a FPL league in this channel",
+            //     fplBotGuildId,
+            //     applicationCommandOptions);
 
-            await _client.ApplicationsCommandForGuildPost(
-                "help",
-                "Shows help",
-                fplBotGuildId);
-
-            var applicationCommandOptions = new ApplicationCommandOptions
-            {
-                Type = 4,
-                Name = "leagueid",
-                Description = "A FPL League Id.",
-                Required = true
-            };
-
-            await _client.ApplicationsCommandForGuildPost("follow",
-                "Follow a FPL league in this channel",
+            await _client.ApplicationsCommandForGuildPost("subscribe",
+                "Subscribe to event",
                 fplBotGuildId,
-                applicationCommandOptions);
+                SubOption("add", "event"), SubOption("remove","event"));
+
+            // await _client.ApplicationsCommandForGuildPost("unsubscribe",
+            //     "Unsubscribe to event",
+            //     fplBotGuildId,
+            //     EventOption("events"));
+
+            ApplicationCommandOptions SubOption(string name, params string[] subOpts)
+            {
+                var subCommand = new ApplicationCommandOptions()
+                {
+                    Type = 1, // eventtype as suboption
+                    Name = name,
+                    Description = "add/remove",
+                    Options = subOpts.Select(SubgroupOption).ToArray()
+                };
+                return subCommand;
+            }
+
+            ApplicationCommandOptions SubgroupOption(string name)
+            {
+                var subscribeOption = new ApplicationCommandOptions()
+                {
+                    Type = 3, // eventtype as string
+                    Name = name,
+                    Description = "Available events",
+                    Required = true,
+                    Choices = Enum.GetNames<EventSubscription>().Select(e => new ApplicationCommandChoices
+                    {
+                        Name = e,
+                        Value = e
+                    }).ToArray()
+                };
+                return subscribeOption;
+            }
         }
     }
 }
