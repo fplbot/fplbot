@@ -15,7 +15,7 @@ namespace FplBot.Slack.Data.Repositories.Redis
     {
         private readonly ILogger<SlackTeamRepository> _logger;
 
-        private readonly ConnectionMultiplexer _redis;
+        private readonly IConnectionMultiplexer _redis;
         private IDatabase _db;
         private string _server;
 
@@ -26,7 +26,7 @@ namespace FplBot.Slack.Data.Repositories.Redis
         private string _teamIdField = "teamId";
         private string _subscriptionsField = "subscriptions";
 
-        public SlackTeamRepository(ConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
+        public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
         {
             _redis = redis;
             _db = _redis.GetDatabase();

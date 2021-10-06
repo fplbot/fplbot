@@ -8,15 +8,16 @@ using System;
 using System.Net;
 using System.Net.Http;
 using Fpl.Search.Data.Abstractions;
+using StackExchange.Redis;
 
 namespace Fpl.SearchConsole
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddSearchConsole(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddSearchConsole(this IServiceCollection services, IConfiguration configuration, ConnectionMultiplexer connection)
         {
             services.AddSearching(configuration.GetSection("Search"));
-            services.AddIndexingServices(configuration);
+            services.AddIndexingServices(configuration, connection);
 
             services.RemoveAll<IIndexBookmarkProvider>();
             services.AddSingleton<IIndexBookmarkProvider, SimpleLeagueIndexBookmarkProvider>();

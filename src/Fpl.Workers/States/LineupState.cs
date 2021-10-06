@@ -74,7 +74,7 @@ namespace Fpl.Workers.States
                     }
                     else
                     {
-                        _logger.LogWarning("Could do match diff matchdetails for {PulseId}", new {fixture.PulseId});
+                        _logger.LogWarning("Could not do match diff matchdetails for {PulseId}", new {fixture.PulseId});
                         _logger.LogInformation($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
                         _logger.LogInformation($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
                     }

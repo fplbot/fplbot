@@ -88,9 +88,9 @@ namespace FplBot.WebApi
             });
             services.Configure<AnalyticsOptions>(Configuration);
             services.AddReducedHttpClientFactoryLogging();
-            services.AddFplBot(Configuration);
-
-            services.AddFplBotDiscord(Configuration);
+            services.AddFplBot(Configuration, conn);
+            services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = options);
+            services.AddFplBotDiscord(Configuration, conn);
 
             services.AddVerifiedEntries(Configuration);
             if(true)//!_env.IsDevelopment())
@@ -99,7 +99,7 @@ namespace FplBot.WebApi
             services.AddMediatR(typeof(Startup));
             if (!_env.IsDevelopment())
             {
-                services.AddRecurringIndexer(Configuration);
+                services.AddRecurringIndexer(Configuration, conn);
             }
             else
             {

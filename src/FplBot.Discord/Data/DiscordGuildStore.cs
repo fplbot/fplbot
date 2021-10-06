@@ -16,12 +16,12 @@ namespace FplBot.Discord.Data
         private readonly RedisValue _channelIdField = "channelid";
         private readonly RedisValue _subscriptionsField = "subs";
 
-        private readonly ConnectionMultiplexer _redis;
+        private readonly IConnectionMultiplexer _redis;
         private readonly IDatabase _db;
         private readonly string _server;
         private readonly ILogger<DiscordGuildStore> _logger;
 
-        public DiscordGuildStore(ConnectionMultiplexer redis, IOptions<DiscordRedisOptions> redisOptions, ILogger<DiscordGuildStore> logger)
+        public DiscordGuildStore(IConnectionMultiplexer redis, IOptions<DiscordRedisOptions> redisOptions, ILogger<DiscordGuildStore> logger)
         {
             _redis = redis;
             _db = _redis.GetDatabase();

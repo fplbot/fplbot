@@ -7,6 +7,7 @@ using FplBot.Slack.Data.Repositories.Redis;
 using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Slack.Helpers;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
@@ -18,22 +19,10 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionFplBotExtensions
     {
-        public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddFplBot(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection)
         {
             services.Configure<RedisOptions>(config);
-
-            services.AddSingleton<ConnectionMultiplexer>(c =>
-            {
-                var opts = c.GetService<IOptions<RedisOptions>>().Value;
-                var options = new ConfigurationOptions
-                {
-                    ClientName = opts.GetRedisUsername,
-                    Password = opts.GetRedisPassword,
-                    EndPoints = {opts.GetRedisServerHostAndPort}
-                };
-                return ConnectionMultiplexer.Connect(options);
-            });
-
+            services.TryAddSingleton<IConnectionMultiplexer>(redisConnection);
             services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
             services.AddFplApiClient(config);
             services.AddSearching(config.GetSection("Search"));

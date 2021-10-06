@@ -1,3 +1,4 @@
+using System;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
@@ -18,6 +19,7 @@ using FplBot.Slack.Data.Abstractions;
 using Nest;
 
 using NServiceBus;
+using StackExchange.Redis;
 using Xunit.Abstractions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -49,8 +51,8 @@ namespace FplBot.Tests.Helpers
             var configuration = config.Build();
 
             var services = new ServiceCollection();
-            services.AddFplBot(configuration);
-
+            services.AddFplBot(configuration, A.Fake<IConnectionMultiplexer>());
+            services.AddDistributedMemoryCache();
 
             SlackClient = A.Fake<ISlackClient>();
 

@@ -11,7 +11,7 @@ using CronBackgroundServices;
 using Fpl.Search.Data;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Data.Repositories;
-
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
 namespace Fpl.Search
@@ -36,22 +36,10 @@ namespace Fpl.Search
             return services;
         }
 
-        public static IServiceCollection AddIndexingServices(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddIndexingServices(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer connection)
         {
             services.Configure<SearchRedisOptions>(config);
-
-            services.AddSingleton<ConnectionMultiplexer>(c =>
-            {
-                var opts = c.GetService<IOptions<SearchRedisOptions>>().Value;
-                var options = new ConfigurationOptions
-                {
-                    ClientName = opts.GetRedisUsername,
-                    Password = opts.GetRedisPassword,
-                    EndPoints = {opts.GetRedisServerHostAndPort}
-                };
-                return ConnectionMultiplexer.Connect(options);
-            });
-
+            services.TryAddSingleton<IConnectionMultiplexer>(connection);
             services.Configure<SearchOptions>(config.GetSection("search"));
             services.AddSingleton<IIndexingClient, IndexingClient>();
 
@@ -67,9 +55,9 @@ namespace Fpl.Search
             return services;
         }
 
-        public static IServiceCollection AddRecurringIndexer(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddRecurringIndexer(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer conn)
         {
-            services.AddIndexingServices(config);
+            services.AddIndexingServices(config, conn);
             services.AddRecurrer<IndexerRecurringAction>();
             return services;
         }

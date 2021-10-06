@@ -11,7 +11,7 @@ namespace Fpl.Search.Data.Repositories
         private readonly IDatabase _db;
         private const string BookmarkKey = "leagueIndexBookmark";
 
-        public LeagueIndexRedisBookmarkProvider(ConnectionMultiplexer redis, ILogger<LeagueIndexRedisBookmarkProvider> logger)
+        public LeagueIndexRedisBookmarkProvider(IConnectionMultiplexer redis, ILogger<LeagueIndexRedisBookmarkProvider> logger)
         {
             _logger = logger;
             _db = redis.GetDatabase();

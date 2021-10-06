@@ -11,12 +11,12 @@ namespace FplBot.VerifiedEntries.Data.Repositories
 {
     internal class VerifiedEntriesRepository : IVerifiedEntriesRepository
     {
-        private ConnectionMultiplexer _redis;
+        private IConnectionMultiplexer _redis;
         private readonly ILogger<VerifiedEntriesRepository> _logger;
         private IDatabase _db;
         private string _server;
 
-        public VerifiedEntriesRepository(ConnectionMultiplexer redis, IOptions<VerifiedRedisOptions> redisOptions, ILogger<VerifiedEntriesRepository> logger)
+        public VerifiedEntriesRepository(IConnectionMultiplexer redis, IOptions<VerifiedRedisOptions> redisOptions, ILogger<VerifiedEntriesRepository> logger)
         {
             _redis = redis;
             _logger = logger;

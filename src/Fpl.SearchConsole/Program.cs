@@ -3,11 +3,13 @@ using System.CommandLine.Builder;
 using System.CommandLine.Hosting;
 using System.CommandLine.Parsing;
 using System.Threading.Tasks;
+using Fpl.Search.Data;
 using Fpl.SearchConsole.Commands.Definitions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using NServiceBus;
 using Serilog;
+using StackExchange.Redis;
 
 namespace Fpl.SearchConsole
 {
@@ -24,8 +26,21 @@ namespace Fpl.SearchConsole
                                         endpointConfiguration.UseTransport<LearningTransport>();
                                         return endpointConfiguration;
                                     })
-                                    .ConfigureServices((_, services) => services.AddSearchConsole(_.Configuration)
-                ))
+                                    .ConfigureServices((ctx, services) =>
+                                    {
+                                        var opts = new SearchRedisOptions()
+                                        {
+                                            REDIS_URL = ctx.Configuration["REDIS_URL"]
+                                        };
+                                        var options = new ConfigurationOptions
+                                        {
+                                            ClientName = opts.GetRedisUsername,
+                                            Password = opts.GetRedisPassword,
+                                            EndPoints = {opts.GetRedisServerHostAndPort}
+                                        };
+                                        var conn =  ConnectionMultiplexer.Connect(options);
+                                        services.AddSearchConsole(ctx.Configuration, conn);
+                                    }))
                 .UseDefaults()
                 .Build()
                 .InvokeAsync(args);

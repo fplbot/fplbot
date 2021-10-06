@@ -16,16 +16,8 @@ namespace Fpl.Client.Infra
             return services;
         }
 
-        // public static IServiceCollection AddFplApiClient(this IServiceCollection services, Action<FplApiClientOptions> configurator)
-        // {
-        //     AddFplApiClient(services);
-        //     services.Configure<FplApiClientOptions>(configurator);
-        //     return services;
-        // }
-
         private static void AddFplApiClientBase(IServiceCollection services, IConfiguration config)
         {
-            var opts = new HerokuRedisOptions() { REDIS_URL = config["REDIS_URL"] };
             services.AddTransient<FplDelegatingHandler>();
             services.AddSingleton<ICacheProvider, CacheProvider>();
             services.AddHttpClient<IEntryClient, EntryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
@@ -39,12 +31,6 @@ namespace Fpl.Client.Infra
             services.ConfigureOptions<FplClientOptionsConfigurator>();
             services.AddSingleton<Authenticator>();
             services.AddSingleton<CookieFetcher>();
-            services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = new ConfigurationOptions
-            {
-                ClientName = opts.GetRedisUsername,
-                Password = opts.GetRedisPassword,
-                EndPoints = {opts.GetRedisServerHostAndPort}
-            });
             services.AddSingleton<CookieCache>();
             services.AddSingleton<FplHttpHandler>();
         }

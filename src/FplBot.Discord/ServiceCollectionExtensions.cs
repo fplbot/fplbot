@@ -4,14 +4,15 @@ using Discord.Net.Endpoints.Hosting;
 using Discord.Net.HttpClients;
 using FplBot.Discord.Data;
 using FplBot.Discord.Handlers.SlashCommands;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
 namespace FplBot.Discord
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddFplBotDiscord(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddFplBotDiscord(this IServiceCollection services, IConfiguration config,
+            ConnectionMultiplexer connection)
         {
             services.AddHostedService<DiscordSlashCommandsEnsurer>();
 
@@ -22,18 +23,7 @@ namespace FplBot.Discord
             });
             services.Configure<DiscordRedisOptions>(config);
 
-            services.AddSingleton<ConnectionMultiplexer>(c =>
-            {
-                var opts = c.GetService<IOptions<DiscordRedisOptions>>().Value;
-                var options = new ConfigurationOptions
-                {
-                    ClientName = opts.GetRedisUsername,
-                    Password = opts.GetRedisPassword,
-                    EndPoints = {opts.GetRedisServerHostAndPort}
-                };
-                return ConnectionMultiplexer.Connect(options);
-            });
-
+            services.TryAddSingleton<IConnectionMultiplexer>(connection);
             services.AddSingleton<IGuildRepository, DiscordGuildStore>();
             services.AddDiscordBotEvents<DiscordGuildStore>()
                 .AddSlashCommandHandler<HelpSlashCommandHandler>()
