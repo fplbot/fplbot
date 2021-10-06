@@ -5,14 +5,9 @@ namespace Fpl.Client
 {
     internal class JsonConvert
     {
-        public static T DeserializeObject<T>(string thing)
+        public static JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web)
         {
-            return JsonSerializer.Deserialize<T>(thing,
-                new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                {
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                });
-        }
-
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
     }
 }

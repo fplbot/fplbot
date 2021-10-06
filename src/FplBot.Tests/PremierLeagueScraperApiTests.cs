@@ -32,7 +32,7 @@ namespace FplBot.Tests
 
         private static PremierLeagueScraperApi CreateClient()
         {
-            return new PremierLeagueScraperApi(new HttpClient(), A.Fake<ILogger<PremierLeagueScraperApi>>());
+            return new PremierLeagueScraperApi(A.Fake<ILogger<PremierLeagueScraperApi>>());
         }
     }
 }

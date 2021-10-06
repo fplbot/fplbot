@@ -13,12 +13,10 @@ namespace Fpl.Workers
 {
     internal class PremierLeagueScraperApi : IGetMatchDetails
     {
-        private readonly HttpClient _client;
         private readonly ILogger<PremierLeagueScraperApi> _logger;
 
-        public PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger)
+        public PremierLeagueScraperApi(ILogger<PremierLeagueScraperApi> logger)
         {
-            _client = client;
             _logger = logger;
         }
 
@@ -26,9 +24,10 @@ namespace Fpl.Workers
         {
             try
             {
-                var res = await _client.GetStringAsync($"https://www.premierleague.com/match/{pulseId}");
-                var context = BrowsingContext.New();
-                var document = await context.OpenAsync(req => req.Content(res));
+                using var client = new HttpClient();
+                var res = await client.GetStringAsync($"https://www.premierleague.com/match/{pulseId}");
+                using var context = BrowsingContext.New();
+                using var document = await context.OpenAsync(req => req.Content(res));
                 var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
                 var json = fixture.Attributes.GetNamedItem("data-fixture").Value;
                 return JsonSerializer.Deserialize<MatchDetails>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});

@@ -3,6 +3,7 @@ using Fpl.Client.Models;
 
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 namespace Fpl.Client
@@ -18,9 +19,7 @@ namespace Fpl.Client
 
         public async Task<ICollection<Transfer>> GetTransfers(int teamId)
         {
-            var json = await _client.GetStringAsync($"/api/entry/{teamId}/transfers");
-
-            return JsonConvert.DeserializeObject<ICollection<Transfer>>(json);
+            return await _client.GetFromJsonAsync<ICollection<Transfer>>($"/api/entry/{teamId}/transfers", JsonConvert.JsonSerializerOptions);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -17,8 +18,7 @@ namespace Fpl.Client
 
         public async Task<EventStatusResponse> GetEventStatus()
         {
-            var json = await _client.GetStringAsync($"/api/event-status/");
-            return JsonConvert.DeserializeObject<EventStatusResponse>(json);
+            return await _client.GetFromJsonAsync<EventStatusResponse>($"/api/event-status/");
         }
     }
 }

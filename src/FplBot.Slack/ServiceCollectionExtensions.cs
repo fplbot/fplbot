@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
             });
 
             services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
-            services.AddFplApiClient(config.GetSection("fpl"));
+            services.AddFplApiClient(config);
             services.AddSearching(config.GetSection("Search"));
             services.AddSlackClientBuilder();
             services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();

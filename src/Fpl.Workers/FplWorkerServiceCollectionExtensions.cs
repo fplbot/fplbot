@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<State>();
             services.AddSingleton<LineupState>();
             services.AddSingleton<DateTimeUtils>();
-            services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>();
+            services.AddSingleton<IGetMatchDetails, PremierLeagueScraperApi>();
             services.AddSingleton<NearDeadLineMonitor>();
             services.AddSingleton<GameweekLifecycleMonitor>();
             services.AddSingleton<MatchDayStatusMonitor>();

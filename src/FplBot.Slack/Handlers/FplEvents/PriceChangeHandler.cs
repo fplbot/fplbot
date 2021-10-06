@@ -45,7 +45,8 @@ namespace FplBot.Slack.Handlers.FplEvents
             {
                 var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
                 var formatted = Formatter.FormatPriceChanged(filtered);
-                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                _logger.LogInformation("Publishing a string of length {length}", formatted.Length);
+                //await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
             }
             else
             {

@@ -3,6 +3,7 @@ using Fpl.Client.Models;
 
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 namespace Fpl.Client
@@ -20,8 +21,7 @@ namespace Fpl.Client
         {
             try
             {
-                var json = await _client.GetStringAsync($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}");
-                return JsonConvert.DeserializeObject<ClassicLeague>(json);
+                return await _client.GetFromJsonAsync<ClassicLeague>($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}", JsonConvert.JsonSerializerOptions);
             }
             catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
             {
@@ -31,9 +31,7 @@ namespace Fpl.Client
 
         public async Task<HeadToHeadLeague> GetHeadToHeadLeague(int leagueId)
         {
-            var json = await _client.GetStringAsync($"/api/leagues-h2h/{leagueId}/standings/");
-
-            return JsonConvert.DeserializeObject<HeadToHeadLeague>(json);
+            return await _client.GetFromJsonAsync<HeadToHeadLeague>($"/api/leagues-h2h/{leagueId}/standings/", JsonConvert.JsonSerializerOptions);
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -17,9 +19,7 @@ namespace Fpl.Client
 
         public async Task<EntryHistory> GetHistory(int teamId)
         {
-            var json = await _client.GetStringAsync($"/api/entry/{teamId}/history/");
-
-            return JsonConvert.DeserializeObject<EntryHistory>(json);
+            return await _client.GetFromJsonAsync<EntryHistory>($"/api/entry/{teamId}/history/", JsonConvert.JsonSerializerOptions);
         }
     }
 }

@@ -3,6 +3,7 @@ using Fpl.Client.Models;
 
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 namespace Fpl.Client
@@ -20,9 +21,7 @@ namespace Fpl.Client
         {
             try
             {
-                var json = await _client.GetStringAsync($"/api/entry/{teamId}/");
-
-                return JsonConvert.DeserializeObject<BasicEntry>(json);
+                return await _client.GetFromJsonAsync<BasicEntry>($"/api/entry/{teamId}/", JsonConvert.JsonSerializerOptions);
             }
             catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
             {
@@ -34,8 +33,7 @@ namespace Fpl.Client
         {
             try
             {
-                var json = await _client.GetStringAsync($"/api/entry/{teamId}/event/{gameweek}/picks/");
-                return JsonConvert.DeserializeObject<EntryPicks>(json);
+                return await _client.GetFromJsonAsync<EntryPicks>($"/api/entry/{teamId}/event/{gameweek}/picks/", JsonConvert.JsonSerializerOptions);
             }
             catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
             {
