@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		..\Dockerfile = ..\Dockerfile
 		..\.editorconfig = ..\.editorconfig
 		..\README.md = ..\README.md
+		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"

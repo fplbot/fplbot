@@ -39,16 +39,37 @@ namespace Discord.Net.Endpoints.Middleware
             var slashCommandType = data.GetProperty("type").GetInt32();
             var hasOptions = data.TryGetProperty("options", out JsonElement opts);
             SlashCommandInput slashCommandInput = null;
+            var isSubCommand = false;
             if (hasOptions)
             {
                 var array = opts.EnumerateArray();
                 var chosenOption = array.First();
-                _logger.LogInformation($"Selected option: {chosenOption}");
-                var name = chosenOption.GetProperty("name").GetString();
-                string value = chosenOption.GetProperty("value").GetRawText();
-                slashCommandInput = new SlashCommandInput(name, value);
+                var subCommandName = chosenOption.GetProperty("name").GetString();
+                isSubCommand = chosenOption.TryGetProperty("options", out JsonElement innerOpts);
+                if (isSubCommand)
+                {
+                    chosenOption = innerOpts.EnumerateArray().First(); // only supports single choice for simplicity
+                }
+
+                string pre = isSubCommand?"subcommand":"";
+                _logger.LogInformation($"Selected {pre}option: {chosenOption}");
+
+                JsonElement valueElement = chosenOption.GetProperty("value");
+                JsonValueKind jsonValueKind = valueElement.ValueKind;
+                string value = jsonValueKind == JsonValueKind.Number ? valueElement.GetInt32().ToString() : valueElement.GetString();
+                slashCommandInput = new SlashCommandInput(subCommandName, value, subCommandName);
             }
-            var handler = _handlers.FirstOrDefault(h => h.Name == commandName);
+
+            ISlashCommandHandler handler = null;
+            if (isSubCommand)
+            {
+                handler = _handlers.FirstOrDefault(h => h.CommandName == commandName && h.SubCommandName == slashCommandInput.SubCommandName);
+            }
+            else
+            {
+                handler = _handlers.FirstOrDefault(h => h.CommandName == commandName);
+            }
+
             if (handler != null)
             {
                 SlashCommandContext slashCommandContext = new(guildId, channelId, slashCommandInput);
@@ -89,5 +110,5 @@ namespace Discord.Net.Endpoints.Middleware
     }
 
     public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput CommandInput = null);
-    public record SlashCommandInput(string Name, string Value);
+    public record SlashCommandInput(string Name, string Value, string SubCommandName);
 }
