@@ -1,8 +1,8 @@
 # @fplbot
-A chatbot for Fantasy Premier league for Slack & Discord.
+A Fantasy Premier league chatbot 
 
 - [Slack](https://slack.com/apps/AREFP62B1-fplbot)
-- [Discord](https://api-test.fplbot.app/oauth/install-url-discord) (no bot home page yet)
+- Beta: [Discord](https://api.fplbot.app/oauth/install-url-discord) (no bot home page yet)
 
 Install at https://www.fplbot.app/ 🤖
 
@@ -10,16 +10,8 @@ Install at https://www.fplbot.app/ 🤖
 
 **Beta support for Discord**
 
-Invite to playground server for test: https://discord.gg/vjuKZw3x
-
-***Dev*** 
-
-Setup and use [ngrok](https://ngrok.io):
-https://`<ngrok-base-url-here>`/oauth/install-url-discord
-
-***Test***
-
-https://api-test.fplbot.app/oauth/install-url-discord
+- Join a server with bot pre-installed : https://discord.gg/vjuKZw3x
+- Install the bot to your own server : https://api.fplbot.app/oauth/install-url-discord
 
 <hr>
 
