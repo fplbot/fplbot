@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Discord.Net.HttpClients;
 using FplBot.Discord.Data;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -13,16 +12,13 @@ namespace FplBot.Discord.Handlers.FplEvents
         IHandleMessages<GameweekFinished>,
         IHandleMessages<InjuryUpdateOccured>,
         IHandleMessages<PlayersPriceChanged>,
-        IHandleMessages<NewPlayersRegistered>,
-        IHandleMessages<PublishToGuildChannel>
+        IHandleMessages<NewPlayersRegistered>
     {
-        private readonly DiscordClient _discordClient;
         private readonly IGuildRepository _repo;
         private readonly ILogger<NearDeadlineHandler> _logger;
 
-        public SayAllHandler(DiscordClient discordClient, IGuildRepository repo, ILogger<NearDeadlineHandler> logger)
+        public SayAllHandler(IGuildRepository repo, ILogger<NearDeadlineHandler> logger)
         {
-            _discordClient = discordClient;
             _repo = repo;
             _logger = logger;
         }
@@ -57,11 +53,6 @@ namespace FplBot.Discord.Handlers.FplEvents
             {
                 await context.SendLocal(new PublishToGuildChannel(guildSub.GuildId, guildSub.ChannelId, message.ToString()));
             }
-        }
-
-        public async Task Handle(PublishToGuildChannel message, IMessageHandlerContext context)
-        {
-            await _discordClient.ChannelMessagePost(message.ChannelId, message.Message);
         }
     }
 }
