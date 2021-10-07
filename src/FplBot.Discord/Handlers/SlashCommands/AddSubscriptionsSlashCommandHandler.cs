@@ -42,8 +42,6 @@ namespace FplBot.Discord.Handlers.SlashCommands
                 };
             }
 
-
-
             var existingSubsWithNew = new List<EventSubscription>(existingSub.Subscriptions) { newEventSub };
 
             if (newEventSub == EventSubscription.All)

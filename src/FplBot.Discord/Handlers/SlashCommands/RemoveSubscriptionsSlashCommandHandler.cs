@@ -51,6 +51,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
                     await _repo.DeleteGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
                     return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed all events in this channel." };
                 }
+
                 await _repo.UpdateGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, existingSubsWithout));
                 var all = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
                 return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed. Updated list: {string.Join(",", all.Subscriptions)}" };

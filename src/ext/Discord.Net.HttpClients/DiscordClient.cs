@@ -141,7 +141,6 @@ namespace Discord.Net.HttpClients
             var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
             var res = await _client.PostAsync($"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands",jsonContent);
             string responseBody = (await res.Content.ReadAsStringAsync());
-            _logger.LogTrace(res.Headers.ToString());
             _logger.LogTrace(responseBody);
             res.EnsureSuccessStatusCode();
         }
