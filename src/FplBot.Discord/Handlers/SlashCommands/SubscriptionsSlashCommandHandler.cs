@@ -14,7 +14,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
         {
             _repo = repo;
         }
-        public string Name => "subscriptions";
+        public string CommandName => "subs";
 
         public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
         {
@@ -30,7 +30,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
             {
                 if (sub.ChannelId == slashCommandContext.ChannelId)
                 {
-                    content += $"This channel:\n {string.Join("\n\n *", sub.Subscriptions)}";
+                    content += $"This channel:\n{string.Join("\n", sub.Subscriptions.Select(c => $"* {c}"))}";
                 }
                 else
                 {

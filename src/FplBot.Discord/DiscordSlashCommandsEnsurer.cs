@@ -43,11 +43,11 @@ namespace FplBot.Discord
         {
             string fplBotGuildId = "893932860162064414"; // test guild
 
-            // await _client.ApplicationsCommandForGuildPost(
-            //     "subscriptions",
-            //     "Shows active subscriptions",
-            //     fplBotGuildId);
-            //
+            await _client.ApplicationsCommandForGuildPost(
+                "subs",
+                "Shows active subscriptions",
+                fplBotGuildId);
+
             // await _client.ApplicationsCommandForGuildPost(
             //     "help",
             //     "Shows help",
@@ -66,8 +66,8 @@ namespace FplBot.Discord
             //     fplBotGuildId,
             //     applicationCommandOptions);
 
-            await _client.ApplicationsCommandForGuildPost("subscribe",
-                "Subscribe to event",
+            await _client.ApplicationsCommandForGuildPost("subscriptions",
+                "Manage subscription",
                 fplBotGuildId,
                 SubOption("add", "event"), SubOption("remove","event"));
 

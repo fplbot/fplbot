@@ -78,11 +78,22 @@ namespace FplBot.Discord.Data
             {
                 var guildId = FromKeyToGuildId(key);
                 var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _subscriptionsField });
-                var subs = ParseSubscriptionString(fetchedTeamData[1], " ");
+                var subs = ParseSubscriptionString(fetchedTeamData[2], " ");
                 guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], subs));
             }
 
             return guilds;
+        }
+
+        public async Task<GuildFplSubscription> GetGuildSubscription(string guildId, string channelId)
+        {
+            var all = await GetAllGuildSubscriptions();
+            return all.FirstOrDefault(s => s.GuildId == guildId && s.ChannelId == channelId);
+        }
+
+        public Task UpdateGuildSubscription(GuildFplSubscription guildSub)
+        {
+            return InsertGuildSubscription(guildSub);
         }
 
         public async Task InsertGuildSubscription(GuildFplSubscription guildSub)

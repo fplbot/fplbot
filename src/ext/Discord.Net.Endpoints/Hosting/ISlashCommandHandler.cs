@@ -5,7 +5,10 @@ namespace Discord.Net.Endpoints.Hosting
 {
     public interface ISlashCommandHandler
     {
-        public string Name { get; }
+        public string CommandName { get; }
+
+        public string SubCommandName => null;
+
         public Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext);
     }
 }

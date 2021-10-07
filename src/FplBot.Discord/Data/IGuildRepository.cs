@@ -8,7 +8,10 @@ namespace FplBot.Discord.Data
     {
         Task<IEnumerable<Guild>> GetAllGuilds();
         Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions();
+        Task<GuildFplSubscription> GetGuildSubscription(string guildId, string channelId);
+        Task UpdateGuildSubscription(GuildFplSubscription guildSub);
         Task InsertGuildSubscription(GuildFplSubscription guildSub);
         Task<IEnumerable<GuildFplSubscription>> GetAllSubscriptionInGuild(string guildId);
+
     }
 }

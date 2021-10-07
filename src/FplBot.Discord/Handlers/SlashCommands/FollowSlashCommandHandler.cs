@@ -18,7 +18,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
             _repo = repo;
         }
 
-        public string Name => "follow";
+        public string CommandName => "follow";
 
         public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
         {

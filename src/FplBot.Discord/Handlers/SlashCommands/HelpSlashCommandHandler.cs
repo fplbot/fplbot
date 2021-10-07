@@ -6,7 +6,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
 {
     public class HelpSlashCommandHandler : ISlashCommandHandler
     {
-        public string Name => "help";
+        public string CommandName => "help";
 
         public Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
         {
