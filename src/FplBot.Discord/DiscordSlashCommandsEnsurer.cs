@@ -42,53 +42,60 @@ namespace FplBot.Discord
         private async Task InstallSlashCommandsInGuild()
         {
             string fplBotGuildId = "893932860162064414"; // test guild
+            var applicationsCommands = await _client.ApplicationsCommandForGuildGet(fplBotGuildId);
+            foreach (var applicationsCommand in applicationsCommands)
+            {
+                await _client.ApplicationsCommandForGuildDelete(fplBotGuildId, applicationsCommand.Id);
+                await Task.Delay(5000);
+            }
 
             await _client.ApplicationsCommandForGuildPost(
                 "subs",
                 "Shows active subscriptions",
                 fplBotGuildId);
 
-            // await _client.ApplicationsCommandForGuildPost(
-            //     "help",
-            //     "Shows help",
-            //     fplBotGuildId);
-            //
-            // var applicationCommandOptions = new ApplicationCommandOptions
-            // {
-            //     Type = 4, // leagueId as int
-            //     Name = "leagueid",
-            //     Description = "A FPL League Id.",
-            //     Required = true
-            // };
-            //
-            // await _client.ApplicationsCommandForGuildPost("follow",
-            //     "Follow a FPL league in this channel",
-            //     fplBotGuildId,
-            //     applicationCommandOptions);
+            await Task.Delay(3000);
+
+            await _client.ApplicationsCommandForGuildPost(
+                "help",
+                "Shows help",
+                fplBotGuildId);
+            await Task.Delay(3000);
+
+            var applicationCommandOptions = new ApplicationCommandOptions
+            {
+                Type = 4, // leagueId as int
+                Name = "leagueid",
+                Description = "A FPL League Id.",
+                Required = true
+            };
+            await Task.Delay(3000);
+
+            await _client.ApplicationsCommandForGuildPost("follow",
+                "Follow a FPL league in this channel",
+                fplBotGuildId,
+                applicationCommandOptions);
+            await Task.Delay(3000);
 
             await _client.ApplicationsCommandForGuildPost("subscriptions",
                 "Manage subscription",
                 fplBotGuildId,
-                SubOption("add", "event"), SubOption("remove","event"));
+                OptionWithOptions("add", OptionWithChoices("event")), OptionWithOptions("remove",OptionWithChoices("event")));
 
-            // await _client.ApplicationsCommandForGuildPost("unsubscribe",
-            //     "Unsubscribe to event",
-            //     fplBotGuildId,
-            //     EventOption("events"));
 
-            ApplicationCommandOptions SubOption(string name, params string[] subOpts)
+            ApplicationCommandOptions OptionWithOptions(string name, params ApplicationCommandOptions[] subOpts)
             {
                 var subCommand = new ApplicationCommandOptions()
                 {
                     Type = 1, // eventtype as suboption
                     Name = name,
                     Description = "add/remove",
-                    Options = subOpts.Select(SubgroupOption).ToArray()
+                    Options = subOpts
                 };
                 return subCommand;
             }
 
-            ApplicationCommandOptions SubgroupOption(string name)
+            ApplicationCommandOptions OptionWithChoices(string name)
             {
                 var subscribeOption = new ApplicationCommandOptions()
                 {

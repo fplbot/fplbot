@@ -30,7 +30,7 @@ namespace FplBot.Discord
                 .AddSlashCommandHandler<FollowSlashCommandHandler>()
                 .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()
                 .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>()
-                .AddSlashCommandHandler<SubscriptionsSlashCommandHandler>();
+                .AddSlashCommandHandler<SubsSlashCommandHandler>();
             return services;
         }
     }

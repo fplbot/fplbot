@@ -141,15 +141,33 @@ namespace Discord.Net.HttpClients
             var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
             var res = await _client.PostAsync($"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands",jsonContent);
             string responseBody = (await res.Content.ReadAsStringAsync());
+            _logger.LogTrace(res.Headers.ToString());
             _logger.LogTrace(responseBody);
             res.EnsureSuccessStatusCode();
         }
 
-        public async Task ApplicationsCommandDelete(long commandId)
+        public async Task ApplicationsCommandDelete(string commandId)
         {
             var res = await _client.DeleteAsync(
                 $"api/v8/applications/{_options.Value.DiscordApplicationId}/commands/{commandId}");
             res.EnsureSuccessStatusCode();
+        }
+
+        public async Task ApplicationsCommandForGuildDelete(string guildId, string commandId)
+        {
+            var res = await _client.DeleteAsync(
+                $"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands/{commandId}");
+            res.EnsureSuccessStatusCode();
+        }
+
+        public record ApplicationsCommand(string Id);
+
+        public async Task<IEnumerable<ApplicationsCommand>> ApplicationsCommandForGuildGet(string guildId)
+        {
+            var res = await _client.GetFromJsonAsync<IEnumerable<ApplicationsCommand>>(
+                $"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands",
+                SerializerOptions);
+            return res;
         }
 
         public record Channel(long Id, string Name, int Type);

@@ -91,6 +91,20 @@ namespace FplBot.Discord.Data
             return all.FirstOrDefault(s => s.GuildId == guildId && s.ChannelId == channelId);
         }
 
+        public async Task DeleteGuildSubscription(string guildId, string channelId)
+        {
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildSubKey("*"));
+
+            foreach (var key in allTeamKeys)
+            {
+                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_guildIdField, _channelIdField});
+                if (fetchedTeamData[0] == guildId && fetchedTeamData[1] == channelId)
+                {
+                    await _db.KeyDeleteAsync(key);
+                }
+            }
+        }
+
         public Task UpdateGuildSubscription(GuildFplSubscription guildSub)
         {
             return InsertGuildSubscription(guildSub);

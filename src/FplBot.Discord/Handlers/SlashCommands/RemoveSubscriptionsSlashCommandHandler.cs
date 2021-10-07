@@ -24,6 +24,15 @@ namespace FplBot.Discord.Handlers.SlashCommands
         public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
         {
             var existingSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+
+            if (existingSub == null)
+            {
+                return new ChannelMessageWithSourceResponse
+                {
+                    Content = $"⚠️ Did not find any sub in this channel to remove!"
+                };
+            }
+
             EventSubscription eventSub = Enum.Parse<EventSubscription>(slashCommandContext.CommandInput.Value);
             if (!existingSub.Subscriptions.Contains(eventSub))
             {
@@ -32,18 +41,23 @@ namespace FplBot.Discord.Handlers.SlashCommands
                     Content = $"You we're not subscribing to {slashCommandContext.CommandInput.Value} 🤷‍♂️"
                 };
             }
-            else
+
+            if (eventSub != EventSubscription.All)
             {
                 var existingSubsWithout = new List<EventSubscription>(existingSub.Subscriptions);
                 existingSubsWithout.Remove(eventSub);
-
+                if (!existingSubsWithout.Any())
+                {
+                    await _repo.DeleteGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+                    return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed all events in this channel." };
+                }
                 await _repo.UpdateGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, existingSubsWithout));
                 var all = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
-                var content = $"Unsubbed. Updated list: {string.Join(",", all.Subscriptions)}";
-                SlashCommandResponse channelMessageWithSourceResponse = new ChannelMessageWithSourceResponse() { Content = content };
-                return channelMessageWithSourceResponse;
+                return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed. Updated list: {string.Join(",", all.Subscriptions)}" };
             }
 
+            await _repo.DeleteGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+            return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed all events in this channel." };
         }
     }
 }

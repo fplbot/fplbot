@@ -25,14 +25,14 @@ namespace FplBot.Discord.Handlers.SlashCommands
             var leagueId = int.Parse(slashCommandContext.CommandInput.Value);
             var league = await _leagueClient.GetClassicLeague(leagueId);
             var existingSub = await _repo.GetAllSubscriptionInGuild(slashCommandContext.GuildId);
-            string content = $"Thx. Now following the '{$"{league.Properties.Name}"}' FPL league. ";
+            string content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. ";
             if (!existingSub.Any(c => c.ChannelId == slashCommandContext.ChannelId))
             {
                 await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, new []
                 {
                     EventSubscription.All
                 }));
-                content += "\nNo existing subs, so also auto-subscribed to all FPL events (goals, standings, etc), but feel free to modify what events you would like to have using the subscribe slash command";
+                content += "\n\nNo existing subs, so also auto-subscribed to all FPL events (goals, standings, etc), but feel free to modify what events you would like to have using the subscription slash command";
             }
 
             return new ChannelMessageWithSourceResponse { Content = content };
