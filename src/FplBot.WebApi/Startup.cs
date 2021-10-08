@@ -209,7 +209,7 @@ namespace FplBot.WebApi
             app.Map("/oauth/authorize", a => a.UseSlackbotDistribution());
             app.Map("/events", a => a.UseSlackbot(enableAuth: !_env.IsDevelopment()));
             app.Map("/oauth/discord/authorize", a => a.UseDiscordDistribution());
-            app.Map("/discord/events", a => a.UseDiscordbot());
+            app.Map("/discord/events", a => a.UseDiscordbot(enableAuth: !_env.IsDevelopment()));
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);

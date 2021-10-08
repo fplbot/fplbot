@@ -24,7 +24,7 @@ namespace Discord.Net.Endpoints.Middleware
             var slashCommand = context.Items[HttpItemKeys.SlashCommandsKey] as JsonDocument;
             context.Response.StatusCode = 200;
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsJsonAsync(await CreateJsonResponse(slashCommand));
+            await context.Response.WriteAsJsonAsync<object>(await CreateJsonResponse(slashCommand), SerializerOptions);
         }
 
         private async Task<object> CreateJsonResponse(JsonDocument doc)
@@ -75,36 +75,16 @@ namespace Discord.Net.Endpoints.Middleware
                 var handled = await handler.Handle(slashCommandContext);
                 if (handled is ChannelMessageWithSourceResponse channelMessageRes)
                 {
-                    var res = new
-                    {
-                        type = handled.Type,
-                        data = new
-                        {
-                            content = channelMessageRes.Content
-                        }
-                    };
-                    _logger.LogTrace($"Response:\n{res}");
-                    return res;
+                    _logger.LogTrace($"Response:\n{channelMessageRes}");
+                    return new { type = 4, data = channelMessageRes };
                 }
                 if (handled is ChannelMessageWithSourceEmbedResponse channelMessageEmbedRes)
                 {
-                    var res = new
-                    {
-                        type = handled.Type,
-                        data = new
-                        {
-                            embeds =  new []
-                            {
-                                channelMessageEmbedRes.Embed
-                            }
-                        }
-                    };
-                    _logger.LogTrace($"Response:\n{res}");
-                    return res;
+                    _logger.LogTrace($"Response:\n\n{JsonSerializer.Serialize(channelMessageEmbedRes,SerializerOptions)}\n\n");
+                    return new { type = 4, data = channelMessageEmbedRes };
                 }
                 _logger.LogTrace($"Not yet ready to handle the slash command type {slashCommandType}. Unsupported in the Discord.Net Framework");
-                return new
-                {
+                return new {
                     type = 4,
                     data = new
                     {
@@ -113,17 +93,30 @@ namespace Discord.Net.Endpoints.Middleware
                 };
             }
             _logger.LogWarning("No handler registered for `{commandName}`", commandName);
-            return new
-            {
+            return new {
                 type = 4,
                 data = new
                 {
                     content = "I'm not ready to handle this command yet 🤷‍♂️"
                 }
-            };;
+            };
         }
+
+        private JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
+        {
+            PropertyNamingPolicy = new Lowercase(),
+            IgnoreNullValues = true
+        };
     }
 
     public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput CommandInput = null);
     public record SlashCommandInput(string Name, string Value, string SubCommandName);
+
+    internal class Lowercase : JsonNamingPolicy
+    {
+        public override string ConvertName(string name)
+        {
+            return name.ToLower();
+        }
+    }
 }

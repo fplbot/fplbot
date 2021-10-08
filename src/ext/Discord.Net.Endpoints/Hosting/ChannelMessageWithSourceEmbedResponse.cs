@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Discord.Net.Endpoints.Hosting
 {
     public class ChannelMessageWithSourceEmbedResponse : SlashCommandResponse
@@ -5,8 +7,11 @@ namespace Discord.Net.Endpoints.Hosting
         public ChannelMessageWithSourceEmbedResponse()
         {
             Type = 4;
+            Embeds = new List<RichEmbed>();
         }
 
-        public Embed Embed { get; set; }
+        public List<RichEmbed> Embeds { get; set; }
     }
+
+    public record RichEmbed(string Title, string Description, int Color = 3604540, string Type = "rich");
 }

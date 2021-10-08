@@ -30,7 +30,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
             {
                 await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
                 var newSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-                return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", newSub.Subscriptions)}" };
+                return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed("✅ Success!", $"Added subscription to {string.Join(",", newSub.Subscriptions)}")}};
             }
 
             if (existingSub.Subscriptions.Contains(newEventSub))
@@ -50,7 +50,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
             await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = existingSubsWithNew});
             var all = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", all.Subscriptions)}" };
+            return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed("ℹ️ Updated!", $"Now subscribing to {string.Join(",", all.Subscriptions)}")}};
         }
     }
 }

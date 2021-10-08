@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
@@ -43,7 +44,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
                 content += $"\nSubscriptions: {string.Join(",", sub.Subscriptions)}";
             }
 
-            return new ChannelMessageWithSourceEmbedResponse() { Embed = new Embed("ℹ️ HELP", content) };
+            return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed("ℹ️ HELP", content)} };
         }
     }
 }
