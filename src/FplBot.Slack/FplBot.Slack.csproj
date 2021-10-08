@@ -16,7 +16,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
     <ProjectReference Include="..\ext\Slackbot.Net.SlackClients.Http\Slackbot.Net.SlackClients.Http.csproj" />
-    <ProjectReference Include="..\ext\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />    
+    <ProjectReference Include="..\ext\Slackbot.Net.Endpoints\Slackbot.Net.Endpoints.csproj" />
+    <ProjectReference Include="..\FplBot.Formatting\FplBot.Formatting.csproj" />    
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
     <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj" />
   </ItemGroup>

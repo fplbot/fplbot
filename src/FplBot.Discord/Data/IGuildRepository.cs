@@ -13,7 +13,5 @@ namespace FplBot.Discord.Data
         Task UpdateGuildSubscription(GuildFplSubscription guildSub);
         Task InsertGuildSubscription(GuildFplSubscription guildSub);
         Task<IEnumerable<GuildFplSubscription>> GetAllSubscriptionInGuild(string guildId);
-
-
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Formatting;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Extensions;
 using FplBot.Slack.Helpers.Formatting;
@@ -158,19 +159,5 @@ namespace FplBot.Slack.Helpers
                 return null;
             }
         }
-
-        private class EntryCaptainPick
-        {
-            public GenericEntry Entry { get; set; }
-            public Player Captain { get; set; }
-            public Player ViceCaptain { get; set; }
-            public bool IsTripleCaptain { get; set; }
-        }
-    }
-
-    public class GenericEntry
-    {
-        public int Entry { get; set; }
-        public string EntryName { get; set; }
     }
 }

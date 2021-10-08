@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Formatting;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Extensions;
 using FplBot.Slack.Helpers;

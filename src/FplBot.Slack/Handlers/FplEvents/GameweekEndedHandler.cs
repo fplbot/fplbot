@@ -3,12 +3,12 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
-using FplBot.Slack.Helpers.Formatting;
 using NServiceBus;
 
 namespace FplBot.Slack.Handlers.FplEvents

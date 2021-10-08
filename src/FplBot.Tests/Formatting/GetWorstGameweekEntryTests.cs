@@ -1,4 +1,5 @@
 ﻿using Fpl.Client.Models;
+using FplBot.Formatting;
 using FplBot.Slack.Helpers.Formatting;
 using Xunit;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -8,12 +8,10 @@ using System.Text.RegularExpressions;
 using Fpl.Client.Models;
 using Fpl.Search.Models;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Extensions;
-using FplBot.Slack.Handlers.FplEvents;
 using FplBot.VerifiedEntries.Data.Models;
 using Slackbot.Net.Models.BlockKit;
 
-namespace FplBot.Slack.Helpers.Formatting
+namespace FplBot.Formatting
 {
     public static class Formatter
     {
@@ -266,7 +264,7 @@ namespace FplBot.Slack.Helpers.Formatting
                 header = "🆕 New players!";
             }
             var nameAndCost = newPlayers.Select(NameAndCost);
-            return $"{header}\n{BulletPoints(nameAndCost)}";
+            return $"{header}\n{BulletPoints<string>(nameAndCost)}";
 
             string NameAndCost(NewPlayer p)
             {
@@ -400,9 +398,9 @@ namespace FplBot.Slack.Helpers.Formatting
 
                 if (reverse)
                 {
-                    playersInSegment = playersInSegment.Reverse();
+                    playersInSegment = Enumerable.Reverse<string>(playersInSegment);
                 }
-                formattedOutput += $"{string.Join("  ", playersInSegment)}\n";
+                formattedOutput += $"{string.Join((string?)"  ", (IEnumerable<string?>)playersInSegment)}\n";
             }
             formattedOutput += "\n";
         }
@@ -506,8 +504,8 @@ namespace FplBot.Slack.Helpers.Formatting
         public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)
         {
             var introText = $"{gw.Name} is finished.";
-            var globalAverage = (int)Math.Round(gw.AverageScore);
-            var leagueAverage = (int)Math.Round(league.Standings.Entries.Average(entry => entry.EventTotal));
+            var globalAverage = (int)Math.Round((double)gw.AverageScore);
+            var leagueAverage = (int)Math.Round((double)league.Standings.Entries.Average(entry => entry.EventTotal));
             var diff = Math.Abs(globalAverage - leagueAverage);
             var nuance = diff <= 5 ? "slightly " : "";
 

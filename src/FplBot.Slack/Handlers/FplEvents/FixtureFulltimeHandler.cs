@@ -3,11 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
-using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
@@ -103,20 +103,5 @@ namespace FplBot.Slack.Handlers.FplEvents
                 });
             }
         }
-    }
-
-    public class FinishedFixture
-    {
-        public Fixture Fixture { get; set; }
-        public Team HomeTeam { get; set; }
-        public Team AwayTeam { get; set; }
-
-        public IEnumerable<BonusPointsPlayer> BonusPoints { get; set; } = new List<BonusPointsPlayer>();
-    }
-
-    public class BonusPointsPlayer
-    {
-        public Player Player { get; set; }
-        public int BonusPoints { get; set; }
     }
 }

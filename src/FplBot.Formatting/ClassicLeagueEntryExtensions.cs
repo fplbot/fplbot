@@ -1,8 +1,6 @@
-﻿using Fpl.Client.Models;
-using FplBot.Slack.Helpers;
-using FplBot.Slack.Helpers.Formatting;
+using Fpl.Client.Models;
 
-namespace FplBot.Slack.Extensions
+namespace FplBot.Formatting
 {
     public static class ClassicLeagueEntryExtensions
     {

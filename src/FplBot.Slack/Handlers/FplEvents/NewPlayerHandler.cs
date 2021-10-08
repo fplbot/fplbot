@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;

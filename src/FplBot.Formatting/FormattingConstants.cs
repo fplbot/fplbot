@@ -1,4 +1,4 @@
-﻿namespace FplBot.Slack.Helpers.Formatting
+namespace FplBot.Formatting
 {
     internal static class FormattingConstants
     {
