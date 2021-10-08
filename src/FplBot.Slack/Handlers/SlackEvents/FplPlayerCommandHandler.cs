@@ -50,7 +50,7 @@ namespace FplBot.Slack.Handlers.SlackEvents
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
             {
                 Channel = message.Channel,
-                Blocks = Formatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
+                Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
             });
 
             return new EventHandledResponse($"Found matching player for {name}: " + playerName);
