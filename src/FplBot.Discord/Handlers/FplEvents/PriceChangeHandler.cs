@@ -34,7 +34,7 @@ namespace FplBot.Discord.Handlers.FplEvents
 
                 foreach (var guildSub in guildSubs)
                 {
-                    if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates) && !string.IsNullOrEmpty(formatted))
+                    if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges) && !string.IsNullOrEmpty(formatted))
                     {
                         await context.SendLocal(new PublishToGuildChannel(guildSub.GuildId, guildSub.ChannelId, formatted));
                     }
