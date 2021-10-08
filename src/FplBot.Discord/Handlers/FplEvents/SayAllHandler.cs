@@ -10,7 +10,7 @@ namespace FplBot.Discord.Handlers.FplEvents
     public class SayAllHandler :
         IHandleMessages<GameweekJustBegan>,
         IHandleMessages<GameweekFinished>,
-        IHandleMessages<InjuryUpdateOccured>,
+
         IHandleMessages<PlayersPriceChanged>,
         IHandleMessages<NewPlayersRegistered>
     {
@@ -25,29 +25,26 @@ namespace FplBot.Discord.Handlers.FplEvents
 
         public async Task Handle(GameweekJustBegan message, IMessageHandlerContext context)
         {
-            await SendToGuilds(message,context);
+            await SendToGuildsIfSubscribing(message,context);
         }
 
         public async Task Handle(GameweekFinished message, IMessageHandlerContext context)
         {
-            await SendToGuilds(message,context);        }
-
-        public async Task Handle(InjuryUpdateOccured message, IMessageHandlerContext context)
-        {
-            await SendToGuilds(message,context);        }
+            await SendToGuildsIfSubscribing(message,context);
+        }
 
         public async Task Handle(PlayersPriceChanged message, IMessageHandlerContext context)
         {
-            await SendToGuilds(message,context);        }
+            await SendToGuildsIfSubscribing(message,context);
+        }
 
         public async Task Handle(NewPlayersRegistered message, IMessageHandlerContext context)
         {
-            await SendToGuilds(message,context);
+            await SendToGuildsIfSubscribing(message,context);
         }
 
-        private async Task SendToGuilds(IEvent message, IMessageHandlerContext context)
+        private async Task SendToGuildsIfSubscribing(IEvent message, IMessageHandlerContext context)
         {
-            _logger.LogInformation(message.ToString());
             var guildSubs = await _repo.GetAllGuildSubscriptions();
             foreach (GuildFplSubscription guildSub in guildSubs)
             {

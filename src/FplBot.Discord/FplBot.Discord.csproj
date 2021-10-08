@@ -11,6 +11,7 @@
     <ProjectReference Include="..\ext\Discord.Net.Endpoints\Discord.Net.Endpoints.csproj" />
     <ProjectReference Include="..\ext\Discord.Net.HttpClients\Discord.Net.HttpClients.csproj" />
     <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+    <ProjectReference Include="..\FplBot.Formatting\FplBot.Formatting.csproj" />
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
   </ItemGroup>
 </Project>
