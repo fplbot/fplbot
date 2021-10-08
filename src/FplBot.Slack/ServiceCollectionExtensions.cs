@@ -1,5 +1,6 @@
 using Fpl.Client.Infra;
 using Fpl.Search;
+using FplBot.Formatting;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data;
 using FplBot.Slack.Data.Abstractions;

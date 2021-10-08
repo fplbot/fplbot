@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FplBot.Slack.Helpers;
 
-namespace FplBot.Slack.Abstractions
+namespace FplBot.Formatting
 {
     public interface ITransfersByGameWeek
     {

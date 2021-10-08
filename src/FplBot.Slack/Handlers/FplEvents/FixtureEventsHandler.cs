@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
 using FplBot.Slack.Extensions;
+using FplBot.Slack.Helpers;
 using FplBot.Slack.Helpers.Formatting.FixtureStats;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
@@ -62,7 +64,7 @@ namespace FplBot.Slack.Handlers.FplEvents
                 var slackUsers = await GetSlackUsers(slackTeam);
                 var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
                 var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
-                tauntData = new TauntData(transfers, entries, slackUsers);
+                tauntData = new TauntData(transfers, entries, entryName => SlackHandleHelper.GetSlackHandleOrFallback(slackUsers, entryName));
             }
 
             var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, slackTeam.Subscriptions, tauntData);

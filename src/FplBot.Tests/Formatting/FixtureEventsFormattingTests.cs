@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Models;
@@ -84,6 +85,10 @@ namespace FplBot.Tests
 
         private TauntData CreateTransferOutForGoalScorerContext(string slackUserRealName, string slackUserHandle, string entryName)
         {
+            User[] users = new[]
+            {
+                new User { Id = "U123", Real_name = slackUserRealName, Name = slackUserHandle }
+            };
             return new TauntData(
                 new[]
                 {
@@ -93,22 +98,19 @@ namespace FplBot.Tests
                     }
                 },
                 Array.Empty<GameweekEntry>(),
-                new[]
-                {
-                    new User { Id = "U123", Real_name = slackUserRealName, Name = slackUserHandle }
-                });
-
+                entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
         }
 
         private TauntData CreateNoTransfersForGoalScorer()
         {
+            User[] users = new[]
+            {
+                new User {Real_name = "dontCare dontCaresen", Name = "dontCareName"}
+            };
             return new TauntData(
                 Array.Empty<TransfersByGameWeek.Transfer>(),
                 Array.Empty<GameweekEntry>(),
-                new[]
-                {
-                    new User {Real_name = "dontCare dontCaresen", Name = "dontCareName"}
-                });
+                entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
         }
     }
 }

@@ -398,9 +398,9 @@ namespace FplBot.Formatting
 
                 if (reverse)
                 {
-                    playersInSegment = Enumerable.Reverse<string>(playersInSegment);
+                    playersInSegment = Enumerable.Reverse(playersInSegment);
                 }
-                formattedOutput += $"{string.Join((string?)"  ", (IEnumerable<string?>)playersInSegment)}\n";
+                formattedOutput += $"{string.Join("  ", playersInSegment)}\n";
             }
             formattedOutput += "\n";
         }
