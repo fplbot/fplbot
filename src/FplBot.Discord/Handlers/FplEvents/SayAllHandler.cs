@@ -10,8 +10,6 @@ namespace FplBot.Discord.Handlers.FplEvents
     public class SayAllHandler :
         IHandleMessages<GameweekJustBegan>,
         IHandleMessages<GameweekFinished>,
-
-        IHandleMessages<PlayersPriceChanged>,
         IHandleMessages<NewPlayersRegistered>
     {
         private readonly IGuildRepository _repo;
@@ -29,11 +27,6 @@ namespace FplBot.Discord.Handlers.FplEvents
         }
 
         public async Task Handle(GameweekFinished message, IMessageHandlerContext context)
-        {
-            await SendToGuildsIfSubscribing(message,context);
-        }
-
-        public async Task Handle(PlayersPriceChanged message, IMessageHandlerContext context)
         {
             await SendToGuildsIfSubscribing(message,context);
         }

@@ -10,25 +10,27 @@ using NServiceBus;
 
 namespace FplBot.Discord.Handlers.FplEvents
 {
-    public class InjuryUpdateHandler : IHandleMessages<InjuryUpdateOccured>
+ public class PriceChangeHandler : IHandleMessages<PlayersPriceChanged>
     {
-        private readonly IGuildRepository _repo;
-        private readonly ILogger<InjuryUpdateHandler> _logger;
 
-        public InjuryUpdateHandler(IGuildRepository repo, ILogger<InjuryUpdateHandler> logger)
+        private readonly IGuildRepository _repo;
+        private readonly ILogger<PriceChangeHandler> _logger;
+
+        public PriceChangeHandler(IGuildRepository repo, ILogger<PriceChangeHandler> logger)
         {
             _repo = repo;
             _logger = logger;
         }
 
-        public async Task Handle(InjuryUpdateOccured message, IMessageHandlerContext context)
+        public async Task Handle(PlayersPriceChanged notification, IMessageHandlerContext context)
         {
+            _logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
             var guildSubs = await _repo.GetAllGuildSubscriptions();
-            var filtered = message.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
+            var filtered = notification.PlayersWithPriceChanges.Where(c => c.IsRelevant());
 
             if (filtered.Any())
             {
-                var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
+                var formatted = Formatter.FormatPriceChanged(filtered);
 
                 foreach (var guildSub in guildSubs)
                 {
