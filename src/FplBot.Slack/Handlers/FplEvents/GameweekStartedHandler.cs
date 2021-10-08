@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Formatting;
+using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;

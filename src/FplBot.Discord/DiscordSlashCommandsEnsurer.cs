@@ -22,7 +22,7 @@ namespace FplBot.Discord
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            Task.Run(InstallSlashCommandsInGuild);
+            //Task.Run(InstallSlashCommandsInGuild);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

@@ -2,13 +2,11 @@
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Formatting;
-using FplBot.Slack.Abstractions;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Slack.Helpers
+namespace FplBot.Formatting.Helpers
 {
-    internal class EntryForGameweek: IEntryForGameweek
+    public class EntryForGameweek: IEntryForGameweek
     {
 
         private readonly IEntryClient _entryClient;

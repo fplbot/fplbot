@@ -6,15 +6,11 @@ using System.Threading.Tasks;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Formatting;
-using FplBot.Slack.Abstractions;
-using FplBot.Slack.Extensions;
-using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Slack.Helpers
+namespace FplBot.Formatting.Helpers
 {
-    internal class CaptainsByGameWeek : ICaptainsByGameWeek
+    public class CaptainsByGameWeek : ICaptainsByGameWeek
     {
         private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly ILeagueClient _leagueClient;

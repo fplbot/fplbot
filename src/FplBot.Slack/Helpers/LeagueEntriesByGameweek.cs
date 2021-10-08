@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Formatting;
+using FplBot.Formatting.Helpers;
 using FplBot.Slack.Abstractions;
 using Microsoft.Extensions.Logging;
 
