@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -7,7 +6,6 @@ using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Formatting;
 using FplBot.Slack.Data.Abstractions;
-using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;

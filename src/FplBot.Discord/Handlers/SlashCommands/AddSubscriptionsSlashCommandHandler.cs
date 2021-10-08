@@ -21,15 +21,15 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
         public string SubCommandName => "add";
 
-        public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
+        public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            var existingSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
-            EventSubscription newEventSub = Enum.Parse<EventSubscription>(slashCommandContext.CommandInput.Value);
+            var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+            EventSubscription newEventSub = Enum.Parse<EventSubscription>(context.CommandInput.Value);
 
             if (existingSub == null)
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, null, new[] { newEventSub }));
-                var newSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+                await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
+                var newSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
                 return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", newSub.Subscriptions)}" };
             }
 
@@ -37,7 +37,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
             {
                 return new ChannelMessageWithSourceResponse
                 {
-                    Content = $"Already subscribing to {slashCommandContext.CommandInput.Value}"
+                    Content = $"Already subscribing to {context.CommandInput.Value}"
                 };
             }
 
@@ -49,7 +49,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
             }
 
             await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = existingSubsWithNew});
-            var all = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+            var all = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
             return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", all.Subscriptions)}" };
         }
     }

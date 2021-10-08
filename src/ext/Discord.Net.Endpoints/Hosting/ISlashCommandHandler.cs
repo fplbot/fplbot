@@ -9,6 +9,6 @@ namespace Discord.Net.Endpoints.Hosting
 
         public string SubCommandName => null;
 
-        public Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext);
+        public Task<SlashCommandResponse> Handle(SlashCommandContext context);
     }
 }

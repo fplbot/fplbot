@@ -22,14 +22,7 @@ namespace FplBot.Discord
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                await InstallSlashCommandsInGuild();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, e.Message);
-            }
+            Task.Run(InstallSlashCommandsInGuild);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -45,7 +38,7 @@ namespace FplBot.Discord
             var applicationsCommands = await _client.ApplicationsCommandForGuildGet(fplBotGuildId);
             foreach (var applicationsCommand in applicationsCommands)
             {
-                await _client.ApplicationsCommandForGuildDelete(fplBotGuildId, applicationsCommand.Id);
+                //await _client.ApplicationsCommandForGuildDelete(fplBotGuildId, applicationsCommand.Id);
                 await Task.Delay(5000);
             }
 

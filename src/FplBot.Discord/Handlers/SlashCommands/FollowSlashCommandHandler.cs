@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
@@ -20,28 +19,29 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
         public string CommandName => "follow";
 
-        public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
+        public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            var leagueId = int.Parse(slashCommandContext.CommandInput.Value);
+            var leagueId = int.Parse(context.CommandInput.Value);
             var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
 
             if(league == null)
                 return new ChannelMessageWithSourceResponse { Content = $"Could not find a classic league of id '{leagueId}'" };
 
 
-            var content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. ";
-
-            var existingSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+            var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
             if (existingSub == null)
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, leagueId, new []
+                await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, new []
                 {
                     EventSubscription.All
                 }));
-                content += "\n\nNo existing subs, so also auto-subscribed to all FPL events (goals, standings, etc), but feel free to modify what events you would like to have using the subscription slash command";
+
+                return new ChannelMessageWithSourceResponse { Content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) " };
             }
 
-            return new ChannelMessageWithSourceResponse { Content = content };
+            await _repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
+            return new ChannelMessageWithSourceResponse { Content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. " };
+
         }
     }
 }

@@ -119,6 +119,10 @@ namespace FplBot.Discord.Data
                 new HashEntry(_channelIdField, guildSub.ChannelId),
                 new HashEntry(_subscriptionsField, string.Join(" ", guildSub.Subscriptions))
             };
+
+            if (guildSub.LeagueId != null)
+                hashEntries.Add(new HashEntry(_leagueIdField, guildSub.LeagueId));
+
             await _db.HashSetAsync(FromGuildIdToGuildSubKey(guildSub.GuildId), hashEntries.ToArray());
         }
 
