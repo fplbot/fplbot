@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FplBot.Formatting;
 using FplBot.Slack.Helpers;
 
 namespace FplBot.Slack.Abstractions

@@ -67,7 +67,7 @@ namespace FplBot.Slack.Handlers.FplEvents
                 tauntData = new TauntData(transfers, entries, entryName => SlackHandleHelper.GetSlackHandleOrFallback(slackUsers, entryName));
             }
 
-            var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, slackTeam.Subscriptions, tauntData);
+            var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, slackTeam.Subscriptions.ContainsStat, tauntData);
             if(!string.IsNullOrEmpty(slackTeam.FplBotSlackChannel))
                 await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
         }

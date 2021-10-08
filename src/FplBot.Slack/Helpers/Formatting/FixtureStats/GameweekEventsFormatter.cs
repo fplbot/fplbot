@@ -1,16 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
-using FplBot.Slack.Data.Models;
-using FplBot.Slack.Extensions;
 
 namespace FplBot.Slack.Helpers.Formatting.FixtureStats
 {
     internal class GameweekEventsFormatter
     {
-        public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, IEnumerable<EventSubscription> subscriptions, TauntData tauntData)
+        public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, TauntData tauntData)
         {
             var formattedStrings = new List<string>();
             var statFormatterFactory = new StatFormatterFactory(tauntData);
@@ -18,7 +17,7 @@ namespace FplBot.Slack.Helpers.Formatting.FixtureStats
             newFixtureEvents.ForEach(newFixtureEvent =>
             {
                 var eventMessages = newFixtureEvent.StatMap
-                    .Where(stat => subscriptions.ContainsStat(stat.Key))
+                    .Where(stat => subscribesToStat(stat.Key))
                     .SelectMany(stat => statFormatterFactory.Create(stat.Key).Format(stat.Value))
                     .WhereNotNull()
                     .MaterializeToArray();

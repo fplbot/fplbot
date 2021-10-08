@@ -37,7 +37,7 @@ namespace FplBot.Tests
 
 
             // Act
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), new [] { EventSubscription.All }, CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
             foreach (var formatttedEvent in formattedEvents)
             {
                 _helper.WriteLine(formatttedEvent);
@@ -53,7 +53,7 @@ namespace FplBot.Tests
         [Fact]
         public void RegularGoalScored()
         {
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), new [] { EventSubscription.All }, CreateNoTransfersForGoalScorer());
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, CreateNoTransfersForGoalScorer());
             foreach (var formatttedEvent in formattedEvents)
             {
                 _helper.WriteLine(formatttedEvent);
