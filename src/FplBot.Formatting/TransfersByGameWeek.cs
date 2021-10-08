@@ -80,7 +80,7 @@ namespace FplBot.Formatting
 
 
 
-        public async Task<string> GetTransfersByGameweekTexts(int gw, int leagueId)
+        public async Task<string> GetTransfersByGameweekTexts(int gw, int leagueId, bool includeExternalLinks = true)
         {
             if (gw < 2)
             {
@@ -100,7 +100,7 @@ namespace FplBot.Formatting
 
             await Task.WhenAll(league.Standings.Entries
                 .OrderBy(x => x.Rank)
-                .Select(entry => GetTransfersTextForEntry(entry, gw, settings.Players))
+                .Select(entry => GetTransfersTextForEntry(entry, gw, settings.Players, includeExternalLinks))
                 .ToArray()
                 .ForEach(async entryTransfersTask =>
                 {
@@ -117,22 +117,28 @@ namespace FplBot.Formatting
 
             if (didNoTransfers.Count > 10)
             {
-                sb.Append($"\nThe {didNoTransfers.Count} others saved their transfer :sleeping:");
+                sb.Append($"\nThe {didNoTransfers.Count} others saved their transfer 😴");
             }
             else if (didNoTransfers.Count == 1)
             {
-                sb.Append($"\n{didNoTransfers.Single().GetEntryLink(gw)} saved their transfer :sleeping:");
+                var who = didNoTransfers.Single();
+                var namedWho = includeExternalLinks ? who.GetEntryLink(gw) : who.EntryName;
+                sb.Append($"\n{namedWho} saved their transfer 😴");
             }
             else if (didNoTransfers.Count > 0)
             {
-                sb.Append($"\n{didNoTransfers.Select(x => x.GetEntryLink(gw)).Join()} saved their transfer :sleeping:");
+                string @join = didNoTransfers.Select(x => {
+                    var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
+                    return namedWho;
+                }).Join();
+                sb.Append($"\n{@join} saved their transfer 😴");
             }
 
             return sb.ToString();
         }
 
 
-        private async Task<EntryTranfers> GetTransfersTextForEntry(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players)
+        private async Task<EntryTranfers> GetTransfersTextForEntry(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players, bool includeExternaLinks)
         {
             var transfersTask = _transfersClient.GetTransfers(entry.Entry);
             var picksTask = _entryClient.GetPicks(entry.Entry, gameweek);
@@ -157,22 +163,23 @@ namespace FplBot.Formatting
                     var transferCost = picks.EventEntryHistory.EventTransfersCost;
                     var wildcardPlayed = picks.ActiveChip == FplConstants.ChipNames.Wildcard;
                     var freeHitPlayed = picks.ActiveChip == FplConstants.ChipNames.FreeHit;
+                    string entryLinkOrName = includeExternaLinks ? entry.GetEntryLink(gameweek) : entry.EntryName;
                     if (wildcardPlayed)
                     {
-                        sb.Append($"{entry.GetEntryLink(gameweek)} threw a WILDCAAAAARD :fire::fire::fire::\n");
+                        sb.Append($"{entryLinkOrName} threw a WILDCAAAAARD 🔥🔥🔥\n");
                     }
                     else if (freeHitPlayed)
                     {
-                        sb.Append($"{entry.GetEntryLink(gameweek)} went all in with the Free Hit chip:\n");
+                        sb.Append($"{entryLinkOrName} went all in with the Free Hit chip:\n");
                     }
                     else
                     {
                         var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : "";
-                        sb.Append($"{entry.GetEntryLink(gameweek)} transferred{transferCostString}:\n");
+                        sb.Append($"{entryLinkOrName} transferred{transferCostString}:\n");
                     }
                     foreach (var entryTransfer in transfers)
                     {
-                        sb.Append($"   :black_small_square:{entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) :arrow_right: {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                        sb.Append($"   ▪️{entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) ➡️ {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
                     }
                 }
                 catch (Exception e)

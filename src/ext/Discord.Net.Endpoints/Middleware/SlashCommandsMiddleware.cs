@@ -25,7 +25,6 @@ namespace Discord.Net.Endpoints.Middleware
             context.Response.StatusCode = 200;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(await CreateJsonResponse(slashCommand));
-
         }
 
         private async Task<object> CreateJsonResponse(JsonDocument doc)
@@ -82,6 +81,22 @@ namespace Discord.Net.Endpoints.Middleware
                         data = new
                         {
                             content = channelMessageRes.Content
+                        }
+                    };
+                    _logger.LogTrace($"Response:\n{res}");
+                    return res;
+                }
+                if (handled is ChannelMessageWithSourceEmbedResponse channelMessageEmbedRes)
+                {
+                    var res = new
+                    {
+                        type = handled.Type,
+                        data = new
+                        {
+                            embeds =  new []
+                            {
+                                channelMessageEmbedRes.Embed
+                            }
                         }
                     };
                     _logger.LogTrace($"Response:\n{res}");

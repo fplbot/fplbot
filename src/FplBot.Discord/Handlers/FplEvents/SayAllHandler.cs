@@ -2,27 +2,17 @@ using System.Threading.Tasks;
 using FplBot.Discord.Data;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
-using Microsoft.Extensions.Logging;
 using NServiceBus;
 
 namespace FplBot.Discord.Handlers.FplEvents
 {
-    public class SayAllHandler :
-        IHandleMessages<GameweekJustBegan>,
-        IHandleMessages<GameweekFinished>
+    public class SayAllHandler : IHandleMessages<GameweekFinished>
     {
         private readonly IGuildRepository _repo;
-        private readonly ILogger<NearDeadlineHandler> _logger;
 
-        public SayAllHandler(IGuildRepository repo, ILogger<NearDeadlineHandler> logger)
+        public SayAllHandler(IGuildRepository repo)
         {
             _repo = repo;
-            _logger = logger;
-        }
-
-        public async Task Handle(GameweekJustBegan message, IMessageHandlerContext context)
-        {
-            await SendToGuildsIfSubscribing(message,context);
         }
 
         public async Task Handle(GameweekFinished message, IMessageHandlerContext context)

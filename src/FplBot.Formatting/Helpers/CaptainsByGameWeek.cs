@@ -25,23 +25,24 @@ namespace FplBot.Formatting.Helpers
             _logger = logger;
         }
 
-        public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId)
+        public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId, bool includeExternalLinks = true)
         {
 
                 var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
 
                 var sb = new StringBuilder();
-                sb.Append($":boom: *Captain picks for gameweek {gameweek}*\n");
+                sb.Append($"💥 *Captain picks for gameweek {gameweek}*\n");
 
                 foreach (var entryCaptainPick in entryCaptainPicks)
                 {
                     var captain = entryCaptainPick.Captain;
                     var viceCaptain = entryCaptainPick.ViceCaptain;
 
-                    sb.Append($"*{entryCaptainPick.Entry.GetEntryLink(gameweek)}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
+                    string entryLinkOrName = includeExternalLinks ?  entryCaptainPick.Entry.GetEntryLink(gameweek) : entryCaptainPick.Entry.EntryName;
+                    sb.Append($"*{entryLinkOrName}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
                     if (entryCaptainPick.IsTripleCaptain)
                     {
-                        sb.Append("TRIPLECAPPED!! :rocket::rocket::rocket::rocket:");
+                        sb.Append("TRIPLECAPPED!! 🚀🚀🚀");
                     }
 
                     sb.Append("\n");
@@ -63,7 +64,7 @@ namespace FplBot.Formatting.Helpers
                     .MaterializeToArray();
 
                 var sb = new StringBuilder();
-                sb.Append($":bar_chart: *Captain picks chart for gameweek {gameweek}*\n\n");
+                sb.Append($"📊 *Captain picks chart for gameweek {gameweek}*\n\n");
 
                 var max = captainGroups.Max(x => x?.Count);
 
@@ -73,7 +74,7 @@ namespace FplBot.Formatting.Helpers
                     {
                         if (captainGroup.Count >= i)
                         {
-                            sb.Append(":black_square:");
+                            sb.Append("▪️");
                         }
                         else
                         {

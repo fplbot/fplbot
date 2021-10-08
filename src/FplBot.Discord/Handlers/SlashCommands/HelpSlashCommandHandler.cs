@@ -12,17 +12,20 @@ namespace FplBot.Discord.Handlers.SlashCommands
     {
         private readonly IGuildRepository _store;
         private readonly ILeagueClient _client;
+        private readonly IMessageSession _session;
 
-        public HelpSlashCommandHandler(IGuildRepository store, ILeagueClient client)
+        public HelpSlashCommandHandler(IGuildRepository store, ILeagueClient client, IMessageSession session)
         {
             _store = store;
             _client = client;
+            _session = session;
         }
         public string CommandName => "help";
 
         public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            var content = "HELP!";
+            // await _session.Publish(new GameweekJustBegan(new NewGameweek(6)));
+            var content = "";
             var sub = await _store.GetGuildSubscription(context.GuildId, context.ChannelId);
             if (sub != null)
             {
@@ -40,7 +43,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
                 content += $"\nSubscriptions: {string.Join(",", sub.Subscriptions)}";
             }
 
-            return new ChannelMessageWithSourceResponse { Content = content };
+            return new ChannelMessageWithSourceEmbedResponse() { Embed = new Embed("ℹ️ HELP", content) };
         }
     }
 }

@@ -439,9 +439,9 @@ namespace FplBot.Formatting
         {
             return position switch
             {
-                0 => ":first_place_medal:",
-                1 => ":second_place_medal:",
-                2 => ":third_place_medal:",
+                0 => "🥇",
+                1 => "🥈",
+                2 => "🥉",
                 _ => FormattingConstants.Emojis.NatureEmojis.GetRandom()
             };
         }

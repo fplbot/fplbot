@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.Net.HttpClients;
 using Fpl.Client.Abstractions;
 using FplBot.Discord.Data;
 using FplBot.Formatting;
@@ -16,17 +16,15 @@ namespace FplBot.Discord.Handlers.FplEvents
     {
         private readonly IGuildRepository _repo;
         private readonly ILeagueClient _leagueClient;
-        private readonly DiscordClient _client;
         private readonly ILogger<GameweekStartedHandler> _logger;
         private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameweek;
 
 
-        public GameweekStartedHandler(IGuildRepository repo, ILeagueClient leagueClient, DiscordClient client, ILogger<GameweekStartedHandler> logger, ICaptainsByGameWeek captainsByGameweek, ITransfersByGameWeek transfersByGameweek)
+        public GameweekStartedHandler(IGuildRepository repo, ILeagueClient leagueClient, ICaptainsByGameWeek captainsByGameweek, ITransfersByGameWeek transfersByGameweek, ILogger<GameweekStartedHandler> logger)
         {
             _repo = repo;
             _leagueClient = leagueClient;
-            _client = client;
             _logger = logger;
             _captainsByGameweek = captainsByGameweek;
             _transfersByGameweek = transfersByGameweek;
@@ -47,11 +45,11 @@ namespace FplBot.Discord.Handlers.FplEvents
 
             var team = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
 
-            var messages = new List<string>();
+            var messages = new List<RichMesssage>();
 
             if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains) ||
                 team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
-                messages.Add("Gameweek {message.GameweekId}!");
+                messages.Add(new RichMesssage($"Gameweek {message.GameweekId}!", ""));
 
 
             var leagueExists = false;
@@ -63,12 +61,14 @@ namespace FplBot.Discord.Handlers.FplEvents
 
             if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
             {
-                messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, team.LeagueId.Value));
-                messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, team.LeagueId.Value));
+                string captainsByGameWeek = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
+                messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
+                string captainsChartByGameWeek = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, team.LeagueId.Value);
+                messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
             }
             else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
             {
-                messages.Add($"⚠️ You're subscribing to captains notifications, but following a league ({team.LeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future.");
+                messages.Add(new RichMesssage("⚠️Warning!",$"️ You're subscribing to captains notifications, but following a league ({team.LeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future."));
             }
             else
             {
@@ -77,19 +77,29 @@ namespace FplBot.Discord.Handlers.FplEvents
 
             if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
             {
-                messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.LeagueId.Value));
+                string transfersByGameweekTexts = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
+                messages.Add(new RichMesssage("Transfers", transfersByGameweekTexts));
             }
             else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
             {
-                messages.Add($"⚠️ You're subscribing to transfers notifications, but following a league ({team.LeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future.");
+                messages.Add(new RichMesssage("⚠️Warning!", $"⚠️ You're subscribing to transfers notifications, but following a league ({team.LeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future."));
             }
             else
             {
                 _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.GuildId);
             }
 
-            var msg = string.Join("\n\n", messages);
-            await _client.ChannelMessagePost(team.ChannelId, msg);
+            var i = 0;
+            foreach (var richMessage in messages)
+            {
+                i = i + 2;
+                var sendOptions = new SendOptions();
+                sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(i));
+                sendOptions.RouteToThisEndpoint();
+                await context.Send(new PublishRichToGuildChannel(team.GuildId, team.ChannelId, richMessage.Title, richMessage.Description), sendOptions);
+            }
         }
     }
+
+    public record RichMesssage(string Title, string Description);
 }
