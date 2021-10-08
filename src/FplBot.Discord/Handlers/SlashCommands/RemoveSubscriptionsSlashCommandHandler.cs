@@ -52,7 +52,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
                     return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed all events in this channel." };
                 }
 
-                await _repo.UpdateGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, existingSubsWithout));
+                await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = existingSubsWithout });
                 var all = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
                 return new ChannelMessageWithSourceResponse() { Content = $"Unsubbed. Updated list: {string.Join(",", all.Subscriptions)}" };
             }

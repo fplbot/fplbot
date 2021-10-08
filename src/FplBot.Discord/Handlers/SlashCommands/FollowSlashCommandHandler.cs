@@ -23,12 +23,18 @@ namespace FplBot.Discord.Handlers.SlashCommands
         public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
         {
             var leagueId = int.Parse(slashCommandContext.CommandInput.Value);
-            var league = await _leagueClient.GetClassicLeague(leagueId);
-            var existingSub = await _repo.GetAllSubscriptionInGuild(slashCommandContext.GuildId);
-            string content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. ";
-            if (!existingSub.Any(c => c.ChannelId == slashCommandContext.ChannelId))
+            var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+
+            if(league == null)
+                return new ChannelMessageWithSourceResponse { Content = $"Could not find a classic league of id '{leagueId}'" };
+
+
+            var content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. ";
+
+            var existingSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+            if (existingSub == null)
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, new []
+                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, leagueId, new []
                 {
                     EventSubscription.All
                 }));

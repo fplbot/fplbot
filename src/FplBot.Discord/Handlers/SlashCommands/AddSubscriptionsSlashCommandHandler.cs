@@ -28,8 +28,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
             if (existingSub == null)
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId,
-                    slashCommandContext.ChannelId, new[] { newEventSub }));
+                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, null, new[] { newEventSub }));
                 var newSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
                 return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", newSub.Subscriptions)}" };
             }
@@ -49,7 +48,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
                 existingSubsWithNew = new List<EventSubscription> { EventSubscription.All };
             }
 
-            await _repo.UpdateGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, existingSubsWithNew));
+            await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = existingSubsWithNew});
             var all = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
             return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", all.Subscriptions)}" };
         }

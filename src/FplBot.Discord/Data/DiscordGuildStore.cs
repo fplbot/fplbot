@@ -14,6 +14,7 @@ namespace FplBot.Discord.Data
         private readonly RedisValue _nameField = "name";
         private readonly RedisValue _guildIdField = "guildid";
         private readonly RedisValue _channelIdField = "channelid";
+        private readonly RedisValue _leagueIdField = "leagueid";
         private readonly RedisValue _subscriptionsField = "subs";
 
         private readonly IConnectionMultiplexer _redis;
@@ -77,9 +78,9 @@ namespace FplBot.Discord.Data
             foreach (var key in allKeys)
             {
                 var guildId = FromKeyToGuildId(key);
-                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _subscriptionsField });
-                var subs = ParseSubscriptionString(fetchedTeamData[2], " ");
-                guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], subs));
+                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
+                var subs = ParseSubscriptionString(fetchedTeamData[3], " ");
+                guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], (int?)fetchedTeamData[2], subs));
             }
 
             return guilds;
@@ -127,12 +128,13 @@ namespace FplBot.Discord.Data
             var subs = new List<GuildFplSubscription>();
             foreach (var key in keys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _subscriptionsField });
+                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
                 if (fetchedTeamData[0].HasValue)
                 {
                     var guildFplSubscription = new GuildFplSubscription(
                         guildId,
                         fetchedTeamData[1],
+                        (int?) fetchedTeamData[2],
                         ParseSubscriptionString(fetchedTeamData[2], " "));
                     subs.Add(guildFplSubscription);
                 }
