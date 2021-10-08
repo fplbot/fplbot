@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Helpers;
-using FplBot.Slack.Helpers.Formatting.FixtureStats;
 
-namespace FplBot.Slack.Abstractions
+namespace FplBot.Formatting.FixtureStats
 {
     public class TauntData
     {

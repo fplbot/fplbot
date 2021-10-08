@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Abstractions;
 
-namespace FplBot.Slack.Helpers.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats
 {
     public class PentaltySavedFormatter : IFormatWithTaunts
     {

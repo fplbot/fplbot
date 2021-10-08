@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Abstractions;
 
-namespace FplBot.Slack.Helpers.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats
 {
-    internal class GameweekEventsFormatter
+    public class GameweekEventsFormatter
     {
         public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, TauntData tauntData)
         {

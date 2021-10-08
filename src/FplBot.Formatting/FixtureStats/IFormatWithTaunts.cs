@@ -1,4 +1,4 @@
-namespace FplBot.Slack.Helpers.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats
 {
     internal interface IFormatWithTaunts : IFormatEvents
     {

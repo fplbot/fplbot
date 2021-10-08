@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Abstractions;
 
-namespace FplBot.Slack.Helpers.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats
 {
     internal class TauntyFormatter : IFormat
     {
