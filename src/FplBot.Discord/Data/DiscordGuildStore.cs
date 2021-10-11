@@ -139,7 +139,7 @@ namespace FplBot.Discord.Data
                         guildId,
                         fetchedTeamData[1],
                         (int?) fetchedTeamData[2],
-                        ParseSubscriptionString(fetchedTeamData[2], " "));
+                        ParseSubscriptionString(fetchedTeamData[3], " "));
                     subs.Add(guildFplSubscription);
                 }
             }
