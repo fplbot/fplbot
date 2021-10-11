@@ -25,8 +25,6 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
         public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            // await _session.Publish(new GameweekJustBegan(new NewGameweek(6)));
-            await _session.Publish(new GameweekFinished(new FinishedGameweek(6)));
             var content = "";
             var sub = await _store.GetGuildSubscription(context.GuildId, context.ChannelId);
             if (sub != null)
