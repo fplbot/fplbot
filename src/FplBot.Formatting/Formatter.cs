@@ -13,7 +13,7 @@ namespace FplBot.Formatting
 {
     public static class Formatter
     {
-        public static string GetStandings(ClassicLeague league, Gameweek gameweek)
+        public static string GetStandings(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
         {
             var sb = new StringBuilder();
 
@@ -32,13 +32,14 @@ namespace FplBot.Formatting
             foreach (var player in sortedByRank)
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
-                sb.Append($"{player.Rank}. {player.GetEntryLink(gameweek.Id)} - {player.Total} {arrow} \n");
+                string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName;
+                sb.Append($"{player.Rank}. {entryOrLink} - {player.Total} {arrow} \n");
             }
 
             return sb.ToString();
         }
 
-        public static string GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek)
+        public static string GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
         {
             var topThree = league.Standings.Entries
                 .GroupBy(e => e.EventTotal)
@@ -60,17 +61,19 @@ namespace FplBot.Formatting
                 var group = topThree[i];
                 foreach (var entry in group)
                 {
-                    sb.Append($"{Formatter.RankEmoji(i)} {entry.GetEntryLink(gameweek.Id)} - {entry.EventTotal}\n");
+                    string entryOrEntryLink = includeExternalLinks ? entry.GetEntryLink(gameweek.Id) : entry.EntryName;
+                    sb.Append($"{Formatter.RankEmoji(i)} {entryOrEntryLink} - {entry.EventTotal}\n");
                 }
             }
 
             return sb.ToString();
         }
 
-        public static string GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek)
+        public static string GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
         {
             var worst = league.Standings.Entries.OrderBy(e => e.EventTotal).FirstOrDefault();
-            return worst == null ? null : $":poop: {worst.GetEntryLink(gameweek.Id)} only got {worst.EventTotal} points. Wow.";
+            string entryOrEntryLink = includeExternalLinks? worst.GetEntryLink(gameweek.Id) : worst?.EntryName;
+            return worst == null ? null : $":poop: {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
         }
 
         private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers, int gameweekId)

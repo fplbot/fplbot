@@ -93,7 +93,7 @@ namespace FplBot.WebApi
             services.AddFplBotDiscord(Configuration, conn);
 
             services.AddVerifiedEntries(Configuration);
-            if(true)//!_env.IsDevelopment())
+            if(!_env.IsDevelopment())
                 services.AddFplWorkers();
 
             services.AddMediatR(typeof(Startup));

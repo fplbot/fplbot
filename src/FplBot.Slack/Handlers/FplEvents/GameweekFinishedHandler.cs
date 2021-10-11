@@ -13,22 +13,22 @@ using NServiceBus;
 
 namespace FplBot.Slack.Handlers.FplEvents
 {
-    internal class GameweekEndedHandler : IHandleMessages<GameweekFinished>, IHandleMessages<PublishStandingsToSlackWorkspace>
+    internal class GameweekFinishedHandler : IHandleMessages<GameweekFinished>, IHandleMessages<PublishStandingsToSlackWorkspace>
     {
         private readonly ISlackWorkSpacePublisher _publisher;
         private readonly ILeagueClient _leagueClient;
-        private readonly IGlobalSettingsClient _gameweekClient;
+        private readonly IGlobalSettingsClient _settingsClient;
         private readonly ISlackTeamRepository _teamRepo;
 
-        public GameweekEndedHandler(ISlackWorkSpacePublisher publisher,
+        public GameweekFinishedHandler(ISlackWorkSpacePublisher publisher,
             ISlackTeamRepository teamsRepo,
             ILeagueClient leagueClient,
-            IGlobalSettingsClient gameweekClient)
+            IGlobalSettingsClient settingsClient)
         {
             _publisher = publisher;
             _teamRepo = teamsRepo;
             _leagueClient = leagueClient;
-            _gameweekClient = gameweekClient;
+            _settingsClient = settingsClient;
         }
 
         public async Task Handle(GameweekFinished notification, IMessageHandlerContext context)
@@ -45,7 +45,7 @@ namespace FplBot.Slack.Handlers.FplEvents
 
         public async Task Handle(PublishStandingsToSlackWorkspace message, IMessageHandlerContext context)
         {
-            var settings = await _gameweekClient.GetGlobalSettings();
+            var settings = await _settingsClient.GetGlobalSettings();
             var gameweeks = settings.Gameweeks;
             var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
             ClassicLeague league = null;
