@@ -23,20 +23,21 @@ namespace FplBot.Discord.Handlers.FplEvents
 
         public async Task Handle(InjuryUpdateOccured message, IMessageHandlerContext context)
         {
-            var guildSubs = await _repo.GetAllGuildSubscriptions();
+            _logger.LogInformation($"Handling {message.PlayersWithInjuryUpdates.Count()} injury updates");
             var filtered = message.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
-
             if (filtered.Any())
             {
                 var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-
+                var guildSubs = await _repo.GetAllGuildSubscriptions();
                 foreach (var guildSub in guildSubs)
                 {
-                    if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates) && !string.IsNullOrEmpty(formatted))
-                    {
-                        await context.SendLocal(new PublishToGuildChannel(guildSub.GuildId, guildSub.ChannelId, formatted));
-                    }
+                    if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
+                        await context.SendLocal(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Injury update", formatted));
                 }
+            }
+            else
+            {
+                _logger.LogInformation("All updates injuries irrelevant, so not sending any notification");
             }
         }
     }
