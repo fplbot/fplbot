@@ -42,8 +42,6 @@ namespace FplBot.Discord.Handlers.FplEvents
             }
         }
 
-
-
         public async Task Handle(PublishGameweekFinishedToGuild message, IMessageHandlerContext context)
         {
             var sub = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);

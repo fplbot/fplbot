@@ -20,7 +20,6 @@ namespace FplBot.Discord.Handlers.FplEvents
         private readonly ICaptainsByGameWeek _captainsByGameweek;
         private readonly ITransfersByGameWeek _transfersByGameweek;
 
-
         public GameweekStartedHandler(IGuildRepository repo, ILeagueClient leagueClient, ICaptainsByGameWeek captainsByGameweek, ITransfersByGameWeek transfersByGameweek, ILogger<GameweekStartedHandler> logger)
         {
             _repo = repo;
