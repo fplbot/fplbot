@@ -7,7 +7,7 @@ namespace FplBot.Formatting.FixtureStats
 {
     public class GameweekEventsFormatter
     {
-        public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, TauntData tauntData)
+        public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, TauntData tauntData = null)
         {
             var formattedStrings = new List<string>();
             var statFormatterFactory = new StatFormatterFactory(tauntData);

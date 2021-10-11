@@ -4,12 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using FplBot.Formatting;
-using FplBot.Formatting.Helpers;
-using FplBot.Slack.Abstractions;
+using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Slack.Helpers
+namespace FplBot.Formatting.Helpers
 {
     public class LeagueEntriesByGameweek : ILeagueEntriesByGameweek
     {
@@ -36,7 +34,7 @@ namespace FplBot.Slack.Helpers
 
                 await Task.WhenAll(entries.Select(async entry =>
                 {
-                    var gameweekEntries = await _entryForGameweek.GetEntryForGameweek(entry, gw);
+                    var gameweekEntries = await _entryForGameweek.GetEntryForGameweek((ClassicLeagueEntry)entry, gw);
                     entryDictionary.Add(gameweekEntries);
                 }));
 
