@@ -19,10 +19,10 @@ namespace FplBot.WebApi.Tests
     public class RedisIntegrationTests : IDisposable
     {
         private readonly ITestOutputHelper _helper;
-        private SlackTeamRepository _repo;
-        private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
-        private IServer _server;
-        private VerifiedEntriesRepository _verifiedRepo;
+        private readonly SlackTeamRepository _repo;
+        private readonly LeagueIndexRedisBookmarkProvider _bookmarkProvider;
+        private readonly IServer _server;
+        private readonly VerifiedEntriesRepository _verifiedRepo;
 
         public RedisIntegrationTests(ITestOutputHelper helper)
         {
