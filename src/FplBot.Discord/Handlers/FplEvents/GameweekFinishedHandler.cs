@@ -78,8 +78,9 @@ namespace FplBot.Discord.Handlers.FplEvents
                 }
                 else
                 {
-                    await context.SendLocal(new PublishToGuildChannel(message.GuildId, message.ChannelId,
-                        $"Standings ready, but you're subscribing to a non-classic/non-existing FPL league: '{message.LeagueId}'"));
+                    string msg = $"Standings are now generally ready, but you're subscribing to a non-classic or " +
+                                 $"non-existing classic FPL league: '{message.LeagueId}'";
+                    await context.SendLocal(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, "⚠️ Standings ready", msg));
                 }
             }
         }

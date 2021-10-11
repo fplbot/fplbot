@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Discord.Net.HttpClients;
 using FplBot.Discord.Data;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -10,17 +9,15 @@ namespace FplBot.Discord.Handlers.FplEvents
 {
     public class NearDeadlineHandler :
         IHandleMessages<OneHourToDeadline>,
-        IHandleMessages<PublishNearDeadlineToGuild>
+        IHandleMessages<TwentyFourHoursToDeadline>
     {
         private readonly IGuildRepository _teamRepo;
-        private readonly DiscordClient _discordClient;
 
         private readonly ILogger<NearDeadlineHandler> _logger;
 
-        public NearDeadlineHandler(IGuildRepository teamRepo, DiscordClient discordClient, ILogger<NearDeadlineHandler> logger)
+        public NearDeadlineHandler(IGuildRepository teamRepo, ILogger<NearDeadlineHandler> logger)
         {
             _teamRepo = teamRepo;
-            _discordClient = discordClient;
             _logger = logger;
         }
 
@@ -28,16 +25,22 @@ namespace FplBot.Discord.Handlers.FplEvents
         {
             _logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
             var allGuilds = await _teamRepo.GetAllGuildSubscriptions();
+            var text = $"@here ⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
             foreach (var guild in allGuilds)
             {
-                await context.SendLocal(new PublishNearDeadlineToGuild(guild.GuildId, guild.ChannelId, message.GameweekNearingDeadline.Id));
+                await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
             }
         }
 
-        public async Task Handle(PublishNearDeadlineToGuild message, IMessageHandlerContext context)
+        public async Task Handle(TwentyFourHoursToDeadline message, IMessageHandlerContext context)
         {
-            var text = $"@here ⏳Gameweek {message.GameweekId} deadline in 60 minutes!";
-            await _discordClient.ChannelMessagePost(message.Channel, text);
+            _logger.LogInformation($"Notifying about 24 hours to (gw{message.GameweekNearingDeadline.Id}) deadline");
+            var allGuilds = await _teamRepo.GetAllGuildSubscriptions();
+            var text = $"@here ⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
+            foreach (var guild in allGuilds)
+            {
+                await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
+            }
         }
     }
 }
