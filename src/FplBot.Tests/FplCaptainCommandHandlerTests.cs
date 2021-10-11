@@ -23,7 +23,7 @@ namespace FplBot.Tests
         {
             var dummyEvent = Factory.CreateDummyEvent(input);
             var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);
-            Assert.StartsWith(":boom:", playerData.Response);
+            Assert.StartsWith("💥", playerData.Response);
         }
 
         [Theory]
@@ -34,7 +34,7 @@ namespace FplBot.Tests
             var dummyEvent = Factory.CreateDummyEvent(input);
             var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);
 
-            Assert.StartsWith(":boom:", playerData.Response);
+            Assert.StartsWith("💥", playerData.Response);
         }
 
         [Theory]
@@ -44,7 +44,7 @@ namespace FplBot.Tests
         {
             var dummyEvent = Factory.CreateDummyEvent(input);
             var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);
-            Assert.StartsWith(":bar_chart:", playerData.Response);
+            Assert.StartsWith("📊", playerData.Response);
         }
 
         [Theory]
@@ -54,7 +54,7 @@ namespace FplBot.Tests
         {
             var dummyEvent = Factory.CreateDummyEvent(input);
             var playerData = await _client.Handle(dummyEvent.meta, dummyEvent.@event);
-            Assert.StartsWith(":bar_chart:", playerData.Response);
+            Assert.StartsWith("📊", playerData.Response);
         }
     }
 }
