@@ -9,72 +9,51 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class InsertTests : IDisposable
+    public class GuildRepoTests : IDisposable
     {
-        private readonly DiscordGuildStore Repo;
-        private readonly IServer Server;
+        private readonly DiscordGuildStore _repo;
+        private readonly IServer _server;
 
-        public InsertTests(ITestOutputHelper helper)
+        public GuildRepoTests(ITestOutputHelper helper)
         {
-            (Server, Repo) = Factory.CreateRepo(helper);
-            Server.FlushDatabase();
+            (_server, _repo) = Factory.CreateRepo(helper);
         }
 
         [Fact]
         public async Task Insert_Works()
         {
-            await Repo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, new[] { EventSubscription.All }));
+            await _repo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, new[] { EventSubscription.All }));
 
-            var guildSub = await Repo.GetGuildSubscription("Guild1", "Channel1");
+            var guildSub = await _repo.GetGuildSubscription("Guild1", "Channel1");
             Assert.NotNull(guildSub);
             Assert.NotEmpty(guildSub.Subscriptions);
-        }
-
-        public void Dispose()
-        {
-            Server.FlushDatabase();
-        }
-    }
-
-    public class GetManyTests : IDisposable
-    {
-        private readonly DiscordGuildStore Repo;
-        private readonly IServer Server;
-        private readonly ITestOutputHelper _helper;
-
-        public GetManyTests(ITestOutputHelper helper)
-        {
-            _helper = helper;
-            (Server, Repo) = Factory.CreateRepo(helper);
-            Server.FlushDatabase();
         }
 
         [Fact]
         public async Task GetMany_Works()
         {
-            await Repo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, new[] { EventSubscription.All }));
-            await Repo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel2", null, new[] { EventSubscription.Standings }));
+            await _repo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { EventSubscription.All }));
+            await _repo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { EventSubscription.Standings }));
 
-            var subs = await Repo.GetAllSubscriptionInGuild("Guild1");
+            var subs = await _repo.GetAllSubscriptionInGuild("Guild2");
 
             Assert.Equal(2, subs.Count());
 
-            var sub1 = await Repo.GetGuildSubscription("Guild1", "Channel1");
-            var sub2 = await Repo.GetGuildSubscription("Guild1", "Channel2");
+            var sub1 = await _repo.GetGuildSubscription("Guild2", "Channel1");
+            var sub2 = await _repo.GetGuildSubscription("Guild2", "Channel2");
 
             Assert.Equal(EventSubscription.All, sub1.Subscriptions.First());
             Assert.Equal(EventSubscription.Standings, sub2.Subscriptions.First());
 
-            var all = await Repo.GetAllGuildSubscriptions();
+            var all = await _repo.GetAllGuildSubscriptions();
             Assert.Equal(2, all.Count());
         }
 
         public void Dispose()
         {
-            Server.FlushDatabase();
+            _server.FlushDatabase();
         }
     }
-
 
     public class Factory
     {

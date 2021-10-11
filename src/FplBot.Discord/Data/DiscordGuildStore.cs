@@ -73,7 +73,7 @@ namespace FplBot.Discord.Data
 
         public async Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions()
         {
-            var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey("*", "*"));
+            var allKeys = _redis.GetServer(_server).Keys(pattern: "GuildSubs-*");
             var guilds = new List<GuildFplSubscription>();
             foreach (var key in allKeys)
             {
@@ -128,7 +128,7 @@ namespace FplBot.Discord.Data
 
         public async Task<IEnumerable<GuildFplSubscription>> GetAllSubscriptionInGuild(string guildId)
         {
-            var keys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey("*", "*"));
+            var keys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey(guildId, "*"));
             var subs = new List<GuildFplSubscription>();
             foreach (var key in keys)
             {
