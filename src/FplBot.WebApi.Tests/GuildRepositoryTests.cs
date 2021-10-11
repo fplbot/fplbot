@@ -9,7 +9,7 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class GuildRepositoryTests
+    public class GuildRepositoryTests : IDisposable
     {
         private readonly DiscordGuildStore Repo;
         private readonly IServer Server;
