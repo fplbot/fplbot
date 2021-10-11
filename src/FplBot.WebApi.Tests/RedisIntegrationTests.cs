@@ -9,7 +9,6 @@ using FplBot.Slack.Data.Repositories.Redis;
 using FplBot.VerifiedEntries.Data;
 using FplBot.VerifiedEntries.Data.Models;
 using FplBot.VerifiedEntries.Data.Repositories;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using Xunit;
@@ -17,31 +16,6 @@ using Xunit.Abstractions;
 
 namespace FplBot.WebApi.Tests
 {
-    public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<VerifiedEntriesRepository>
-    {
-        private readonly ITestOutputHelper _helper;
-
-        public SimpleLogger(ITestOutputHelper helper)
-        {
-            _helper = helper;
-        }
-
-        public IDisposable BeginScope<TState>(TState state)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            _helper.WriteLine(formatter(state, exception));
-        }
-    }
-
     public class RedisIntegrationTests : IDisposable
     {
         private readonly ITestOutputHelper _helper;
