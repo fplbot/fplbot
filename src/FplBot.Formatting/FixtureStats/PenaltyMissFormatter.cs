@@ -26,6 +26,6 @@ namespace FplBot.Formatting.FixtureStats
 
         public string EventDescriptionSingular => "{0} missed a penalty! {1}";
         public string EventDescriptionPlural => "{0} missed {1} penalties! {2}";
-        public string EventEmoji => ":dizzy_face:";
+        public string EventEmoji => "🥴";
     }
 }
