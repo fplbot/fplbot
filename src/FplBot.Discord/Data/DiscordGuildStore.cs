@@ -94,15 +94,11 @@ namespace FplBot.Discord.Data
 
         public async Task DeleteGuildSubscription(string guildId, string channelId)
         {
-            var allTeamKeys = _redis.GetServer(_server).Keys(pattern:FromGuildIdAndChannelToGuildChannelSubKey("*", "*"));
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern:FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
 
             foreach (var key in allTeamKeys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_guildIdField, _channelIdField});
-                if (fetchedTeamData[0] == guildId && fetchedTeamData[1] == channelId)
-                {
-                    await _db.KeyDeleteAsync(key);
-                }
+                await _db.KeyDeleteAsync(key);
             }
         }
 
