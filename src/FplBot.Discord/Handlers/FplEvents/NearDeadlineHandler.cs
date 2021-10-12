@@ -28,7 +28,8 @@ namespace FplBot.Discord.Handlers.FplEvents
             var text = $"@here ⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
             foreach (var guild in allGuilds)
             {
-                await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
+                if(guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+                    await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
             }
         }
 
@@ -36,10 +37,11 @@ namespace FplBot.Discord.Handlers.FplEvents
         {
             _logger.LogInformation($"Notifying about 24 hours to (gw{message.GameweekNearingDeadline.Id}) deadline");
             var allGuilds = await _teamRepo.GetAllGuildSubscriptions();
-            var text = $"@here ⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
+            var text = $"⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
             foreach (var guild in allGuilds)
             {
-                await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
+                if(guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+                    await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
             }
         }
     }
