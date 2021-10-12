@@ -3,52 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Search.Data.Repositories;
+using FplBot.Discord.Data;
 using FplBot.Slack.Data;
 using FplBot.Slack.Data.Models;
 using FplBot.Slack.Data.Repositories.Redis;
 using FplBot.VerifiedEntries.Data;
 using FplBot.VerifiedEntries.Data.Models;
 using FplBot.VerifiedEntries.Data.Repositories;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using Xunit;
 using Xunit.Abstractions;
+using EventSubscription = FplBot.Slack.Data.Models.EventSubscription;
 
 namespace FplBot.WebApi.Tests
 {
-    public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<VerifiedEntriesRepository>
-    {
-        private readonly ITestOutputHelper _helper;
-
-        public SimpleLogger(ITestOutputHelper helper)
-        {
-            _helper = helper;
-        }
-
-        public IDisposable BeginScope<TState>(TState state)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            _helper.WriteLine(formatter(state, exception));
-        }
-    }
-
     public class RedisIntegrationTests : IDisposable
     {
         private readonly ITestOutputHelper _helper;
-        private SlackTeamRepository _repo;
-        private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
-        private IServer _server;
-        private VerifiedEntriesRepository _verifiedRepo;
+        private readonly SlackTeamRepository _repo;
+        private readonly LeagueIndexRedisBookmarkProvider _bookmarkProvider;
+        private readonly IServer _server;
+        private readonly VerifiedEntriesRepository _verifiedRepo;
+        private readonly DiscordGuildStore _guildRepo;
 
         public RedisIntegrationTests(ITestOutputHelper helper)
         {
@@ -59,6 +36,12 @@ namespace FplBot.WebApi.Tests
             });
 
             var verifiedOpts = new OptionsWrapper<VerifiedRedisOptions>(new VerifiedRedisOptions
+            {
+                REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
+            });
+
+
+            var discordOpts = new OptionsWrapper<DiscordRedisOptions>(new DiscordRedisOptions
             {
                 REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
             });
@@ -76,6 +59,7 @@ namespace FplBot.WebApi.Tests
             _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
             _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
             _verifiedRepo = new VerifiedEntriesRepository(multiplexer, verifiedOpts, new SimpleLogger(_helper));
+            _guildRepo = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(_helper));
         }
 
         [Fact]
@@ -219,6 +203,41 @@ namespace FplBot.WebApi.Tests
             Assert.Null(team.FplBotSlackChannel);
             Assert.Null(team.FplbotLeagueId);
             Assert.Empty(team.Subscriptions);
+        }
+
+        [Fact]
+        public async Task Insert_Works()
+        {
+            await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, new[] { FplBot.Discord.Data.EventSubscription.All }));
+
+            var guildSub = await _guildRepo.GetGuildSubscription("Guild1", "Channel1");
+            Assert.NotNull(guildSub);
+            Assert.NotEmpty(guildSub.Subscriptions);
+        }
+
+        [Fact]
+        public async Task GetMany_Works()
+        {
+            await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { FplBot.Discord.Data.EventSubscription.All }));
+            await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { FplBot.Discord.Data.EventSubscription.Standings }));
+
+            foreach(var key in _server.Keys(pattern: "GuildSubs-Guild2-Channel-*")) {
+                _helper.WriteLine(key);
+            }
+
+            var subs = await _guildRepo.GetAllSubscriptionInGuild("Guild2");
+
+
+            Assert.Equal(2, subs.Count());
+
+            var sub1 = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
+            var sub2 = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
+
+            Assert.Equal(FplBot.Discord.Data.EventSubscription.All, sub1.Subscriptions.First());
+            Assert.Equal(FplBot.Discord.Data.EventSubscription.Standings, sub2.Subscriptions.First());
+
+            var all = await _guildRepo.GetAllGuildSubscriptions();
+            Assert.Equal(2, all.Count());
         }
 
         private static VerifiedEntry SomeEntry()

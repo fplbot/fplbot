@@ -1,12 +1,12 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
-using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
@@ -19,18 +19,16 @@ namespace FplBot.Slack.Handlers.FplEvents
         IHandleMessages<TwentyFourHoursToDeadline>,
         IHandleMessages<PublishDeadlineNotificationToSlackWorkspace>
     {
-        private readonly ISlackWorkSpacePublisher _workspacePublisher;
         private readonly ISlackTeamRepository _teamRepo;
         private readonly ISlackClientBuilder _builder;
         private readonly ILogger<NearDeadlineHandler> _logger;
         private readonly IGlobalSettingsClient _globalSettingsClient;
         private readonly IFixtureClient _fixtures;
 
-        public NearDeadlineHandler(ISlackWorkSpacePublisher workspacePublisher, ISlackTeamRepository teamRepo,
+        public NearDeadlineHandler(ISlackTeamRepository teamRepo,
             ISlackClientBuilder builder, IGlobalSettingsClient globalSettingsClient, IFixtureClient fixtures,
             ILogger<NearDeadlineHandler> logger)
         {
-            _workspacePublisher = workspacePublisher;
             _teamRepo = teamRepo;
             _builder = builder;
             _logger = logger;

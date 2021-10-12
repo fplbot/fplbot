@@ -1,13 +1,12 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
+using FplBot.Formatting;
+using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
-using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using Slackbot.Net.SlackClients.Http;
@@ -39,7 +38,7 @@ namespace FplBot.Slack.Handlers.FplEvents
             var settings = await _settingsClient.GetGlobalSettings();
             var fixtures = await _fixtureClient.GetFixtures();
             var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
-            var fixture = CreateFinishedFixture(settings.Teams, settings.Players, fplfixture);
+            var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings.Teams, settings.Players, fplfixture);
             var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
             var threadMessage = Formatter.FormatProvisionalFinished(fixture);
 
@@ -49,44 +48,6 @@ namespace FplBot.Slack.Handlers.FplEvents
                 {
                     await context.SendLocal(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage));
                 }
-            }
-        }
-
-        private static FinishedFixture CreateFinishedFixture(ICollection<Team> teams, ICollection<Player> players, Fixture n)
-        {
-            return new FinishedFixture
-            {
-                Fixture = n,
-                HomeTeam = teams.First(t => t.Id == n.HomeTeamId),
-                AwayTeam = teams.First(t => t.Id == n.AwayTeamId),
-                BonusPoints = CreateBonusPlayers(players, n)
-            };
-        }
-
-        private static IEnumerable<BonusPointsPlayer> CreateBonusPlayers(ICollection<Player> players, Fixture fixture)
-        {
-            try
-            {
-                var bonusPointsHome = fixture.Stats.FirstOrDefault(s => s.Identifier == "bps")?.HomeStats;
-                var bonusPointsAway = fixture.Stats.FirstOrDefault(s => s.Identifier == "bps")?.AwayStats;
-
-                var home = bonusPointsHome.Select(BpsFilter).ToList();
-                var away = bonusPointsAway.Select(BpsFilter).ToList();
-                var aggregated = home.Concat(away).OrderByDescending(bpp => bpp.BonusPoints);
-                return aggregated;
-
-                BonusPointsPlayer BpsFilter(FixtureStatValue bps)
-                {
-                    return new BonusPointsPlayer
-                    {
-                        Player = players.First(p => p.Id == bps.Element),
-                        BonusPoints = bps.Value
-                    };
-                }
-            }
-            catch
-            {
-                return new List<BonusPointsPlayer>();
             }
         }
 
@@ -103,20 +64,5 @@ namespace FplBot.Slack.Handlers.FplEvents
                 });
             }
         }
-    }
-
-    public class FinishedFixture
-    {
-        public Fixture Fixture { get; set; }
-        public Team HomeTeam { get; set; }
-        public Team AwayTeam { get; set; }
-
-        public IEnumerable<BonusPointsPlayer> BonusPoints { get; set; } = new List<BonusPointsPlayer>();
-    }
-
-    public class BonusPointsPlayer
-    {
-        public Player Player { get; set; }
-        public int BonusPoints { get; set; }
     }
 }

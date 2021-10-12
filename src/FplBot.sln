@@ -70,6 +70,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.Endpoints", "ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.HttpClients", "ext\Discord.Net.HttpClients\Discord.Net.HttpClients.csproj", "{CF74E462-5392-4517-B1E6-8FD8252669B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Formatting", "FplBot.Formatting\FplBot.Formatting.csproj", "{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -296,6 +298,18 @@ Global
 		{CF74E462-5392-4517-B1E6-8FD8252669B0}.Release|x64.Build.0 = Release|Any CPU
 		{CF74E462-5392-4517-B1E6-8FD8252669B0}.Release|x86.ActiveCfg = Release|Any CPU
 		{CF74E462-5392-4517-B1E6-8FD8252669B0}.Release|x86.Build.0 = Release|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Debug|x64.Build.0 = Debug|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Debug|x86.Build.0 = Debug|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x64.ActiveCfg = Release|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x64.Build.0 = Release|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x86.ActiveCfg = Release|Any CPU
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -320,6 +334,7 @@ Global
 		{6589E6EE-EA5B-4366-8B7A-4EC7D9E3FB4A} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{99FBCAD7-BDD1-4C85-B0D5-C1225D13A7C5} = {51FD3283-052A-4E69-B969-B487BF5BBA69}
 		{CF74E462-5392-4517-B1E6-8FD8252669B0} = {51FD3283-052A-4E69-B969-B487BF5BBA69}
+		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}

@@ -16,9 +16,9 @@ namespace FplBot.Discord.Handlers.SlashCommands
         }
         public string CommandName => "subs";
 
-        public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
+        public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            var sub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
+            var sub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
 
             if (sub == null)
                 return new ChannelMessageWithSourceResponse { Content = "No subscriptions registered in this channel. Add one?" };

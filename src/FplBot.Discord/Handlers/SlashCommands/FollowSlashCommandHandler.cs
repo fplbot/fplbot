@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
@@ -20,22 +20,39 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
         public string CommandName => "follow";
 
-        public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
+        public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            var leagueId = int.Parse(slashCommandContext.CommandInput.Value);
-            var league = await _leagueClient.GetClassicLeague(leagueId);
-            var existingSub = await _repo.GetAllSubscriptionInGuild(slashCommandContext.GuildId);
-            string content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. ";
-            if (!existingSub.Any(c => c.ChannelId == slashCommandContext.ChannelId))
+            var leagueId = int.Parse(context.CommandInput.Value);
+            var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+
+            if(league == null)
+                return Respond($"Could not find a classic league of id '{leagueId}'", success:false);
+
+            var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+            if (existingSub == null)
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, new []
+                await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, new []
                 {
                     EventSubscription.All
                 }));
-                content += "\n\nNo existing subs, so also auto-subscribed to all FPL events (goals, standings, etc), but feel free to modify what events you would like to have using the subscription slash command";
+
+                return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) ");
             }
 
-            return new ChannelMessageWithSourceResponse { Content = content };
+            await _repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
+            return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. " );
+
+        }
+
+        private static SlashCommandResponse Respond(string content, bool success = true)
+        {
+            return new ChannelMessageWithSourceEmbedResponse()
+            {
+                Embeds = new List<RichEmbed>
+                {
+                    success ? new("✅ Success", content) : new ("⚠️ Error", content)
+                }
+            };
         }
     }
 }

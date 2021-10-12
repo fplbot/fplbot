@@ -14,6 +14,7 @@ namespace FplBot.Discord.Data
         private readonly RedisValue _nameField = "name";
         private readonly RedisValue _guildIdField = "guildid";
         private readonly RedisValue _channelIdField = "channelid";
+        private readonly RedisValue _leagueIdField = "leagueid";
         private readonly RedisValue _subscriptionsField = "subs";
 
         private readonly IConnectionMultiplexer _redis;
@@ -39,9 +40,9 @@ namespace FplBot.Discord.Data
             await _db.HashSetAsync(FromGuildIdToGuildKey(guild.Id), hashEntries.ToArray());
         }
 
-        public async Task<Guild> Delete(string guildId)
+        public async Task<Guild> DeleteGuild(string guildId)
         {
-            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("*"));
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("Guild-*"));
 
             foreach (var key in allTeamKeys)
             {
@@ -72,14 +73,14 @@ namespace FplBot.Discord.Data
 
         public async Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions()
         {
-            var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildSubKey("*"));
+            var allKeys = _redis.GetServer(_server).Keys(pattern: "GuildSubs-*");
             var guilds = new List<GuildFplSubscription>();
             foreach (var key in allKeys)
             {
                 var guildId = FromKeyToGuildId(key);
-                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _subscriptionsField });
-                var subs = ParseSubscriptionString(fetchedTeamData[2], " ");
-                guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], subs));
+                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
+                var subs = ParseSubscriptionString(fetchedTeamData[3], " ");
+                guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], (int?)fetchedTeamData[2], subs));
             }
 
             return guilds;
@@ -93,15 +94,11 @@ namespace FplBot.Discord.Data
 
         public async Task DeleteGuildSubscription(string guildId, string channelId)
         {
-            var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildSubKey("*"));
+            var allTeamKeys = _redis.GetServer(_server).Keys(pattern:FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
 
             foreach (var key in allTeamKeys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_guildIdField, _channelIdField});
-                if (fetchedTeamData[0] == guildId && fetchedTeamData[1] == channelId)
-                {
-                    await _db.KeyDeleteAsync(key);
-                }
+                await _db.KeyDeleteAsync(key);
             }
         }
 
@@ -118,22 +115,27 @@ namespace FplBot.Discord.Data
                 new HashEntry(_channelIdField, guildSub.ChannelId),
                 new HashEntry(_subscriptionsField, string.Join(" ", guildSub.Subscriptions))
             };
-            await _db.HashSetAsync(FromGuildIdToGuildSubKey(guildSub.GuildId), hashEntries.ToArray());
+
+            if (guildSub.LeagueId != null)
+                hashEntries.Add(new HashEntry(_leagueIdField, guildSub.LeagueId));
+
+            await _db.HashSetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildSub.GuildId, guildSub.ChannelId), hashEntries.ToArray());
         }
 
         public async Task<IEnumerable<GuildFplSubscription>> GetAllSubscriptionInGuild(string guildId)
         {
-            var keys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildSubKey("*"));
+            var keys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey(guildId, "*"));
             var subs = new List<GuildFplSubscription>();
             foreach (var key in keys)
             {
-                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _subscriptionsField });
+                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
                 if (fetchedTeamData[0].HasValue)
                 {
                     var guildFplSubscription = new GuildFplSubscription(
                         guildId,
                         fetchedTeamData[1],
-                        ParseSubscriptionString(fetchedTeamData[2], " "));
+                        (int?) fetchedTeamData[2],
+                        ParseSubscriptionString(fetchedTeamData[3], " "));
                     subs.Add(guildFplSubscription);
                 }
             }
@@ -146,9 +148,9 @@ namespace FplBot.Discord.Data
             return $"Guild-{guildId}";
         }
 
-        private static string FromGuildIdToGuildSubKey(string guildId)
+        private static string FromGuildIdAndChannelToGuildChannelSubKey(string guildId, string channelId)
         {
-            return $"GuildSubs-{guildId}";
+            return $"GuildSubs-{guildId}-Channel-{channelId}";
         }
 
         private static string FromKeyToGuildId(string key)

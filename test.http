@@ -154,6 +154,8 @@ Content-Type: application/json
 
 {
   "type": 2,
+  "channel_id": "895041288594919456",
+  "guild_id": "893932860162064414",
   "data" : {
     "type" : 1,
     "name" : "help"

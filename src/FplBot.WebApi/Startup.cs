@@ -93,7 +93,7 @@ namespace FplBot.WebApi
             services.AddFplBotDiscord(Configuration, conn);
 
             services.AddVerifiedEntries(Configuration);
-            if(true)//!_env.IsDevelopment())
+            if(!_env.IsDevelopment())
                 services.AddFplWorkers();
 
             services.AddMediatR(typeof(Startup));
@@ -209,7 +209,7 @@ namespace FplBot.WebApi
             app.Map("/oauth/authorize", a => a.UseSlackbotDistribution());
             app.Map("/events", a => a.UseSlackbot(enableAuth: !_env.IsDevelopment()));
             app.Map("/oauth/discord/authorize", a => a.UseDiscordDistribution());
-            app.Map("/discord/events", a => a.UseDiscordbot());
+            app.Map("/discord/events", a => a.UseDiscordbot(enableAuth: true));// !_env.IsDevelopment()));
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);

@@ -1,11 +1,11 @@
 using System.Linq;
 using System.Threading.Tasks;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
-using FplBot.Slack.Helpers.Formatting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 
@@ -45,8 +45,7 @@ namespace FplBot.Slack.Handlers.FplEvents
             {
                 var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
                 var formatted = Formatter.FormatPriceChanged(filtered);
-                _logger.LogInformation("Publishing a string of length {length}", formatted.Length);
-                //await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+                await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
             }
             else
             {

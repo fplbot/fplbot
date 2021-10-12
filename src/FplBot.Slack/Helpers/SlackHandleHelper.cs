@@ -11,6 +11,7 @@ namespace FplBot.Slack.Helpers
         {
             return GetSlackHandle(users, entryName) ?? entryName;
         }
+
         public static string GetSlackHandle(IEnumerable<User> users, string entryName)
         {
             return SearchForHandle(users, user => user.Real_name, entryName) ??

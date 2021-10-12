@@ -38,6 +38,31 @@ namespace Discord.Net.HttpClients
             res.EnsureSuccessStatusCode();
         }
 
+        public record RichEmbed(string Title, string Description);
+
+        public async Task ChannelMessagePost(string channelId, RichEmbed embed)
+        {
+            string serialized = JsonSerializer.Serialize((object)new
+            {
+                embeds =  new []
+                {
+                    new
+                    {
+                        type = "rich",
+                        title = embed.Title,
+                        description = embed.Description,
+                        color = 3604540
+                    }
+                }
+            });
+            var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
+            _logger.LogInformation(serialized);
+            var res = await _client.PostAsync($"api/v8/channels/{channelId}/messages",jsonContent);
+            string responseBody = (await res.Content.ReadAsStringAsync());
+            _logger.LogInformation(responseBody);
+            res.EnsureSuccessStatusCode();
+        }
+
         public async Task ApplicationsCommandPost(string name, string description)
         {
             var jsonContent = new StringContent(JsonSerializer.Serialize(new

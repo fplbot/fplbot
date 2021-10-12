@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>      
+      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+      <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj" />
+      <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>

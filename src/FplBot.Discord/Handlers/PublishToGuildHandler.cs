@@ -5,7 +5,9 @@ using NServiceBus;
 
 namespace FplBot.Discord.Handlers
 {
-    public class PublishToGuildHandler : IHandleMessages<PublishToGuildChannel>
+    public class PublishToGuildHandler :
+        IHandleMessages<PublishToGuildChannel>,
+        IHandleMessages<PublishRichToGuildChannel>
     {
         private readonly DiscordClient _discordClient;
 
@@ -17,6 +19,11 @@ namespace FplBot.Discord.Handlers
         public async Task Handle(PublishToGuildChannel message, IMessageHandlerContext context)
         {
             await _discordClient.ChannelMessagePost(message.ChannelId, message.Message);
+        }
+
+        public async Task Handle(PublishRichToGuildChannel message, IMessageHandlerContext context)
+        {
+            await _discordClient.ChannelMessagePost(message.ChannelId, new DiscordClient.RichEmbed(message.Title, message.Description));
         }
     }
 }

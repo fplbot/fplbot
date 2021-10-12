@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Threading.Tasks;
+using FplBot.Formatting;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Helpers;

@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Formatting;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Extensions;
 using FplBot.Slack.Helpers;
@@ -49,7 +50,7 @@ namespace FplBot.Slack.Handlers.SlackEvents
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
             {
                 Channel = message.Channel,
-                Blocks = Formatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
+                Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
             });
 
             return new EventHandledResponse($"Found matching player for {name}: " + playerName);

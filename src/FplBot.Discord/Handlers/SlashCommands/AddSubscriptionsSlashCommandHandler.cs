@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
@@ -21,25 +20,21 @@ namespace FplBot.Discord.Handlers.SlashCommands
 
         public string SubCommandName => "add";
 
-        public async Task<SlashCommandResponse> Handle(SlashCommandContext slashCommandContext)
+        public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
         {
-            var existingSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
-            EventSubscription newEventSub = Enum.Parse<EventSubscription>(slashCommandContext.CommandInput.Value);
+            var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+            EventSubscription newEventSub = Enum.Parse<EventSubscription>(context.CommandInput.Value);
 
             if (existingSub == null)
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId,
-                    slashCommandContext.ChannelId, new[] { newEventSub }));
-                var newSub = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
-                return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", newSub.Subscriptions)}" };
+                await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
+                var newSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+                return Respond("✅ Success!", $"Added subscription to {string.Join(",", newSub.Subscriptions)}");
             }
 
-            if (existingSub.Subscriptions.Contains(newEventSub))
+            if (existingSub.Subscriptions.ContainsSubscriptionFor(newEventSub))
             {
-                return new ChannelMessageWithSourceResponse
-                {
-                    Content = $"Already subscribing to {slashCommandContext.CommandInput.Value}"
-                };
+                return Respond("⚠️", $"Already subscribing to {context.CommandInput.Value}");
             }
 
             var existingSubsWithNew = new List<EventSubscription>(existingSub.Subscriptions) { newEventSub };
@@ -49,9 +44,14 @@ namespace FplBot.Discord.Handlers.SlashCommands
                 existingSubsWithNew = new List<EventSubscription> { EventSubscription.All };
             }
 
-            await _repo.UpdateGuildSubscription(new GuildFplSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId, existingSubsWithNew));
-            var all = await _repo.GetGuildSubscription(slashCommandContext.GuildId, slashCommandContext.ChannelId);
-            return new ChannelMessageWithSourceResponse() { Content = $"Now subscribing to {string.Join(",", all.Subscriptions)}" };
+            await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = existingSubsWithNew});
+            var all = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+            return Respond("ℹ️ Updated!", $"Now subscribing to {string.Join(",", all.Subscriptions)}");
+        }
+
+        private static ChannelMessageWithSourceEmbedResponse Respond(string title, string description)
+        {
+            return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed(title, description)}};
         }
     }
 }
