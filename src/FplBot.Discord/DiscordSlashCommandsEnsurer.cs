@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FplBot.Discord
 {
-    public class DiscordSlashCommandsEnsurer : IHostedService
+    public class DiscordSlashCommandsEnsurer
     {
         private readonly DiscordClient _client;
         private readonly ILogger<DiscordSlashCommandsEnsurer> _logger;
@@ -20,61 +21,46 @@ namespace FplBot.Discord
             _logger = logger;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task DeleteGuildSlashCommands(string guild)
         {
-            //Task.Run(InstallSlashCommandsInGuild);
-        }
+            var applicationsCommands = await _client.ApplicationsCommandForGuildGet(guild);
 
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        // TODO: Migrate to global slash commands when ready
-        // These will only be available to the single guild
-        private async Task InstallSlashCommandsInGuild()
-        {
-            string fplBotGuildId = "893932860162064414"; // test guild
-            var applicationsCommands = await _client.ApplicationsCommandForGuildGet(fplBotGuildId);
             foreach (var applicationsCommand in applicationsCommands)
             {
-                //await _client.ApplicationsCommandForGuildDelete(fplBotGuildId, applicationsCommand.Id);
+                await _client.ApplicationsCommandForGuildDelete(guild, applicationsCommand.Id);
                 await Task.Delay(5000);
             }
+        }
 
-            await _client.ApplicationsCommandForGuildPost(
-                "subs",
-                "Shows active subscriptions",
-                fplBotGuildId);
-
-            await Task.Delay(3000);
-
-            await _client.ApplicationsCommandForGuildPost(
+        public async Task InstallGuildSlashCommandsInGuild(string guild = null)
+        {
+            await _client.ApplicationsCommandPost(
                 "help",
                 "Shows help",
-                fplBotGuildId);
+                guild);
+
             await Task.Delay(3000);
 
-            var applicationCommandOptions = new ApplicationCommandOptions
-            {
-                Type = 4, // leagueId as int
-                Name = "leagueid",
-                Description = "A FPL League Id.",
-                Required = true
-            };
             await Task.Delay(3000);
 
-            await _client.ApplicationsCommandForGuildPost("follow",
+            await _client.ApplicationsCommandPost("follow",
                 "Follow a FPL league in this channel",
-                fplBotGuildId,
-                applicationCommandOptions);
+                guild,
+                new ApplicationCommandOptions
+                {
+                    Type = 4, // leagueId as int
+                    Name = "leagueid",
+                    Description = "A FPL League Id.",
+                    Required = true
+                });
+
             await Task.Delay(3000);
 
-            await _client.ApplicationsCommandForGuildPost("subscriptions",
+            await _client.ApplicationsCommandPost("subscriptions",
                 "Manage subscription",
-                fplBotGuildId,
-                OptionWithOptions("add", OptionWithChoices("event")), OptionWithOptions("remove",OptionWithChoices("event")));
-
+                guild,
+                OptionWithOptions("add", OptionWithChoices("event")),
+                OptionWithOptions("remove", OptionWithChoices("event")));
 
             ApplicationCommandOptions OptionWithOptions(string name, params ApplicationCommandOptions[] subOpts)
             {
@@ -104,6 +90,11 @@ namespace FplBot.Discord
                 };
                 return subscribeOption;
             }
+        }
+
+        public async Task<IEnumerable<DiscordClient.ApplicationsCommand>> GetAllForGuild(string guildId)
+        {
+            return await _client.ApplicationsCommandForGuildGet(guildId);
         }
     }
 }

@@ -1,0 +1,30 @@
+@page
+@model FplBot.WebApi.Pages.Admin.Discord.Slashcommands
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@if (TempData.ContainsKey("msg"))
+{
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        @TempData["msg"]
+    </div>
+}
+
+<h1>Yolo</h1>
+
+<div class="col-12 pb-5 pt-5">
+    <form asp-page-handler="UninstallSlashCommands">
+        <button class="btn btn-danger">⚠️ 1️⃣ Remove slash commands for fpl guild</button>
+    </form>
+</div>
+
+<div class="col-12 pb-5">
+    <form asp-page-handler="InstallSlashCommands">
+        <button class="btn btn-info">✅ 1️⃣ Install slash commands for fpl guild</button>
+    </form>
+</div>
+
+<div class="col-12 pb-5">
+    <form asp-page-handler="InstallGlobalSlashCommands">
+        <button class="btn btn-info">⚠️ 🌍 Install global slash commands</button>
+    </form>
+</div>

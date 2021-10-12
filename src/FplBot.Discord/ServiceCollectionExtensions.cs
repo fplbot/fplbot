@@ -14,8 +14,7 @@ namespace FplBot.Discord
         public static IServiceCollection AddFplBotDiscord(this IServiceCollection services, IConfiguration config,
             ConnectionMultiplexer connection)
         {
-            services.AddHostedService<DiscordSlashCommandsEnsurer>();
-
+            services.AddSingleton<DiscordSlashCommandsEnsurer>();
             services.AddDiscordHttpClient(c =>
             {
                 c.DiscordApplicationId = config["DiscordAppId"];
@@ -29,8 +28,7 @@ namespace FplBot.Discord
                 .AddSlashCommandHandler<HelpSlashCommandHandler>()
                 .AddSlashCommandHandler<FollowSlashCommandHandler>()
                 .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()
-                .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>()
-                .AddSlashCommandHandler<SubsSlashCommandHandler>();
+                .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>();
             return services;
         }
     }

@@ -63,22 +63,8 @@ namespace Discord.Net.HttpClients
             res.EnsureSuccessStatusCode();
         }
 
-        public async Task ApplicationsCommandPost(string name, string description)
-        {
-            var jsonContent = new StringContent(JsonSerializer.Serialize(new
-            {
-                name = name,
-                type = 1,
-                description = description
-            }), Encoding.UTF8, "application/json");
-            var res = await _client.PostAsync($"api/v8/applications/{_options.Value.DiscordApplicationId}/commands",jsonContent);
-            res.EnsureSuccessStatusCode();
-            string responseBody = (await res.Content.ReadAsStringAsync());
-        }
-
         // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
-
-        public async Task ApplicationsCommandForGuildPost(string name, string description, string guildId, params ApplicationCommandOptions[] options)
+        public async Task ApplicationsCommandPost(string name, string description, string guildId, params ApplicationCommandOptions[] options)
         {
             object value = new
             {
@@ -164,7 +150,14 @@ namespace Discord.Net.HttpClients
             string serialized = JsonSerializer.Serialize(value);
             _logger.LogTrace($"Sending:\n{serialized}");
             var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
-            var res = await _client.PostAsync($"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands",jsonContent);
+
+            var requestUri = $"api/v8/applications/{_options.Value.DiscordApplicationId}/commands";
+            if (!string.IsNullOrEmpty(guildId))
+            {
+                requestUri = $"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands";
+            }
+
+            var res = await _client.PostAsync(requestUri,jsonContent);
             string responseBody = (await res.Content.ReadAsStringAsync());
             _logger.LogTrace(responseBody);
             res.EnsureSuccessStatusCode();
