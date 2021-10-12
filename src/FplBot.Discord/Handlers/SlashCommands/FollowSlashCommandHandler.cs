@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
@@ -25,8 +26,7 @@ namespace FplBot.Discord.Handlers.SlashCommands
             var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
 
             if(league == null)
-                return new ChannelMessageWithSourceResponse { Content = $"Could not find a classic league of id '{leagueId}'" };
-
+                return Respond($"Could not find a classic league of id '{leagueId}'", success:false);
 
             var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
             if (existingSub == null)
@@ -36,12 +36,23 @@ namespace FplBot.Discord.Handlers.SlashCommands
                     EventSubscription.All
                 }));
 
-                return new ChannelMessageWithSourceResponse { Content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) " };
+                return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) ");
             }
 
             await _repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
-            return new ChannelMessageWithSourceResponse { Content = $"✅ Thx! Now following the '{$"{league.Properties.Name}"}' FPL league. " };
+            return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. " );
 
+        }
+
+        private static SlashCommandResponse Respond(string content, bool success = true)
+        {
+            return new ChannelMessageWithSourceEmbedResponse()
+            {
+                Embeds = new List<RichEmbed>
+                {
+                    success ? new("✅ Success", content) : new ("⚠️ Error", content)
+                }
+            };
         }
     }
 }

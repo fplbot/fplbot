@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
@@ -33,16 +34,32 @@ namespace FplBot.Discord.Handlers.SlashCommands
                 {
                     var league = await _client.GetClassicLeague(sub.LeagueId.Value, tolerate404:true);
                     if(league != null)
-                        content += $"\nCurrently following the '{league.Properties.Name}' league";
+                        content += $"\n**League:**\nCurrently following the '{league.Properties.Name}' league";
                 }
                 else
                 {
-                    content += $"\nNot following any FPL leagues";
+                    content += $"\n ⚠️ Not following any FPL leagues";
                 }
 
-                content += $"\nSubscriptions: {string.Join(",", sub.Subscriptions)}";
+                content += $"\n\n**Subscriptions:**\n{string.Join("\n", sub.Subscriptions.Select(s => $" ✅ {s}"))}";
+
+                if (sub.Subscriptions.Count() > 1)
+                {
+                    var allTypes = EventSubscriptionHelper.GetAllSubscriptionTypes();
+                    var allTypesExceptSubs = allTypes.Except(sub.Subscriptions).Except(new []{ EventSubscription.All });
+                    content += $"\n\n**Not subscribing:**\n{string.Join("\n", allTypesExceptSubs.Select(s => $" ❌ {s}"))}";
+                }
+            }
+            else
+            {
+                content = "⚠️ Not subscribing to any events. Add one to get notifications!";
             }
 
+            return Respond(content);
+        }
+
+        private static ChannelMessageWithSourceEmbedResponse Respond(string content)
+        {
             return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed("ℹ️ HELP", content)} };
         }
     }
