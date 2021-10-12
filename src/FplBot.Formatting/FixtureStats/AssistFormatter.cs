@@ -16,7 +16,7 @@ namespace FplBot.Formatting.FixtureStats
 
         public string EventDescriptionSingular => "{0} got an assist! {1}";
         public string EventDescriptionPlural => "{0} got {1} assists! {2}";
-        public string EventEmoji => ":handshake:";
+        public string EventEmoji => "🤝";
 
         public string[] JokePool => new []
         {

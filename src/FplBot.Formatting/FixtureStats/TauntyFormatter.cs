@@ -28,7 +28,7 @@ namespace FplBot.Formatting.FixtureStats
                 }
                 if (g.Any(g => g.IsRemoved))
                 {
-                    message = $"~{message.TrimEnd()}~ (VAR? :shrug:)";
+                    message = $"~{message.TrimEnd()}~ (VAR? 🤷‍♀️)";
                 }
                 else
                 {

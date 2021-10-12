@@ -15,8 +15,8 @@ namespace FplBot.Formatting.FixtureStats
 
         public string[] JokePool => new []
         {
-            "Smart move bringing him in, {0} :upside_down_face:",
-            "Didn't you transfer him in this week, {0}? :japanese_ogre:",
+            "Smart move bringing him in, {0} 🙃",
+            "Didn't you transfer him in this week, {0}? 👹",
             "Maybe you should have waited a couple of more weeks before knee jerking him in, {0}?"
         };
 
@@ -28,6 +28,6 @@ namespace FplBot.Formatting.FixtureStats
         public string EventDescriptionSingular => "{0} got a red card! {1}";
         public string EventDescriptionPlural => "{0} got {1} red cards!? {2}";
 
-        public string EventEmoji => ":red_circle:";
+        public string EventEmoji => "🔴";
     }
 }

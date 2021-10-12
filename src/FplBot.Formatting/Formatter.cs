@@ -27,7 +27,7 @@ namespace FplBot.Formatting
                 return sb.ToString();
             }
 
-            sb.Append($":star: *Here's the current standings after {gameweek.Name}* :star: \n\n");
+            sb.Append($"⭐️ *Here's the current standings after {gameweek.Name}* ⭐ \n\n");
 
             foreach (var player in sortedByRank)
             {
@@ -73,7 +73,7 @@ namespace FplBot.Formatting
         {
             var worst = league.Standings.Entries.OrderBy(e => e.EventTotal).FirstOrDefault();
             string entryOrEntryLink = includeExternalLinks? worst.GetEntryLink(gameweek.Id) : worst?.EntryName;
-            return worst == null ? null : $":poop: {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
+            return worst == null ? null : $"💩 {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
         }
 
         private static string GetRankChangeEmoji(ClassicLeagueEntry player, int numPlayers, int gameweekId)
@@ -83,7 +83,7 @@ namespace FplBot.Formatting
 
             if (player.LastRank == 0)
             {
-                return ":wave: (joined this gameweek)";
+                return "👋 (joined this gameweek)";
             }
 
             var rankDiff = player.LastRank - player.Rank;
@@ -92,17 +92,17 @@ namespace FplBot.Formatting
 
             if (rankDiff < 0)
             {
-                emojiString.Append($":chart_with_downwards_trend: ({rankDiff}) ");
+                emojiString.Append($"📉 ({rankDiff}) ");
             }
 
             if (rankDiff > 0)
             {
-                emojiString.Append($":chart_with_upwards_trend: (+{rankDiff}) ");
+                emojiString.Append($"📈 (+{rankDiff}) ");
             }
 
             if (player.Rank == numPlayers)
             {
-                emojiString.Append(":hankey:");
+                emojiString.Append("💩");
             }
 
             return emojiString.ToString();
@@ -115,7 +115,7 @@ namespace FplBot.Formatting
 
             var sb = new StringBuilder();
 
-            sb.Append($":helmet_with_white_cross: *Injured players*\n");
+            sb.Append($"⛑ *Injured players*\n");
 
             foreach (var player in players)
             {
@@ -143,7 +143,7 @@ namespace FplBot.Formatting
             {
                 var isPriceIncrease = @group.Key > 0;
                 var priceChange = $"{FormatCurrency(group.Key)}";
-                var header = isPriceIncrease ? $"*Price up {priceChange} :chart_with_upwards_trend:*" : $"*Price down {priceChange} :chart_with_downwards_trend:*";
+                var header = isPriceIncrease ? $"*Price up {priceChange} 📈*" : $"*Price down {priceChange} 📉*";
                 messageToSend += $"\n\n{header}";
                 foreach (var p in group)
                 {
@@ -201,7 +201,7 @@ namespace FplBot.Formatting
 
         public static string BulletPoints<T>(IEnumerable<T> list)
         {
-            return string.Join("\n", list.Select(s => $":black_small_square: {s}"));
+            return string.Join("\n", list.Select(s => $"▪️ {s}"));
         }
 
         public static string FormatInjuryStatusUpdates(IEnumerable<InjuredPlayerUpdate> statusUpdates)
@@ -451,7 +451,7 @@ namespace FplBot.Formatting
 
         public static string FixturesForGameweek(int gwId, string name, DateTime deadline, ICollection<Fixture> fixtures, ICollection<Team> teams, int tzOffset)
         {
-            var textToSend = $":information_source: <https://fantasy.premierleague.com/fixtures/{gwId}|{name.ToUpper()}>";
+            var textToSend = $"ℹ️ <https://fantasy.premierleague.com/fixtures/{gwId}|{name.ToUpper()}>";
             textToSend += $"\nDeadline: {deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
 
             var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
@@ -485,34 +485,34 @@ namespace FplBot.Formatting
                 return null;
             }
 
-            var emojis = ":ballot_box_with_check:";
+            var emojis = "☑️";
 
             switch (entryItemVerifiedType)
             {
                 case VerifiedEntryType.FootballerInPL:
                 case VerifiedEntryType.Footballer:
-                    emojis += ":soccer:";
+                    emojis += "⚽️";
                     break;
                 case VerifiedEntryType.ChessMaster:
-                    emojis += ":chess_pawn:";
+                    emojis += "♟";
                     break;
                 case VerifiedEntryType.Podcaster:
-                    emojis += ":studio_microphone:";
+                    emojis += "🎙";
                     break;
                 case VerifiedEntryType.CommunityFame:
-                    emojis += ":bird:";
+                    emojis += "🐥";
                     break;
                 case VerifiedEntryType.Actor:
-                    emojis += ":performing_arts:";
+                    emojis += "🎭";
                     break;
                 case VerifiedEntryType.TvFace:
-                    emojis += ":tv:";
+                    emojis += "📺";
                     break;
                 case VerifiedEntryType.Athlete:
-                    emojis += ":sports_medal:";
+                    emojis += "🏅";
                     break;
                 case VerifiedEntryType.PastWinner:
-                    emojis += ":trophy:";
+                    emojis += "🏆";
                     break;
                 case VerifiedEntryType.Unknown:
                     break;
