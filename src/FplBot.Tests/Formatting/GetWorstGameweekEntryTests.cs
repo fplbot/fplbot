@@ -72,7 +72,7 @@ namespace FplBot.Tests.Formatting
             var message = Formatter.GetWorstGameweekEntry(league, gameweek);
 
             // Assert
-            Assert.Equal(":poop: <https://fantasy.premierleague.com/entry/6/event/1|X> only got 5 points. Wow.", message);
+            Assert.Equal("💩 <https://fantasy.premierleague.com/entry/6/event/1|X> only got 5 points. Wow.", message);
         }
     }
 }
