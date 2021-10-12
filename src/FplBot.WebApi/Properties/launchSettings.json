@@ -5,9 +5,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "DISCORD_TOKEN": "ODEyNDQxOTEzMTkzNTI5MzY1.YDAzfg.9TFUwQVs15bk1mKz9surbt0Wsb8",
-        "DiscordAppId" : "812441913193529365"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },    
     "test": {
