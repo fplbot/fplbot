@@ -41,13 +41,21 @@ namespace FplBot.Discord.Handlers.SlashCommands
                     content += $"\n ⚠️ Not following any FPL leagues";
                 }
 
-                content += $"\n\n**Subscriptions:**\n{string.Join("\n", sub.Subscriptions.Select(s => $" ✅ {s}"))}";
-
-                if (sub.Subscriptions.Count() > 1)
+                var allTypes = EventSubscriptionHelper.GetAllSubscriptionTypes();
+                if (sub.Subscriptions.Any())
                 {
-                    var allTypes = EventSubscriptionHelper.GetAllSubscriptionTypes();
-                    var allTypesExceptSubs = allTypes.Except(sub.Subscriptions).Except(new []{ EventSubscription.All });
-                    content += $"\n\n**Not subscribing:**\n{string.Join("\n", allTypesExceptSubs.Select(s => $" ❌ {s}"))}";
+                    content += $"\n\n**Subscriptions:**\n{string.Join("\n", sub.Subscriptions.Select(s => $" ✅ {s}"))}";
+
+                    if (!sub.Subscriptions.Contains(EventSubscription.All))
+                    {
+                        var allTypesExceptSubs = allTypes.Except(sub.Subscriptions).Except(new []{ EventSubscription.All });
+                        content += $"\n\n**Not subscribing:**\n{string.Join("\n", allTypesExceptSubs.Select(s => $" ❌ {s}"))}";
+                    }
+                }
+                else
+                {
+                    content += "\n\n**Subscriptions:**\n ⚠️ No subscriptions";
+                    content += $"\n\n**Events you may subscribe to:**\n{string.Join("\n", allTypes.Select(s => $" ▪️ {s}"))}";
                 }
             }
             else

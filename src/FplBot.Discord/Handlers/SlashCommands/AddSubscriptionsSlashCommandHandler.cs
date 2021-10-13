@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
 using FplBot.Discord.Data;
+using FplBot.Formatting;
 
 namespace FplBot.Discord.Handlers.SlashCommands
 {
@@ -29,24 +31,28 @@ namespace FplBot.Discord.Handlers.SlashCommands
             {
                 await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
                 var newSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-                return Respond("✅ Success!", $"Added subscription to {string.Join(",", newSub.Subscriptions)}");
+                return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(newSub.Subscriptions)}");
             }
 
-            if (existingSub.Subscriptions.ContainsSubscriptionFor(newEventSub))
+            if (existingSub.Subscriptions.Contains(newEventSub))
             {
                 return Respond("⚠️", $"Already subscribing to {context.CommandInput.Value}");
             }
 
-            var existingSubsWithNew = new List<EventSubscription>(existingSub.Subscriptions) { newEventSub };
+            var updatedList = new List<EventSubscription>(existingSub.Subscriptions) { newEventSub };
 
             if (newEventSub == EventSubscription.All)
             {
-                existingSubsWithNew = new List<EventSubscription> { EventSubscription.All };
+                updatedList = new List<EventSubscription> { EventSubscription.All };
+            }
+            else if (existingSub.Subscriptions.Count() == 1 && existingSub.Subscriptions.First() == EventSubscription.All) // from "all" to "1 specific" => 1 specifc
+            {
+                updatedList = new List<EventSubscription> { newEventSub };
             }
 
-            await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = existingSubsWithNew});
+            await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = updatedList});
             var all = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            return Respond("ℹ️ Updated!", $"Now subscribing to {string.Join(",", all.Subscriptions)}");
+            return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(all.Subscriptions)}");
         }
 
         private static ChannelMessageWithSourceEmbedResponse Respond(string title, string description)
