@@ -35,6 +35,13 @@ namespace FplBot.WebApi.Pages.Admin.Discord
             return RedirectToPage("Subscriptions");
         }
 
+        public async Task<IActionResult> OnPostDeleteSub(string guildId, string channelId)
+        {
+            await _repo.DeleteGuildSubscription(guildId, channelId);
+            TempData["msg"] = $"Deleted sub {guildId}-{channelId}";
+            return RedirectToPage("Subscriptions");
+        }
+
         public IEnumerable<RedisKey> AllKeys { get; set; }
 
         public IEnumerable<GuildFplSubscription> Subs { get; set; }

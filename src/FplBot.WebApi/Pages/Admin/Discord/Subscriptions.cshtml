@@ -15,24 +15,39 @@
     <ul>
         @foreach (var sub in Model.Subs)
         {
-            <li>@sub.GuildId - @sub.ChannelId - @ToFormatted(sub.Subscriptions)</li>
+            <li class="list-group-item d-flex align-items-baseline">
+                <div>
+                    @sub.GuildId - @sub.ChannelId - @ToFormatted(sub.Subscriptions)
+                </div>
+
+                <div class="ml-auto">
+                    <form asp-page-handler="DeleteSub" method="post">
+                        <input class="btn btn-danger btn-block" type="submit" name="delete-sub" value="Delete Sub">
+                        <input type="hidden" name="guildId" value="@sub.GuildId">
+                        <input type="hidden" name="channelId" value="@sub.ChannelId">
+                    </form>
+                </div>
+            </li>
         }
     </ul>
 </div>
 <div class="col-12">
-<h1>Keys</h1>
+<h1>All keys</h1>
 <ul>
     @foreach (var key in Model.AllKeys)
     {
-        if (key.ToString().StartsWith("GuildSubs-") || key.ToString().StartsWith("Guild-"))
-        {
-            <li>@key - 
-                <form asp-page-handler="DeleteKey" method="post">
-                    <input class="btn btn-danger" type="submit" name="delete-sub" value="Delete key">
-                    <input type="hidden" name="key" value="@key">
-                </form>
-            </li>
-        }
+        <li class="list-group-item d-flex align-items-baseline">
+            <div>
+                @key
+            </div>
+
+            <div class="ml-auto">
+            <form asp-page-handler="DeleteKey" method="post">
+                <input class="btn btn-danger btn-block" type="submit" name="delete-key" value="Delete key">
+                <input type="hidden" name="key" value="@key">
+            </form>
+            </div>
+        </li>
     }
 </ul>
 </div>
