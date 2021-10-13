@@ -1,0 +1,45 @@
+@page
+@using FplBot.Discord.Data
+@model FplBot.WebApi.Pages.Admin.Discord.Subscriptions
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@if (TempData.ContainsKey("msg"))
+{
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        @TempData["msg"]
+    </div>
+}
+
+<div class="col-12">
+    <h1>Subs</h1>
+    <ul>
+        @foreach (var sub in Model.Subs)
+        {
+            <li>@sub.GuildId - @sub.ChannelId - @ToFormatted(sub.Subscriptions)</li>
+        }
+    </ul>
+</div>
+<div class="col-12">
+<h1>Keys</h1>
+<ul>
+    @foreach (var key in Model.AllKeys)
+    {
+        if (key.ToString().StartsWith("GuildSubs-") || key.ToString().StartsWith("Guild-"))
+        {
+            <li>@key - 
+                <form asp-page-handler="DeleteKey" method="post">
+                    <input class="btn btn-danger" type="submit" name="delete-sub" value="Delete key">
+                    <input type="hidden" name="key" value="@key">
+                </form>
+            </li>
+        }
+    }
+</ul>
+</div>
+@functions
+{
+    private static string ToFormatted(IEnumerable<EventSubscription> subSubscriptions)
+    {
+        return string.Join(",", subSubscriptions);
+    }
+}

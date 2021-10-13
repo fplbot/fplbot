@@ -73,7 +73,7 @@ namespace FplBot.Discord.Data
 
         public async Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions()
         {
-            var allKeys = _redis.GetServer(_server).Keys(pattern: "GuildSubs-*");
+            var allKeys = _redis.GetServer(_server).Keys(pattern: "GuildSubs-*-Channel-*");
             var guilds = new List<GuildFplSubscription>();
             foreach (var key in allKeys)
             {
@@ -88,8 +88,16 @@ namespace FplBot.Discord.Data
 
         public async Task<GuildFplSubscription> GetGuildSubscription(string guildId, string channelId)
         {
-            var all = await GetAllGuildSubscriptions();
-            return all.FirstOrDefault(s => s.GuildId == guildId && s.ChannelId == channelId);
+            var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
+            var guilds = new List<GuildFplSubscription>();
+            foreach (var key in allKeys)
+            {
+                var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
+                var subs = ParseSubscriptionString(fetchedTeamData[3], " ");
+                guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], (int?)fetchedTeamData[2], subs));
+            }
+
+            return guilds.FirstOrDefault();
         }
 
         public async Task DeleteGuildSubscription(string guildId, string channelId)
@@ -102,9 +110,9 @@ namespace FplBot.Discord.Data
             }
         }
 
-        public Task UpdateGuildSubscription(GuildFplSubscription guildSub)
+        public async Task UpdateGuildSubscription(GuildFplSubscription guildSub)
         {
-            return InsertGuildSubscription(guildSub);
+            await InsertGuildSubscription(guildSub);
         }
 
         public async Task InsertGuildSubscription(GuildFplSubscription guildSub)

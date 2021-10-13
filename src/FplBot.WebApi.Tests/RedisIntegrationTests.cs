@@ -240,6 +240,26 @@ namespace FplBot.WebApi.Tests
             Assert.Equal(2, all.Count());
         }
 
+        [Fact]
+        public async Task Update_Works()
+        {
+            await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { FplBot.Discord.Data.EventSubscription.All }));
+            await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { FplBot.Discord.Data.EventSubscription.Standings }));
+
+            var sub2 = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
+            var update = sub2 with { Subscriptions = new[] { Discord.Data.EventSubscription.Lineups } };
+            await _guildRepo.UpdateGuildSubscription(update);
+
+            var sub2Updated = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
+            Assert.Single(sub2Updated.Subscriptions);
+            Assert.Equal(FplBot.Discord.Data.EventSubscription.Lineups, sub2Updated.Subscriptions.First());
+
+            var sub1NotUpdated = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
+            Assert.Single(sub1NotUpdated.Subscriptions);
+            Assert.Equal(FplBot.Discord.Data.EventSubscription.All, sub1NotUpdated.Subscriptions.First());
+
+        }
+
         private static VerifiedEntry SomeEntry()
         {
             return new VerifiedEntry(1, "fullname", "entryteamname", VerifiedEntryType.Footballer);
