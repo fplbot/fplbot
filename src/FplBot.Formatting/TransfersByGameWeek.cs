@@ -79,6 +79,74 @@ namespace FplBot.Formatting
         }
 
 
+        public record TransfersMessage(string Message);
+
+        public record TransfersPayload(IEnumerable<TransfersMessage> Messages)
+        {
+            public int GetTotalCharCount()
+            {
+                return Messages.Sum(c => c.Message.Length);
+            }
+        };
+
+        public async Task<TransfersPayload> GetTransferMessages(int gw, int leagueId, bool includeExternalLinks = true)
+        {
+            if (gw < 2)
+            {
+                return new TransfersPayload(new List<TransfersMessage> { new("No transfers are made the first gameweek.") });
+            }
+
+            var leagueTask = _leagueClient.GetClassicLeague(leagueId);
+            var settingsTask = _globalSettingsClient.GetGlobalSettings();
+
+            var league = await leagueTask;
+            var settings = await settingsTask;
+
+            var sb = new List<TransfersMessage>
+            {
+                new($"Transfers made for gameweek {gw}:\n\n")
+            };
+
+            var didNoTransfers = new ConcurrentBag<ClassicLeagueEntry>();
+
+            await Task.WhenAll(league.Standings.Entries
+                .OrderBy(x => x.Rank)
+                .Select(entry => GetTransfersTextForEntry(entry, gw, settings.Players, includeExternalLinks))
+                .ToArray()
+                .ForEach(async entryTransfersTask =>
+                {
+                    var entryTransfers = await entryTransfersTask;
+                    if (!entryTransfers.DidTransfer)
+                    {
+                        didNoTransfers.Add(entryTransfers.Entry);
+                    }
+                    else
+                    {
+                        sb.Add(new (entryTransfers.Text));
+                    }
+                }));
+
+            if (didNoTransfers.Count > 10)
+            {
+                sb.Add(new ($"\nThe {didNoTransfers.Count} others saved their transfer 😴"));
+            }
+            else if (didNoTransfers.Count == 1)
+            {
+                var who = didNoTransfers.Single();
+                var namedWho = includeExternalLinks ? who.GetEntryLink(gw) : who.EntryName;
+                sb.Add(new($"\n{namedWho} saved their transfer 😴"));
+            }
+            else if (didNoTransfers.Count > 0)
+            {
+                string @join = didNoTransfers.Select(x => {
+                    var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
+                    return namedWho;
+                }).Join();
+                sb.Add(new($"\n{@join} saved their transfer 😴"));
+            }
+
+            return new TransfersPayload(sb);
+        }
 
         public async Task<string> GetTransfersByGameweekTexts(int gw, int leagueId, bool includeExternalLinks = true)
         {

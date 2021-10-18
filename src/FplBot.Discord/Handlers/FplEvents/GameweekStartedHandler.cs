@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using FplBot.Discord.Data;
@@ -76,8 +77,21 @@ namespace FplBot.Discord.Handlers.FplEvents
 
             if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
             {
-                string transfersByGameweekTexts = await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
-                messages.Add(new RichMesssage("Transfers", transfersByGameweekTexts));
+                var transfersByGameweekTexts = await _transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
+                if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
+                {
+                    var array = transfersByGameweekTexts.Messages.ToList();
+                    int halfway = array.Count() / 2;
+                    var firstArray = array.Take(halfway);
+                    var secondArray = array.Skip(halfway);
+                    messages.Add(new RichMesssage("Transfers", string.Join("", firstArray.Select(c => c.Message))));
+                    messages.Add(new RichMesssage("Transfers (#2)", string.Join("", secondArray.Select(c => c.Message))));
+                }
+                else
+                {
+                    messages.Add(new RichMesssage("Transfers", string.Join("", transfersByGameweekTexts.Messages.Select(m => m.Message))));
+                }
+
             }
             else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
             {
