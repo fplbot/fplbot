@@ -33,7 +33,7 @@ namespace FplBot.Formatting
             {
                 var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
                 string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName;
-                sb.Append($"{player.Rank}. {entryOrLink} - {player.Total} {arrow} \n");
+                sb.Append($"\n{player.Rank}. {entryOrLink} - {player.Total} {arrow}");
             }
 
             return sb.ToString();
