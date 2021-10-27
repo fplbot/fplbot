@@ -7,11 +7,13 @@ namespace FplBot.Formatting.FixtureStats
 {
     internal class RegularFormatter : IFormat
     {
-        private readonly IFormatEvents _formatter;
+        private readonly IDescribeEvents _formatter;
+        private readonly FormattingType _formattingType;
 
-        public RegularFormatter(IFormatEvents formatter)
+        public RegularFormatter(IDescribeEvents formatter, FormattingType formattingType)
         {
             _formatter = formatter;
+            _formattingType = formattingType;
         }
 
         public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
@@ -27,11 +29,24 @@ namespace FplBot.Formatting.FixtureStats
 
                 if (g.Any(g => g.IsRemoved))
                 {
-                    message = $"~{message.TrimEnd()}~ (VAR? 🤷‍♀️)";
+                    message = $"{StrikeThrough()}{message.TrimEnd()}{StrikeThrough()} (VAR? 🤷‍♀️)";
                 }
                 return message;
 
             });
+        }
+
+        private string StrikeThrough()
+        {
+            switch (_formattingType)
+            {
+                case FormattingType.Slack:
+                    return "~";
+                case FormattingType.Discord:
+                    return "~~";
+                default:
+                    return "ð";
+            }
         }
     }
 }

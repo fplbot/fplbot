@@ -161,3 +161,6 @@ Content-Type: application/json
     "name" : "help"
   }
 }
+
+### test event formatting
+GET http://localhost:1337/debug/goal?removed=true

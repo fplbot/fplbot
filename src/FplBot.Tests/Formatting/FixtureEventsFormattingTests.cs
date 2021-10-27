@@ -5,8 +5,6 @@ using System.Text.RegularExpressions;
 using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Abstractions;
-using FplBot.Slack.Data.Models;
 using FplBot.Slack.Helpers;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
@@ -37,31 +35,55 @@ namespace FplBot.Tests
 
 
             // Act
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true,FormattingType.Slack, CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
             foreach (var formatttedEvent in formattedEvents)
             {
-                _helper.WriteLine(formatttedEvent);
+                _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
             }
             // Assert
             var formattedEvent = formattedEvents.First();
             var regex = new Regex("\\{0\\}.*");
-            CustomAssert.AnyOfContains(GoalFormatter.GoalJokes.Select(x => regex.Replace(x, string.Empty)), formattedEvent);
-            Assert.Contains(expectedTauntName, formattedEvent);
+            CustomAssert.AnyOfContains(GoalDescriber.GoalJokes.Select(x => regex.Replace(x, string.Empty)), formattedEvent.Details);
+            Assert.Contains(expectedTauntName, formattedEvent.Details);
 
         }
 
         [Fact]
         public void RegularGoalScored()
         {
-            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, CreateNoTransfersForGoalScorer());
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, FormattingType.Slack, CreateNoTransfersForGoalScorer());
             foreach (var formatttedEvent in formattedEvents)
             {
-                _helper.WriteLine(formatttedEvent);
+                _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
             }
-            Assert.Contains("PlayerFirstName PlayerSecondName scored a goal", formattedEvents.First());
+            Assert.Contains("PlayerFirstName PlayerSecondName scored a goal", formattedEvents.First().Details);
         }
 
-        private List<FixtureEvents> CreateGoalEvent()
+        [Fact]
+        public void VAR_Slack()
+        {
+            FormattingType formattingType = FormattingType.Slack;
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
+            foreach (var formatttedEvent in formattedEvents)
+            {
+                _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            }
+            Assert.Contains("~PlayerFirstName PlayerSecondName scored a goal! ⚽️~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
+        }
+
+        [Fact]
+        public void VAR_Discord()
+        {
+            FormattingType formattingType = FormattingType.Discord;
+            var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
+            foreach (var formatttedEvent in formattedEvents)
+            {
+                _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            }
+            Assert.Contains("~~PlayerFirstName PlayerSecondName scored a goal! ⚽️~~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
+        }
+
+        private List<FixtureEvents> CreateGoalEvent(bool removed = false)
         {
             var fixture = TestBuilder.AwayTeamGoal(1,1);
             return new List<FixtureEvents>
@@ -77,7 +99,7 @@ namespace FplBot.Tests
                     ),
                     new Dictionary<StatType, List<PlayerEvent>>
                     {
-                        { StatType.GoalsScored, new List<PlayerEvent>{ new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, false)}}
+                        { StatType.GoalsScored, new List<PlayerEvent>{ new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved:removed)}}
                     }
                 )
             };

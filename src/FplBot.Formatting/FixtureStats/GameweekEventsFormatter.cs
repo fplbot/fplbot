@@ -7,10 +7,10 @@ namespace FplBot.Formatting.FixtureStats
 {
     public class GameweekEventsFormatter
     {
-        public static List<string> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, TauntData tauntData = null)
+        public static List<FixtureEventMessage> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, FormattingType formattingType, TauntData tauntData = null)
         {
-            var formattedStrings = new List<string>();
-            var statFormatterFactory = new StatFormatterFactory(tauntData);
+            var formattedStrings = new List<FixtureEventMessage>();
+            var statFormatterFactory = new StatFormatterFactory(tauntData, formattingType);
 
             newFixtureEvents.ForEach(newFixtureEvent =>
             {
@@ -21,7 +21,7 @@ namespace FplBot.Formatting.FixtureStats
                     .MaterializeToArray();
                 if (eventMessages.Any())
                 {
-                    formattedStrings.Add($"{GetScore(newFixtureEvent)}\n" + Formatter.BulletPoints(eventMessages));
+                    formattedStrings.Add(new($"{GetScore(newFixtureEvent)}", Formatter.BulletPoints(eventMessages)));
                 }
             });
 

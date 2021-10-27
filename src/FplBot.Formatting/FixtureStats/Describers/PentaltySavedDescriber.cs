@@ -3,20 +3,8 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Formatting.FixtureStats
 {
-    public class PentaltySavedFormatter : IFormatWithTaunts
+    public class PentaltySavedDescriber : IDescribeTaunts
     {
-        private readonly IFormat _formatter;
-
-        public PentaltySavedFormatter(TauntData tauntData)
-        {
-            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
-        }
-
-        public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
-        {
-            return _formatter.Format(events);
-        }
-
         public TauntType Type => TauntType.OutTransfers;
 
         public string[] JokePool => new []

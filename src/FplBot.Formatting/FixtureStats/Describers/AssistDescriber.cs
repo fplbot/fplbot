@@ -3,15 +3,8 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Formatting.FixtureStats
 {
-    public class AssistFormatter : IFormatWithTaunts
+    public class AssistDescriber : IDescribeTaunts
     {
-        private readonly IFormat _formatter;
-
-        public AssistFormatter(TauntData tauntData)
-        {
-            _formatter = tauntData != null ? new TauntyFormatter(this, tauntData) : new RegularFormatter(this);
-        }
-
         public TauntType Type => TauntType.OutTransfers;
 
         public string EventDescriptionSingular => "{0} got an assist! {1}";
@@ -25,10 +18,5 @@ namespace FplBot.Formatting.FixtureStats
             "Hey everyone, someone transferred him out before this gameweek: {0}",
             "Kinda stupid decision tossing him out of your team, {0}"
         };
-
-        public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
-        {
-            return _formatter.Format(events);
-        }
     }
 }

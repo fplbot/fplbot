@@ -37,15 +37,15 @@ namespace FplBot.Discord.Handlers.FplEvents
             var sub = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
             if (sub != null)
             {
-                var formattedStr = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat);
+                var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat, FormattingType.Discord);
                 var i = 0;
-                foreach (string str in formattedStr)
+                foreach (var eventMsg in eventMessages)
                 {
                     i += 2;
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(i));
                     sendOptions.RouteToThisEndpoint();
-                    await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, $"ℹ️", str), sendOptions);
+                    await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details), sendOptions);
                 }
             }
             else

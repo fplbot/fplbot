@@ -1,10 +1,9 @@
 namespace FplBot.Formatting.FixtureStats
 {
-    internal interface IFormatEvents : IFormat
+    internal interface IDescribeEvents
     {
         string EventDescriptionSingular { get; }
         string EventDescriptionPlural { get; }
-
         string EventEmoji { get; }
     }
 }
