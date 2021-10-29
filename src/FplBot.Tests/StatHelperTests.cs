@@ -65,19 +65,14 @@ namespace FplBot.Tests
         }
 
         [Fact]
-        public void NewFixtureWithYellowCard_NewEvent_DoesNotShowAssDiff()
+        public void YellowCards_DoesNotProduceEvents()
         {
             var initial = TestBuilder.NoGoals(fixtureCode:10);
             var withYellow = TestBuilder.NoGoals(fixtureCode:10).WithYellowCard();
 
             var events = FixtureDiffer.DiffFixtureStats(newFixture:withYellow,initial, new List<Player> { TestBuilder.Player()});
 
-            Assert.NotEmpty(events);
-            Assert.Single(events);
-            Assert.Equal(StatType.YellowCards, events.First().Key);
-            var playerEvent = events.First().Value.First();
-            Assert.Equal(TestBuilder.PlayerId, playerEvent.Player.Id);
-            Assert.False(playerEvent.IsRemoved);
+            Assert.Empty(events);
         }
     }
 }
