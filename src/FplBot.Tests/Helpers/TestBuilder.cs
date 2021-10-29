@@ -49,6 +49,7 @@ namespace FplBot.Tests
                 PulseId = fixtureCode
             };
         }
+
         public static Fixture AwayTeamGoal(int fixtureCode, int goals)
         {
             return new Fixture
@@ -80,6 +81,13 @@ namespace FplBot.Tests
             return fixture;
         }
 
+        public static Fixture WithYellowCard(this Fixture fixture)
+        {
+            fixture.FinishedProvisional = true;
+            fixture.Stats = fixture.Stats.Append(Yellow(PlayerId)).ToArray();
+            return fixture;
+        }
+
         private static FixtureStat BpsSystem(int playerId, int bps)
         {
             return new FixtureStat
@@ -88,6 +96,19 @@ namespace FplBot.Tests
                 HomeStats = new List<FixtureStatValue>
                 {
                     new FixtureStatValue {Element = playerId, Value = bps}
+                },
+                AwayStats = new List<FixtureStatValue> { }
+            };
+        }
+
+        private static FixtureStat Yellow(int playerId)
+        {
+            return new FixtureStat
+            {
+                Identifier = "yellow_cards",
+                HomeStats = new List<FixtureStatValue>
+                {
+                    new FixtureStatValue {Element = playerId, Value = 1}
                 },
                 AwayStats = new List<FixtureStatValue> { }
             };

@@ -63,5 +63,16 @@ namespace FplBot.Tests
             Assert.Equal(TestBuilder.PlayerId, playerEvent.Player.Id);
             Assert.True(playerEvent.IsRemoved);
         }
+
+        [Fact]
+        public void YellowCards_DoesNotProduceEvents()
+        {
+            var initial = TestBuilder.NoGoals(fixtureCode:10);
+            var withYellow = TestBuilder.NoGoals(fixtureCode:10).WithYellowCard();
+
+            var events = FixtureDiffer.DiffFixtureStats(newFixture:withYellow,initial, new List<Player> { TestBuilder.Player()});
+
+            Assert.Empty(events);
+        }
     }
 }
