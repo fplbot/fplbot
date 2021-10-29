@@ -68,7 +68,7 @@ namespace FplBot.WebApi
             {
                 c.CLIENT_ID = Configuration["CLIENT_ID"];
                 c.CLIENT_SECRET = Configuration["CLIENT_SECRET"];
-                c.SuccessRedirectUri = successUri;
+                c.SuccessRedirectUri = $"{successUri}?type=slack";
                 c.OnSuccess = async (teamId,teamName, s) =>
                 {
                     var msg = s.GetService<IMessageSession>();
@@ -79,7 +79,7 @@ namespace FplBot.WebApi
             {
                 c.CLIENT_ID = Configuration["DISCORD_CLIENT_ID"];
                 c.CLIENT_SECRET = Configuration["DISCORD_CLIENT_SECRET"];
-                c.SuccessRedirectUri = successUri;
+                c.SuccessRedirectUri = $"{successUri}?type=discord";
                 c.OnSuccess = async (guildId,guildName, s) =>
                 {
                     var msg = s.GetService<IMessageSession>();
