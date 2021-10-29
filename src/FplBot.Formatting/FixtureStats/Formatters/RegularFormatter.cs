@@ -7,24 +7,27 @@ namespace FplBot.Formatting.FixtureStats
 {
     internal class RegularFormatter : IFormat
     {
-        private readonly IDescribeEvents _formatter;
+        private readonly IDescribeEvents _describer;
         private readonly FormattingType _formattingType;
 
-        public RegularFormatter(IDescribeEvents formatter, FormattingType formattingType)
+        public RegularFormatter(IDescribeEvents describer, FormattingType formattingType)
         {
-            _formatter = formatter;
+            _describer = describer;
             _formattingType = formattingType;
         }
 
         public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
         {
+            if(_describer is NoOpDescriber)
+                return Enumerable.Empty<string>();
+
             return events.GroupBy(g => g.Player).Select( g =>
             {
-                var message = string.Format(_formatter.EventDescriptionSingular, $"{g.Key.FirstName} {g.Key.SecondName}", _formatter.EventEmoji);
+                var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.FirstName} {g.Key.SecondName}", _describer.EventEmoji);
                 if (g.Count() > 1)
                 {
-                    var multipleEmojis = String.Concat(Enumerable.Repeat(_formatter.EventEmoji, g.Count()));
-                    message = string.Format(_formatter.EventDescriptionPlural, $"{g.Key.FirstName} {g.Key.SecondName} {multipleEmojis}", g.Count(), _formatter.EventEmoji);
+                    var multipleEmojis = String.Concat(Enumerable.Repeat(_describer.EventEmoji, g.Count()));
+                    message = string.Format(_describer.EventDescriptionPlural, $"{g.Key.FirstName} {g.Key.SecondName} {multipleEmojis}", g.Count(), _describer.EventEmoji);
                 }
 
                 if (g.Any(g => g.IsRemoved))
@@ -45,7 +48,7 @@ namespace FplBot.Formatting.FixtureStats
                 case FormattingType.Discord:
                     return "~~";
                 default:
-                    return "ð";
+                    return "ℹ️";
             }
         }
     }

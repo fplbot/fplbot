@@ -52,12 +52,15 @@ namespace FplBot.WebApi.Controllers
             PlayerDetails playerDetails1 = new(1,"First", "Last", "Testerson");
             PlayerDetails playerDetails2 = new(2,"Yolo", "Yolsen", "Yolerson");
             TeamType teamDetails = TeamType.Home;
+
             List<PlayerEvent> playerEvents = new()
             {
                 new PlayerEvent(playerDetails1, teamDetails, IsRemoved: isRemoved),
-                new PlayerEvent(playerDetails2, teamDetails, false)
+                new PlayerEvent(playerDetails2, teamDetails, false),
             };
+
             statMap.Add(type, playerEvents);
+
             fixtureEventsList.Add(new FixtureEvents(fixtureScore, statMap));
             return new FixtureEventsOccured(fixtureEventsList);
         }
