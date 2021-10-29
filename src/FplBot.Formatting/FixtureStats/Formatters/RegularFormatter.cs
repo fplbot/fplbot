@@ -18,9 +18,6 @@ namespace FplBot.Formatting.FixtureStats
 
         public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
         {
-            if(_describer is NoOpDescriber)
-                return Enumerable.Empty<string>();
-
             return events.GroupBy(g => g.Player).Select( g =>
             {
                 var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.FirstName} {g.Key.SecondName}", _describer.EventEmoji);

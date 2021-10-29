@@ -23,7 +23,7 @@ namespace FplBot.Formatting.FixtureStats
                 StatType.RedCards => CreateFormatter(new RedCardDescriber()),
                 StatType.PenaltiesMissed => CreateFormatter(new PenaltyMissDescriber()),
                 StatType.PenaltiesSaved => CreateFormatter(new PentaltySavedDescriber()),
-                _ => CreateFormatter(new NoOpDescriber())
+                _ => new NoOpFormatter()
             };
         }
 
