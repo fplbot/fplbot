@@ -83,8 +83,19 @@ namespace FplBot.Tests
 
         public static Fixture WithYellowCard(this Fixture fixture)
         {
-            fixture.FinishedProvisional = true;
             fixture.Stats = fixture.Stats.Append(Yellow(PlayerId)).ToArray();
+            return fixture;
+        }
+
+        public static Fixture WithSaves(this Fixture fixture)
+        {
+            fixture.Stats = fixture.Stats.Append(Saves(PlayerId)).ToArray();
+            return fixture;
+        }
+
+        public static Fixture WithBonus(this Fixture fixture)
+        {
+            fixture.Stats = fixture.Stats.Append(Bonus(PlayerId)).ToArray();
             return fixture;
         }
 
@@ -103,12 +114,27 @@ namespace FplBot.Tests
 
         private static FixtureStat Yellow(int playerId)
         {
+            return CreateStat(playerId, "yellow_cards");
+        }
+
+        private static FixtureStat Bonus(int playerId)
+        {
+            return CreateStat(playerId, "bonus");
+        }
+
+        private static FixtureStat Saves(int playerId)
+        {
+            return CreateStat(playerId, "saves");
+        }
+
+        private static FixtureStat CreateStat(int playerId, string identifier)
+        {
             return new FixtureStat
             {
-                Identifier = "yellow_cards",
+                Identifier = identifier,
                 HomeStats = new List<FixtureStatValue>
                 {
-                    new FixtureStatValue {Element = playerId, Value = 1}
+                    new FixtureStatValue { Element = playerId, Value = 1 }
                 },
                 AwayStats = new List<FixtureStatValue> { }
             };

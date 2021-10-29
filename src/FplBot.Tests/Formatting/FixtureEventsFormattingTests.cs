@@ -78,9 +78,56 @@ namespace FplBot.Tests
             var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
             foreach (var formatttedEvent in formattedEvents)
             {
-                _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+                _helper.WriteLine($"{formatttedEvent.Title} {string.Join("\n", formatttedEvent.Details)}");
             }
             Assert.Contains("~~PlayerFirstName PlayerSecondName scored a goal! ⚽️~~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
+        }
+
+        [Fact]
+        public void Formatting_ShouldNotFormat_ForIrrelevantStats()
+        {
+            var disordEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateIrrelevantEvents(), subscribes => true,  FormattingType.Discord);
+            foreach (var formatttedEvent in disordEvents)
+            {
+                _helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
+            }
+            Assert.Single(disordEvents);
+            Assert.Contains("scored a goal", disordEvents.First().Details);
+
+
+            var slackEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateIrrelevantEvents(), subscribes => true, FormattingType.Slack);
+            foreach (var formatttedEvent in slackEvents)
+            {
+                _helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
+            }
+            Assert.Single(slackEvents);
+            Assert.Contains("scored a goal", slackEvents.First().Details);
+        }
+
+        private List<FixtureEvents> CreateIrrelevantEvents()
+        {
+            var fixture = TestBuilder.AwayTeamGoal(1,1);
+            return new List<FixtureEvents>
+            {
+                new FixtureEvents
+                (
+                    new FixtureScore
+                    (
+                        new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name, TestBuilder.HomeTeam().ShortName),
+                        new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name, TestBuilder.AwayTeam().ShortName),
+                        1,
+                        0
+                    ),
+                    new Dictionary<StatType, List<PlayerEvent>>
+                    {
+                        { StatType.YellowCards, new List<PlayerEvent>{ new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved:false)}},
+                        { StatType.Bonus, new List<PlayerEvent>{ new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved:false)}},
+                        { StatType.Saves, new List<PlayerEvent>{ new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved:false)}},
+                        { StatType.GoalsScored, new List<PlayerEvent>{ new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved:false)}},
+
+                    }
+                )
+            };
         }
 
         private List<FixtureEvents> CreateGoalEvent(bool removed = false)
