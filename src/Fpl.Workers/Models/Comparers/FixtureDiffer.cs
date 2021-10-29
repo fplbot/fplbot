@@ -18,7 +18,7 @@ namespace Fpl.Workers.Models.Comparers
             foreach (var stat in newFixture.Stats)
             {
                 var type = StatHelper.FromStatString(stat.Identifier);
-                if (type == StatType.Unknown || type == StatType.YellowCards)
+                if (type is StatType.Unknown or StatType.YellowCards or StatType.Saves or StatType.Bonus)
                 {
                     continue;
                 }

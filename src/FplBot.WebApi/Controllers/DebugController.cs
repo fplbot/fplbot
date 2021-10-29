@@ -34,6 +34,7 @@ namespace FplBot.WebApi.Controllers
                 // await _session.Publish(FixtureEvents(StatType.RedCards, removed));
                 await _session.Publish(FixtureEvents(StatType.YellowCards, removed));
                 await _session.Publish(FixtureEvents(StatType.Saves, removed));
+                await _session.Publish(FixtureEvents(StatType.Bonus, removed));
                 return new OkResult();
             }
 

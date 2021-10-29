@@ -74,5 +74,27 @@ namespace FplBot.Tests
 
             Assert.Empty(events);
         }
+
+        [Fact]
+        public void Saves_DoesNotProduceEvents()
+        {
+            var initial = TestBuilder.NoGoals(fixtureCode:10);
+            var withSaves = TestBuilder.NoGoals(fixtureCode:10).WithSaves();
+
+            var events = FixtureDiffer.DiffFixtureStats(newFixture:withSaves,initial, new List<Player> { TestBuilder.Player()});
+
+            Assert.Empty(events);
+        }
+
+        [Fact]
+        public void Bonus_DoesNotProduceEvents()
+        {
+            var initial = TestBuilder.NoGoals(fixtureCode:10);
+            var withBonus = TestBuilder.NoGoals(fixtureCode:10).WithBonus();
+
+            var events = FixtureDiffer.DiffFixtureStats(newFixture:withBonus,initial, new List<Player> { TestBuilder.Player()});
+
+            Assert.Empty(events);
+        }
     }
 }

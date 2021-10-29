@@ -12,7 +12,6 @@ namespace FplBot.Slack.Extensions
                 StatType.GoalsScored => EventSubscription.FixtureGoals,
                 StatType.Assists => EventSubscription.FixtureAssists,
                 StatType.OwnGoals => EventSubscription.FixtureGoals,
-                StatType.YellowCards => EventSubscription.FixtureCards,
                 StatType.RedCards => EventSubscription.FixtureCards,
                 StatType.PenaltiesSaved => EventSubscription.FixturePenaltyMisses,
                 StatType.PenaltiesMissed => EventSubscription.FixturePenaltyMisses,
