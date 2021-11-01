@@ -68,12 +68,16 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
         run: heroku container:release web --app blank-fplbot
       - run: git log $(git describe --tags --abbrev=0)..HEAD --oneline
-      - name: Log commit messages since last release
+      - name: Generate CHANGELOG.md
         id: releasenotes
         run: |
-          echo 'RELEASE_NOTES<<EOF' >> $GITHUB_ENV
-          git log $(git describe --tags --abbrev=0)..HEAD --oneline >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          gh api repos/$GITHUB_REPOSITORY/releases/generate-notes \
+          -f tag_name="${{ steps.gitversion.outputs.majorMinorPatch }}" \
+          -q .body > CHANGELOG.md
+          echo -e "\n\n" >> CHANGELOG.md
+          git log $(git describe --tags --abbrev=0)..HEAD --oneline >> CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -82,7 +86,7 @@ jobs:
         with:
           tag_name: ${{ steps.gitversion.outputs.majorMinorPatch }}
           release_name: Release ${{ steps.gitversion.outputs.majorMinorPatch }}
-          body: ${{ env.RELEASE_NOTES }}
+          body_path: CHANGELOG.md
           draft: false
           prerelease: false
       - name: update deployment status
