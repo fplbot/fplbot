@@ -74,7 +74,7 @@ namespace FplBot.Formatting.Helpers
                     {
                         if (captainGroup.Count >= i)
                         {
-                            sb.Append("▪️");
+                            sb.Append("⬛");
                         }
                         else
                         {
