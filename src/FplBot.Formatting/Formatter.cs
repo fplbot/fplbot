@@ -407,7 +407,6 @@ namespace FplBot.Formatting
             var globalAverage = (int)Math.Round((double)gw.AverageScore);
             var leagueAverage = (int)Math.Round((double)league.Standings.Entries.Average(entry => entry.EventTotal));
             var diff = Math.Abs(globalAverage - leagueAverage);
-            var nuance = diff <= 5 ? "slightly " : "";
 
             if (globalAverage < 40)
             {
@@ -422,18 +421,7 @@ namespace FplBot.Formatting
                 introText += $" The global average was *{globalAverage}* points.";
             }
 
-            if (leagueAverage > globalAverage)
-            {
-                introText += $" Your league did {nuance}better than this, though - with *{leagueAverage}* points average.";
-            }
-            else if (leagueAverage == globalAverage)
-            {
-                introText += $" I guess your league is pretty mediocre, since you got the exact same *{leagueAverage}* points average.";
-            }
-            else
-            {
-                introText += $" I'm afraid your league did {nuance}worse than this, with your *{leagueAverage}* points average.";
-            }
+            introText += $" Your league's average was *{leagueAverage}* points.";   
 
             return introText;
         }
