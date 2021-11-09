@@ -1,9 +1,8 @@
-namespace FplBot.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats.Describers;
+
+internal interface IDescribeEvents
 {
-    internal interface IDescribeEvents
-    {
-        string EventDescriptionSingular { get; }
-        string EventDescriptionPlural { get; }
-        string EventEmoji { get; }
-    }
+    string EventDescriptionSingular { get; }
+    string EventDescriptionPlural { get; }
+    string EventEmoji { get; }
 }

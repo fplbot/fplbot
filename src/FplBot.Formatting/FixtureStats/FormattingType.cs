@@ -1,8 +1,7 @@
-namespace FplBot.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats;
+
+public enum FormattingType
 {
-    public enum FormattingType
-    {
-        Slack,
-        Discord
-    }
+    Slack,
+    Discord
 }

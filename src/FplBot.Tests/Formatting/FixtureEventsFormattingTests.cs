@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
+using FplBot.Formatting.FixtureStats.Describers;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Helpers;
 using FplBot.Tests.Helpers;

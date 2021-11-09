@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
 
-    <ItemGroup>      
-      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
-      <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj" />
-      <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj"/>
+    <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj"/>
+    <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj"/>
+  </ItemGroup>
 
 </Project>

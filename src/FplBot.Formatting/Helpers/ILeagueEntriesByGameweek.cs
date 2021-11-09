@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace FplBot.Formatting.Helpers
+namespace FplBot.Formatting.Helpers;
+
+public interface ILeagueEntriesByGameweek
 {
-    public interface ILeagueEntriesByGameweek
-    {
-        Task<IEnumerable<GameweekEntry>> GetEntriesForGameweek(int gw, int leagueId);
-    }
+    Task<IEnumerable<GameweekEntry>> GetEntriesForGameweek(int gw, int leagueId);
 }
