@@ -17,7 +17,8 @@ jobs:
           dotnet-version: "3.1.x"
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "5.0.400"
+          dotnet-version: "6.0.x"
+          include-prerelease: true
       - name: Test
         run: dotnet test src --logger "GitHubActions;report-warnings=false"
         env:

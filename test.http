@@ -8,7 +8,7 @@ X-Correlation-Id:testtool
     "event": {
         "type": "app_mention",
         "user": "USRAR1YTV",
-        "text" : "<@BOT123> unsubscribe fixturegoals",
+        "text" : "<@BOT123> player salah",
         "channel": "C92QZTVEF"
     }
 }
