@@ -1,61 +1,57 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Fpl.Client.Models;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
 
-namespace FplBot.Tests.Helpers
+namespace FplBot.Tests.Helpers;
+
+public class InMemorySlackTeamRepository : ISlackTeamRepository
 {
-    public class InMemorySlackTeamRepository : ISlackTeamRepository
+    private readonly int _leagueId;
+
+    public InMemorySlackTeamRepository()
     {
-        private readonly int _leagueId;
+        _leagueId = 15263;
+    }
 
-        public InMemorySlackTeamRepository()
+    public Task<SlackTeam> GetTeam(string teamId)
+    {
+        return Task.FromResult(new SlackTeam
         {
-            _leagueId = 15263;
-        }
+            Subscriptions = new EventSubscription[0],
+            FplBotSlackChannel = "#lol",
+            FplbotLeagueId = _leagueId
+        });
+    }
 
-        public Task<SlackTeam> GetTeam(string teamId)
-        {
-            return Task.FromResult(new SlackTeam
+    public Task UpdateLeagueId(string teamId, long newLeagueId)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteByTeamId(string teamId)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public Task<IEnumerable<SlackTeam>> GetAllTeams()
+    {
+        IEnumerable<SlackTeam> teams = new []{
+            new SlackTeam
             {
-                Subscriptions = new EventSubscription[0],
+                FplbotLeagueId = _leagueId,
                 FplBotSlackChannel = "#lol",
-                FplbotLeagueId = _leagueId
-            });
-        }
+                Subscriptions = new EventSubscription[0]
+            }
+        };
+        return Task.FromResult(teams);
+    }
 
-        public Task UpdateLeagueId(string teamId, long newLeagueId)
-        {
-            return Task.CompletedTask;
-        }
+    public Task UpdateChannel(string teamId, string newChannel)
+    {
+        return Task.CompletedTask;
+    }
 
-        public Task DeleteByTeamId(string teamId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<IEnumerable<SlackTeam>> GetAllTeams()
-        {
-            IEnumerable<SlackTeam> teams = new []{
-                new SlackTeam
-                {
-                    FplbotLeagueId = _leagueId,
-                    FplBotSlackChannel = "#lol",
-                    Subscriptions = new EventSubscription[0]
-                }
-            };
-            return Task.FromResult(teams);
-        }
-
-        public Task UpdateChannel(string teamId, string newChannel)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
-        {
-            return Task.CompletedTask;
-        }
+    public Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
+    {
+        return Task.CompletedTask;
     }
 }

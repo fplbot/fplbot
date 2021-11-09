@@ -1,130 +1,127 @@
 using Fpl.Client.Models;
 using FplBot.Formatting;
-using FplBot.Slack.Handlers.FplEvents;
-using FplBot.Slack.Helpers.Formatting;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace FplBot.Tests.Formatting
+namespace FplBot.Tests.Formatting;
+
+public class FulltimeFormattingTests
 {
-    public class FulltimeFormattingTests
+    private readonly ITestOutputHelper _helper;
+
+    public FulltimeFormattingTests(ITestOutputHelper helper)
     {
-        private readonly ITestOutputHelper _helper;
+        _helper = helper;
+    }
 
-        public FulltimeFormattingTests(ITestOutputHelper helper)
+    [Fact]
+    public void Distributed()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
-            _helper = helper;
-        }
+            BonusPointsPlayer("player-E", 10),
+            BonusPointsPlayer("player-D", 20),
+            BonusPointsPlayer("player-C", 30),
+            BonusPointsPlayer("player-B", 40),
+            BonusPointsPlayer("player-A", 50)
+        })));
+    }
 
-        [Fact]
-        public void Distributed()
+    [Fact]
+    public void SharedFirstPlace()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+            BonusPointsPlayer("player-E", 10),
+            BonusPointsPlayer("player-D", 20),
+            BonusPointsPlayer("player-C", 30),
+            BonusPointsPlayer("player-B", 40),
+            BonusPointsPlayer("player-A", 40)
+        })));
+    }
+
+    [Fact]
+    public void AllSharedFirstPlace()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        {
+            BonusPointsPlayer("player-E", 10),
+            BonusPointsPlayer("player-D", 20),
+            BonusPointsPlayer("player-C", 40),
+            BonusPointsPlayer("player-B", 40),
+            BonusPointsPlayer("player-A", 40)
+        })));
+    }
+
+    [Fact]
+    public void TiedSecondPlace()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        {
+            BonusPointsPlayer("player-E", 10),
+            BonusPointsPlayer("player-D", 20),
+            BonusPointsPlayer("player-C", 30),
+            BonusPointsPlayer("player-B", 30),
+            BonusPointsPlayer("player-A", 40)
+        })));
+    }
+
+    [Fact]
+    public void TiedSecondPlaceForThreePlayers()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        {
+            BonusPointsPlayer("player-E", 10),
+            BonusPointsPlayer("player-D", 30),
+            BonusPointsPlayer("player-C", 30),
+            BonusPointsPlayer("player-B", 30),
+            BonusPointsPlayer("player-A", 40)
+        })));
+    }
+
+    [Fact]
+    public void TiedThirdPlace()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        {
+            BonusPointsPlayer("player-E", 10),
+            BonusPointsPlayer("player-D", 20),
+            BonusPointsPlayer("player-C", 20),
+            BonusPointsPlayer("player-B", 30),
+            BonusPointsPlayer("player-A", 40)
+        })));
+    }
+
+    [Fact]
+    public void TiedThirdPlaceForMultiplePlayers()
+    {
+        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        {
+            BonusPointsPlayer("player-E", 20),
+            BonusPointsPlayer("player-D", 20),
+            BonusPointsPlayer("player-C", 20),
+            BonusPointsPlayer("player-B", 30),
+            BonusPointsPlayer("player-A", 40)
+        })));
+    }
+
+    private FinishedFixture GetProvisionalFinishedFixture(params BonusPointsPlayer[] bonusPointsPlayers)
+    {
+        return new FinishedFixture
             {
-                BonusPointsPlayer("player-E", 10),
-                BonusPointsPlayer("player-D", 20),
-                BonusPointsPlayer("player-C", 30),
-                BonusPointsPlayer("player-B", 40),
-                BonusPointsPlayer("player-A", 50)
-            })));
-        }
-
-        [Fact]
-        public void SharedFirstPlace()
-        {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-            {
-                BonusPointsPlayer("player-E", 10),
-                BonusPointsPlayer("player-D", 20),
-                BonusPointsPlayer("player-C", 30),
-                BonusPointsPlayer("player-B", 40),
-                BonusPointsPlayer("player-A", 40)
-            })));
-        }
-
-        [Fact]
-        public void AllSharedFirstPlace()
-        {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-            {
-                BonusPointsPlayer("player-E", 10),
-                BonusPointsPlayer("player-D", 20),
-                BonusPointsPlayer("player-C", 40),
-                BonusPointsPlayer("player-B", 40),
-                BonusPointsPlayer("player-A", 40)
-            })));
-        }
-
-        [Fact]
-        public void TiedSecondPlace()
-        {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-            {
-                BonusPointsPlayer("player-E", 10),
-                BonusPointsPlayer("player-D", 20),
-                BonusPointsPlayer("player-C", 30),
-                BonusPointsPlayer("player-B", 30),
-                BonusPointsPlayer("player-A", 40)
-            })));
-        }
-
-        [Fact]
-        public void TiedSecondPlaceForThreePlayers()
-        {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-            {
-                BonusPointsPlayer("player-E", 10),
-                BonusPointsPlayer("player-D", 30),
-                BonusPointsPlayer("player-C", 30),
-                BonusPointsPlayer("player-B", 30),
-                BonusPointsPlayer("player-A", 40)
-            })));
-        }
-
-        [Fact]
-        public void TiedThirdPlace()
-        {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-            {
-                BonusPointsPlayer("player-E", 10),
-                BonusPointsPlayer("player-D", 20),
-                BonusPointsPlayer("player-C", 20),
-                BonusPointsPlayer("player-B", 30),
-                BonusPointsPlayer("player-A", 40)
-            })));
-        }
-
-        [Fact]
-        public void TiedThirdPlaceForMultiplePlayers()
-        {
-            _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-            {
-                BonusPointsPlayer("player-E", 20),
-                BonusPointsPlayer("player-D", 20),
-                BonusPointsPlayer("player-C", 20),
-                BonusPointsPlayer("player-B", 30),
-                BonusPointsPlayer("player-A", 40)
-            })));
-        }
-
-        private FinishedFixture GetProvisionalFinishedFixture(params BonusPointsPlayer[] bonusPointsPlayers)
-        {
-            return new FinishedFixture
-                {
-                    Fixture = TestBuilder.AwayTeamGoal(1, 1),
-                    HomeTeam = TestBuilder.HomeTeam(),
-                    AwayTeam = TestBuilder.AwayTeam(),
-                    BonusPoints = bonusPointsPlayers
-                }
+                Fixture = TestBuilder.AwayTeamGoal(1, 1),
+                HomeTeam = TestBuilder.HomeTeam(),
+                AwayTeam = TestBuilder.AwayTeam(),
+                BonusPoints = bonusPointsPlayers
+            }
             ;
-        }
-        BonusPointsPlayer BonusPointsPlayer(string webName, int bonusPoints)
+    }
+    BonusPointsPlayer BonusPointsPlayer(string webName, int bonusPoints)
+    {
+        return new BonusPointsPlayer
         {
-            return new BonusPointsPlayer
-            {
-                Player = new Player { WebName = webName},
-                BonusPoints = bonusPoints
-            };
-        }
+            Player = new Player { WebName = webName},
+            BonusPoints = bonusPoints
+        };
     }
 }

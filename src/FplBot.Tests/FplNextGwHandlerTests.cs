@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using FakeItEasy;
 
 using FplBot.Slack.Handlers.SlackEvents;
@@ -8,36 +7,35 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace FplBot.Tests
+namespace FplBot.Tests;
+
+public class FplNextGwHandlerTests
 {
-    public class FplNextGwHandlerTests
+    private readonly IHandleAppMentions _client;
+
+    public FplNextGwHandlerTests(ITestOutputHelper logger)
     {
-        private readonly IHandleAppMentions _client;
+        _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
+    }
 
-        public FplNextGwHandlerTests(ITestOutputHelper logger)
-        {
-            _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
-        }
-
-        [Theory(Skip = "Disable it temporary until ihaztimetofix")]
-        [InlineData("@fplbot nextgw")]
-        public async Task GetPlayerHandler(string input)
-        {
-            A.CallTo(() => Factory.SlackClient.UsersList())
-                .Returns(new UsersListResponse
+    [Theory(Skip = "Disable it temporary until ihaztimetofix")]
+    [InlineData("@fplbot nextgw")]
+    public async Task GetPlayerHandler(string input)
+    {
+        A.CallTo(() => Factory.SlackClient.UsersList())
+            .Returns(new UsersListResponse
+            {
+                Ok = true, Members = new []
                 {
-                    Ok = true, Members = new []
+                    new Slackbot.Net.SlackClients.Http.Models.Responses.UsersList.User
                     {
-                        new Slackbot.Net.SlackClients.Http.Models.Responses.UsersList.User
-                        {
-                            Id = "123"
-                        },
-                    }
-                });
-            var dummy = Factory.CreateDummyEventByUser(input, "123");
-            var playerData = await _client.Handle(dummy.meta, dummy.@event);
+                        Id = "123"
+                    },
+                }
+            });
+        var dummy = Factory.CreateDummyEventByUser(input, "123");
+        var playerData = await _client.Handle(dummy.meta, dummy.@event);
 
-            Assert.NotEmpty(playerData.Response);
-        }
+        Assert.NotEmpty(playerData.Response);
     }
 }
