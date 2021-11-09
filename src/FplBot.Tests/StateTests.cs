@@ -7,7 +7,6 @@ using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;
-using Xunit;
 
 
 namespace FplBot.Tests;

@@ -1,8 +1,6 @@
 using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Events.v1;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace FplBot.Tests.Formatting;
 

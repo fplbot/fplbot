@@ -1,7 +1,5 @@
 using Fpl.Client.Models;
 using Fpl.Workers.Models.Mappers;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace FplBot.Tests;
 

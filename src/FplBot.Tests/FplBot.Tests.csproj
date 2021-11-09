@@ -49,4 +49,9 @@
       <ProjectReference Include="..\Fpl.Workers\Fpl.Workers.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Xunit.Abstractions" />
+  </ItemGroup>
+
 </Project>

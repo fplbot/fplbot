@@ -4,8 +4,6 @@ using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Tests.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace FplBot.Tests;
 

@@ -7,8 +7,6 @@ using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace FplBot.Tests;
 

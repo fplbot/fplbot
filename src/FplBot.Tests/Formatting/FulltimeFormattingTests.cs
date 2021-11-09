@@ -1,7 +1,5 @@
 using Fpl.Client.Models;
 using FplBot.Formatting;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace FplBot.Tests.Formatting;
 

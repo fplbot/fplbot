@@ -1,5 +1,4 @@
 using FplBot.Slack.Helpers;
-using Xunit;
 
 namespace FplBot.Tests;
 

@@ -1,7 +1,6 @@
 using Fpl.Client.Models;
 using Fpl.Workers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
-using Xunit;
 
 namespace FplBot.Tests;
 

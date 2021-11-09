@@ -1,7 +1,6 @@
 using FakeItEasy;
 using Fpl.Workers;
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace FplBot.Tests;
 

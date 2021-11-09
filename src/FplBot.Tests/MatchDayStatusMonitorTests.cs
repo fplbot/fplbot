@@ -5,7 +5,6 @@ using Fpl.Workers.RecurringActions;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;
-using Xunit;
 
 namespace FplBot.Tests;
 

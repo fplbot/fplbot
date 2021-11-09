@@ -6,7 +6,6 @@ using Fpl.Workers.RecurringActions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;
-using Xunit;
 
 namespace FplBot.Tests;
 

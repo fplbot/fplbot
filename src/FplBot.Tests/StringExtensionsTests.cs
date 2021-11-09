@@ -1,6 +1,5 @@
 ﻿using FplBot.Slack.Data;
 using FplBot.Slack.Data.Models;
-using Xunit;
 
 namespace FplBot.Tests;
 
