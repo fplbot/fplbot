@@ -24,7 +24,6 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: "6.0.x"
-          include-prerelease: true
       - name: start deployment
         uses: bobheadxi/deployments@v0.4.3
         id: deployment
