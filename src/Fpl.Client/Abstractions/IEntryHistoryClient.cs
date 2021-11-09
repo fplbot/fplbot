@@ -1,10 +1,8 @@
-﻿using System.Threading.Tasks;
-using Fpl.Client.Models;
+﻿using Fpl.Client.Models;
 
-namespace Fpl.Client.Abstractions
+namespace Fpl.Client.Abstractions;
+
+public interface IEntryHistoryClient
 {
-    public interface IEntryHistoryClient
-    {
-        Task<EntryHistory> GetHistory(int teamId);
-    }
+    Task<EntryHistory> GetHistory(int teamId);
 }

@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Fpl.Client.Models
+namespace Fpl.Client.Models;
+
+public class GameSettings
 {
-    public class GameSettings
-    {
-        [JsonPropertyName("game")]
-        public Game Game { get; set; }
-    }
+    [JsonPropertyName("game")]
+    public Game Game { get; set; }
 }

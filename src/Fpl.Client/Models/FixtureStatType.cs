@@ -1,16 +1,15 @@
-﻿namespace Fpl.Client.Models
+﻿namespace Fpl.Client.Models;
+
+public enum FplFixtureStatType
 {
-    public enum FplFixtureStatType
-    {
-        GoalScored,
-        Assist,
-        OwnGoal,
-        PenaltySaved,
-        PenaltyMissed,
-        YellowCard,
-        RedCard,
-        Save,
-        Bonus,
-        Bps
-    }
+    GoalScored,
+    Assist,
+    OwnGoal,
+    PenaltySaved,
+    PenaltyMissed,
+    YellowCard,
+    RedCard,
+    Save,
+    Bonus,
+    Bps
 }

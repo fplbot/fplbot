@@ -1,12 +1,11 @@
 ﻿
-namespace Fpl.Client.Models
+namespace Fpl.Client.Models;
+
+public enum FplPlayerPosition
 {
-    public enum FplPlayerPosition
-    {
-        NotSet = 0,
-        Goalkeeper = 1,
-        Defender = 2,
-        Midfielder = 3,
-        Forward = 4,
-    }
+    NotSet = 0,
+    Goalkeeper = 1,
+    Defender = 2,
+    Midfielder = 3,
+    Forward = 4,
 }

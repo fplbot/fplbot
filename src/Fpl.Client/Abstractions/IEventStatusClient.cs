@@ -1,10 +1,8 @@
-using System.Threading.Tasks;
 using Fpl.Client.Models;
 
-namespace Fpl.Client.Abstractions
+namespace Fpl.Client.Abstractions;
+
+public interface IEventStatusClient
 {
-    public interface IEventStatusClient
-    {
-        Task<EventStatusResponse> GetEventStatus();
-    }
+    Task<EventStatusResponse> GetEventStatus();
 }

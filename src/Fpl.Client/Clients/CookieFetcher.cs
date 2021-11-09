@@ -1,38 +1,35 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Fpl.Client.Clients
-{
-    public class CookieFetcher
-    {
-        private readonly Authenticator _authenticator;
-        private readonly CookieCache _cache;
-        private readonly ILogger<CookieFetcher> _logger;
+namespace Fpl.Client.Clients;
 
-        public CookieFetcher(Authenticator authenticator, CookieCache cache, ILogger<CookieFetcher> logger)
-        {
-            _authenticator = authenticator;
-            _cache = cache;
-            _logger = logger;
-        }
+public class CookieFetcher
+{
+    private readonly Authenticator _authenticator;
+    private readonly CookieCache _cache;
+    private readonly ILogger<CookieFetcher> _logger;
+
+    public CookieFetcher(Authenticator authenticator, CookieCache cache, ILogger<CookieFetcher> logger)
+    {
+        _authenticator = authenticator;
+        _cache = cache;
+        _logger = logger;
+    }
         
-        public async Task<string> GetSessionCookie()
-        {
-            var cookieFromCache = await _cache.GetAsync();
+    public async Task<string> GetSessionCookie()
+    {
+        var cookieFromCache = await _cache.GetAsync();
             
-            if (string.IsNullOrEmpty(cookieFromCache))
-            {
-                _logger.LogInformation("Cache miss. Re-authenticating.");
-                var cookies = await _authenticator.Authenticate();
+        if (string.IsNullOrEmpty(cookieFromCache))
+        {
+            _logger.LogInformation("Cache miss. Re-authenticating.");
+            var cookies = await _authenticator.Authenticate();
                 
-                var sessionCookieExpiry = cookies.First(c => c.Name == "sessionid").Expires;
-                var cookieString = string.Join("; ", cookies);
-                await _cache.SetAsync(cookieString, sessionCookieExpiry);
-                return cookieString;
-            }
-            _logger.LogDebug("Cache hit");
-            return cookieFromCache;
+            var sessionCookieExpiry = cookies.First(c => c.Name == "sessionid").Expires;
+            var cookieString = string.Join("; ", cookies);
+            await _cache.SetAsync(cookieString, sessionCookieExpiry);
+            return cookieString;
         }
+        _logger.LogDebug("Cache hit");
+        return cookieFromCache;
     }
 }
