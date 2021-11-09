@@ -1,21 +1,20 @@
-namespace FplBot.Discord.Data
+namespace FplBot.Discord.Data;
+
+public enum EventSubscription
 {
-    public enum EventSubscription
-    {
-        All,
-        Standings,
-        Captains,
-        Transfers,
-        FixtureGoals,
-        FixtureAssists,
-        FixtureCards,
-        FixturePenaltyMisses,
-        FixtureFullTime,
-        Taunts,
-        PriceChanges,
-        InjuryUpdates,
-        Deadlines,
-        Lineups,
-        NewPlayers
-    }
+    All,
+    Standings,
+    Captains,
+    Transfers,
+    FixtureGoals,
+    FixtureAssists,
+    FixtureCards,
+    FixturePenaltyMisses,
+    FixtureFullTime,
+    Taunts,
+    PriceChanges,
+    InjuryUpdates,
+    Deadlines,
+    Lineups,
+    NewPlayers
 }
