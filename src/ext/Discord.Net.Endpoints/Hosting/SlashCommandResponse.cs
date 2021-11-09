@@ -1,7 +1,6 @@
-namespace Discord.Net.Endpoints.Hosting
+namespace Discord.Net.Endpoints.Hosting;
+
+public abstract class SlashCommandResponse
 {
-    public abstract class SlashCommandResponse
-    {
-        public int Type { get; protected init; }
-    }
+    public int Type { get; protected init; }
 }

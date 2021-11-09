@@ -1,7 +1,6 @@
-namespace Discord.Net.Endpoints.Hosting
+namespace Discord.Net.Endpoints.Hosting;
+
+public interface IDiscordbotEventsBuilder
 {
-    public interface IDiscordbotEventsBuilder
-    {
-        IDiscordbotEventsBuilder AddSlashCommandHandler<T>() where T: class, ISlashCommandHandler;
-    }
+    IDiscordbotEventsBuilder AddSlashCommandHandler<T>() where T: class, ISlashCommandHandler;
 }
