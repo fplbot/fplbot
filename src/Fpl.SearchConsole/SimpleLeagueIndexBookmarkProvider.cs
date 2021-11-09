@@ -1,48 +1,43 @@
-using System;
-using System.Threading.Tasks;
 using Fpl.Search.Data.Abstractions;
-using Fpl.Search.Indexing;
-using Microsoft.Extensions.Logging;
 
-namespace Fpl.SearchConsole
+namespace Fpl.SearchConsole;
+
+internal class SimpleLeagueIndexBookmarkProvider : IIndexBookmarkProvider
 {
-    internal class SimpleLeagueIndexBookmarkProvider : IIndexBookmarkProvider
+    private readonly ILogger<SimpleLeagueIndexBookmarkProvider> _logger;
+    private string Path = "./bookmark.txt";
+
+    public SimpleLeagueIndexBookmarkProvider(ILogger<SimpleLeagueIndexBookmarkProvider> logger)
     {
-        private readonly ILogger<SimpleLeagueIndexBookmarkProvider> _logger;
-        private string Path = "./bookmark.txt";
+        _logger = logger;
+    }
 
-        public SimpleLeagueIndexBookmarkProvider(ILogger<SimpleLeagueIndexBookmarkProvider> logger)
+    public async Task<int> GetBookmark()
+    {
+        try
         {
-            _logger = logger;
+            var txt = await System.IO.File.ReadAllTextAsync(Path);
+
+            return int.TryParse(txt, out int bookmark) ? bookmark : 1;
         }
-
-        public async Task<int> GetBookmark()
+        catch (Exception e)
         {
-            try
-            {
-                var txt = await System.IO.File.ReadAllTextAsync(Path);
-
-                return int.TryParse(txt, out int bookmark) ? bookmark : 1;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, e.Message);
-                return 1;
-            }
+            _logger.LogError(e, e.Message);
+            return 1;
         }
+    }
 
-        public Task SetBookmark(int bookmark)
+    public Task SetBookmark(int bookmark)
+    {
+        try
         {
-            try
-            {
-                _logger.LogInformation($"Setting bookmark at {bookmark}.");
-                return System.IO.File.WriteAllTextAsync(Path, bookmark.ToString());
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, e.Message);
-                return Task.CompletedTask;
-            }
+            _logger.LogInformation($"Setting bookmark at {bookmark}.");
+            return System.IO.File.WriteAllTextAsync(Path, bookmark.ToString());
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return Task.CompletedTask;
         }
     }
 }
