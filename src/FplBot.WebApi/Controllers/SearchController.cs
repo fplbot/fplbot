@@ -1,102 +1,98 @@
-using System.Net.Http;
-using System.Threading.Tasks;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
-namespace FplBot.WebApi.Controllers
+namespace FplBot.WebApi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class SearchController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class SearchController : ControllerBase
+    private readonly ISearchService _searchService;
+    private readonly ILogger<SearchController> _logger;
+
+    public SearchController(ISearchService searchService, ILogger<SearchController> logger)
     {
-        private readonly ISearchService _searchService;
-        private readonly ILogger<SearchController> _logger;
+        _searchService = searchService;
+        _logger = logger;
+    }
 
-        public SearchController(ISearchService searchService, ILogger<SearchController> logger)
+    [HttpGet("entries/{id:int}")]
+    public async Task<IActionResult> GetEntry(int id)
+    {
+        var entry = await _searchService.GetEntry(id);
+
+        if (entry == null)
         {
-            _searchService = searchService;
-            _logger = logger;
+            return NotFound();
         }
 
-        [HttpGet("entries/{id:int}")]
-        public async Task<IActionResult> GetEntry(int id)
+        return Ok(entry);
+    }
+
+    [HttpGet("entries")]
+    public async Task<IActionResult> GetEntries(string query, int page)
+    {
+        var metaData = new SearchMetaData
         {
-            var entry = await _searchService.GetEntry(id);
+            Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+        };
 
-            if (entry == null)
-            {
-                return NotFound();
-            }
+        var searchResult = await _searchService.SearchForEntry(query, page, 10, metaData);
 
-            return Ok(entry);
+        if (searchResult.TotalPages < page && !searchResult.Any())
+        {
+            ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+            return BadRequest(ModelState);
         }
 
-        [HttpGet("entries")]
-        public async Task<IActionResult> GetEntries(string query, int page)
+        return Ok(new
         {
-            var metaData = new SearchMetaData
-            {
-                Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
-            };
+            Hits = searchResult,
+        });
+    }
 
-            var searchResult = await _searchService.SearchForEntry(query, page, 10, metaData);
+    [HttpGet("leagues")]
+    public async Task<IActionResult> GetLeagues(string query, int page, string countryToBoost)
+    {
+        var metaData = new SearchMetaData
+        {
+            Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+        };
 
-            if (searchResult.TotalPages < page && !searchResult.Any())
-            {
-                ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
-                return BadRequest(ModelState);
-            }
+        var searchResult = await _searchService.SearchForLeague(query, page, 10, metaData, countryToBoost);
 
-            return Ok(new
-            {
-                Hits = searchResult,
-            });
+        if (searchResult.TotalPages < page && !searchResult.Any())
+        {
+            ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+            return BadRequest(ModelState);
         }
 
-        [HttpGet("leagues")]
-        public async Task<IActionResult> GetLeagues(string query, int page, string countryToBoost)
+        return Ok(new
         {
-            var metaData = new SearchMetaData
-            {
-                Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
-            };
+            Hits = searchResult,
+        });
+    }
 
-            var searchResult = await _searchService.SearchForLeague(query, page, 10, metaData, countryToBoost);
+    [HttpGet("any")]
+    public async Task<IActionResult> GetAny(string query, int page, SearchType type = SearchType.All)
+    {
+        var metaData = new SearchMetaData
+        {
+            Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
+        };
 
-            if (searchResult.TotalPages < page && !searchResult.Any())
-            {
-                ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
-                return BadRequest(ModelState);
-            }
+        var searchResult = await _searchService.SearchAny(query, page, 10, metaData, type);
 
-            return Ok(new
-            {
-                Hits = searchResult,
-            });
+        if (searchResult.TotalPages < page && !searchResult.Any())
+        {
+            ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
+            return BadRequest(ModelState);
         }
 
-        [HttpGet("any")]
-        public async Task<IActionResult> GetAny(string query, int page, SearchType type = SearchType.All)
+        return Ok(new
         {
-            var metaData = new SearchMetaData
-            {
-                Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
-            };
-
-            var searchResult = await _searchService.SearchAny(query, page, 10, metaData, type);
-
-            if (searchResult.TotalPages < page && !searchResult.Any())
-            {
-                ModelState.AddModelError(nameof(page), $"{nameof(page)} exceeds the total page count");
-                return BadRequest(ModelState);
-            }
-
-            return Ok(new
-            {
-                Hits = searchResult,
-            });
-        }
+            Hits = searchResult,
+        });
     }
 }

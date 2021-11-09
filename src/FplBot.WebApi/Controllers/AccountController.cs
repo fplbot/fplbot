@@ -1,31 +1,27 @@
-using System.Threading.Tasks;
-using AspNet.Security.OAuth.Slack;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FplBot.WebApi.Controllers
-{
-    [Route("[controller]")]
+namespace FplBot.WebApi.Controllers;
 
-    public class AccountController : Controller
+[Route("[controller]")]
+
+public class AccountController : Controller
+{
+    [Route("/challenge")]
+    public ChallengeResult TriggerChallenge()
     {
-        [Route("/challenge")]
-        public ChallengeResult TriggerChallenge()
+        return Challenge(new AuthenticationProperties
         {
-            return Challenge(new AuthenticationProperties
-            {
-                RedirectUri = "/admin"
-            });
-        }
-        
-        [Route("/logout")]
-        [AllowAnonymous]
-        public async Task<RedirectToPageResult> Logout()
-        {
-            await HttpContext.SignOutAsync();
-            return RedirectToPage("/SignedOut");
-        }
+            RedirectUri = "/admin"
+        });
+    }
+
+    [Route("/logout")]
+    [AllowAnonymous]
+    public async Task<RedirectToPageResult> Logout()
+    {
+        await HttpContext.SignOutAsync();
+        return RedirectToPage("/SignedOut");
     }
 }

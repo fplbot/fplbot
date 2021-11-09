@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FplBot.WebApi.Pages
+namespace FplBot.WebApi.Pages;
+
+public class Success : PageModel
 {
-    public class Success : PageModel
+    public void OnGet()
     {
-        public void OnGet()
-        {
             
-        }
     }
 }
