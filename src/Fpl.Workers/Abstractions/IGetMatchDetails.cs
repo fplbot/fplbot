@@ -1,9 +1,6 @@
-using System.Threading.Tasks;
+namespace Fpl.Workers.Abstractions;
 
-namespace Fpl.Workers.Abstractions
+public interface IGetMatchDetails
 {
-    public interface IGetMatchDetails
-    {
-        Task<MatchDetails> GetMatchDetails(int pulseId);
-    }
+    Task<MatchDetails> GetMatchDetails(int pulseId);
 }
