@@ -1,26 +1,23 @@
-using System.Threading;
-using System.Threading.Tasks;
 using FplBot.VerifiedEntries.Data.Abstractions;
 using MediatR;
 
-namespace FplBot.VerifiedEntries.InternalCommands
+namespace FplBot.VerifiedEntries.InternalCommands;
+
+public record IncrementSelfOwnershipWeekCounter(int EntryId) : INotification;
+
+public class IncrementSelfOwnershipWeekCounterCommandHandler : INotificationHandler<IncrementSelfOwnershipWeekCounter>
 {
-    public record IncrementSelfOwnershipWeekCounter(int EntryId) : INotification;
+    private readonly IVerifiedPLEntriesRepository _repo;
 
-    public class IncrementSelfOwnershipWeekCounterCommandHandler : INotificationHandler<IncrementSelfOwnershipWeekCounter>
+    public IncrementSelfOwnershipWeekCounterCommandHandler(IVerifiedPLEntriesRepository repo)
     {
-        private readonly IVerifiedPLEntriesRepository _repo;
+        _repo = repo;
+    }
 
-        public IncrementSelfOwnershipWeekCounterCommandHandler(IVerifiedPLEntriesRepository repo)
-        {
-            _repo = repo;
-        }
-
-        public async Task Handle(IncrementSelfOwnershipWeekCounter notification, CancellationToken cancellationToken)
-        {
-            var plEntry = await _repo.GetVerifiedPLEntry(notification.EntryId);
-            var selfOwnership = plEntry.SelfOwnershipStats with { WeekCount = plEntry.SelfOwnershipStats.WeekCount + 1 };
-            await _repo.UpdateStats(notification.EntryId, selfOwnership);
-        }
+    public async Task Handle(IncrementSelfOwnershipWeekCounter notification, CancellationToken cancellationToken)
+    {
+        var plEntry = await _repo.GetVerifiedPLEntry(notification.EntryId);
+        var selfOwnership = plEntry.SelfOwnershipStats with { WeekCount = plEntry.SelfOwnershipStats.WeekCount + 1 };
+        await _repo.UpdateStats(notification.EntryId, selfOwnership);
     }
 }
