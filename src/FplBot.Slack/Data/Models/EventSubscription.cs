@@ -1,21 +1,20 @@
-namespace FplBot.Slack.Data.Models
+namespace FplBot.Slack.Data.Models;
+
+public enum EventSubscription
 {
-    public enum EventSubscription
-    {
-        All,
-        Standings,
-        Captains,
-        Transfers,
-        FixtureGoals,
-        FixtureAssists,
-        FixtureCards,
-        FixturePenaltyMisses,
-        FixtureFullTime,
-        Taunts,
-        PriceChanges,
-        InjuryUpdates,
-        Deadlines,
-        Lineups,
-        NewPlayers
-    }
+    All,
+    Standings,
+    Captains,
+    Transfers,
+    FixtureGoals,
+    FixtureAssists,
+    FixtureCards,
+    FixturePenaltyMisses,
+    FixtureFullTime,
+    Taunts,
+    PriceChanges,
+    InjuryUpdates,
+    Deadlines,
+    Lineups,
+    NewPlayers
 }

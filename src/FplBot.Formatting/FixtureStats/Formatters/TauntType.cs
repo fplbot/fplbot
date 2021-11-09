@@ -1,9 +1,8 @@
-namespace FplBot.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats.Formatters;
+
+public enum TauntType
 {
-    public enum TauntType
-    {
-        HasPlayerInTeam,
-        InTransfers,
-        OutTransfers
-    }
+    HasPlayerInTeam,
+    InTransfers,
+    OutTransfers
 }

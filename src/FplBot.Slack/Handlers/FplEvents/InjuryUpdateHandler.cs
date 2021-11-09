@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Threading.Tasks;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -9,37 +7,36 @@ using FplBot.Slack.Extensions;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 
-namespace FplBot.Slack.Handlers.FplEvents
+namespace FplBot.Slack.Handlers.FplEvents;
+
+public class InjuryUpdateHandler : IHandleMessages<InjuryUpdateOccured>
 {
-    public class InjuryUpdateHandler : IHandleMessages<InjuryUpdateOccured>
+    private readonly ISlackTeamRepository _slackTeamRepo;
+    private readonly ILogger<InjuryUpdateHandler> _logger;
+
+    public InjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogger<InjuryUpdateHandler> logger)
     {
-        private readonly ISlackTeamRepository _slackTeamRepo;
-        private readonly ILogger<InjuryUpdateHandler> _logger;
+        _slackTeamRepo = slackTeamRepo;
+        _logger = logger;
+    }
 
-        public InjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogger<InjuryUpdateHandler> logger)
+    public async Task Handle(InjuryUpdateOccured notification, IMessageHandlerContext context)
+    {
+        _logger.LogInformation($"Handling {notification.PlayersWithInjuryUpdates.Count()} injury updates");
+        var filtered = notification.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
+        if (filtered.Any())
         {
-            _slackTeamRepo = slackTeamRepo;
-            _logger = logger;
+            var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
+            var slackTeams = await _slackTeamRepo.GetAllTeams();
+            foreach (var slackTeam in slackTeams)
+            {
+                if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
+                    await context.SendLocal(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
+            }
         }
-
-        public async Task Handle(InjuryUpdateOccured notification, IMessageHandlerContext context)
+        else
         {
-            _logger.LogInformation($"Handling {notification.PlayersWithInjuryUpdates.Count()} injury updates");
-            var filtered = notification.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
-            if (filtered.Any())
-            {
-                var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-                var slackTeams = await _slackTeamRepo.GetAllTeams();
-                foreach (var slackTeam in slackTeams)
-                {
-                    if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
-                        await context.SendLocal(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
-                }
-            }
-            else
-            {
-                _logger.LogInformation("All updates injuries irrelevant, so not sending any notification");
-            }
+            _logger.LogInformation("All updates injuries irrelevant, so not sending any notification");
         }
     }
 }

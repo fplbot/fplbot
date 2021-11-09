@@ -1,4 +1,1 @@
-namespace Fpl.Workers.Models
-{
-
-}
+namespace Fpl.Workers.Models;

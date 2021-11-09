@@ -1,19 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿namespace Fpl.Workers.Extensions;
 
-namespace Fpl.Workers.Extensions
+public static class EnumerableExtensions
 {
-    public static class EnumerableExtensions
+
+    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enumerable)
     {
+        return enumerable.Where(x => x != null);
+    }
 
-        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> enumerable)
-        {
-            return enumerable.Where(x => x != null);
-        }
-
-        public static T[] MaterializeToArray<T>(this IEnumerable<T> enumerable)
-        {
-            return enumerable as T[] ?? enumerable.ToArray();
-        }
+    public static T[] MaterializeToArray<T>(this IEnumerable<T> enumerable)
+    {
+        return enumerable as T[] ?? enumerable.ToArray();
     }
 }

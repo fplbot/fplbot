@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace Fpl.Search.Models;
 
-namespace Fpl.Search.Models
+public enum QueryClient
 {
-    public enum QueryClient
-    {
-        Slack,
-        Web,
-        Console
-    }
+    Slack,
+    Web,
+    Console
 }

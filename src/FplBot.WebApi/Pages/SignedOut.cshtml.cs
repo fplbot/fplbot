@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FplBot.WebApi.Pages
+namespace FplBot.WebApi.Pages;
+
+public class SignedOut : PageModel
 {
-    public class SignedOut : PageModel
+    public void OnGet()
     {
-        public void OnGet()
-        {
             
-        }
     }
 }

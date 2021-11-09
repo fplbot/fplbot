@@ -1,20 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-    </PropertyGroup>
-  
-    <ItemGroup>
-      <PackageReference Include="MediatR" Version="9.0.0" />
-      <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(AspNetVersion)" />
-      <PackageReference Include="NServiceBus" Version="7.5.0" />
-      <PackageReference Include="StackExchange.Redis" Version="2.2.50" />
-    </ItemGroup>
-  
-    <ItemGroup>
-      <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
-      <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
-    </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0"/>
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(AspNetVersion)"/>
+    <PackageReference Include="NServiceBus" Version="7.5.0"/>
+    <PackageReference Include="StackExchange.Redis" Version="2.2.50"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj"/>
+    <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj"/>
+  </ItemGroup>
 
 </Project>

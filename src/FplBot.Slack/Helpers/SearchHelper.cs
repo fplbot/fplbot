@@ -1,132 +1,127 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 
-namespace FplBot.Slack.Helpers
+namespace FplBot.Slack.Helpers;
+
+internal static class SearchHelper
 {
-    internal static class SearchHelper
+    private const int LevenshteinDistanceThreshold = 3;
+
+    public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
     {
-        private const int LevenshteinDistanceThreshold = 3;
+        var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new {Pri = idx, Prop = prop}).ToArray();
 
-        public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
+        var searchResultsForProps = new ConcurrentBag<SearchResultWithPri<T>>();
+        Parallel.ForEach(searchPropertiesWithPri, x =>
         {
-            var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new {Pri = idx, Prop = prop}).ToArray();
+            searchResultsForProps.Add(new SearchResultWithPri<T>(x.Pri, Find(collection, input, x.Prop)));
+        });
 
-            var searchResultsForProps = new ConcurrentBag<SearchResultWithPri<T>>();
-            Parallel.ForEach(searchPropertiesWithPri, x =>
+        var searchResultsForPropsOrderedByPri = searchResultsForProps.OrderBy(x => x.Pri).ToArray();
+
+        var perfectMatch = searchResultsForPropsOrderedByPri.FirstOrDefault(x => x.SearchResult.LevenshteinDistance == 0);
+        if (perfectMatch != null)
+        {
+            return perfectMatch.SearchResult;
+        }
+
+        foreach (var searchResult in searchResultsForPropsOrderedByPri)
+        {
+            if (searchResult.SearchResult.LevenshteinDistance <= LevenshteinDistanceThreshold)
             {
-                searchResultsForProps.Add(new SearchResultWithPri<T>(x.Pri, Find(collection, input, x.Prop)));
-            });
-
-            var searchResultsForPropsOrderedByPri = searchResultsForProps.OrderBy(x => x.Pri).ToArray();
-
-            var perfectMatch = searchResultsForPropsOrderedByPri.FirstOrDefault(x => x.SearchResult.LevenshteinDistance == 0);
-            if (perfectMatch != null)
-            {
-                return perfectMatch.SearchResult;
+                return searchResult.SearchResult;
             }
+        }
 
-            foreach (var searchResult in searchResultsForPropsOrderedByPri)
+        return null;
+    }
+
+    public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, Func<T, ISearchableProperty> searchProperties)
+    {
+        var normalizedInput = input.ToLower();
+
+        var lev = new Fastenshtein.Levenshtein(normalizedInput);
+
+        var lowestDistance = int.MaxValue;
+        var currentWinner = default(T);
+
+        foreach (var item in collection)
+        {
+            foreach (var searchProperty in searchProperties(item).AsStrings)
             {
-                if (searchResult.SearchResult.LevenshteinDistance <= LevenshteinDistanceThreshold)
+                var termToMatchAgainst = searchProperty.ToLower();
+                if (termToMatchAgainst == normalizedInput)
                 {
-                    return searchResult.SearchResult;
+                    return new SearchResult<T>(item, 0);
                 }
-            }
 
-            return null;
-        }
+                var distance = lev.DistanceFrom(termToMatchAgainst);
+                if (distance >= lowestDistance) continue;
 
-        public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, Func<T, ISearchableProperty> searchProperties)
-        {
-            var normalizedInput = input.ToLower();
-
-            var lev = new Fastenshtein.Levenshtein(normalizedInput);
-
-            var lowestDistance = int.MaxValue;
-            var currentWinner = default(T);
-
-            foreach (var item in collection)
-            {
-                foreach (var searchProperty in searchProperties(item).AsStrings)
-                {
-                    var termToMatchAgainst = searchProperty.ToLower();
-                    if (termToMatchAgainst == normalizedInput)
-                    {
-                        return new SearchResult<T>(item, 0);
-                    }
-
-                    var distance = lev.DistanceFrom(termToMatchAgainst);
-                    if (distance >= lowestDistance) continue;
-
-                    lowestDistance = distance;
-                    currentWinner = item;
-                }
-            }
-
-            return new SearchResult<T>(currentWinner, lowestDistance);
-        }
-
-        private class SearchResultWithPri<T>
-        {
-            public int Pri { get; }
-            public SearchResult<T> SearchResult { get; }
-
-            public SearchResultWithPri(int pri, SearchResult<T> searchResult)
-            {
-                Pri = pri;
-                SearchResult = searchResult;
+                lowestDistance = distance;
+                currentWinner = item;
             }
         }
+
+        return new SearchResult<T>(currentWinner, lowestDistance);
     }
 
-    internal class SearchResult<T>
+    private class SearchResultWithPri<T>
     {
-        public T Item { get; }
-        public int LevenshteinDistance { get; }
+        public int Pri { get; }
+        public SearchResult<T> SearchResult { get; }
 
-        public SearchResult(T item, int levenshteinDistance)
+        public SearchResultWithPri(int pri, SearchResult<T> searchResult)
         {
-            Item = item;
-            LevenshteinDistance = levenshteinDistance;
+            Pri = pri;
+            SearchResult = searchResult;
         }
     }
+}
 
-    internal interface ISearchableProperty
+internal class SearchResult<T>
+{
+    public T Item { get; }
+    public int LevenshteinDistance { get; }
+
+    public SearchResult(T item, int levenshteinDistance)
     {
-        string[] AsStrings { get; }
+        Item = item;
+        LevenshteinDistance = levenshteinDistance;
     }
+}
 
-    internal class SearchableProperty : ISearchableProperty
+internal interface ISearchableProperty
+{
+    string[] AsStrings { get; }
+}
+
+internal class SearchableProperty : ISearchableProperty
+{
+    private readonly string _property;
+    public SearchableProperty(string property)
     {
-        private readonly string _property;
-        public SearchableProperty(string property)
-        {
-            _property = property;
-        }
-        public string[] AsStrings => new[] { _property };
+        _property = property;
     }
+    public string[] AsStrings => new[] { _property };
+}
 
-    internal class SearchablePropertyCollection : ISearchableProperty
+internal class SearchablePropertyCollection : ISearchableProperty
+{
+    public SearchablePropertyCollection(string[] properties)
     {
-        public SearchablePropertyCollection(string[] properties)
-        {
-            AsStrings = properties;
-        }
-        public string[] AsStrings { get; }
+        AsStrings = properties;
     }
+    public string[] AsStrings { get; }
+}
 
-    internal static class SearchablePropertyExtensions
+internal static class SearchablePropertyExtensions
+{
+    public static ISearchableProperty Searchable(this string s)
     {
-        public static ISearchableProperty Searchable(this string s)
-        {
-            return new SearchableProperty(s);
-        }
-        public static ISearchableProperty Searchable(this string[] s)
-        {
-            return new SearchablePropertyCollection(s);
-        }
+        return new SearchableProperty(s);
+    }
+    public static ISearchableProperty Searchable(this string[] s)
+    {
+        return new SearchablePropertyCollection(s);
     }
 }

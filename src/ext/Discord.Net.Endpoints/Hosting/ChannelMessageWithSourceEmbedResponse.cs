@@ -1,17 +1,14 @@
-using System.Collections.Generic;
+namespace Discord.Net.Endpoints.Hosting;
 
-namespace Discord.Net.Endpoints.Hosting
+public class ChannelMessageWithSourceEmbedResponse : SlashCommandResponse
 {
-    public class ChannelMessageWithSourceEmbedResponse : SlashCommandResponse
+    public ChannelMessageWithSourceEmbedResponse()
     {
-        public ChannelMessageWithSourceEmbedResponse()
-        {
-            Type = 4;
-            Embeds = new List<RichEmbed>();
-        }
-
-        public List<RichEmbed> Embeds { get; set; }
+        Type = 4;
+        Embeds = new List<RichEmbed>();
     }
 
-    public record RichEmbed(string Title, string Description, int Color = 3604540, string Type = "rich");
+    public List<RichEmbed> Embeds { get; set; }
 }
+
+public record RichEmbed(string Title, string Description, int Color = 3604540, string Type = "rich");

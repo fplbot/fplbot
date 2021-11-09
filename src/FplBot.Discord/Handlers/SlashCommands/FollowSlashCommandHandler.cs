@@ -1,58 +1,55 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
 using Fpl.Client.Abstractions;
 using FplBot.Discord.Data;
 
-namespace FplBot.Discord.Handlers.SlashCommands
+namespace FplBot.Discord.Handlers.SlashCommands;
+
+public class FollowSlashCommandHandler : ISlashCommandHandler
 {
-    public class FollowSlashCommandHandler : ISlashCommandHandler
+    private readonly ILeagueClient _leagueClient;
+    private readonly IGuildRepository _repo;
+
+    public FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildRepository repo)
     {
-        private readonly ILeagueClient _leagueClient;
-        private readonly IGuildRepository _repo;
+        _leagueClient = leagueClient;
+        _repo = repo;
+    }
 
-        public FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildRepository repo)
+    public string CommandName => "follow";
+
+    public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
+    {
+        var leagueId = int.Parse(context.CommandInput.Value);
+        var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+
+        if(league == null)
+            return Respond($"Could not find a classic league of id '{leagueId}'", success:false);
+
+        var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+        if (existingSub == null)
         {
-            _leagueClient = leagueClient;
-            _repo = repo;
+            await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, new []
+            {
+                EventSubscription.All
+            }));
+
+            return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) ");
         }
 
-        public string CommandName => "follow";
+        await _repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
+        return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. " );
 
-        public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
+    }
+
+    private static SlashCommandResponse Respond(string content, bool success = true)
+    {
+        return new ChannelMessageWithSourceEmbedResponse()
         {
-            var leagueId = int.Parse(context.CommandInput.Value);
-            var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
-
-            if(league == null)
-                return Respond($"Could not find a classic league of id '{leagueId}'", success:false);
-
-            var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            if (existingSub == null)
+            Embeds = new List<RichEmbed>
             {
-                await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, new []
-                {
-                    EventSubscription.All
-                }));
-
-                return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) ");
+                success ? new("✅ Success", content) : new ("⚠️ Error", content)
             }
-
-            await _repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
-            return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. " );
-
-        }
-
-        private static SlashCommandResponse Respond(string content, bool success = true)
-        {
-            return new ChannelMessageWithSourceEmbedResponse()
-            {
-                Embeds = new List<RichEmbed>
-                {
-                    success ? new("✅ Success", content) : new ("⚠️ Error", content)
-                }
-            };
-        }
+        };
     }
 }

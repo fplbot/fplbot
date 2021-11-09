@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace Fpl.Search;
 
-namespace Fpl.Search
+internal class FplSearchException : Exception
 {
-    internal class FplSearchException : Exception
+    public FplSearchException(string message) : base(message)
     {
-        public FplSearchException(string message) : base(message)
-        {
-        }
     }
 }

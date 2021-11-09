@@ -1,12 +1,10 @@
-﻿using System.Threading.Tasks;
-using Fpl.Client.Models;
+﻿using Fpl.Client.Models;
 
-namespace Fpl.Client.Abstractions
+namespace Fpl.Client.Abstractions;
+
+public interface IEntryClient
 {
-    public interface IEntryClient
-    {
-        Task<BasicEntry> Get(int teamId, bool tolerate404 = false);
+    Task<BasicEntry> Get(int teamId, bool tolerate404 = false);
 
-        Task<EntryPicks> GetPicks(int teamId, int gameweek, bool tolerate404 = false);
-    }
+    Task<EntryPicks> GetPicks(int teamId, int gameweek, bool tolerate404 = false);
 }

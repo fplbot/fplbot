@@ -1,168 +1,160 @@
-
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Slack.Extensions;
-using FplBot.Slack.Helpers.Formatting;
 using NServiceBus;
 
-namespace FplBot.WebApi.Handlers.Commands
+namespace FplBot.WebApi.Handlers.Commands;
+
+public class ThrottleSuggestionConstants
 {
-    public class ThrottleSuggestionConstants
+    public const int ThrottleTimeoutInSeconds = 60;
+    public const string SlackChannel = "#fplbot-notifications";
+    public const string TeamId = "T016B9N3U7P";
+}
+
+public record VerifiedEntrySuggestionReceived(int EntryId, string Description) : IEvent;
+public record VerifiedPLEntrySuggestionReceived(int EntryId,string Description, int PlayerId) : IEvent;
+
+public record SuggestionsThrottleTimeout();
+
+public class ThrottleEntrySuggestionsSaga : Saga<AcccumulatedSuggestionsSagaData>,
+    IAmStartedByMessages<VerifiedEntrySuggestionReceived>,
+    IHandleTimeouts<SuggestionsThrottleTimeout>
+{
+    protected override void ConfigureHowToFindSaga(SagaPropertyMapper<AcccumulatedSuggestionsSagaData> mapper)
     {
-        public const int ThrottleTimeoutInSeconds = 60;
-        public const string SlackChannel = "#fplbot-notifications";
-        public const string TeamId = "T016B9N3U7P";
+        mapper.ConfigureMapping<VerifiedEntrySuggestionReceived>(message => message.EntryId).ToSaga(sagaData => sagaData.EntryId);
     }
 
-    public record VerifiedEntrySuggestionReceived(int EntryId, string Description) : IEvent;
-    public record VerifiedPLEntrySuggestionReceived(int EntryId,string Description, int PlayerId) : IEvent;
-
-    public record SuggestionsThrottleTimeout();
-
-    public class ThrottleEntrySuggestionsSaga : Saga<AcccumulatedSuggestionsSagaData>,
-        IAmStartedByMessages<VerifiedEntrySuggestionReceived>,
-        IHandleTimeouts<SuggestionsThrottleTimeout>
+    public async Task Handle(VerifiedEntrySuggestionReceived message, IMessageHandlerContext context)
     {
-        protected override void ConfigureHowToFindSaga(SagaPropertyMapper<AcccumulatedSuggestionsSagaData> mapper)
-        {
-            mapper.ConfigureMapping<VerifiedEntrySuggestionReceived>(message => message.EntryId).ToSaga(sagaData => sagaData.EntryId);
-        }
-
-        public async Task Handle(VerifiedEntrySuggestionReceived message, IMessageHandlerContext context)
-        {
-            Data.SuggestionCount++;
-            if(!Data.Descriptions.Contains(message.Description))
-                Data.Descriptions.Add(message.Description);
-            await RequestTimeout(context, TimeSpan.FromSeconds(ThrottleSuggestionConstants.ThrottleTimeoutInSeconds), new SuggestionsThrottleTimeout());
-        }
-
-        public async Task Timeout(SuggestionsThrottleTimeout state, IMessageHandlerContext context)
-        {
-            await context.SendLocal(new PublishAggregatedEntrySuggestions(Data.EntryId, Data.Descriptions.ToArray(), Data.SuggestionCount));
-            MarkAsComplete();
-        }
+        Data.SuggestionCount++;
+        if(!Data.Descriptions.Contains(message.Description))
+            Data.Descriptions.Add(message.Description);
+        await RequestTimeout(context, TimeSpan.FromSeconds(ThrottleSuggestionConstants.ThrottleTimeoutInSeconds), new SuggestionsThrottleTimeout());
     }
 
-    public class ThrottlePlSuggestionsSaga : Saga<AcccumulatedPLSuggestionsSagaData>,
-        IAmStartedByMessages<VerifiedPLEntrySuggestionReceived>,
-        IHandleTimeouts<SuggestionsThrottleTimeout>
+    public async Task Timeout(SuggestionsThrottleTimeout state, IMessageHandlerContext context)
     {
-        protected override void ConfigureHowToFindSaga(SagaPropertyMapper<AcccumulatedPLSuggestionsSagaData> mapper)
-        {
-            mapper.ConfigureMapping<VerifiedPLEntrySuggestionReceived>(message => message.EntryId).ToSaga(sagaData => sagaData.EntryId);
-        }
+        await context.SendLocal(new PublishAggregatedEntrySuggestions(Data.EntryId, Data.Descriptions.ToArray(), Data.SuggestionCount));
+        MarkAsComplete();
+    }
+}
 
-        public async Task Handle(VerifiedPLEntrySuggestionReceived message, IMessageHandlerContext context)
-        {
-            Data.SuggestionCount++;
-            Data.PlayerId = message.PlayerId;
-            if(!Data.Descriptions.Contains(message.Description))
-                Data.Descriptions.Add(message.Description);
-
-            await RequestTimeout(context, TimeSpan.FromSeconds(ThrottleSuggestionConstants.ThrottleTimeoutInSeconds), new SuggestionsThrottleTimeout());
-        }
-
-        public async Task Timeout(SuggestionsThrottleTimeout state, IMessageHandlerContext context)
-        {
-            await context.SendLocal(new PublishAggregatedPLEntrySuggestions(Data.EntryId, Data.Descriptions.ToArray(), Data.SuggestionCount, Data.PlayerId));
-            MarkAsComplete();
-        }
+public class ThrottlePlSuggestionsSaga : Saga<AcccumulatedPLSuggestionsSagaData>,
+    IAmStartedByMessages<VerifiedPLEntrySuggestionReceived>,
+    IHandleTimeouts<SuggestionsThrottleTimeout>
+{
+    protected override void ConfigureHowToFindSaga(SagaPropertyMapper<AcccumulatedPLSuggestionsSagaData> mapper)
+    {
+        mapper.ConfigureMapping<VerifiedPLEntrySuggestionReceived>(message => message.EntryId).ToSaga(sagaData => sagaData.EntryId);
     }
 
-    public class AcccumulatedPLSuggestionsSagaData : AcccumulatedSuggestionsSagaData
+    public async Task Handle(VerifiedPLEntrySuggestionReceived message, IMessageHandlerContext context)
     {
-        public int PlayerId { get; set; }
+        Data.SuggestionCount++;
+        Data.PlayerId = message.PlayerId;
+        if(!Data.Descriptions.Contains(message.Description))
+            Data.Descriptions.Add(message.Description);
+
+        await RequestTimeout(context, TimeSpan.FromSeconds(ThrottleSuggestionConstants.ThrottleTimeoutInSeconds), new SuggestionsThrottleTimeout());
     }
 
-    public class AcccumulatedSuggestionsSagaData : ContainSagaData
+    public async Task Timeout(SuggestionsThrottleTimeout state, IMessageHandlerContext context)
     {
-        public AcccumulatedSuggestionsSagaData()
-        {
-            Descriptions = new List<string>();
-        }
+        await context.SendLocal(new PublishAggregatedPLEntrySuggestions(Data.EntryId, Data.Descriptions.ToArray(), Data.SuggestionCount, Data.PlayerId));
+        MarkAsComplete();
+    }
+}
 
-        public int EntryId { get; set; }
-        public int SuggestionCount { get; set; }
+public class AcccumulatedPLSuggestionsSagaData : AcccumulatedSuggestionsSagaData
+{
+    public int PlayerId { get; set; }
+}
 
-        public List<string> Descriptions { get; set; }
+public class AcccumulatedSuggestionsSagaData : ContainSagaData
+{
+    public AcccumulatedSuggestionsSagaData()
+    {
+        Descriptions = new List<string>();
     }
 
-    public record PublishAggregatedEntrySuggestions(int EntryId, string[] Descriptions, int SuggestionCount) : ICommand;
-    public record PublishAggregatedPLEntrySuggestions(int EntryId, string[] Descriptions, int SuggestionCount, int? PlayerId) : ICommand;
+    public int EntryId { get; set; }
+    public int SuggestionCount { get; set; }
 
-    public class AggregatedSuggestionsHandler : IHandleMessages<PublishAggregatedEntrySuggestions>, IHandleMessages<PublishAggregatedPLEntrySuggestions>
+    public List<string> Descriptions { get; set; }
+}
+
+public record PublishAggregatedEntrySuggestions(int EntryId, string[] Descriptions, int SuggestionCount) : ICommand;
+public record PublishAggregatedPLEntrySuggestions(int EntryId, string[] Descriptions, int SuggestionCount, int? PlayerId) : ICommand;
+
+public class AggregatedSuggestionsHandler : IHandleMessages<PublishAggregatedEntrySuggestions>, IHandleMessages<PublishAggregatedPLEntrySuggestions>
+{
+    private readonly IGlobalSettingsClient _settings;
+    private readonly IEntryClient _entryClient;
+
+    public AggregatedSuggestionsHandler(IGlobalSettingsClient settings, IEntryClient entryClient)
     {
-        private readonly IGlobalSettingsClient _settings;
-        private readonly IEntryClient _entryClient;
+        _settings = settings;
+        _entryClient = entryClient;
+    }
 
-        public AggregatedSuggestionsHandler(IGlobalSettingsClient settings, IEntryClient entryClient)
+    public async Task Handle(PublishAggregatedEntrySuggestions message, IMessageHandlerContext context)
+    {
+        string text;
+        try
         {
-            _settings = settings;
-            _entryClient = entryClient;
+            var entry = await _entryClient.Get(message.EntryId);
+            text = $"{Link(entry)} for {entry.PlayerFullName}{Counting(message.SuggestionCount)}. \n{Formatter.BulletPoints(message.Descriptions)}";
         }
-
-        public async Task Handle(PublishAggregatedEntrySuggestions message, IMessageHandlerContext context)
+        catch (Exception)
         {
-            string text;
-            try
+            text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist 🤷‍♂️. \n{Formatter.BulletPoints(message.Descriptions)}";
+        }
+        await context.SendLocal(new PublishToSlack(ThrottleSuggestionConstants.TeamId, ThrottleSuggestionConstants.SlackChannel, "Verified suggestion: " + text));
+    }
+
+    public async Task Handle(PublishAggregatedPLEntrySuggestions message, IMessageHandlerContext context)
+    {
+        string text;
+        try
+        {
+            var entry = await _entryClient.Get(message.EntryId);
+            var settings =  await _settings.GetGlobalSettings();
+            var player = settings.Players.Get(message.PlayerId);
+            if (player != null)
             {
-                var entry = await _entryClient.Get(message.EntryId);
-                text = $"{Link(entry)} for {entry.PlayerFullName}{Counting(message.SuggestionCount)}. \n{Formatter.BulletPoints(message.Descriptions)}";
+                var team = settings.Teams.Get(player.TeamId);
+                text = $"{Link(entry)} for {player.FullName} ({team.ShortName}){Counting(message.SuggestionCount)}";
             }
-            catch (Exception)
+            else
             {
-                text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist 🤷‍♂️. \n{Formatter.BulletPoints(message.Descriptions)}";
+                text = $"{Link(entry)} for unknown PL player {message.PlayerId}{Counting(message.SuggestionCount)}!";
             }
-            await context.SendLocal(new PublishToSlack(ThrottleSuggestionConstants.TeamId, ThrottleSuggestionConstants.SlackChannel, "Verified suggestion: " + text));
         }
-
-        public async Task Handle(PublishAggregatedPLEntrySuggestions message, IMessageHandlerContext context)
+        catch (Exception)
         {
-            string text;
-            try
-            {
-                var entry = await _entryClient.Get(message.EntryId);
-                var settings =  await _settings.GetGlobalSettings();
-                var player = settings.Players.Get(message.PlayerId);
-                if (player != null)
-                {
-                    var team = settings.Teams.Get(player.TeamId);
-                    text = $"{Link(entry)} for {player.FullName} ({team.ShortName}){Counting(message.SuggestionCount)}";
-                }
-                else
-                {
-                    text = $"{Link(entry)} for unknown PL player {message.PlayerId}{Counting(message.SuggestionCount)}!";
-                }
-            }
-            catch (Exception)
-            {
-                text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist. 🤷‍♂️";
-            }
-
-            await context.SendLocal(new PublishToSlack(ThrottleSuggestionConstants.TeamId, ThrottleSuggestionConstants.SlackChannel, "Verified suggestion: " + text));
-
+            text = $"{message.EntryId} suggested{Counting(message.SuggestionCount)}, but it does not exist. 🤷‍♂️";
         }
 
-        private string Counting(int count)
-        {
-            if (count > 1)
-            {
-                return $" {count} times";
-            }
+        await context.SendLocal(new PublishToSlack(ThrottleSuggestionConstants.TeamId, ThrottleSuggestionConstants.SlackChannel, "Verified suggestion: " + text));
 
-            return string.Empty;
-        }
-
-        private string Link(BasicEntry entry)
-        {
-            return $"<https://fantasy.premierleague.com/entry/{entry.Id}/event/{entry.CurrentEvent}|{entry.TeamName}>";
-        }
     }
 
+    private string Counting(int count)
+    {
+        if (count > 1)
+        {
+            return $" {count} times";
+        }
 
+        return string.Empty;
+    }
+
+    private string Link(BasicEntry entry)
+    {
+        return $"<https://fantasy.premierleague.com/entry/{entry.Id}/event/{entry.CurrentEvent}|{entry.TeamName}>";
+    }
 }

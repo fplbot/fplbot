@@ -1,8 +1,9 @@
-namespace FplBot.Formatting.FixtureStats
+using FplBot.Formatting.FixtureStats.Formatters;
+
+namespace FplBot.Formatting.FixtureStats.Describers;
+
+internal interface IDescribeTaunts : IDescribeEvents
 {
-    internal interface IDescribeTaunts : IDescribeEvents
-    {
-        public TauntType Type { get; }
-        public string[] JokePool { get; }
-    }
+    public TauntType Type { get; }
+    public string[] JokePool { get; }
 }

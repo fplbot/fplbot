@@ -1,10 +1,8 @@
-using System.Threading.Tasks;
 using Fpl.Client.Models;
 
-namespace Fpl.Client.Abstractions
+namespace Fpl.Client.Abstractions;
+
+public interface IGlobalSettingsClient
 {
-    public interface IGlobalSettingsClient
-    {
-        Task<GlobalSettings> GetGlobalSettings();
-    }
+    Task<GlobalSettings> GetGlobalSettings();
 }

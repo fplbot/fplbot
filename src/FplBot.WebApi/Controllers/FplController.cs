@@ -1,43 +1,38 @@
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Fpl.Client.Abstractions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
-namespace FplBot.WebApi.Controllers
+namespace FplBot.WebApi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class FplController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class FplController : ControllerBase
+    private readonly ILeagueClient _leagueClient;
+    private readonly ILogger<FplController> _logger;
+
+    public FplController(ILeagueClient leagueClient, ILogger<FplController> logger)
     {
-        private readonly ILeagueClient _leagueClient;
-        private readonly ILogger<FplController> _logger;
+        _leagueClient = leagueClient;
+        _logger = logger;
+    }
 
-        public FplController(ILeagueClient leagueClient, ILogger<FplController> logger)
+    [HttpGet("leagues/{leagueId}")]
+    public async Task<IActionResult> GetLeague(int leagueId)
+    {
+        try
         {
-            _leagueClient = leagueClient;
-            _logger = logger;
+            var league = await _leagueClient.GetClassicLeague(leagueId);
+            return Ok(new
+            {
+                LeagueName = league.Properties.Name,
+                LeagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Entry == league.Properties.AdminEntry)?.PlayerName
+            });
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogWarning(e.ToString());
         }
 
-        [HttpGet("leagues/{leagueId}")]
-        public async Task<IActionResult> GetLeague(int leagueId)
-        {
-            try
-            {
-                var league = await _leagueClient.GetClassicLeague(leagueId);
-                return Ok(new
-                {
-                    LeagueName = league.Properties.Name,
-                    LeagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Entry == league.Properties.AdminEntry)?.PlayerName
-                });
-            }
-            catch (HttpRequestException e)
-            {
-                _logger.LogWarning(e.ToString());
-            }
-
-            return NotFound();
-        }
+        return NotFound();
     }
 }

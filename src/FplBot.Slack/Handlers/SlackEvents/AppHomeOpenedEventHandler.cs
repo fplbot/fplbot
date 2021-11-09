@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using FplBot.Slack.Data.Abstractions;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -9,93 +8,92 @@ using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ViewPublish;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 
-namespace FplBot.Slack.Handlers.SlackEvents
+namespace FplBot.Slack.Handlers.SlackEvents;
+
+public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
 {
-    public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
+    private readonly ISlackClientBuilder _builder;
+    private readonly ISlackTeamRepository _repo;
+    private readonly ILogger<AppHomeOpenedEvent> _logger;
+
+    public AppHomeOpenedEventHandler(ISlackClientBuilder builder, ISlackTeamRepository repo, ILogger<AppHomeOpenedEvent> logger)
     {
-        private readonly ISlackClientBuilder _builder;
-        private readonly ISlackTeamRepository _repo;
-        private readonly ILogger<AppHomeOpenedEvent> _logger;
+        _builder = builder;
+        _repo = repo;
+        _logger = logger;
+    }
 
-        public AppHomeOpenedEventHandler(ISlackClientBuilder builder, ISlackTeamRepository repo, ILogger<AppHomeOpenedEvent> logger)
+    public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppHomeOpenedEvent appHomeEvent)
+    {
+        var team = await _repo.GetTeam(eventMetadata.Team_Id);
+        var client = _builder.Build(team.AccessToken);
+
+
+
+        var viewPublishRequest = BuildViewRequest(appHomeEvent.User, team.FplbotLeagueId);
+        ViewPublishResponse res = null;
+        try
         {
-            _builder = builder;
-            _repo = repo;
-            _logger = logger;
+            res = await client.ViewPublish(viewPublishRequest);
+            return !res.Ok ? new EventHandledResponse(res.Error) : new EventHandledResponse("Opened AppHome");
         }
-
-        public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppHomeOpenedEvent appHomeEvent)
+        catch (WellKnownSlackApiException se)
         {
-            var team = await _repo.GetTeam(eventMetadata.Team_Id);
-            var client = _builder.Build(team.AccessToken);
-
-
-
-            var viewPublishRequest = BuildViewRequest(appHomeEvent.User, team.FplbotLeagueId);
-            ViewPublishResponse res = null;
-            try
-            {
-                res = await client.ViewPublish(viewPublishRequest);
-                return !res.Ok ? new EventHandledResponse(res.Error) : new EventHandledResponse("Opened AppHome");
-            }
-            catch (WellKnownSlackApiException se)
-            {
-                _logger.LogError(se.Message, se);
-                return new EventHandledResponse(se.Message);
-            }
+            _logger.LogError(se.Message, se);
+            return new EventHandledResponse(se.Message);
         }
+    }
 
-        private static ViewPublishRequest BuildViewRequest(string userId, long? leagueId)
+    private static ViewPublishRequest BuildViewRequest(string userId, long? leagueId)
+    {
+        return new ViewPublishRequest(userId)
         {
-            return new ViewPublishRequest(userId)
+            View = new View
             {
-                View = new View
+                Type = PublishViewConstants.Home,
+                Blocks = new IBlock[]
                 {
-                    Type = PublishViewConstants.Home,
-                    Blocks = new IBlock[]
+                    new SectionBlock
                     {
-                        new SectionBlock
+                        type = BlockTypes.Section,
+                        text = new Text
                         {
-                            type = BlockTypes.Section,
-                            text = new Text
-                            {
-                                type = TextTypes.PlainText,
-                                text = "Welcome to the home!!"
-                            }
-                        },
-                        new DividerBlock()
-                        {
-                            type = BlockTypes.Divider
-                        },
-                        new SectionBlock()
-                        {
-                            type = BlockTypes.Section,
-                            text = new Text
-                            {
-                                type = TextTypes.PlainText,
-                                text = "Here you can update your teams FPL League ID"
-                            }
-
-                        },
-                        new InputBlock
-                        {
-                            dispatch_action = true,
-                            label = new Text
-                            {
-                                type = TextTypes.PlainText,
-                                text = "FPL League Id"
-
-                            },
-                            element = new PlainTextInputElement
-                            {
-                                action_id = "fpl_league_id_action",
-                                initial_value = leagueId?.ToString()
-                            }
-
+                            type = TextTypes.PlainText,
+                            text = "Welcome to the home!!"
                         }
+                    },
+                    new DividerBlock()
+                    {
+                        type = BlockTypes.Divider
+                    },
+                    new SectionBlock()
+                    {
+                        type = BlockTypes.Section,
+                        text = new Text
+                        {
+                            type = TextTypes.PlainText,
+                            text = "Here you can update your teams FPL League ID"
+                        }
+
+                    },
+                    new InputBlock
+                    {
+                        dispatch_action = true,
+                        label = new Text
+                        {
+                            type = TextTypes.PlainText,
+                            text = "FPL League Id"
+
+                        },
+                        element = new PlainTextInputElement
+                        {
+                            action_id = "fpl_league_id_action",
+                            initial_value = leagueId?.ToString()
+                        }
+
                     }
                 }
-            };
-        }
+            }
+        };
     }
 }

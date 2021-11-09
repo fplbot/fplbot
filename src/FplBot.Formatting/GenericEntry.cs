@@ -1,8 +1,7 @@
-namespace FplBot.Formatting
+namespace FplBot.Formatting;
+
+public class GenericEntry
 {
-    public class GenericEntry
-    {
-        public int Entry { get; set; }
-        public string EntryName { get; set; }
-    }
+    public int Entry { get; set; }
+    public string EntryName { get; set; }
 }

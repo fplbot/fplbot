@@ -1,12 +1,11 @@
 ﻿using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace FplBot.Slack.Extensions
+namespace FplBot.Slack.Extensions;
+
+public static class SlackUserExtensions
 {
-    public static class SlackUserExtensions
+    public static bool IsActiveRealPerson(this User user)
     {
-        public static bool IsActiveRealPerson(this User user)
-        {
-            return !user.Deleted && !user.Is_Bot;
-        }
+        return !user.Deleted && !user.Is_Bot;
     }
 }

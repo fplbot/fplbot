@@ -1,14 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Formatting.FixtureStats
+namespace FplBot.Formatting.FixtureStats.Formatters;
+
+internal class NoOpFormatter : IFormat
 {
-    internal class NoOpFormatter : IFormat
+    public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
     {
-        public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
-        {
-            return Enumerable.Empty<string>();
-        }
+        return Enumerable.Empty<string>();
     }
 }

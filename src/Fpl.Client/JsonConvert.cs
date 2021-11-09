@@ -1,13 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Fpl.Client
+namespace Fpl.Client;
+
+internal class JsonConvert
 {
-    internal class JsonConvert
+    public static JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web)
     {
-        public static JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web)
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-    }
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 }

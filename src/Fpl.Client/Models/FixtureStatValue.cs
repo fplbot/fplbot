@@ -1,13 +1,12 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Fpl.Client.Models
-{
-    public class FixtureStatValue
-    {
-        [JsonPropertyName("element")]
-        public int Element { get; set; }
+namespace Fpl.Client.Models;
 
-        [JsonPropertyName("value")]
-        public int Value { get; set; }
-    }
+public class FixtureStatValue
+{
+    [JsonPropertyName("element")]
+    public int Element { get; set; }
+
+    [JsonPropertyName("value")]
+    public int Value { get; set; }
 }

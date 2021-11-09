@@ -1,6 +1,6 @@
 # Contributing
 ### Requirements:
-- .NET Core 5.0 SDK (5.0.100 or above): https://dotnet.microsoft.com/download/dotnet/5.0
+- .NET Core 6.0 SDK (6.0.100 or above): https://dotnet.microsoft.com/download/dotnet/6.0
 - Or Docker
 
 ### Using docker:
@@ -35,7 +35,7 @@ export fpl__password=pwd
 # Slack app setup
 
 * Create a Slack app
-* Provide the following granuar scopes:
+* Provide the following granular scopes:
   * _TODO_: list all scopes
 * Enable event subscriptions, and subscribe to:
   * _TODO_: list all subscriptions
@@ -48,8 +48,10 @@ export fpl__password=pwd
 ### Test
 * Heroku: https://dashboard.heroku.com/apps/blank-fplbot-test/
 * Slack-app: https://api.slack.com/apps/ATDD4SFQ9/
+* Discord-app: https://discord.com/developers/applications/812441913193529365/information
 
 ### Production:
 
 * Heroku: https://dashboard.heroku.com/apps/blank-fplbot/
 * Slack-app: https://api.slack.com/apps/AREFP62B1
+* Discord-app: https://discord.com/developers/applications/812441954175811664/information

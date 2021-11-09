@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <IsPackable>false</IsPackable>
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <ItemGroup>
@@ -47,5 +48,10 @@
       <ProjectReference Include="..\FplBot.Slack\FplBot.Slack.csproj" />
       <ProjectReference Include="..\Fpl.Workers\Fpl.Workers.csproj" />
     </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Xunit.Abstractions" />
+  </ItemGroup>
 
 </Project>

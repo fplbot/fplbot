@@ -1,18 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 
-namespace Fpl.Client.Models
+namespace Fpl.Client.Models;
+
+public class EntryHistory
 {
-    public class EntryHistory
-    {
-        [JsonPropertyName("chips")]
-        public ICollection<EntryHistoryChip> Chips { get; set; }
+    [JsonPropertyName("chips")]
+    public ICollection<EntryHistoryChip> Chips { get; set; }
 
-        [JsonPropertyName("past")]
-        public ICollection<EntrySeasonHistory> SeasonHistory { get; set; }
+    [JsonPropertyName("past")]
+    public ICollection<EntrySeasonHistory> SeasonHistory { get; set; }
 
-        [JsonPropertyName("current")]
-        public ICollection<EventEntryHistory> GameweekHistory { get; set; }
-    }
+    [JsonPropertyName("current")]
+    public ICollection<EventEntryHistory> GameweekHistory { get; set; }
 }
