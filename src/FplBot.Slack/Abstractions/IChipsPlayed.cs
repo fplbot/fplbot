@@ -1,9 +1,6 @@
-using System.Threading.Tasks;
+namespace FplBot.Slack.Abstractions;
 
-namespace FplBot.Slack.Abstractions
+internal interface IChipsPlayed
 {
-    internal interface IChipsPlayed
-    {
-        Task<bool> GetHasUsedTripleCaptainForGameWeek(int gameweek, int teamCode);
-    }
+    Task<bool> GetHasUsedTripleCaptainForGameWeek(int gameweek, int teamCode);
 }
