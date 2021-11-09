@@ -1,9 +1,8 @@
-﻿namespace Fpl.Search.Models
+﻿namespace Fpl.Search.Models;
+
+public enum SearchType
 {
-    public enum SearchType
-    {
-        All,
-        Entries,
-        Leagues
-    }
+    All,
+    Entries,
+    Leagues
 }
