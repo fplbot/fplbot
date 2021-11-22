@@ -31,6 +31,7 @@ public class LiveEventsExtractor
 
                             new FixtureTeam(homeTeam.Id, homeTeam.Name, homeTeam.ShortName),
                             new FixtureTeam(awayTeam.Id, awayTeam.Name, awayTeam.ShortName),
+                            fixture.Minutes,
                             fixture.HomeTeamScore,
                             fixture.AwayTeamScore
                         ),

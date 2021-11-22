@@ -33,6 +33,7 @@ public class GameweekEventsFormatter
     {
         return $"{fixtureEvent.FixtureScore.HomeTeam.Name} " +
                $"{fixtureEvent.FixtureScore.HomeTeamScore}-{fixtureEvent.FixtureScore.AwayTeamScore} " +
-               $"{fixtureEvent.FixtureScore.AwayTeam.Name}";
+               $"{fixtureEvent.FixtureScore.AwayTeam.Name} " +
+               $"({fixtureEvent.FixtureScore.Minutes}')";
     }
 }

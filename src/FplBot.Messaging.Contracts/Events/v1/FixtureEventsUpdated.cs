@@ -6,7 +6,7 @@ public record FixtureEventsOccured(List<FixtureEvents> FixtureEvents) : IEvent;
 
 public record FixtureEvents(FixtureScore FixtureScore, Dictionary<StatType, List<PlayerEvent>> StatMap);
 
-public record FixtureScore(FixtureTeam HomeTeam, FixtureTeam AwayTeam, int? HomeTeamScore, int? AwayTeamScore);
+public record FixtureScore(FixtureTeam HomeTeam, FixtureTeam AwayTeam, int? Minutes, int? HomeTeamScore, int? AwayTeamScore);
 
 public record FixtureTeam(int TeamId, string Name, string ShortName);
 
