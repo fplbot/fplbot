@@ -45,7 +45,7 @@ public static class TestBuilder
         };
     }
 
-    public static Fixture AwayTeamGoal(int fixtureCode, int goals)
+    public static Fixture AwayTeamGoal(int fixtureCode, int goals, int? minutes = null)
     {
         return new Fixture
         {
@@ -59,7 +59,8 @@ public static class TestBuilder
             },
             HomeTeamScore = 0,
             AwayTeamScore = goals,
-            PulseId = fixtureCode
+            PulseId = fixtureCode,
+            Minutes = minutes.HasValue ? minutes.Value : 30
         };
     }
 

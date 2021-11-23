@@ -22,15 +22,15 @@ public class DebugController
     {
         if (!_env.IsProduction())
         {
-            // await _session.Publish(FixtureEvents(StatType.GoalsScored, removed));
+            await _session.Publish(FixtureEvents(StatType.GoalsScored, removed));
             // await _session.Publish(FixtureEvents(StatType.Assists, removed));
             // await _session.Publish(FixtureEvents(StatType.OwnGoals, removed));
             // await _session.Publish(FixtureEvents(StatType.PenaltiesMissed, removed));
             // await _session.Publish(FixtureEvents(StatType.PenaltiesSaved, removed));
             // await _session.Publish(FixtureEvents(StatType.RedCards, removed));
-            await _session.Publish(FixtureEvents(StatType.YellowCards, removed));
-            await _session.Publish(FixtureEvents(StatType.Saves, removed));
-            await _session.Publish(FixtureEvents(StatType.Bonus, removed));
+            // await _session.Publish(FixtureEvents(StatType.YellowCards, removed));
+            // await _session.Publish(FixtureEvents(StatType.Saves, removed));
+            // await _session.Publish(FixtureEvents(StatType.Bonus, removed));
             return new OkResult();
         }
 
@@ -43,7 +43,7 @@ public class DebugController
         List<FixtureEvents> fixtureEventsList = new();
         FixtureTeam home = new(1, "HOM", "HomeTeam");
         FixtureTeam away = new(2, "AWA", "Away");
-        FixtureScore fixtureScore = new(home, away, 0, 0);
+        FixtureScore fixtureScore = new(home, away, 35, 0, 1);
         Dictionary<StatType,List<PlayerEvent>> statMap = new();
         PlayerDetails playerDetails1 = new(1,"First", "Last", "Testerson");
         PlayerDetails playerDetails2 = new(2,"Yolo", "Yolsen", "Yolerson");
