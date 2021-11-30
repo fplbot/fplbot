@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using FplBot.Formatting.FixtureStats.Formatters;
 using FplBot.Messaging.Contracts.Events.v1;
 
@@ -31,9 +28,10 @@ public class GameweekEventsFormatter
 
     private static string GetScore(FixtureEvents fixtureEvent)
     {
+        var gameTime =fixtureEvent.FixtureScore.Minutes != 0 ?  $"({fixtureEvent.FixtureScore.Minutes}')" : "";
         return $"{fixtureEvent.FixtureScore.HomeTeam.Name} " +
                $"{fixtureEvent.FixtureScore.HomeTeamScore}-{fixtureEvent.FixtureScore.AwayTeamScore} " +
                $"{fixtureEvent.FixtureScore.AwayTeam.Name} " +
-               $"({fixtureEvent.FixtureScore.Minutes}')";
+               gameTime;
     }
 }
