@@ -25,11 +25,8 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
         _logger = logger;
     }
 
-    public async Task<string> GetCaptainsByGameWeek(int gameweek, int leagueId, bool includeExternalLinks = true)
+    public async Task<string> GetCaptainsByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeExternalLinks = true)
     {
-
-        var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
-
         var sb = new StringBuilder();
         sb.Append($"💥 *Captain picks for gameweek {gameweek}*\n");
 
@@ -53,10 +50,8 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
 
     }
 
-    public async Task<string> GetCaptainsChartByGameWeek(int gameweek, int leagueId)
+    public async Task<string> GetCaptainsChartByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks)
     {
-
-        var entryCaptainPicks = await GetEntryCaptainPicks(gameweek, leagueId);
         var captainGroups = entryCaptainPicks
             .GroupBy(x => x.Captain.Id, el => el.Captain)
             .OrderByDescending(x => x.Count())
@@ -98,11 +93,28 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
         }
 
         return sb.ToString();
-
-
     }
 
-    private async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)
+    public async Task<string> GetCaptainsStatsByGameWeek(IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeHeader = true)
+    {
+        var captainGroups = entryCaptainPicks
+            .GroupBy(x => x.Captain.Id, el => el.Captain)
+            .OrderByDescending(x => x.Count())
+            .Select((group, i) => new { Captain = group.First(), Count = group.Count(), Emoji = Formatter.RankEmoji(i) })
+            .MaterializeToArray();
+
+        var sb = new StringBuilder();
+        if(includeHeader)
+            sb.Append($"📊 *Captain stats*\n");
+        foreach (var captainGroup in captainGroups)
+        {
+            sb.Append($"{captainGroup.Emoji} = {captainGroup.Captain.FirstName} {captainGroup.Captain.SecondName} ({captainGroup.Count})\n");
+        }
+
+        return sb.ToString();
+    }
+
+    public async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)
     {
         var leagueTask = _leagueClient.GetClassicLeague(leagueId);
         var playersTask = _globalSettingsClient.GetGlobalSettings();

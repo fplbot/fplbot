@@ -1,4 +1,5 @@
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Discord.Data;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
@@ -11,6 +12,7 @@ namespace FplBot.Discord.Handlers.FplEvents;
 
 public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandleMessages<ProcessGameweekStartedForGuildChannel>
 {
+    private const int MemberCountForLargeLeague = 25;
     private readonly IGuildRepository _repo;
     private readonly ILeagueClient _leagueClient;
     private readonly ILogger<GameweekStartedHandler> _logger;
@@ -51,19 +53,31 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
             messages.Add(new RichMesssage($"Gameweek {message.GameweekId}!", ""));
 
 
-        var leagueExists = false;
+
+        ClassicLeague league = null;
         if (team.LeagueId.HasValue)
         {
-            var league = await _leagueClient.GetClassicLeague(team.LeagueId.Value, tolerate404:true);
-            leagueExists = league != null;
+            league = await _leagueClient.GetClassicLeague(team.LeagueId.Value, tolerate404:true);
         }
+
+        var leagueExists = league != null;
 
         if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
         {
-            string captainsByGameWeek = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
-            messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
-            string captainsChartByGameWeek = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, team.LeagueId.Value);
-            messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
+            var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.LeagueId.Value);
+            if (league.Standings.Entries.Count < MemberCountForLargeLeague)
+            {
+                string captainsByGameWeek = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
+                messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
+                string captainsChartByGameWeek = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
+                messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
+            }
+            else
+            {
+                string captainsByGameWeek = await _captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
+                messages.Add(new RichMesssage("Captain stats:", captainsByGameWeek));
+            }
+
         }
         else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
         {
@@ -76,21 +90,28 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
 
         if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
         {
-            var transfersByGameweekTexts = await _transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
-            if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
+            if (league.Standings.Entries.Count < MemberCountForLargeLeague)
             {
-                var array = transfersByGameweekTexts.Messages.ToList();
-                int halfway = array.Count() / 2;
-                var firstArray = array.Take(halfway);
-                var secondArray = array.Skip(halfway);
-                messages.Add(new RichMesssage("Transfers", string.Join("", firstArray.Select(c => c.Message))));
-                messages.Add(new RichMesssage("Transfers (#2)", string.Join("", secondArray.Select(c => c.Message))));
+                var transfersByGameweekTexts = await _transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
+                if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
+                {
+                    var array = transfersByGameweekTexts.Messages.ToList();
+                    int halfway = array.Count() / 2;
+                    var firstArray = array.Take(halfway);
+                    var secondArray = array.Skip(halfway);
+                    messages.Add(new RichMesssage("Transfers", string.Join("", firstArray.Select(c => c.Message))));
+                    messages.Add(new RichMesssage("Transfers (#2)", string.Join("", secondArray.Select(c => c.Message))));
+                }
+                else
+                {
+                    messages.Add(new RichMesssage("Transfers", string.Join("", transfersByGameweekTexts.Messages.Select(m => m.Message))));
+                }
             }
             else
             {
-                messages.Add(new RichMesssage("Transfers", string.Join("", transfersByGameweekTexts.Messages.Select(m => m.Message))));
+                var externalLink = $"See https://www.fplbot.app/leagues/{team.LeagueId.Value} for full details";
+                messages.Add(new RichMesssage("Captains/Transfers/Chips", externalLink));
             }
-
         }
         else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
         {
