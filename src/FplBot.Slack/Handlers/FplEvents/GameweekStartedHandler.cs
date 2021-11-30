@@ -74,12 +74,12 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
             var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.FplbotLeagueId.Value);
             if (league.Standings.Entries.Count < MemberCountForLargeLeague)
             {
-                messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks));
-                messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks));
+                messages.Add(_captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks));
+                messages.Add(_captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks));
             }
             else
             {
-                messages.Add(await _captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks));
+                messages.Add(_captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks));
             }
 
         }

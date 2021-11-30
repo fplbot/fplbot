@@ -67,14 +67,14 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
             var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.LeagueId.Value);
             if (league.Standings.Entries.Count < MemberCountForLargeLeague)
             {
-                string captainsByGameWeek = await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
+                string captainsByGameWeek = _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
                 messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
-                string captainsChartByGameWeek = await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
+                string captainsChartByGameWeek = _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
                 messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
             }
             else
             {
-                string captainsByGameWeek = await _captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
+                string captainsByGameWeek = _captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
                 messages.Add(new RichMesssage("Captain stats:", captainsByGameWeek));
             }
 

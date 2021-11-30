@@ -25,7 +25,7 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
         _logger = logger;
     }
 
-    public async Task<string> GetCaptainsByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeExternalLinks = true)
+    public string GetCaptainsByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeExternalLinks = true)
     {
         var sb = new StringBuilder();
         sb.Append($"💥 *Captain picks for gameweek {gameweek}*\n");
@@ -50,7 +50,7 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
 
     }
 
-    public async Task<string> GetCaptainsChartByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks)
+    public string GetCaptainsChartByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks)
     {
         var captainGroups = entryCaptainPicks
             .GroupBy(x => x.Captain.Id, el => el.Captain)
@@ -95,7 +95,7 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
         return sb.ToString();
     }
 
-    public async Task<string> GetCaptainsStatsByGameWeek(IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeHeader = true)
+    public string GetCaptainsStatsByGameWeek(IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeHeader = true)
     {
         var captainGroups = entryCaptainPicks
             .GroupBy(x => x.Captain.Id, el => el.Captain)
