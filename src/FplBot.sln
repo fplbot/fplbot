@@ -33,7 +33,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA5
 		DeployToTest.yml = ..\.github\workflows\DeployToTest.yml
 		..\.github\workflows\PulumiUpProd.yml = ..\.github\workflows\PulumiUpProd.yml
 		..\.github\workflows\PulumiUpTest.yml = ..\.github\workflows\PulumiUpTest.yml
-		..\.github\workflows\PulumiPreview.yml = ..\.github\workflows\PulumiPreview.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ext", "ext", "{51FD3283-052A-4E69-B969-B487BF5BBA69}"
