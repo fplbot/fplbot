@@ -34,7 +34,10 @@ public class GameweekFinishedHandler : IHandleMessages<GameweekFinished>,
         var allSubs = await _repo.GetAllGuildSubscriptions();
         foreach (var sub in allSubs)
         {
-            await context.SendLocal(new PublishGameweekFinishedToGuild(sub.GuildId, sub.ChannelId, sub.LeagueId, message.FinishedGameweek.Id));
+            var options = new SendOptions();
+            options.RequireImmediateDispatch();
+            options.RouteToThisEndpoint();
+            await context.Send(new PublishGameweekFinishedToGuild(sub.GuildId, sub.ChannelId, sub.LeagueId, message.FinishedGameweek.Id), options);
         }
     }
 

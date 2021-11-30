@@ -30,7 +30,13 @@ public class InjuryUpdateHandler : IHandleMessages<InjuryUpdateOccured>
             foreach (var guildSub in guildSubs)
             {
                 if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
-                    await context.SendLocal(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Injury update", formatted));
+                {
+                    var options = new SendOptions();
+                    options.RequireImmediateDispatch();
+                    options.RouteToThisEndpoint();
+                    await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Injury update", formatted), options);
+                }
+
             }
         }
         else

@@ -24,7 +24,13 @@ public class LineupReadyHandler : IHandleMessages<LineupReady>
         foreach (var sub in subs)
         {
             if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
-                await context.SendLocal(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
+            {
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"), options);
+            }
+
         }
     }
 }

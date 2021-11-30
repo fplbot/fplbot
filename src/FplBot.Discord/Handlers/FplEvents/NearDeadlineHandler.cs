@@ -27,8 +27,13 @@ public class NearDeadlineHandler :
         var text = $"@here ⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
         foreach (var guild in allGuilds)
         {
-            if(guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
-                await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
+            if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+            {
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text), options);
+            }
         }
     }
 
@@ -39,8 +44,13 @@ public class NearDeadlineHandler :
         var text = $"⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
         foreach (var guild in allGuilds)
         {
-            if(guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
-                await context.SendLocal(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text));
+            if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+            {
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text), options);
+            }
         }
     }
 }

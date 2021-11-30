@@ -28,7 +28,10 @@ public class NewPlayersHandler : IHandleMessages<NewPlayersRegistered>
         {
             if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
             {
-                await context.SendLocal(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted));
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted), options);
             }
         }
     }

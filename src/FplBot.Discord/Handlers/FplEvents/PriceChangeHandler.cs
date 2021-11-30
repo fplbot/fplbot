@@ -34,7 +34,10 @@ public class PriceChangeHandler : IHandleMessages<PlayersPriceChanged>
             {
                 if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges) && !string.IsNullOrEmpty(formatted))
                 {
-                    await context.SendLocal(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Price changes", formatted));
+                    var options = new SendOptions();
+                    options.RequireImmediateDispatch();
+                    options.RouteToThisEndpoint();
+                    await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Price changes", formatted), options);
                 }
             }
         }

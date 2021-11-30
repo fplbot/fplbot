@@ -44,7 +44,10 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
 
         foreach (var slackTeam in slackTeams)
         {
-            await context.SendLocal(new PublishFixtureEventsToSlackWorkspace(slackTeam.TeamId, message.FixtureEvents));
+            var options = new SendOptions();
+            options.RequireImmediateDispatch();
+            options.RouteToThisEndpoint();
+            await context.Send(new PublishFixtureEventsToSlackWorkspace(slackTeam.TeamId, message.FixtureEvents), options);
         }
     }
 

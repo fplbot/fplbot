@@ -31,7 +31,12 @@ public class InjuryUpdateHandler : IHandleMessages<InjuryUpdateOccured>
             foreach (var slackTeam in slackTeams)
             {
                 if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
-                    await context.SendLocal(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
+                {
+                    var options = new SendOptions();
+                    options.RequireImmediateDispatch();
+                    options.RouteToThisEndpoint();
+                    await context.Send(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted), options);
+                }
             }
         }
         else

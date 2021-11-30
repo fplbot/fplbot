@@ -30,7 +30,10 @@ public class NewPlayerHandler : IHandleMessages<NewPlayersRegistered>, IHandleMe
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
             {
-                await context.SendLocal(new PublishNewPlayersToSlackWorkspace(slackTeam.TeamId, notification.NewPlayers));
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishNewPlayersToSlackWorkspace(slackTeam.TeamId, notification.NewPlayers), options);
             }
         }
     }
