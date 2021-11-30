@@ -36,7 +36,13 @@ public class FixtureFulltimeHandler : IHandleMessages<FixtureFinished>
         foreach (var sub in subs)
         {
             if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureFullTime))
-                await context.SendLocal(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {title}",$"{threadMessage}"));
+            {
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {title}",$"{threadMessage}"), options);
+            }
+
         }
     }
 }

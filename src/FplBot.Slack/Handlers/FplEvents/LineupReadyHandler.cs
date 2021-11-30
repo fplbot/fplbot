@@ -31,8 +31,10 @@ public class LineupReadyHandler : IHandleMessages<LineupReady>, IHandleMessages<
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.Lineups))
             {
-                var command = new PublishLineupsToSlackWorkspace(slackTeam.TeamId, message.Lineup);
-                await context.SendLocal(command);
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishLineupsToSlackWorkspace(slackTeam.TeamId, message.Lineup), options);
             }
         }
     }
@@ -48,13 +50,16 @@ public class LineupReadyHandler : IHandleMessages<LineupReady>, IHandleMessages<
         if (res.Ok)
         {
             var formattedLineup = Formatter.FormatLineup(lineups);
-            await context.SendLocal(new PublishSlackThreadMessage
+            var options = new SendOptions();
+            options.RequireImmediateDispatch();
+            options.RouteToThisEndpoint();
+            await context.Send(new PublishSlackThreadMessage
             (
                 message.WorkspaceId,
                 team.FplBotSlackChannel,
                 res.ts,
                 formattedLineup
-            ));
+            ),options);
         }
     }
 }

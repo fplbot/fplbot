@@ -25,7 +25,10 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
 
         foreach (var sub in subs)
         {
-            await context.SendLocal(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents));
+            var options = new SendOptions();
+            options.RequireImmediateDispatch();
+            options.RouteToThisEndpoint();
+            await context.Send(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents), options);
         }
     }
 
@@ -43,6 +46,7 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
                 var sendOptions = new SendOptions();
                 sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(i));
                 sendOptions.RouteToThisEndpoint();
+
                 await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details), sendOptions);
             }
         }

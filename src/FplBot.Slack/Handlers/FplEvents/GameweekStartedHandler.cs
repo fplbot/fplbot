@@ -40,7 +40,10 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
         var teams = await _teamRepo.GetAllTeams();
         foreach (var team in teams)
         {
-            await context.SendLocal(new ProcessGameweekStartedForSlackWorkspace(team.TeamId, notification.NewGameweek.Id));
+            var options = new SendOptions();
+            options.RequireImmediateDispatch();
+            options.RouteToThisEndpoint();
+            await context.Send(new ProcessGameweekStartedForSlackWorkspace(team.TeamId, notification.NewGameweek.Id), options);
         }
     }
 

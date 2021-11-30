@@ -30,7 +30,10 @@ public class PriceChangeHandler : IHandleMessages<PlayersPriceChanged>, IHandleM
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
             {
-                await context.SendLocal(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()));
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()), options);
             }
         }
     }

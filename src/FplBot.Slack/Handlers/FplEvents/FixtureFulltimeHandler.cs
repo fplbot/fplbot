@@ -44,7 +44,10 @@ public class FixtureFulltimeHandler : IHandleMessages<FixtureFinished>, IHandleM
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.FixtureFullTime))
             {
-                await context.SendLocal(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage));
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage), options);
             }
         }
     }

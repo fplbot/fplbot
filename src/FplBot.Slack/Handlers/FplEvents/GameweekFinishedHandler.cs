@@ -35,7 +35,10 @@ internal class GameweekFinishedHandler : IHandleMessages<GameweekFinished>, IHan
         {
             if (team.HasRegisteredFor(EventSubscription.Standings))
             {
-                await context.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, notification.FinishedGameweek.Id));
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, notification.FinishedGameweek.Id), options);
             }
         }
     }

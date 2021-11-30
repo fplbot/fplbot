@@ -31,7 +31,10 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
         var subs = await _repo.GetAllGuildSubscriptions();
         foreach (var team in subs)
         {
-            await context.SendLocal(new ProcessGameweekStartedForGuildChannel(team.GuildId, team.ChannelId, notification.NewGameweek.Id));
+            var options = new SendOptions();
+            options.RequireImmediateDispatch();
+            options.RouteToThisEndpoint();
+            await context.Send(new ProcessGameweekStartedForGuildChannel(team.GuildId, team.ChannelId, notification.NewGameweek.Id), options);
         }
     }
 
