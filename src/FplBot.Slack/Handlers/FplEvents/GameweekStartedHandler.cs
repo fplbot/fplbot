@@ -1,4 +1,6 @@
+using System.Net;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -7,12 +9,14 @@ using FplBot.Slack.Abstractions;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;
 using Microsoft.Extensions.Logging;
+using Nest;
 using NServiceBus;
 
 namespace FplBot.Slack.Handlers.FplEvents;
 
 internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandleMessages<ProcessGameweekStartedForSlackWorkspace>
 {
+    private const int MemberCountForLargeLeague = 25;
     private readonly ICaptainsByGameWeek _captainsByGameweek;
     private readonly ITransfersByGameWeek _transfersByGameweek;
     private readonly ISlackWorkSpacePublisher _publisher;
@@ -53,21 +57,31 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
 
         var team = await _teamRepo.GetTeam(message.WorkspaceId);
         if(team.HasRegisteredFor(EventSubscription.Captains) || team.HasRegisteredFor(EventSubscription.Transfers))
-            await _publisher.PublishToWorkspace($"Gameweek {message.GameweekId}!");
+            await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, $"Gameweek {message.GameweekId}!");
 
         var messages = new List<string>();
 
         var leagueExists = false;
+        ClassicLeague league = null;
         if (team.FplbotLeagueId.HasValue)
         {
-            var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
-            leagueExists = league != null;
+            league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
         }
+        leagueExists = league != null;
 
         if (leagueExists && team.HasRegisteredFor(EventSubscription.Captains))
         {
-            messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, team.FplbotLeagueId.Value));
-            messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, team.FplbotLeagueId.Value));
+            var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.FplbotLeagueId.Value);
+            if (league.Standings.Entries.Count < MemberCountForLargeLeague)
+            {
+                messages.Add(await _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks));
+                messages.Add(await _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks));
+            }
+            else
+            {
+                messages.Add(await _captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks));
+            }
+
         }
         else if (team.FplbotLeagueId.HasValue && !leagueExists && team.HasRegisteredFor(EventSubscription.Captains))
         {
@@ -80,7 +94,24 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
 
         if (leagueExists && team.HasRegisteredFor(EventSubscription.Transfers))
         {
-            messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.FplbotLeagueId.Value));
+            try
+            {
+                if (league.Standings.Entries.Count < MemberCountForLargeLeague)
+                {
+                    messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.FplbotLeagueId.Value));
+                }
+                else
+                {
+                    var externalLink = $"See https://www.fplbot.app/leagues/{team.FplbotLeagueId.Value} for all transfers";
+                    messages.Add(externalLink);
+                }
+
+            }
+            catch(HttpRequestException hre) when(hre.StatusCode == HttpStatusCode.TooManyRequests) // fallback
+            {
+                var externalLink = $"See https://www.fplbot.app/leagues/{team.FplbotLeagueId.Value} for all transfers";
+                messages.Add(externalLink);
+            }
         }
         else if (team.FplbotLeagueId.HasValue && !leagueExists && team.HasRegisteredFor(EventSubscription.Transfers))
         {

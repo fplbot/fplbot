@@ -51,9 +51,10 @@ internal class FplCaptainCommandHandler : HandleAppMentionBase
         string outgoingMessage;
         if (setup.FplbotLeagueId.HasValue)
         {
+            var captainPicks = await _captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, setup.FplbotLeagueId.Value);
             outgoingMessage = isChartRequest
-                ? await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, setup.FplbotLeagueId.Value)
-                : await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, setup.FplbotLeagueId.Value);
+                ? await _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, captainPicks)
+                : await _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, captainPicks);
         }
         else
         {
