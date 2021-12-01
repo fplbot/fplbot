@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Formatting;

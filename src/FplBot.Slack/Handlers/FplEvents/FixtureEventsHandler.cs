@@ -1,4 +1,5 @@
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
 using FplBot.Formatting.Helpers;
