@@ -55,7 +55,7 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
                 var currentGw = gws.Gameweeks.GetCurrentGameweek();
                 var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, sub.LeagueId.Value);
                 var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, sub.LeagueId.Value);
-                tauntData = new TauntData(transfers, entries, entryName => entryName);
+                tauntData = new TauntData(transfers, entries);
             }
             var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat, FormattingType.Discord, tauntData);
             var i = 0;

@@ -13,11 +13,11 @@ public class TauntData
     public Func<string, string> EntryNameToHandle { get; }
 
 
-    public TauntData(IEnumerable<TransfersByGameWeek.Transfer> TransfersForLeague, IEnumerable<GameweekEntry> GameweekEntries, Func<string, string> EntryNameToHandle)
+    public TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague, IEnumerable<GameweekEntry> gameweekEntries, Func<string, string> entryNameToHandle = null)
     {
-        this.TransfersForLeague = TransfersForLeague;
-        this.GameweekEntries = GameweekEntries;
-        this.EntryNameToHandle = EntryNameToHandle;
+        TransfersForLeague = transfersForLeague;
+        GameweekEntries = gameweekEntries;
+        EntryNameToHandle = entryNameToHandle ?? (s => s);
     }
 
     public string[] GetTauntibleEntries(PlayerDetails player, TauntType tauntType)
