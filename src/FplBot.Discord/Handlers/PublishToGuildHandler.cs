@@ -30,10 +30,9 @@ public class PublishToGuildHandler :
         {
             await _discordClient.ChannelMessagePost(message.ChannelId, new DiscordClient.RichEmbed(message.Title, message.Description));
         }
-        catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.Unauthorized)
+        catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.Forbidden)
         {
             // Scenarios:
-            // - Bot uninstalled
             // - Setup a subscription in a channel without giving the bot permissions (fplbot role needs access)
             _logger.LogWarning("Unauthorized to post to Discord channel {channel}", message.ChannelId);
         }
