@@ -1,4 +1,5 @@
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;

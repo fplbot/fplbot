@@ -1,5 +1,9 @@
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Discord.Data;
+using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
+using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
@@ -11,11 +15,17 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
 {
     private readonly IGuildRepository _repo;
     private readonly ILogger<FixtureEventsHandler> _logger;
+    private readonly IGlobalSettingsClient _globalSettingsClient;
+    private readonly ILeagueEntriesByGameweek _leagueEntriesByGameweek;
+    private readonly ITransfersByGameWeek _transfersByGameWeek;
 
-    public FixtureEventsHandler(IGuildRepository repo, ILogger<FixtureEventsHandler> logger)
+    public FixtureEventsHandler(IGuildRepository repo, ILogger<FixtureEventsHandler> logger, IGlobalSettingsClient globalSettingsClient, ILeagueEntriesByGameweek leagueEntriesByGameweek, ITransfersByGameWeek transfersByGameWeek)
     {
         _repo = repo;
         _logger = logger;
+        _globalSettingsClient = globalSettingsClient;
+        _leagueEntriesByGameweek = leagueEntriesByGameweek;
+        _transfersByGameWeek = transfersByGameWeek;
     }
 
     public async Task Handle(FixtureEventsOccured message, IMessageHandlerContext context)
@@ -38,7 +48,16 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
         var sub = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
         if (sub != null)
         {
-            var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat, FormattingType.Discord);
+            TauntData tauntData = null;
+            if (sub.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
+            {
+                var gws = await _globalSettingsClient.GetGlobalSettings();
+                var currentGw = gws.Gameweeks.GetCurrentGameweek();
+                var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, sub.LeagueId.Value);
+                var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, sub.LeagueId.Value);
+                tauntData = new TauntData(transfers, entries, entryName => entryName);
+            }
+            var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat, FormattingType.Discord, tauntData);
             var i = 0;
             foreach (var eventMsg in eventMessages)
             {

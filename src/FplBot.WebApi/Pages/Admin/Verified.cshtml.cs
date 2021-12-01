@@ -1,4 +1,5 @@
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Slack.Extensions;
 using FplBot.VerifiedEntries.Data.Abstractions;
 using FplBot.VerifiedEntries.Data.Models;

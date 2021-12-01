@@ -1,6 +1,4 @@
-﻿using Fpl.Client.Models;
-
-namespace FplBot.Slack.Extensions;
+namespace Fpl.Client.Models;
 
 public static class GameweekExtensions
 {
