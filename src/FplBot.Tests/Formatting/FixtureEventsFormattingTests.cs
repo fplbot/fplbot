@@ -52,7 +52,7 @@ public class FixtureEventsFormattingTests
         {
             _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
-        Assert.Contains("PlayerFirstName PlayerSecondName scored a goal", formattedEvents.First().Details);
+        Assert.Contains("PlayerWebname scored a goal", formattedEvents.First().Details);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class FixtureEventsFormattingTests
         {
             _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
-        Assert.Contains("~PlayerFirstName PlayerSecondName scored a goal! ⚽️~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
+        Assert.Contains("~PlayerWebname scored a goal! ⚽️~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class FixtureEventsFormattingTests
         {
             _helper.WriteLine($"{formatttedEvent.Title} {string.Join("\n", formatttedEvent.Details)}");
         }
-        Assert.Contains("~~PlayerFirstName PlayerSecondName scored a goal! ⚽️~~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
+        Assert.Contains("~~PlayerWebname scored a goal! ⚽️~~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
     }
 
     [Fact]
