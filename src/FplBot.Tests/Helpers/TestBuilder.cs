@@ -196,6 +196,7 @@ public static class TestBuilder
             Code = PlayerCode,
             FirstName = "PlayerFirstName",
             SecondName = "PlayerSecondName",
+            WebName = "PlayerWebname",
             TeamCode = HomeTeamId
         };
     }

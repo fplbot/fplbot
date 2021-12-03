@@ -20,11 +20,11 @@ internal class TauntyFormatter : IFormat
     {
         return goalEvents.GroupBy(g => g.Player).Select(g =>
         {
-            var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.FirstName} {g.Key.SecondName}", _describer.EventEmoji);
+            var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.WebName}", _describer.EventEmoji);
             if (g.Count() > 1)
             {
                 var multipleEmojis = String.Concat(Enumerable.Repeat(_describer.EventEmoji, g.Count()));
-                message = string.Format(_describer.EventDescriptionPlural, $"{g.Key.FirstName} {g.Key.SecondName}", g.Count(), multipleEmojis);
+                message = string.Format(_describer.EventDescriptionPlural, $"{g.Key.WebName}", g.Count(), multipleEmojis);
             }
             if (g.Any(g => g.IsRemoved))
             {

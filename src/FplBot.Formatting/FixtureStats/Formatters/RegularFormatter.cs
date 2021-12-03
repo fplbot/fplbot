@@ -18,11 +18,11 @@ internal class RegularFormatter : IFormat
     {
         return events.GroupBy(g => g.Player).Select( g =>
         {
-            var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.FirstName} {g.Key.SecondName}", _describer.EventEmoji);
+            var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.WebName}", _describer.EventEmoji);
             if (g.Count() > 1)
             {
                 var multipleEmojis = String.Concat(Enumerable.Repeat(_describer.EventEmoji, g.Count()));
-                message = string.Format(_describer.EventDescriptionPlural, $"{g.Key.FirstName} {g.Key.SecondName} {multipleEmojis}", g.Count(), _describer.EventEmoji);
+                message = string.Format(_describer.EventDescriptionPlural, $"{g.Key.WebName} {multipleEmojis}", g.Count(), _describer.EventEmoji);
             }
 
             if (g.Any(g => g.IsRemoved))
