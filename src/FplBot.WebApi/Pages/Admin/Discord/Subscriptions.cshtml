@@ -42,7 +42,12 @@
                     {
                         <li class="list-group-item d-flex align-items-baseline">
                             <div>
-                                @sub.ChannelId - @ToFormatted(sub.Subscriptions)
+                                @sub.ChannelId
+                                @if (sub.LeagueId.HasValue)
+                                {
+                                   <span class="ml-2">(following <a href="https://fantasy.premierleague.com/leagues/@sub.LeagueId/standings/c" target="_blank">@sub.LeagueId</a>)</span>
+                                }
+                                <div class="small">@ToFormatted(sub.Subscriptions)</div>
                             </div>
 
                             <div class="ml-auto">
