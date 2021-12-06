@@ -36,5 +36,11 @@ public class PublishToGuildHandler :
             // - Setup a subscription in a channel without giving the bot permissions (fplbot role needs access)
             _logger.LogWarning("Unauthorized to post to Discord channel {channel}", message.ChannelId);
         }
+        catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Scenarios:
+            // - Deleted channel?
+            _logger.LogWarning("Discord channel {channel} not found", message.ChannelId);
+        }
     }
 }
