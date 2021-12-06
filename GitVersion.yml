@@ -6,7 +6,7 @@ branches:
   feature:
     regex: ^features?[/-]|(?!^master$|^(hotfix|bugfix)(es)?[/-]|^support[/-]|(^(pull|pull\-requests|pr)[/-]))(^.*$)
     tag: ''
-  pull-request:   
+  pull-request:
     tag: ''
   hotfix:
     regex: ^(hotfix|bugfix)(es)?[/-]
