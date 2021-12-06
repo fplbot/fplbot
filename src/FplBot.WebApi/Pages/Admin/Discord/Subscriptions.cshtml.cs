@@ -1,3 +1,4 @@
+using Discord.Net.Endpoints.Hosting;
 using FplBot.Discord.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -21,9 +22,18 @@ public class Subscriptions : PageModel
 
     public async Task OnGet()
     {
-        Subs = await _repo.GetAllGuildSubscriptions();
-        AllKeys = _server.Keys(pattern: "*");
+        var guilds = await _repo.GetAllGuilds();
+
+        GuildsWithSubs = new List<GuildWithSubs>();
+        var allsubs = await _repo.GetAllGuildSubscriptions();
+        foreach (var guild in guilds)
+        {
+            var subs = allsubs.Where(s => s.GuildId == guild.Id);
+            GuildsWithSubs.Add(new GuildWithSubs(guild, subs));
+        }
     }
+
+    public List<GuildWithSubs> GuildsWithSubs { get; set; }
 
     public async Task<IActionResult> OnPostDeleteKey(string key)
     {
@@ -38,8 +48,6 @@ public class Subscriptions : PageModel
         TempData["msg"] = $"Deleted sub {guildId}-{channelId}";
         return RedirectToPage("Subscriptions");
     }
-
-    public IEnumerable<RedisKey> AllKeys { get; set; }
-
-    public IEnumerable<GuildFplSubscription> Subs { get; set; }
 }
+
+public record GuildWithSubs(Guild guild, IEnumerable<GuildFplSubscription> Subs);

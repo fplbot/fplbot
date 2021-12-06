@@ -11,46 +11,55 @@
 }
 
 <div class="col-12">
-    <h1>Subs</h1>
-    <ul>
-        @foreach (var sub in Model.Subs)
+    <h1>Discord </h1>
+    @Model.GuildsWithSubs.Count(g => g.Subs.Any()) servers with in total @Model.GuildsWithSubs.Sum(s => s.Subs.Count()) subs. @Model.GuildsWithSubs.Count(g => !g.Subs.Any()) without any subs.
+    <ol>
+        @foreach (var guild in Model.GuildsWithSubs.OrderByDescending(g => g.Subs.Any()))
         {
-            <li class="list-group-item d-flex align-items-baseline">
-                <div>
-                    @sub.GuildId - @sub.ChannelId - @ToFormatted(sub.Subscriptions)
-                </div>
+            var cssClass = "primary";
+            if (!guild.Subs.Any())
+            {
+                cssClass = "warning";
+            }
 
-                <div class="ml-auto">
-                    <form asp-page-handler="DeleteSub" method="post">
-                        <input class="btn btn-danger btn-block" type="submit" name="delete-sub" value="Delete Sub">
-                        <input type="hidden" name="guildId" value="@sub.GuildId">
-                        <input type="hidden" name="channelId" value="@sub.ChannelId">
-                    </form>
+            <li class="list-group-item d-flex align-items-baseline list-group-item-@cssClass">
+                <div>
+                    @guild.guild.Name
+                    @if (!guild.Subs.Any())
+                    {
+                        <span class="ml-3 alert-warning">⚠️ No subs!</span>
+                    }
+                    else
+                    {
+                        <span class="ml-3">(@guild.Subs.Count() subs)</span>
+                    }
                 </div>
             </li>
-        }
-    </ul>
-</div>
-<div class="col-12">
-<h1>All keys</h1>
-<ul>
-    @foreach (var key in Model.AllKeys)
-    {
-        <li class="list-group-item d-flex align-items-baseline">
-            <div>
-                @key
-            </div>
+            if (guild.Subs.Any())
+            {
+                <ul>
+                    @foreach (var sub in guild.Subs)
+                    {
+                        <li class="list-group-item d-flex align-items-baseline">
+                            <div>
+                                @sub.ChannelId - @ToFormatted(sub.Subscriptions)
+                            </div>
 
-            <div class="ml-auto">
-            <form asp-page-handler="DeleteKey" method="post">
-                <input class="btn btn-danger btn-block" type="submit" name="delete-key" value="Delete key">
-                <input type="hidden" name="key" value="@key">
-            </form>
-            </div>
-        </li>
-    }
-</ul>
+                            <div class="ml-auto">
+                                <form asp-page-handler="DeleteSub" method="post">
+                                    <input class="btn btn-danger btn-block" type="submit" name="delete-sub" value="Delete">
+                                    <input type="hidden" name="guildId" value="@sub.GuildId">
+                                    <input type="hidden" name="channelId" value="@sub.ChannelId">
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </ol>
 </div>
+
 @functions
 {
     private static string ToFormatted(IEnumerable<EventSubscription> subSubscriptions)
