@@ -311,6 +311,6 @@ public static class TestBuilder
     public static PlayerDetails PlayerDetails()
     {
         var player = Player();
-        return new PlayerDetails(player.Id, player.FirstName, player.SecondName, player.WebName);
+        return new PlayerDetails(player.Id, player.WebName);
     }
 }

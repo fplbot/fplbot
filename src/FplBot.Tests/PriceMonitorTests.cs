@@ -43,7 +43,7 @@ public class PriceMonitorTests
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
         Assert.Single(priceChanges);
-        Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().SecondName);
+        Assert.Equal(TestBuilder.Player().WebName, priceChanges.First().WebName);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class PriceMonitorTests
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
         Assert.Single(priceChanges);
-        Assert.Equal(TestBuilder.Player().SecondName, priceChanges.First().SecondName);
+        Assert.Equal(TestBuilder.Player().WebName, priceChanges.First().WebName);
 
         var before2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
         var after2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
@@ -63,7 +63,7 @@ public class PriceMonitorTests
         var priceChanges2 = PlayerChangesEventsExtractor.GetPriceChanges(after2,before2, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
         Assert.Single(priceChanges2);
-        Assert.Equal(TestBuilder.Player().SecondName, priceChanges2.First().SecondName);
+        Assert.Equal(TestBuilder.Player().WebName, priceChanges2.First().WebName);
 
         var before3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
         var after3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
@@ -71,7 +71,7 @@ public class PriceMonitorTests
         var priceChanges3 = PlayerChangesEventsExtractor.GetPriceChanges(after3,before3, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
         Assert.Single(priceChanges3);
-        Assert.Equal(TestBuilder.Player().SecondName, priceChanges3.First().SecondName);
+        Assert.Equal(TestBuilder.Player().WebName, priceChanges3.First().WebName);
     }
 
     [Fact]

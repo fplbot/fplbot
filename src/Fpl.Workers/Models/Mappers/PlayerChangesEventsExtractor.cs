@@ -4,7 +4,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace Fpl.Workers.Models.Mappers;
 
-public class PlayerChangesEventsExtractor
+public static class PlayerChangesEventsExtractor
 {
 
     public static IEnumerable<PlayerWithPriceChange> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
@@ -20,8 +20,7 @@ public class PlayerChangesEventsExtractor
         return compared.Select(p => new PlayerWithPriceChange
         (
             p.ToPlayer.Id,
-            p.ToPlayer.FirstName,
-            p.ToPlayer.SecondName,
+            p.ToPlayer.WebName,
             p.ToPlayer.CostChangeEvent,
             p.ToPlayer.NowCost,
             p.ToPlayer.OwnershipPercentage,

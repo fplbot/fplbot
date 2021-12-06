@@ -120,7 +120,7 @@ public static class Formatter
         foreach (var player in players)
         {
             var text = player.ChanceOfPlayingNextRound.HasValue ? $"Chance of playing next round: {player.ChanceOfPlayingNextRound.Value}%" : player.News;
-            sb.Append($"*{player.FirstName} {player.SecondName}* - {text} (_Owned by {player.OwnershipPercentage}%_)\n");
+            sb.Append($"*{player.WebName}* - {text} (_Owned by {player.OwnershipPercentage}%_)\n");
         }
 
         return sb.ToString();
@@ -130,30 +130,6 @@ public static class Formatter
     public static string FormatCurrency(int amount)
     {
         return (amount / 10.0).ToString("£0.0", CultureInfo.InvariantCulture);
-    }
-
-    public static string FormatPriceChanged(IEnumerable<Player> priceChangesPlayers, ICollection<Team> teams)
-    {
-        if (!priceChangesPlayers.Any())
-            return "No players with price changes.";
-
-        var messageToSend = "";
-        var grouped = priceChangesPlayers.OrderByDescending(p => p.CostChangeEvent).ThenByDescending(p => p.NowCost).GroupBy(p => p.CostChangeEvent);
-        foreach (var group in grouped)
-        {
-            var isPriceIncrease = @group.Key > 0;
-            var priceChange = $"{FormatCurrency(group.Key)}";
-            var header = isPriceIncrease ? $"*Price up {priceChange} 📈*" : $"*Price down {priceChange} 📉*";
-            messageToSend += $"\n\n{header}";
-            foreach (var p in group)
-            {
-                var team = teams.FirstOrDefault(t => t.Code == p.TeamCode);
-                var teamName = team != null ? $"({team.Name})" : "";
-                messageToSend += $"\n• {p.FirstName} {p.SecondName} {teamName} {FormatCurrency(p.NowCost)}";
-            }
-        }
-
-        return messageToSend;
     }
 
     public static string FormatNewPlayers(IEnumerable<NewPlayer> newPlayers)
@@ -192,7 +168,7 @@ public static class Formatter
             messageToSend += $"\n\n{header}";
             foreach (var p in group)
             {
-                messageToSend += $"\n• {p.FirstName} {p.SecondName} ({p.TeamShortName}) {FormatCurrency(p.NowCost)}";
+                messageToSend += $"\n• {p.WebName} ({p.TeamShortName}) {FormatCurrency(p.NowCost)}";
             }
         }
 
@@ -421,7 +397,7 @@ public static class Formatter
             introText += $" The global average was *{globalAverage}* points.";
         }
 
-        introText += $" Your league's average was *{leagueAverage}* points.";   
+        introText += $" Your league's average was *{leagueAverage}* points.";
 
         return introText;
     }

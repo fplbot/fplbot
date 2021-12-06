@@ -32,4 +32,4 @@ public enum TeamType
     Away
 }
 
-public record PlayerDetails(int Id, string FirstName, string SecondName, string WebName);
+public record PlayerDetails(int Id, string WebName);

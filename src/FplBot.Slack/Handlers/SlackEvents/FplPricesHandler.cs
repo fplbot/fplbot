@@ -1,5 +1,6 @@
 ﻿using Fpl.Client.Abstractions;
 using FplBot.Formatting;
+using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Abstractions;
 using FplBot.Slack.Extensions;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -26,10 +27,16 @@ internal class FplPricesHandler : HandleAppMentionBase
         var allPlayers = globalSettings.Players;
         var teams = globalSettings.Teams;
 
-        var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0 && p.IsRelevant());
+        var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0 && p.IsRelevant())
+            .Select(p =>
+            {
+                var t = teams.First(t => t.Code == p.TeamCode);
+                return new PlayerWithPriceChange(p.Id, p.WebName, p.CostChangeEvent, p.NowCost, p.OwnershipPercentage, t.Id, t.ShortName);
+            });
         if (priceChangedPlayers.Any())
         {
-            var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers, teams);
+
+            var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers);
             await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
         }
         else

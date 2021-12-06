@@ -45,8 +45,8 @@ public class DebugController
         FixtureTeam away = new(2, "AWA", "Away");
         FixtureScore fixtureScore = new(home, away, 35, 0, 1);
         Dictionary<StatType,List<PlayerEvent>> statMap = new();
-        PlayerDetails playerDetails1 = new(1,"First", "Last", "Testerson");
-        PlayerDetails playerDetails2 = new(2,"Yolo", "Yolsen", "Yolerson");
+        PlayerDetails playerDetails1 = new(1, "Testerson");
+        PlayerDetails playerDetails2 = new(2, "Yolerson");
         TeamType teamDetails = TeamType.Home;
 
         List<PlayerEvent> playerEvents = new()
