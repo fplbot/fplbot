@@ -88,10 +88,8 @@ public static class WebApplicationBuilderExtensions
         services.AddFplBot(configuration, conn);
         services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = options);
         services.AddFplBotDiscord(configuration, conn);
-
         services.AddVerifiedEntries(configuration);
-        if(!env.IsDevelopment())
-            services.AddFplWorkers();
+
 
         services.AddMediatR(typeof(WebApplicationBuilderExtensions));
         if (!env.IsDevelopment())

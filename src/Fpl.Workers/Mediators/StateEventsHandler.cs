@@ -8,16 +8,16 @@ namespace Fpl.Workers.Handlers;
 /// <summary>
 /// This class is wired up by MediatR, do not delete
 /// </summary>
-internal class StateEventsHandler :
+internal class StateMediator :
     INotificationHandler<GameweekMonitoringStarted>,
     INotificationHandler<GameweekJustBegan>,
     INotificationHandler<GameweekCurrentlyOnGoing>,
     INotificationHandler<GameweekCurrentlyFinished>
 {
-    private readonly ILogger<StateEventsHandler> _logger;
+    private readonly ILogger<StateMediator> _logger;
     private readonly State _state;
 
-    public StateEventsHandler(State state, ILogger<StateEventsHandler> logger)
+    public StateMediator(State state, ILogger<StateMediator> logger)
     {
         _logger = logger;
         _state = state;

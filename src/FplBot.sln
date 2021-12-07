@@ -15,15 +15,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi.Tests", "FplB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E-772F-4E70-BD50-1121343BA7D7}"
 	ProjectSection(SolutionItems) = preProject
-		..\buildherokuimage.sh = ..\buildherokuimage.sh
 		Directory.Build.targets = Directory.Build.targets
 		..\test.http = ..\test.http
 		.gitignore = ../.gitignore
 		..\GitVersion.yml = ..\GitVersion.yml
-		..\Dockerfile = ..\Dockerfile
 		..\.editorconfig = ..\.editorconfig
 		..\README.md = ..\README.md
 		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
+		Dockerfile.worker = Dockerfile.worker
+		Dockerfile.web = Dockerfile.web
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
@@ -64,6 +64,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.HttpClients", "ext\Discord.Net.HttpClients\Discord.Net.HttpClients.csproj", "{CF74E462-5392-4517-B1E6-8FD8252669B0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Formatting", "FplBot.Formatting\FplBot.Formatting.csproj", "{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Workers.Console", "Fpl.Workers.Console\Fpl.Workers.Console.csproj", "{AE284990-83A7-4649-93D2-A60764EDB6A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -267,6 +269,18 @@ Global
 		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x64.Build.0 = Release|Any CPU
 		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x86.ActiveCfg = Release|Any CPU
 		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}.Release|x86.Build.0 = Release|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Debug|x64.Build.0 = Debug|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Debug|x86.Build.0 = Debug|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x64.ActiveCfg = Release|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x64.Build.0 = Release|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x86.ActiveCfg = Release|Any CPU
+		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -289,6 +303,7 @@ Global
 		{99FBCAD7-BDD1-4C85-B0D5-C1225D13A7C5} = {51FD3283-052A-4E69-B969-B487BF5BBA69}
 		{CF74E462-5392-4517-B1E6-8FD8252669B0} = {51FD3283-052A-4E69-B969-B487BF5BBA69}
 		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{AE284990-83A7-4649-93D2-A60764EDB6A4} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}
