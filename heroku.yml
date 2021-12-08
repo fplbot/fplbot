@@ -1,2 +1,0 @@
-run:
-  web: dotnet ./FplBot.WebApi.dll
