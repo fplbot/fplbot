@@ -1,4 +1,5 @@
 using NServiceBus;
+using NServiceBus.Features;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.Hosting;
@@ -33,7 +34,6 @@ public static class HostBuilderExtensions
         string endpointName = $"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
-        endpointConfiguration.EnableInstallers();
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
         endpointConfiguration.License(context.Configuration["NSB_LICENSE"]);
         endpointConfiguration.SendHeartbeatTo(
@@ -70,6 +70,24 @@ public static class HostBuilderExtensions
         var recoverabilty = endpointConfiguration.Recoverability();
         recoverabilty.Immediate(s => s.NumberOfRetries(0));
         recoverabilty.Delayed(s => s.NumberOfRetries(3).TimeIncrease(TimeSpan.FromSeconds(20)));
+
+        // ℹ️ Disabled in dev to decrease webapp startup time
+        //
+        // Enable when you want to create new queues (i.e. new developer and/or endpoint) without
+        // using the `asb-transport` CLI tool
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            endpointConfiguration.EnableInstallers();
+        }
+
+        // ℹ️ Disabled in dev To decrease web app startup time
+        //
+        // Enable interim if you want to test _new_ events and/or commands
+        if(context.HostingEnvironment.IsDevelopment())
+        {
+            endpointConfiguration.DisableFeature<AutoSubscribe>();
+        }
+
         return endpointConfiguration;
     }
 
