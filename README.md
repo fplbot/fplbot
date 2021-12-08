@@ -1,18 +1,20 @@
 # @fplbot
-A Fantasy Premier league chatbot 
-
-- [Slack](https://slack.com/apps/AREFP62B1-fplbot)
-- Beta: [Discord](https://api.fplbot.app/oauth/install-url-discord) (no bot home page yet)
-
-Install at https://www.fplbot.app/ 🤖
-
 [![master](https://github.com/fplbot/fplbot/workflows/Release/badge.svg)](https://github.com/fplbot/fplbot/actions?query=workflow%3ARelease)
 
-**Beta support for Discord**
+A Fantasy Premier league chatbot. Get it at 👉 https://www.fplbot.app/ 👈
+#### Features
+* Follow your own league's captain picks, transfers and get standings at the end of each gameweek
+* Deadline notifications
+* Match events
+* ++
 
-- Join a server with bot pre-installed : https://discord.gg/vjuKZw3x
-- Install the bot to your own server : https://api.fplbot.app/oauth/install-url-discord
+<img  alt="taunts" src="https://user-images.githubusercontent.com/206726/145211604-767d5f98-ee19-420b-af95-932400037f42.png">
 
-<hr>
 
+
+#### Supported platforms:
+- [Slack](https://slack.com/apps/AREFP62B1-fplbot)
+- Discord
+
+---
 _FplBot is a [Blank.no](https://blank.no) project_
