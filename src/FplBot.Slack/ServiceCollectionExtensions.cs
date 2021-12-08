@@ -1,4 +1,3 @@
-using Fpl.Client.Infra;
 using Fpl.Search;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;

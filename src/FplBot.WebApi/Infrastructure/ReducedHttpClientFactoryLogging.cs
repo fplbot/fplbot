@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Http.Logging;
+using Microsoft.Extensions.Logging;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,7 @@ internal static class ServiceCollectionExtensions
         return services;
     }
 }
-    
+
 internal class ReducedLoggingHttpMessageHandlerBuilderFilter : IHttpMessageHandlerBuilderFilter
 {
     private readonly ILoggerFactory _loggerFactory;
@@ -41,12 +42,12 @@ internal class ReducedLoggingHttpMessageHandlerBuilderFilter : IHttpMessageHandl
         };
     }
 }
-    
+
 public class MinimalLoggingHandler : DelegatingHandler
 {
     private readonly ILogger _logger;
 
-    public MinimalLoggingHandler(ILogger logger) 
+    public MinimalLoggingHandler(ILogger logger)
     {
         _logger = logger;
     }
@@ -64,7 +65,7 @@ public class MinimalLoggingHandler : DelegatingHandler
 
         return response;
     }
-        
+
     internal struct ValueStopwatch
     {
         private static readonly double TimestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;

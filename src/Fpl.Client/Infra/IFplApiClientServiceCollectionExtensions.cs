@@ -1,9 +1,10 @@
+using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace Fpl.Client.Infra;
+// ReSharper disable once CheckNamespace
+namespace Microsoft.Extensions.DependencyInjection;
 
 public static class IFplApiClientServiceCollectionExtensions
 {
