@@ -61,7 +61,7 @@ public class MinimalLoggingHandler : DelegatingHandler
 
         var stopwatch = ValueStopwatch.StartNew();
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation(new EventId(101, "RequestEnd"), $"{request.Method} {request.RequestUri} - {response.StatusCode} in {stopwatch.GetElapsedTime().TotalMilliseconds}ms");
+        _logger.LogInformation($"{request.Method} {request.RequestUri} - {response.StatusCode} in {stopwatch.GetElapsedTime().TotalMilliseconds}ms");
 
         return response;
     }
