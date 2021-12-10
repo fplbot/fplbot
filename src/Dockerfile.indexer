@@ -1,0 +1,14 @@
+﻿FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+WORKDIR /app
+COPY . .
+RUN dotnet restore Fpl.Search.Indexer.Console
+
+ARG INFOVERSION="0.666"
+ARG VERSION="1.0.666"
+RUN echo "Infoversion: $INFOVERSION"
+RUN dotnet publish Fpl.Search.Indexer.Console -o /app/fplbot-indexer -c Release /p:Version=$VERSION /p:InformationalVersion=$INFOVERSION
+
+FROM mcr.microsoft.com/dotnet/runtime:6.0
+WORKDIR /indexer
+COPY --from=build-env /app/fplbot-indexer .
+ENTRYPOINT ["dotnet", "Fpl.Search.Indexer.Console.dll"]

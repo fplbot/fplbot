@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
 		Dockerfile.eventpublisher = Dockerfile.eventpublisher
 		Dockerfile.web = Dockerfile.web
+		Dockerfile.indexer = Dockerfile.indexer
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
@@ -66,6 +67,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Formatting", "FplBot.Formatting\FplBot.Formatting.csproj", "{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.EventPublishers.Console", "Fpl.EventPublishers.Console\Fpl.EventPublishers.Console.csproj", "{AE284990-83A7-4649-93D2-A60764EDB6A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Search.Indexer.Console", "Fpl.Search.Indexer.Console\Fpl.Search.Indexer.Console.csproj", "{35DDB4A1-C258-4260-9321-D5A53AC88638}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -281,6 +284,18 @@ Global
 		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x64.Build.0 = Release|Any CPU
 		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x86.ActiveCfg = Release|Any CPU
 		{AE284990-83A7-4649-93D2-A60764EDB6A4}.Release|x86.Build.0 = Release|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Debug|x64.Build.0 = Debug|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Debug|x86.Build.0 = Debug|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x64.ActiveCfg = Release|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x64.Build.0 = Release|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x86.ActiveCfg = Release|Any CPU
+		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -304,6 +319,7 @@ Global
 		{CF74E462-5392-4517-B1E6-8FD8252669B0} = {51FD3283-052A-4E69-B969-B487BF5BBA69}
 		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{AE284990-83A7-4649-93D2-A60764EDB6A4} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{35DDB4A1-C258-4260-9321-D5A53AC88638} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}
