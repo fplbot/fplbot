@@ -1,4 +1,3 @@
-using Fpl.Search;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using StackExchange.Redis;
@@ -6,6 +5,7 @@ using StackExchange.Redis;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((ctx, services) =>
     {
+        services.UseMinimalHttpLogger();
         var redisOptions = HerokuRedisConfigParser.ConfigurationOptions(Environment.GetEnvironmentVariable("REDIS_URL"));
         services.AddStackExchangeRedisCache(o =>
         {

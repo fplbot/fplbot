@@ -7,16 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="9.0.0"/>
-    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0"/>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(AspNetVersion)"/>
-    <PackageReference Include="NServiceBus" Version="7.5.0"/>
-    <PackageReference Include="StackExchange.Redis" Version="2.2.50"/>
+    <PackageReference Include="MediatR" Version="9.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(AspNetVersion)" />
+    <PackageReference Include="NServiceBus" Version="7.5.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.2.50" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj"/>
-    <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj"/>
+    <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
+    <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Handlers" />
   </ItemGroup>
 
 </Project>

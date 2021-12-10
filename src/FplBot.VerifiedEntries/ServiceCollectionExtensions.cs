@@ -18,7 +18,7 @@ public static class ServiceCollectionFplBotExtensions
     {
         services.Configure<VerifiedRedisOptions>(config);
 
-        services.AddSingleton<ConnectionMultiplexer>(c =>
+        services.AddSingleton<IConnectionMultiplexer>(c =>
         {
             var opts = c.GetService<IOptions<VerifiedRedisOptions>>().Value;
             var options = new ConfigurationOptions
