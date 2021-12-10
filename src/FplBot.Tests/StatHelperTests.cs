@@ -1,5 +1,5 @@
 using Fpl.Client.Models;
-using Fpl.Workers.Models.Comparers;
+using Fpl.EventPublishers.Models.Comparers;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Tests;

@@ -1,7 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Workers.States;
+using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Data.Abstractions;
 using FplBot.Slack.Data.Models;

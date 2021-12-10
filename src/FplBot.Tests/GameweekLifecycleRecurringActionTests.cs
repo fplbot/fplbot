@@ -1,8 +1,9 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Workers.Events;
-using Fpl.Workers.RecurringActions;
+using Fpl.EventPublishers.Events;
+using Fpl.EventPublishers.RecurringActions;
+using Fpl.EventPublishers.States;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;

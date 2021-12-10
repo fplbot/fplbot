@@ -22,7 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		..\.editorconfig = ..\.editorconfig
 		..\README.md = ..\README.md
 		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
-		Dockerfile.worker = Dockerfile.worker
+		Dockerfile.eventpublisher = Dockerfile.eventpublisher
 		Dockerfile.web = Dockerfile.web
 	EndProjectSection
 EndProject
@@ -41,13 +41,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Messaging.Contracts"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Search", "Fpl.Search\Fpl.Search.csproj", "{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.SearchConsole", "Fpl.SearchConsole\Fpl.SearchConsole.csproj", "{8638EB58-F84F-43B0-9ECF-C60D8BA6B742}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Search.Console", "Fpl.Search.Console\Fpl.Search.Console.csproj", "{8638EB58-F84F-43B0-9ECF-C60D8BA6B742}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8BF7B64C-7CAC-489B-B419-F5B2A20954D9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{1AD92010-0595-4213-95ED-F57DF177968F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Workers", "Fpl.Workers\Fpl.Workers.csproj", "{33EA9DA6-8216-4AFF-9BE0-057F0CCCEFF9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.EventPublishers", "Fpl.EventPublishers\Fpl.EventPublishers.csproj", "{33EA9DA6-8216-4AFF-9BE0-057F0CCCEFF9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Functions", "FplBot.Functions\FplBot.Functions.csproj", "{4233A87D-825B-4CE7-8548-A367FF54E852}"
 EndProject
@@ -65,7 +65,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.HttpClients", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Formatting", "FplBot.Formatting\FplBot.Formatting.csproj", "{062E0F68-65BF-4E41-9EAF-D70C9843A3C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Workers.Console", "Fpl.Workers.Console\Fpl.Workers.Console.csproj", "{AE284990-83A7-4649-93D2-A60764EDB6A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.EventPublishers.Console", "Fpl.EventPublishers.Console\Fpl.EventPublishers.Console.csproj", "{AE284990-83A7-4649-93D2-A60764EDB6A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

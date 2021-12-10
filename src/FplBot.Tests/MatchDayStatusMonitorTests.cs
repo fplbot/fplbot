@@ -1,7 +1,8 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Workers.RecurringActions;
+using Fpl.EventPublishers.RecurringActions;
+using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
 using NServiceBus.Testing;

@@ -1,5 +1,5 @@
 using Fpl.Client.Models;
-using Fpl.Workers;
+using Fpl.EventPublishers;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Slack.Data.Models;
 

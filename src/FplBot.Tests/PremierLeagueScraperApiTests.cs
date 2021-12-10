@@ -1,5 +1,5 @@
 using FakeItEasy;
-using Fpl.Workers;
+using Fpl.EventPublishers;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests;

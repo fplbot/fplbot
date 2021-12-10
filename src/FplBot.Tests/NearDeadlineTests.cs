@@ -1,8 +1,9 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.Workers.Helpers;
-using Fpl.Workers.RecurringActions;
+using Fpl.EventPublishers.Helpers;
+using Fpl.EventPublishers.RecurringActions;
+using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ namespace FplBot.Tests;
 public class NearDeadlineTests
 {
     private readonly ITestOutputHelper _helper;
-    private DateTimeUtils _deadlineChecker;
+    private readonly DateTimeUtils _deadlineChecker;
 
     public NearDeadlineTests(ITestOutputHelper helper)
     {

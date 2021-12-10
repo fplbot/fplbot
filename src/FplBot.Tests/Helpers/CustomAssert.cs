@@ -1,4 +1,4 @@
-using Fpl.Workers.Extensions;
+using Fpl.EventPublishers.Extensions;
 using Xunit.Sdk;
 
 namespace FplBot.Tests.Helpers;

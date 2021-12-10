@@ -1,2 +1,2 @@
-docker build -t fplbot-webapi:heroku  -f ./Dockerfile.web .
+docker build -t fplbot/web:heroku  -f ./Dockerfile.web .
 

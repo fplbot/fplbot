@@ -1,5 +1,5 @@
 using Fpl.Client.Models;
-using Fpl.Workers.Models.Mappers;
+using Fpl.EventPublishers.Models.Mappers;
 
 namespace FplBot.Tests;
 
