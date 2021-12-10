@@ -94,7 +94,6 @@ public static class WebApplicationBuilderExtensions
         services.AddMediatR(typeof(WebApplicationBuilderExtensions));
         if (!env.IsDevelopment())
         {
-            services.AddRecurringIndexer(configuration, conn);
         }
         else
         {
