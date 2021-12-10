@@ -92,15 +92,11 @@ public static class WebApplicationBuilderExtensions
 
 
         services.AddMediatR(typeof(WebApplicationBuilderExtensions));
-        if (!env.IsDevelopment())
-        {
-        }
-        else
-        {
-            // Used in admin pages:
-            services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
-            services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
-        }
+
+        // Used in admin pages:
+        services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
+        services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
+
 
         services.AddAuthentication(options =>
             {
