@@ -30,7 +30,7 @@ public static class HostBuilderExtensions
     private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string endpointPostfix = null)
     {
         endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"FplBot.Workers.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}";
+        string endpointName = $"Fpl.EventPublisher.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.SendOnly();
@@ -59,7 +59,7 @@ public static class HostBuilderExtensions
 
     private static EndpointConfiguration LearningTransport(this HostBuilderContext context)
     {
-        var endpointConfiguration = new EndpointConfiguration($"FplBot.Workers.{context.HostingEnvironment.EnvironmentName}");
+        var endpointConfiguration = new EndpointConfiguration($"Fpl.EventPublisher.{context.HostingEnvironment.EnvironmentName}");
         endpointConfiguration.UseTransport<LearningTransport>();
         endpointConfiguration.UsePersistence<InMemoryPersistence>();
         return endpointConfiguration;
