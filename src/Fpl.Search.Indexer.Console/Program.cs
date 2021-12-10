@@ -15,7 +15,6 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         var conn =  ConnectionMultiplexer.Connect(redisOptions);
         services.AddVerifiedEntries(ctx.Configuration);
-
     })
     .UseSerilog((hostingContext, loggerConfiguration) =>
         loggerConfiguration
