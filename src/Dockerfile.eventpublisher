@@ -1,12 +1,12 @@
 ﻿FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 COPY . .
-RUN dotnet restore Fpl.EventPublishers.Console/Fpl.EventPublishers.Console.csproj
+RUN dotnet restore Fpl.EventPublishers.Console
 
 ARG INFOVERSION="0.666"
 ARG VERSION="1.0.666"
 RUN echo "Infoversion: $INFOVERSION"
-RUN dotnet publish Fpl.EventPublishers.Console/Fpl.EventPublishers.Console.csproj -o /app/fplbot-worker -c Release /p:Version=$VERSION /p:InformationalVersion=$INFOVERSION
+RUN dotnet publish Fpl.EventPublishers.Console -o /app/fplbot-worker -c Release /p:Version=$VERSION /p:InformationalVersion=$INFOVERSION
 
 FROM mcr.microsoft.com/dotnet/runtime:6.0
 WORKDIR /worker
