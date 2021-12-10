@@ -1,9 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Fpl.Search;
+using Fpl.Search.Indexing;
 using FplBot.Messaging.Contracts.Commands.v1;
+using Microsoft.Extensions.Options;
 using NServiceBus;
 
-namespace Fpl.Search.Indexing;
+namespace FplBot.WebApi.Handlers.Commands;
 
 public class IndexQueryCommandHandler : IHandleMessages<IndexQuery>
 {
