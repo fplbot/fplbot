@@ -51,6 +51,16 @@ public static class SearchServiceCollectionExtensions
         services.AddSingleton<IIndexingService, IndexingService>();
         services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
         services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
+        services.AddSingleton<IElasticClient>(provider =>
+        {
+            var searchOpts = provider.GetService<IOptions<SearchOptions>>();
+            var searchOptions = searchOpts.Value;
+            searchOptions.Validate();
+            var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));
+            connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
+            return new ElasticClient(connectionSettings);
+        });
+
         return services;
     }
 

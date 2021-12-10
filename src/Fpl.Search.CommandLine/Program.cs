@@ -24,7 +24,7 @@ IHostBuilder ConfigureHost(string[] strings)
         .UseSerilog((_, conf) => conf.WriteTo.Console())
         .UseNServiceBus(ctx =>
         {
-            var endpointConfiguration = new EndpointConfiguration($"Fpl.Search.Console.{ctx.HostingEnvironment.EnvironmentName}");
+            var endpointConfiguration = new EndpointConfiguration($"Fpl.Search.CommandLine.{ctx.HostingEnvironment.EnvironmentName}");
             endpointConfiguration.UseTransport<LearningTransport>();
             return endpointConfiguration;
         })
