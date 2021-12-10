@@ -1,3 +1,4 @@
+using Fpl.Search;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using StackExchange.Redis;
@@ -15,6 +16,7 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         var conn =  ConnectionMultiplexer.Connect(redisOptions);
         services.AddVerifiedEntries(ctx.Configuration);
+        services.AddRecurringIndexer(ctx.Configuration, conn);
     })
     .UseSerilog((hostingContext, loggerConfiguration) =>
         loggerConfiguration
