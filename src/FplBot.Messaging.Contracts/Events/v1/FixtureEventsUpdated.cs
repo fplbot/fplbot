@@ -2,6 +2,7 @@ using NServiceBus;
 
 namespace FplBot.Messaging.Contracts.Events.v1;
 
+[TimeToBeReceived("00:15:00")] // discard events not being handled within 15 mins
 public record FixtureEventsOccured(List<FixtureEvents> FixtureEvents) : IEvent;
 
 public record FixtureEvents(FixtureScore FixtureScore, Dictionary<StatType, List<PlayerEvent>> StatMap);
