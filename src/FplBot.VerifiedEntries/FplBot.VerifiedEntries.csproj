@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fpl.Client\Fpl.Client.csproj" />
-    <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

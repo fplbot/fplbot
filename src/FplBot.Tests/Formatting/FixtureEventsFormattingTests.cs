@@ -3,8 +3,8 @@ using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
 using FplBot.Formatting.FixtureStats.Describers;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Helpers;
 using FplBot.Tests.Helpers;
+using FplBot.WebApi.Slack.Helpers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 

@@ -1,9 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Slack.Data.Abstractions;
-using FplBot.Slack.Data.Models;
-using FplBot.Slack.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NServiceBus;

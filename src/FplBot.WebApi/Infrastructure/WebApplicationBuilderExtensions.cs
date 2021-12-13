@@ -5,9 +5,9 @@ using Discord.Net.Endpoints.Hosting;
 using Fpl.Search;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Data.Repositories;
+using FplBot.Data.Slack;
 using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Slack.Data;
 using FplBot.WebApi.Configurations;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -41,7 +41,7 @@ public static class WebApplicationBuilderExtensions
         var configuration = builder.Configuration;
         var env = builder.Environment;
 
-        var opts = new RedisOptions { REDIS_URL = Environment.GetEnvironmentVariable("REDIS_URL") };
+        var opts = new SlackRedisOptions { REDIS_URL = Environment.GetEnvironmentVariable("REDIS_URL") };
         var options = new ConfigurationOptions
         {
             ClientName = opts.GetRedisUsername,
@@ -85,9 +85,9 @@ public static class WebApplicationBuilderExtensions
         });
         services.Configure<AnalyticsOptions>(configuration);
         services.AddReducedHttpClientFactoryLogging();
-        services.AddFplBot(configuration, conn);
         services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = options);
-        services.AddFplBotDiscord(configuration, conn);
+        services.AddFplBotSlackWebEndpoints(configuration, conn);
+        services.AddFplBotDiscordWebEndpoints(configuration, conn);
         services.AddVerifiedEntries(configuration);
 
 

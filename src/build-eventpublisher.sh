@@ -1,1 +1,1 @@
-docker build -t fplbot/eventpublisher:heroku  -f ./Dockerfile.fpleventpublisher .
+docker build -t fplbot/eventpublisher:heroku  -f ./Dockerfile.eventpublisher .

@@ -1,10 +1,9 @@
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.VerifiedEntries.InternalCommands;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using NServiceBus;
 
-namespace FplBot.VerifiedEntries.Handlers;
+namespace FplBot.WebApi.Handlers.Commands;
 
 internal class GameweekJustBeganUpdateStatsHandler : IHandleMessages<GameweekJustBegan>
 {

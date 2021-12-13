@@ -2,10 +2,10 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Slack.Extensions;
+using FplBot.WebApi.Slack.Extensions;
 using NServiceBus;
 
-namespace FplBot.WebApi.Handlers.Commands;
+namespace FplBot.WebApi.Handlers.Sagas;
 
 public class ThrottleSuggestionConstants
 {
