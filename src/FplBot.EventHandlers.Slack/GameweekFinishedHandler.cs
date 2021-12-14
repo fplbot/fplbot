@@ -1,3 +1,4 @@
+using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data.Slack;
@@ -57,7 +58,7 @@ internal class GameweekFinishedHandler : IHandleMessages<GameweekFinished>, IHan
             var worst = Formatter.GetWorstGameweekEntry(league, gw);
             await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, intro, standings, topThree, worst);
         }
-        catch (HttpRequestException e) when (e.Message.Contains("404"))
+        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
             await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
         }
