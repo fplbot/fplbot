@@ -29,7 +29,7 @@ public class DebugHandler : IHandleAppMentions
         {
             debugInfo += $"️▪️ <https://github.com/fplbot/fplbot/tree/{debugDetails.Sha}|{debugDetails.Sha?.Substring(0, debugDetails.Sha.Length - 1)}>\n";
         }
-        await _session.SendLocal(new PublishToSlack(eventMetadata.Team_Id, slackEvent.Channel, debugInfo));
+        await _session.Send("FplBot.EventHandlers.Slack", new PublishToSlack(eventMetadata.Team_Id, slackEvent.Channel, debugInfo));
         return new EventHandledResponse("OK");
     }
 
