@@ -31,7 +31,7 @@ internal class FplStandingsCommandHandler : HandleAppMentionBase
         var gameweek = settings.Gameweeks.GetCurrentGameweek();
         if (team.HasChannelAndLeagueSetup())
         {
-            await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, appMentioned.Channel, team.FplbotLeagueId.Value, gameweek.Id));
+            await _session.Send("FplBot.EventHandlers.Slack", new PublishStandingsToSlackWorkspace(team.TeamId, appMentioned.Channel, team.FplbotLeagueId.Value, gameweek.Id));
         }
 
         return new EventHandledResponse("OK");
