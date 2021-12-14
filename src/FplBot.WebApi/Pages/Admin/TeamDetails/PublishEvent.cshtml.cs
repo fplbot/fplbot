@@ -45,7 +45,7 @@ public class PublishEvent : PageModel
             var gameweek = settings.Gameweeks.GetCurrentGameweek();
             if (team.FplbotLeagueId.HasValue && !string.IsNullOrEmpty(team.FplBotSlackChannel))
             {
-                await _session.SendLocal(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, gameweek.Id));
+                await _session.Send("FplBot.EventHandlers.Slack", new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, gameweek.Id));
                 TempData["msg"] = $"Published standings to {teamId}";
             }
             else
