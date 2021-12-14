@@ -153,8 +153,8 @@ public static class HostBuilderExtensions
             return Environment.MachineName;
 
         if (contextHostingEnvironment.IsProduction())
-            return $"Heroku.EH.{chatbot}";
-        return $"Heroku.Test.EH.{chatbot}";
+            return $"Heroku.EH";
+        return $"Heroku.Test.EH";
     }
 
     private static string GetServiceControlMonitoringQueue(IHostEnvironment contextHostingEnvironment)
