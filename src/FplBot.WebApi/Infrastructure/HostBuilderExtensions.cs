@@ -88,7 +88,23 @@ public static class HostBuilderExtensions
             endpointConfiguration.DisableFeature<AutoSubscribe>();
         }
 
+        endpointConfiguration.UniquelyIdentifyRunningInstance()
+            .UsingNames(
+                instanceName: endpointName,
+                hostName: UniqueHostName(context.HostingEnvironment)
+            );
+
         return endpointConfiguration;
+    }
+
+    private static string UniqueHostName(IHostEnvironment contextHostingEnvironment)
+    {
+        if (contextHostingEnvironment.IsDevelopment())
+            return Environment.MachineName;
+
+        if (contextHostingEnvironment.IsProduction())
+            return $"Heroku.Web";
+        return $"Heroku.Test.Web";
     }
 
     private static string GetServiceControlQueue(IHostEnvironment contextHostingEnvironment)

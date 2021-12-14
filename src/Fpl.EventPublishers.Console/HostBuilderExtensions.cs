@@ -46,8 +46,21 @@ public static class HostBuilderExtensions
         var topicName = $"bundle-1{endpointPostfix}";
         transport.TopicName(topicName);
         Console.WriteLine($"Topic: {topicName}");
+        endpointConfiguration.UniquelyIdentifyRunningInstance()
+            .UsingNames(
+                instanceName: endpointName,
+                hostName: UniqueHostName(context.HostingEnvironment)
+            );        return endpointConfiguration;
+    }
 
-        return endpointConfiguration;
+    private static string UniqueHostName(IHostEnvironment contextHostingEnvironment)
+    {
+        if (contextHostingEnvironment.IsDevelopment())
+            return Environment.MachineName;
+
+        if (contextHostingEnvironment.IsProduction())
+            return $"Heroku.EP";
+        return $"Heroku.Test.EP";
     }
 
     private static string GetServiceControlQueue(IHostEnvironment contextHostingEnvironment)
