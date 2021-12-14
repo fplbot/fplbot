@@ -138,7 +138,23 @@ public static class HostBuilderExtensions
             );
         }
 
+        endpointConfiguration.UniquelyIdentifyRunningInstance()
+            .UsingNames(
+                instanceName: endpointName,
+                hostName: UniqueHostName(chatbot, context.HostingEnvironment)
+                );
+
         return endpointConfiguration;
+    }
+
+    private static string UniqueHostName(string chatbot, IHostEnvironment contextHostingEnvironment)
+    {
+        if (contextHostingEnvironment.IsDevelopment())
+            return Environment.MachineName;
+
+        if (contextHostingEnvironment.IsProduction())
+            return $"Heroku.EH.{chatbot}";
+        return $"Heroku.Test.EH.{chatbot}";
     }
 
     private static string GetServiceControlMonitoringQueue(IHostEnvironment contextHostingEnvironment)
