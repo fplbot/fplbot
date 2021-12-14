@@ -1,4 +1,4 @@
-using FplBot.Slack.Helpers;
+using FplBot.WebApi.Slack.Helpers;
 
 namespace FplBot.Tests;
 

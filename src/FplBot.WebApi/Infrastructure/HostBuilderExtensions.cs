@@ -31,7 +31,7 @@ public static class HostBuilderExtensions
     private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string endpointPostfix = null)
     {
         endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"FplBot.{context.HostingEnvironment.EnvironmentName}{endpointPostfix}";
+        string endpointName = $"FplBot.WebApi";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
@@ -75,10 +75,10 @@ public static class HostBuilderExtensions
         //
         // Enable when you want to create new queues (i.e. new developer and/or endpoint) without
         // using the `asb-transport` CLI tool
-        if (!context.HostingEnvironment.IsDevelopment())
-        {
+        // if (!context.HostingEnvironment.IsDevelopment())
+        // {
             endpointConfiguration.EnableInstallers();
-        }
+        // }
 
         // ℹ️ Disabled in dev To decrease web app startup time
         //
@@ -100,7 +100,7 @@ public static class HostBuilderExtensions
 
     private static EndpointConfiguration LearningTransport(this HostBuilderContext context)
     {
-        var endpointConfiguration = new EndpointConfiguration($"FplBot.{context.HostingEnvironment.EnvironmentName}");
+        var endpointConfiguration = new EndpointConfiguration($"FplBot.WebApi");
         endpointConfiguration.UseTransport<LearningTransport>();
         endpointConfiguration.UsePersistence<InMemoryPersistence>();
         return endpointConfiguration;

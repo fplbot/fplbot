@@ -62,6 +62,7 @@ jobs:
           docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.web ./src
           docker build -t registry.heroku.com/blank-fplbot/eventpublisher --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.eventpublisher ./src
           docker build -t registry.heroku.com/blank-fplbot/indexer --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.indexer ./src
+          docker build -t registry.heroku.com/blank-fplbot/eventhandler --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.eventhandler ./src
       - uses: docker/login-action@v1
         with:
           registry: registry.heroku.com
@@ -72,10 +73,11 @@ jobs:
           docker push registry.heroku.com/blank-fplbot/web
           docker push registry.heroku.com/blank-fplbot/eventpublisher
           docker push registry.heroku.com/blank-fplbot/indexer
+          docker push registry.heroku.com/blank-fplbot/eventhandler
       - name: Deploy to prod
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
-        run: heroku container:release web eventpublisher indexer --app blank-fplbot
+        run: heroku container:release web eventpublisher indexer eventhandler --app blank-fplbot
       - run: git log $(git describe --tags --abbrev=0)..HEAD --oneline
       - name: Generate CHANGELOG.md
         id: releasenotes

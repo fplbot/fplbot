@@ -11,7 +11,7 @@ using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FplBot.Slack.Data.Abstractions;
+using FplBot.Data.Slack;
 using Nest;
 
 using NServiceBus;
@@ -46,7 +46,7 @@ public static class Factory
         var configuration = config.Build();
 
         var services = new ServiceCollection();
-        services.AddFplBot(configuration, A.Fake<IConnectionMultiplexer>());
+        services.AddFplBotSlackWebEndpoints(configuration, A.Fake<IConnectionMultiplexer>());
         services.AddDistributedMemoryCache();
 
         SlackClient = A.Fake<ISlackClient>();

@@ -1,7 +1,6 @@
 using FakeItEasy;
-
-using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Tests.Helpers;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 

@@ -1,4 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.Data.Discord;
 using FplBot.Discord.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -50,4 +51,4 @@ public class Subscriptions : PageModel
     }
 }
 
-public record GuildWithSubs(Guild guild, IEnumerable<GuildFplSubscription> Subs);
+public record GuildWithSubs(GuildRepoGuild guild, IEnumerable<GuildFplSubscription> Subs);

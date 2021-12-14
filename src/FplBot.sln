@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Tests", "FplBot.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fpl.Client", "Fpl.Client\Fpl.Client.csproj", "{76C6B8FB-F47B-45BA-894C-A58D48D98D56}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.Slack", "FplBot.Slack\FplBot.Slack.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi.Slack", "FplBot.WebApi.Slack\FplBot.WebApi.Slack.csproj", "{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi", "FplBot.WebApi\FplBot.WebApi.csproj", "{1037B3F4-02E9-4DE4-AD56-7651E0FB7808}"
 EndProject
@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 		Dockerfile.eventpublisher = Dockerfile.eventpublisher
 		Dockerfile.web = Dockerfile.web
 		Dockerfile.indexer = Dockerfile.indexer
+		Dockerfile.eventhandler = Dockerfile.eventhandler
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
@@ -58,7 +59,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Infrastructure", "Fp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.VerifiedEntries", "FplBot.VerifiedEntries\FplBot.VerifiedEntries.csproj", "{F4AD962C-CE59-475A-9999-599F851110E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Discord", "FplBot.Discord\FplBot.Discord.csproj", "{6589E6EE-EA5B-4366-8B7A-4EC7D9E3FB4A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.WebApi.Discord", "FplBot.WebApi.Discord\FplBot.WebApi.Discord.csproj", "{6589E6EE-EA5B-4366-8B7A-4EC7D9E3FB4A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.Endpoints", "ext\Discord.Net.Endpoints\Discord.Net.Endpoints.csproj", "{99FBCAD7-BDD1-4C85-B0D5-C1225D13A7C5}"
 EndProject
@@ -69,6 +70,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.EventPublishers.Console", "Fpl.EventPublishers.Console\Fpl.EventPublishers.Console.csproj", "{AE284990-83A7-4649-93D2-A60764EDB6A4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fpl.Search.Indexer.Console", "Fpl.Search.Indexer.Console\Fpl.Search.Indexer.Console.csproj", "{35DDB4A1-C258-4260-9321-D5A53AC88638}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.EventHandlers.Console", "FplBot.EventHandlers.Console\FplBot.EventHandlers.Console.csproj", "{425DA46E-E96D-4679-8432-4001B3DE486B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.Data", "FplBot.Data\FplBot.Data.csproj", "{EF20A254-A403-432F-B491-8B61017B7C99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.EventHandlers.Discord", "FplBot.EventHandlers.Discord\FplBot.EventHandlers.Discord.csproj", "{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.EventHandlers.Slack", "FplBot.EventHandlers.Slack\FplBot.EventHandlers.Slack.csproj", "{BD0D18BF-7D9D-429E-9197-82B94B62CA02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -296,6 +305,54 @@ Global
 		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x64.Build.0 = Release|Any CPU
 		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x86.ActiveCfg = Release|Any CPU
 		{35DDB4A1-C258-4260-9321-D5A53AC88638}.Release|x86.Build.0 = Release|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Debug|x64.Build.0 = Debug|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Debug|x86.Build.0 = Debug|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Release|x64.ActiveCfg = Release|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Release|x64.Build.0 = Release|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Release|x86.ActiveCfg = Release|Any CPU
+		{425DA46E-E96D-4679-8432-4001B3DE486B}.Release|x86.Build.0 = Release|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Debug|x86.Build.0 = Debug|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Release|x64.Build.0 = Release|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Release|x86.ActiveCfg = Release|Any CPU
+		{EF20A254-A403-432F-B491-8B61017B7C99}.Release|x86.Build.0 = Release|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Debug|x64.Build.0 = Debug|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Debug|x86.Build.0 = Debug|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Release|x64.ActiveCfg = Release|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Release|x64.Build.0 = Release|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Release|x86.ActiveCfg = Release|Any CPU
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}.Release|x86.Build.0 = Release|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Debug|x64.Build.0 = Debug|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Debug|x86.Build.0 = Debug|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x64.ActiveCfg = Release|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x64.Build.0 = Release|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x86.ActiveCfg = Release|Any CPU
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -320,6 +377,10 @@ Global
 		{062E0F68-65BF-4E41-9EAF-D70C9843A3C8} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{AE284990-83A7-4649-93D2-A60764EDB6A4} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{35DDB4A1-C258-4260-9321-D5A53AC88638} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{425DA46E-E96D-4679-8432-4001B3DE486B} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{EF20A254-A403-432F-B491-8B61017B7C99} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{BD0D18BF-7D9D-429E-9197-82B94B62CA02} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B0BB4AA1-C89E-4A74-87DA-74A5E209B8B0}

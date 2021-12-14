@@ -1,6 +1,5 @@
 using Fpl.Client.Abstractions;
-using FplBot.Slack.Data.Abstractions;
-using FplBot.Slack.Data.Models;
+using FplBot.Data.Slack;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Slackbot.Net.SlackClients.Http;

@@ -6,8 +6,7 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="JetBrains.dotMemory.Console.macos-x64" Version="2020.2.0-eap01" />
+  <ItemGroup>    
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="5.0.10" />
     <PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
@@ -27,8 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FplBot.Discord\FplBot.Discord.csproj" />
-    <ProjectReference Include="..\FplBot.Slack\FplBot.Slack.csproj" />    
+    <ProjectReference Include="..\FplBot.WebApi.Discord\FplBot.WebApi.Discord.csproj" />
+    <ProjectReference Include="..\FplBot.WebApi.Slack\FplBot.WebApi.Slack.csproj" />    
     <ProjectReference Include="..\FplBot.VerifiedEntries\FplBot.VerifiedEntries.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data" />
   </ItemGroup>
 </Project>

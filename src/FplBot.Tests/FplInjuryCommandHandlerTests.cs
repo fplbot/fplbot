@@ -1,5 +1,5 @@
-using FplBot.Slack.Handlers.SlackEvents;
 using FplBot.Tests.Helpers;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests;

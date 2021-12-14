@@ -66,6 +66,7 @@ jobs:
           docker build -t registry.heroku.com/blank-fplbot-test/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.web ./src
           docker build -t registry.heroku.com/blank-fplbot-test/eventpublisher --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.eventpublisher ./src
           docker build -t registry.heroku.com/blank-fplbot-test/indexer --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.indexer ./src
+          docker build -t registry.heroku.com/blank-fplbot-test/eventhandler --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.eventhandler ./src
       - uses: docker/login-action@v1
         with:
           registry: registry.heroku.com
@@ -76,10 +77,11 @@ jobs:
           docker push registry.heroku.com/blank-fplbot-test/web
           docker push registry.heroku.com/blank-fplbot-test/eventpublisher
           docker push registry.heroku.com/blank-fplbot-test/indexer
+          docker push registry.heroku.com/blank-fplbot-test/eventhandler
       - name: Deploy to test
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
-        run: heroku container:release web eventpublisher indexer --app blank-fplbot-test
+        run: heroku container:release web eventpublisher indexer eventhandler --app blank-fplbot-test
       - name: update deployment status
         uses: bobheadxi/deployments@v0.4.3
         if: always()

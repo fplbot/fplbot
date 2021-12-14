@@ -1,8 +1,8 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Slack.Extensions;
 using FplBot.VerifiedEntries.Data.Abstractions;
 using FplBot.VerifiedEntries.Helpers;
+using FplBot.WebApi.Slack.Extensions;
 using MediatR;
 
 namespace FplBot.WebApi.Handlers.Commands;

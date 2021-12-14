@@ -1,5 +1,4 @@
-﻿using FplBot.Slack.Data;
-using FplBot.Slack.Data.Models;
+﻿using FplBot.Data.Slack;
 
 namespace FplBot.Tests;
 

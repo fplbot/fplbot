@@ -45,7 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FplBot.Slack\FplBot.Slack.csproj" />
+      <ProjectReference Include="..\FplBot.WebApi.Slack\FplBot.WebApi.Slack.csproj" />
       <ProjectReference Include="..\Fpl.EventPublishers\Fpl.EventPublishers.csproj" />
     </ItemGroup>
 
