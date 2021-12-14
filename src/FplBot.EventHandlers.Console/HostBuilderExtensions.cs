@@ -128,12 +128,16 @@ public static class HostBuilderExtensions
         string assemblyToExclude = $"FplBot.EventHandlers.{excludeHandlers}.dll";
         Console.WriteLine($"Excluding {assemblyToExclude}");
         scanner.ExcludeAssemblies(assemblyToExclude);
-        var metrics = endpointConfiguration.EnableMetrics();
 
-        metrics.SendMetricDataToServiceControl(
-            serviceControlMetricsAddress: GetServiceControlMonitoringQueue(context.HostingEnvironment),
-            interval: TimeSpan.FromSeconds(2)
-        );
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            var metrics = endpointConfiguration.EnableMetrics();
+            metrics.SendMetricDataToServiceControl(
+                serviceControlMetricsAddress: GetServiceControlMonitoringQueue(context.HostingEnvironment),
+                interval: TimeSpan.FromSeconds(2)
+            );
+        }
+
         return endpointConfiguration;
     }
 
