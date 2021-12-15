@@ -88,11 +88,11 @@ public static class HostBuilderExtensions
             endpointConfiguration.DisableFeature<AutoSubscribe>();
         }
 
-        endpointConfiguration.UniquelyIdentifyRunningInstance()
-            .UsingNames(
-                instanceName: endpointName,
-                hostName: UniqueHostName(context.HostingEnvironment)
-            );
+        // endpointConfiguration.UniquelyIdentifyRunningInstance()
+        //     .UsingNames(
+        //         instanceName: endpointName,
+        //         hostName: UniqueHostName(context.HostingEnvironment)
+        //     );
 
         return endpointConfiguration;
     }

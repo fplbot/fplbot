@@ -46,11 +46,12 @@ public static class HostBuilderExtensions
         var topicName = $"bundle-1{endpointPostfix}";
         transport.TopicName(topicName);
         Console.WriteLine($"Topic: {topicName}");
-        endpointConfiguration.UniquelyIdentifyRunningInstance()
-            .UsingNames(
-                instanceName: endpointName,
-                hostName: UniqueHostName(context.HostingEnvironment)
-            );        return endpointConfiguration;
+        // endpointConfiguration.UniquelyIdentifyRunningInstance()
+        //     .UsingNames(
+        //         instanceName: endpointName,
+        //         hostName: UniqueHostName(context.HostingEnvironment)
+        //     );
+        return endpointConfiguration;
     }
 
     private static string UniqueHostName(IHostEnvironment contextHostingEnvironment)

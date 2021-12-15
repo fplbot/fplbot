@@ -138,11 +138,11 @@ public static class HostBuilderExtensions
             );
         }
 
-        endpointConfiguration.UniquelyIdentifyRunningInstance()
-            .UsingNames(
-                instanceName: endpointName,
-                hostName: UniqueHostName(chatbot, context.HostingEnvironment)
-                );
+        // endpointConfiguration.UniquelyIdentifyRunningInstance()
+        //     .UsingNames(
+        //         instanceName: endpointName,
+        //         hostName: UniqueHostName(chatbot, context.HostingEnvironment)
+        //         );
 
         return endpointConfiguration;
     }
