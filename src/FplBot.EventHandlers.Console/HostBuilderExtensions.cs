@@ -82,7 +82,7 @@ public static class HostBuilderExtensions
     private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string chatbot, string excludeHandlers, string endpointPostfix = null)
     {
         endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"FplBot.EventHandlers.{chatbot}";
+        string endpointName = $"FplBot.EventHandlers.{chatbot}{endpointPostfix}";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();

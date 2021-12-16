@@ -31,7 +31,7 @@ public static class HostBuilderExtensions
     private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string endpointPostfix = null)
     {
         endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"FplBot.WebApi";
+        string endpointName = $"FplBot.WebApi{endpointPostfix}";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
@@ -71,22 +71,8 @@ public static class HostBuilderExtensions
         recoverabilty.Immediate(s => s.NumberOfRetries(0));
         recoverabilty.Delayed(s => s.NumberOfRetries(3).TimeIncrease(TimeSpan.FromSeconds(20)));
 
-        // ℹ️ Disabled in dev to decrease webapp startup time
-        //
-        // Enable when you want to create new queues (i.e. new developer and/or endpoint) without
-        // using the `asb-transport` CLI tool
-        // if (!context.HostingEnvironment.IsDevelopment())
-        // {
-            endpointConfiguration.EnableInstallers();
-        // }
+        endpointConfiguration.EnableInstallers();
 
-        // ℹ️ Disabled in dev To decrease web app startup time
-        //
-        // Enable interim if you want to test _new_ events and/or commands
-        if(context.HostingEnvironment.IsDevelopment())
-        {
-            endpointConfiguration.DisableFeature<AutoSubscribe>();
-        }
 
         if (!context.HostingEnvironment.IsDevelopment())
         {
