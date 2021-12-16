@@ -1,3 +1,4 @@
+using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -22,7 +23,15 @@ public class MatchDayStatusMonitor
 
     public async Task EveryFiveMinutesTick(CancellationToken token)
     {
-        var fetched = await _eventStatusClient.GetEventStatus();
+        EventStatusResponse fetched;
+        try
+        {
+            fetched = await _eventStatusClient.GetEventStatus();
+        }
+        catch (HttpRequestException hre) when (LogError(hre))
+        {
+            return;
+        }
 
         // init/ app-startup
         if (_storedCurrent == null)
@@ -58,6 +67,12 @@ public class MatchDayStatusMonitor
         }
 
         _storedCurrent = fetched;
+    }
+
+    private bool LogError(HttpRequestException hre)
+    {
+        _logger.LogWarning("Game is updating ({StatusCode})", hre.StatusCode);
+        return hre.StatusCode == HttpStatusCode.ServiceUnavailable;
     }
 
     private static MatchdayBonusPointsAdded GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)

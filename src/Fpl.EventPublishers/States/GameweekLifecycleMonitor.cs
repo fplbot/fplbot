@@ -1,3 +1,4 @@
+using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Events;
@@ -26,7 +27,16 @@ internal class GameweekLifecycleMonitor
 
     public async Task EveryOtherMinuteTick(CancellationToken token)
     {
-        var globalSettings = await _gwClient.GetGlobalSettings();
+        GlobalSettings globalSettings;
+        try
+        {
+            globalSettings = await _gwClient.GetGlobalSettings();
+        }
+        catch (HttpRequestException hre) when (LogError(hre))
+        {
+            return;
+        }
+
         var gameweeks = globalSettings.Gameweeks;
         var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
         if (_storedCurrent == null)
@@ -89,5 +99,11 @@ internal class GameweekLifecycleMonitor
         var isFirstGameweekBeginning = _storedCurrent.Id == 1 && fetchedCurrent.Id == 1;
         var isFirstGameweekChangeToCurrent = _storedCurrent.IsCurrent == false && fetchedCurrent.IsCurrent;
         return isFirstGameweekBeginning && isFirstGameweekChangeToCurrent;
+    }
+
+    private bool LogError(HttpRequestException hre)
+    {
+        _logger.LogWarning("Game is updating ({StatusCode})", hre.StatusCode);
+        return hre.StatusCode == HttpStatusCode.ServiceUnavailable;
     }
 }

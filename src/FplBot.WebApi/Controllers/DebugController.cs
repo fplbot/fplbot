@@ -46,7 +46,7 @@ public class DebugController
         FixtureScore fixtureScore = new(home, away, 35, 0, 1);
         Dictionary<StatType,List<PlayerEvent>> statMap = new();
         PlayerDetails playerDetails1 = new(1, "Testerson");
-        PlayerDetails playerDetails2 = new(2, "Yolerson");
+        PlayerDetails playerDetails2 = new(2, Environment.MachineName);
         TeamType teamDetails = TeamType.Home;
 
         List<PlayerEvent> playerEvents = new()
