@@ -7,6 +7,7 @@ using NServiceBus;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using StackExchange.Redis;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.Hosting;
@@ -138,20 +139,37 @@ public static class HostBuilderExtensions
             );
         }
 
-        endpointConfiguration.UniquelyIdentifyRunningInstance()
-            .UsingNames(
-                instanceName: endpointName,
-                hostName: UniqueHostName(chatbot, context.HostingEnvironment)
-            );
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            var unique= endpointConfiguration.UniquelyIdentifyRunningInstance();
+            if (context.HostingEnvironment.IsProduction())
+            {
+                unique.UsingCustomIdentifier(Guid.Parse("b93574ee-1cda-4fc5-84a3-23290b2baa41"));
+                unique.UsingCustomDisplayName("blank-fplbot/handler");
+            }
+            else
+            {
+                unique.UsingCustomIdentifier(Guid.Parse("281aca40-e7a0-46d7-a16c-3a95954ab3a6"));
+                unique.UsingCustomDisplayName("blank-fplbot-test/handler");
+            }
+        }
 
         endpointConfiguration.CustomDiagnosticsWriter(
             diagnostics =>
             {
-                Console.WriteLine(diagnostics);
+                var diagnosticsLite = JsonSerializer.Deserialize<Diagnostics>(diagnostics);
+                diagnosticsLite.Chatbot = chatbot;
+                Console.WriteLine(diagnosticsLite);
                 return Task.CompletedTask;
             });
 
         return endpointConfiguration;
+    }
+
+    record Hosting(string HostId, string HostDisplayName, string MachineName, string HostName, string UserName, string PathToExe);
+    record Diagnostics(Hosting Hosting)
+    {
+        public string Chatbot { get; set; }
     }
 
     private static string UniqueHostName(string chatbot, IHostEnvironment contextHostingEnvironment)

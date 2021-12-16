@@ -88,21 +88,34 @@ public static class HostBuilderExtensions
             endpointConfiguration.DisableFeature<AutoSubscribe>();
         }
 
-        endpointConfiguration.UniquelyIdentifyRunningInstance()
-            .UsingNames(
-                instanceName: endpointName,
-                hostName: UniqueHostName(context.HostingEnvironment)
-            );
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            var unique= endpointConfiguration.UniquelyIdentifyRunningInstance();
+            if (context.HostingEnvironment.IsProduction())
+            {
+                unique.UsingCustomIdentifier(Guid.Parse("c6d14bec-0da5-4403-b0ec-c3f3b738c11d"));
+                unique.UsingCustomDisplayName("blank-fplbot/web");
+            }
+            else
+            {
+                unique.UsingCustomIdentifier(Guid.Parse("d8bcefac-f469-4daa-a94f-807c5b959d78"));
+                unique.UsingCustomDisplayName("blank-fplbot-test/web");
+            }
+        }
 
         endpointConfiguration.CustomDiagnosticsWriter(
             diagnostics =>
             {
-                Console.WriteLine(diagnostics);
+                var diagnosticsLite = System.Text.Json.JsonSerializer.Deserialize<Diagnostics>(diagnostics);
+                Console.WriteLine(diagnosticsLite.Hosting);
                 return Task.CompletedTask;
             });
 
         return endpointConfiguration;
     }
+
+    record Hosting(string HostId, string HostDisplayName, string MachineName, string HostName, string UserName, string PathToExe);
+    record Diagnostics(Hosting Hosting);
 
     private static string UniqueHostName(IHostEnvironment contextHostingEnvironment)
     {

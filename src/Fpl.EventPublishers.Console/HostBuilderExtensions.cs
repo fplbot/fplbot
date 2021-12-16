@@ -46,13 +46,34 @@ public static class HostBuilderExtensions
         var topicName = $"bundle-1{endpointPostfix}";
         transport.TopicName(topicName);
         Console.WriteLine($"Topic: {topicName}");
-        // endpointConfiguration.UniquelyIdentifyRunningInstance()
-        //     .UsingNames(
-        //         instanceName: endpointName,
-        //         hostName: UniqueHostName(context.HostingEnvironment)
-        //     );
+
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            var unique= endpointConfiguration.UniquelyIdentifyRunningInstance();
+            if (context.HostingEnvironment.IsProduction())
+            {
+                unique.UsingCustomIdentifier(Guid.Parse("fd56af13-62f7-437d-90a8-139a64e4382d"));
+                unique.UsingCustomDisplayName("blank-fplbot/publisher");
+            }
+            else
+            {
+                unique.UsingCustomIdentifier(Guid.Parse("c2f4bade-4274-46b4-a062-152fbc6229ef"));
+                unique.UsingCustomDisplayName("blank-fplbot-test/publisher");
+            }
+        }
+        endpointConfiguration.CustomDiagnosticsWriter(
+            diagnostics =>
+            {
+                var diagnosticsLite = System.Text.Json.JsonSerializer.Deserialize<Diagnostics>(diagnostics);
+                Console.WriteLine(diagnosticsLite);
+                return Task.CompletedTask;
+            });
+
         return endpointConfiguration;
     }
+    record Hosting(string HostId, string HostDisplayName, string MachineName, string HostName, string UserName, string PathToExe);
+
+    record Diagnostics(Hosting Hosting);
 
     private static string UniqueHostName(IHostEnvironment contextHostingEnvironment)
     {
