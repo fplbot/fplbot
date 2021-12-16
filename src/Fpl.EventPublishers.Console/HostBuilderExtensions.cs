@@ -30,7 +30,7 @@ public static class HostBuilderExtensions
     private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string endpointPostfix = null)
     {
         endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"Fpl.EventPublisher.{endpointPostfix}";
+        string endpointName = $"Fpl.EventPublisher{endpointPostfix}";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.SendOnly();
