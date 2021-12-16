@@ -1,4 +1,6 @@
+using System.Net;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using Fpl.EventPublishers.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
@@ -23,7 +25,15 @@ internal class NearDeadLineMonitor
 
     public async Task EveryMinuteTick()
     {
-        var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+        GlobalSettings globalSettings;
+        try
+        {
+            globalSettings = await _globalSettingsClient.GetGlobalSettings();
+        }
+        catch (HttpRequestException hre) when (LogError(hre))
+        {
+            return;
+        }
         var gweeks = globalSettings.Gameweeks;
 
         var next = gweeks.FirstOrDefault(gw => gw.IsNext);
@@ -40,5 +50,11 @@ internal class NearDeadLineMonitor
         {
             _logger.LogInformation($"No next gameweek");
         }
+    }
+
+    private bool LogError(HttpRequestException hre)
+    {
+        _logger.LogWarning("Game is updating ({StatusCode})", hre.StatusCode);
+        return hre.StatusCode == HttpStatusCode.ServiceUnavailable;
     }
 }

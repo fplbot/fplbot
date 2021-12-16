@@ -1,4 +1,6 @@
+using System.Net;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using Fpl.EventPublishers.Abstractions;
 using Fpl.EventPublishers.Models.Mappers;
 using Microsoft.Extensions.Logging;
@@ -26,7 +28,16 @@ internal class LineupState
     public async Task Reset(int gw)
     {
         _matchDetails.Clear();
-        var fixtures = await _fixtureClient.GetFixturesByGameweek(gw);
+        ICollection<Fixture> fixtures;
+        try
+        {
+            fixtures = await _fixtureClient.GetFixturesByGameweek(gw);
+        }
+        catch (HttpRequestException hre) when (LogError(hre))
+        {
+            return;
+        }
+
         foreach (var fixture in fixtures)
         {
             var lineups = await _scraperApi.GetMatchDetails(fixture.PulseId);
@@ -86,5 +97,11 @@ internal class LineupState
                 _logger.LogError(e, e.Message);
             }
         }
+    }
+
+    private bool LogError(HttpRequestException hre)
+    {
+        _logger.LogWarning("Game is updating ({StatusCode})", hre.StatusCode);
+        return hre.StatusCode == HttpStatusCode.ServiceUnavailable;
     }
 }
