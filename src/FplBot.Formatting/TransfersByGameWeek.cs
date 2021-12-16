@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Fpl.Client;
@@ -70,14 +71,22 @@ public class TransfersByGameWeek : ITransfersByGameWeek
 
             return playerTransfers.ToArray();
         }
+        catch (HttpRequestException hre) when (LogWarning(hre, gw, leagueId))
+        {
+            return Enumerable.Empty<Transfer>();
+        }
         catch (Exception e)
         {
             _logger.LogError(e, e.Message);
-
             return Enumerable.Empty<Transfer>();
         }
     }
 
+    private bool LogWarning(HttpRequestException hre, int gw, int leagueId)
+    {
+        _logger.LogWarning("Could not get transfers in {GW} for {LeagueId}", gw, leagueId);
+        return hre.StatusCode == HttpStatusCode.NotFound;
+    }
 
     public record TransfersMessage(string Message);
 

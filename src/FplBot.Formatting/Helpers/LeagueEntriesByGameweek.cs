@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Logging;
@@ -40,11 +37,20 @@ public class LeagueEntriesByGameweek : ILeagueEntriesByGameweek
 
             return entryDictionary;
         }
+        catch (HttpRequestException hre) when (LogWarning(hre, gw, leagueId))
+        {
+            return Enumerable.Empty<GameweekEntry>();
+        }
         catch (Exception e)
         {
             _logger.LogError(e, e.Message);
             return Enumerable.Empty<GameweekEntry>();
         }
+    }
+    private bool LogWarning(HttpRequestException hre, int gw, int leagueId)
+    {
+        _logger.LogWarning("Could not get entries in {GW} for {LeagueId}", gw, leagueId);
+        return hre.StatusCode == HttpStatusCode.NotFound;
     }
 
 }
