@@ -6,19 +6,19 @@ using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.RecurringActions;
 
-internal class GameweekLifecycleRecurringAction : IRecurringAction 
+internal class GameweekLifecycleRecurringAction : IRecurringAction
 {
     private readonly GameweekLifecycleMonitor _monitor;
-    private readonly ILogger<GameweekLifecycleMonitor> _logger;
+    private readonly ILogger<GameweekLifecycleRecurringAction> _logger;
 
-    public GameweekLifecycleRecurringAction(GameweekLifecycleMonitor monitor, ILogger<GameweekLifecycleMonitor> logger)
+    public GameweekLifecycleRecurringAction(GameweekLifecycleMonitor monitor, ILogger<GameweekLifecycleRecurringAction> logger)
     {
         _monitor = monitor;
         _logger = logger;
     }
 
     public async Task Process(CancellationToken token)
-    {            
+    {
         using (_logger.BeginCorrelationScope())
         {
             _logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
