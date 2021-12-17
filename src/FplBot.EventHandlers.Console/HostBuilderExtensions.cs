@@ -135,7 +135,8 @@ public static class HostBuilderExtensions
             var metrics = endpointConfiguration.EnableMetrics();
             metrics.SendMetricDataToServiceControl(
                 serviceControlMetricsAddress: GetServiceControlMonitoringQueue(context.HostingEnvironment),
-                interval: TimeSpan.FromSeconds(60)
+                interval: TimeSpan.FromSeconds(30),
+                instanceId: $"{endpointName}@{Environment.MachineName}"
             );
         }
 
