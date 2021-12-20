@@ -37,7 +37,7 @@ internal class LineupState
         {
             _currentFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
         }
-        catch (Exception hre) when (LogError(hre))
+        catch (Exception e) when (LogError(e))
         {
             return;
         }
@@ -69,7 +69,7 @@ internal class LineupState
             updatedFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
 
         }
-        catch (Exception hre) when (LogError(hre))
+        catch (Exception e) when (LogError(e))
         {
             return;
         }

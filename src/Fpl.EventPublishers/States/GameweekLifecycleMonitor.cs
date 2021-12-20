@@ -32,7 +32,7 @@ internal class GameweekLifecycleMonitor
         {
             globalSettings = await _gwClient.GetGlobalSettings();
         }
-        catch (Exception hre) when (LogError(hre))
+        catch (Exception e) when (LogError(e))
         {
             return;
         }
