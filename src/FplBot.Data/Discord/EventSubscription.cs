@@ -16,5 +16,6 @@ public enum EventSubscription
     InjuryUpdates,
     Deadlines,
     Lineups,
-    NewPlayers
+    NewPlayers,
+    FixtureRemoved
 }
