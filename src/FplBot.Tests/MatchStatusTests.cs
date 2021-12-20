@@ -58,6 +58,21 @@ public class MatchStatusTests
         Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
     }
 
+    [Fact]
+    public async Task WhenFixtureIsRemoved_EmitsFixtureRemoved()
+    {
+        var monitor = CreateFixture2RemovedScenario();
+        await monitor.Reset(1);
+        await monitor.Refresh(1);
+
+        Assert.Equal(1, _session.PublishedMessages.Length);
+        var message = _session.PublishedMessages[0].Message;
+        Assert.IsType<FixtureRemovedFromGameweek>(message);
+        var fixtureRemovedFromGameweekEvent = ((FixtureRemovedFromGameweek)message);
+        Assert.Equal(1, fixtureRemovedFromGameweekEvent.Gameweek);
+        Assert.Equal(new RemovedFixture(2, "HOM", "AWA"), fixtureRemovedFromGameweekEvent.RemovedFixture);
+    }
+
     private LineupState CreateNewLineupScenario()
     {
         var fixtureClient = A.Fake<IFixtureClient>();
@@ -73,7 +88,7 @@ public class MatchStatusTests
         A.CallTo(() => scraperFake.GetMatchDetails(testFixture1.PulseId)).Returns(TestBuilder.NoLineup(testFixture1.PulseId));
         A.CallTo(() => scraperFake.GetMatchDetails(testFixture2.PulseId)).Returns(TestBuilder.NoLineup(testFixture2.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.PulseId));
         _session = new TestableMessageSession();
-        return new LineupState(fixtureClient, scraperFake, _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, scraperFake, A.Fake<IGlobalSettingsClient>(), _session, A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateTwoNewLineupsScenario()
@@ -91,6 +106,30 @@ public class MatchStatusTests
         A.CallTo(() => scraperFake.GetMatchDetails(testFixture1.PulseId)).Returns(TestBuilder.NoLineup(testFixture1.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.PulseId));;
         A.CallTo(() => scraperFake.GetMatchDetails(testFixture2.PulseId)).Returns(TestBuilder.NoLineup(testFixture2.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.PulseId));
         _session = new TestableMessageSession();
-        return new LineupState(fixtureClient, scraperFake, _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, scraperFake, A.Fake<IGlobalSettingsClient>(), _session, A.Fake<ILogger<LineupState>>());
+    }
+
+    private LineupState CreateFixture2RemovedScenario()
+    {
+        var fixtureClient = A.Fake<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
+        {
+            TestBuilder.NoGoals(1),
+            TestBuilder.NoGoals(2)
+        }).Once().Then.Returns(new List<Fixture>()
+        {
+            TestBuilder.NoGoals(1)
+        });
+
+        var scraperFake = A.Fake<IGetMatchDetails>();
+       _session = new TestableMessageSession();
+       var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
+       A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+           {
+               Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
+               Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }
+           }
+       );
+        return new LineupState(fixtureClient, scraperFake, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
     }
 }

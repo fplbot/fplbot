@@ -52,9 +52,17 @@ internal class NearDeadLineMonitor
         }
     }
 
-    private bool LogError(HttpRequestException hre)
+    private bool LogError(Exception e)
     {
-        _logger.LogWarning("Game is updating ({StatusCode})", hre.StatusCode);
-        return hre.StatusCode == HttpStatusCode.ServiceUnavailable;
+        if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
+        {
+            _logger.LogWarning("Game is updating");
+        }
+        else
+        {
+            _logger.LogError(e, e.Message);
+        }
+
+        return true;
     }
 }
