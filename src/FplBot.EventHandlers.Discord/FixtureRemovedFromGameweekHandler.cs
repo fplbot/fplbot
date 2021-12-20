@@ -1,4 +1,3 @@
-using Fpl.Client.Models;
 using FplBot.Data.Discord;
 using FplBot.EventHandlers.Discord.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -32,8 +31,9 @@ public class FixtureRemovedFromGameweekHandler : IHandleMessages<FixtureRemovedF
                 options.RouteToThisEndpoint();
                 var formattedMsg = new PublishRichToGuildChannel(sub.GuildId,
                     sub.ChannelId,
-                    $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}",
-                    $"❌ Fixture has been removed from gameweek {message.Gameweek}!");
+                    $"❌ Fixture off!",
+                    $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}" +
+                    $" has been removed from gameweek {message.Gameweek}!");
                 await context.Send(formattedMsg, options);
             }
         }
