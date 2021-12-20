@@ -17,5 +17,5 @@ public enum EventSubscription
     Deadlines,
     Lineups,
     NewPlayers,
-    FixtureRemoved
+    FixtureRemovedFromGameweek
 }

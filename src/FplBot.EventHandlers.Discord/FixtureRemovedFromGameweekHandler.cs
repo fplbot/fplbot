@@ -25,7 +25,7 @@ public class FixtureRemovedFromGameweekHandler : IHandleMessages<FixtureRemovedF
 
         foreach (var sub in subs)
         {
-            if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureRemoved))
+            if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureRemovedFromGameweek))
             {
                 var options = new SendOptions();
                 options.RequireImmediateDispatch();
