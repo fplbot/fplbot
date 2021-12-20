@@ -33,16 +33,16 @@ public class PublishToGuildHandler :
 
     public async Task Handle(PublishRichToGuildChannel message, IMessageHandlerContext context)
     {
-        var desc = message.Description;
+        int? color = null;
 
         if (_env.IsDevelopment())
         {
-            desc = $"[{Environment.MachineName}]\n{message.Description}";
+            color = 14177041;
         }
 
         try
         {
-            await _discordClient.ChannelMessagePost(message.ChannelId, new DiscordClient.RichEmbed(message.Title, desc));
+            await _discordClient.ChannelMessagePost(message.ChannelId, new DiscordClient.RichEmbed(message.Title, message.Description, color));
         }
         catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.Forbidden)
         {

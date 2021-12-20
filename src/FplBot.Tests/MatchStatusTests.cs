@@ -70,7 +70,7 @@ public class MatchStatusTests
         Assert.IsType<FixtureRemovedFromGameweek>(message);
         var fixtureRemovedFromGameweekEvent = ((FixtureRemovedFromGameweek)message);
         Assert.Equal(1, fixtureRemovedFromGameweekEvent.Gameweek);
-        Assert.Equal(new RemovedFixture(2, "HOM", "AWA"), fixtureRemovedFromGameweekEvent.RemovedFixture);
+        Assert.Equal(new RemovedFixture(2, new(10,"HomeTeam","HOM"), new(20, "AwAyTeam", "AWA")), fixtureRemovedFromGameweekEvent.RemovedFixture);
     }
 
     private LineupState CreateNewLineupScenario()

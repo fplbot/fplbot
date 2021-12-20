@@ -17,7 +17,7 @@ internal class LineupState
     private readonly IMessageSession _session;
     private readonly ILogger<LineupState> _logger;
     private readonly Dictionary<int, MatchDetails> _matchDetails;
-    private ICollection<Fixture> _oldFixtures;
+    private ICollection<Fixture> _currentFixtures;
 
     public LineupState(IFixtureClient fixtureClient, IGetMatchDetails scraperApi, IGlobalSettingsClient globalSettingsClient, IMessageSession session, ILogger<LineupState> logger)
     {
@@ -27,7 +27,7 @@ internal class LineupState
         _session = session;
         _logger = logger;
         _matchDetails = new Dictionary<int, MatchDetails>();
-        _oldFixtures = new List<Fixture>();
+        _currentFixtures = new List<Fixture>();
     }
 
     public async Task Reset(int gw)
@@ -35,14 +35,14 @@ internal class LineupState
         _matchDetails.Clear();
         try
         {
-            _oldFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
+            _currentFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
         }
         catch (Exception hre) when (LogError(hre))
         {
             return;
         }
 
-        foreach (var fixture in _oldFixtures)
+        foreach (var fixture in _currentFixtures)
         {
             var lineups = await _scraperApi.GetMatchDetails(fixture.PulseId);
             if (lineups != null)
@@ -76,23 +76,25 @@ internal class LineupState
 
         await CheckForLineups(updatedFixtures);
         await CheckForRemovedFixtures(updatedFixtures, gw);
-        _oldFixtures = updatedFixtures;
+        _currentFixtures = updatedFixtures;
     }
 
     private async Task CheckForRemovedFixtures(ICollection<Fixture> updatedFixtures, int gw)
     {
-        foreach (var fixture in _oldFixtures)
+        foreach (var currentFixture in _currentFixtures)
         {
             try
             {
-                var isFixtureRemoved = updatedFixtures.All(f => f.Id != fixture.Id);
+                var isFixtureRemoved = updatedFixtures.All(f => f.Id != currentFixture.Id);
                 if (isFixtureRemoved)
                 {
                     var settings = await _globalSettingsClient.GetGlobalSettings();
                     var teams = settings.Teams;
-                    var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
-                    var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
-                    var removedFixture = new RemovedFixture(fixture.Id, homeTeam.ShortName, awayTeam.ShortName);
+                    var homeTeam = teams.First(t => t.Id == currentFixture.HomeTeamId);
+                    var awayTeam = teams.First(t => t.Id == currentFixture.AwayTeamId);
+                    var removedFixture = new RemovedFixture(currentFixture.Id,
+                        new (homeTeam.Id, homeTeam.Name, homeTeam.ShortName),
+                        new (awayTeam.Id, awayTeam.Name, awayTeam.ShortName));
                     await _session.Publish(new FixtureRemovedFromGameweek(gw, removedFixture));
                 }
             }
