@@ -26,25 +26,31 @@ internal class LineupsHandler :
 
     public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Init");
-        return _matchState.Reset(notification.CurrentGameweek.Id);
+        var initId = notification.CurrentGameweek.Id;
+        if (notification.CurrentGameweek.IsFinished)
+        {
+            initId++;
+        }
+
+        _logger.LogInformation("Init {Gameweek}", initId);
+        return _matchState.Reset(initId);
     }
 
     public Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Resetting state");
+        _logger.LogInformation("Resetting state. Gameweek {Gameweek} just began.", notification.Gameweek.Id);
         return _matchState.Reset(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyOnGoing notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Refreshing state for ongoing gw");
+        _logger.LogInformation("Refreshing state for ongoing gw {Gameweek}", notification.Gameweek.Id);
         return _matchState.Refresh(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyFinished notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Refreshing state for finished gw");
+        _logger.LogInformation("Refreshing state for finished gw {Gameweek}. Using next gw {NextGameweek}", notification.Gameweek.Id, notification.Gameweek.Id + 1);
         return _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
     }
 }
