@@ -9,14 +9,19 @@ namespace FplBot.EventHandlers.Slack;
 public class FixtureRemovedFromGameweekHandler : IHandleMessages<FixtureRemovedFromGameweek>
 {
     private readonly ISlackTeamRepository _teamRepo;
+    private readonly ILogger<FixtureRemovedFromGameweekHandler> _logger;
 
-    public FixtureRemovedFromGameweekHandler(ISlackTeamRepository teamRepo)
+
+    public FixtureRemovedFromGameweekHandler(ISlackTeamRepository teamRepo, ILogger<FixtureRemovedFromGameweekHandler> logger)
     {
         _teamRepo = teamRepo;
+        _logger = logger;
     }
 
     public async Task Handle(FixtureRemovedFromGameweek message, IMessageHandlerContext context)
     {
+        _logger.LogInformation("Fixture removed from gameweek {Message}", message);
+
         var teams = await _teamRepo.GetAllTeams();
         foreach (var team in teams)
         {
