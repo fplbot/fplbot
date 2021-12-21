@@ -80,6 +80,14 @@ internal class LineupState
 
     private async Task CheckForRemovedFixtures(ICollection<Fixture> updatedFixtures, int gw)
     {
+        var currentEvent = _currentFixtures.First().Event;
+        var updatedEvent = updatedFixtures.First().Event;
+        if (updatedEvent != currentEvent)
+        {
+            _logger.LogWarning("Checking fixtures for different gameweek. {Current} vs {Updated}. Aborting.", currentEvent, updatedEvent );
+            return;
+        }
+
         foreach (var currentFixture in _currentFixtures)
         {
             try
