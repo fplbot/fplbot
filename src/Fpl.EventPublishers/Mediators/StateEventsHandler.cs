@@ -1,4 +1,5 @@
 using Fpl.EventPublishers.Events;
+using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.States;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -25,24 +26,28 @@ internal class StateMediator :
 
     public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
     {
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekMonitoringStarted), notification.CurrentGameweek.Id.ToString()));
         _logger.LogInformation("Init");
         return _state.Reset(notification.CurrentGameweek.Id);
     }
 
     public Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
     {
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekJustBegan), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Getting ready to rumble");
         return _state.Reset(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyOnGoing notification, CancellationToken cancellationToken)
     {
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyOnGoing), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Refreshing state for ongoing gw");
         return _state.Refresh(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyFinished notification, CancellationToken cancellationToken)
     {
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyFinished), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Refreshing state - finished gw");
         return _state.Refresh(notification.Gameweek.Id);
     }

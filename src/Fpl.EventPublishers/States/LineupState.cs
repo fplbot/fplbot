@@ -2,6 +2,7 @@ using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Abstractions;
+using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
@@ -80,6 +81,7 @@ internal class LineupState
 
     private async Task CheckForRemovedFixtures(ICollection<Fixture> updatedFixtures, int gw)
     {
+        using var scope = _logger.AddContext("CheckForRemovedFixtures");
         var currentEvent = _currentFixtures.First().Event;
         var updatedEvent = updatedFixtures.First().Event;
         if (updatedEvent != currentEvent)
@@ -104,6 +106,10 @@ internal class LineupState
                         new (awayTeam.Id, awayTeam.Name, awayTeam.ShortName));
                     await _session.Publish(new FixtureRemovedFromGameweek(gw, removedFixture));
                 }
+                else
+                {
+                    _logger.LogDebug("Fixture {FixtureId} not removed", currentFixture.Id);
+                }
             }
             catch (Exception e) when (LogError(e))
             {
@@ -113,6 +119,7 @@ internal class LineupState
 
     private async Task CheckForLineups(ICollection<Fixture> fixtures)
     {
+        using var scope = _logger.AddContext("CheckForLineups");
         foreach (var fixture in fixtures)
         {
             try
