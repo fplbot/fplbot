@@ -8,10 +8,12 @@ namespace Fpl.EventPublishers;
 
 internal class PremierLeagueScraperApi : IGetMatchDetails
 {
+    private readonly HttpClient _client;
     private readonly ILogger<PremierLeagueScraperApi> _logger;
 
-    public PremierLeagueScraperApi(ILogger<PremierLeagueScraperApi> logger)
+    public PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger)
     {
+        _client = client;
         _logger = logger;
     }
 
@@ -19,8 +21,7 @@ internal class PremierLeagueScraperApi : IGetMatchDetails
     {
         try
         {
-            using var client = new HttpClient();
-            var res = await client.GetStringAsync($"https://www.premierleague.com/match/{pulseId}");
+            var res = await _client.GetStringAsync($"https://www.premierleague.com/match/{pulseId}");
             using var context = BrowsingContext.New();
             using var document = await context.OpenAsync(req => req.Content(res));
             var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
