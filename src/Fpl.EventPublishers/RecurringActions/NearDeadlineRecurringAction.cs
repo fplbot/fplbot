@@ -19,11 +19,10 @@ internal class NearDeadlineRecurringAction : IRecurringAction
 
     public async Task Process(CancellationToken token)
     {
-        using (_logger.BeginCorrelationScope())
-        {
-            _logger.LogInformation($"Running {nameof(NearDeadlineRecurringAction)}");
-            await _monitor.EveryMinuteTick();
-        }
+        using var scope = _logger.BeginCorrelationScope();
+        using var scope2 = _logger.AddContext("NeardeadlineCheck");
+        _logger.LogInformation($"Running {nameof(NearDeadlineRecurringAction)}");
+        await _monitor.EveryMinuteTick();
     }
 
     public string Cron => CronPatterns.EveryMinuteAt20Seconds;

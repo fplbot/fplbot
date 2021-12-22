@@ -19,11 +19,10 @@ internal class MatchDayStatusRecurringAction : IRecurringAction
 
     public async Task Process(CancellationToken token)
     {
-        using (_logger.BeginCorrelationScope())
-        {
-            _logger.LogInformation($"Running {nameof(MatchDayStatusRecurringAction)}");
-            await _monitor.EveryFiveMinutesTick(token);
-        }
+        using var scope = _logger.BeginCorrelationScope();
+        using var scope2 = _logger.AddContext("MatchdaystatusCheck");
+        _logger.LogInformation($"Running {nameof(MatchDayStatusRecurringAction)}");
+        await _monitor.EveryFiveMinutesTick(token);
     }
 
     public string Cron => CronPatterns.EveryFiveMinutesAt40seconds;

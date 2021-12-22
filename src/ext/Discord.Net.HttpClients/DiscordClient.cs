@@ -38,7 +38,7 @@ namespace Discord.Net.HttpClients
             res.EnsureSuccessStatusCode();
         }
 
-        public record RichEmbed(string Title, string Description);
+        public record RichEmbed(string Title, string Description, int? Color = null);
 
         public async Task ChannelMessagePost(string channelId, RichEmbed embed)
         {
@@ -51,7 +51,7 @@ namespace Discord.Net.HttpClients
                         type = "rich",
                         title = embed.Title,
                         description = embed.Description,
-                        color = 3604540
+                        color = embed.Color ?? 3604540
                     }
                 }
             });

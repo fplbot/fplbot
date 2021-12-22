@@ -28,7 +28,7 @@ public class MatchDayStatusMonitor
         {
             fetched = await _eventStatusClient.GetEventStatus();
         }
-        catch (HttpRequestException hre) when (LogError(hre))
+        catch (Exception e) when (LogError(e))
         {
             return;
         }
@@ -69,10 +69,18 @@ public class MatchDayStatusMonitor
         _storedCurrent = fetched;
     }
 
-    private bool LogError(HttpRequestException hre)
+    private bool LogError(Exception e)
     {
-        _logger.LogWarning("Game is updating ({StatusCode})", hre.StatusCode);
-        return hre.StatusCode == HttpStatusCode.ServiceUnavailable;
+        if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
+        {
+            _logger.LogWarning("Game is updating");
+        }
+        else
+        {
+            _logger.LogError(e, e.Message);
+        }
+
+        return true;
     }
 
     private static MatchdayBonusPointsAdded GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)

@@ -19,11 +19,9 @@ internal class GameweekLifecycleRecurringAction : IRecurringAction
 
     public async Task Process(CancellationToken token)
     {
-        using (_logger.BeginCorrelationScope())
-        {
-            _logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
-            await _monitor.EveryOtherMinuteTick(token);
-        }
+        using var scope = _logger.BeginCorrelationScope();
+        _logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
+        await _monitor.EveryOtherMinuteTick(token);
     }
 
     public string Cron => CronPatterns.EveryOtherMinute;

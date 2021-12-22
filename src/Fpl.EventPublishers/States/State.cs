@@ -1,5 +1,6 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
@@ -32,6 +33,7 @@ internal class State
 
     public async Task Reset(int newGameweek)
     {
+        using var scope = _logger.AddContext("StateInit");
         _logger.LogInformation($"Running reset for gw {newGameweek}");
         _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
         var settings = await _settingsClient.GetGlobalSettings();
@@ -41,6 +43,7 @@ internal class State
 
     public async Task Refresh(int currentGameweek)
     {
+        using var scope = _logger.AddContext("StateRefresh");
         _logger.LogInformation($"Refreshing {currentGameweek}");
         var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
         var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures, _players, _teams);

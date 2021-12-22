@@ -1,4 +1,5 @@
 using Fpl.EventPublishers.Events;
+using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.States;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -26,25 +27,34 @@ internal class LineupsHandler :
 
     public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Init");
-        return _matchState.Reset(notification.CurrentGameweek.Id);
+        var initId = notification.CurrentGameweek.Id;
+        if (notification.CurrentGameweek.IsFinished)
+        {
+            initId++;
+        }
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekMonitoringStarted), initId.ToString()));
+        _logger.LogInformation("Init {Gameweek}", initId);
+        return _matchState.Reset(initId);
     }
 
     public Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Resetting state");
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekJustBegan), notification.Gameweek.Id.ToString()));
+        _logger.LogInformation("Resetting state. Gameweek {Gameweek} just began.", notification.Gameweek.Id);
         return _matchState.Reset(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyOnGoing notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Refreshing state for ongoing gw");
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyOnGoing), notification.Gameweek.Id.ToString()));
+        _logger.LogInformation("Refreshing state for ongoing gw {Gameweek}", notification.Gameweek.Id);
         return _matchState.Refresh(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyFinished notification, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Refreshing state for finished gw");
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyFinished), (notification.Gameweek.Id+1).ToString()));
+        _logger.LogInformation("Refreshing state for finished gw {Gameweek}. Using next gw {NextGameweek}", notification.Gameweek.Id, notification.Gameweek.Id + 1);
         return _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
     }
 }

@@ -22,7 +22,8 @@ public class DebugController
     {
         if (!_env.IsProduction())
         {
-            await _session.Publish(FixtureEvents(StatType.GoalsScored, removed));
+            var message = FixtureEvents(StatType.GoalsScored, removed);
+            await _session.Publish(message);
             // await _session.Publish(FixtureEvents(StatType.Assists, removed));
             // await _session.Publish(FixtureEvents(StatType.OwnGoals, removed));
             // await _session.Publish(FixtureEvents(StatType.PenaltiesMissed, removed));
@@ -31,11 +32,24 @@ public class DebugController
             // await _session.Publish(FixtureEvents(StatType.YellowCards, removed));
             // await _session.Publish(FixtureEvents(StatType.Saves, removed));
             // await _session.Publish(FixtureEvents(StatType.Bonus, removed));
-            return new OkResult();
+            return new AcceptedResult("", message);
         }
 
         return new UnauthorizedResult();
 
+    }
+
+    [HttpGet("removedfixture")]
+    public async Task<IActionResult> RemovedFixture(bool removed = false)
+    {
+        if (!_env.IsProduction())
+        {
+            var removedFixture = new RemovedFixture(1, new(1, "Arsenal", "ARS"), new(2, "Chelsea", "CHE"));
+            var message = new FixtureRemovedFromGameweek(1337, removedFixture);
+            await _session.Publish(message);
+            return new AcceptedResult("", message);
+        }
+        return new UnauthorizedResult();
     }
 
     private static FixtureEventsOccured FixtureEvents(StatType type, bool isRemoved)
