@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using Discord.Net.Endpoints.Hosting;
@@ -18,13 +19,28 @@ internal class DiscordCodeTokenExchangeMiddleware
 
     public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildStore guildStore, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
     {
-        logger.LogInformation("Installing discord bot!");
-        var redirect_uri = new Uri($"{ctx.Request.Scheme}://{ctx.Request.Host.Value.ToString()}{ctx.Request.PathBase.Value}");
-        var code = ctx.Request.Query["code"].FirstOrDefault();
-        var guild_id = ctx.Request.Query["guild_id"].FirstOrDefault();
+        var error = ctx.Request.Query["error"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(error))
+        {
+            var description = ctx.Request.Query["error_description"];
+            logger.LogWarning($"Error received from Discord:{error}:{description}. Redirecting to error page.");
+            var location = $"{options.Value.ErrorRedirectUri}?details={WebUtility.UrlEncode(error)}";
+            ctx.Response.Redirect((location));
+            return;
+        }
 
-        if(code == null)
-            await _next(ctx);
+        logger.LogInformation("Installing discord bot!");
+        var redirectUri = new Uri($"{ctx.Request.Scheme}://{ctx.Request.Host.Value}{ctx.Request.PathBase.Value}");
+        var code = ctx.Request.Query["code"].FirstOrDefault();
+        var guildId = ctx.Request.Query["guild_id"].FirstOrDefault();
+
+        if(string.IsNullOrEmpty(code))
+        {
+            logger.LogWarning("No code received");
+            var location = $"{options.Value.ErrorRedirectUri}?details=no_code";
+            ctx.Response.Redirect(location);
+            return;
+        }
 
         var httpClient = new HttpClient();
         var parameters = new List<KeyValuePair<string,string>>
@@ -33,7 +49,7 @@ internal class DiscordCodeTokenExchangeMiddleware
             new ("client_id", options.Value.CLIENT_ID),
             new ("client_secret", options.Value.CLIENT_SECRET),
             new ("grant_type", "authorization_code"),
-            new ("redirect_uri", redirect_uri.ToString())
+            new ("redirect_uri", redirectUri.ToString())
         };
 
         var formUrlEncodedContent = new FormUrlEncodedContent(parameters);
@@ -48,15 +64,15 @@ internal class DiscordCodeTokenExchangeMiddleware
             var guild = jsonDoc.GetProperty("guild");
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
-            await guildStore.Insert(new Guild(guild_id, guild_name));
-            await options.Value.OnSuccess(guild_id, guild_name, provider);
+            await guildStore.Insert(new Guild(guildId, guild_name));
+            await options.Value.OnSuccess(guildId, guild_name, provider);
             ctx.Response.Redirect(options.Value.SuccessRedirectUri);
         }
         else
         {
-            logger.LogError($"Bad Oauth response! {response}");
-            ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await ctx.Response.WriteAsync(jsonResponse);
+            logger.LogError($"Token exchange failed ({response.StatusCode})! Response: \n{jsonResponse}");
+            var location = $"{options.Value.ErrorRedirectUri}?details=token_exchange_failed";
+            ctx.Response.Redirect(location);
         }
     }
 }

@@ -61,6 +61,7 @@ public static class WebApplicationBuilderExtensions
             });
 
         var successUri = env.IsProduction() ? "https://www.fplbot.app/success" : "https://test.fplbot.app/success";
+        var errorUri = env.IsProduction() ? "https://www.fplbot.app/error" : "https://test.fplbot.app/error";
         services.AddSlackbotDistribution(c =>
         {
             c.CLIENT_ID = configuration["CLIENT_ID"];
@@ -77,6 +78,7 @@ public static class WebApplicationBuilderExtensions
             c.CLIENT_ID = configuration["DISCORD_CLIENT_ID"];
             c.CLIENT_SECRET = configuration["DISCORD_CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=discord";
+            c.ErrorRedirectUri = errorUri;
             c.OnSuccess = async (guildId,guildName, s) =>
             {
                 var msg = s.GetService<IMessageSession>();
