@@ -28,6 +28,6 @@ public class PremierLeagueScraperApiTests
 
     private static PremierLeagueScraperApi CreateClient()
     {
-        return new PremierLeagueScraperApi(A.Fake<ILogger<PremierLeagueScraperApi>>());
+        return new PremierLeagueScraperApi(new HttpClient(),A.Fake<ILogger<PremierLeagueScraperApi>>());
     }
 }
