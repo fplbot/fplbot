@@ -27,6 +27,7 @@ public static class TestBuilder
             Code = fixtureCode,
             HomeTeamId = 10,
             AwayTeamId = AwayTeamId,
+            Started = true,
             Stats = new[]
             {
                 new FixtureStat
@@ -53,6 +54,7 @@ public static class TestBuilder
             Code = fixtureCode,
             HomeTeamId = HomeTeamId,
             AwayTeamId = AwayTeamId,
+            Started = true,
             Stats = new[]
             {
                 AwayTeamLeadingBy(goals)
@@ -67,6 +69,12 @@ public static class TestBuilder
     public static Fixture FinishedProvisional(this Fixture fixture)
     {
         fixture.FinishedProvisional = true;
+        return fixture;
+    }
+
+    public static Fixture NotStarted(this Fixture fixture)
+    {
+        fixture.Started = false;
         return fixture;
     }
 

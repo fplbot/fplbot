@@ -65,7 +65,7 @@ public class MatchStatusTests
         await monitor.Reset(1);
         await monitor.Refresh(1);
 
-        Assert.Equal(1, _session.PublishedMessages.Length);
+        Assert.Single(_session.PublishedMessages);
         var message = _session.PublishedMessages[0].Message;
         Assert.IsType<FixtureRemovedFromGameweek>(message);
         var fixtureRemovedFromGameweekEvent = ((FixtureRemovedFromGameweek)message);
@@ -76,8 +76,8 @@ public class MatchStatusTests
     private LineupState CreateNewLineupScenario()
     {
         var fixtureClient = A.Fake<IFixtureClient>();
-        var testFixture1 = TestBuilder.NoGoals(1);
-        var testFixture2 = TestBuilder.NoGoals(2);
+        var testFixture1 = TestBuilder.NoGoals(1).NotStarted();
+        var testFixture2 = TestBuilder.NoGoals(2).NotStarted();
         A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
         {
             testFixture1,
@@ -94,8 +94,8 @@ public class MatchStatusTests
     private LineupState CreateTwoNewLineupsScenario()
     {
         var fixtureClient = A.Fake<IFixtureClient>();
-        var testFixture1 = TestBuilder.NoGoals(1);
-        var testFixture2 = TestBuilder.NoGoals(2);
+        var testFixture1 = TestBuilder.NoGoals(1).NotStarted();
+        var testFixture2 = TestBuilder.NoGoals(2).NotStarted();
         A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
         {
             testFixture1,

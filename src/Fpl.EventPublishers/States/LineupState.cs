@@ -120,7 +120,7 @@ internal class LineupState
     private async Task CheckForLineups(ICollection<Fixture> fixtures)
     {
         using var scope = _logger.AddContext("CheckForLineups");
-        foreach (var fixture in fixtures)
+        foreach (var fixture in fixtures.Where(f => !f.Started.Value))
         {
             try
             {
