@@ -7,6 +7,7 @@ using FplBot.WebApi.Handlers.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NServiceBus;
 
 namespace  FplBot.WebApi.Pages.Admin;
 
@@ -17,6 +18,7 @@ public class Verified : PageModel
     private readonly IGlobalSettingsClient _settings;
     private readonly IMediator _mediator;
     private readonly ILogger<Verified> _logger;
+    private readonly IMessageSession _session;
 
     public Verified(
         IVerifiedEntriesRepository repo,
@@ -24,13 +26,15 @@ public class Verified : PageModel
         IEntryClient entryClient,
         IGlobalSettingsClient settings,
         IMediator mediator,
-        ILogger<Verified> logger)
+        ILogger<Verified> logger,
+        IMessageSession session)
     {
         _repo = repo;
         _plRepo = plRepo;
         _settings = settings;
         _mediator = mediator;
         _logger = logger;
+        _session = session;
     }
 
     public async Task OnGet()
@@ -43,8 +47,18 @@ public class Verified : PageModel
 
     public async Task<IActionResult> OnPostSeedSelfishness()
     {
-        await _mediator.Publish(new SeedSelfishness());
-        TempData["msg"] += $"Selfishness added to seed!";
+        var allPlEntries = await _plRepo.GetAllVerifiedPLEntries();
+
+        var i = 0;
+        foreach (var verifiedPlEntry in allPlEntries)
+        {
+            var sendOptions = new SendOptions();
+            sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(i));
+            sendOptions.RouteToThisEndpoint();
+            await _session.Send(new SeedSelfishness(verifiedPlEntry.EntryId), sendOptions);
+            i += 3;
+        }
+        TempData["msg"] += $"Selfishness seed job started!";
         return RedirectToPage("Verified");
     }
 
