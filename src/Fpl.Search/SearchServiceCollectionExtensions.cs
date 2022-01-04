@@ -10,6 +10,8 @@ using CronBackgroundServices;
 using Fpl.Search.Data;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Data.Repositories;
+using FplBot.VerifiedEntries.InternalCommands;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
@@ -60,6 +62,7 @@ public static class SearchServiceCollectionExtensions
             connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
             return new ElasticClient(connectionSettings);
         });
+        services.AddMediatR(typeof(IndexEntryCommandHandler));
 
         return services;
     }

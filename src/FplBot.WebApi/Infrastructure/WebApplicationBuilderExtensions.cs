@@ -3,8 +3,6 @@ using AspNet.Security.OAuth.Slack;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
 using Fpl.Search;
-using Fpl.Search.Data.Abstractions;
-using Fpl.Search.Data.Repositories;
 using FplBot.Data.Slack;
 using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -96,8 +94,7 @@ public static class WebApplicationBuilderExtensions
         services.AddMediatR(typeof(WebApplicationBuilderExtensions));
 
         // Used in admin pages:
-        services.AddSingleton<ILeagueIndexBookmarkProvider, LeagueIndexRedisBookmarkProvider>();
-        services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
+        services.AddIndexingServices(configuration, conn);
 
 
         services.AddAuthentication(options =>
