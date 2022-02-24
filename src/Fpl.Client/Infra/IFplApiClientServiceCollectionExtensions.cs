@@ -19,19 +19,18 @@ public static class IFplApiClientServiceCollectionExtensions
     {
         services.AddTransient<FplDelegatingHandler>();
         services.AddSingleton<ICacheProvider, CacheProvider>();
-        services.AddHttpClient<IEntryClient, EntryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<IFixtureClient, FixtureClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<ILeagueClient, LeagueClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<ITransfersClient, TransfersClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<ILiveClient, LiveClient>().AddHttpMessageHandler<FplDelegatingHandler>();
-        services.AddHttpClient<IEventStatusClient, EventStatusClient>().AddHttpMessageHandler<FplDelegatingHandler>();
+        services.AddHttpClient<IEntryClient, EntryClient>();
+        services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>();
+        services.AddHttpClient<IFixtureClient, FixtureClient>();
+        services.AddHttpClient<ILeagueClient, LeagueClient>();
+        services.AddHttpClient<ITransfersClient, TransfersClient>();
+        services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>();
+        services.AddHttpClient<ILiveClient, LiveClient>();
+        services.AddHttpClient<IEventStatusClient, EventStatusClient>();
         services.ConfigureOptions<FplClientOptionsConfigurator>();
         services.AddSingleton<Authenticator>();
         services.AddSingleton<CookieFetcher>();
         services.AddSingleton<CookieCache>();
-        services.AddSingleton<FplHttpHandler>();
     }
 }
 
