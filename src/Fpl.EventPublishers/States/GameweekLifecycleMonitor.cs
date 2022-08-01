@@ -39,6 +39,8 @@ internal class GameweekLifecycleMonitor
 
         var gameweeks = globalSettings.Gameweeks;
         var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
+
+
         if (_storedCurrent == null)
         {
             _logger.LogDebug("Executing initial fetch");
@@ -46,6 +48,13 @@ internal class GameweekLifecycleMonitor
             if (fetchedCurrent != null)
             {
                 await _mediator.Publish(new GameweekMonitoringStarted(fetchedCurrent), token);
+            }
+            else
+            {
+                var fetchedNext = gameweeks.FirstOrDefault(gw => gw.IsNext);
+                _storedCurrent = fetchedNext;
+                if(fetchedNext != null)
+                    await _mediator.Publish(new GameweekMonitoringStarted(fetchedNext), token);
             }
         }
 
@@ -57,7 +66,7 @@ internal class GameweekLifecycleMonitor
 
         _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
 
-        if (IsChangeToNewGameweek(fetchedCurrent) || IsFirstGameweekChangingToCurrent(fetchedCurrent))
+        if (IsFirstGameweekChangingToCurrent(fetchedCurrent) || IsChangeToNewGameweek(fetchedCurrent))
         {
             await _session.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
             await _mediator.Publish(new GameweekJustBegan(fetchedCurrent), token);

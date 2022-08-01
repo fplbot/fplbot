@@ -26,9 +26,9 @@ internal class StateMediator :
 
     public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
     {
-        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekMonitoringStarted), notification.CurrentGameweek.Id.ToString()));
+        using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekMonitoringStarted), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Init");
-        return _state.Reset(notification.CurrentGameweek.Id);
+        return _state.Reset(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
@@ -51,4 +51,6 @@ internal class StateMediator :
         _logger.LogInformation("Refreshing state - finished gw");
         return _state.Refresh(notification.Gameweek.Id);
     }
+
+
 }

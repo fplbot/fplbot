@@ -52,9 +52,6 @@ internal class State
 
         var globalSettings = await _settingsClient.GetGlobalSettings();
         var after = globalSettings.Players;
-        var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, _teams);
-        var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, _teams);
-        var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, _teams);
 
         _players = after;
 
@@ -63,18 +60,9 @@ internal class State
             await _session.Publish(new FixtureEventsOccured(fixtureEvents.ToList()));
         }
 
-        if (priceChanges.Any())
-            await _session.Publish(new PlayersPriceChanged(priceChanges.ToList()));
-
-        if (injuryUpdates.Any())
-            await _session.Publish(new InjuryUpdateOccured(injuryUpdates));
-
         foreach (var fixture in finishedFixtures)
         {
             await _session.Publish(new FixtureFinished(fixture));
         }
-
-        if (newPlayers.Any())
-            await _session.Publish(new NewPlayersRegistered(newPlayers.ToList()));
     }
 }
