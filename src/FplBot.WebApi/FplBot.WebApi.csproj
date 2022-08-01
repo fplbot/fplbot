@@ -31,8 +31,4 @@
     <ProjectReference Include="..\FplBot.WebApi.Slack\FplBot.WebApi.Slack.csproj" />    
     <ProjectReference Include="..\FplBot.VerifiedEntries\FplBot.VerifiedEntries.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Data" />
-  </ItemGroup>
 </Project>
