@@ -59,8 +59,14 @@ public class FixtureEventsHandler : IHandleMessages<FixtureEventsOccured>, IHand
             var gws = await _globalSettingsClient.GetGlobalSettings();
             var currentGw = gws.Gameweeks.GetCurrentGameweek();
             var slackUsers = await GetSlackUsers(slackTeam);
-            var entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
-            var transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
+            IEnumerable<GameweekEntry> entries = new List<GameweekEntry>();
+            IEnumerable<TransfersByGameWeek.Transfer> transfers = new List<TransfersByGameWeek.Transfer>();
+            if (currentGw != null)
+            {
+                entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
+                transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, slackTeam.FplbotLeagueId.Value);
+            }
+
             tauntData = new TauntData(transfers, entries, entryName => SlackHandleHelper.GetSlackHandleOrFallback(slackUsers, entryName));
         }
 
