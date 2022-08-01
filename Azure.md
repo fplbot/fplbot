@@ -18,7 +18,11 @@ Disregard credentials from output, as they will be invalid from the next command
 az ad sp create-for-rbac --name {nameOfPrincipal} --sdk-auth --role contributor --scopes /subscriptions/{subId}/resourceGroups/fplbot-prod
 ```
 
-The output of the last run has been added as `AZURE_CREDENTIALS` secret in GitHub Secrets.
+The output of the last run has been added as `AZURE_CREDENTIALS` secret in GitHub Secrets. The output also contains a `clientId` & `clientSecret` stored as Pulumi secrets:
+
+```shell
+pulumi config set azure-native:clientSecret <insert-clientSecret-here> --secret
+```
 
 
 
