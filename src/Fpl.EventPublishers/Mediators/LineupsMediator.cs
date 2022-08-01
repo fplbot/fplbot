@@ -27,8 +27,8 @@ internal class LineupsHandler :
 
     public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
     {
-        var initId = notification.CurrentGameweek.Id;
-        if (notification.CurrentGameweek.IsFinished)
+        var initId = notification.Gameweek.Id;
+        if (notification.Gameweek.IsFinished)
         {
             initId++;
         }
@@ -57,4 +57,6 @@ internal class LineupsHandler :
         _logger.LogInformation("Refreshing state for finished gw {Gameweek}. Using next gw {NextGameweek}", notification.Gameweek.Id, notification.Gameweek.Id + 1);
         return _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
     }
+
+
 }
