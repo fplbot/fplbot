@@ -10,14 +10,14 @@ using NServiceBus;
 
 namespace Fpl.EventPublishers.RecurringActions;
 
-public class TeamsAndPlayersRecurringAction : IRecurringAction
+public class PlayerUpdatesRecurringAction : IRecurringAction
 {
     private readonly IGlobalSettingsClient _settingsClient;
     private readonly IMessageSession _session;
-    private readonly ILogger<TeamsAndPlayersRecurringAction> _logger;
+    private readonly ILogger<PlayerUpdatesRecurringAction> _logger;
     private ICollection<Player> _players;
 
-    public TeamsAndPlayersRecurringAction(IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<TeamsAndPlayersRecurringAction> logger)
+    public PlayerUpdatesRecurringAction(IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<PlayerUpdatesRecurringAction> logger)
     {
         _settingsClient = settingsClient;
         _session = session;
@@ -27,7 +27,7 @@ public class TeamsAndPlayersRecurringAction : IRecurringAction
 
     public async Task Process(CancellationToken stoppingToken)
     {
-        using var scope = _logger.AddContext("PlayersAndTeamState");
+        using var scope = _logger.BeginCorrelationScope();
         var settings = await _settingsClient.GetGlobalSettings();
         if (_players == null || !_players.Any())
         {
@@ -56,5 +56,5 @@ public class TeamsAndPlayersRecurringAction : IRecurringAction
             await _session.Publish(new NewPlayersRegistered(newPlayers.ToList()));
     }
 
-    public string Cron => CronPatterns.EveryTwentySeconds;
+    public string Cron => CronPatterns.EveryOtherMinuteAt40SecondsSharp;
 }
