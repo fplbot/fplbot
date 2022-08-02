@@ -5,7 +5,7 @@ namespace FplBot.EventHandlers.Slack.Helpers;
 
 public static class PlayerExtensions
 {
-    private const int THRESHOLD = 7;
+    private const int THRESHOLD = 1;
 
     public static bool IsRelevant(this InjuredPlayer player)
     {
