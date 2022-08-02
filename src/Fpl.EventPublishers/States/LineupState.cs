@@ -108,7 +108,7 @@ internal class LineupState
                 }
                 else
                 {
-                    _logger.LogDebug("Fixture {FixtureId} not removed", currentFixture.Id);
+                    _logger.LogTrace("Fixture {FixtureId} not removed", currentFixture.Id);
                 }
             }
             catch (Exception e) when (LogError(e))

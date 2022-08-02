@@ -62,7 +62,7 @@ internal class GameweekLifecycleMonitor
             }
         }
 
-        _logger.LogDebug($"Stored: {_storedCurrent?.Id} & Fetched: {fetchedCurrent?.Id}");
+        _logger.LogDebug($"Stored: {_storedCurrent?.Id} & FetchedCurrent: {fetchedCurrent?.Id} & FetchedNext:{fetchedNext?.Id}");
 
         if (fetchedCurrent == null)
         {

@@ -24,5 +24,5 @@ internal class GameweekLifecycleRecurringAction : IRecurringAction
         await _monitor.EveryOtherMinuteTick(token);
     }
 
-    public string Cron => CronPatterns.EveryOtherMinute;
+    public string Cron => CronPatterns.EveryTwentySeconds;
 }
