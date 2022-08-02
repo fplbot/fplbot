@@ -1,3 +1,4 @@
+using System.Net;
 using CronBackgroundServices;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -28,6 +29,17 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
     public async Task Process(CancellationToken stoppingToken)
     {
         using var scope = _logger.BeginCorrelationScope();
+        try
+        {
+            await PublishIfChanges();
+        }
+        catch (Exception e) when (LogError(e))
+        {
+        }
+    }
+
+    private async Task PublishIfChanges()
+    {
         var settings = await _settingsClient.GetGlobalSettings();
         if (_players == null || !_players.Any())
         {
@@ -54,6 +66,20 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
 
         if (newPlayers.Any())
             await _session.Publish(new NewPlayersRegistered(newPlayers.ToList()));
+    }
+
+    private bool LogError(Exception e)
+    {
+        if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
+        {
+            _logger.LogWarning("Game is updating");
+        }
+        else
+        {
+            _logger.LogError(e, e.Message);
+        }
+
+        return true;
     }
 
     public string Cron => CronPatterns.EveryOtherMinuteAt40SecondsSharp;

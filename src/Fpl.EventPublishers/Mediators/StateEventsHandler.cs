@@ -16,39 +16,39 @@ internal class StateMediator :
     INotificationHandler<GameweekCurrentlyFinished>
 {
     private readonly ILogger<StateMediator> _logger;
-    private readonly State _state;
+    private readonly FixtureState _fixtureState;
 
-    public StateMediator(State state, ILogger<StateMediator> logger)
+    public StateMediator(FixtureState fixtureState, ILogger<StateMediator> logger)
     {
         _logger = logger;
-        _state = state;
+        _fixtureState = fixtureState;
     }
 
     public Task Handle(GameweekMonitoringStarted notification, CancellationToken cancellationToken)
     {
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekMonitoringStarted), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Init");
-        return _state.Reset(notification.Gameweek.Id);
+        return _fixtureState.Reset(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekJustBegan notification, CancellationToken cancellationToken)
     {
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekJustBegan), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Getting ready to rumble");
-        return _state.Reset(notification.Gameweek.Id);
+        return _fixtureState.Reset(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyOnGoing notification, CancellationToken cancellationToken)
     {
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyOnGoing), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Refreshing state for ongoing gw");
-        return _state.Refresh(notification.Gameweek.Id);
+        return _fixtureState.Refresh(notification.Gameweek.Id);
     }
 
     public Task Handle(GameweekCurrentlyFinished notification, CancellationToken cancellationToken)
     {
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyFinished), notification.Gameweek.Id.ToString()));
         _logger.LogInformation("Refreshing state - finished gw");
-        return _state.Refresh(notification.Gameweek.Id);
+        return _fixtureState.Refresh(notification.Gameweek.Id);
     }
 }

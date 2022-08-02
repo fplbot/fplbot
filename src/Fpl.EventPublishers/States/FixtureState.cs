@@ -8,18 +8,18 @@ using NServiceBus;
 
 namespace Fpl.EventPublishers.States;
 
-internal class State
+internal class FixtureState
 {
     private readonly IFixtureClient _fixtureClient;
     private readonly IGlobalSettingsClient _settingsClient;
     private readonly IMessageSession _session;
-    private readonly ILogger<State> _logger;
+    private readonly ILogger<FixtureState> _logger;
 
     private ICollection<Player> _players;
     private ICollection<Fixture> _currentGameweekFixtures;
     private ICollection<Team> _teams;
 
-    public State(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<State> logger)
+    public FixtureState(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IMessageSession session, ILogger<FixtureState> logger)
     {
         _fixtureClient = fixtureClient;
         _settingsClient = settingsClient;

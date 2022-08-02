@@ -13,7 +13,8 @@ internal class LineupsHandler :
     INotificationHandler<GameweekMonitoringStarted>,
     INotificationHandler<GameweekJustBegan>,
     INotificationHandler<GameweekCurrentlyOnGoing>,
-    INotificationHandler<GameweekCurrentlyFinished>
+    INotificationHandler<GameweekCurrentlyFinished>,
+    INotificationHandler<CurrentlyPreseason>
 {
 
     private readonly ILogger<LineupsHandler> _logger;
@@ -56,5 +57,12 @@ internal class LineupsHandler :
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyFinished), (notification.Gameweek.Id+1).ToString()));
         _logger.LogInformation("Refreshing state for finished gw {Gameweek}. Using next gw {NextGameweek}", notification.Gameweek.Id, notification.Gameweek.Id + 1);
         return _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
+    }
+
+    public Task Handle(CurrentlyPreseason notification, CancellationToken cancellationToken)
+    {
+        using var scope = _logger.AddContext(nameof(CurrentlyPreseason));
+        _logger.LogInformation("Refreshing state for preseason");
+        return _matchState.Refresh(1);
     }
 }

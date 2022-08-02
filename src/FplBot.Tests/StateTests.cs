@@ -66,13 +66,13 @@ public class StateTests
         Assert.IsType<FixtureFinished>(_messageSession.PublishedMessages[1].Message);
     }
 
-    private static State CreateAllMockState()
+    private static FixtureState CreateAllMockState()
     {
         _messageSession = new TestableMessageSession();
-        return new State(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession, A.Fake<ILogger<State>>());
+        return new FixtureState(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession, A.Fake<ILogger<FixtureState>>());
     }
 
-    private static State CreateMultipleFinishedFixturesScenario()
+    private static FixtureState CreateMultipleFinishedFixturesScenario()
     {
         var playerClient = A.Fake<IGlobalSettingsClient>();
         A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -105,7 +105,7 @@ public class StateTests
         return CreateBaseScenario(fixtureClient, playerClient);
     }
 
-    private static State CreateSingleFinishedFixturesScenario()
+    private static FixtureState CreateSingleFinishedFixturesScenario()
     {
         var playerClient = A.Fake<IGlobalSettingsClient>();
         A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -141,7 +141,7 @@ public class StateTests
         return CreateBaseScenario(fixtureClient, playerClient);
     }
 
-    private static State CreateNoFinishedFixturesScenario()
+    private static FixtureState CreateNoFinishedFixturesScenario()
     {
         var playerClient = A.Fake<IGlobalSettingsClient>();
         A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -172,7 +172,7 @@ public class StateTests
         return CreateBaseScenario(fixtureClient, playerClient);
     }
 
-    private static State CreateGoalScoredScenario()
+    private static FixtureState CreateGoalScoredScenario()
     {
         var playerClient = A.Fake<IGlobalSettingsClient>();
         A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
@@ -205,7 +205,7 @@ public class StateTests
 
 
 
-    private static State CreateBaseScenario(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
+    private static FixtureState CreateBaseScenario(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
     {
         var slackTeamRepository = A.Fake<ISlackTeamRepository>();
         A.CallTo(() => slackTeamRepository.GetAllTeams()).Returns(new List<SlackTeam>
@@ -214,7 +214,7 @@ public class StateTests
         });
 
         _messageSession = new TestableMessageSession();
-        return new State(fixtureClient, settingsClient, _messageSession, A.Fake<ILogger<State>>());
+        return new FixtureState(fixtureClient, settingsClient, _messageSession, A.Fake<ILogger<FixtureState>>());
     }
 
 

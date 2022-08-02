@@ -15,7 +15,7 @@ public static class FplWorkerServiceCollectionExtensions
     public static IServiceCollection AddFplWorkers(this IServiceCollection services)
     {
         services.AddMediatR(typeof(GameweekMonitoringStarted));
-        services.AddSingleton<State>();
+        services.AddSingleton<FixtureState>();
         services.AddSingleton<LineupState>();
         services.AddSingleton<DateTimeUtils>();
         services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>();

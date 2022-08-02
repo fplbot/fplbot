@@ -94,16 +94,23 @@ internal class GameweekLifecycleMonitor
             return;
         }
 
-        if (!_storedCurrent.IsFinished)
+        if (!_storedCurrent.IsFinished && _storedCurrent.IsCurrent)
         {
             await _mediator.Publish(new GameweekCurrentlyOnGoing(_storedCurrent), token);
             _storedCurrent = fetchedCurrent;
             return;
         }
 
-        if(_storedCurrent.IsFinished)
+        if(_storedCurrent.IsFinished && _storedCurrent.IsCurrent)
         {
             await _mediator.Publish(new GameweekCurrentlyFinished(_storedCurrent), token);
+            _storedCurrent = fetchedCurrent;
+            return;
+        }
+
+        if(_storedCurrent.IsNext && _storedCurrent.Id == 1)
+        {
+            await _mediator.Publish(new CurrentlyPreseason(), token);
             _storedCurrent = fetchedCurrent;
             return;
         }
