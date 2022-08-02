@@ -89,7 +89,8 @@ public class GameweekLifecycleRecurringActionTests
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
-        A.CallTo(() => mediator.Publish(A<GameweekFinished>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();          }
+        A.CallTo(() => mediator.Publish(A<GameweekFinished>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+    }
 
     [Fact]
     public async Task OnNoChanges_CallsNothing()
@@ -144,7 +145,6 @@ public class GameweekLifecycleRecurringActionTests
 
         A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 1), CancellationToken.None)).MustHaveHappenedOnceExactly();
         A.CallTo(() => mediator.Publish(A<GameweekJustBegan>.That.Matches(a => a.Gameweek.Id == 1), CancellationToken.None)).MustHaveHappenedOnceExactly();
-
     }
 
     private List<Gameweek> Preseason()
