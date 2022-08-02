@@ -66,7 +66,6 @@ internal class GameweekLifecycleMonitor
 
         if (fetchedCurrent == null)
         {
-
             if (fetchedNext != null)
             {
                 _logger.LogDebug("No gw marked as current. Using next");
