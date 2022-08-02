@@ -10,4 +10,7 @@ public class EntryItem
     public VerifiedEntryType? VerifiedType { get; set; }
     public string Alias { get; set; }
     public string Description { get; set; }
+    public string Country { get; set; }
+    public int NumberOfPastSeasons { get; set; }
+    public string Thumbprint { get; set; }
 }

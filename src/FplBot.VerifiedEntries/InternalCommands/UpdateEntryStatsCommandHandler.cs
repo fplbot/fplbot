@@ -52,7 +52,13 @@ public class UpdateEntryStatsCommandHandler : INotificationHandler<UpdateAllEntr
 
     private async Task<VerifiedEntryStats> GetUpdatedStatsForEntry(int entryId, ICollection<Player> players)
     {
-        var history = await _entryHistoryClient.GetHistory(entryId);
+        var history = (await _entryHistoryClient.GetHistory(entryId))?.entryHistory;
+
+        if (history == null)
+        {
+            throw new Exception($"Unable to obtain entry history for entry {entryId}");
+        }
+
         var latestReportedGameweek = history.GameweekHistory.LastOrDefault();
 
         if (latestReportedGameweek == null)
