@@ -25,7 +25,7 @@ public static class FplWorkerServiceCollectionExtensions
         services.AddRecurrer<GameweekLifecycleRecurringAction>()
             .AddRecurrer<NearDeadlineRecurringAction>()
             .AddRecurrer<MatchDayStatusRecurringAction>()
-            .AddRecurrer<TeamsAndPlayersRecurringAction>();
+            .AddRecurrer<PlayerUpdatesRecurringAction>();
         return services;
     }
 }
