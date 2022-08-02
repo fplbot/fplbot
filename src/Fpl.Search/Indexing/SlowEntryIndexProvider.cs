@@ -1,17 +1,19 @@
 ﻿using Fpl.Client;
 using Fpl.Client.Abstractions;
-using Fpl.Search.Models;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Fpl.Client.Models;
 using Fpl.Search.Data.Abstractions;
+using Fpl.Search.Models;
 using FplBot.VerifiedEntries.Data.Abstractions;
 using FplBot.VerifiedEntries.Data.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Fpl.Search.Indexing;
 
 public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryItem>, ISingleEntryIndexProvider, IVerifiedEntryIndexProvider
 {
     private readonly IEntryClient _entryClient;
+    private readonly IEntryHistoryClient _entryHistoryClient;
     private readonly IEntryIndexBookmarkProvider _indexBookmarkProvider;
     private readonly IVerifiedEntriesRepository _verifiedEntriesRepository;
     private readonly ILogger<IndexProviderBase> _logger;
@@ -23,12 +25,14 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
     public SlowEntryIndexProvider(
         ILeagueClient leagueClient,
         IEntryClient entryClient,
+        IEntryHistoryClient entryHistoryClient,
         IEntryIndexBookmarkProvider indexBookmarkProvider,
         IVerifiedEntriesRepository verifiedEntriesRepository,
         ILogger<IndexProviderBase> logger,
         IOptions<SearchOptions> options) : base(leagueClient, logger)
     {
         _entryClient = entryClient;
+        _entryHistoryClient = entryHistoryClient;
         _indexBookmarkProvider = indexBookmarkProvider;
         _verifiedEntriesRepository = verifiedEntriesRepository;
         _logger = logger;
@@ -50,10 +54,10 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
 
     public async Task<(EntryItem[], bool)> GetBatchToIndex(int i, int batchSize)
     {
-        var batch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryClient.Get(n, tolerate404: true)).ToArray(), _logger);
-        var items = batch
+        var entryBatch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryClient.Get(n, tolerate404: true)).ToArray(), _logger);
+        var items = entryBatch
             .Where(x => x != null && x.Exists)
-            .Select(y => new EntryItem { Id = y.Id, TeamName = y.TeamName, RealName = y.PlayerFullName }).ToArray();
+            .Select(y => new EntryItem { Id = y.Id, TeamName = y.TeamName, RealName = y.PlayerFullName, Country = y.PlayerRegionShortIso }).ToArray();
 
         if (!items.Any())
         {
@@ -61,6 +65,18 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
         }
         else
         {
+            var historyBatch = (await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryHistoryClient.GetHistory(n, tolerate404: true)).ToArray(), _logger))
+                .Where(x => x.HasValue)
+                .Select(x => x.Value)
+                .ToArray();
+
+            foreach (var entryItem in items)
+            {
+                var (_, entryHistory) = historyBatch.Single(x => x.teamId == entryItem.Id);
+                entryItem.NumberOfPastSeasons = entryHistory.SeasonHistory.Count;
+                entryItem.Thumbprint = ToEntryThumbprint(entryHistory);
+            }
+
             _currentConsecutiveCountOfMissingEntries = 0;
         }
 
@@ -103,32 +119,56 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
     {
         await RefreshVerifiedEntries();
 
+        var entry = await _entryClient.Get(entryId);
+        var history = (await _entryHistoryClient.GetHistory(entryId))?.entryHistory;
+
         if (IsVerifiedEntry(entryId))
         {
-            return ToEntryItem(_allVerifiedEntries.Single(x => x.EntryId == entryId));
+            var verifiedEntry = _allVerifiedEntries.Single(x => x.EntryId == entryId);
+            return ToEntryItem(verifiedEntry, entry, history);
         }
 
-        var entry = await _entryClient.Get(entryId);
-        return new EntryItem {Id = entry.Id, RealName = entry.PlayerFullName, TeamName = entry.TeamName};
+        return new EntryItem
+        {
+            Id = entry.Id,
+            RealName = entry.PlayerFullName,
+            TeamName = entry.TeamName,
+            Country = entry.PlayerRegionShortIso,
+            NumberOfPastSeasons = history != null ? history.SeasonHistory.Count : 0,
+            Thumbprint = history != null ? ToEntryThumbprint(history) : string.Empty
+        };
     }
 
     public async Task<EntryItem[]> GetAllVerifiedEntriesToIndex()
     {
         await RefreshVerifiedEntries();
 
-        return _allVerifiedEntries.Select(ToEntryItem).ToArray();
+        return (await Task.WhenAll(_allVerifiedEntries.Select(async verifiedEntry =>
+        {
+            var entry = await _entryClient.Get(verifiedEntry.EntryId);
+            var history = (await _entryHistoryClient.GetHistory(verifiedEntry.EntryId))?.entryHistory;
+            return ToEntryItem(verifiedEntry, entry, history);
+        }))).ToArray();
     }
 
-    private static EntryItem ToEntryItem(VerifiedEntry entry)
+    private static EntryItem ToEntryItem(VerifiedEntry verifiedEntry, BasicEntry basicEntry, EntryHistory entryHistory)
     {
         return new EntryItem
         {
-            Id = entry.EntryId,
-            RealName = entry.FullName,
-            TeamName = entry.EntryTeamName,
-            VerifiedType = entry.VerifiedEntryType,
-            Alias = entry.Alias,
-            Description = entry.Description
+            Id = verifiedEntry.EntryId,
+            RealName = verifiedEntry.FullName,
+            TeamName = verifiedEntry.EntryTeamName,
+            VerifiedType = verifiedEntry.VerifiedEntryType,
+            Alias = verifiedEntry.Alias,
+            Description = verifiedEntry.Description,
+            Country = basicEntry.PlayerRegionShortIso,
+            NumberOfPastSeasons = entryHistory != null ? entryHistory.SeasonHistory.Count : 0,
+            Thumbprint = entryHistory != null ? ToEntryThumbprint(entryHistory) : string.Empty
         };
+    }
+
+    private static string ToEntryThumbprint(EntryHistory entryHistory)
+    {
+        return entryHistory.SeasonHistory.Any() ? string.Join(";", entryHistory.SeasonHistory.Take(2).Select(x => $"{x.SeasonName}:{x.Rank}").ToArray()) : string.Empty;
     }
 }

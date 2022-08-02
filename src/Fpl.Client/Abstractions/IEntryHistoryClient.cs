@@ -4,5 +4,5 @@ namespace Fpl.Client.Abstractions;
 
 public interface IEntryHistoryClient
 {
-    Task<EntryHistory> GetHistory(int teamId);
+    Task<(int teamId, EntryHistory entryHistory)?> GetHistory(int teamId, bool tolerate404 = false);
 }
