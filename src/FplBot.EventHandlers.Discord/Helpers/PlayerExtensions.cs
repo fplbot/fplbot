@@ -4,7 +4,7 @@ namespace FplBot.EventHandlers.Discord.Helpers;
 
 public static class PlayerExtensions
 {
-    private const int THRESHOLD = 7;
+    private const int THRESHOLD = 0;
 
     public static bool IsRelevant(this InjuredPlayer player)
     {

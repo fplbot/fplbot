@@ -39,7 +39,7 @@ public class PriceChangeHandler : IHandleMessages<PlayersPriceChanged>, IHandleM
     public async Task Handle(PublishPriceChangesToSlackWorkspace message, IMessageHandlerContext context)
     {
         _logger.LogInformation($"Publish price changes to {message.WorkspaceId}");
-        var filtered = message.PlayersWithPriceChanges.Where(c => c.OwnershipPercentage > 7);
+        var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
             var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
