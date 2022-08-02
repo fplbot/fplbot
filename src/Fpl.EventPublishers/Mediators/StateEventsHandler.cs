@@ -51,6 +51,4 @@ internal class StateMediator :
         _logger.LogInformation("Refreshing state - finished gw");
         return _state.Refresh(notification.Gameweek.Id);
     }
-
-
 }
