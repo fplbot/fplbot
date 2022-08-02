@@ -10,7 +10,7 @@ using NServiceBus.Testing;
 
 namespace FplBot.Tests;
 
-public class GameweekLifecycleRecurringActionTests
+public class GameweekLifecycleMonitorTests
 {
     [Fact]
     public async Task OnFirstProcess_NoCurrentGameweek_OrchestratesNothing()
