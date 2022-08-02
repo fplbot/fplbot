@@ -39,7 +39,7 @@ internal class GameweekLifecycleMonitor
 
         var gameweeks = globalSettings.Gameweeks;
         var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
-
+        var fetchedNext = gameweeks.FirstOrDefault(gw => gw.IsNext);
 
         if (_storedCurrent == null)
         {
@@ -48,49 +48,66 @@ internal class GameweekLifecycleMonitor
             if (fetchedCurrent != null)
             {
                 await _mediator.Publish(new GameweekMonitoringStarted(fetchedCurrent), token);
+                return;
             }
             else
             {
-                var fetchedNext = gameweeks.FirstOrDefault(gw => gw.IsNext);
+
                 _storedCurrent = fetchedNext;
-                if(fetchedNext != null)
+                if (fetchedNext != null)
+                {
                     await _mediator.Publish(new GameweekMonitoringStarted(fetchedNext), token);
+                    return;
+                }
             }
         }
 
+        _logger.LogDebug($"Stored: {_storedCurrent?.Id} & Fetched: {fetchedCurrent?.Id}");
+
         if (fetchedCurrent == null)
         {
-            _logger.LogDebug("No gw marked as current");
-            return;
-        }
 
-        _logger.LogDebug($"Stored: {_storedCurrent.Id} & Fetched: {fetchedCurrent.Id}");
+            if (fetchedNext != null)
+            {
+                _logger.LogDebug("No gw marked as current. Using next");
+                fetchedCurrent = fetchedNext;
+            }
+            else
+            {
+                _logger.LogDebug("No gw marked as current or next. Skipping");
+                return;
+            }
+        }
 
         if (IsFirstGameweekChangingToCurrent(fetchedCurrent) || IsChangeToNewGameweek(fetchedCurrent))
         {
             await _session.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
             await _mediator.Publish(new GameweekJustBegan(fetchedCurrent), token);
-
+            _storedCurrent = fetchedCurrent;
+            return;
         }
-        else if (IsChangeToFinishedGameweek(fetchedCurrent))
+
+        if (IsChangeToFinishedGameweek(fetchedCurrent))
         {
             await _session.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
             await _mediator.Publish(new GameweekFinished(fetchedCurrent), token);
+            _storedCurrent = fetchedCurrent;
+            return;
         }
-        else
+
+        if (!_storedCurrent.IsFinished)
         {
-            if (!_storedCurrent.IsFinished)
-            {
-                await _mediator.Publish(new GameweekCurrentlyOnGoing(_storedCurrent), token);
-            }
-            else
-            {
-                await _mediator.Publish(new GameweekCurrentlyFinished(_storedCurrent), token);
-            }
+            await _mediator.Publish(new GameweekCurrentlyOnGoing(_storedCurrent), token);
+            _storedCurrent = fetchedCurrent;
+            return;
         }
 
-        _storedCurrent = fetchedCurrent;
-
+        if(_storedCurrent.IsFinished)
+        {
+            await _mediator.Publish(new GameweekCurrentlyFinished(_storedCurrent), token);
+            _storedCurrent = fetchedCurrent;
+            return;
+        }
     }
 
     private bool IsChangeToNewGameweek(Gameweek fetchedCurrent)

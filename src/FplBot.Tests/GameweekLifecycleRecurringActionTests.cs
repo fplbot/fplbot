@@ -24,13 +24,14 @@ public class GameweekLifecycleRecurringActionTests
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
+        await action.EveryOtherMinuteTick(CancellationToken.None);
 
-        A.CallTo(() => mediator.Publish(null, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
+        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
         Assert.Empty(session.PublishedMessages);
     }
 
     [Fact]
-    public async Task OnFirstProcess_OrchestratesInitializeAndGameweekOngoing()
+    public async Task OnFirstProcess_OrchestratesInitialize()
     {
         var gameweekClient = A.Fake<IGlobalSettingsClient>();
 
@@ -40,6 +41,24 @@ public class GameweekLifecycleRecurringActionTests
         var session = new TestableMessageSession();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
+        await action.EveryOtherMinuteTick(CancellationToken.None);
+
+        A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustNotHaveHappened();
+    }
+
+    [Fact]
+    public async Task OnFirstProcessAndFollowing_OrchestratesInitializeAndOngoing()
+    {
+        var gameweekClient = A.Fake<IGlobalSettingsClient>();
+
+        A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
+
+        var mediator = A.Fake<IMediator>();
+        var session = new TestableMessageSession();
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
+        await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
         A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
@@ -59,13 +78,34 @@ public class GameweekLifecycleRecurringActionTests
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
-
-        A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
+        A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
         A.CallTo(() => mediator.Publish(A<GameweekJustBegan>.That.Matches(a => a.Gameweek.Id == 3), CancellationToken.None)).MustHaveHappenedOnceExactly();
+        Assert.Single(session.PublishedMessages);
+        Assert.IsType<Messaging.Contracts.Events.v1.GameweekJustBegan>(session.PublishedMessages[0].Message);
+    }
+
+    [Fact]
+    public async Task OnGameweekTransition_WithFollowingOngoing_CallsOngoing()
+    {
+        var gameweekClient = A.Fake<IGlobalSettingsClient>();
+        A.CallTo(() => gameweekClient.GetGlobalSettings())
+            .Returns(GameweeksBeforeTransition()).Once()
+            .Then.Returns(GameweeksAfterTransition());
+
+        var mediator = A.Fake<IMediator>();
+        var session = new TestableMessageSession();
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+
+        await action.EveryOtherMinuteTick(CancellationToken.None);
+        await action.EveryOtherMinuteTick(CancellationToken.None);
+        await action.EveryOtherMinuteTick(CancellationToken.None);
+
+        A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => mediator.Publish(A<GameweekJustBegan>.That.Matches(a => a.Gameweek.Id == 3), CancellationToken.None)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 3), CancellationToken.None)).MustHaveHappenedOnceExactly();
+
         Assert.Single(session.PublishedMessages);
         Assert.IsType<Messaging.Contracts.Events.v1.GameweekJustBegan>(session.PublishedMessages[0].Message);
     }
@@ -83,13 +123,12 @@ public class GameweekLifecycleRecurringActionTests
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
-
-        A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-
+        await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
+        A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
         A.CallTo(() => mediator.Publish(A<GameweekFinished>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyFinished>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -104,23 +143,10 @@ public class GameweekLifecycleRecurringActionTests
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
-
+        await action.EveryOtherMinuteTick(CancellationToken.None);
+        await action.EveryOtherMinuteTick(CancellationToken.None);
 
         A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 2), CancellationToken.None)).MustHaveHappenedOnceExactly();
-
-        A.CallTo(() => mediator.Publish(A<GameweekJustBegan>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-        A.CallTo(() => mediator.Publish(A<GameweekFinished>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-
-
-        await action.EveryOtherMinuteTick(CancellationToken.None);
-
-        A.CallTo(() => mediator.Publish(A<GameweekJustBegan>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-        A.CallTo(() => mediator.Publish(A<GameweekFinished>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
-
-
-        await action.EveryOtherMinuteTick(CancellationToken.None);
 
         A.CallTo(() => mediator.Publish(A<GameweekJustBegan>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
         A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>._, CancellationToken.None)).WithAnyArguments().MustNotHaveHappened();
@@ -145,6 +171,7 @@ public class GameweekLifecycleRecurringActionTests
 
         A.CallTo(() => mediator.Publish(A<GameweekMonitoringStarted>.That.Matches(a => a.Gameweek.Id == 1), CancellationToken.None)).MustHaveHappenedOnceExactly();
         A.CallTo(() => mediator.Publish(A<GameweekJustBegan>.That.Matches(a => a.Gameweek.Id == 1), CancellationToken.None)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => mediator.Publish(A<GameweekCurrentlyOnGoing>.That.Matches(a => a.Gameweek.Id == 1), CancellationToken.None)).MustNotHaveHappened();
     }
 
     private List<Gameweek> Preseason()
