@@ -55,6 +55,7 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, globalSettings.Teams);
         var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, globalSettings.Teams);
         var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, globalSettings.Teams);
+        var transfers = PlayerChangesEventsExtractor.GetInternalPLTransfers(after, _players, globalSettings.Teams);
 
         _players = after;
 
@@ -66,6 +67,9 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
 
         if (newPlayers.Any())
             await _session.Publish(new NewPlayersRegistered(newPlayers.ToList()));
+
+        if (transfers.Any())
+            await _session.Publish(new PremiershipPlayerTransferred(transfers.ToList()));
     }
 
     private bool LogError(Exception e)

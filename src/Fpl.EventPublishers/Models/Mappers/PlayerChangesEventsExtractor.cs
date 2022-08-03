@@ -63,6 +63,36 @@ public static class PlayerChangesEventsExtractor
         return updates;
     }
 
+    public static IEnumerable<InternalPremiershipTransfer> GetInternalPLTransfers(ICollection<Player> after,
+        ICollection<Player> players, ICollection<Team> teams)
+    {
+        if (players == null)
+            return new List<InternalPremiershipTransfer>();
+        if (after == null)
+            return new List<InternalPremiershipTransfer>();
+
+        var diff = after.Except(players, new PlayersTeamChangeComparer());
+
+        if (!diff.Any())
+            return new List<InternalPremiershipTransfer>();
+
+        var updates = new List<InternalPremiershipTransfer>();
+        foreach (var player in diff)
+        {
+            var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
+            var afterPlayer = after.FirstOrDefault(p => p.Id == player.Id);
+            var fromTeam = teams.FirstOrDefault(t => t.Code == fromPlayer?.TeamCode);
+            var toTeam = teams.FirstOrDefault(t => t.Code == afterPlayer?.TeamCode);
+
+            if (fromTeam != null && toTeam != null)
+            {
+                updates.Add(new InternalPremiershipTransfer(player.WebName, fromTeam?.Name, toTeam?.Name));
+            }
+
+        }
+        return updates;
+    }
+
     private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
     {
         var playersWithChanges = after.Except(players, changeComparer).ToList();

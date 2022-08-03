@@ -7,7 +7,7 @@ using NServiceBus;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class NewPlayerHandler : IHandleMessages<NewPlayersRegistered>
+public class NewPlayerHandler : IHandleMessages<NewPlayersRegistered>, IHandleMessages<PremiershipPlayerTransferred>
 {
     private readonly ISlackTeamRepository _slackTeamRepo;
     private readonly ILogger<NewPlayerHandler> _logger;
@@ -23,6 +23,23 @@ public class NewPlayerHandler : IHandleMessages<NewPlayersRegistered>
         _logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
         var slackTeams = await _slackTeamRepo.GetAllTeams();
         var formatted = Formatter.FormatNewPlayers(notification.NewPlayers);
+        foreach (var slackTeam in slackTeams)
+        {
+            if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
+            {
+                var options = new SendOptions();
+                options.RequireImmediateDispatch();
+                options.RouteToThisEndpoint();
+                await context.Send(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted), options);
+            }
+        }
+    }
+
+    public async Task Handle(PremiershipPlayerTransferred notification, IMessageHandlerContext context)
+    {
+        _logger.LogInformation($"Handling {notification.Transfers.Count()} new transfers");
+        var slackTeams = await _slackTeamRepo.GetAllTeams();
+        var formatted = Formatter.FormatTransferredPlayers(notification.Transfers);
         foreach (var slackTeam in slackTeams)
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
