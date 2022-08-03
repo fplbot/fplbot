@@ -221,6 +221,18 @@ public static class TestBuilder
         };
     }
 
+    public static Player FromHomeTeam(this Player player)
+    {
+        player.TeamCode = HomeTeamId;
+        return player;
+    }
+
+    public static Player FromAwayTeam(this Player player)
+    {
+        player.TeamCode = AwayTeamId;
+        return player;
+    }
+
     public static Player WithCostChangeEvent(this Player player, int cost)
     {
         player.CostChangeEvent = cost;

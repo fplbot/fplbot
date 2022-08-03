@@ -53,7 +53,40 @@ public class PlayerUpdatesRecurringActionTests
         Assert.IsType<InjuryUpdateOccured>(_messageSession.PublishedMessages[0].Message);
     }
 
-        private static PlayerUpdatesRecurringAction CreateNewInjuryScenario()
+    [Fact]
+    public async Task WithPlayerTransferBetweenTwoPLTeams_EmitsEvent()
+    {
+        var state = CreateTeamChangeScenario();
+        await state.Process(CancellationToken.None);
+        await state.Process(CancellationToken.None);
+        Assert.Single(_messageSession.PublishedMessages);
+        Assert.IsType<PremiershipPlayerTransferred>(_messageSession.PublishedMessages[0].Message);
+    }
+
+    private static PlayerUpdatesRecurringAction CreateTeamChangeScenario()
+    {
+        var settingsClient = A.Fake<IGlobalSettingsClient>();
+        A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+            {
+                Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().FromHomeTeam(), TestBuilder.OtherPlayer().FromAwayTeam()
+                }
+            }
+        ).Once().Then.Returns(new GlobalSettings
+        {
+            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
+            Players = new List<Player>
+            {
+                TestBuilder.Player().FromAwayTeam(), TestBuilder.OtherPlayer().FromAwayTeam()
+            }
+        });
+
+        return CreatePlayerBaseScenario(settingsClient);
+    }
+
+    private static PlayerUpdatesRecurringAction CreateNewInjuryScenario()
     {
         var settingsClient = A.Fake<IGlobalSettingsClient>();
         A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings

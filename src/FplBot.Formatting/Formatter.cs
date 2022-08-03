@@ -148,6 +148,22 @@ public static class Formatter
         }
     }
 
+    public static string FormatTransferredPlayers(IEnumerable<InternalPremiershipTransfer> transfers)
+    {
+        var header = $"🆕 Transfer!";
+        if (transfers.Count() > 1)
+        {
+            header = "🆕 Transfers!";
+        }
+        var nameAndCost = transfers.Select(NameAndTeams);
+        return $"{header}\n{BulletPoints<string>(nameAndCost)}";
+
+        string NameAndTeams(InternalPremiershipTransfer p)
+        {
+            return $"{p.WebName} {p.FromTeam} ➡️ {p.ToTeam}";
+        }
+    }
+
     public static string FormatPriceChanged(IEnumerable<PlayerWithPriceChange> priceChangesPlayers)
     {
         if (!priceChangesPlayers.Any())
