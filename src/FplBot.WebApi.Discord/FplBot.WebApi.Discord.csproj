@@ -3,7 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-    
+
   <ItemGroup>
     <PackageReference Include="StackExchange.Redis" Version="2.2.50"/>
   </ItemGroup>
