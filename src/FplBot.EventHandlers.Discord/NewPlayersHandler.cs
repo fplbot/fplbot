@@ -21,18 +21,27 @@ public class NewPlayersHandler : IHandleMessages<NewPlayersRegistered>, IHandleM
     public async Task Handle(NewPlayersRegistered message, IMessageHandlerContext context)
     {
         _logger.LogInformation($"Handling {message.NewPlayers.Count()} new players");
-        var guildSubs = await _repo.GetAllGuildSubscriptions();
-        var formatted = Formatter.FormatNewPlayers(message.NewPlayers);
 
-        foreach (var guildSub in guildSubs)
+        var filtered = message.NewPlayers.Where(c => c.IsRelevant());
+        if (filtered.Any())
         {
-            if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
+            var guildSubs = await _repo.GetAllGuildSubscriptions();
+            var formatted = Formatter.FormatNewPlayers(filtered);
+
+            foreach (var guildSub in guildSubs)
             {
-                var options = new SendOptions();
-                options.RequireImmediateDispatch();
-                options.RouteToThisEndpoint();
-                await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted), options);
+                if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
+                {
+                    var options = new SendOptions();
+                    options.RequireImmediateDispatch();
+                    options.RouteToThisEndpoint();
+                    await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted), options);
+                }
             }
+        }
+        else
+        {
+            _logger.LogInformation("All new players irrelevant, so not sending any notification");
         }
     }
 
