@@ -22,16 +22,25 @@ public class NewPlayerHandler : IHandleMessages<NewPlayersRegistered>, IHandleMe
     {
         _logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
         var slackTeams = await _slackTeamRepo.GetAllTeams();
-        var formatted = Formatter.FormatNewPlayers(notification.NewPlayers);
-        foreach (var slackTeam in slackTeams)
+        var filtered = notification.NewPlayers.Where(c => c.IsRelevant());
+        if (filtered.Any())
         {
-            if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
+            var formatted = Formatter.FormatNewPlayers(filtered);
+
+            foreach (var slackTeam in slackTeams)
             {
-                var options = new SendOptions();
-                options.RequireImmediateDispatch();
-                options.RouteToThisEndpoint();
-                await context.Send(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted), options);
+                if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
+                {
+                    var options = new SendOptions();
+                    options.RequireImmediateDispatch();
+                    options.RouteToThisEndpoint();
+                    await context.Send(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted), options);
+                }
             }
+        }
+        else
+        {
+            _logger.LogInformation("All new players irrelevant, so not sending any notification");
         }
     }
 

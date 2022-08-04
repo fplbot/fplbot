@@ -17,6 +17,11 @@ public static class PlayerExtensions
         return player.OwnershipPercentage > THRESHOLD;
     }
 
+    public static bool IsRelevant(this NewPlayer player)
+    {
+        return player.NowCost >= 60;
+    }
+
     public static Player Get(this ICollection<Player> players, int? playerId)
     {
         return playerId.HasValue ? players.SingleOrDefault(p => p.Id == playerId) : null;

@@ -15,4 +15,9 @@ public static class PlayerExtensions
     {
         return player.OwnershipPercentage > THRESHOLD;
     }
+
+    public static bool IsRelevant(this NewPlayer player)
+    {
+        return player.NowCost >= 60;
+    }
 }
