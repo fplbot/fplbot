@@ -18,8 +18,4 @@
     <ProjectReference Include="..\FplBot.Messaging.Contracts\FplBot.Messaging.Contracts.csproj"/>
     <ProjectReference Include="..\Fpl.Search\Fpl.Search.csproj"/>
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Handlers\FplEvents"/>
-  </ItemGroup>
 </Project>
