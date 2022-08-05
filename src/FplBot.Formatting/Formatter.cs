@@ -148,19 +148,24 @@ public static class Formatter
         }
     }
 
-    public static string FormatTransferredPlayers(IEnumerable<InternalPremiershipTransfer> transfers)
+    public static string FormatTransferredPlayers(IEnumerable<InternalPremiershipTransfer> transfers, bool includeheader = true)
     {
-        var header = $"🆕 Transfer!";
-        if (transfers.Count() > 1)
+        var header = "";
+        if (includeheader)
         {
-            header = "🆕 Transfers!";
+            header = $"🔄 Transfer!";
+            if (transfers.Count() > 1)
+            {
+                header = "🔄 Transfers!";
+            }
         }
-        var nameAndCost = transfers.Select(NameAndTeams);
-        return $"{header}\n{BulletPoints<string>(nameAndCost)}";
+
+        var nameAndTeams = transfers.Select(NameAndTeams);
+        return $"{header}\n{BulletPoints<string>(nameAndTeams)}";
 
         string NameAndTeams(InternalPremiershipTransfer p)
         {
-            return $"{p.WebName} {p.FromTeam} ➡️ {p.ToTeam}";
+            return $"{p.WebName} — {p.FromTeam} ➡️ {p.ToTeam}";
         }
     }
 

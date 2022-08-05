@@ -86,7 +86,7 @@ public static class PlayerChangesEventsExtractor
 
             if (fromTeam != null && toTeam != null)
             {
-                updates.Add(new InternalPremiershipTransfer(player.WebName, fromTeam?.Name, toTeam?.Name));
+                updates.Add(new InternalPremiershipTransfer(player.WebName, fromTeam?.ShortName, toTeam?.ShortName));
             }
 
         }

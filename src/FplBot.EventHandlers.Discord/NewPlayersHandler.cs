@@ -49,7 +49,7 @@ public class NewPlayersHandler : IHandleMessages<NewPlayersRegistered>, IHandleM
     {
         _logger.LogInformation($"Handling {message.Transfers.Count()} new transfers");
         var guildSubs = await _repo.GetAllGuildSubscriptions();
-        var formatted = Formatter.FormatTransferredPlayers(message.Transfers);
+        var formatted = Formatter.FormatTransferredPlayers(message.Transfers, includeheader:false);
 
         foreach (var guildSub in guildSubs)
         {
@@ -58,7 +58,7 @@ public class NewPlayersHandler : IHandleMessages<NewPlayersRegistered>, IHandleM
                 var options = new SendOptions();
                 options.RequireImmediateDispatch();
                 options.RouteToThisEndpoint();
-                await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ On the move!", formatted), options);
+                await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"🔄️ Transfer!", formatted), options);
             }
         }
     }
