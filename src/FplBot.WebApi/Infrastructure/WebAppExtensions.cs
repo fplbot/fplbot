@@ -1,4 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.WebApi.Endpoints.Test;
 using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 
@@ -29,6 +30,9 @@ public static class WebAppExtensions
         app.Map("/events", a => a.UseSlackbot(enableAuth: !env.IsDevelopment()));
         app.Map("/oauth/discord/authorize", a => a.UseDiscordDistribution());
         app.Map("/discord/events", a => a.UseDiscordbot(enableAuth: !env.IsDevelopment()));
+        app.UseMinimalEndpoints(
+            ("/debug", TestEndpoints.Map)
+        );
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
@@ -36,4 +40,11 @@ public static class WebAppExtensions
         });
     }
 
+    private static void UseMinimalEndpoints(this WebApplication app, params (string BaseRoute, Action<WebApplication, string> RouteToEndpoint)[] mappings)
+    {
+        foreach (var mapping in mappings)
+        {
+            mapping.RouteToEndpoint(app, mapping.BaseRoute);
+        }
+    }
 }
