@@ -12,7 +12,7 @@ public class PlayerPriceComparer : IEqualityComparer<Player>
         if (x == null || y == null)
             return false;
 
-        return x.Id == y.Id && x.CostChangeEvent == y.CostChangeEvent;
+        return x.Id == y.Id && x.NowCost == y.NowCost;
     }
 
     public int GetHashCode(Player obj)

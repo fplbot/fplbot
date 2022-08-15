@@ -26,8 +26,8 @@ public class PriceMonitorTests
     [Fact]
     public void GetChangedPlayers_WhenSamePlayersWithPriceChange_ReturnsNoChanges()
     {
-        var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
-        var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+        var before = new List<Player>{ TestBuilder.Player().WithCost(1) };
+        var after = new List<Player>{ TestBuilder.Player().WithCost(1) };
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
 
@@ -37,8 +37,8 @@ public class PriceMonitorTests
     [Fact]
     public void GetChangedPlayers_WhenSamePlayersWithChangeInPriceChange_ReturnsChanges()
     {
-        var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
-        var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+        var before = new List<Player>{ TestBuilder.Player().WithCost(0) };
+        var after = new List<Player>{ TestBuilder.Player().WithCost(1) };
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
@@ -49,24 +49,24 @@ public class PriceMonitorTests
     [Fact]
     public void GetChangedPlayers_WhenSamePlayersDuplicateWithChangeInPriceChange_ReturnsSingleChanges()
     {
-        var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
-        var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
+        var before = new List<Player>{ TestBuilder.Player().WithCost(0) };
+        var after = new List<Player>{ TestBuilder.Player().WithCost(1), TestBuilder.Player().WithCost(1) };
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
         Assert.Single(priceChanges);
         Assert.Equal(TestBuilder.Player().WebName, priceChanges.First().WebName);
 
-        var before2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
-        var after2 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1), TestBuilder.Player().WithCostChangeEvent(1) };
+        var before2 = new List<Player>{ TestBuilder.Player().WithCost(0), TestBuilder.Player().WithCost(0) };
+        var after2 = new List<Player>{ TestBuilder.Player().WithCost(1), TestBuilder.Player().WithCost(1) };
 
         var priceChanges2 = PlayerChangesEventsExtractor.GetPriceChanges(after2,before2, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
         Assert.Single(priceChanges2);
         Assert.Equal(TestBuilder.Player().WebName, priceChanges2.First().WebName);
 
-        var before3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0), TestBuilder.Player().WithCostChangeEvent(0) };
-        var after3 = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+        var before3 = new List<Player>{ TestBuilder.Player().WithCost(0), TestBuilder.Player().WithCost(0) };
+        var after3 = new List<Player>{ TestBuilder.Player().WithCost(1) };
 
         var priceChanges3 = PlayerChangesEventsExtractor.GetPriceChanges(after3,before3, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
@@ -77,8 +77,8 @@ public class PriceMonitorTests
     [Fact]
     public void GetChangedPlayers_WhenSamePlayersWithChangeInPriceRemoved_ReturnsNoChanges()
     {
-        var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
-        var after = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(0) };
+        var before = new List<Player>{ TestBuilder.Player().WithCost(1) };
+        var after = new List<Player>{ TestBuilder.Player().WithCost(0) };
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
 
@@ -88,11 +88,11 @@ public class PriceMonitorTests
     [Fact]
     public void GetChangedPlayers_OneNewPlayerWithCostChange_ReturnsNewPlayer()
     {
-        var before = new List<Player>{ TestBuilder.Player().WithCostChangeEvent(1) };
+        var before = new List<Player>{ TestBuilder.Player().WithCost(1) };
         var after = new List<Player>
         {
-            TestBuilder.Player().WithCostChangeEvent(1),
-            TestBuilder.OtherPlayer().WithCostChangeEvent(1)
+            TestBuilder.Player().WithCost(1),
+            TestBuilder.OtherPlayer().WithCost(1)
         };
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
@@ -105,13 +105,13 @@ public class PriceMonitorTests
     {
         var before = new List<Player>
         {
-            TestBuilder.Player().WithCostChangeEvent(1),
-            TestBuilder.OtherPlayer().WithCostChangeEvent(1)
+            TestBuilder.Player().WithCost(1),
+            TestBuilder.OtherPlayer().WithCost(1)
         };
 
         var after = new List<Player>
         {
-            TestBuilder.Player().WithCostChangeEvent(1)
+            TestBuilder.Player().WithCost(1)
         };
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, before, new List<Team>());
