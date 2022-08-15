@@ -181,10 +181,9 @@ public static class Formatter
             var priceChange = $"{FormatCurrency(group.Key)}";
             var header = @group.Key switch
             {
-                var p when p > 0 => $"*Price up {priceChange} 📈*",
-                var p when p < 0 => $"*Price down {priceChange} 📉*",
-                var p when p == 0 => $"*Back to status quo… 🙃*",
-                _ => "*No idea*"
+                > 0 => $"*Price up {priceChange} 📈*",
+                < 0 => $"*Price down {priceChange} 📉*",
+                0 => $"*Back to status quo… 🙃*"
             };
             messageToSend += $"\n\n{header}";
             foreach (var p in group)

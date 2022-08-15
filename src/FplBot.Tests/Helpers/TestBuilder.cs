@@ -233,9 +233,9 @@ public static class TestBuilder
         return player;
     }
 
-    public static Player WithCostChangeEvent(this Player player, int cost)
+    public static Player WithCost(this Player player, int cost)
     {
-        player.CostChangeEvent = cost;
+        player.NowCost = cost;
         return player;
     }
 

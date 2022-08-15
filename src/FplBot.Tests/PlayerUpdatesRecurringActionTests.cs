@@ -205,7 +205,7 @@ public class PlayerUpdatesRecurringActionTests
             },
             Players = new List<Player>
             {
-                TestBuilder.Player().WithCostChangeEvent(1)
+                TestBuilder.Player().WithCost(1)
             }
         });
 
