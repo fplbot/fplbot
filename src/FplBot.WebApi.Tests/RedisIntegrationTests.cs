@@ -1,3 +1,4 @@
+using System.Net.Security;
 using Fpl.Search.Data.Repositories;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
@@ -49,7 +50,13 @@ public class RedisIntegrationTests : IDisposable
             ClientName = opts.Value.GetRedisUsername,
             Password = opts.Value.GetRedisPassword,
             EndPoints = { opts.Value.GetRedisServerHostAndPort },
-            AllowAdmin = true
+            AllowAdmin = true,
+            Ssl = true,
+            SslClientAuthenticationOptions = s => new SslClientAuthenticationOptions
+            {
+                TargetHost = opts.Value.GetHost,
+                RemoteCertificateValidationCallback = (h, a, c, k) => true,
+            }
         };
 
         var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
