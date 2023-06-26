@@ -9,6 +9,8 @@ public class VerifiedRedisOptions
 
     public string GetRedisServerHostAndPort => REDIS_URL.Split("@")[1];
 
+    public string GetHost => GetRedisServerHostAndPort.Split(":")[0];
+
     private Uri _uri;
 
     private Uri RedisUri()

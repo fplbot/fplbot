@@ -2,6 +2,7 @@
 using System.CommandLine.Builder;
 using System.CommandLine.Hosting;
 using System.CommandLine.Parsing;
+using System.Net.Security;
 using Fpl.Search.Data;
 using Fpl.SearchConsole;
 using Fpl.SearchConsole.Commands.Definitions;
@@ -38,11 +39,14 @@ IHostBuilder ConfigureHost(string[] strings)
             {
                 ClientName = opts.GetRedisUsername,
                 Password = opts.GetRedisPassword,
-                EndPoints = {opts.GetRedisServerHostAndPort}
+                EndPoints = {opts.GetRedisServerHostAndPort},
+                SslClientAuthenticationOptions = s => new SslClientAuthenticationOptions
+                {
+                    TargetHost = opts.GetHost,
+                    RemoteCertificateValidationCallback = (h, a, c, k) => true,
+                }
             };
             var conn =  ConnectionMultiplexer.Connect(options);
             services.AddSearchConsole(ctx.Configuration, conn);
         });
 }
-
-

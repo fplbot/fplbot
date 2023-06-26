@@ -1,3 +1,7 @@
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.Slack;
 using Discord.Net.Endpoints.Authentication;
@@ -44,7 +48,13 @@ public static class WebApplicationBuilderExtensions
         {
             ClientName = opts.GetRedisUsername,
             Password = opts.GetRedisPassword,
-            EndPoints = {opts.GetRedisServerHostAndPort}
+            EndPoints = {opts.GetRedisServerHostAndPort},
+            Ssl = true,
+            SslClientAuthenticationOptions = s => new SslClientAuthenticationOptions
+            {
+                TargetHost = opts.GetHost,
+                RemoteCertificateValidationCallback = (h, a, c, k) => true,
+            }
         };
         var conn =  ConnectionMultiplexer.Connect(options);
 

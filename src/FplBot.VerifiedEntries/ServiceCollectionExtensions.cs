@@ -1,3 +1,5 @@
+using System.Net.Security;
+using System.Security.Authentication;
 using FplBot.VerifiedEntries;
 using FplBot.VerifiedEntries.Data;
 using FplBot.VerifiedEntries.Data.Abstractions;
@@ -25,7 +27,13 @@ public static class ServiceCollectionFplBotExtensions
             {
                 ClientName = opts.GetRedisUsername,
                 Password = opts.GetRedisPassword,
-                EndPoints = {opts.GetRedisServerHostAndPort}
+                EndPoints = { opts.GetRedisServerHostAndPort },
+                Ssl = true,
+                SslClientAuthenticationOptions = s => new SslClientAuthenticationOptions
+                {
+                    TargetHost = opts.GetHost,
+                    RemoteCertificateValidationCallback = (h, a, c, k) => true,
+                }
             };
             return ConnectionMultiplexer.Connect(options);
         });
