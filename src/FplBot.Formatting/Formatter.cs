@@ -401,8 +401,13 @@ public static class Formatter
     {
         var introText = $"{gw.Name} is finished.";
         var globalAverage = (int)Math.Round((double)gw.AverageScore);
-        var leagueAverage = (int)Math.Round((double)league.Standings.Entries.Average(entry => entry.EventTotal));
-        var diff = Math.Abs(globalAverage - leagueAverage);
+
+        var leagueAvgTxt = "";
+        if (league.Standings.Entries.Any())
+        {
+            var leagueAverage = (int)Math.Round((double)league.Standings.Entries.Average(entry => entry.EventTotal));
+            leagueAvgTxt = $" Your league's average was *{leagueAverage}* points.";
+        }
 
         if (globalAverage < 40)
         {
@@ -417,7 +422,7 @@ public static class Formatter
             introText += $" The global average was *{globalAverage}* points.";
         }
 
-        introText += $" Your league's average was *{leagueAverage}* points.";
+        introText += leagueAvgTxt;
 
         return introText;
     }
