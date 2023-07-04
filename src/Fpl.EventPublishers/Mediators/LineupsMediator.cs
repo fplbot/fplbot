@@ -56,7 +56,7 @@ internal class LineupsHandler :
     {
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyFinished), (notification.Gameweek.Id+1).ToString()));
         _logger.LogInformation("Refreshing state for finished gw {Gameweek}. Using next gw {NextGameweek}", notification.Gameweek.Id, notification.Gameweek.Id + 1);
-        if (notification.Gameweek.Id < 39)
+        if (notification.Gameweek.Id < 38)
         {
             await _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
         }
