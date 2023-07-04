@@ -52,11 +52,18 @@ internal class LineupsHandler :
         return _matchState.Refresh(notification.Gameweek.Id);
     }
 
-    public Task Handle(GameweekCurrentlyFinished notification, CancellationToken cancellationToken)
+    public async Task Handle(GameweekCurrentlyFinished notification, CancellationToken cancellationToken)
     {
         using var scope = _logger.AddContext(Tuple.Create(nameof(GameweekCurrentlyFinished), (notification.Gameweek.Id+1).ToString()));
         _logger.LogInformation("Refreshing state for finished gw {Gameweek}. Using next gw {NextGameweek}", notification.Gameweek.Id, notification.Gameweek.Id + 1);
-        return _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
+        if (notification.Gameweek.Id < 39)
+        {
+            await _matchState.Refresh(notification.Gameweek.Id + 1); // monitor next gameweeks matches, since current = finished
+        }
+        else
+        {
+            _logger.LogInformation("Not refreshing state. Current gw is the last gw : {Gameweek}", notification.Gameweek.Id);
+        }
     }
 
     public Task Handle(CurrentlyPreseason notification, CancellationToken cancellationToken)
