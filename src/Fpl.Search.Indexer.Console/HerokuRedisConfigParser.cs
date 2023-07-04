@@ -27,5 +27,4 @@ public static class HerokuRedisConfigParser
     private static string GetRedisServerHostAndPort(string redisUri) => redisUri.Split("@")[1];
 
     private static string GetHost(string redisUri) => redisUri.Split(":")[0];
-
 }
