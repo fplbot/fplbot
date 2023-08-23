@@ -57,13 +57,43 @@ public static class TestBuilder
             Started = true,
             Stats = new[]
             {
-                AwayTeamLeadingBy(goals)
+                AddGoalsScored(goals, PlayerId)
             },
             HomeTeamScore = 0,
             AwayTeamScore = goals,
             PulseId = fixtureCode,
             Minutes = minutes.HasValue ? minutes.Value : 30
         };
+    }
+
+    public static Fixture AddAwayGoal(this Fixture fixture, int numGoals = 1)
+    {
+        var goalScoredStats = fixture.Stats.FirstOrDefault(c => c.Identifier == "goals_scored");
+
+        var awayGoal = new FixtureStatValue
+        {
+            Element = PlayerId,
+            Value = numGoals
+        };
+
+        if (goalScoredStats is null)
+        {
+            goalScoredStats = new FixtureStat
+            {
+                Identifier = "goals_scored",
+                HomeStats = Array.Empty<FixtureStatValue>(),
+                AwayStats = new[] { awayGoal }
+            };
+            var updatedStats = fixture.Stats.Append(goalScoredStats);
+            fixture.Stats = updatedStats.ToArray();
+        }
+        else
+        {
+            var updatedAwayStats = goalScoredStats.AwayStats.Append(awayGoal);
+            goalScoredStats.AwayStats = updatedAwayStats.ToArray();
+        }
+
+        return fixture;
     }
 
     public static Fixture FinishedProvisional(this Fixture fixture)
@@ -144,7 +174,7 @@ public static class TestBuilder
         };
     }
 
-    private static FixtureStat AwayTeamLeadingBy(int goals)
+    private static FixtureStat AddGoalsScored(int goals, int playerId)
     {
         return new FixtureStat
         {
@@ -157,7 +187,7 @@ public static class TestBuilder
             {
                 new FixtureStatValue
                 {
-                    Element = PlayerId,
+                    Element = playerId,
                     Value = goals
                 }
             }
