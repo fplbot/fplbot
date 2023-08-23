@@ -1,3 +1,4 @@
+using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Comparers;
@@ -25,6 +26,10 @@ public class LiveEventsExtractor
                 var newFixtureStats = FixtureDiffer.DiffFixtureStats(fixture, oldFixture, players);
 
                 if (newFixtureStats.Values.Any())
+                {
+                    var goalScored = fixture.Stats.FirstOrDefault(c => c.Identifier == FplConstants.StatIdentifiers.GoalsScored);
+                    var homeTeamScore = goalScored?.HomeStats?.Sum(s => s.Value) ?? 0;
+                    var awayTeamScore = goalScored?.AwayStats?.Sum(s => s.Value) ?? 0;
                     return new FixtureEvents
                     (
                         new FixtureScore(
@@ -32,13 +37,13 @@ public class LiveEventsExtractor
                             new FixtureTeam(homeTeam.Id, homeTeam.Name, homeTeam.ShortName),
                             new FixtureTeam(awayTeam.Id, awayTeam.Name, awayTeam.ShortName),
                             fixture.Minutes,
-                            fixture.HomeTeamScore,
-                            fixture.AwayTeamScore
+                            homeTeamScore,
+                            awayTeamScore
                         ),
                         newFixtureStats
                     );
-                else
-                    return null;
+                }
+                return null;
             }
 
             return null;
