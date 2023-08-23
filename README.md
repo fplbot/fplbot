@@ -1,5 +1,6 @@
 # @fplbot
-[![master](https://github.com/fplbot/fplbot/workflows/Release/badge.svg)](https://github.com/fplbot/fplbot/actions?query=workflow%3ARelease)
+[![master](https://github.com/fplbot/fplbot/workflows/CI/badge.svg)](https://github.com/fplbot/fplbot/actions?query=workflow%3ACI+branch%3Amaster)
+
 
 A Fantasy Premier league chatbot. Get it at 👉 https://www.fplbot.app/ 👈
 #### Features
