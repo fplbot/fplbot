@@ -63,8 +63,12 @@ public class GameweekFinishedHandler : IHandleMessages<GameweekFinished>,
                     new ("ℹ️ Gameweek finished!",intro),
                     new ("ℹ️ Standings", standings),
                     new ("ℹ️ Top 3", topThree),
-                    new ("ℹ️ Lantern beige", worst)
                 });
+
+                if (worst is not null)
+                {
+                    messages.Add(new("ℹ️ Lantern beige", worst));
+                }
                 var i = 0;
                 foreach (var richMessage in messages)
                 {

@@ -12,5 +12,5 @@ public class ClassicLeagueStandings
     public int Number { get; set; }
 
     [JsonPropertyName("results")]
-    public ICollection<ClassicLeagueEntry> Entries { get; set; }
+    public ICollection<ClassicLeagueEntry> Entries { get; set; } = new List<ClassicLeagueEntry>();
 }
