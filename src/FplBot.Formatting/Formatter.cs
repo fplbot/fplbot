@@ -71,8 +71,8 @@ public static class Formatter
 
     public static string GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
-        var worst = league.Standings.Entries.OrderBy(e => e.EventTotal).FirstOrDefault();
-        string entryOrEntryLink = includeExternalLinks? worst.GetEntryLink(gameweek.Id) : worst?.EntryName;
+        var worst = league.Standings.Entries.MinBy(e => e.EventTotal);
+        string entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
         return worst == null ? null : $"💩 {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
     }
 

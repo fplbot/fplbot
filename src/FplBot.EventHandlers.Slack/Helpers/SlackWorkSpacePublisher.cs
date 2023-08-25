@@ -32,13 +32,11 @@ public class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
     {
         foreach (var msg in messages)
         {
-            var req = new ChatPostMessageRequest
+            if (msg is { Length: > 0 })
             {
-                Channel = channel,
-                Text = msg,
-                unfurl_links = "false"
-            };
-            await PublishToWorkspace(teamId, req);
+                var req = new ChatPostMessageRequest { Channel = channel, Text = msg, unfurl_links = "false" };
+                await PublishToWorkspace(teamId, req);
+            }
         }
     }
 

@@ -56,7 +56,13 @@ internal class GameweekFinishedHandler : IHandleMessages<GameweekFinished>, IHan
             var standings = Formatter.GetStandings(league, gw);
             var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
             var worst = Formatter.GetWorstGameweekEntry(league, gw);
-            await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, intro, standings, topThree, worst);
+
+            var messages = new List<string> { intro, standings, topThree};
+            if (worst is not null)
+            {
+                messages.Add(worst);
+            }
+            await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
