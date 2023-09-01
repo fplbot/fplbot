@@ -254,9 +254,26 @@ public class TransfersByGameWeek : ITransfersByGameWeek
                     var transferCostString = transferCost > 0 ? $" (-{transferCost} pts)" : "";
                     sb.Append($"{entryLinkOrName} transferred{transferCostString}:\n");
                 }
-                foreach (var entryTransfer in transfers)
+
+                if (wildcardPlayed || freeHitPlayed)
                 {
-                    sb.Append($"   ▪️{entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) ➡️ {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                    sb.Append($"   Made use of {transfers.Length} transfers. Final 11:\n");
+                    var firstEleven = picks.Picks.OrderBy(p => p.TeamPosition).Take(11);
+                    var starters = firstEleven.Select(first11pick => players.SingleOrDefault(x => x.Id == first11pick.PlayerId)).ToList();
+                    foreach (var playerGroup in starters.GroupBy(p => p.Position))
+                    {
+                        var playersInPos = string.Join("  ", playerGroup.Select(p => p.WebName));
+                        var player = playerGroup.First();
+                        var pos = Formatter.PositionEmoji(player.Position);
+                        sb.Append($"      {pos} {playersInPos}\n");
+                    }
+                }
+                else
+                {
+                    foreach (var entryTransfer in transfers)
+                    {
+                        sb.Append($"   ▪️{entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) ➡️ {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                    }
                 }
             }
             catch (Exception e)

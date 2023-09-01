@@ -93,14 +93,16 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
             if (league.Standings.Entries.Count < MemberCountForLargeLeague)
             {
                 var transfersByGameweekTexts = await _transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId.Value, includeExternalLinks:false);
+                // Discord max limit is 2000 chars, so chunking by 4 managers
                 if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
                 {
-                    var array = transfersByGameweekTexts.Messages.ToList();
-                    int halfway = array.Count() / 2;
-                    var firstArray = array.Take(halfway);
-                    var secondArray = array.Skip(halfway);
-                    messages.Add(new RichMesssage("Transfers", string.Join("", firstArray.Select(c => c.Message))));
-                    messages.Add(new RichMesssage("Transfers (#2)", string.Join("", secondArray.Select(c => c.Message))));
+                    var array = transfersByGameweekTexts.Messages.Chunk(4).ToArray();
+
+                    messages.Add(new RichMesssage("Transfers", string.Join("", array.First().Select(c => c.Message))));
+                    foreach (var partial in array[1..])
+                    {
+                        messages.Add(new RichMesssage("", string.Join("", partial.Select(c => c.Message))));
+                    }
                 }
                 else
                 {

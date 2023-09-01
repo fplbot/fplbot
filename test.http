@@ -163,4 +163,4 @@ Content-Type: application/json
 }
 
 ### test event formatting
-GET http://localhost:1337/debug/goal
+GET http://localhost:1337/debug/gameweekstart

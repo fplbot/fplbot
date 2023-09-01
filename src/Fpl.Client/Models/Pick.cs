@@ -7,9 +7,6 @@ public class Pick
     [JsonPropertyName("element")]
     public int PlayerId { get; set; }
 
-    [JsonPropertyName("element_type")]
-    public int ElementType { get; set; }
-
     [JsonPropertyName("position")]
     public int TeamPosition { get; set; }
 
