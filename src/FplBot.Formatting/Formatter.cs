@@ -319,6 +319,18 @@ public static class Formatter
         };
     }
 
+    public static string PositionEmoji(FplPlayerPosition position)
+    {
+        return position switch
+        {
+            FplPlayerPosition.Goalkeeper => "🧤",
+            FplPlayerPosition.Defender => "🛡",
+            FplPlayerPosition.Midfielder => "⚙️",
+            FplPlayerPosition.Forward => "⚡️️",
+            _ => "⁇"
+        };
+    }
+
     public static string FormatProvisionalFinished(FinishedFixture fixture)
     {
         var fullTimeReport = "";
@@ -553,6 +565,11 @@ public static class Formatter
     public static string GetEntryLink(int entryId, string name, int? gameweek)
     {
         return $"<https://fantasy.premierleague.com/entry/{entryId}/{GetLinkSuffix(gameweek)}|{name}>";
+    }
+
+    public static string GetEntryTransferLink(int entryId)
+    {
+        return $"https://fantasy.premierleague.com/entry/{entryId}/transfers";
     }
 
     private static string GetLinkSuffix(int? gameweek) => gameweek.HasValue ? $"event/{gameweek.Value}" : "history";
