@@ -40,6 +40,17 @@ public static class TestBuilder
                     AwayStats = new List<FixtureStatValue>
                     {
                     }
+                },
+                new FixtureStat
+                {
+                    Identifier = "own_goals",
+                    HomeStats = new List<FixtureStatValue>
+                    {
+
+                    },
+                    AwayStats = new List<FixtureStatValue>
+                    {
+                    }
                 }
             },
             PulseId = fixtureCode
@@ -91,6 +102,66 @@ public static class TestBuilder
         {
             var updatedAwayStats = goalScoredStats.AwayStats.Append(awayGoal);
             goalScoredStats.AwayStats = updatedAwayStats.ToArray();
+        }
+
+        return fixture;
+    }
+
+    public static Fixture AddHomeGoal(this Fixture fixture, int numGoals = 1)
+    {
+        var goalScoredStats = fixture.Stats.FirstOrDefault(c => c.Identifier == "goals_scored");
+
+        var homeGoal = new FixtureStatValue
+        {
+            Element = PlayerId,
+            Value = numGoals
+        };
+
+        if (goalScoredStats is null)
+        {
+            goalScoredStats = new FixtureStat
+            {
+                Identifier = "goals_scored",
+                HomeStats = new[] { homeGoal },
+                AwayStats = Array.Empty<FixtureStatValue>(),
+            };
+            var updatedStats = fixture.Stats.Append(goalScoredStats);
+            fixture.Stats = updatedStats.ToArray();
+        }
+        else
+        {
+            var updatedAwayStats = goalScoredStats.HomeStats.Append(homeGoal);
+            goalScoredStats.HomeStats = updatedAwayStats.ToArray();
+        }
+
+        return fixture;
+    }
+
+    public static Fixture AddAwayOwnGoal(this Fixture fixture, int numGoals = 1)
+    {
+        var ownGoalsStats = fixture.Stats.FirstOrDefault(c => c.Identifier == "own_goals");
+
+        var awayOwnGoal = new FixtureStatValue
+        {
+            Element = PlayerId,
+            Value = numGoals
+        };
+
+        if (ownGoalsStats is null)
+        {
+            ownGoalsStats = new FixtureStat
+            {
+                Identifier = "own_goals",
+                HomeStats = Array.Empty<FixtureStatValue>(),
+                AwayStats = new[] { awayOwnGoal }
+            };
+            var updatedStats = fixture.Stats.Append(ownGoalsStats);
+            fixture.Stats = updatedStats.ToArray();
+        }
+        else
+        {
+            var updatedAwayStats = ownGoalsStats.AwayStats.Append(awayOwnGoal);
+            ownGoalsStats.AwayStats = updatedAwayStats.ToArray();
         }
 
         return fixture;

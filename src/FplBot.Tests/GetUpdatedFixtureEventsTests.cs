@@ -82,4 +82,49 @@ public class GetUpdatedFixtureEventsTests
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player> { TestBuilder.Player()}, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
         Assert.Empty(events);
     }
+
+    [Fact]
+    public static void When_OwnGoal_ReturnsCorrectScore()
+    {
+        var current = new List<Fixture>
+        {
+            TestBuilder.NoGoals(fixtureCode:1)
+        };
+
+        var updatedFixture = TestBuilder.NoGoals(1);
+        updatedFixture.AddAwayOwnGoal();
+
+        var latest = new List<Fixture>
+        {
+            updatedFixture
+        };
+
+        var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player> { TestBuilder.Player()}, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
+
+        Assert.Equal(1, events.First().FixtureScore.HomeTeamScore);
+        Assert.Equal(0, events.First().FixtureScore.AwayTeamScore);
+    }
+
+    [Fact]
+    public static void When_OwnGoalAndGoal_ReturnsCorrectScore()
+    {
+        var current = new List<Fixture>
+        {
+            TestBuilder.NoGoals(fixtureCode:1)
+        };
+
+        var updatedFixture = TestBuilder.NoGoals(1);
+        updatedFixture.AddHomeGoal();
+        updatedFixture.AddAwayOwnGoal();
+
+        var latest = new List<Fixture>
+        {
+            updatedFixture
+        };
+
+        var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player> { TestBuilder.Player()}, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
+
+        Assert.Equal(2, events.First().FixtureScore.HomeTeamScore);
+        Assert.Equal(0, events.First().FixtureScore.AwayTeamScore);
+    }
 }
