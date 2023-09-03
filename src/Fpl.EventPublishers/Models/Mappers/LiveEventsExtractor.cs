@@ -28,8 +28,16 @@ public class LiveEventsExtractor
                 if (newFixtureStats.Values.Any())
                 {
                     var goalScored = fixture.Stats.FirstOrDefault(c => c.Identifier == FplConstants.StatIdentifiers.GoalsScored);
-                    var homeTeamScore = goalScored?.HomeStats?.Sum(s => s.Value) ?? 0;
-                    var awayTeamScore = goalScored?.AwayStats?.Sum(s => s.Value) ?? 0;
+                    var homeTeamGoals = goalScored?.HomeStats?.Sum(s => s.Value) ?? 0;
+                    var awayTeamGoals = goalScored?.AwayStats?.Sum(s => s.Value) ?? 0;
+
+                    var owngoals= fixture.Stats.FirstOrDefault(c => c.Identifier == FplConstants.StatIdentifiers.OwnGoals);
+                    var homeTeamOwnGoals = owngoals?.HomeStats?.Sum(s => s.Value) ?? 0;
+                    var awayTeamOwnGoals = owngoals?.AwayStats?.Sum(s => s.Value) ?? 0;
+
+                    var homeTeamScore = homeTeamGoals + awayTeamOwnGoals;
+                    var awayTeamScore = awayTeamGoals + homeTeamOwnGoals;
+
                     return new FixtureEvents
                     (
                         new FixtureScore(
