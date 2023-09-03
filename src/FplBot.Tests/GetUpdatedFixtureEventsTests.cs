@@ -12,6 +12,12 @@ public class GetUpdatedFixtureEventsTests
         AssertEmpty(null,null);
         AssertEmpty(new List<Fixture>(), null);
         AssertEmpty(null, new List<Fixture>());
+
+        void AssertEmpty(ICollection<Fixture> latest, ICollection<Fixture> current)
+        {
+            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player>(), new List<Team>());
+            Assert.Empty(events);
+        }
     }
 
     [Fact]
@@ -74,12 +80,6 @@ public class GetUpdatedFixtureEventsTests
         };
 
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player> { TestBuilder.Player()}, new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam()});
-        Assert.Empty(events);
-    }
-
-    private static void AssertEmpty(ICollection<Fixture> latest, ICollection<Fixture> current)
-    {
-        var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player>(), new List<Team>());
         Assert.Empty(events);
     }
 }
