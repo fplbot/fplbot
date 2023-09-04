@@ -35,18 +35,32 @@ public class TauntData
         }
     }
 
+    /// One can transfer out a player and then transfer him back in again. Verify player is in picks.
     private IEnumerable<string> EntriesThatTransferredPlayerOutThisGameweek(int playerId)
     {
-        return TransfersForLeague == null ?
-            Enumerable.Empty<string>() :
-            TransfersForLeague.Where(x => x.PlayerTransferredOut == playerId).Select(x => EntryNameToHandle(x.EntryName));
+        if (TransfersForLeague == null)
+        {
+            return Enumerable.Empty<string>();
+        }
+
+        var transfersOut = TransfersForLeague.Where(x => x.PlayerTransferredOut == playerId).Select(x => EntryNameToHandle(x.EntryName));
+        var hasPlayer = EntriesThatHasPlayerInTeam(playerId);
+        var managersWithoutThePlayer = transfersOut.Except(hasPlayer);
+        return managersWithoutThePlayer;
     }
 
+    /// One can transfer in a player and then transfer him out again. Verify player is in picks.
     private IEnumerable<string> EntriesThatTransferredPlayerInThisGameweek(int playerId)
     {
-        return TransfersForLeague == null ?
-            Enumerable.Empty<string>() :
-            TransfersForLeague.Where(x => x.PlayerTransferredIn == playerId).Select(x => EntryNameToHandle(x.EntryName));
+        if (TransfersForLeague == null)
+        {
+            return Enumerable.Empty<string>();
+        }
+
+        var transfersIn = TransfersForLeague.Where(x => x.PlayerTransferredIn == playerId).Select(x => EntryNameToHandle(x.EntryName));
+        var hasPlayer = EntriesThatHasPlayerInTeam(playerId);
+        var managersWithThePlayer = transfersIn.Intersect(hasPlayer);
+        return managersWithThePlayer;
     }
 
     private IEnumerable<string> EntriesThatHasPlayerInTeam(int playerId)

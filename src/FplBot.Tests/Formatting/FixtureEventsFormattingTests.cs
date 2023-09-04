@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
 using FplBot.Formatting.FixtureStats.Describers;
@@ -44,6 +45,31 @@ public class FixtureEventsFormattingTests
 
     }
 
+    [Theory]
+    [InlineData("Kohn Jorsnes", "kors", "Magnus Carlsen", "Magnus Carlsen")]
+    [InlineData("Magnus Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
+    [InlineData("Magnus", "carlsen", "Magnus Carlsen", "<@U123>")]
+    [InlineData("Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
+    [InlineData(null, "carlsen", "Magnus Carlsen", "Magnus Carlsen")]
+    public void ProducesSingleTauntString(string slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
+    {
+        // Arrange
+
+
+        // Act
+        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true,FormattingType.Slack, CreateMultipleTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
+        foreach (var formatttedEvent in formattedEvents)
+        {
+            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+        }
+        // Assert
+        Assert.Single(formattedEvents);
+
+        var formattedEvent = formattedEvents.First();
+        var countOfMentions = Regex.Matches(formattedEvent.Details, pattern: expectedTauntName).Count;
+        Assert.Equal(1, countOfMentions);
+    }
+
     [Fact]
     public void RegularGoalScored()
     {
@@ -53,6 +79,26 @@ public class FixtureEventsFormattingTests
             _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
         Assert.Contains("PlayerWebname scored a goal", formattedEvents.First().Details);
+    }
+
+    [Fact]
+    public void RedCardMultipleTransfersIn()
+    {
+        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateRedCardEvent(), subscribes => true, FormattingType.Slack, CreateMultipleTransferInForRedCardedPlayer());
+        foreach (var formatttedEvent in formattedEvents)
+        {
+            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+        }
+
+        Assert.Single(formattedEvents);
+        var formattedEvent = formattedEvents.First();
+        Assert.Contains("PlayerWebname got a red card", formattedEvent.Details);
+
+        var regex = new Regex("\\{0\\}.*");
+        CustomAssert.AnyOfContains(RedCardDescriber.RedCardJokes.Select(x => regex.Replace(x, string.Empty)), formattedEvent.Details);
+        Assert.Contains("<@U123>", formattedEvent.Details);
+        var countOfMentions = Regex.Matches(formattedEvent.Details, pattern: "<@U123>").Count;
+        Assert.Equal(1, countOfMentions);
     }
 
     [Fact]
@@ -150,6 +196,28 @@ public class FixtureEventsFormattingTests
         };
     }
 
+    private List<FixtureEvents> CreateRedCardEvent()
+    {
+        var fixture = TestBuilder.NoGoals(1);
+        return new List<FixtureEvents>
+        {
+            new(
+                new FixtureScore
+                (
+                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name, TestBuilder.HomeTeam().ShortName),
+                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name, TestBuilder.AwayTeam().ShortName),
+                    66,
+                    1,
+                    0
+                ),
+                new Dictionary<StatType, List<PlayerEvent>>
+                {
+                    { StatType.RedCards, new List<PlayerEvent>{ new(TestBuilder.PlayerDetails(), TeamType.Home, false)}}
+                }
+            )
+        };
+    }
+
     private TauntData CreateTransferOutForGoalScorerContext(string slackUserRealName, string slackUserHandle, string entryName)
     {
         User[] users = new[]
@@ -165,6 +233,50 @@ public class FixtureEventsFormattingTests
                 }
             },
             Array.Empty<GameweekEntry>(),
+            entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
+    }
+
+    private TauntData CreateMultipleTransferOutForGoalScorerContext(string slackUserRealName, string slackUserHandle, string entryName)
+    {
+        User[] users = new[]
+        {
+            new User { Id = "U123", Real_name = slackUserRealName, Name = slackUserHandle }
+        };
+        return new TauntData(
+            new[]
+            {
+                new TransfersByGameWeek.Transfer
+                {
+                    EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId
+                },
+                new TransfersByGameWeek.Transfer
+                {
+                    EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId,
+                },
+            },
+            Array.Empty<GameweekEntry>(),
+            entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
+    }
+
+    private TauntData CreateMultipleTransferInForRedCardedPlayer()
+    {
+        User[] users = new[]
+        {
+            new User { Id = "U123", Real_name = "John Johnsen", Name = "@johnsen" }
+        };
+        return new TauntData(
+            new[]
+            {
+                new TransfersByGameWeek.Transfer
+                {
+                    EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId
+                },
+                new TransfersByGameWeek.Transfer
+                {
+                    EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId,
+                },
+            },
+            new []{ new GameweekEntry(2, "John Johnson", "FjolleTeamName", new EntryPicks { Picks = new List<Pick> { new Pick { PlayerId = TestBuilder.PlayerId } } }) },
             entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
     }
 
