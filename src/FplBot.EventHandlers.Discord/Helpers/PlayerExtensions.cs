@@ -8,12 +8,12 @@ public static class PlayerExtensions
 
     public static bool IsRelevant(this InjuredPlayer player)
     {
-        return player.OwnershipPercentage > THRESHOLD;
+        return player.OwnershipPercentage >= THRESHOLD;
     }
 
     public static bool IsRelevant(this PlayerWithPriceChange player)
     {
-        return player.OwnershipPercentage > THRESHOLD;
+        return player.OwnershipPercentage >= THRESHOLD;
     }
 
     public static bool IsRelevant(this NewPlayer player)
