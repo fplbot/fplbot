@@ -48,21 +48,24 @@ internal class GameweekFinishedHandler : IHandleMessages<GameweekFinished>, IHan
         var settings = await _settingsClient.GetGlobalSettings();
         var gameweeks = settings.Gameweeks;
         var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
-        ClassicLeague league = null;
         try
         {
-            league = await _leagueClient.GetClassicLeague(message.LeagueId);
-            var intro = Formatter.FormatGameweekFinished(gw, league);
-            var standings = Formatter.GetStandings(league, gw);
-            var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
-            var worst = Formatter.GetWorstGameweekEntry(league, gw);
-
-            var messages = new List<string> { intro, standings, topThree};
-            if (worst is not null)
+            var league = await _leagueClient.GetClassicLeague(message.LeagueId);
+            var leagueStarted = league.Properties.StartEvent is var startEvent && message.GameweekId >= startEvent;
+            if (leagueStarted)
             {
-                messages.Add(worst);
+                var intro = Formatter.FormatGameweekFinished(gw, league);
+                var standings = Formatter.GetStandings(league, gw);
+                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
+                var worst = Formatter.GetWorstGameweekEntry(league, gw);
+
+                var messages = new List<string> { intro, standings, topThree};
+                if (worst is not null)
+                {
+                    messages.Add(worst);
+                }
+                await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
             }
-            await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
         {

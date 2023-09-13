@@ -53,20 +53,22 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
         var newGameweek = message.GameweekId;
 
         var team = await _teamRepo.GetTeam(message.WorkspaceId);
-        if(team.HasRegisteredFor(EventSubscription.Captains) || team.HasRegisteredFor(EventSubscription.Transfers))
-            await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, $"Gameweek {message.GameweekId}!");
 
         var messages = new List<string>();
 
-        var leagueExists = false;
         ClassicLeague league = null;
         if (team.FplbotLeagueId.HasValue)
         {
             league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
         }
-        leagueExists = league != null;
 
-        if (leagueExists && team.HasRegisteredFor(EventSubscription.Captains))
+        var leagueExists = league != null;
+        var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
+
+        if(leagueExists && leagueStarted && (team.HasRegisteredFor(EventSubscription.Captains) || team.HasRegisteredFor(EventSubscription.Transfers)))
+            await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, $"Gameweek {message.GameweekId}!");
+
+        if (leagueExists && leagueStarted && team.HasRegisteredFor(EventSubscription.Captains))
         {
             var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.FplbotLeagueId.Value);
             if (league.Standings.Entries.Count < MemberCountForLargeLeague)
@@ -86,10 +88,10 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
         }
         else
         {
-            _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.TeamId);
+            _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.TeamId, leagueStarted);
         }
 
-        if (leagueExists && team.HasRegisteredFor(EventSubscription.Transfers))
+        if (leagueExists && leagueStarted && team.HasRegisteredFor(EventSubscription.Transfers))
         {
             try
             {
@@ -116,7 +118,7 @@ internal class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHan
         }
         else
         {
-            _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.TeamId);
+            _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.TeamId, leagueStarted);
         }
 
         await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, messages.ToArray());

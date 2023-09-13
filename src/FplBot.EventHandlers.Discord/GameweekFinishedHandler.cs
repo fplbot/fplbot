@@ -50,33 +50,36 @@ public class GameweekFinishedHandler : IHandleMessages<GameweekFinished>,
             var settings = await _settingsClient.GetGlobalSettings();
             var gameweeks = settings.Gameweeks;
             var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
-            ClassicLeague league = await _leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
+            var league = await _leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
             if (league != null)
             {
-                var messages = new List<RichMesssage>();
-                var intro = Formatter.FormatGameweekFinished(gw, league);
-                var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
-                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
-                var worst = Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
-                messages.AddRange(new RichMesssage[]
+                if (league.Properties.StartEvent is var startEvent && message.GameweekId >= startEvent)
                 {
-                    new ("ℹ️ Gameweek finished!",intro),
-                    new ("ℹ️ Standings", standings),
-                    new ("ℹ️ Top 3", topThree),
-                });
+                    var messages = new List<RichMesssage>();
+                    var intro = Formatter.FormatGameweekFinished(gw, league);
+                    var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
+                    var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
+                    var worst = Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
+                    messages.AddRange(new RichMesssage[]
+                    {
+                        new ("ℹ️ Gameweek finished!",intro),
+                        new ("ℹ️ Standings", standings),
+                        new ("ℹ️ Top 3", topThree),
+                    });
 
-                if (worst is not null)
-                {
-                    messages.Add(new("ℹ️ Lantern beige", worst));
-                }
-                var i = 0;
-                foreach (var richMessage in messages)
-                {
-                    i = i + 2;
-                    var sendOptions = new SendOptions();
-                    sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(i));
-                    sendOptions.RouteToThisEndpoint();
-                    await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, richMessage.Title, richMessage.Description), sendOptions);
+                    if (worst is not null)
+                    {
+                        messages.Add(new("ℹ️ Lantern beige", worst));
+                    }
+                    var i = 0;
+                    foreach (var richMessage in messages)
+                    {
+                        i = i + 2;
+                        var sendOptions = new SendOptions();
+                        sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(i));
+                        sendOptions.RouteToThisEndpoint();
+                        await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, richMessage.Title, richMessage.Description), sendOptions);
+                    }
                 }
             }
             else
