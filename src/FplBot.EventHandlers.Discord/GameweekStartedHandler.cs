@@ -48,12 +48,6 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
 
         var messages = new List<RichMesssage>();
 
-        if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains) ||
-            team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
-            messages.Add(new RichMesssage($"Gameweek {message.GameweekId}!", ""));
-
-
-
         ClassicLeague league = null;
         if (team.LeagueId.HasValue)
         {
@@ -61,8 +55,13 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
         }
 
         var leagueExists = league != null;
+        var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
 
-        if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+        if (leagueExists && leagueStarted && (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains) ||
+                                          team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers)))
+            messages.Add(new RichMesssage($"Gameweek {message.GameweekId}!", ""));
+
+        if (leagueExists && leagueStarted && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
         {
             var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.LeagueId.Value);
             if (league.Standings.Entries.Count < MemberCountForLargeLeague)
@@ -85,10 +84,10 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
         }
         else
         {
-            _logger.LogInformation("Team {team} hasn't subscribed for gw start captains, so bypassing it", team.GuildId);
+            _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
         }
 
-        if (leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+        if (leagueExists && leagueStarted && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
         {
             if (league.Standings.Entries.Count < MemberCountForLargeLeague)
             {
@@ -121,7 +120,7 @@ public class GameweekStartedHandler : IHandleMessages<GameweekJustBegan>, IHandl
         }
         else
         {
-            _logger.LogInformation("Team {team} hasn't subscribed for gw start transfers, so bypassing it", team.GuildId);
+            _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
         }
 
         var i = 0;
