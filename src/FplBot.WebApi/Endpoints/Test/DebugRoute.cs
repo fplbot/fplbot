@@ -1,3 +1,4 @@
+using FplBot.WebApi.Endpoints.Test.GameweekEnd;
 using FplBot.WebApi.Endpoints.Test.Gameweekstart;
 using FplBot.WebApi.Endpoints.Test.Goal;
 using FplBot.WebApi.Endpoints.Test.RemovedFixtures;
@@ -13,5 +14,6 @@ public static class TestEndpoints
         app.MapGet($"{baseRoute}/removedfixture", TestRemovedFixture.Get);
         app.MapGet($"{baseRoute}/goal", TestGoal.Get);
         app.MapGet($"{baseRoute}/gameweekstart", TestGwStart.Get);
+        app.MapGet($"{baseRoute}/gameweekend", TestGwEnd.Get);
     }
 }
