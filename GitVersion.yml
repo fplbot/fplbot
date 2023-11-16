@@ -1,10 +1,10 @@
 branches:
   master:
-    regex: ^master$
+    regex: ^main
     mode: ContinuousDelivery
     tag: ''
   feature:
-    regex: ^features?[/-]|(?!^master$|^(hotfix|bugfix)(es)?[/-]|^support[/-]|(^(pull|pull\-requests|pr)[/-]))(^.*$)
+    regex: ^features?[/-]|(?!^main|^(hotfix|bugfix)(es)?[/-]|^support[/-]|(^(pull|pull\-requests|pr)[/-]))(^.*$)
     tag: ''
   pull-request:
     tag: ''
