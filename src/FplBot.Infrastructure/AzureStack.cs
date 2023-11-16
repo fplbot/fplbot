@@ -67,7 +67,7 @@ public class AzureStack : Stack
                     new NameValuePairArgs
                     {
                         Name = "linuxFxVersion",
-                        Value= "DOTNET|6.0"
+                        Value= "DOTNET|8.0"
                     },
                     new NameValuePairArgs
                     {

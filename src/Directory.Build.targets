@@ -1,12 +1,15 @@
 <Project>
   <PropertyGroup>
-    <AspNetVersion>6.0.0</AspNetVersion>
+    <AspNetVersion>8.0.0</AspNetVersion>
     <SlackbotNetVersion>6.0.1</SlackbotNetVersion>
+    <RedisVersion>2.7.4</RedisVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Update="CronBackgroundServices" Version="7.0.0" />
     <PackageReference Update="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)" />
     <PackageReference Update="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
+    <PackageReference Update="StackExchange.Redis" Version="$(RedisVersion)" />
+
   </ItemGroup>
 </Project>

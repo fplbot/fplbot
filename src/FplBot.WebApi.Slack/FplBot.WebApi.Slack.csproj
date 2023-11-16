@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Fastenshtein" Version="1.0.0.7"/>
-    <PackageReference Include="StackExchange.Redis" Version="2.6.116"/>
+    <PackageReference Include="StackExchange.Redis" Version="$(RedisVersion)"/>
     <PackageReference Include="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)"/>
     <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)"/>
   </ItemGroup>
