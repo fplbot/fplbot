@@ -337,3 +337,5 @@ src/Fpl.SearchConsole/appsettings.Production.json
 local.settings.json
 .learningtransport/
 .vscode/
+__azurite**
+__blobstorage__/
