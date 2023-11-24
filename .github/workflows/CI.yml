@@ -11,14 +11,10 @@ jobs:
     name: ci
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "3.1.x"
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: "6.0.x"
-          include-prerelease: true
+          dotnet-version: "8.0.x"
       - name: Test
         run: dotnet test src --logger "GitHubActions;report-warnings=false"
         env:

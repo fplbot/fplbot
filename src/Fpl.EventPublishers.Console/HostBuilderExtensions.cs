@@ -18,7 +18,7 @@ public static class HostBuilderExtensions
             if (ctx.Configuration["ASB_CONNECTIONSTRING"] != null)
             {
                 Console.WriteLine($"Using ASB from {Environment.MachineName}");
-                return ctx.AzureServiceBusEndpoint(Environment.MachineName);
+                return ctx.AzureServiceBusEndpoint();
             }
 
             Console.WriteLine("Using Learning transport");
@@ -27,10 +27,10 @@ public static class HostBuilderExtensions
         return host;
     }
 
-    private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string endpointPostfix = null)
+    private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context)
     {
-        endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"Fpl.EventPublisher{endpointPostfix}";
+
+        var endpointName = $"Fpl.EventPublisher";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.SendOnly();
@@ -43,9 +43,10 @@ public static class HostBuilderExtensions
         endpointConfiguration.UsePersistence<InMemoryPersistence>();
         var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
         transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
-        var topicName = $"bundle-1{endpointPostfix}";
-        transport.TopicName(topicName);
-        Console.WriteLine($"Topic: {topicName}");
+        if(context.HostingEnvironment.IsDevelopment()){
+            transport.TopicName(Environment.MachineName);
+            Console.WriteLine($"Using non-default topic: {Environment.MachineName}");
+        }
 
         if (!context.HostingEnvironment.IsDevelopment())
         {

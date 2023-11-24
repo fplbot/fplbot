@@ -33,11 +33,8 @@ public static class WebAppExtensions
         app.UseMinimalEndpoints(
             ("/debug", TestEndpoints.Map)
         );
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
-            endpoints.MapRazorPages();
-        });
+        app.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
+        app.MapRazorPages();
     }
 
     private static void UseMinimalEndpoints(this WebApplication app, params (string BaseRoute, Action<WebApplication, string> RouteToEndpoint)[] mappings)

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /app
 COPY . .
 RUN dotnet restore FplBot.WebApi
@@ -8,7 +8,7 @@ ARG VERSION="1.0.666"
 RUN echo "Infoversion: $INFOVERSION"
 RUN dotnet publish FplBot.WebApi -o /app/out/fplbot-webapi -c Release /p:Version=$VERSION /p:InformationalVersion=$INFOVERSION
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /webapi
 COPY --from=build-env /app/out/fplbot-webapi .
 ENTRYPOINT ["dotnet", "FplBot.WebApi.dll"]

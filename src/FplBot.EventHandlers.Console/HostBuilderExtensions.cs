@@ -70,7 +70,7 @@ public static class HostBuilderExtensions
             if (ctx.Configuration["ASB_CONNECTIONSTRING"] != null)
             {
                 Console.WriteLine($"Using ASB from {Environment.MachineName}");
-                return ctx.AzureServiceBusEndpoint(chatbot,exclude, Environment.MachineName);
+                return ctx.AzureServiceBusEndpoint(chatbot, exclude);
             }
 
             Console.WriteLine("Using Learning transport");
@@ -79,10 +79,10 @@ public static class HostBuilderExtensions
         return host;
     }
 
-    private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string chatbot, string excludeHandlers, string endpointPostfix = null)
+    private static EndpointConfiguration AzureServiceBusEndpoint(this HostBuilderContext context, string chatbot, string excludeHandlers)
     {
-        endpointPostfix = string.IsNullOrEmpty(endpointPostfix) ? string.Empty : $".{endpointPostfix}";
-        string endpointName = $"FplBot.EventHandlers.{chatbot}{endpointPostfix}";
+
+        var endpointName = $"FplBot.EventHandlers.{chatbot}";
         Console.WriteLine($"Endpoint: {endpointName}");
         var endpointConfiguration = new EndpointConfiguration(endpointName);
         endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
@@ -94,9 +94,10 @@ public static class HostBuilderExtensions
         endpointConfiguration.UsePersistence<InMemoryPersistence>();
         var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
         transport.ConnectionString(context.Configuration["ASB_CONNECTIONSTRING"]);
-        var topicName = $"bundle-1{endpointPostfix}";
-        transport.TopicName(topicName);
-        Console.WriteLine($"Topic: {topicName}");
+        if(context.HostingEnvironment.IsDevelopment()){
+            transport.TopicName(Environment.MachineName);
+            Console.WriteLine($"Using non-default topic: {Environment.MachineName}");
+        }
 
         transport.SubscriptionRuleNamingConvention((Type t) =>
         {
@@ -126,7 +127,7 @@ public static class HostBuilderExtensions
         endpointConfiguration.EnableInstallers();
 
         var scanner = endpointConfiguration.AssemblyScanner();
-        string assemblyToExclude = $"FplBot.EventHandlers.{excludeHandlers}.dll";
+        var assemblyToExclude = $"FplBot.EventHandlers.{excludeHandlers}.dll";
         Console.WriteLine($"Excluding {assemblyToExclude}");
         scanner.ExcludeAssemblies(assemblyToExclude);
 

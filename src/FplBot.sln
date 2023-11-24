@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FplBot.WebApi.Tests", "FplB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E-772F-4E70-BD50-1121343BA7D7}"
 	ProjectSection(SolutionItems) = preProject
-		Directory.Build.targets = Directory.Build.targets
+		Directory.Packages.props = Directory.Packages.props
 		..\test.http = ..\test.http
 		.gitignore = ../.gitignore
 		..\GitVersion.yml = ..\GitVersion.yml

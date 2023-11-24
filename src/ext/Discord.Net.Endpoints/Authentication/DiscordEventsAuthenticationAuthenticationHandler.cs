@@ -17,8 +17,7 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
     private readonly string _publicKey;
 
     public DiscordEventsAuthenticationAuthenticationHandler(
-        IOptionsMonitor<DiscordEventsAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder,
-        ISystemClock clock) : base(options, logger, encoder, clock)
+        IOptionsMonitor<DiscordEventsAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
     {
         if (string.IsNullOrEmpty(options.CurrentValue.PublicKey))
             throw new ArgumentNullException(nameof(DiscordEventsAuthenticationOptions.PublicKey));
