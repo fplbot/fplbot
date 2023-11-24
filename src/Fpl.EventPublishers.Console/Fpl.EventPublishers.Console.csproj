@@ -8,12 +8,12 @@
   
   <ItemGroup>
     <PackageReference Include="StackExchange.Redis" Version="$(RedisVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(AspNetVersion)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(AspNetVersion)" />
     <PackageReference Include="NServiceBus.Extensions.Hosting" Version="1.1.0" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.3.0" />
     <PackageReference Include="NServiceBus.Heartbeat" Version="3.0.1" />
-    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="1.9.0" />    
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(AspNetVersion)" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="1.9.0" />        
     <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
     <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.2.0" />
