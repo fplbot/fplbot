@@ -14,7 +14,7 @@ var root = new RootCommand();
 root.AddCommand(IndexCommand.Create());
 root.AddCommand(SearchCommand.Create());
 var builder = new CommandLineBuilder(root);
-builder.UseHost(_ => ConfigureHost(args))
+await builder.UseHost(_ => ConfigureHost(args))
         .UseDefaults()
         .Build()
         .InvokeAsync(args);
