@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CronBackgroundServices" Version="7.0.0" />
-    <PackageReference Include="AngleSharp" Version="1.0.0-alpha-844" />
-    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
-    <PackageReference Include="NServiceBus" Version="7.5.0" />
+    <PackageReference Include="CronBackgroundServices" />
+    <PackageReference Include="AngleSharp" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
+    <PackageReference Include="NServiceBus" />
   </ItemGroup>
 
   <ItemGroup>

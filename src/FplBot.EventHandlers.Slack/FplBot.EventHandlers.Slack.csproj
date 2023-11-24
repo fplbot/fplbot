@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="6.0.1" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" />
   </ItemGroup>
 
   <ItemGroup>

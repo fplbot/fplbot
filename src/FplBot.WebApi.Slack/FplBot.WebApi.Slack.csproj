@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fastenshtein" Version="1.0.0.7"/>
-    <PackageReference Include="StackExchange.Redis" Version="$(RedisVersion)"/>
-    <PackageReference Include="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)"/>
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)"/>
+    <PackageReference Include="Fastenshtein" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Slackbot.Net.Endpoints" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" />
   </ItemGroup>
 
   <ItemGroup>

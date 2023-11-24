@@ -7,12 +7,12 @@
     <WarningsAsErrors>CS8032</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.2" OutputItemType="Analyzer" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" OutputItemType="Analyzer" />
     <!-- Warning 1.19/20 has a bug, ASB-trigger won't generate -->
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.18.0" />
-    <PackageReference Include="NServiceBus.AzureFunctions.Worker.ServiceBus" Version="4.2.1" />
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" />
+    <PackageReference Include="NServiceBus.AzureFunctions.Worker.ServiceBus" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

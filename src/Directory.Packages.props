@@ -1,0 +1,63 @@
+<Project>
+  <PropertyGroup>
+    <AspNetVersion>8.0.0</AspNetVersion>
+    <SlackbotNetVersion>6.0.1</SlackbotNetVersion>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="AngleSharp" Version="1.0.0-alpha-844" />
+    <PackageVersion Include="AspNet.Security.OAuth.Slack" Version="5.0.11" />
+    <PackageVersion Include="CronBackgroundServices" Version="7.0.0" />
+    <PackageVersion Include="Fastenshtein" Version="1.0.0.7"/>
+    <PackageVersion Include="MediatR" Version="9.0.0" />
+    <PackageVersion Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="7.0.8" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.2" OutputItemType="Analyzer" />    
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="1.18.0" /><!-- 🚨 Warning! v1.19-21 has a bug, ASB-trigger won't generate -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="$(AspNetVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(AspNetVersion)" />
+    <PackageVersion Include="MinimalHttpLogger" Version="0.1.2"/>
+    <PackageVersion Include="NEST" Version="7.14.1" />
+    <PackageVersion Include="NServiceBus" Version="7.5.0" />
+    <PackageVersion Include="NServiceBus.AzureFunctions.Worker.ServiceBus" Version="4.2.1" />
+    <PackageVersion Include="NServiceBus.Extensions.Hosting" Version="1.1.0" />
+    <PackageVersion Include="NServiceBus.Transport.AzureServiceBus" Version="1.9.0" />
+    <PackageVersion Include="NServiceBus.Heartbeat" Version="3.0.1" />
+    <PackageVersion Include="NServiceBus.Metrics.ServiceControl" Version="3.0.6"/>
+    <PackageVersion Include="NServiceBus.Newtonsoft.Json" Version="2.3.0" />
+    <PackageVersion Include="Pulumi.AzureNative" Version="1.27.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="4.1.0" />
+    <PackageVersion Include="Serilog.Enrichers.CorrelationId" Version="3.0.1" />
+    <PackageVersion Include="Serilog.Extensions.Hosting" Version="4.2.0" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="1.1.0" />
+    <PackageVersion Include="Serilog.Settings.Configuration" Version="3.2.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="4.0.0" />
+    <PackageVersion Include="Slackbot.Net.Endpoints" Version="$(SlackbotNetVersion)" />
+    <PackageVersion Include="Slackbot.Net.SlackClients.Http" Version="$(SlackbotNetVersion)" />
+    <PackageVersion Include="Spectre.Console" Version="0.41.0" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.7.4" />
+    <PackageVersion Include="System.CommandLine.Hosting" Version="0.3.0-alpha.20574.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test -->
+    <PackageVersion Include="GitHubActionsTestLogger" Version="1.2.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageVersion Include="xunit" Version="2.4.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.4.3" />
+    <PackageVersion Include="coverlet.collector" Version="3.1.0" />
+    <PackageVersion Include="FakeItEasy" Version="7.2.0" />
+    <PackageVersion Include="NServiceBus.Testing" Version="7.3.0" />
+  </ItemGroup>
+</Project>
