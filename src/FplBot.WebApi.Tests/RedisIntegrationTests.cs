@@ -113,6 +113,20 @@ public class RedisIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task TestInsertAndDeleteCaseInvariant()
+    {
+        await _store.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
+        await _store.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
+
+
+        var team = await _store.Delete("TEAMID2");
+
+        var tokensAfterDelete = await _repo.GetTokens();
+        Assert.Single(tokensAfterDelete);
+        Assert.NotNull(team);
+    }
+
+    [Fact]
     public async Task UpdatesLeagueId()
     {
         await _store.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { }});

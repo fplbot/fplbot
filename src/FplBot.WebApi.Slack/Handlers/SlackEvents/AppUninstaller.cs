@@ -15,6 +15,6 @@ public class AppUninstaller : IUninstall
 
     public async Task OnUninstalled(string teamId, string teamName)
     {
-        await _messageSession.Publish(new AppUninstalled(teamId, teamName));
+        await _messageSession.Publish(new AppUninstalled(teamId.ToUpper(), teamName));
     }
 }
