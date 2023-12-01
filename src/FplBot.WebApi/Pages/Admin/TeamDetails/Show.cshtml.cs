@@ -72,7 +72,7 @@ public class TeamDetailsIndex : PageModel
                 TempData["msg"] = $"Uninstall failed '{res.Error}'";
             }
         }
-        catch (WellKnownSlackApiException e) when (e.Message == "account_inactive")
+        catch (WellKnownSlackApiException e) when (e.Message is "account_inactive" or "not_authed")
         {
             await _teamRepo.DeleteByTeamId(teamId);
             TempData["msg"] = "Token no longer valid. Team deleted.";
