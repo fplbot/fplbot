@@ -73,7 +73,15 @@ public class NearDeadlineHandler :
         string notification = $"⏳ Gameweek {message.Gameweek.Id} deadline in 24 hours!";
 
         var team = await _teamRepo.GetTeam(message.WorkspaceId);
-        await PublishToTeam();
+        if (team.AccessToken is not null)
+        {
+            await PublishToTeam();
+        }
+        else
+        {
+            _logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", message.WorkspaceId);
+        }
+
 
         async Task PublishToTeam()
         {

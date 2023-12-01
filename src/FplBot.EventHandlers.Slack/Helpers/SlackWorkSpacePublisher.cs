@@ -43,7 +43,15 @@ public class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
     public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
     {
         var team = await _repository.GetTeam(teamId);
-        await PublishUsingToken(team.AccessToken,messages);
+        if (team.AccessToken is not null)
+        {
+            await PublishUsingToken(team.AccessToken,messages);
+        }
+        else
+        {
+            _logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", teamId);
+        }
+
     }
 
     private async Task PublishUsingToken(string token, params ChatPostMessageRequest[] messages)

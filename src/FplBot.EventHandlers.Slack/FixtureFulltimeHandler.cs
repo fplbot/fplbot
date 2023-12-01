@@ -54,14 +54,21 @@ public class FixtureFulltimeHandler : IHandleMessages<FixtureFinished>, IHandleM
     public async Task Handle(PublishFulltimeMessageToSlackWorkspace message, IMessageHandlerContext context)
     {
         var team = await _slackTeamRepo.GetTeam(message.WorkspaceId);
-        var slackClient = _builder.Build(team.AccessToken);
-        var res = await slackClient.ChatPostMessage(team.FplBotSlackChannel, message.Title);
-        if(!string.IsNullOrEmpty(message.ThreadMessage) && res.Ok)
+        if (team.AccessToken is not null)
         {
-            await slackClient.ChatPostMessage(new ChatPostMessageRequest
+            var slackClient = _builder.Build(team.AccessToken);
+            var res = await slackClient.ChatPostMessage(team.FplBotSlackChannel, message.Title);
+            if(!string.IsNullOrEmpty(message.ThreadMessage) && res.Ok)
             {
-                Channel = team.FplBotSlackChannel, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
-            });
+                await slackClient.ChatPostMessage(new ChatPostMessageRequest
+                {
+                    Channel = team.FplBotSlackChannel, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
+                });
+            }
+        }
+        else
+        {
+            _logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", message.WorkspaceId);
         }
     }
 }
