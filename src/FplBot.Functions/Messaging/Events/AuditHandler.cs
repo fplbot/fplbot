@@ -8,7 +8,7 @@ public class AuditHandler : IHandleMessages<AppInstalled>, IHandleMessages<AppUn
 {
     public async Task Handle(AppInstalled message, IMessageHandlerContext context)
     {
-        string definition = message.TeamId.StartsWith("T") ? "Slack workspace": "Discord guild";
+        var definition = message.Platform == ChatPlatform.Slack ? "Slack workspace": "Discord guild";
         await PublishToAuditChannel(context, $"🎉 A new {definition} ('{message.TeamName}') installed @fplbot!");
     }
 
@@ -26,6 +26,4 @@ public class AuditHandler : IHandleMessages<AppInstalled>, IHandleMessages<AppUn
     {
         await messageHandlerContext.SendLocal(new PublishViaWebHook(message));
     }
-
-
 }

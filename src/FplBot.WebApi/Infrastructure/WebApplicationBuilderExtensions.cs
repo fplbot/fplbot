@@ -1,7 +1,4 @@
 using System.Net.Security;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.Slack;
 using Discord.Net.Endpoints.Authentication;
@@ -78,7 +75,7 @@ public static class WebApplicationBuilderExtensions
             c.OnSuccess = async (teamId,teamName, s) =>
             {
                 var msg = s.GetService<IMessageSession>();
-                await msg.Publish(new AppInstalled(teamId, teamName));
+                await msg.Publish(new AppInstalled(teamId, teamName, ChatPlatform.Slack));
             };
         });
         services.AddDiscordBotDistribution(c =>
@@ -90,7 +87,7 @@ public static class WebApplicationBuilderExtensions
             c.OnSuccess = async (guildId,guildName, s) =>
             {
                 var msg = s.GetService<IMessageSession>();
-                await msg.Publish(new AppInstalled(guildId, guildName));
+                await msg.Publish(new AppInstalled(guildId, guildName, ChatPlatform.Discord));
             };
         });
         services.Configure<AnalyticsOptions>(configuration);
