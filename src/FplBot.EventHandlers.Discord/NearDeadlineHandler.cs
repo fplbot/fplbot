@@ -24,7 +24,7 @@ public class NearDeadlineHandler :
     {
         _logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
         var allGuilds = await _teamRepo.GetAllGuildSubscriptions();
-        var text = $"@here ⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
+        var text = $"😱 Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes! @here";
         foreach (var guild in allGuilds)
         {
             if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
@@ -32,7 +32,7 @@ public class NearDeadlineHandler :
                 var options = new SendOptions();
                 options.RequireImmediateDispatch();
                 options.RouteToThisEndpoint();
-                await context.Send(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text), options);
+                await context.Send(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, text), options);
             }
         }
     }
@@ -49,7 +49,7 @@ public class NearDeadlineHandler :
                 var options = new SendOptions();
                 options.RequireImmediateDispatch();
                 options.RouteToThisEndpoint();
-                await context.Send(new PublishRichToGuildChannel(guild.GuildId, guild.ChannelId, "ℹ️ Deadline", text), options);
+                await context.Send(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, $"{text}"), options);
             }
         }
     }
