@@ -12,13 +12,15 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class FplWorkerServiceCollectionExtensions
 {
+    private const string SomeUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36";
+
     public static IServiceCollection AddFplWorkers(this IServiceCollection services)
     {
         services.AddMediatR(typeof(GameweekMonitoringStarted));
         services.AddSingleton<FixtureState>();
         services.AddSingleton<LineupState>();
         services.AddSingleton<DateTimeUtils>();
-        services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>();
+        services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>().ConfigureHttpClient(client => client.DefaultRequestHeaders.Add("User-Agent", SomeUserAgent));
         services.AddSingleton<NearDeadLineMonitor>();
         services.AddSingleton<GameweekLifecycleMonitor>();
         services.AddSingleton<MatchDayStatusMonitor>();
