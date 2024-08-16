@@ -1,0 +1,37 @@
+@page
+@using FplBot.Messaging.Contracts.Commands.v1
+@model FplBot.WebApi.Pages.Admin.Discord.Broadcast
+
+@{
+    ViewData["Title"] = "Discord - broadcast";
+}
+
+<div class="col-6">
+    <h1>@ViewData["Title"]</h1>
+    <p>Logged in as @User.Identity.Name from @User.Claims.FirstOrDefault(c => c.Type == "urn:slack:team_name")?.Value</p>
+    <p><a href="@Url.Action("Logout","Account")">Log out</a></p>
+    <p><a href="@Url.PageLink("Index")">Admin page</a></p>
+    
+    @if (TempData.ContainsKey("msg"))
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert">
+            @TempData["msg"]    
+        </div>
+    }
+
+    <h3>Broadcast message to all Discord Guilds channels</h3>
+
+      <form method="post">
+         @Html.AntiForgeryToken()
+         <textarea class="form-control" name="message" placeholder="📢 Hi!">📢 Hi!</textarea>
+
+         <select id="selectedFilter" name="selectedFilter" class="custom-select-lg">
+             <option>Choose...</option>
+             @foreach (var sub in Enum.GetNames(typeof(ChannelFilter)))
+             {
+                 <option class="select" value="@sub">@sub</option>
+             }
+         </select>
+          <input type="submit" value="Broadcast" class="btn btn-primary"/>
+        </form>
+</div>
