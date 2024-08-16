@@ -34,14 +34,14 @@ public class BroadcastHandler(IGuildRepository repo, ILogger<BroadcastHandler> l
         {
             if (!devOnly)
             {
-                await SendToGuild(message, context, guild, guildfilter, 0);
+                var millisecondDelay = i*750;
+                await SendToGuild(message, context, guild, guildfilter, millisecondDelay);
             }
             else
             {
                 if (guild.GuildId == "893932860162064414")
                 {
-                    var millisecondDelay = i*750;
-                    await SendToGuild(message, context, guild, guildfilter, millisecondDelay);
+                    await SendToGuild(message, context, guild, guildfilter, 0);
                 }
             }
 
