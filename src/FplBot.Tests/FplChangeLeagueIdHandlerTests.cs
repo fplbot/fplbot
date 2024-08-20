@@ -30,7 +30,7 @@ public class FplChangeLeagueIdHandlerTests
         var dummy = Factory.CreateDummyEvent("follow abc");
         var response = await _client.Handle(dummy.meta, dummy.@event);
         _logger.WriteLine(response.Response);
-        Assert.Contains("Could not update league to id 'abc'. Make sure it's a valid number.", response.Response, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("Could not update league to id 'abc'. Make sure it's a single valid number.", response.Response, StringComparison.InvariantCultureIgnoreCase);
     }
 
     [Fact]
@@ -60,4 +60,22 @@ public class FplChangeLeagueIdHandlerTests
         Assert.Contains("Could not find league 11111111 :/ Could you find it at https://fantasy.premierleague.com/leagues/11111111/standings/c ?", response.Response, StringComparison.InvariantCultureIgnoreCase);
     }
 
+    [Fact]
+    public async Task HandlesFormattedPhoneNumberLinks()
+    {
+        var dummy = Factory.CreateDummyEvent("follow <tel:1234|1234>");
+        var response = await _client.Handle(dummy.meta, dummy.@event);
+        _logger.WriteLine(response.Response);
+        Assert.Contains("Thanks! You're now following", response.Response, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("leagueId: 1234", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task HandlesMultipleNumbers()
+    {
+        var dummy = Factory.CreateDummyEvent("follow 1234 5678");
+        var response = await _client.Handle(dummy.meta, dummy.@event);
+        _logger.WriteLine(response.Response);
+        Assert.Contains("Could not update league to id", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
 }
