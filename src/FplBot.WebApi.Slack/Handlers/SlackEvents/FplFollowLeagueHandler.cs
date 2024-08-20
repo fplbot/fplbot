@@ -1,4 +1,5 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System.Text.RegularExpressions;
+using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.WebApi.Slack.Abstractions;
 using Microsoft.Extensions.Logging;
@@ -35,14 +36,20 @@ public class FplFollowLeagueHandler : HandleAppMentionBase
             return new EventHandledResponse(help);
         }
 
-        var couldParse = int.TryParse(newLeagueId, out var theLeagueId);
+        int theLeagueId;
 
-        if (!couldParse)
+        var matches = new Regex(@"\d+").Matches(newLeagueId);
+        if (matches.Select(c => c.Value).Distinct().Count() == 1)
         {
-            var res = $"Could not update league to id '{newLeagueId}'. Make sure it's a valid number.";
+            theLeagueId = int.Parse(matches.First().Value);
+        }
+        else
+        {
+            var res = $"Could not update league to id '{newLeagueId}'. Make sure it's a single valid number.";
             await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, res);
             return new EventHandledResponse(res);
         }
+
 
         var failure = $"Could not find league {newLeagueId} :/ Could you find it at https://fantasy.premierleague.com/leagues/{newLeagueId}/standings/c ?";
         try
