@@ -15,7 +15,7 @@ A Fantasy Premier league chatbot. Get it at 👉 https://www.fplbot.app/ 👈
 
 #### Supported platforms:
 - [Slack](https://slack.com/apps/AREFP62B1-fplbot)
-- Discord
+- [Discord](https://discord.com/application-directory/812441954175811664)
 
 ---
 _FplBot is a [Blank.no](https://blank.no) project_
