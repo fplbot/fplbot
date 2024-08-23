@@ -1,6 +1,7 @@
 using System.Net.Security;
 using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.Slack;
+using CronBackgroundServices;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
 using Fpl.Search;
@@ -25,6 +26,7 @@ public static class WebApplicationBuilderExtensions
 {
     public static void ConfigureWebApp(this WebApplicationBuilder builder)
     {
+        builder.Services.AddRecurrer<GuildStatusChecker>();
         builder.Host.UseMessaging();
         builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
             loggerConfiguration
