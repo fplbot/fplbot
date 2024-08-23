@@ -98,6 +98,11 @@ public class DiscordGuildRepository : IGuildRepository
         await _db.HashSetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildSub.GuildId, guildSub.ChannelId), hashEntries.ToArray());
     }
 
+    public async Task DeleteGuild(string guildId)
+    {
+        await _db.KeyDeleteAsync(FromGuildIdToGuildKey(guildId));
+    }
+
     private static string FromGuildIdToGuildKey(string guildId)
     {
         return $"Guild-{guildId}";

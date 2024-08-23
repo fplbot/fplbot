@@ -197,11 +197,20 @@ namespace Discord.Net.HttpClients
             return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions);
         }
 
+        public async Task<Guild> GuildGet(string guildId)
+        {
+            var res = await _client.GetAsync($"/api/v8/guilds/{guildId}");
+            res.EnsureSuccessStatusCode();
+            return await res.Content.ReadFromJsonAsync<Guild>(SerializerOptions);
+        }
+
         private JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
         {
             PropertyNamingPolicy = new Lowercase(),
         };
     }
+
+    public record Guild(string Id);
 
     public class ApplicationCommandOptions
     {
