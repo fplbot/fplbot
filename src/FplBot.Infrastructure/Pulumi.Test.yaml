@@ -10,7 +10,7 @@ config:
     secure: AAABAP5hgSbmX8MCSv+W87R/CAiMkaXdaoeGkEll7XtnBDPM0AFfSWEntohVskWPYmwz9SU4t1mlNqm0snwnFOFhSPP8bDNd8gdFyroVYbjPrBa7JMrbPM6enmH3VOlu/UjwU575Lre0CvAaJXET
   azure-native:clientId: b25f1cd5-11c1-4d79-9d65-9cdb6900c13a
   azure-native:clientSecret:
-    secure: AAABAORGYbpw4GA/nD+mupVp/79AAhXNG54ZMzHSm9OgrUK3wN1KR0p4g8W2+8su5BNvETrYosDFag7h0YP6mUanIaYuwQUq
+    secure: AAABAPKSvy6ER6+vvVx7dNYjIlRc2G3/7xXEfnK435OrrcR/0fl+mhfI5J3alkliJiYyY+IGQZlcDpOfu9F34FBwUtuNu+++
   azure-native:location: norwayeast
   azure-native:subscriptionId: 6dbdcf53-4893-4cde-b62c-d51aadb063e0
   azure-native:tenantId: afdc552b-9fbf-444a-aa31-09baa3b81833
