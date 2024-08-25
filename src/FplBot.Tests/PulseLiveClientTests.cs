@@ -1,6 +1,4 @@
-using FakeItEasy;
 using Fpl.EventPublishers;
-using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests;
 
@@ -33,6 +31,6 @@ public class PulseLiveClientTests
         httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
         httpClient.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
         httpClient.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com/");
-        return new PulseLiveClient(httpClient,A.Fake<ILogger<PulseLiveClient>>());
+        return new PulseLiveClient(httpClient);
     }
 }

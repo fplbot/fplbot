@@ -2,11 +2,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Fpl.EventPublishers.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers;
 
-internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
+internal class PulseLiveClient(HttpClient client) : IPulseLiveClient
 {
     public async Task<MatchDetails> GetMatchDetails(int pulseId)
     {
