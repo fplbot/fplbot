@@ -6,22 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers;
 
-internal class PremierLeagueScraperApi : IGetMatchDetails
+internal class PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger) : IGetMatchDetails
 {
-    private readonly HttpClient _client;
-    private readonly ILogger<PremierLeagueScraperApi> _logger;
-
-    public PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger)
-    {
-        _client = client;
-        _logger = logger;
-    }
-
     public async Task<MatchDetails> GetMatchDetails(int pulseId)
     {
         try
         {
-            return await _client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", (JsonSerializerOptions)new(JsonSerializerDefaults.Web)
+            return await client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", (JsonSerializerOptions)new(JsonSerializerDefaults.Web)
             {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             });

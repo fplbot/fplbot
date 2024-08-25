@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <PackageReference Include="CronBackgroundServices" />
-    <PackageReference Include="AngleSharp" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
     <PackageReference Include="NServiceBus" />
   </ItemGroup>

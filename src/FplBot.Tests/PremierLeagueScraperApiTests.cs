@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests;
 
-public class PremierLeagueScraperApiTests(ITestOutputHelper helper)
+public class PremierLeagueScraperApiTests
 {
     [Fact]
     public async Task GetMatchWithLineups_GetsLineups()
