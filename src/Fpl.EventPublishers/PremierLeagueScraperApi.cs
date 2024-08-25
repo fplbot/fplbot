@@ -1,6 +1,6 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AngleSharp;
 using Fpl.EventPublishers.Abstractions;
 using Microsoft.Extensions.Logging;
 
@@ -21,12 +21,10 @@ internal class PremierLeagueScraperApi : IGetMatchDetails
     {
         try
         {
-            var res = await _client.GetStringAsync($"https://www.premierleague.com/match/{pulseId}");
-            using var context = BrowsingContext.New();
-            using var document = await context.OpenAsync(req => req.Content(res));
-            var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
-            var json = fixture.Attributes.GetNamedItem("data-fixture").Value;
-            return JsonSerializer.Deserialize<MatchDetails>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
+            return await _client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", (JsonSerializerOptions)new(JsonSerializerDefaults.Web)
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
         }
         catch (Exception)
         {
