@@ -20,7 +20,7 @@ public static class FplWorkerServiceCollectionExtensions
         services.AddSingleton<FixtureState>();
         services.AddSingleton<LineupState>();
         services.AddSingleton<DateTimeUtils>();
-        services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>().ConfigureHttpClient(client =>
+        services.AddHttpClient<IPulseLiveClient, PulseLiveClient>().ConfigureHttpClient(client =>
         {
             client.BaseAddress = new Uri("https://footballapi.pulselive.com");
             client.DefaultRequestHeaders.Add("User-Agent", SomeUserAgent);

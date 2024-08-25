@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers;
 
-internal class PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger) : IGetMatchDetails
+internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
 {
     public async Task<MatchDetails> GetMatchDetails(int pulseId)
     {

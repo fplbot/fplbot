@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests;
 
-public class PremierLeagueScraperApiTests
+public class PulseLiveClientTests
 {
     [Fact]
     public async Task GetMatchWithLineups_GetsLineups()
@@ -26,13 +26,13 @@ public class PremierLeagueScraperApiTests
         Assert.False(matchDetails.HasLineUps());
     }
 
-    private PremierLeagueScraperApi CreateClient()
+    private PulseLiveClient CreateClient()
     {
         var httpClient = new HttpClient();
         httpClient.BaseAddress = new Uri("https://footballapi.pulselive.com");
         httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
         httpClient.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
         httpClient.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com/");
-        return new PremierLeagueScraperApi(httpClient,A.Fake<ILogger<PremierLeagueScraperApi>>());
+        return new PulseLiveClient(httpClient,A.Fake<ILogger<PulseLiveClient>>());
     }
 }
