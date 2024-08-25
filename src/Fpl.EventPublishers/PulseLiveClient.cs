@@ -1,32 +1,20 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AngleSharp;
 using Fpl.EventPublishers.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers;
 
-internal class PremierLeagueScraperApi : IGetMatchDetails
+internal class PulseLiveClient(HttpClient client) : IPulseLiveClient
 {
-    private readonly HttpClient _client;
-    private readonly ILogger<PremierLeagueScraperApi> _logger;
-
-    public PremierLeagueScraperApi(HttpClient client, ILogger<PremierLeagueScraperApi> logger)
-    {
-        _client = client;
-        _logger = logger;
-    }
-
     public async Task<MatchDetails> GetMatchDetails(int pulseId)
     {
         try
         {
-            var res = await _client.GetStringAsync($"https://www.premierleague.com/match/{pulseId}");
-            using var context = BrowsingContext.New();
-            using var document = await context.OpenAsync(req => req.Content(res));
-            var fixture = document.QuerySelectorAll("div.mcTabsContainer").First();
-            var json = fixture.Attributes.GetNamedItem("data-fixture").Value;
-            return JsonSerializer.Deserialize<MatchDetails>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
+            return await client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", (JsonSerializerOptions)new(JsonSerializerDefaults.Web)
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
         }
         catch (Exception)
         {

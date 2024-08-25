@@ -1,6 +1,6 @@
 namespace Fpl.EventPublishers.Abstractions;
 
-public interface IGetMatchDetails
+public interface IPulseLiveClient
 {
     Task<MatchDetails> GetMatchDetails(int pulseId);
 }

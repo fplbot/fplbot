@@ -20,7 +20,13 @@ public static class FplWorkerServiceCollectionExtensions
         services.AddSingleton<FixtureState>();
         services.AddSingleton<LineupState>();
         services.AddSingleton<DateTimeUtils>();
-        services.AddHttpClient<IGetMatchDetails, PremierLeagueScraperApi>().ConfigureHttpClient(client => client.DefaultRequestHeaders.Add("User-Agent", SomeUserAgent));
+        services.AddHttpClient<IPulseLiveClient, PulseLiveClient>().ConfigureHttpClient(client =>
+        {
+            client.BaseAddress = new Uri("https://footballapi.pulselive.com");
+            client.DefaultRequestHeaders.Add("User-Agent", SomeUserAgent);
+            client.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
+            client.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com/");
+        });
         services.AddSingleton<NearDeadLineMonitor>();
         services.AddSingleton<GameweekLifecycleMonitor>();
         services.AddSingleton<MatchDayStatusMonitor>();

@@ -13,17 +13,17 @@ namespace Fpl.EventPublishers.States;
 internal class LineupState
 {
     private readonly IFixtureClient _fixtureClient;
-    private readonly IGetMatchDetails _scraperApi;
+    private readonly IPulseLiveClient _pulseClient;
     private readonly IGlobalSettingsClient _globalSettingsClient;
     private readonly IMessageSession _session;
     private readonly ILogger<LineupState> _logger;
     private readonly Dictionary<int, MatchDetails> _matchDetails;
     private ICollection<Fixture> _currentFixtures;
 
-    public LineupState(IFixtureClient fixtureClient, IGetMatchDetails scraperApi, IGlobalSettingsClient globalSettingsClient, IMessageSession session, ILogger<LineupState> logger)
+    public LineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient, IMessageSession session, ILogger<LineupState> logger)
     {
         _fixtureClient = fixtureClient;
-        _scraperApi = scraperApi;
+        _pulseClient = pulseClient;
         _globalSettingsClient = globalSettingsClient;
         _session = session;
         _logger = logger;
@@ -45,7 +45,7 @@ internal class LineupState
 
         foreach (var fixture in _currentFixtures)
         {
-            var lineups = await _scraperApi.GetMatchDetails(fixture.PulseId);
+            var lineups = await _pulseClient.GetMatchDetails(fixture.PulseId);
             if (lineups != null)
             {
                 _matchDetails[fixture.PulseId] = lineups;
@@ -53,7 +53,7 @@ internal class LineupState
             else
             {
                 // retry:
-                var retry = await _scraperApi.GetMatchDetails(fixture.PulseId);
+                var retry = await _pulseClient.GetMatchDetails(fixture.PulseId);
                 if (retry != null)
                 {
                     _matchDetails[fixture.PulseId] = retry;
@@ -124,7 +124,7 @@ internal class LineupState
         {
             try
             {
-                var updatedMatchDetails = await _scraperApi.GetMatchDetails(fixture.PulseId);
+                var updatedMatchDetails = await _pulseClient.GetMatchDetails(fixture.PulseId);
                 if (_matchDetails.ContainsKey(fixture.PulseId) && updatedMatchDetails != null)
                 {
                     var storedDetails = _matchDetails[fixture.PulseId];
