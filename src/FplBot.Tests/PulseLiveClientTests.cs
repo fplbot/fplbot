@@ -15,11 +15,11 @@ public class PulseLiveClientTests
         Assert.True(matchDetails.HasLineUps());
     }
 
-    [Fact]
+    [Fact(Skip = "Integration test. Change to fixture without lineups (future, yet to play)")]
     public async Task GetMatchWithoutLineups_GetsEmptyLineups()
     {
         var client = CreateClient();
-        var matchDetails = await client.GetMatchDetails(115838); // https://www.premierleague.com/match/59272 mci - eve (to be played May 23rd 2021)
+        var matchDetails = await client.GetMatchDetails(116200); // https://www.premierleague.com/match/59272 mci - eve (to be played May 23rd 2021)
         Assert.NotNull(matchDetails);
         Assert.True(matchDetails.HasTeams());
         Assert.False(matchDetails.HasLineUps());
