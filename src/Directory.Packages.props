@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageVersion Include="AspNet.Security.OAuth.Slack" Version="5.0.11" />
-    <PackageVersion Include="CronBackgroundServices" Version="7.0.0" />
+    <PackageVersion Include="CronBackgroundServices" Version="8.0.0" />
     <PackageVersion Include="Fastenshtein" Version="1.0.0.7"/>
     <PackageVersion Include="MediatR" Version="9.0.0" />
     <PackageVersion Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />

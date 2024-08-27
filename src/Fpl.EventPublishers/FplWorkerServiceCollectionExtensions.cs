@@ -25,7 +25,7 @@ public static class FplWorkerServiceCollectionExtensions
             client.BaseAddress = new Uri("https://footballapi.pulselive.com");
             client.DefaultRequestHeaders.Add("User-Agent", SomeUserAgent);
             client.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
-            client.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com/");
+            client.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com");
         });
         services.AddSingleton<NearDeadLineMonitor>();
         services.AddSingleton<GameweekLifecycleMonitor>();

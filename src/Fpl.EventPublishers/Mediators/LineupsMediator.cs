@@ -64,6 +64,7 @@ internal class LineupsHandler :
         {
             _logger.LogInformation("Not refreshing state. Current gw is the last gw : {Gameweek}", notification.Gameweek.Id);
         }
+        _matchState.LogState();
     }
 
     public Task Handle(CurrentlyPreseason notification, CancellationToken cancellationToken)

@@ -2,22 +2,24 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Fpl.EventPublishers.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers;
 
-internal class PulseLiveClient(HttpClient client) : IPulseLiveClient
+internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
 {
     public async Task<MatchDetails> GetMatchDetails(int pulseId)
     {
         try
         {
-            return await client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", (JsonSerializerOptions)new(JsonSerializerDefaults.Web)
+            return await client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             });
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            logger.LogError(e, e.Message);
             return null;
         }
     }

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Abstractions;
@@ -137,6 +138,10 @@ internal class LineupState
                         {
                             await _session.Publish(lineups);
                         }
+                        else
+                        {
+                            _logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.PulseId });
+                        }
                     }
                 }
                 else
@@ -169,5 +174,15 @@ internal class LineupState
         }
 
         return true;
+    }
+
+    public void LogState()
+    {
+        StringBuilder logstring = new ($"Debug. \nCurrent state has ({_matchDetails.Keys.Count} fixtures):");
+        foreach (var key in _matchDetails.Keys)
+        {
+            logstring.Append($"\n{key} - Lineups: {_matchDetails[key].Teams.First().Team.Club.Abbr}-{_matchDetails[key].Teams.Last().Team.Club.Abbr} {_matchDetails[key].HasLineUps()}");
+        }
+        _logger.LogInformation(logstring.ToString());
     }
 }
