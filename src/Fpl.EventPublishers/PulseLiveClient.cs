@@ -12,10 +12,18 @@ internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logge
     {
         try
         {
-            return await client.GetFromJsonAsync<MatchDetails>($"/football/fixtures/{pulseId}", new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            var res = await client.GetAsync($"/football/fixtures/{pulseId}");
+            res.EnsureSuccessStatusCode();
+            var content = await res.Content.ReadAsStringAsync();
+            if (content.First() is '{')
             {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            });
+                return JsonSerializer.Deserialize<MatchDetails>(content,
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                    {
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    });
+            }
+            throw new Exception("Response was not JSON:\n" + content);
         }
         catch (Exception e)
         {
@@ -70,7 +78,7 @@ public class LineupContainer
 
     public bool HasLineups()
     {
-        return Lineup != null && Lineup.Any();
+        return Lineup != null && Lineup.Any() && Lineup.All(p => p.MatchPosition is not null) && Formation is not null;
     }
 }
 

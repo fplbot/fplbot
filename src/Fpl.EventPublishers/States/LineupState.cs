@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Abstractions;
@@ -132,7 +133,7 @@ internal class LineupState
                     var lineupsConfirmed = !storedDetails.HasLineUps() && updatedMatchDetails.HasLineUps();
                     if (lineupsConfirmed)
                     {
-                        var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails);
+                        var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, e => _logger.LogError(e, e.Message));
 
                         if (lineups != null)
                         {
@@ -141,6 +142,11 @@ internal class LineupState
                         else
                         {
                             _logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.PulseId });
+                            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                            {
+                                WriteIndented = true
+                            };
+                            _logger.LogWarning(System.Text.Json.JsonSerializer.Serialize(updatedMatchDetails, options));
                         }
                     }
                 }
