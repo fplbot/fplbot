@@ -4,7 +4,7 @@ namespace Fpl.EventPublishers.Models.Mappers;
 
 public class MatchDetailsMapper
 {
-    public static LineupReady TryMapToLineup(MatchDetails details)
+    public static LineupReady TryMapToLineup(MatchDetails details, Action<Exception> logger = null)
     {
         try
         {
@@ -30,8 +30,9 @@ public class MatchDetailsMapper
             return null;
 
         }
-        catch
+        catch(Exception e)
         {
+            logger?.Invoke(e);
             return null;
         }
     }

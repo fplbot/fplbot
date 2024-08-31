@@ -408,13 +408,17 @@ public static class TestBuilder
             {
                 new LineupContainer
                 {
-                    Formation = new Formation { Players = new IEnumerable<int>[0]},
-                    Lineup = new []{ new PlayerInLineup() }
+                    Formation = new Formation { Players = new List<int[]>{ new []{ 1 } } },
+                    Lineup = new []{ new PlayerInLineup { Id = 1, Name = new Name { First = "First", Last = "Lasteson", Display = "Lastinho"}, MatchPosition = "D"} }
                 },
                 new LineupContainer
                 {
-                    Formation = new Formation { Players = new IEnumerable<int>[0]},
-                    Lineup = new []{ new PlayerInLineup() }
+                    Formation = new Formation
+                    {
+                        Players = new List<int[]>{ new []{ 1 } }
+
+                    },
+                    Lineup = new []{ new PlayerInLineup { Id = 1, Name = new Name { First = "First", Last = "Lasteson", Display = "Lastinho"}, MatchPosition = "D"} }
                 }
             }
         };
