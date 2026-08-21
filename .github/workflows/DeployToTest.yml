@@ -40,6 +40,11 @@ jobs:
         uses: gittools/actions/gitversion/execute@v0
         with:
           useConfigFile: true
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Build Function
         run: dotnet build ./src/FplBot.Functions -o ./output -c Release /p:Version=${{ steps.gitversion.outputs.fullSemVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
       - uses: pulumi/actions@v3
@@ -50,11 +55,6 @@ jobs:
           work-dir: ./src/FplBot.Infrastructure
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      - uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy function to test
         uses: Azure/functions-action@v1
         id: fa
