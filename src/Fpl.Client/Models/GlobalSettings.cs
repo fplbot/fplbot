@@ -16,9 +16,6 @@ public class GlobalSettings
     [JsonPropertyName("element_types")]
     public ICollection<PlayerType> PlayerTypes { get; set; }
 
-    [JsonPropertyName("game_settings")]
-    public GameSettings GameSettings { get; set; }
-
     [JsonPropertyName("phases")]
     public ICollection<Phase> Phases { get; set; }
 

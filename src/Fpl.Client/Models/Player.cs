@@ -85,18 +85,6 @@ public class Player
     [JsonPropertyName("transfers_in_event")]
     public int TransfersInEvent { get; set; }
 
-    [JsonPropertyName("loans_in")]
-    public int LoansIn { get; set; }
-
-    [JsonPropertyName("loans_out")]
-    public int LoansOut { get; set; }
-
-    [JsonPropertyName("loaned_in")]
-    public int LoanedIn { get; set; }
-
-    [JsonPropertyName("loaned_out")]
-    public int LoanedOut { get; set; }
-
     [JsonPropertyName("total_points")]
     public int TotalPoints { get; set; }
 
@@ -165,9 +153,6 @@ public class Player
 
     [JsonPropertyName("ict_index")]
     public double IctIndex { get; set; }
-
-    [JsonPropertyName("ea_index")]
-    public double EaIndex { get; set; }
 
     [JsonPropertyName("element_type")]
     public FplPlayerPosition Position { get; set; }

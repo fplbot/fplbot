@@ -31,9 +31,6 @@ public class Gameweek
     [JsonPropertyName("deadline_time_game_offset")]
     public int DeadLineTimeGameOffset { get; set; }
 
-    [JsonPropertyName("deadline_time_formatted")]
-    public string DeadLineTimeFormatted { get; set; }
-
     [JsonPropertyName("highest_score")]
     public int? HighestScore { get; set; }
 
