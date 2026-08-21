@@ -11,6 +11,10 @@ jobs:
   deploy-ubuntu-test:
     name: deploy-to-test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      deployments: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -46,9 +50,11 @@ jobs:
           work-dir: ./src/FplBot.Infrastructure
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      - uses: azure/login@v1
+      - uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Deploy function to test
         uses: Azure/functions-action@v1
         id: fa
