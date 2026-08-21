@@ -8,9 +8,5 @@ config:
     secure: AAABABgiEa2KdgvgZX7evuSIOnnr4XxQUKIM1mosY/1eEFPs8F6SqtsaYY4waCukWQgGUucmKqPMxtvDS5z5EOpTt9Pe5imydgj+X+mOmEO9wUhlU2tv9io=
   FplBot.Infrastructure:SlackWebHookUrl:
     secure: AAABAP5hgSbmX8MCSv+W87R/CAiMkaXdaoeGkEll7XtnBDPM0AFfSWEntohVskWPYmwz9SU4t1mlNqm0snwnFOFhSPP8bDNd8gdFyroVYbjPrBa7JMrbPM6enmH3VOlu/UjwU575Lre0CvAaJXET
-  azure-native:clientId: b25f1cd5-11c1-4d79-9d65-9cdb6900c13a
-  azure-native:clientSecret:
-    secure: AAABAPKSvy6ER6+vvVx7dNYjIlRc2G3/7xXEfnK435OrrcR/0fl+mhfI5J3alkliJiYyY+IGQZlcDpOfu9F34FBwUtuNu+++
   azure-native:location: norwayeast
   azure-native:subscriptionId: 6dbdcf53-4893-4cde-b62c-d51aadb063e0
-  azure-native:tenantId: afdc552b-9fbf-444a-aa31-09baa3b81833
