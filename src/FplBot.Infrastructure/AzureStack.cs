@@ -39,6 +39,7 @@ public class AzureStack : Stack
             ApplicationType = ApplicationType.Web,
             Kind = "web",
             ResourceGroupName = resourceGroup.Name,
+            IngestionMode = "ApplicationInsights",
         });
 
         var storageAccountConnectionStr = GetConnectionString(resourceGroup.Name, storageAccount.Name);
