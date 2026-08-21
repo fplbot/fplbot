@@ -12,7 +12,7 @@ internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logge
     {
         try
         {
-            var res = await client.GetAsync($"/football/fixtures/{pulseId}");
+            var res = await client.GetAsync($"/api/v3/matches/{pulseId}/lineups");
             res.EnsureSuccessStatusCode();
             var content = await res.Content.ReadAsStringAsync();
             if (content.First() is '{')
@@ -35,81 +35,69 @@ internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logge
 
 public class MatchDetails
 {
-    public int Id { get; set; }
-    // The two teams participating
-    public IEnumerable<TeamDetails> Teams { get; set; } = new List<TeamDetails>();
+    [JsonPropertyName("home_team")]
+    public TeamLineup HomeTeam { get; set; }
 
-    // The lineup
-    public IEnumerable<LineupContainer> TeamLists { get; set; } = new List<LineupContainer>();
+    [JsonPropertyName("away_team")]
+    public TeamLineup AwayTeam { get; set; }
 
-    public bool HasLineUps()
-    {
-        return TeamLists != null && TeamLists.All(c => c != null) && TeamLists.All(l => l.HasLineups());
-    }
-
-    public bool HasTeams()
-    {
-        return Teams != null && Teams.Any() && Teams.All(t => t.Team != null);
-    }
+    public bool HasLineUps() => HomeTeam?.HasLineups() == true && AwayTeam?.HasLineups() == true;
+    public bool HasTeams() => HomeTeam != null && AwayTeam != null;
 }
 
-public class TeamDetails
+public class TeamLineup
 {
-    public PulseTeam Team { get; set; }
-}
-
-public class PulseTeam
-{
-    public int Id { get; set; }
-    public Club Club { get; set; }
-}
-
-public class Club
-{
-    public string Abbr { get; set; }
-}
-
-public class LineupContainer
-{
+    [JsonPropertyName("teamId")]
     public int TeamId { get; set; }
-    public IEnumerable<PlayerInLineup> Lineup { get; set; } = new List<PlayerInLineup>();
 
-    public Formation Formation { get; set; }
+    [JsonPropertyName("players")]
+    public IEnumerable<PulsePlayer> Players { get; set; } = new List<PulsePlayer>();
 
-    public bool HasLineups()
-    {
-        return Lineup != null && Lineup.Any() && Lineup.All(p => p.MatchPosition is not null) && Formation is not null;
-    }
+    [JsonPropertyName("formation")]
+    public PulseFormation Formation { get; set; }
+
+    public bool HasLineups() =>
+        Players != null && Players.Any() &&
+        Formation?.Lineup != null && Formation.Lineup.Any();
 }
 
-public class Formation
+public class PulsePlayer
 {
-    public string Label { get; set; }
-    public IEnumerable<IEnumerable<int>> Players { get; set; }
-}
-
-public class PlayerInLineup
-{
-    public const string MatchPositionGoalie = "G";
-    public const string MatchPositionDefender = "D";
-    public const string MatchPositionMidfielder = "M";
-    public const string MatchPositionForward = "F";
-
+    [JsonPropertyName("id")]
     public int Id { get; set; }
-    public string MatchPosition { get; set; }
-    public Name Name { get; set; }
-    public bool Captain { get; set; }
+
+    [JsonPropertyName("firstName")]
+    public string FirstName { get; set; }
+
+    [JsonPropertyName("lastName")]
+    public string LastName { get; set; }
+
+    [JsonPropertyName("knownName")]
+    public string KnownName { get; set; }
+
+    [JsonPropertyName("isCaptain")]
+    public bool IsCaptain { get; set; }
+
+    [JsonPropertyName("position")]
+    public string Position { get; set; }
+
+    public string DisplayName => KnownName ?? LastName ?? $"{FirstName} {LastName}".Trim();
+
+    public string MatchPosition => Position switch
+    {
+        "Goalkeeper" => "G",
+        "Defender" => "D",
+        "Midfielder" => "M",
+        "Forward" => "F",
+        _ => Position
+    };
 }
 
-public class Name
+public class PulseFormation
 {
-    public string First { get; set; }
-    public string Last { get; set; }
-    public string Display { get; set; }
+    [JsonPropertyName("formation")]
+    public string Label { get; set; }
 
-    public override string ToString()
-    {
-        var names = Display.Split(" ");
-        return names.Length == 1 ? Display : $"{string.Join(" ",names[1..])}";
-    }
+    [JsonPropertyName("lineup")]
+    public IEnumerable<IEnumerable<int>> Lineup { get; set; }
 }

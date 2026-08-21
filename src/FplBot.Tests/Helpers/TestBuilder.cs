@@ -387,49 +387,23 @@ public static class TestBuilder
         };
     }
 
-    public static MatchDetails NoLineup(int pulseFixtureId)
+    public static MatchDetails NoLineup(int fixtureCode)
     {
         return new MatchDetails
         {
-            Id = pulseFixtureId,
-            Teams = SomeHomeAndAwayTeams(),
-            TeamLists = null
+            HomeTeam = new TeamLineup { TeamId = 1 },
+            AwayTeam = new TeamLineup { TeamId = 2 }
         };
     }
 
-    public static MatchDetails Lineup(int pulseFixtureId)
+    public static MatchDetails Lineup(int fixtureCode)
     {
+        var player = new PulsePlayer { Id = 1, FirstName = "First", LastName = "Lasteson", Position = "Defender" };
+        var formation = new PulseFormation { Label = "4-4-2", Lineup = new List<int[]> { new[] { 1 } } };
         return new MatchDetails
         {
-            Id = pulseFixtureId,
-            Teams = SomeHomeAndAwayTeams(),
-
-            TeamLists = new []
-            {
-                new LineupContainer
-                {
-                    Formation = new Formation { Players = new List<int[]>{ new []{ 1 } } },
-                    Lineup = new []{ new PlayerInLineup { Id = 1, Name = new Name { First = "First", Last = "Lasteson", Display = "Lastinho"}, MatchPosition = "D"} }
-                },
-                new LineupContainer
-                {
-                    Formation = new Formation
-                    {
-                        Players = new List<int[]>{ new []{ 1 } }
-
-                    },
-                    Lineup = new []{ new PlayerInLineup { Id = 1, Name = new Name { First = "First", Last = "Lasteson", Display = "Lastinho"}, MatchPosition = "D"} }
-                }
-            }
-        };
-    }
-
-    private static List<TeamDetails> SomeHomeAndAwayTeams()
-    {
-        return new List<TeamDetails>
-        {
-            new TeamDetails { Team = new PulseTeam { Club = new Club()}},
-            new TeamDetails { Team = new PulseTeam { Club = new Club()}}
+            HomeTeam = new TeamLineup { TeamId = 1, Players = new[] { player }, Formation = formation },
+            AwayTeam = new TeamLineup { TeamId = 2, Players = new[] { player }, Formation = formation }
         };
     }
 

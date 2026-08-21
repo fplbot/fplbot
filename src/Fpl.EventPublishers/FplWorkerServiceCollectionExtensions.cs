@@ -22,7 +22,7 @@ public static class FplWorkerServiceCollectionExtensions
         services.AddSingleton<DateTimeUtils>();
         services.AddHttpClient<IPulseLiveClient, PulseLiveClient>().ConfigureHttpClient(client =>
         {
-            client.BaseAddress = new Uri("https://footballapi.pulselive.com");
+            client.BaseAddress = new Uri("https://sdp-prem-prod.premier-league-prod.pulselive.com");
             client.DefaultRequestHeaders.Add("User-Agent", SomeUserAgent);
             client.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
             client.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com");

@@ -21,6 +21,7 @@ internal class LineupState
     private readonly ILogger<LineupState> _logger;
     private readonly Dictionary<int, MatchDetails> _matchDetails;
     private ICollection<Fixture> _currentFixtures;
+    private Dictionary<int, string> _teamShortNames = new();
 
     public LineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient, IMessageSession session, ILogger<LineupState> logger)
     {
@@ -39,6 +40,8 @@ internal class LineupState
         try
         {
             _currentFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
+            var settings = await _globalSettingsClient.GetGlobalSettings();
+            _teamShortNames = settings.Teams.ToDictionary(t => t.Id, t => t.ShortName);
         }
         catch (Exception e) when (LogError(e))
         {
@@ -47,18 +50,18 @@ internal class LineupState
 
         foreach (var fixture in _currentFixtures)
         {
-            var lineups = await _pulseClient.GetMatchDetails(fixture.PulseId);
+            var lineups = await _pulseClient.GetMatchDetails(fixture.Code);
             if (lineups != null)
             {
-                _matchDetails[fixture.PulseId] = lineups;
+                _matchDetails[fixture.Code] = lineups;
             }
             else
             {
                 // retry:
-                var retry = await _pulseClient.GetMatchDetails(fixture.PulseId);
+                var retry = await _pulseClient.GetMatchDetails(fixture.Code);
                 if (retry != null)
                 {
-                    _matchDetails[fixture.PulseId] = retry;
+                    _matchDetails[fixture.Code] = retry;
                 }
             }
         }
@@ -126,14 +129,16 @@ internal class LineupState
         {
             try
             {
-                var updatedMatchDetails = await _pulseClient.GetMatchDetails(fixture.PulseId);
-                if (_matchDetails.ContainsKey(fixture.PulseId) && updatedMatchDetails != null)
+                var updatedMatchDetails = await _pulseClient.GetMatchDetails(fixture.Code);
+                if (_matchDetails.ContainsKey(fixture.Code) && updatedMatchDetails != null)
                 {
-                    var storedDetails = _matchDetails[fixture.PulseId];
+                    var storedDetails = _matchDetails[fixture.Code];
                     var lineupsConfirmed = !storedDetails.HasLineUps() && updatedMatchDetails.HasLineUps();
                     if (lineupsConfirmed)
                     {
-                        var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, e => _logger.LogError(e, e.Message));
+                        var homeAbbr = _teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?");
+                    var awayAbbr = _teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?");
+                    var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, fixture.Code, homeAbbr, awayAbbr, e => _logger.LogError(e, e.Message));
 
                         if (lineups != null)
                         {
@@ -141,7 +146,7 @@ internal class LineupState
                         }
                         else
                         {
-                            _logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.PulseId });
+                            _logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.Code });
                             var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
                             {
                                 WriteIndented = true
@@ -152,14 +157,14 @@ internal class LineupState
                 }
                 else
                 {
-                    _logger.LogWarning("Could not do match diff matchdetails for {PulseId}", new { fixture.PulseId });
-                    _logger.LogDebug($"Contains({fixture.PulseId}): {_matchDetails.ContainsKey(fixture.PulseId)}");
-                    _logger.LogDebug($"Details for ({fixture.PulseId})? : {updatedMatchDetails != null}");
+                    _logger.LogWarning("Could not do match diff matchdetails for {PulseId}", new { fixture.Code });
+                    _logger.LogDebug($"Contains({fixture.Code}): {_matchDetails.ContainsKey(fixture.Code)}");
+                    _logger.LogDebug($"Details for ({fixture.Code})? : {updatedMatchDetails != null}");
                 }
 
                 if (updatedMatchDetails != null)
                 {
-                    _matchDetails[fixture.PulseId] = updatedMatchDetails;
+                    _matchDetails[fixture.Code] = updatedMatchDetails;
                 }
             }
             catch (Exception e) when (LogError(e))
@@ -187,7 +192,7 @@ internal class LineupState
         StringBuilder logstring = new ($"Debug. \nCurrent state has ({_matchDetails.Keys.Count} fixtures):");
         foreach (var key in _matchDetails.Keys)
         {
-            logstring.Append($"\n{key} - Lineups: {_matchDetails[key].Teams.First().Team.Club.Abbr}-{_matchDetails[key].Teams.Last().Team.Club.Abbr} {_matchDetails[key].HasLineUps()}");
+            logstring.Append($"\n{key} - Lineups: {_matchDetails[key].HomeTeam?.TeamId}-{_matchDetails[key].AwayTeam?.TeamId} {_matchDetails[key].HasLineUps()}");
         }
         _logger.LogInformation(logstring.ToString());
     }

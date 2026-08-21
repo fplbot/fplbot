@@ -85,10 +85,15 @@ public class MatchStatusTests
         });
 
         var pulseFake = A.Fake<IPulseLiveClient>();
-        A.CallTo(() => pulseFake.GetMatchDetails(testFixture1.PulseId)).Returns(TestBuilder.NoLineup(testFixture1.PulseId));
-        A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.PulseId)).Returns(TestBuilder.NoLineup(testFixture2.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.PulseId));
+        A.CallTo(() => pulseFake.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code));
+        A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
+        var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
+        });
         _session = new TestableMessageSession();
-        return new LineupState(fixtureClient, pulseFake, A.Fake<IGlobalSettingsClient>(), _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, pulseFake, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateTwoNewLineupsScenario()
@@ -103,10 +108,15 @@ public class MatchStatusTests
         });
 
         var pulseClient = A.Fake<IPulseLiveClient>();
-        A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.PulseId)).Returns(TestBuilder.NoLineup(testFixture1.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.PulseId));;
-        A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.PulseId)).Returns(TestBuilder.NoLineup(testFixture2.PulseId)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.PulseId));
+        A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.Code));
+        A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
+        var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
+        });
         _session = new TestableMessageSession();
-        return new LineupState(fixtureClient, pulseClient, A.Fake<IGlobalSettingsClient>(), _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateFixture2RemovedScenario()
