@@ -57,6 +57,8 @@ jobs:
         with:
           app-name: ${{ steps.pulumi.outputs.FunctionName }}
           package: './output'
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Build docker images
         run: |
           docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.web ./src
