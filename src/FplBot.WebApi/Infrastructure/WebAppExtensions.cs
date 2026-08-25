@@ -17,6 +17,7 @@ public static class WebAppExtensions
         }
 
         app.UseForwardedHeaders();
+        app.UseMiddleware<BlockedIpMiddleware>();
         if(!env.IsDevelopment())
             app.UseHttpsRedirection();
 

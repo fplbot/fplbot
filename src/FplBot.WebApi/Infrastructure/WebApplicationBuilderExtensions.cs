@@ -182,6 +182,6 @@ public static class WebApplicationBuilderExtensions
             );
         });
         services.AddHttpContextAccessor();
-
+        services.Configure<BlockedIpOptions>(configuration.GetSection("IpBlocking"));
     }
 }
