@@ -8,10 +8,11 @@ public class BlockedIpMiddleware(RequestDelegate next, IOptionsMonitor<BlockedIp
     public async Task InvokeAsync(HttpContext context)
     {
         var opts = options.CurrentValue;
-        if (opts.BlockedIps.Length > 0 && IsProtectedPath(context.Request.Path, opts.ProtectedPaths))
+        var blockedIps = opts.BlockedIpList;
+        if (blockedIps.Length > 0 && IsProtectedPath(context.Request.Path, opts.ProtectedPaths))
         {
             var remoteIp = context.Connection.RemoteIpAddress;
-            if (remoteIp != null && IsBlocked(remoteIp, opts.BlockedIps))
+            if (remoteIp != null && IsBlocked(remoteIp, blockedIps))
             {
                 logger.LogWarning("Blocked request from {Ip} to {Path}", remoteIp, context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
