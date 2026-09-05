@@ -38,27 +38,21 @@ jobs:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Build docker images
-        run: |
-          ARGS="--build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile ./src"
-          docker build --target web          -t registry.heroku.com/blank-fplbot/web          $ARGS
-          docker build --target eventpublisher -t registry.heroku.com/blank-fplbot/eventpublisher $ARGS
-          docker build --target indexer      -t registry.heroku.com/blank-fplbot/indexer      $ARGS
-          docker build --target eventhandler -t registry.heroku.com/blank-fplbot/eventhandler $ARGS
+        run: dotnet run --project src/Build -- docker-build-prod
+        env:
+          VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
+          INFOVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
       - uses: docker/login-action@v1
         with:
           registry: registry.heroku.com
           username: _
           password: ${{ secrets.HEROKU_TOKEN }}
-      - name: Push docker image to Heroku
-        run: |
-          docker push registry.heroku.com/blank-fplbot/web
-          docker push registry.heroku.com/blank-fplbot/eventpublisher
-          docker push registry.heroku.com/blank-fplbot/indexer
-          docker push registry.heroku.com/blank-fplbot/eventhandler
+      - name: Push docker images to Heroku
+        run: dotnet run --project src/Build -- docker-push-prod
       - name: Deploy to prod
+        run: dotnet run --project src/Build -- deploy-prod
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
-        run: heroku container:release web eventpublisher indexer eventhandler --app blank-fplbot
       - name: Create Release
         id: create_release
         continue-on-error: true

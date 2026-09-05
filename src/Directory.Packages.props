@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageVersion Include="AlmostServiceBus.Aspire.Hosting" Version="0.3.1" />
+    <PackageVersion Include="Bullseye" Version="6.2.0" />
+    <PackageVersion Include="SimpleExec" Version="13.1.0" />
     <PackageVersion Include="AlmostServiceBus.TestHost" Version="0.3.1" />
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.5.3" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.5.3" />

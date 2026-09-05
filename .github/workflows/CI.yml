@@ -16,7 +16,7 @@ jobs:
         with:
           dotnet-version: "10.0.x"
       - name: Test
-        run: dotnet test src --logger "GitHubActions;report-warnings=false"
+        run: dotnet run --project src/Build -- test
         env:
           fpl__login: ${{ secrets.fpl__login }}
           fpl__password: ${{ secrets.fpl__password }}
