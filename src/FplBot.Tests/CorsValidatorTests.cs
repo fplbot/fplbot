@@ -1,7 +1,7 @@
 using FplBot.WebApi.Infrastructure;
 using Xunit;
 
-namespace FplBot.WebApi.Tests;
+namespace FplBot.Tests;
 
 public class CorsValidatorTests
 {

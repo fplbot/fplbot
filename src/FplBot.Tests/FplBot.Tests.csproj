@@ -20,6 +20,8 @@
         </PackageReference>
         <PackageReference Include="AlmostServiceBus.TestHost" />
         <PackageReference Include="FakeItEasy"/>
+        <PackageReference Include="Testcontainers.Redis" />
+        <PackageReference Include="StackExchange.Redis" />
     </ItemGroup>
 
     <ItemGroup Condition="Exists('appsettings.Local.json')">

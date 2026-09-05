@@ -14,7 +14,7 @@ using Xunit;
 using Xunit.Abstractions;
 using EventSubscription = FplBot.Data.Slack.EventSubscription;
 
-namespace FplBot.WebApi.Tests;
+namespace FplBot.Tests;
 
 public class RedisIntegrationTests : IAsyncLifetime
 {

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 using Xunit.Abstractions;
 
-namespace FplBot.WebApi.Tests;
+namespace FplBot.Tests;
 
 public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<VerifiedEntriesRepository>, ILogger<DiscordGuildStore>, ILogger<TokenStore>, ILogger<DiscordGuildRepository>
 {
