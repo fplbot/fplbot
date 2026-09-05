@@ -1,77 +1,59 @@
 using System.Net.Security;
-using Fpl.Search;
+using FplBot.Services.EventHandlers;
+using FplBot.Services.EventPublishers;
 using FplBot.Services.SearchIndexer;
-using FplBot.Data.Slack;
-using FplBot.EventHandlers.Discord;
-using FplBot.EventHandlers.Slack;
-using FplBot.Formatting;
-using FplBot.Formatting.Helpers;
-using FplBot.WebApi.Handlers.Commands;
-using FplBot.WebApi.Handlers.Events;
-using FplBot.WebApi.Handlers.Sagas;
-using FplBot.WebApi.Infrastructure;
+using FplBot.Services.WebApi;
 using MassTransit;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using StackExchange.Redis;
 
-using DiscordFixtureEventsHandler = FplBot.EventHandlers.Discord.FixtureEventsHandler;
-using DiscordFixtureFulltimeHandler = FplBot.EventHandlers.Discord.FixtureFulltimeHandler;
-using DiscordGameweekFinishedHandler = FplBot.EventHandlers.Discord.GameweekFinishedHandler;
-using DiscordGameweekStartedHandler = FplBot.EventHandlers.Discord.GameweekStartedHandler;
-using DiscordInjuryUpdateHandler = FplBot.EventHandlers.Discord.InjuryUpdateHandler;
-using DiscordLineupReadyHandler = FplBot.EventHandlers.Discord.LineupReadyHandler;
-using DiscordNearDeadlineHandler = FplBot.EventHandlers.Discord.NearDeadlineHandler;
-using DiscordNewPlayersHandler = FplBot.EventHandlers.Discord.NewPlayersHandler;
-using DiscordPriceChangeHandler = FplBot.EventHandlers.Discord.PriceChangeHandler;
-using DiscordFixtureRemovedHandler = FplBot.EventHandlers.Discord.FixtureRemovedFromGameweekHandler;
-using SlackFixtureEventsHandler = FplBot.EventHandlers.Slack.FixtureEventsHandler;
-using SlackFixtureFulltimeHandler = FplBot.EventHandlers.Slack.FixtureFulltimeHandler;
-using SlackGameweekFinishedHandler = FplBot.EventHandlers.Slack.GameweekFinishedHandler;
-using SlackGameweekStartedHandler = FplBot.EventHandlers.Slack.GameweekStartedHandler;
-using SlackInjuryUpdateHandler = FplBot.EventHandlers.Slack.InjuryUpdateHandler;
-using SlackLineupReadyHandler = FplBot.EventHandlers.Slack.LineupReadyHandler;
-using SlackNearDeadlineHandler = FplBot.EventHandlers.Slack.NearDeadlineHandler;
-using SlackNewPlayerHandler = FplBot.EventHandlers.Slack.NewPlayerHandler;
-using SlackPriceChangeHandler = FplBot.EventHandlers.Slack.PriceChangeHandler;
-using SlackFixtureRemovedHandler = FplBot.EventHandlers.Slack.FixtureRemovedFromGameweekHandler;
-
 namespace FplBot.Hosting;
 
 public static class FplBotApplication
 {
+    private static readonly IFplBotService[] AllServices =
+    [
+        new WebApiService(),
+        new EventHandlersService(),
+        new EventPublishersService(),
+        new SearchIndexerService()
+    ];
+
     public static async Task RunAsync(string[] args, IReadOnlyList<FplBotService> activeServices)
     {
-        if (activeServices.Contains(FplBotService.WebApi))
-            await RunAsWebApplication(args, activeServices);
+        var active = AllServices.Where(s => activeServices.Contains(s.ServiceType)).ToList();
+        if (active.Any(s => s.ServiceType == FplBotService.WebApi))
+            await RunAsWebApplication(args, active);
         else
-            await RunAsWorkerHost(args, activeServices);
+            await RunAsWorkerHost(args, active);
     }
 
-    private static async Task RunAsWebApplication(string[] args, IReadOnlyList<FplBotService> activeServices)
+    private static async Task RunAsWebApplication(string[] args, List<IFplBotService> active)
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Host.UseSerilog(ConfigureSerilog);
 
         var redisConn = BuildRedisConnection(builder.Configuration);
         ConfigureCommon(builder.Services, builder.Configuration, redisConn);
-        ConfigureMassTransit(builder.Services, builder.Configuration, activeServices);
+        builder.Services.AddMassTransit(x =>
+        {
+            foreach (var svc in active)
+                svc.ConfigureMassTransit(x);
+            ConfigureAzureServiceBus(x, builder.Configuration);
+        });
 
-        if (activeServices.Contains(FplBotService.WebApi))
-            builder.ConfigureWebApp(redisConn);
-        if (activeServices.Contains(FplBotService.EventHandlers))
-            ConfigureEventHandlers(builder.Services, builder.Configuration, redisConn);
-        if (activeServices.Contains(FplBotService.EventPublishers))
-            builder.Services.AddFplWorkers();
-        if (activeServices.Contains(FplBotService.SearchIndexer))
-            ConfigureSearchIndexer(builder.Services, builder.Configuration, redisConn);
+        foreach (var svc in active)
+            svc.Configure(builder.Services, builder.Configuration, redisConn, builder.Environment);
 
         var app = builder.Build();
-        app.UseWebApp();
+        foreach (var svc in active)
+            svc.ConfigureApp(app);
+
         await app.RunAsync();
     }
 
-    private static async Task RunAsWorkerHost(string[] args, IReadOnlyList<FplBotService> activeServices)
+    private static async Task RunAsWorkerHost(string[] args, List<IFplBotService> active)
     {
         var host = Host.CreateDefaultBuilder(args)
             .UseSerilog(ConfigureSerilog)
@@ -79,14 +61,15 @@ public static class FplBotApplication
             {
                 var redisConn = BuildRedisConnection(ctx.Configuration);
                 ConfigureCommon(services, ctx.Configuration, redisConn);
-                ConfigureMassTransit(services, ctx.Configuration, activeServices);
+                services.AddMassTransit(x =>
+                {
+                    foreach (var svc in active)
+                        svc.ConfigureMassTransit(x);
+                    ConfigureAzureServiceBus(x, ctx.Configuration);
+                });
 
-                if (activeServices.Contains(FplBotService.EventHandlers))
-                    ConfigureEventHandlers(services, ctx.Configuration, redisConn);
-                if (activeServices.Contains(FplBotService.EventPublishers))
-                    services.AddFplWorkers();
-                if (activeServices.Contains(FplBotService.SearchIndexer))
-                    ConfigureSearchIndexer(services, ctx.Configuration, redisConn);
+                foreach (var svc in active)
+                    svc.Configure(services, ctx.Configuration, redisConn, ctx.HostingEnvironment);
             })
             .Build();
 
@@ -112,75 +95,18 @@ public static class FplBotApplication
         services.AddFplApiClient(config);
     }
 
-    private static void ConfigureMassTransit(IServiceCollection services, IConfiguration config, IReadOnlyList<FplBotService> activeServices)
+    private static void ConfigureAzureServiceBus(IBusRegistrationConfigurator cfg, IConfiguration config)
     {
-        services.AddMassTransit(x =>
+        cfg.UsingAzureServiceBus((ctx, bus) =>
         {
-            if (activeServices.Contains(FplBotService.WebApi))
-            {
-                x.AddConsumer<AppInstalledHandler>();
-                x.AddConsumer<IndexQueryCommandHandler>();
-                x.AddConsumer<AggregatedSuggestionsHandler>();
-                x.AddSagaStateMachine<ThrottleEntrySuggestionsSagaStateMachine, AcccumulatedSuggestionsSagaState>()
-                    .InMemoryRepository();
-                x.AddSagaStateMachine<ThrottlePlSuggestionsSagaStateMachine, AcccumulatedPLSuggestionsSagaState>()
-                    .InMemoryRepository();
-            }
-
-            if (activeServices.Contains(FplBotService.EventHandlers))
-            {
-                x.AddConsumer<BroadcastHandler>();
-                x.AddConsumer<DiscordFixtureEventsHandler>();
-                x.AddConsumer<DiscordFixtureFulltimeHandler>();
-                x.AddConsumer<DiscordFixtureRemovedHandler>();
-                x.AddConsumer<DiscordGameweekFinishedHandler>();
-                x.AddConsumer<DiscordGameweekStartedHandler>();
-                x.AddConsumer<DiscordInjuryUpdateHandler>();
-                x.AddConsumer<DiscordLineupReadyHandler>();
-                x.AddConsumer<DiscordNearDeadlineHandler>();
-                x.AddConsumer<DiscordNewPlayersHandler>();
-                x.AddConsumer<DiscordPriceChangeHandler>();
-                x.AddConsumer<PublishToGuildHandler>();
-
-                x.AddConsumer<SlackFixtureEventsHandler>();
-                x.AddConsumer<SlackFixtureFulltimeHandler>();
-                x.AddConsumer<SlackFixtureRemovedHandler>();
-                x.AddConsumer<SlackGameweekFinishedHandler>();
-                x.AddConsumer<SlackGameweekStartedHandler>();
-                x.AddConsumer<SlackInjuryUpdateHandler>();
-                x.AddConsumer<SlackLineupReadyHandler>();
-                x.AddConsumer<SlackNearDeadlineHandler>();
-                x.AddConsumer<SlackNewPlayerHandler>();
-                x.AddConsumer<SlackPriceChangeHandler>();
-                x.AddConsumer<PublishToSlackHandler>();
-            }
-
-            x.UsingAzureServiceBus((ctx, cfg) =>
-            {
-                var connectionString = config.GetConnectionString("servicebus")
-                                       ?? config["ASB_CONNECTIONSTRING"]
-                                       ?? throw new InvalidOperationException(
-                                           "Service bus connection string not configured. Set ConnectionStrings__servicebus or ASB_CONNECTIONSTRING.");
-                cfg.Host(connectionString);
-                cfg.UseServiceBusMessageScheduler();
-                cfg.ConfigureEndpoints(ctx);
-            });
+            var connectionString = config.GetConnectionString("servicebus")
+                                   ?? config["ASB_CONNECTIONSTRING"]
+                                   ?? throw new InvalidOperationException(
+                                       "Service bus connection string not configured. Set ConnectionStrings__servicebus or ASB_CONNECTIONSTRING.");
+            bus.Host(connectionString);
+            bus.UseServiceBusMessageScheduler();
+            bus.ConfigureEndpoints(ctx);
         });
-    }
-
-    private static void ConfigureEventHandlers(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redisConn)
-    {
-        services.AddDiscordServices(config);
-        services.AddSlackServices(config);
-        services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
-        services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
-        services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
-        services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
-    }
-
-    private static void ConfigureSearchIndexer(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redisConn)
-    {
-        services.AddRecurringIndexer(config, redisConn);
     }
 
     private static ConnectionMultiplexer BuildRedisConnection(IConfiguration config)

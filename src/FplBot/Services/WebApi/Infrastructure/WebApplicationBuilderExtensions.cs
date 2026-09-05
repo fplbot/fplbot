@@ -12,6 +12,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Hosting;
 using Slackbot.Net.Endpoints.Authentication;
 using Slackbot.Net.Endpoints.Hosting;
 using StackExchange.Redis;
@@ -20,13 +21,9 @@ namespace FplBot.WebApi.Infrastructure;
 
 public static class WebApplicationBuilderExtensions
 {
-    public static void ConfigureWebApp(this WebApplicationBuilder builder, ConnectionMultiplexer redisConn)
+    public static void ConfigureWebApp(this IServiceCollection services, IConfiguration configuration, IHostEnvironment env, ConnectionMultiplexer redisConn)
     {
-        builder.Services.AddRecurrer<GuildStatusChecker>();
-
-        var services = builder.Services;
-        var configuration = builder.Configuration;
-        var env = builder.Environment;
+        services.AddRecurrer<GuildStatusChecker>();
 
         services.AddDataProtection()
             .PersistKeysToStackExchangeRedis(redisConn)
