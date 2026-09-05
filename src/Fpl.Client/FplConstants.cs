@@ -19,5 +19,17 @@ public class FplConstants
         public const string RedCards = "red_cards";
         public const string PenaltiesSaved = "penalties_saved";
         public const string PenaltiesMissed = "penalties_missed";
+        public const string Bps = "bps";
+        public const string DefensiveContribution = "defensive_contribution";
+    }
+
+    // https://www.premierleague.com/news/4324847
+    // Defenders earn defensive contribution points for 10+ clearances, blocks, interceptions and tackles.
+    // Midfielders and forwards earn them for 12+ clearances, blocks, interceptions, tackles and recoveries.
+    // Goalkeepers do not earn defensive contribution points.
+    public static class DefensiveContributionThresholds
+    {
+        public const int Defender = 10;
+        public const int MidfielderAndForward = 12;
     }
 }

@@ -340,7 +340,22 @@ public static class Formatter
             fullTimeReport += $"\nBonus points:\n";
             fullTimeReport += BulletPoints(bonusPointsOutput);
         }
+
+        if (fixture.DefensiveContributions.Any())
+        {
+            var defensiveContributionsOutput = CreateDefensiveContributionsOutput(fixture);
+            fullTimeReport += $"\nDefensive contributions:\n";
+            fullTimeReport += BulletPoints(defensiveContributionsOutput);
+        }
         return fullTimeReport;
+    }
+
+    public static IEnumerable<string> CreateDefensiveContributionsOutput(FinishedFixture fixture)
+    {
+        return fixture.DefensiveContributions
+            .OrderByDescending(dc => dc.Contributions)
+            .ThenBy(dc => dc.Player.WebName)
+            .Select(dc => $"{dc.Player.WebName} ({dc.Contributions})");
     }
 
     static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)
