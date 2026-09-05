@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Messaging -->
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" />
+
+    <!-- Data / Redis -->
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
+
+    <!-- Search -->
+    <PackageReference Include="NEST" />
+
+    <!-- Event scheduling -->
+    <PackageReference Include="CronBackgroundServices" />
+
+    <!-- Formatting -->
+    <PackageReference Include="Fastenshtein" />
+
+    <!-- Web / Auth -->
+    <PackageReference Include="AspNet.Security.OAuth.Slack" />
+    <PackageReference Include="NSec.Cryptography" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
+
+    <!-- Slack -->
+    <PackageReference Include="Slackbot.Net.Endpoints" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" />
+
+    <!-- Logging -->
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Enrichers.CorrelationId" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Formatting.Compact" />
+    <PackageReference Include="Serilog.Settings.Configuration" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+
+    <!-- Misc -->
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
+    <PackageReference Include="MinimalHttpLogger" />
+  </ItemGroup>
+
+</Project>

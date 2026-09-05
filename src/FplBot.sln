@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 	ProjectSection(SolutionItems) = preProject
 		Directory.Packages.props = Directory.Packages.props
 		..\test.http = ..\test.http
-		.gitignore = ../.gitignore
+		.gitignore = .gitignore
 		..\GitVersion.yml = ..\GitVersion.yml
 		..\.editorconfig = ..\.editorconfig
 		..\README.md = ..\README.md
@@ -30,9 +30,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7DA770E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{3A8DA51F-F076-4468-8F49-B101E912748C}"
 	ProjectSection(SolutionItems) = preProject
-		CI.yml = ..\.github\workflows\CI.yml
-		DeployToProd.yml = ..\.github\workflows\DeployToProd.yml
-		DeployToTest.yml = ..\.github\workflows\DeployToTest.yml
+		CI.yml = CI.yml
+		DeployToProd.yml = DeployToProd.yml
+		DeployToTest.yml = DeployToTest.yml
 		..\.github\workflows\PulumiUpProd.yml = ..\.github\workflows\PulumiUpProd.yml
 		..\.github\workflows\PulumiUpTest.yml = ..\.github\workflows\PulumiUpTest.yml
 	EndProjectSection
@@ -78,6 +78,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.EventHandlers.Discord", "FplBot.EventHandlers.Discord\FplBot.EventHandlers.Discord.csproj", "{6FED1D9A-CF9D-481C-8867-C785C6D1AD6D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot.EventHandlers.Slack", "FplBot.EventHandlers.Slack\FplBot.EventHandlers.Slack.csproj", "{BD0D18BF-7D9D-429E-9197-82B94B62CA02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FplBot", "FplBot\FplBot.csproj", "{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -353,20 +355,32 @@ Global
 		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x64.Build.0 = Release|Any CPU
 		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x86.ActiveCfg = Release|Any CPU
 		{BD0D18BF-7D9D-429E-9197-82B94B62CA02}.Release|x86.Build.0 = Release|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Debug|x64.Build.0 = Debug|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Debug|x86.Build.0 = Debug|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Release|x64.ActiveCfg = Release|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Release|x64.Build.0 = Release|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Release|x86.ActiveCfg = Release|Any CPU
+		{2C2A948A-AC1E-4380-A9C0-45196BCAEB64}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3A8DA51F-F076-4468-8F49-B101E912748C} = {F7DA770E-772F-4E70-BD50-1121343BA7D7}
+		{0DB12843-588F-4B7B-837C-1D8D12683751} = {1AD92010-0595-4213-95ED-F57DF177968F}
 		{76C6B8FB-F47B-45BA-894C-A58D48D98D56} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{839A5FF5-4B18-4B5A-9922-5A8F9EE29ADC} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{1037B3F4-02E9-4DE4-AD56-7651E0FB7808} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
-		{8638EB58-F84F-43B0-9ECF-C60D8BA6B742} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
-		{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
-		{839F77B2-CBE2-4C16-A384-F2768EAD88F6} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
-		{0DB12843-588F-4B7B-837C-1D8D12683751} = {1AD92010-0595-4213-95ED-F57DF177968F}
 		{10C77C57-4C2B-4E28-BC76-4BFB1AB0BB99} = {1AD92010-0595-4213-95ED-F57DF177968F}
+		{3A8DA51F-F076-4468-8F49-B101E912748C} = {F7DA770E-772F-4E70-BD50-1121343BA7D7}
+		{839F77B2-CBE2-4C16-A384-F2768EAD88F6} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{DECDBD96-27D1-4F54-9BC7-4F6DF5842E99} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
+		{8638EB58-F84F-43B0-9ECF-C60D8BA6B742} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{33EA9DA6-8216-4AFF-9BE0-057F0CCCEFF9} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{4233A87D-825B-4CE7-8548-A367FF54E852} = {8BF7B64C-7CAC-489B-B419-F5B2A20954D9}
 		{78C54E1D-8B99-473E-AAC3-4B2399B7B949} = {7DF3DBD2-A528-4CFE-9F09-8225D0AC437C}
