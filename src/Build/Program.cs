@@ -15,19 +15,19 @@ targets.Add("test",
         """test src --logger "GitHubActions;report-warnings=false" """));
 
 targets.Add("docker-build-test",
-    "Build all four Docker images tagged for the test Heroku app",
-    async () => await BuildImages($"registry.heroku.com/{TestApp}"));
+    "Build the Docker image and tag it for all test app process types",
+    async () => await BuildImage($"registry.heroku.com/{TestApp}"));
 
 targets.Add("docker-build-prod",
-    "Build all four Docker images tagged for the prod Heroku app",
-    async () => await BuildImages($"registry.heroku.com/{ProdApp}"));
+    "Build the Docker image and tag it for all prod app process types",
+    async () => await BuildImage($"registry.heroku.com/{ProdApp}"));
 
 targets.Add("docker-push-test",
-    "Push images to the Heroku test registry (requires HEROKU_TOKEN)",
+    "Push all process-type tags to the Heroku test registry (requires HEROKU_TOKEN)",
     async () => await PushImages($"registry.heroku.com/{TestApp}"));
 
 targets.Add("docker-push-prod",
-    "Push images to the Heroku prod registry (requires HEROKU_TOKEN)",
+    "Push all process-type tags to the Heroku prod registry (requires HEROKU_TOKEN)",
     async () => await PushImages($"registry.heroku.com/{ProdApp}"));
 
 targets.Add("deploy-test",
@@ -42,26 +42,21 @@ targets.Add("deploy-prod",
 
 await targets.RunAndExitAsync(args);
 
-async Task BuildImages(string registry)
+async Task BuildImage(string registry)
 {
     var buildArgs = $"--build-arg INFOVERSION={infoVersion} --build-arg VERSION={version} -f ./src/Dockerfile ./src";
-    foreach (var (stage, service) in Services())
-        await Command.RunAsync("docker", $"build --target {stage} -t {registry}/{service} {buildArgs}");
+    await Command.RunAsync("docker", $"build -t {registry}/web {buildArgs}");
+    foreach (var service in ProcessTypes()[1..])
+        await Command.RunAsync("docker", $"tag {registry}/web {registry}/{service}");
 }
 
 async Task PushImages(string registry)
 {
-    foreach (var (_, service) in Services())
+    foreach (var service in ProcessTypes())
         await Command.RunAsync("docker", $"push {registry}/{service}");
 }
 
-(string stage, string service)[] Services() =>
-[
-    ("web",          "web"),
-    ("eventpublisher","eventpublisher"),
-    ("indexer",      "indexer"),
-    ("eventhandler", "eventhandler"),
-];
+string[] ProcessTypes() => ["web", "eventpublisher", "indexer", "eventhandler"];
 
 static string Env(string name, string fallback) =>
     Environment.GetEnvironmentVariable(name) is { Length: > 0 } v ? v : fallback;

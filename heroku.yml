@@ -1,0 +1,5 @@
+run:
+  web:             dotnet FplBot.dll --services WebApi
+  eventhandler:    dotnet FplBot.dll --services EventHandlers
+  eventpublisher:  dotnet FplBot.dll --services EventPublishers
+  indexer:         dotnet FplBot.dll --services SearchIndexer
