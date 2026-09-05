@@ -9,7 +9,7 @@
 - [x] Step 8 — Aspire AppHost for local dev
 - [x] Step 9 — CI integration test infrastructure
 - [x] Step 10 — Update test projects
-- [ ] Step 11 — Delete old projects
+- [x] Step 11 — Delete old projects
 
 ---
 
