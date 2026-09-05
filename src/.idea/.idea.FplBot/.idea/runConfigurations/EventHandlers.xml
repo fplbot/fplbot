@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="EventHandlers" type="DotNetProject" factoryName=".NET Project">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/FplBot/FplBot.csproj" />
+    <option name="PROGRAM_PARAMETERS" value="--services EventHandlers" />
+    <method v="2" />
+  </configuration>
+</component>
