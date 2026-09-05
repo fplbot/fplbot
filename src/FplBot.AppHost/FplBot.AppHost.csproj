@@ -11,7 +11,4 @@
     <PackageReference Include="Aspire.Hosting.Redis" />
     <PackageReference Include="AlmostServiceBus.Aspire.Hosting" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="../FplBot/FplBot.csproj" />
-  </ItemGroup>
 </Project>
