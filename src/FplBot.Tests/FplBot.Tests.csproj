@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <IsPackable>false</IsPackable>
         <ImplicitUsings>enable</ImplicitUsings>        
     </PropertyGroup>
@@ -18,8 +18,8 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="AlmostServiceBus.TestHost" />
         <PackageReference Include="FakeItEasy"/>
-        <PackageReference Include="NServiceBus.Testing" />
     </ItemGroup>
 
     <ItemGroup Condition="Exists('appsettings.Local.json')">
@@ -45,8 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FplBot.WebApi.Slack\FplBot.WebApi.Slack.csproj" />
-      <ProjectReference Include="..\Fpl.EventPublishers\Fpl.EventPublishers.csproj" />
+      <ProjectReference Include="..\FplBot\FplBot.csproj" />
     </ItemGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ using Fpl.EventPublishers.Events;
 using Fpl.EventPublishers.States;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
@@ -19,7 +19,7 @@ public class GameweekLifecycleMonitorTests
         A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -36,7 +36,7 @@ public class GameweekLifecycleMonitorTests
         A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(new List<Gameweek>()));
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -53,7 +53,7 @@ public class GameweekLifecycleMonitorTests
         A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -72,7 +72,7 @@ public class GameweekLifecycleMonitorTests
             .Then.Returns(GameweeksAfterTransition());
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -93,7 +93,7 @@ public class GameweekLifecycleMonitorTests
             .Then.Returns(GameweeksAfterTransition());
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -117,7 +117,7 @@ public class GameweekLifecycleMonitorTests
             .Then.Returns(GameweeksWithCurrentNowMarkedAsFinished());
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -140,7 +140,7 @@ public class GameweekLifecycleMonitorTests
         A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GameweeksWithCurrentNowMarkedAsFinished());
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -163,7 +163,7 @@ public class GameweekLifecycleMonitorTests
 
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -186,7 +186,7 @@ public class GameweekLifecycleMonitorTests
             .Returns(GlobalSettingsWithGameweeks(Gw1Current()));
 
         var mediator = A.Fake<IMediator>();
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
 
         await action.EveryOtherMinuteTick(CancellationToken.None);

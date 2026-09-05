@@ -5,13 +5,13 @@ using Fpl.EventPublishers.Abstractions;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
 public class MatchStatusTests
 {
-    private TestableMessageSession _session;
+    private TestPublishEndpoint _session;
 
     [Fact]
     public async Task DoesNotEmitInInitPhase()
@@ -92,7 +92,7 @@ public class MatchStatusTests
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
-        _session = new TestableMessageSession();
+        _session = new TestPublishEndpoint();
         return new LineupState(fixtureClient, pulseFake, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
     }
 
@@ -115,7 +115,7 @@ public class MatchStatusTests
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
-        _session = new TestableMessageSession();
+        _session = new TestPublishEndpoint();
         return new LineupState(fixtureClient, pulseClient, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
     }
 
@@ -132,7 +132,7 @@ public class MatchStatusTests
         });
 
         var pulseClient = A.Fake<IPulseLiveClient>();
-       _session = new TestableMessageSession();
+       _session = new TestPublishEndpoint();
        var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
            {

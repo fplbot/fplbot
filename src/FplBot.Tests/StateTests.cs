@@ -5,14 +5,14 @@ using Fpl.EventPublishers.States;
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 
 namespace FplBot.Tests;
 
 public class StateTests
 {
-    private static TestableMessageSession _messageSession;
+    private static TestPublishEndpoint _messageSession;
 
     [Fact]
     public async Task DoesNotCrashWithNoDataReturned()
@@ -68,7 +68,7 @@ public class StateTests
 
     private static FixtureState CreateAllMockState()
     {
-        _messageSession = new TestableMessageSession();
+        _messageSession = new TestPublishEndpoint();
         return new FixtureState(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession, A.Fake<ILogger<FixtureState>>());
     }
 
@@ -213,7 +213,7 @@ public class StateTests
             TestBuilder.SlackTeam()
         });
 
-        _messageSession = new TestableMessageSession();
+        _messageSession = new TestPublishEndpoint();
         return new FixtureState(fixtureClient, settingsClient, _messageSession, A.Fake<ILogger<FixtureState>>());
     }
 

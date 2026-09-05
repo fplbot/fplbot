@@ -7,8 +7,8 @@
 - [x] Step 5 — Multi-stage Dockerfile
 - [x] Step 6 — Update CI workflows
 - [x] Step 8 — Aspire AppHost for local dev
-- [ ] Step 9 — CI integration test infrastructure
-- [ ] Step 10 — Update test projects
+- [x] Step 9 — CI integration test infrastructure
+- [x] Step 10 — Update test projects
 - [ ] Step 11 — Delete old projects
 
 ---

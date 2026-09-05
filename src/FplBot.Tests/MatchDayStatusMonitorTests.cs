@@ -5,7 +5,7 @@ using Fpl.EventPublishers.RecurringActions;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
@@ -116,7 +116,7 @@ public class MatchDayStatusMonitorTests
     }
 
     private IEventStatusClient EventStatusClient = A.Fake<IEventStatusClient>();
-    private TestableMessageSession Mediator = new();
+    private TestPublishEndpoint Mediator = new();
 
     private static class Some
     {

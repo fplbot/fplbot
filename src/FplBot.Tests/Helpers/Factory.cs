@@ -14,7 +14,7 @@ using System.Text.Json.Serialization;
 using FplBot.Data.Slack;
 using Nest;
 
-using NServiceBus;
+using MassTransit;
 using StackExchange.Redis;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -65,7 +65,7 @@ public static class Factory
         services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository());
         services.Replace<IElasticClient>(elasticClient);
         services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
-        services.AddSingleton<IMessageSession>(A.Fake<IMessageSession>()); // Faking NServicebus
+        services.AddSingleton<IPublishEndpoint>(A.Fake<IPublishEndpoint>());
         services.AddFplWorkers();
         var provider = services.BuildServiceProvider();
         return provider;

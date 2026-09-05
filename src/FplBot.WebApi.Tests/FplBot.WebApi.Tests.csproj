@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>        
     </PropertyGroup>
@@ -9,6 +9,8 @@
     <ItemGroup>
         <PackageReference Include="GitHubActionsTestLogger" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="AlmostServiceBus.TestHost" />
+        <PackageReference Include="Testcontainers.Redis" />
         <PackageReference Include="StackExchange.Redis" />
         <PackageReference Include="xunit" />
         <PackageReference Include="xunit.runner.visualstudio">
@@ -22,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FplBot.WebApi\FplBot.WebApi.csproj" />
+      <ProjectReference Include="..\FplBot\FplBot.csproj" />
     </ItemGroup>
 
 </Project>
