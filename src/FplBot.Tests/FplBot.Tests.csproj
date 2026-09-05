@@ -19,6 +19,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="AlmostServiceBus.TestHost" />
+        <PackageReference Include="Azure.Messaging.ServiceBus" />
         <PackageReference Include="FakeItEasy"/>
         <PackageReference Include="Testcontainers.Redis" />
         <PackageReference Include="StackExchange.Redis" />

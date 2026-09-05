@@ -30,7 +30,7 @@ public class NearDeadlineHandler :
         {
             if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
             {
-                await context.Send(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, text));
+                await context.Publish(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, text));
             }
         }
     }
@@ -45,7 +45,7 @@ public class NearDeadlineHandler :
         {
             if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
             {
-                await context.Send(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, $"{text}"));
+                await context.Publish(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, $"{text}"));
             }
         }
     }

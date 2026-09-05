@@ -31,7 +31,7 @@ public class InjuryUpdateHandler : IConsumer<InjuryUpdateOccured>
             {
                 if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
                 {
-                    await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Injury update", formatted));
+                    await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Injury update", formatted));
                 }
 
             }

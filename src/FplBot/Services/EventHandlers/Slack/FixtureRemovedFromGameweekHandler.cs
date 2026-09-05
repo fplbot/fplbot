@@ -30,7 +30,7 @@ public class FixtureRemovedFromGameweekHandler : IConsumer<FixtureRemovedFromGam
             {
                 var fixture = $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}";
                 var msg = $"❌ *Fixture off!*\n {fixture} has been removed from gameweek {message.Gameweek}!";
-                await context.Send(new PublishToSlack(team.TeamId, team.FplBotSlackChannel, msg));
+                await context.Publish(new PublishToSlack(team.TeamId, team.FplBotSlackChannel, msg));
             }
         }
     }

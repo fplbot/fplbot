@@ -27,7 +27,7 @@ public class LineupReadyHandler : IConsumer<LineupReady>
         {
             if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
             {
-                await context.Send(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
+                await context.Publish(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
             }
 
         }

@@ -33,7 +33,7 @@ public class NewPlayersHandler : IConsumer<NewPlayersRegistered>, IConsumer<Prem
             {
                 if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
                 {
-                    await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted));
+                    await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted));
                 }
             }
         }
@@ -54,7 +54,7 @@ public class NewPlayersHandler : IConsumer<NewPlayersRegistered>, IConsumer<Prem
         {
             if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
             {
-                await context.Send(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"🔄️ Transfer!", formatted));
+                await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"🔄️ Transfer!", formatted));
             }
         }
     }

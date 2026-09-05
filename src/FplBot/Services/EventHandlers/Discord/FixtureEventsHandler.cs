@@ -36,7 +36,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
 
         foreach (var sub in subs)
         {
-            await context.Send(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents));
+            await context.Publish(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents));
         }
     }
 
@@ -65,7 +65,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
             var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat, FormattingType.Discord, tauntData);
             foreach (var eventMsg in eventMessages)
             {
-                await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details));
+                await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details));
             }
         }
         else

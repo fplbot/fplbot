@@ -34,7 +34,7 @@ public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<Pr
         var subs = await _repo.GetAllGuildSubscriptions();
         foreach (var team in subs)
         {
-            await context.Send(new ProcessGameweekStartedForGuildChannel(team.GuildId, team.ChannelId, notification.NewGameweek.Id));
+            await context.Publish(new ProcessGameweekStartedForGuildChannel(team.GuildId, team.ChannelId, notification.NewGameweek.Id));
         }
     }
 
@@ -124,7 +124,7 @@ public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<Pr
 
         foreach (var richMessage in messages)
         {
-            await context.Send(new PublishRichToGuildChannel(team.GuildId, team.ChannelId, richMessage.Title, richMessage.Description));
+            await context.Publish(new PublishRichToGuildChannel(team.GuildId, team.ChannelId, richMessage.Title, richMessage.Description));
         }
     }
 }

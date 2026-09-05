@@ -32,7 +32,7 @@ public class NewPlayerHandler : IConsumer<NewPlayersRegistered>, IConsumer<Premi
             {
                 if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
                 {
-                    await context.Send(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
+                    await context.Publish(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
                 }
             }
         }
@@ -52,7 +52,7 @@ public class NewPlayerHandler : IConsumer<NewPlayersRegistered>, IConsumer<Premi
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
             {
-                await context.Send(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
+                await context.Publish(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
             }
         }
     }

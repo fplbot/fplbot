@@ -15,6 +15,7 @@
     <PackageVersion Include="AspNet.Security.OAuth.Slack" Version="5.0.11" />
     <PackageVersion Include="CronBackgroundServices" Version="8.0.0" />
     <PackageVersion Include="Fastenshtein" Version="1.0.0.7"/>
+    <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
     <PackageVersion Include="MassTransit" Version="8.3.6" />
     <PackageVersion Include="MassTransit.Azure.ServiceBus.Core" Version="8.3.6" />
     <PackageVersion Include="MediatR" Version="9.0.0" />

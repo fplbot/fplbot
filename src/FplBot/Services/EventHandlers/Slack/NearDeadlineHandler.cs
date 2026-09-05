@@ -43,7 +43,7 @@ public class NearDeadlineHandler :
             {
                 var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
                 var command = new PublishToSlack(team.TeamId, team.FplBotSlackChannel, text);
-                await context.Send(command);
+                await context.Publish(command);
             }
         }
     }
@@ -59,7 +59,7 @@ public class NearDeadlineHandler :
             if (team.HasRegisteredFor(EventSubscription.Deadlines))
             {
                 var command = new PublishDeadlineNotificationToSlackWorkspace(team.TeamId, message.GameweekNearingDeadline);
-                await context.Send(command);
+                await context.Publish(command);
             }
         }
     }

@@ -38,7 +38,7 @@ public class FixtureFulltimeHandler : IConsumer<FixtureFinished>
         {
             if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureFullTime))
             {
-                await context.Send(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {title}",$"{threadMessage}"));
+                await context.Publish(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {title}",$"{threadMessage}"));
             }
 
         }

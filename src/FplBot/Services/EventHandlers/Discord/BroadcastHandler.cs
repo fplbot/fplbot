@@ -55,7 +55,7 @@ public class BroadcastHandler(IGuildRepository repo, ILogger<BroadcastHandler> l
         if (filter(guild))
         {
             logger.LogInformation("Sending message to {GuildId} {ChannelId}", guild.GuildId, guild.ChannelId);
-            await context.Send(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, message.Message));
+            await context.Publish(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, message.Message));
         }
         else
         {

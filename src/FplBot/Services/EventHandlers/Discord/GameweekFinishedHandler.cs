@@ -35,7 +35,7 @@ public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
         var allSubs = await _repo.GetAllGuildSubscriptions();
         foreach (var sub in allSubs)
         {
-            await context.Send(new PublishGameweekFinishedToGuild(sub.GuildId, sub.ChannelId, sub.LeagueId, message.FinishedGameweek.Id));
+            await context.Publish(new PublishGameweekFinishedToGuild(sub.GuildId, sub.ChannelId, sub.LeagueId, message.FinishedGameweek.Id));
         }
     }
 
@@ -72,7 +72,7 @@ public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
                     }
                     foreach (var richMessage in messages)
                     {
-                        await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, richMessage.Title, richMessage.Description));
+                        await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, richMessage.Title, richMessage.Description));
                     }
                 }
             }
@@ -80,7 +80,7 @@ public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
             {
                 string msg = $"Standings are now generally ready, but you're subscribing to a non-classic or " +
                              $"non-existing classic FPL league: '{message.LeagueId}'";
-                await context.Send(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, "⚠️ Standings ready", msg));
+                await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, "⚠️ Standings ready", msg));
             }
         }
     }

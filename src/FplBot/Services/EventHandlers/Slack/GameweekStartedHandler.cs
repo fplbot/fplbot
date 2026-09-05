@@ -42,7 +42,7 @@ internal class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<
         var teams = await _teamRepo.GetAllTeams();
         foreach (var team in teams)
         {
-            await context.Send(new ProcessGameweekStartedForSlackWorkspace(team.TeamId, notification.NewGameweek.Id));
+            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(team.TeamId, notification.NewGameweek.Id));
         }
     }
 

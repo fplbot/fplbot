@@ -29,7 +29,7 @@ public class PriceChangeHandler : IConsumer<PlayersPriceChanged>, IConsumer<Publ
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
             {
-                await context.Send(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()));
+                await context.Publish(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()));
             }
         }
     }

@@ -44,7 +44,7 @@ public class FixtureFulltimeHandler : IConsumer<FixtureFinished>, IConsumer<Publ
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.FixtureFullTime))
             {
-                await context.Send(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage));
+                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage));
             }
         }
     }

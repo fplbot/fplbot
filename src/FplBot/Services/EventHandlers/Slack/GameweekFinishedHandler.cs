@@ -36,7 +36,7 @@ internal class GameweekFinishedHandler : IConsumer<GameweekFinished>, IConsumer<
         {
             if (team.HasRegisteredFor(EventSubscription.Standings))
             {
-                await context.Send(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, notification.FinishedGameweek.Id));
+                await context.Publish(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, notification.FinishedGameweek.Id));
             }
         }
     }

@@ -32,7 +32,7 @@ public class FixtureRemovedFromGameweekHandler : IConsumer<FixtureRemovedFromGam
                     $"❌ Fixture off!",
                     $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}" +
                     $" has been removed from gameweek {message.Gameweek}!");
-                await context.Send(formattedMsg);
+                await context.Publish(formattedMsg);
             }
         }
     }
