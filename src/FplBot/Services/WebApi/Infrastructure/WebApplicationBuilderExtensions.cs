@@ -1,11 +1,9 @@
-using System.Net.Security;
 using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.Slack;
 using CronBackgroundServices;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
 using Fpl.Search;
-using FplBot.Data.Slack;
 using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Configurations;
@@ -14,8 +12,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
-using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
 using Slackbot.Net.Endpoints.Authentication;
 using Slackbot.Net.Endpoints.Hosting;
 using StackExchange.Redis;
@@ -24,42 +20,18 @@ namespace FplBot.WebApi.Infrastructure;
 
 public static class WebApplicationBuilderExtensions
 {
-    public static void ConfigureWebApp(this WebApplicationBuilder builder)
+    public static void ConfigureWebApp(this WebApplicationBuilder builder, ConnectionMultiplexer redisConn)
     {
         builder.Services.AddRecurrer<GuildStatusChecker>();
-        builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
-            loggerConfiguration
-                .ReadFrom.Configuration(hostingContext.Configuration)
-                .Enrich.WithCorrelationId()
-                .Enrich.WithCorrelationIdHeader()
-                .WriteTo.Console(
-                    outputTemplate:
-                    "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}",
-                    theme: ConsoleTheme.None));
 
         var services = builder.Services;
         var configuration = builder.Configuration;
         var env = builder.Environment;
 
-        var opts = new SlackRedisOptions { REDIS_URL = Environment.GetEnvironmentVariable("REDIS_URL") };
-        var options = new ConfigurationOptions
-        {
-            ClientName = opts.GetRedisUsername,
-            Password = opts.GetRedisPassword,
-            EndPoints = {opts.GetRedisServerHostAndPort},
-            Ssl = true,
-            SslClientAuthenticationOptions = s => new SslClientAuthenticationOptions
-            {
-                TargetHost = opts.GetHost,
-                RemoteCertificateValidationCallback = (h, a, c, k) => true,
-            }
-        };
-        var conn =  ConnectionMultiplexer.Connect(options);
-
         services.AddDataProtection()
-            .PersistKeysToStackExchangeRedis(conn)
-            .SetApplicationName(
-                "fplbot"); // set static so cookies are not encrypted differently after a reboot/deploy. https://github.com/dotnet/aspnetcore/issues/2513#issuecomment-354683162
+            .PersistKeysToStackExchangeRedis(redisConn)
+            .SetApplicationName("fplbot");
+
         services.AddControllers()
             .AddJsonOptions(opts =>
             {
@@ -68,42 +40,38 @@ public static class WebApplicationBuilderExtensions
 
         var successUri = env.IsProduction() ? "https://www.fplbot.app/success" : "https://test.fplbot.app/success";
         var errorUri = env.IsProduction() ? "https://www.fplbot.app/error" : "https://test.fplbot.app/error";
+
         services.AddSlackbotDistribution(c =>
         {
             c.CLIENT_ID = configuration["CLIENT_ID"];
             c.CLIENT_SECRET = configuration["CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=slack";
-            c.OnSuccess = async (teamId,teamName, s) =>
+            c.OnSuccess = async (teamId, teamName, s) =>
             {
                 var msg = s.GetRequiredService<IPublishEndpoint>();
                 await msg.Publish(new AppInstalled(teamId, teamName, ChatPlatform.Slack));
             };
         });
+
         services.AddDiscordBotDistribution(c =>
         {
             c.CLIENT_ID = configuration["DISCORD_CLIENT_ID"];
             c.CLIENT_SECRET = configuration["DISCORD_CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=discord";
             c.ErrorRedirectUri = errorUri;
-            c.OnSuccess = async (guildId,guildName, s) =>
+            c.OnSuccess = async (guildId, guildName, s) =>
             {
                 var msg = s.GetRequiredService<IPublishEndpoint>();
                 await msg.Publish(new AppInstalled(guildId, guildName, ChatPlatform.Discord));
             };
         });
+
         services.Configure<AnalyticsOptions>(configuration);
-        services.AddReducedHttpClientFactoryLogging();
-        services.AddStackExchangeRedisCache(o => o.ConfigurationOptions = options);
-        services.AddFplBotSlackWebEndpoints(configuration, conn);
-        services.AddFplBotDiscordWebEndpoints(configuration, conn);
+        services.AddFplBotSlackWebEndpoints(configuration, redisConn);
+        services.AddFplBotDiscordWebEndpoints(configuration, redisConn);
         services.AddVerifiedEntries(configuration);
-
-
         services.AddMediatR(typeof(WebApplicationBuilderExtensions));
-
-        // Used in admin pages:
-        services.AddIndexingServices(configuration, conn);
-
+        services.AddIndexingServices(configuration, redisConn);
 
         services.AddAuthentication(options =>
             {
@@ -124,7 +92,6 @@ public static class WebApplicationBuilderExtensions
                 c.ClientId = configuration.GetValue<string>("CLIENT_ID");
                 c.ClientSecret = configuration.GetValue<string>("CLIENT_SECRET");
                 c.Scope.Add("identity.team");
-
                 c.Events.OnRemoteFailure = r =>
                 {
                     var errorMsg = r.Request.Query["error"];
@@ -150,6 +117,7 @@ public static class WebApplicationBuilderExtensions
                 b.RequireClaim("urn:slack:user_id", "U016CP6EPR8", "U0172HKTB08", "U016CSWNXAP");
             });
         });
+
         var mvcBuilder = services
             .AddRazorPages()
             .AddRazorPagesOptions(options =>
@@ -159,27 +127,27 @@ public static class WebApplicationBuilderExtensions
             });
 
         if (env.IsDevelopment())
-        {
             mvcBuilder.AddRazorRuntimeCompilation();
-        }
 
         services.Configure<RouteOptions>(o =>
         {
             o.LowercaseQueryStrings = true;
             o.LowercaseUrls = true;
         });
+
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             options.KnownNetworks.Clear();
             options.KnownProxies.Clear();
         });
+
         services.AddCors(options =>
         {
             options.AddPolicy(CorsOriginValidator.CustomCorsPolicyName, p =>
-                p.SetIsOriginAllowed(CorsOriginValidator.ValidateOrigin).AllowAnyHeader().AllowAnyMethod()
-            );
+                p.SetIsOriginAllowed(CorsOriginValidator.ValidateOrigin).AllowAnyHeader().AllowAnyMethod());
         });
+
         services.AddHttpContextAccessor();
         services.Configure<BlockedIpOptions>(configuration.GetSection("IpBlocking"));
     }
