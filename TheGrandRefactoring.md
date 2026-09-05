@@ -2,8 +2,8 @@
 
 - [x] Step 1 — Create FplBot project skeleton (`src/FplBot/FplBot.csproj`, `Program.cs`, `--services` parsing, added to sln, `Directory.Packages.props` bumped to .NET 10 + MassTransit 8.3.6)
 - [x] Step 2 — Migrate and convert projects (bottom-up, NServiceBus → MassTransit) — 379 files, all 13 library/host projects folded in
-- [ ] Step 3 — Create service modules
-- [ ] Step 4 — Remove Azure Functions and Pulumi
+- [x] Step 3 — Create service modules
+- [x] Step 4 — Remove Azure Functions and Pulumi
 - [ ] Step 5 — Multi-stage Dockerfile
 - [ ] Step 6 — Update CI workflows
 - [ ] Step 8 — Aspire AppHost for local dev
