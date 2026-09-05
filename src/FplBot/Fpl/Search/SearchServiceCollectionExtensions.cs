@@ -67,10 +67,4 @@ public static class SearchServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddRecurringIndexer(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer conn)
-    {
-        services.AddIndexingServices(config, conn);
-        services.AddRecurrer<IndexerRecurringAction>();
-        return services;
-    }
 }

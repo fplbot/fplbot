@@ -1,5 +1,6 @@
 using System.Net.Security;
 using Fpl.Search;
+using FplBot.Services.SearchIndexer;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Discord;
 using FplBot.EventHandlers.Slack;
