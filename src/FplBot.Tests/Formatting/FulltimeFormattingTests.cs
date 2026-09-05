@@ -103,6 +103,51 @@ public class FulltimeFormattingTests
         })));
     }
 
+    [Fact]
+    public void DefensiveContributionsOnly_ListsPlayersByContributionsDescending()
+    {
+        var fixture = GetProvisionalFinishedFixture();
+        fixture.DefensiveContributions = new[]
+        {
+            DefensiveContributionPlayer("player-B", 12),
+            DefensiveContributionPlayer("player-A", 10),
+            DefensiveContributionPlayer("player-C", 14)
+        };
+
+        var output = Formatter.FormatProvisionalFinished(fixture);
+        _helper.WriteLine(output);
+
+        Assert.DoesNotContain("Bonus points:", output);
+        Assert.Contains("Defensive contributions:", output);
+        Assert.Equal(new[] { "player-C (14)", "player-B (12)", "player-A (10)" }, Formatter.CreateDefensiveContributionsOutput(fixture));
+    }
+
+    [Fact]
+    public void BonusAndDefensiveContributions_BonusComesFirst()
+    {
+        var fixture = GetProvisionalFinishedFixture(
+            BonusPointsPlayer("player-C", 30),
+            BonusPointsPlayer("player-B", 40),
+            BonusPointsPlayer("player-A", 50));
+        fixture.DefensiveContributions = new[] { DefensiveContributionPlayer("player-D", 11) };
+
+        var output = Formatter.FormatProvisionalFinished(fixture);
+        _helper.WriteLine(output);
+
+        var bonusIndex = output.IndexOf("Bonus points:", StringComparison.Ordinal);
+        var dcIndex = output.IndexOf("Defensive contributions:", StringComparison.Ordinal);
+        Assert.True(bonusIndex >= 0);
+        Assert.True(dcIndex > bonusIndex);
+        Assert.Contains("▪️ player-D (11)", output);
+    }
+
+    [Fact]
+    public void NoBonusAndNoDefensiveContributions_ReturnsEmpty()
+    {
+        var output = Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture());
+        Assert.Equal(string.Empty, output);
+    }
+
     private FinishedFixture GetProvisionalFinishedFixture(params BonusPointsPlayer[] bonusPointsPlayers)
     {
         return new FinishedFixture
@@ -113,6 +158,15 @@ public class FulltimeFormattingTests
                 BonusPoints = bonusPointsPlayers
             }
             ;
+    }
+
+    DefensiveContributionPlayer DefensiveContributionPlayer(string webName, int contributions)
+    {
+        return new DefensiveContributionPlayer
+        {
+            Player = new Player { WebName = webName },
+            Contributions = contributions
+        };
     }
     BonusPointsPlayer BonusPointsPlayer(string webName, int bonusPoints)
     {

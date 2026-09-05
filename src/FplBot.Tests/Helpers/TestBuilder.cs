@@ -1,3 +1,4 @@
+using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.EventPublishers;
 using FplBot.Data.Slack;
@@ -204,6 +205,28 @@ public static class TestBuilder
         return fixture;
     }
 
+    public static Fixture WithDefensiveContribution(this Fixture fixture, int homePlayerId, int homeContributions, int awayPlayerId, int awayContributions)
+    {
+        fixture.Stats = fixture.Stats.Append(new FixtureStat
+        {
+            Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
+            HomeStats = new List<FixtureStatValue> { new() { Element = homePlayerId, Value = homeContributions } },
+            AwayStats = new List<FixtureStatValue> { new() { Element = awayPlayerId, Value = awayContributions } }
+        }).ToArray();
+        return fixture;
+    }
+
+    public static Fixture WithEmptyDefensiveContribution(this Fixture fixture)
+    {
+        fixture.Stats = fixture.Stats.Append(new FixtureStat
+        {
+            Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
+            HomeStats = new List<FixtureStatValue>(),
+            AwayStats = new List<FixtureStatValue>()
+        }).ToArray();
+        return fixture;
+    }
+
     private static FixtureStat BpsSystem(int playerId, int bps)
     {
         return new FixtureStat
@@ -331,6 +354,12 @@ public static class TestBuilder
     public static Player FromAwayTeam(this Player player)
     {
         player.TeamCode = AwayTeamId;
+        return player;
+    }
+
+    public static Player WithPosition(this Player player, FplPlayerPosition position)
+    {
+        player.Position = position;
         return player;
     }
 

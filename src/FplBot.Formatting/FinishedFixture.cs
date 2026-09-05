@@ -10,4 +10,5 @@ public class FinishedFixture
     public Team AwayTeam { get; set; }
 
     public IEnumerable<BonusPointsPlayer> BonusPoints { get; set; } = new List<BonusPointsPlayer>();
+    public IEnumerable<DefensiveContributionPlayer> DefensiveContributions { get; set; } = new List<DefensiveContributionPlayer>();
 }
