@@ -9,64 +9,56 @@ using FplBot.VerifiedEntries.Data.Repositories;
 using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using Testcontainers.Redis;
 using Xunit;
 using Xunit.Abstractions;
 using EventSubscription = FplBot.Data.Slack.EventSubscription;
 
 namespace FplBot.WebApi.Tests;
 
-public class RedisIntegrationTests : IDisposable
+public class RedisIntegrationTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _helper;
-    private readonly SlackTeamRepository _repo;
-    private readonly LeagueIndexRedisBookmarkProvider _bookmarkProvider;
-    private readonly IServer _server;
-    private readonly VerifiedEntriesRepository _verifiedRepo;
-    private readonly DiscordGuildRepository _guildRepo;
-    private readonly DiscordGuildStore _guildStore;
-    private readonly TokenStore _store;
+    private readonly RedisContainer _redisContainer;
+    private SlackTeamRepository _repo;
+    private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
+    private IServer _server;
+    private VerifiedEntriesRepository _verifiedRepo;
+    private DiscordGuildRepository _guildRepo;
+    private DiscordGuildStore _guildStore;
+    private TokenStore _store;
 
     public RedisIntegrationTests(ITestOutputHelper helper)
     {
         _helper = helper;
-        var opts = new OptionsWrapper<SlackRedisOptions>(new SlackRedisOptions
-        {
-            REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
-        });
+        _redisContainer = new RedisBuilder().Build();
+    }
 
-        var verifiedOpts = new OptionsWrapper<VerifiedRedisOptions>(new VerifiedRedisOptions
-        {
-            REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
-        });
+    public async Task InitializeAsync()
+    {
+        await _redisContainer.StartAsync();
 
+        var connectionString = _redisContainer.GetConnectionString();
+        var multiplexer = await ConnectionMultiplexer.ConnectAsync(connectionString + ",allowAdmin=true");
 
-        var discordOpts = new OptionsWrapper<DiscordRedisOptions>(new DiscordRedisOptions
-        {
-            REDIS_URL = Environment.GetEnvironmentVariable("HEROKU_REDIS_COPPER_URL"),
-        });
+        var fakeUrl = $"redis://user:pass@{connectionString}";
+        var opts = new OptionsWrapper<SlackRedisOptions>(new SlackRedisOptions { REDIS_URL = fakeUrl });
+        var verifiedOpts = new OptionsWrapper<VerifiedRedisOptions>(new VerifiedRedisOptions { REDIS_URL = fakeUrl });
+        var discordOpts = new OptionsWrapper<DiscordRedisOptions>(new DiscordRedisOptions { REDIS_URL = fakeUrl });
 
-        var configurationOptions = new ConfigurationOptions
-        {
-            ClientName = opts.Value.GetRedisUsername,
-            Password = opts.Value.GetRedisPassword,
-            EndPoints = { opts.Value.GetRedisServerHostAndPort },
-            AllowAdmin = true,
-            Ssl = true,
-            SslClientAuthenticationOptions = s => new SslClientAuthenticationOptions
-            {
-                TargetHost = opts.Value.GetHost,
-                RemoteCertificateValidationCallback = (h, a, c, k) => true,
-            }
-        };
-
-        var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
-        _server = multiplexer.GetServer(opts.Value.GetRedisServerHostAndPort);
+        _server = multiplexer.GetServer(connectionString);
         _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
         _store = new TokenStore(multiplexer, opts, new SimpleLogger(_helper));
         _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
         _verifiedRepo = new VerifiedEntriesRepository(multiplexer, verifiedOpts, new SimpleLogger(_helper));
         _guildRepo = new DiscordGuildRepository(multiplexer, discordOpts, new SimpleLogger(_helper));
         _guildStore = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(_helper));
+    }
+
+    public async Task DisposeAsync()
+    {
+        _server?.FlushDatabase();
+        await _redisContainer.DisposeAsync();
     }
 
     [Fact]
@@ -105,7 +97,6 @@ public class RedisIntegrationTests : IDisposable
         await _store.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
         await _store.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
 
-
         await _store.Delete("teamId2");
 
         var tokensAfterDelete = await _repo.GetTokens();
@@ -117,7 +108,6 @@ public class RedisIntegrationTests : IDisposable
     {
         await _store.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
         await _store.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
-
 
         var team = await _store.Delete("TEAMID2");
 
@@ -200,11 +190,9 @@ public class RedisIntegrationTests : IDisposable
         var allVerifiedEntries = await _verifiedRepo.GetAllVerifiedEntries();
         Assert.Single(allVerifiedEntries);
 
-
         await _verifiedRepo.UpdateAllStats(verifiedEntry.EntryId, EntryStats() with {PointsThisGw = 100});
         var allVerifiedEntriesAfterUpdate = await _verifiedRepo.GetAllVerifiedEntries();
         Assert.Single(allVerifiedEntriesAfterUpdate);
-
     }
 
     [Fact]
@@ -248,7 +236,6 @@ public class RedisIntegrationTests : IDisposable
 
         var subs = await _guildRepo.GetAllGuildSubscriptions();
 
-
         Assert.Equal(2, subs.Count());
 
         var sub1 = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
@@ -278,7 +265,6 @@ public class RedisIntegrationTests : IDisposable
         var sub1NotUpdated = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
         Assert.Single(sub1NotUpdated.Subscriptions);
         Assert.Equal(Data.Discord.EventSubscription.All, sub1NotUpdated.Subscriptions.First());
-
     }
 
     private static VerifiedEntry SomeEntry()
@@ -291,8 +277,4 @@ public class RedisIntegrationTests : IDisposable
         return new VerifiedEntryStats(1, 2, 3, 50, "", "", "", 1);
     }
 
-    public void Dispose()
-    {
-        _server.FlushDatabase();
-    }
 }
