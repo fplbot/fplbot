@@ -1,4 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ public class Subscriptions : PageModel
     private readonly IServer _server;
     private readonly IDatabase _db;
 
-    public Subscriptions(IGuildRepository repo, IConnectionMultiplexer plexer, IOptions<DiscordRedisOptions> options)
+    public Subscriptions(IGuildRepository repo, IConnectionMultiplexer plexer, IOptions<RedisOptions> options)
     {
         _repo = repo;
         _db = plexer.GetDatabase();

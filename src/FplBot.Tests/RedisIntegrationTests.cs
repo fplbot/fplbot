@@ -1,5 +1,6 @@
 using System.Net.Security;
 using Fpl.Search.Data.Repositories;
+using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Discord.Data;
@@ -38,8 +39,8 @@ public class RedisIntegrationTests : IAsyncLifetime
         var multiplexer = await ConnectionMultiplexer.ConnectAsync(connectionString + ",allowAdmin=true");
 
         var fakeUrl = $"redis://user:pass@{connectionString}";
-        var opts = new OptionsWrapper<SlackRedisOptions>(new SlackRedisOptions { REDIS_URL = fakeUrl });
-        var discordOpts = new OptionsWrapper<DiscordRedisOptions>(new DiscordRedisOptions { REDIS_URL = fakeUrl });
+        var opts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = fakeUrl });
+        var discordOpts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = fakeUrl });
 
         _server = multiplexer.GetServer(connectionString);
         _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));

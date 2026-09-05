@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.HttpClients;
+using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord.Data;
 using FplBot.Discord.Handlers.SlashCommands;
@@ -21,7 +22,7 @@ public static class ServiceCollectionExtensions
             c.DiscordApplicationId = config["DiscordAppId"];
             c.DiscordAppToken = config["DISCORD_TOKEN"];
         });
-        services.Configure<DiscordRedisOptions>(config);
+        services.Configure<RedisOptions>(config);
 
         services.TryAddSingleton<IConnectionMultiplexer>(connection);
         services.AddSingleton<IGuildRepository, DiscordGuildRepository>();

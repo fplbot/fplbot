@@ -1,3 +1,4 @@
+using FplBot.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -18,7 +19,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     private string _teamNameField = "teamName";
     private string _subscriptionsField = "subscriptions";
 
-    public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<SlackRedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
+    public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
     {
         _redis = redis;
         _db = _redis.GetDatabase();

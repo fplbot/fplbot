@@ -1,4 +1,5 @@
 using Fpl.Search;
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
@@ -21,7 +22,7 @@ public static class ServiceCollectionFplBotSlackWebExtensions
 {
     public static IServiceCollection AddFplBotSlackWebEndpoints(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection)
     {
-        services.Configure<SlackRedisOptions>(config);
+        services.Configure<RedisOptions>(config);
         services.TryAddSingleton<IConnectionMultiplexer>(redisConnection);
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
         services.AddFplApiClient(config);

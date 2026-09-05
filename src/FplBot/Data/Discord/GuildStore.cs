@@ -1,5 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
-using FplBot.Data.Discord;
+using FplBot.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -15,7 +15,7 @@ public class DiscordGuildStore : IGuildStore
     private readonly string _server;
     private readonly ILogger<DiscordGuildStore> _logger;
 
-    public DiscordGuildStore(IConnectionMultiplexer redis, IOptions<DiscordRedisOptions> redisOptions,
+    public DiscordGuildStore(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions,
         ILogger<DiscordGuildStore> logger)
     {
         _redis = redis;

@@ -1,3 +1,4 @@
+using FplBot.Data;
 using FplBot.Data.Slack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,7 @@ public class TokenStore : ITokenStore
     private string _server;
     private readonly ILogger<TokenStore> _logger;
 
-    public TokenStore(IConnectionMultiplexer redis, IOptions<SlackRedisOptions> redisOptions, ILogger<TokenStore> logger)
+    public TokenStore(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<TokenStore> logger)
     {
         _redis = redis;
         _db = _redis.GetDatabase();

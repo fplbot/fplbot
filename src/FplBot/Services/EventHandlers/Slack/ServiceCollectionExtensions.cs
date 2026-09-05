@@ -1,3 +1,4 @@
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +11,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddSlackServices(this IServiceCollection services, IConfiguration config)
     {
-        services.Configure<SlackRedisOptions>(config);
+        services.Configure<RedisOptions>(config);
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
         services.AddSlackClientBuilder();
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();

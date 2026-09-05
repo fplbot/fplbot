@@ -1,4 +1,5 @@
 using Discord.Net.HttpClients;
+using FplBot.Data;
 using FplBot.Data.Discord;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddDiscordServices(this IServiceCollection services, IConfiguration config)
     {
-        services.Configure<DiscordRedisOptions>(config);
+        services.Configure<RedisOptions>(config);
         services.AddSingleton<IGuildRepository, DiscordGuildRepository>();
         services.AddDiscordHttpClient(c =>
         {

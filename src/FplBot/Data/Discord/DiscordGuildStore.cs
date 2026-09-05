@@ -1,3 +1,4 @@
+using FplBot.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -17,7 +18,7 @@ public class DiscordGuildRepository : IGuildRepository
     private readonly string _server;
     private readonly ILogger<DiscordGuildRepository> _logger;
 
-    public DiscordGuildRepository(IConnectionMultiplexer redis, IOptions<DiscordRedisOptions> redisOptions, ILogger<DiscordGuildRepository> logger)
+    public DiscordGuildRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<DiscordGuildRepository> logger)
     {
         _redis = redis;
         _db = _redis.GetDatabase();

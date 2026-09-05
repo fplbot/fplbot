@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Nest;
 using CronBackgroundServices;
-using Fpl.Search.Data;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Data.Repositories;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -37,8 +36,7 @@ public static class SearchServiceCollectionExtensions
 
     public static IServiceCollection AddIndexingServices(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer connection)
     {
-        services.Configure<SearchRedisOptions>(config);
-        services.TryAddSingleton<IConnectionMultiplexer>(connection);
+services.TryAddSingleton<IConnectionMultiplexer>(connection);
         services.Configure<SearchOptions>(config.GetSection("search"));
         services.AddSingleton<IIndexingClient, IndexingClient>();
 
