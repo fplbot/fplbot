@@ -1,0 +1,1 @@
+namespace Fpl.EventPublishers.Models;
