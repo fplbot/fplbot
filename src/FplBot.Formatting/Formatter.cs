@@ -344,6 +344,10 @@ public static class Formatter
         if (fixture.DefensiveContributions.Any())
         {
             var defensiveContributionsOutput = CreateDefensiveContributionsOutput(fixture);
+            if (fullTimeReport.Length > 0)
+            {
+                fullTimeReport += "\n"; // blank line between the bonus points and the defensive contributions
+            }
             fullTimeReport += $"\nDefensive contributions:\n";
             fullTimeReport += BulletPoints(defensiveContributionsOutput);
         }
