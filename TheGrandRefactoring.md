@@ -4,8 +4,8 @@
 - [x] Step 2 — Migrate and convert projects (bottom-up, NServiceBus → MassTransit) — 379 files, all 13 library/host projects folded in
 - [x] Step 3 — Create service modules
 - [x] Step 4 — Remove Azure Functions and Pulumi
-- [ ] Step 5 — Multi-stage Dockerfile
-- [ ] Step 6 — Update CI workflows
+- [x] Step 5 — Multi-stage Dockerfile
+- [x] Step 6 — Update CI workflows
 - [ ] Step 8 — Aspire AppHost for local dev
 - [ ] Step 9 — CI integration test infrastructure
 - [ ] Step 10 — Update test projects
