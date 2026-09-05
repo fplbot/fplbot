@@ -3,9 +3,6 @@ using Fpl.Search.Data.Repositories;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Discord.Data;
-using FplBot.VerifiedEntries.Data;
-using FplBot.VerifiedEntries.Data.Models;
-using FplBot.VerifiedEntries.Data.Repositories;
 using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -23,7 +20,6 @@ public class RedisIntegrationTests : IAsyncLifetime
     private SlackTeamRepository _repo;
     private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
     private IServer _server;
-    private VerifiedEntriesRepository _verifiedRepo;
     private DiscordGuildRepository _guildRepo;
     private DiscordGuildStore _guildStore;
     private TokenStore _store;
@@ -43,14 +39,12 @@ public class RedisIntegrationTests : IAsyncLifetime
 
         var fakeUrl = $"redis://user:pass@{connectionString}";
         var opts = new OptionsWrapper<SlackRedisOptions>(new SlackRedisOptions { REDIS_URL = fakeUrl });
-        var verifiedOpts = new OptionsWrapper<VerifiedRedisOptions>(new VerifiedRedisOptions { REDIS_URL = fakeUrl });
         var discordOpts = new OptionsWrapper<DiscordRedisOptions>(new DiscordRedisOptions { REDIS_URL = fakeUrl });
 
         _server = multiplexer.GetServer(connectionString);
         _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
         _store = new TokenStore(multiplexer, opts, new SimpleLogger(_helper));
         _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
-        _verifiedRepo = new VerifiedEntriesRepository(multiplexer, verifiedOpts, new SimpleLogger(_helper));
         _guildRepo = new DiscordGuildRepository(multiplexer, discordOpts, new SimpleLogger(_helper));
         _guildStore = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(_helper));
     }
@@ -182,20 +176,6 @@ public class RedisIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UpdatesDontCreateDuplicates()
-    {
-        VerifiedEntry verifiedEntry = SomeEntry() with { EntryStats = EntryStats()};
-
-        await _verifiedRepo.Insert(verifiedEntry);
-        var allVerifiedEntries = await _verifiedRepo.GetAllVerifiedEntries();
-        Assert.Single(allVerifiedEntries);
-
-        await _verifiedRepo.UpdateAllStats(verifiedEntry.EntryId, EntryStats() with {PointsThisGw = 100});
-        var allVerifiedEntriesAfterUpdate = await _verifiedRepo.GetAllVerifiedEntries();
-        Assert.Single(allVerifiedEntriesAfterUpdate);
-    }
-
-    [Fact]
     public async Task TestInsertWithOutFplData()
     {
         await _store.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1"});
@@ -265,16 +245,6 @@ public class RedisIntegrationTests : IAsyncLifetime
         var sub1NotUpdated = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
         Assert.Single(sub1NotUpdated.Subscriptions);
         Assert.Equal(Data.Discord.EventSubscription.All, sub1NotUpdated.Subscriptions.First());
-    }
-
-    private static VerifiedEntry SomeEntry()
-    {
-        return new VerifiedEntry(1, "fullname", "entryteamname", VerifiedEntryType.Footballer);
-    }
-
-    private static VerifiedEntryStats EntryStats()
-    {
-        return new VerifiedEntryStats(1, 2, 3, 50, "", "", "", 1);
     }
 
 }

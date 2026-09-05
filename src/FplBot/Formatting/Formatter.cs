@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using Fpl.Client.Models;
 using Fpl.Search.Models;
 using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.VerifiedEntries.Data.Models;
 
 namespace FplBot.Formatting;
 
@@ -491,54 +490,7 @@ public static class Formatter
 
     public static string FormatEntryItem(EntryItem entryItem, int? gameweek)
     {
-        return GetEntryLink(entryItem.Id, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})" + (entryItem.VerifiedType != null ? $" {GetVerifiedTypeEmoji(entryItem.VerifiedType)}" : null);
-    }
-
-    private static string GetVerifiedTypeEmoji(VerifiedEntryType? entryItemVerifiedType)
-    {
-        if (entryItemVerifiedType == null)
-        {
-            return null;
-        }
-
-        var emojis = "☑️";
-
-        switch (entryItemVerifiedType)
-        {
-            case VerifiedEntryType.FootballerInPL:
-            case VerifiedEntryType.Footballer:
-                emojis += "⚽️";
-                break;
-            case VerifiedEntryType.ChessMaster:
-                emojis += "♟";
-                break;
-            case VerifiedEntryType.Podcaster:
-                emojis += "🎙";
-                break;
-            case VerifiedEntryType.CommunityFame:
-                emojis += "🐥";
-                break;
-            case VerifiedEntryType.Actor:
-                emojis += "🎭";
-                break;
-            case VerifiedEntryType.TvFace:
-                emojis += "📺";
-                break;
-            case VerifiedEntryType.Athlete:
-                emojis += "🏅";
-                break;
-            case VerifiedEntryType.PastWinner:
-                emojis += "🏆";
-                break;
-            case VerifiedEntryType.Unknown:
-                break;
-            case null:
-                break;
-            default:
-                break;
-        }
-
-        return emojis;
+        return GetEntryLink(entryItem.Id, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})";
     }
 
     public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)

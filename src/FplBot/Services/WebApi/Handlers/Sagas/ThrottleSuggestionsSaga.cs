@@ -2,7 +2,6 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.VerifiedEntries.Extensions;
 using MassTransit;
 
 namespace FplBot.WebApi.Handlers.Sagas;
@@ -188,11 +187,11 @@ public class AggregatedSuggestionsHandler : IConsumer<PublishAggregatedEntrySugg
         {
             var entry = await _entryClient.Get(message.EntryId);
             var settings = await _settings.GetGlobalSettings();
-            var player = settings.Players.Get(message.PlayerId);
+            var player = settings.Players.FirstOrDefault(p => p.Id == message.PlayerId);
             if (player != null)
             {
-                var team = settings.Teams.Get(player.TeamId);
-                text = $"{Link(entry)} for {player.FullName} ({team.ShortName}){Counting(message.SuggestionCount)}";
+                var team = settings.Teams.FirstOrDefault(t => t.Id == player.TeamId);
+                text = $"{Link(entry)} for {player.FullName} ({team?.ShortName}){Counting(message.SuggestionCount)}";
             }
             else
             {

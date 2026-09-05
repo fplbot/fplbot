@@ -2,7 +2,6 @@ using Fpl.Search.Data.Repositories;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Discord.Data;
-using FplBot.VerifiedEntries.Data.Repositories;
 using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
@@ -10,7 +9,7 @@ using Xunit.Abstractions;
 
 namespace FplBot.Tests;
 
-public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<VerifiedEntriesRepository>, ILogger<DiscordGuildStore>, ILogger<TokenStore>, ILogger<DiscordGuildRepository>
+public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<DiscordGuildStore>, ILogger<TokenStore>, ILogger<DiscordGuildRepository>
 {
     private readonly ITestOutputHelper _helper;
 

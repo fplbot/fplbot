@@ -10,8 +10,6 @@ using CronBackgroundServices;
 using Fpl.Search.Data;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Data.Repositories;
-using FplBot.VerifiedEntries.InternalCommands;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
@@ -47,7 +45,6 @@ public static class SearchServiceCollectionExtensions
         services.AddSingleton<SlowEntryIndexProvider>();
         services.AddSingleton<IIndexProvider<EntryItem>>(x => x.GetRequiredService<SlowEntryIndexProvider>());
         services.AddSingleton<ISingleEntryIndexProvider>(x => x.GetRequiredService<SlowEntryIndexProvider>());
-        services.AddSingleton<IVerifiedEntryIndexProvider>(x => x.GetRequiredService<SlowEntryIndexProvider>());
 
         services.AddSingleton<IIndexProvider<LeagueItem>, LeagueIndexProvider>();
         services.AddSingleton<IIndexingService, IndexingService>();
@@ -62,8 +59,6 @@ public static class SearchServiceCollectionExtensions
             connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
             return new ElasticClient(connectionSettings);
         });
-        services.AddMediatR(typeof(IndexEntryCommandHandler));
-
         return services;
     }
 

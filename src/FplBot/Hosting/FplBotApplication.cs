@@ -6,7 +6,6 @@ using FplBot.EventHandlers.Discord;
 using FplBot.EventHandlers.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
-using FplBot.VerifiedEntries;
 using FplBot.WebApi.Handlers.Commands;
 using FplBot.WebApi.Handlers.Events;
 using FplBot.WebApi.Handlers.Sagas;
@@ -121,9 +120,6 @@ public static class FplBotApplication
             {
                 x.AddConsumer<AppInstalledHandler>();
                 x.AddConsumer<IndexQueryCommandHandler>();
-                x.AddConsumer<GameweekJustBeganUpdateStatsHandler>();
-                x.AddConsumer<MatchDayStatusHandler>();
-                x.AddConsumer<SeedSelfishnessHandler>();
                 x.AddConsumer<AggregatedSuggestionsHandler>();
                 x.AddSagaStateMachine<ThrottleEntrySuggestionsSagaStateMachine, AcccumulatedSuggestionsSagaState>()
                     .InMemoryRepository();
@@ -184,7 +180,6 @@ public static class FplBotApplication
 
     private static void ConfigureSearchIndexer(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redisConn)
     {
-        services.AddVerifiedEntries(config);
         services.AddRecurringIndexer(config, redisConn);
     }
 

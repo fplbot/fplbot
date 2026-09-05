@@ -69,7 +69,6 @@ public static class WebApplicationBuilderExtensions
         services.Configure<AnalyticsOptions>(configuration);
         services.AddFplBotSlackWebEndpoints(configuration, redisConn);
         services.AddFplBotDiscordWebEndpoints(configuration, redisConn);
-        services.AddVerifiedEntries(configuration);
         services.AddMediatR(typeof(WebApplicationBuilderExtensions));
         services.AddIndexingServices(configuration, redisConn);
 

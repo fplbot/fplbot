@@ -9,28 +9,24 @@ public class IndexingService : IIndexingService
     private readonly IIndexingClient _indexingClient;
     private readonly IIndexProvider<EntryItem> _entryIndexProvider;
     private readonly IIndexProvider<LeagueItem> _leagueIndexProvider;
-    private readonly IVerifiedEntryIndexProvider _verifiedEntryIndexProvider;
     private readonly ISingleEntryIndexProvider _singleEntryIndexProvider;
 
     public IndexingService(
         IIndexingClient indexingClient,
         IIndexProvider<EntryItem> entryIndexProvider,
         IIndexProvider<LeagueItem> leagueIndexProvider,
-        IVerifiedEntryIndexProvider verifiedEntryIndexProvider,
         ISingleEntryIndexProvider singleEntryIndexProvider,
         ILogger<IndexingClient> logger)
     {
         _indexingClient = indexingClient;
         _entryIndexProvider = entryIndexProvider;
         _leagueIndexProvider = leagueIndexProvider;
-        _verifiedEntryIndexProvider = verifiedEntryIndexProvider;
         _singleEntryIndexProvider = singleEntryIndexProvider;
         _logger = logger;
     }
 
     public async Task IndexEntries(CancellationToken token, Action<int> pageProgress = null)
     {
-        await IndexVerifiedEntries(token);
         await Index(_entryIndexProvider, pageProgress, token);
     }
 
@@ -38,15 +34,6 @@ public class IndexingService : IIndexingService
     {
         var entryItem = await _singleEntryIndexProvider.GetSingleEntryToIndex(entryId);
         await _indexingClient.Index(new[] {entryItem}, _singleEntryIndexProvider.IndexName, token);
-    }
-
-    private async Task IndexVerifiedEntries(CancellationToken token)
-    {
-        var verifiedEntriesToIndex = await _verifiedEntryIndexProvider.GetAllVerifiedEntriesToIndex();
-        if (verifiedEntriesToIndex.Any())
-        {
-            await _indexingClient.Index(verifiedEntriesToIndex, _verifiedEntryIndexProvider.IndexName, token);
-        }
     }
 
     public async Task IndexLeagues(CancellationToken token, Action<int> pageProgress = null)
