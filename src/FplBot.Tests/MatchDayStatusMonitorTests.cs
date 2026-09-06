@@ -106,7 +106,7 @@ public class MatchDayStatusMonitorTests
         Assert.IsType<MatchdayMatchPointsAdded>(Mediator.PublishedMessages[0].Message);
     }
 
-    public MatchDayStatusMonitor CreateMatchDayStatusMonitor( )
+    private MatchDayStatusMonitor CreateMatchDayStatusMonitor( )
     {
         return new(EventStatusClient, new TestScopeFactory(Mediator), A.Fake<ILogger<MatchDayStatusMonitor>>());
     }
@@ -140,7 +140,7 @@ public class MatchDayStatusMonitorTests
             return new List<EventStatus> { EventStatusWithoutAnythingAdded() with { PointsStatus = EventStatusConstants.PointStatus.Ready} };
         }
 
-        public static EventStatus EventStatusWithoutAnythingAdded()
+        private static EventStatus EventStatusWithoutAnythingAdded()
         {
             return new()
             {
