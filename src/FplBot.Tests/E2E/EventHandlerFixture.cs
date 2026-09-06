@@ -1,4 +1,3 @@
-using AlmostServiceBus.TestHost;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -30,9 +29,7 @@ namespace FplBot.Tests.E2E;
 
 public class EventHandlerFixture : IAsyncLifetime
 {
-    private readonly RedisContainer _redis = new RedisBuilder().Build();
-    // Fixed port so the emulator also binds port 5300 for the management API (required by Azure SDK dev emulator mode)
-    private readonly ServiceBusEmulatorFixture _asb = new ServiceBusEmulatorFixture(publicPort: 5672);
+    private readonly RedisContainer _redis = new RedisBuilder("redis:latest").Build();
     private IHost _host;
     private ConnectionMultiplexer _multiplexer;
 
@@ -41,7 +38,7 @@ public class EventHandlerFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        await Task.WhenAll(_redis.StartAsync(), _asb.StartAsync());
+        await _redis.StartAsync();
 
         var redisConnStr = _redis.GetConnectionString();
         _multiplexer = await ConnectionMultiplexer.ConnectAsync(redisConnStr + ",allowAdmin=true");
@@ -116,11 +113,7 @@ public class EventHandlerFixture : IAsyncLifetime
                 services.AddMassTransit(x =>
                 {
                     new EventHandlersService().ConfigureMassTransit(x);
-                    x.UsingAzureServiceBus((ctx, bus) =>
-                    {
-                        bus.Host(_asb.ConnectionString);
-                        bus.ConfigureEndpoints(ctx);
-                    });
+                    x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
                 });
             })
             .Build();
@@ -142,7 +135,6 @@ public class EventHandlerFixture : IAsyncLifetime
         _host.Dispose();
         _multiplexer?.Dispose();
         await _redis.DisposeAsync();
-        await _asb.DisposeAsync();
     }
 
     private ISlackClient BuildCapturingSlackClient()

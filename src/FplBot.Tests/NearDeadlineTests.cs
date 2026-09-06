@@ -7,7 +7,6 @@ using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.Logging;
-using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
