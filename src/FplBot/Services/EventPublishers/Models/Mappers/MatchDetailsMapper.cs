@@ -1,3 +1,4 @@
+using Fpl.PulseLive;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace Fpl.EventPublishers.Models.Mappers;

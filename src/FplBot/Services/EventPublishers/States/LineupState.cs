@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.Abstractions;
+using Fpl.PulseLive;
 using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;

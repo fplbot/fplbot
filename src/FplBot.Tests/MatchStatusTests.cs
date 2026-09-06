@@ -1,7 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.Abstractions;
+using Fpl.PulseLive;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;

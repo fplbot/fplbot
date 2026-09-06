@@ -1,4 +1,4 @@
-namespace Fpl.EventPublishers.Abstractions;
+namespace Fpl.PulseLive;
 
 public interface IPulseLiveClient
 {

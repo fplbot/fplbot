@@ -1,4 +1,4 @@
-using Fpl.EventPublishers;
+using Fpl.PulseLive;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests;

@@ -1,8 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Fpl.EventPublishers.Abstractions;
 
-namespace Fpl.EventPublishers;
+namespace Fpl.PulseLive;
 
 internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
 {
