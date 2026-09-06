@@ -13,9 +13,9 @@ public class GetUpdatedFixtureEventsTests
         AssertEmpty(new List<Fixture>(), null);
         AssertEmpty(null, new List<Fixture>());
 
-        void AssertEmpty(ICollection<Fixture> latest, ICollection<Fixture> current)
+        void AssertEmpty(ICollection<Fixture>? latest, ICollection<Fixture>? current)
         {
-            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, new List<Player>(), new List<Team>());
+            var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest!, current!, new List<Player>(), new List<Team>());
             Assert.Empty(events);
         }
     }

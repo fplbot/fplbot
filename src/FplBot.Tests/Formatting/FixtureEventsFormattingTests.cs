@@ -155,8 +155,8 @@ public class FixtureEventsFormattingTests
             (
                 new FixtureScore
                 (
-                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name, TestBuilder.HomeTeam().ShortName),
-                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name, TestBuilder.AwayTeam().ShortName),
+                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name!, TestBuilder.HomeTeam().ShortName!),
+                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name!, TestBuilder.AwayTeam().ShortName!),
                     85,
                     1,
                     0
@@ -182,8 +182,8 @@ public class FixtureEventsFormattingTests
             (
                 new FixtureScore
                 (
-                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name, TestBuilder.HomeTeam().ShortName),
-                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name, TestBuilder.AwayTeam().ShortName),
+                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name!, TestBuilder.HomeTeam().ShortName!),
+                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name!, TestBuilder.AwayTeam().ShortName!),
                     66,
                     1,
                     0
@@ -204,8 +204,8 @@ public class FixtureEventsFormattingTests
             new(
                 new FixtureScore
                 (
-                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name, TestBuilder.HomeTeam().ShortName),
-                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name, TestBuilder.AwayTeam().ShortName),
+                    new FixtureTeam(fixture.HomeTeamId, TestBuilder.HomeTeam().Name!, TestBuilder.HomeTeam().ShortName!),
+                    new FixtureTeam(fixture.AwayTeamId, TestBuilder.AwayTeam().Name!, TestBuilder.AwayTeam().ShortName!),
                     66,
                     1,
                     0

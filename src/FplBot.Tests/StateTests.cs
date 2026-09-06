@@ -12,7 +12,7 @@ namespace FplBot.Tests;
 
 public class StateTests
 {
-    private static TestPublishEndpoint _messageSession;
+    private static TestPublishEndpoint _messageSession = null!;
 
     [Fact]
     public async Task DoesNotCrashWithNoDataReturned()

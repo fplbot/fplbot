@@ -22,9 +22,9 @@ namespace FplBot.Tests.Helpers;
 
 public static class Factory
 {
-    public static T Create<T>(ITestOutputHelper logger = null)
+    public static T Create<T>(ITestOutputHelper? logger = null) where T : notnull
     {
-        return BuildServiceProvider(logger).GetService<T>();
+        return BuildServiceProvider(logger).GetRequiredService<T>();
     }
 
     public static IEnumerable<IHandleAppMentions> GetAllHandlers(ITestOutputHelper logger)
@@ -37,7 +37,7 @@ public static class Factory
         return GetAllHandlers(logger).First(h => h is T);
     }
 
-    private static ServiceProvider BuildServiceProvider(ITestOutputHelper logger)
+    private static ServiceProvider BuildServiceProvider(ITestOutputHelper? logger)
     {
         var config = new ConfigurationBuilder();
         config.AddJsonFile("appsettings.json", optional: true);
@@ -71,7 +71,7 @@ public static class Factory
         return provider;
     }
 
-    public static ISlackClient SlackClient { get; set; }
+    public static ISlackClient SlackClient { get; set; } = null!;
 
     private static void Replace<T>(this ServiceCollection services, T replacement) where T : class
     {
@@ -114,7 +114,7 @@ internal class DontCareRepo : ITokenStore
 {
     public Task<Workspace> Delete(string token)
     {
-        return Task.FromResult<Workspace>(null);
+        return Task.FromResult<Workspace>(null!);
     }
 
     public Task Insert(Workspace slackTeam)

@@ -10,7 +10,7 @@ namespace FplBot.Tests;
 
 public class PlayerUpdatesRecurringActionTests
 {
-    private static TestPublishEndpoint _messageSession;
+    private static TestPublishEndpoint _messageSession = null!;
 
     [Fact]
     public async Task WithPriceIncrease()

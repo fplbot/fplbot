@@ -18,12 +18,12 @@ public class RedisIntegrationTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _helper;
     private readonly RedisContainer _redisContainer;
-    private SlackTeamRepository _repo;
-    private LeagueIndexRedisBookmarkProvider _bookmarkProvider;
-    private IServer _server;
-    private DiscordGuildRepository _guildRepo;
-    private DiscordGuildStore _guildStore;
-    private TokenStore _store;
+    private SlackTeamRepository _repo = null!;
+    private LeagueIndexRedisBookmarkProvider _bookmarkProvider = null!;
+    private IServer _server = null!;
+    private DiscordGuildRepository _guildRepo = null!;
+    private DiscordGuildStore _guildStore = null!;
+    private TokenStore _store = null!;
 
     public RedisIntegrationTests(ITestOutputHelper helper)
     {
@@ -145,7 +145,7 @@ public class RedisIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task GetTeamWithNullSubs_ReturnsEmptySubsList()
     {
-        await _store.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null});
+        await _store.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null!});
         var team = await _repo.GetTeam("teamId1");
         Assert.Empty(team.Subscriptions);
     }
@@ -153,7 +153,7 @@ public class RedisIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task GetTeamWithNullSubs_UpdateToEmptyList_ReturnsEmptySubsList()
     {
-        await _store.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null});
+        await _store.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null!});
         await _repo.GetTeam("teamId1");
         await _repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { });
         var updated = await _repo.GetTeam("teamId1");

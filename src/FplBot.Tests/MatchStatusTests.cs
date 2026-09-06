@@ -11,7 +11,7 @@ namespace FplBot.Tests;
 
 public class MatchStatusTests
 {
-    private TestPublishEndpoint _session;
+    private TestPublishEndpoint _session = null!;
 
     [Fact]
     public async Task DoesNotEmitInInitPhase()

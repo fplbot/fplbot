@@ -107,7 +107,7 @@ public class InjuryFormattingTests
     [Fact]
     public void ErronousUpdateHandling()
     {
-        var change = Formatter.Change(new InjuredPlayerUpdate(null, null, null));
+        var change = Formatter.Change(new InjuredPlayerUpdate(null!, null!, null!));
         Assert.Null(change);
     }
 

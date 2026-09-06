@@ -8,7 +8,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
 {
     private readonly EventHandlerFixture _fixture;
     private readonly ITestOutputHelper _output;
-    private string _teamId;
+    private string? _teamId;
 
     public SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputHelper output)
     {
@@ -28,7 +28,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     [Fact]
     public async Task InjuryUpdate_WorkspaceSubscribedToInjuryUpdates_ReceivesSlackMessage()
     {
-        await SeedTeam(_teamId, "#injuries", EventSubscription.InjuryUpdates);
+        await SeedTeam(_teamId!, "#injuries", EventSubscription.InjuryUpdates);
 
         await _fixture.Bus.Publish(new InjuryUpdateOccured(new[]
         {
@@ -48,7 +48,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     [Fact]
     public async Task InjuryUpdate_WorkspaceNotSubscribed_NoSlackMessage()
     {
-        await SeedTeam(_teamId, "#main", EventSubscription.Standings);
+        await SeedTeam(_teamId!, "#main", EventSubscription.Standings);
 
         await _fixture.Bus.Publish(new InjuryUpdateOccured(new[]
         {
@@ -65,7 +65,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     [Fact]
     public async Task PriceChange_WorkspaceSubscribedToPriceChanges_ReceivesSlackMessage()
     {
-        await SeedTeam(_teamId, "#prices", EventSubscription.PriceChanges);
+        await SeedTeam(_teamId!, "#prices", EventSubscription.PriceChanges);
 
         await _fixture.Bus.Publish(new PlayersPriceChanged(new List<PlayerWithPriceChange>
         {
@@ -89,7 +89,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     [Fact]
     public async Task PriceChange_WorkspaceSubscribedToOtherEvents_NoSlackMessage()
     {
-        await SeedTeam(_teamId, "#main", EventSubscription.Standings, EventSubscription.InjuryUpdates);
+        await SeedTeam(_teamId!, "#main", EventSubscription.Standings, EventSubscription.InjuryUpdates);
 
         await _fixture.Bus.Publish(new PlayersPriceChanged(new List<PlayerWithPriceChange>
         {
@@ -113,7 +113,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         var subscribedTeamId = _teamId;
         var unsubscribedTeamId = Guid.NewGuid().ToString("N");
 
-        await SeedTeam(subscribedTeamId, "#injuries", EventSubscription.InjuryUpdates);
+        await SeedTeam(subscribedTeamId!, "#injuries", EventSubscription.InjuryUpdates);
         await SeedTeam(unsubscribedTeamId, "#main", EventSubscription.Standings);
 
         await _fixture.Bus.Publish(new InjuryUpdateOccured(new[]

@@ -30,11 +30,11 @@ namespace FplBot.Tests.E2E;
 public class EventHandlerFixture : IAsyncLifetime
 {
     private readonly RedisContainer _redis = new RedisBuilder("redis:latest").Build();
-    private IHost _host;
-    private ConnectionMultiplexer _multiplexer;
+    private IHost _host = null!;
+    private ConnectionMultiplexer _multiplexer = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
-    public TokenStore Store { get; private set; }
+    public TokenStore Store { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
@@ -69,7 +69,7 @@ public class EventHandlerFixture : IAsyncLifetime
             });
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["REDIS_URL"] = redisUrl,
                 ["DiscordAppId"] = "test",
@@ -96,7 +96,7 @@ public class EventHandlerFixture : IAsyncLifetime
                 services.AddSingleton<IEventStatusClient>(A.Fake<IEventStatusClient>());
 
                 // Discord and Slack services (EventHandlersService.Configure calls AddSlackServices internally)
-                new EventHandlersService().Configure(services, config, _multiplexer, null);
+                new EventHandlersService().Configure(services, config, _multiplexer, null!);
 
                 // Replace the real ISlackClientBuilder with the capturing fake — must come AFTER Configure()
                 // because Configure() calls AddSlackServices() which re-registers the real builder.
@@ -144,7 +144,7 @@ public class EventHandlerFixture : IAsyncLifetime
         A.CallTo(() => fakeSlackClient.ChatPostMessage(A<ChatPostMessageRequest>._))
             .ReturnsLazily(call =>
             {
-                SlackCapture.Record(call.Arguments.Get<ChatPostMessageRequest>(0));
+                SlackCapture.Record(call.Arguments.Get<ChatPostMessageRequest>(0)!);
                 return Task.FromResult(new ChatPostMessageResponse { Ok = true, ts = "ts123" });
             });
 

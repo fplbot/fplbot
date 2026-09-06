@@ -18,7 +18,7 @@ public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRed
         _helper = helper;
     }
 
-    public IDisposable BeginScope<TState>(TState state)
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
         throw new NotImplementedException();
     }
@@ -28,7 +28,7 @@ public class SimpleLogger : ILogger<SlackTeamRepository>, ILogger<LeagueIndexRed
         return true;
     }
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         _helper.WriteLine(formatter(state, exception));
     }
