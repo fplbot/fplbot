@@ -345,3 +345,4 @@ local.settings.json
 .vscode/
 __azurite**
 __blobstorage__/
+.claude/
