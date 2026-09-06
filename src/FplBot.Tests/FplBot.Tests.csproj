@@ -23,7 +23,7 @@
         <PackageReference Include="FakeItEasy" Version="7.2.0" />
         <PackageReference Include="Testcontainers.Redis" Version="4.14.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
-        <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
+        <PackageReference Include="StackExchange.Redis" Version="3.1.31" />
     </ItemGroup>
 
     <ItemGroup Condition="Exists('appsettings.Local.json')">
