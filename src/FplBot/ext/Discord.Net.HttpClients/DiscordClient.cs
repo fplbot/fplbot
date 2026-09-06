@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Discord.Net.HttpClients
 {
-    public class DiscordClient
+    public class DiscordClient : IDiscordClient
     {
         private readonly HttpClient _client;
         private readonly IOptions<DiscordClientOptions> _options;

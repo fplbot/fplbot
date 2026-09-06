@@ -7,6 +7,7 @@ using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.RecurringActions;
@@ -14,14 +15,14 @@ namespace Fpl.EventPublishers.RecurringActions;
 public class PlayerUpdatesRecurringAction : IRecurringAction
 {
     private readonly IGlobalSettingsClient _settingsClient;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PlayerUpdatesRecurringAction> _logger;
     private ICollection<Player> _players;
 
-    public PlayerUpdatesRecurringAction(IGlobalSettingsClient settingsClient, IPublishEndpoint publishEndpoint, ILogger<PlayerUpdatesRecurringAction> logger)
+    public PlayerUpdatesRecurringAction(IGlobalSettingsClient settingsClient, IServiceScopeFactory scopeFactory, ILogger<PlayerUpdatesRecurringAction> logger)
     {
         _settingsClient = settingsClient;
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
         _logger = logger;
         _players = new List<Player>();
     }
@@ -59,17 +60,23 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
 
         _players = after;
 
-        if (priceChanges.Any())
-            await _publishEndpoint.Publish(new PlayersPriceChanged(priceChanges.ToList()));
+        if (priceChanges.Any() || injuryUpdates.Any() || newPlayers.Any() || transfers.Any())
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
-        if (injuryUpdates.Any())
-            await _publishEndpoint.Publish(new InjuryUpdateOccured(injuryUpdates));
+            if (priceChanges.Any())
+                await publish.Publish(new PlayersPriceChanged(priceChanges.ToList()));
 
-        if (newPlayers.Any())
-            await _publishEndpoint.Publish(new NewPlayersRegistered(newPlayers.ToList()));
+            if (injuryUpdates.Any())
+                await publish.Publish(new InjuryUpdateOccured(injuryUpdates));
 
-        if (transfers.Any())
-            await _publishEndpoint.Publish(new PremiershipPlayerTransferred(transfers.ToList()));
+            if (newPlayers.Any())
+                await publish.Publish(new NewPlayersRegistered(newPlayers.ToList()));
+
+            if (transfers.Any())
+                await publish.Publish(new PremiershipPlayerTransferred(transfers.ToList()));
+        }
     }
 
     private bool LogError(Exception e)

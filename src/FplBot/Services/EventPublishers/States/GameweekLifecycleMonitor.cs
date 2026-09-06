@@ -4,6 +4,7 @@ using Fpl.Client.Models;
 using Fpl.EventPublishers.Events;
 using MassTransit;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
@@ -13,16 +14,16 @@ internal class GameweekLifecycleMonitor
     private readonly IGlobalSettingsClient _gwClient;
     private readonly ILogger<GameweekLifecycleMonitor> _logger;
     private readonly IMediator _mediator;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     private Gameweek? _storedCurrent;
 
-    public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator, IPublishEndpoint publishEndpoint)
+    public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator, IServiceScopeFactory scopeFactory)
     {
         _gwClient = gwClient;
         _logger = logger;
         _mediator = mediator;
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task EveryOtherMinuteTick(CancellationToken token)
@@ -83,7 +84,8 @@ internal class GameweekLifecycleMonitor
 
         if (IsFirstGameweekChangingToCurrent(fetchedCurrent) || IsChangeToNewGameweek(fetchedCurrent))
         {
-            await _publishEndpoint.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
+            using (var scope = _scopeFactory.CreateScope())
+                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
             await _mediator.Publish(new GameweekJustBegan(fetchedCurrent), token);
             _storedCurrent = fetchedCurrent;
             return;
@@ -91,7 +93,8 @@ internal class GameweekLifecycleMonitor
 
         if (IsChangeToFinishedGameweek(fetchedCurrent))
         {
-            await _publishEndpoint.Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
+            using (var scope = _scopeFactory.CreateScope())
+                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
             await _mediator.Publish(new GameweekFinished(fetchedCurrent), token);
             _storedCurrent = fetchedCurrent;
             return;

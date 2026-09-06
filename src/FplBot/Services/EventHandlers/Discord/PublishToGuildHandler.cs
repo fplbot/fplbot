@@ -10,11 +10,11 @@ public class PublishToGuildHandler :
     IConsumer<PublishToGuildChannel>,
     IConsumer<PublishRichToGuildChannel>
 {
-    private readonly DiscordClient _discordClient;
+    private readonly IDiscordClient _discordClient;
     private readonly ILogger<PublishToGuildHandler> _logger;
     private readonly IHostEnvironment _env;
 
-    public PublishToGuildHandler(DiscordClient discordClient, ILogger<PublishToGuildHandler> logger, IHostEnvironment env)
+    public PublishToGuildHandler(IDiscordClient discordClient, ILogger<PublishToGuildHandler> logger, IHostEnvironment env)
     {
         _discordClient = discordClient;
         _logger = logger;

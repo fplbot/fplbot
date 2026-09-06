@@ -1,6 +1,8 @@
 using System;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Discord.Net.HttpClients
@@ -17,6 +19,11 @@ namespace Discord.Net.HttpClients
                 c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", token);
                 c.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("fplbot", "1"));
             });
+            services.AddTransient<IDiscordClient>(sp =>
+                new DevLoggingDiscordClient(
+                    sp.GetRequiredService<DiscordClient>(),
+                    sp.GetRequiredService<IHostEnvironment>(),
+                    sp.GetRequiredService<ILogger<DevLoggingDiscordClient>>()));
             return services;
         }
     }

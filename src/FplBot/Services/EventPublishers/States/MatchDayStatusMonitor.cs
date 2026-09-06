@@ -3,6 +3,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
@@ -10,14 +11,14 @@ namespace Fpl.EventPublishers.States;
 public class MatchDayStatusMonitor
 {
     private readonly IEventStatusClient _eventStatusClient;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
     private EventStatusResponse? _storedCurrent;
     private ILogger<MatchDayStatusMonitor> _logger;
 
-    public MatchDayStatusMonitor(IEventStatusClient eventStatusClient, IPublishEndpoint publishEndpoint, ILogger<MatchDayStatusMonitor> logger)
+    public MatchDayStatusMonitor(IEventStatusClient eventStatusClient, IServiceScopeFactory scopeFactory, ILogger<MatchDayStatusMonitor> logger)
     {
         _eventStatusClient = eventStatusClient;
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -46,27 +47,31 @@ public class MatchDayStatusMonitor
 
         _logger.LogInformation("Checking status");
         var bonusAdded = GetBonusAdded(fetched, _storedCurrent);
-
-        if (bonusAdded != null)
-        {
-            _logger.LogInformation("Bonus added!");
-            await _publishEndpoint.Publish(bonusAdded);
-        }
-
         var pointsReady = GetPointsReady(fetched, _storedCurrent);
+        var leaguesStatusChanged = fetched.Leagues != _storedCurrent.Leagues && fetched.Leagues == EventStatusConstants.LeaguesStatus.Updated;
 
-        if (pointsReady != null)
+        if (bonusAdded != null || pointsReady != null || leaguesStatusChanged)
         {
-            _logger.LogInformation("Points ready!");
-            await _publishEndpoint.Publish(pointsReady);
-        }
+            using var scope = _scopeFactory.CreateScope();
+            var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
-        var leaguesStatusChanged = fetched.Leagues != _storedCurrent.Leagues;
+            if (bonusAdded != null)
+            {
+                _logger.LogInformation("Bonus added!");
+                await publish.Publish(bonusAdded);
+            }
 
-        if (leaguesStatusChanged && fetched.Leagues == EventStatusConstants.LeaguesStatus.Updated)
-        {
-            _logger.LogInformation($"League status changed from ${_storedCurrent.Leagues} to ${fetched.Leagues}");
-            await _publishEndpoint.Publish(new MatchdayLeaguesUpdated());
+            if (pointsReady != null)
+            {
+                _logger.LogInformation("Points ready!");
+                await publish.Publish(pointsReady);
+            }
+
+            if (leaguesStatusChanged)
+            {
+                _logger.LogInformation($"League status changed from ${_storedCurrent.Leagues} to ${fetched.Leagues}");
+                await publish.Publish(new MatchdayLeaguesUpdated());
+            }
         }
 
         _storedCurrent = fetched;

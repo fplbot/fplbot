@@ -6,6 +6,7 @@ using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
@@ -14,14 +15,14 @@ internal class NearDeadLineMonitor
 {
     private readonly IGlobalSettingsClient _globalSettingsClient;
     private readonly DateTimeUtils _dateTimeUtils;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<NearDeadLineMonitor> _logger;
 
-    public NearDeadLineMonitor(IGlobalSettingsClient globalSettingsClient, DateTimeUtils dateTimeUtils, IPublishEndpoint publishEndpoint, ILogger<NearDeadLineMonitor> logger)
+    public NearDeadLineMonitor(IGlobalSettingsClient globalSettingsClient, DateTimeUtils dateTimeUtils, IServiceScopeFactory scopeFactory, ILogger<NearDeadLineMonitor> logger)
     {
         _globalSettingsClient = globalSettingsClient;
         _dateTimeUtils = dateTimeUtils;
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -46,11 +47,13 @@ internal class NearDeadLineMonitor
 
         if (next != null)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
             if (_dateTimeUtils.IsWithinMinutesToDate(60, next.Deadline))
-                await _publishEndpoint.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
+                await publish.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
 
             if (_dateTimeUtils.IsWithinMinutesToDate(24*60, next.Deadline))
-                await _publishEndpoint.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
+                await publish.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
         }
         else
         {

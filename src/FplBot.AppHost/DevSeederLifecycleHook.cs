@@ -1,6 +1,5 @@
-using Aspire.Hosting.ApplicationModel;
+using System.Net.Security;
 using Aspire.Hosting.Eventing;
-using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 
 internal static class DevSeeder
@@ -12,32 +11,40 @@ internal static class DevSeeder
 
     public static Task SeedAsync(ResourceEndpointsAllocatedEvent evt, CancellationToken ct)
     {
-        // Run seeding in the background so we don't block Aspire's startup event chain
-        _ = Task.Run(() => SeedInBackgroundAsync(evt, ct), CancellationToken.None);
+        _ = Task.Run(() => SeedInBackgroundAsync(ct), CancellationToken.None);
         return Task.CompletedTask;
     }
 
-    private static async Task SeedInBackgroundAsync(ResourceEndpointsAllocatedEvent evt, CancellationToken ct)
+    private static async Task SeedInBackgroundAsync(CancellationToken ct)
     {
-        var notifications = evt.Services.GetRequiredService<ResourceNotificationService>();
-        await notifications.WaitForResourceAsync("redis", KnownResourceStates.Running, ct);
+        try
+        {
+        Console.WriteLine("[DevSeeder] Starting background seed...");
 
-        var redis = evt.Resource as RedisResource;
-        if (redis == null) return;
-
-        var endpoint = redis.GetEndpoint("tcp");
-        var connectionString = $"{endpoint.Host}:{endpoint.Port},password=devpassword";
+        var options = new ConfigurationOptions
+        {
+            EndPoints = { "localhost:6379" },
+            Password = "devpassword",
+            Ssl = true,
+            SslClientAuthenticationOptions = _ => new SslClientAuthenticationOptions
+            {
+                TargetHost = "localhost",
+                RemoteCertificateValidationCallback = (_, _, _, _) => true,
+            },
+            AbortOnConnectFail = false,
+        };
 
         IConnectionMultiplexer? mux = null;
         for (var attempt = 0; attempt < 10; attempt++)
         {
             try
             {
-                mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+                mux = await ConnectionMultiplexer.ConnectAsync(options);
                 break;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[DevSeeder] Attempt {attempt} failed: {ex.Message}");
                 await Task.Delay(500, ct);
             }
         }
@@ -53,6 +60,11 @@ internal static class DevSeeder
         await SeedDiscord(db);
 
         Console.WriteLine("[DevSeeder] Seeded fake Slack workspace and Discord guild into Redis.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DevSeeder] Unhandled exception: {ex}");
+        }
     }
 
     private static async Task SeedSlack(IDatabase db)
@@ -64,6 +76,7 @@ internal static class DevSeeder
             new HashEntry("teamName", "Dev Slack Workspace"),
             new HashEntry("subscriptions", AllSubs)
         ]);
+        Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK (league 12345, channel C0DEV000001).");
     }
 
     private static async Task SeedDiscord(IDatabase db)
@@ -71,6 +84,7 @@ internal static class DevSeeder
         await db.HashSetAsync("Guild-111222333444555666", [
             new HashEntry("name", "Dev Discord Guild")
         ]);
+        Console.WriteLine("[DevSeeder] Inserted Discord guild Guild-111222333444555666.");
 
         await db.HashSetAsync("GuildSubs-111222333444555666-Channel-999888777666555444", [
             new HashEntry("guildid", "111222333444555666"),
@@ -78,5 +92,6 @@ internal static class DevSeeder
             new HashEntry("leagueid", "12345"),
             new HashEntry("subs", AllSubs)
         ]);
+        Console.WriteLine("[DevSeeder] Inserted Discord subscription GuildSubs-111222333444555666-Channel-999888777666555444 (league 12345).");
     }
 }
