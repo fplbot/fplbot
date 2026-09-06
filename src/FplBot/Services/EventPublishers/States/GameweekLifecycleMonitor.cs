@@ -1,9 +1,7 @@
 using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.Events;
 using MassTransit;
-using MediatR;
 
 namespace Fpl.EventPublishers.States;
 
@@ -11,17 +9,19 @@ internal class GameweekLifecycleMonitor
 {
     private readonly IGlobalSettingsClient _gwClient;
     private readonly ILogger<GameweekLifecycleMonitor> _logger;
-    private readonly IMediator _mediator;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IFixtureState _fixtureState;
+    private readonly ILineupState _lineupState;
 
     private Gameweek? _storedCurrent;
 
-    public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator, IServiceScopeFactory scopeFactory)
+    public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IServiceScopeFactory scopeFactory, IFixtureState fixtureState, ILineupState lineupState)
     {
         _gwClient = gwClient;
         _logger = logger;
-        _mediator = mediator;
         _scopeFactory = scopeFactory;
+        _fixtureState = fixtureState;
+        _lineupState = lineupState;
     }
 
     public async Task EveryOtherMinuteTick(CancellationToken token)
@@ -49,16 +49,17 @@ internal class GameweekLifecycleMonitor
             _storedCurrent = fetchedCurrent;
             if (fetchedCurrent != null)
             {
-                await _mediator.Publish(new GameweekMonitoringStarted(fetchedCurrent), token);
+                await _fixtureState.Reset(fetchedCurrent.Id);
+                await _lineupState.Reset(fetchedCurrent.IsFinished ? fetchedCurrent.Id + 1 : fetchedCurrent.Id);
                 return;
             }
             else
             {
-
                 _storedCurrent = fetchedNext;
                 if (fetchedNext != null)
                 {
-                    await _mediator.Publish(new GameweekMonitoringStarted(fetchedNext), token);
+                    await _fixtureState.Reset(fetchedNext.Id);
+                    await _lineupState.Reset(fetchedNext.IsFinished ? fetchedNext.Id + 1 : fetchedNext.Id);
                     return;
                 }
             }
@@ -83,8 +84,9 @@ internal class GameweekLifecycleMonitor
         if (IsFirstGameweekChangingToCurrent(fetchedCurrent) || IsChangeToNewGameweek(fetchedCurrent))
         {
             using (var scope = _scopeFactory.CreateScope())
-                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new (fetchedCurrent.Id)));
-            await _mediator.Publish(new GameweekJustBegan(fetchedCurrent), token);
+                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new(fetchedCurrent.Id)));
+            await _fixtureState.Reset(fetchedCurrent.Id);
+            await _lineupState.Reset(fetchedCurrent.Id);
             _storedCurrent = fetchedCurrent;
             return;
         }
@@ -92,29 +94,32 @@ internal class GameweekLifecycleMonitor
         if (IsChangeToFinishedGameweek(fetchedCurrent))
         {
             using (var scope = _scopeFactory.CreateScope())
-                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new (fetchedCurrent.Id)));
-            await _mediator.Publish(new GameweekFinished(fetchedCurrent), token);
+                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new(fetchedCurrent.Id)));
             _storedCurrent = fetchedCurrent;
             return;
         }
 
         if (!_storedCurrent!.IsFinished && _storedCurrent.IsCurrent)
         {
-            await _mediator.Publish(new GameweekCurrentlyOnGoing(_storedCurrent), token);
+            await _fixtureState.Refresh(_storedCurrent.Id);
+            await _lineupState.Refresh(_storedCurrent.Id);
             _storedCurrent = fetchedCurrent;
             return;
         }
 
-        if(_storedCurrent.IsFinished && _storedCurrent.IsCurrent)
+        if (_storedCurrent.IsFinished && _storedCurrent.IsCurrent)
         {
-            await _mediator.Publish(new GameweekCurrentlyFinished(_storedCurrent), token);
+            await _fixtureState.Refresh(_storedCurrent.Id);
+            if (_storedCurrent.Id < 38)
+                await _lineupState.Refresh(_storedCurrent.Id + 1);
+            _lineupState.LogState();
             _storedCurrent = fetchedCurrent;
             return;
         }
 
-        if(_storedCurrent.IsNext && _storedCurrent.Id == 1)
+        if (_storedCurrent.IsNext && _storedCurrent.Id == 1)
         {
-            await _mediator.Publish(new CurrentlyPreseason(), token);
+            await _lineupState.Refresh(1);
             _storedCurrent = fetchedCurrent;
             return;
         }

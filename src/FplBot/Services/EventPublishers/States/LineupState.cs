@@ -11,7 +11,7 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-internal class LineupState
+internal class LineupState : ILineupState
 {
     private readonly IFixtureClient _fixtureClient;
     private readonly IPulseLiveClient _pulseClient;

@@ -46,8 +46,6 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
 
     <!-- Misc -->
-    <PackageReference Include="MediatR" Version="9.0.0" />
-    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="MinimalHttpLogger" Version="0.1.2" />
   </ItemGroup>
 

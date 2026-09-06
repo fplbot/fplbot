@@ -1,11 +1,9 @@
 using CronBackgroundServices;
 using Fpl.EventPublishers;
 using Fpl.EventPublishers.Abstractions;
-using Fpl.EventPublishers.Events;
 using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.RecurringActions;
 using Fpl.EventPublishers.States;
-using MediatR;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;
@@ -16,9 +14,8 @@ public static class FplWorkerServiceCollectionExtensions
 
     public static IServiceCollection AddFplWorkers(this IServiceCollection services)
     {
-        services.AddMediatR(typeof(GameweekMonitoringStarted));
-        services.AddSingleton<FixtureState>();
-        services.AddSingleton<LineupState>();
+        services.AddSingleton<IFixtureState, FixtureState>();
+        services.AddSingleton<ILineupState, LineupState>();
         services.AddSingleton<DateTimeUtils>();
         services.AddHttpClient<IPulseLiveClient, PulseLiveClient>().ConfigureHttpClient(client =>
         {

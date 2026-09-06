@@ -5,6 +5,19 @@
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Docker (for local infrastructure via Aspire AppHost)
 
+## Architecture overview
+
+FplBot runs as a single .NET project (`src/FplBot/`) deployed as four Docker containers, each handling a different role:
+
+| Service | Role |
+|---|---|
+| `WebApi` | HTTP: Slack/Discord webhooks, OAuth, slash commands |
+| `EventHandlers` | Consumes events from the bus → posts messages to Slack/Discord |
+| `EventPublishers` | Background jobs polling FPL API and publishing events |
+| `SearchIndexer` | Syncs FPL data to Elasticsearch for search |
+
+Events flow through MassTransit with Azure Service Bus. See `CLAUDE.md` for the full architecture and patterns.
+
 ## Local development
 
 Start the local infrastructure (Redis + service bus emulator) via the Aspire AppHost:
@@ -13,21 +26,34 @@ Start the local infrastructure (Redis + service bus emulator) via the Aspire App
 ./src/devenv.sh
 ```
 
-Then add an `appsettings.Local.json` file (gitignored) in the relevant service directory with the config below, or set equivalent environment variables.
+Then run the app:
 
-### Configuration
+```shell
+dotnet run --project src/FplBot
+```
 
-| Key | Description |
-|-----|-------------|
-| `CLIENT_ID` | Slack app client ID |
-| `CLIENT_SECRET` | Slack app client secret |
-| `DISCORD_CLIENT_ID` | Discord app client ID |
-| `DISCORD_CLIENT_SECRET` | Discord app client secret |
-| `DISCORD_PUBLICKEY` | Discord app public key |
-| `DISCORD_TOKEN` | Discord bot token |
-| `DiscordAppId` | Discord application ID |
+**No secrets are needed to run locally.** All keys have safe development defaults in `src/FplBot/appsettings.json`. For integration with real Slack/Discord apps, add an `appsettings.Local.json` (gitignored) in `src/FplBot/` with the values below, or set equivalent environment variables.
 
-When using the Aspire AppHost, `ConnectionStrings__redis` and `ConnectionStrings__servicebus` are injected automatically.
+When using the Aspire AppHost, `REDIS_URL` and `ASB_CONNECTIONSTRING` are injected automatically.
+
+### Configuration reference
+
+| Key | Description | Dev default |
+|---|---|---|
+| `REDIS_URL` | Redis connection string | `rediss://:devpassword@localhost:6379` (Aspire) |
+| `ASB_CONNECTIONSTRING` | Azure Service Bus connection | Local emulator (Aspire) |
+| `CLIENT_ID` | Slack app client ID | `dev` |
+| `CLIENT_SECRET` | Slack app client secret | `dev` |
+| `CLIENT_SIGNING_SECRET` | Slack signing secret (for request verification) | `dev` |
+| `SlackAppId` | Slack application ID | `dev` |
+| `SlackToken_FplBot_Workspace` | Bot token for internal workspace | `dev` |
+| `DISCORD_CLIENT_ID` | Discord app client ID | `dev` |
+| `DISCORD_CLIENT_SECRET` | Discord app client secret | `dev` |
+| `DISCORD_PUBLICKEY` | Discord app public key (interaction verification) | `dev` |
+| `DISCORD_TOKEN` | Discord bot token | `dev` |
+| `DiscordAppId` | Discord application ID | `dev` |
+| `fpl.Login` | FPL API login email | `dev` |
+| `fpl.Password` | FPL API password | `dev` |
 
 ## Running tests
 
@@ -40,6 +66,15 @@ Or directly:
 ```shell
 dotnet test src
 ```
+
+## Adding a feature
+
+For the two most common tasks, use the Claude skill files in `src/.claude/commands/`:
+
+- **New notification type** (e.g. alert on a new FPL event): `add-notification.md`
+- **New chat command** (e.g. `@fplbot <something>`): `add-command-handler.md`
+
+Or see `CLAUDE.md` at the repo root for the full architecture reference.
 
 ## Building and deploying
 
