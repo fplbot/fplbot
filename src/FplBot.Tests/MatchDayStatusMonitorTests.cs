@@ -1,11 +1,10 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.RecurringActions;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
@@ -112,11 +111,11 @@ public class MatchDayStatusMonitorTests
 
     public MatchDayStatusMonitor CreateMatchDayStatusMonitor( )
     {
-        return new(EventStatusClient, Mediator, A.Fake<ILogger<MatchDayStatusMonitor>>());
+        return new(EventStatusClient, new TestScopeFactory(Mediator), A.Fake<ILogger<MatchDayStatusMonitor>>());
     }
 
     private IEventStatusClient EventStatusClient = A.Fake<IEventStatusClient>();
-    private TestableMessageSession Mediator = new();
+    private TestPublishEndpoint Mediator = new();
 
     private static class Some
     {

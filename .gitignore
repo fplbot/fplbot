@@ -289,6 +289,12 @@ paket-files/
 
 # JetBrains Rider
 .idea/
+!src/.idea/
+!src/.idea/.idea.FplBot/
+!src/.idea/.idea.FplBot/.idea/
+src/.idea/.idea.FplBot/.idea/*
+!src/.idea/.idea.FplBot/.idea/runConfigurations/
+!src/.idea/.idea.FplBot/.idea/runConfigurations/*.xml
 *.sln.iml
 
 # CodeRush
@@ -339,3 +345,4 @@ local.settings.json
 .vscode/
 __azurite**
 __blobstorage__/
+.claude/

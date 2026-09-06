@@ -1,0 +1,20 @@
+{
+  "_comment": "Manifest for FplBotAdminDevelop — the 'Sign in with Slack' app for the admin panel. App ID: A0BUW9JBL0P. Credentials live under admin:{} in appsettings.json. To recreate: run src/create-slack-dev-app.py --admin",
+  "display_information": {
+    "name": "FplBotAdminDevelop"
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "http://localhost:1337/signin-slack"
+    ],
+    "scopes": {
+      "user": ["identity.basic", "identity.team"]
+    }
+  },
+  "settings": {
+    "interactivity": { "is_enabled": false },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

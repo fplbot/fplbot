@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="All Services" type="CompoundRunConfigurationType">
+    <toRun name="WebApi" type="DotNetProject" />
+    <toRun name="EventHandlers" type="DotNetProject" />
+    <toRun name="EventPublishers" type="DotNetProject" />
+    <toRun name="SearchIndexer" type="DotNetProject" />
+    <method v="2" />
+  </configuration>
+</component>

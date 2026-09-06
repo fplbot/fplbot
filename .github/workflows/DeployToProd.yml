@@ -8,86 +8,54 @@ jobs:
     name: deploy-to-prod
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: write
       deployments: write
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v3
+      - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
       - name: start deployment
-        uses: bobheadxi/deployments@v0.4.3
+        uses: bobheadxi/deployments@v1
         id: deployment
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: production
           ref: ${{ github.head_ref }}
-      - run: echo "ACTIONS_ALLOW_UNSECURE_COMMANDS=true" >> $GITHUB_ENV
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0
-        with:
-          versionSpec: "5.x"
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v0
-        with:
-          useConfigFile: true
-      - uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Build Function
-        run: dotnet build ./src/FplBot.Functions -o ./output -c Release /p:Version=${{ steps.gitversion.outputs.fullSemVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
-      - uses: pulumi/actions@v6
-        id: pulumi
-        with:
-          command: up
-          stack-name: Prod
-          work-dir: ./src/FplBot.Infrastructure
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      - name: Deploy function to prod
-        uses: Azure/functions-action@v1
-        id: fa
-        with:
-          app-name: ${{ steps.pulumi.outputs.FunctionName }}
-          package: './output'
+      - name: Set version
+        run: |
+          VERSION="$(date +%Y).$(date +%m).$(date +%d).${{ github.run_number }}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "INFOVERSION=$VERSION+${{ github.sha }}" >> $GITHUB_ENV
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Build docker images
-        run: |
-          docker build -t registry.heroku.com/blank-fplbot/web --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.web ./src
-          docker build -t registry.heroku.com/blank-fplbot/eventpublisher --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.eventpublisher ./src
-          docker build -t registry.heroku.com/blank-fplbot/indexer --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.indexer ./src
-          docker build -t registry.heroku.com/blank-fplbot/eventhandler --build-arg INFOVERSION=${{ steps.gitversion.outputs.informationalVersion }} --build-arg VERSION=${{ steps.gitversion.outputs.fullSemVer }} -f ./src/Dockerfile.eventhandler ./src
-      - uses: docker/login-action@v1
+        run: dotnet run --project src/Build -- docker-build
+        env:
+          INFOVERSION: ${{ env.INFOVERSION }}
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/login-action@v4
         with:
           registry: registry.heroku.com
           username: _
           password: ${{ secrets.HEROKU_TOKEN }}
-      - name: Push docker image to Heroku
-        run: |
-          docker push registry.heroku.com/blank-fplbot/web
-          docker push registry.heroku.com/blank-fplbot/eventpublisher
-          docker push registry.heroku.com/blank-fplbot/indexer
-          docker push registry.heroku.com/blank-fplbot/eventhandler
+      - name: Push docker images to Heroku
+        run: dotnet run --project src/Build -- docker-push-prod
       - name: Deploy to prod
+        run: dotnet run --project src/Build -- deploy-prod
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
-        run: heroku container:release web eventpublisher indexer eventhandler --app blank-fplbot
       - name: Create Release
         id: create_release
         continue-on-error: true
-        run: gh release create ${{ steps.gitversion.outputs.majorMinorPatch }} --generate-notes
+        run: gh release create ${{ env.VERSION }} --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: update deployment status
-        uses: bobheadxi/deployments@v0.4.3
+        uses: bobheadxi/deployments@v1
         if: always()
         with:
           step: finish

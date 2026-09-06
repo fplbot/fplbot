@@ -11,7 +11,7 @@ public class PulseLiveClientTests
         var client = CreateClient();
         var matchDetails = await client.GetMatchDetails(2645195); // fixture 1, GW1 2026/27, already played
         Assert.NotNull(matchDetails);
-        Assert.True(matchDetails.HasTeams());
+        Assert.True(matchDetails!.HasTeams());
         Assert.True(matchDetails.HasLineUps());
     }
 
@@ -22,7 +22,7 @@ public class PulseLiveClientTests
         var client = CreateClient();
         var matchDetails = await client.GetMatchDetails(2645198); // https://www.premierleague.com/en/match/2645198/hull-city-vs-manchester-united/overview
         Assert.NotNull(matchDetails);
-        Assert.True(matchDetails.HasTeams());
+        Assert.True(matchDetails!.HasTeams());
         Assert.False(matchDetails.HasLineUps());
     }
 

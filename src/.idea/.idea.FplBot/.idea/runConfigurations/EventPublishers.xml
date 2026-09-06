@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="EventPublishers" type="DotNetProject" factoryName=".NET Project">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/FplBot/FplBot.csproj" />
+    <option name="PROGRAM_PARAMETERS" value="--services EventPublishers" />
+    <option name="ENV_VARIABLES" value="DOTNET_ENVIRONMENT=Development" />
+    <method v="2" />
+  </configuration>
+</component>

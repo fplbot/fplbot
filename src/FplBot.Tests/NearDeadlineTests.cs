@@ -2,12 +2,10 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Helpers;
-using Fpl.EventPublishers.RecurringActions;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
 
 namespace FplBot.Tests;
 
@@ -121,11 +119,11 @@ public class NearDeadlineTests
         var gameweek2 = new Gameweek { IsCurrent = false, IsNext = false, Deadline = new DateTime(2021,8,22,10,0,0)};
         var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
         A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
 
-        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, session, dontCareLogger);
+        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, new TestScopeFactory(session), dontCareLogger);
 
         await handler.EveryMinuteTick();
 
@@ -141,11 +139,11 @@ public class NearDeadlineTests
         var gameweek2 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,22,10,0,0)};
         var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
         A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
-        var session = new TestableMessageSession();
+        var session = new TestPublishEndpoint();
         var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 21, 10, 0, 0) };
 
-        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, session, dontCareLogger);
+        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, new TestScopeFactory(session), dontCareLogger);
 
         await handler.EveryMinuteTick();
 

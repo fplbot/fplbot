@@ -9,21 +9,21 @@ public class StatHelperTests
     [Fact]
     public void NullFixtures_NoEvents()
     {
-        var events = FixtureDiffer.DiffFixtureStats(null, null, new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(null!, null!, new List<Player>());
         Assert.Empty(events);
     }
 
     [Fact]
     public void NullNewFixture_NoEvents()
     {
-        var events = FixtureDiffer.DiffFixtureStats(new Fixture(), null, new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(new Fixture(), null!, new List<Player>());
         Assert.Empty(events);
     }
 
     [Fact]
     public void NullOldFixture_NoEvents()
     {
-        var events = FixtureDiffer.DiffFixtureStats(null, new Fixture(), new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(null!, new Fixture(), new List<Player>());
         Assert.Empty(events);
     }
 

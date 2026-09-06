@@ -4,13 +4,13 @@ using Fpl.Client.Models;
 using Fpl.EventPublishers.RecurringActions;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
 public class PlayerUpdatesRecurringActionTests
 {
-    private static TestableMessageSession _messageSession;
+    private static TestPublishEndpoint _messageSession = null!;
 
     [Fact]
     public async Task WithPriceIncrease()
@@ -216,7 +216,7 @@ public class PlayerUpdatesRecurringActionTests
 
     private static PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient)
     {
-        _messageSession = new TestableMessageSession();
-        return new PlayerUpdatesRecurringAction(playerClient, _messageSession, A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
+        _messageSession = new TestPublishEndpoint();
+        return new PlayerUpdatesRecurringAction(playerClient, new TestScopeFactory(_messageSession), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
     }
 }

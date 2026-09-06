@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Build/Build.csproj" />
+  <Project Path="FplBot.AppHost/FplBot.AppHost.csproj" />
+  <Project Path="FplBot.Tests/FplBot.Tests.csproj" />
+  <Project Path="FplBot/FplBot.csproj" />
+</Solution>

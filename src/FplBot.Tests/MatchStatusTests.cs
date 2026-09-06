@@ -5,13 +5,13 @@ using Fpl.EventPublishers.Abstractions;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.Logging;
-using NServiceBus.Testing;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests;
 
 public class MatchStatusTests
 {
-    private TestableMessageSession _session;
+    private TestPublishEndpoint _session = null!;
 
     [Fact]
     public async Task DoesNotEmitInInitPhase()
@@ -92,8 +92,8 @@ public class MatchStatusTests
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
-        _session = new TestableMessageSession();
-        return new LineupState(fixtureClient, pulseFake, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
+        _session = new TestPublishEndpoint();
+        return new LineupState(fixtureClient, pulseFake, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateTwoNewLineupsScenario()
@@ -115,8 +115,8 @@ public class MatchStatusTests
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
-        _session = new TestableMessageSession();
-        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
+        _session = new TestPublishEndpoint();
+        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateFixture2RemovedScenario()
@@ -132,7 +132,7 @@ public class MatchStatusTests
         });
 
         var pulseClient = A.Fake<IPulseLiveClient>();
-       _session = new TestableMessageSession();
+       _session = new TestPublishEndpoint();
        var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
            {
@@ -140,6 +140,6 @@ public class MatchStatusTests
                Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }
            }
        );
-        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
     }
 }

@@ -1,0 +1,18 @@
+using FplBot.Messaging.Contracts.Events.v1;
+using MassTransit;
+
+namespace FplBot.WebApi.Endpoints.Test.RemovedFixtures;
+
+public static class TestRemovedFixture
+{
+    public static async Task<IResult> Get(IWebHostEnvironment env, IPublishEndpoint publishEndpoint)
+    {
+        if (env.IsProduction())
+            return TypedResults.Unauthorized();
+
+        var removedFixture = new RemovedFixture(1, new(1, "Arsenal", "ARS"), new(2, "Chelsea", "CHE"));
+        var message = new FixtureRemovedFromGameweek(1337, removedFixture);
+        await publishEndpoint.Publish(message);
+        return TypedResults.Accepted("", message);
+    }
+}
