@@ -4,6 +4,7 @@ using CronBackgroundServices;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
 using Fpl.Search;
+using FplBot.Config;
 using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Configurations;
@@ -23,6 +24,16 @@ public static class WebApplicationBuilderExtensions
 {
     public static void ConfigureWebApp(this IServiceCollection services, IConfiguration configuration, IHostEnvironment env, ConnectionMultiplexer redisConn)
     {
+        services.AddOptions<SlackOptions>()
+            .Bind(configuration)
+            .ValidateWithFluentValidation(new SlackOptionsValidator())
+            .ValidateOnStart();
+
+        services.AddOptions<DiscordWebOptions>()
+            .Bind(configuration)
+            .ValidateWithFluentValidation(new DiscordWebOptionsValidator())
+            .ValidateOnStart();
+
         services.AddRecurrer<GuildStatusChecker>();
 
         services.AddDataProtection()
@@ -66,7 +77,6 @@ public static class WebApplicationBuilderExtensions
         services.Configure<AnalyticsOptions>(configuration);
         services.AddFplBotSlackWebEndpoints(configuration, redisConn);
         services.AddFplBotDiscordWebEndpoints(configuration, redisConn);
-        services.AddMediatR(typeof(WebApplicationBuilderExtensions));
         services.AddIndexingServices(configuration, redisConn);
 
         services.AddAuthentication(options =>

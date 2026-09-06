@@ -1,20 +1,23 @@
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
 public class AppUninstaller : IUninstall
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public AppUninstaller(IPublishEndpoint publishEndpoint)
+    public AppUninstaller(IServiceScopeFactory scopeFactory)
     {
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task OnUninstalled(string teamId, string teamName)
     {
-        await _publishEndpoint.Publish(new AppUninstalled(teamId.ToUpper(), teamName));
+        using var scope = _scopeFactory.CreateScope();
+        var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        await publisher.Publish(new AppUninstalled(teamId.ToUpper(), teamName));
     }
 }

@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <!-- Messaging -->
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="MassTransit" Version="8.5.10" />
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.10" />
 

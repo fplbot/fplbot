@@ -1,5 +1,6 @@
 using System.Collections;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.Helpers;
 
@@ -71,6 +72,26 @@ public class TestPublishEndpoint : IPublishEndpoint
     }
 
     public ConnectHandle ConnectPublishObserver(IPublishObserver observer) => throw new NotImplementedException();
+}
+
+public class TestScopeFactory : IServiceScopeFactory
+{
+    private readonly TestPublishEndpoint _publisher;
+    public TestScopeFactory(TestPublishEndpoint publisher) => _publisher = publisher;
+
+    public IServiceScope CreateScope() => new TestScope(_publisher);
+
+    private class TestScope(TestPublishEndpoint publisher) : IServiceScope
+    {
+        public IServiceProvider ServiceProvider { get; } = new TestServiceProvider(publisher);
+        public void Dispose() { }
+    }
+
+    private class TestServiceProvider(TestPublishEndpoint publisher) : IServiceProvider
+    {
+        public object? GetService(Type serviceType) =>
+            serviceType == typeof(IPublishEndpoint) ? publisher : null;
+    }
 }
 
 public class PublishedMessageCollection : IEnumerable<TestPublishEndpoint.PublishedMessage>

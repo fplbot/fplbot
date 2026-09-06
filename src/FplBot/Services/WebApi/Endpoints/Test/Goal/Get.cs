@@ -1,19 +1,18 @@
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Microsoft.AspNetCore.Mvc;
 
 namespace FplBot.WebApi.Endpoints.Test.Goal;
 
 public static class TestGoal
 {
-    public static async Task<IActionResult> Get(IWebHostEnvironment env, IPublishEndpoint publishEndpoint, bool removed = false)
+    public static async Task<IResult> Get(IWebHostEnvironment env, IPublishEndpoint publishEndpoint, bool removed = false)
     {
         if (env.IsProduction())
-            return new UnauthorizedResult();
+            return TypedResults.Unauthorized();
 
         var message = FixtureEvents(StatType.GoalsScored, removed);
         await publishEndpoint.Publish(message);
-        return new AcceptedResult("", message);
+        return TypedResults.Accepted("", message);
     }
 
     private static FixtureEventsOccured FixtureEvents(StatType type, bool isRemoved)

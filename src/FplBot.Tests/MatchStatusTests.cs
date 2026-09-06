@@ -93,7 +93,7 @@ public class MatchStatusTests
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
         _session = new TestPublishEndpoint();
-        return new LineupState(fixtureClient, pulseFake, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, pulseFake, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateTwoNewLineupsScenario()
@@ -116,7 +116,7 @@ public class MatchStatusTests
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
         _session = new TestPublishEndpoint();
-        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
     }
 
     private LineupState CreateFixture2RemovedScenario()
@@ -140,6 +140,6 @@ public class MatchStatusTests
                Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }
            }
        );
-        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, _session, A.Fake<ILogger<LineupState>>());
+        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
     }
 }

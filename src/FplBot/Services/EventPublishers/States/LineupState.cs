@@ -8,6 +8,7 @@ using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
@@ -17,18 +18,18 @@ internal class LineupState
     private readonly IFixtureClient _fixtureClient;
     private readonly IPulseLiveClient _pulseClient;
     private readonly IGlobalSettingsClient _globalSettingsClient;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<LineupState> _logger;
     private readonly Dictionary<int, MatchDetails> _matchDetails;
     private ICollection<Fixture> _currentFixtures = new List<Fixture>();
     private Dictionary<int, string?> _teamShortNames = new();
 
-    public LineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient, IPublishEndpoint publishEndpoint, ILogger<LineupState> logger)
+    public LineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient, IServiceScopeFactory scopeFactory, ILogger<LineupState> logger)
     {
         _fixtureClient = fixtureClient;
         _pulseClient = pulseClient;
         _globalSettingsClient = globalSettingsClient;
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
         _logger = logger;
         _matchDetails = new Dictionary<int, MatchDetails>();
         _currentFixtures = new List<Fixture>();
@@ -112,7 +113,7 @@ internal class LineupState
                     var removedFixture = new RemovedFixture(currentFixture.Id,
                         new (homeTeam.Id, homeTeam.Name ?? string.Empty, homeTeam.ShortName ?? string.Empty),
                         new (awayTeam.Id, awayTeam.Name ?? string.Empty, awayTeam.ShortName ?? string.Empty));
-                    await _publishEndpoint.Publish(new FixtureRemovedFromGameweek(gw, removedFixture));
+                    await PublishAsync(new FixtureRemovedFromGameweek(gw, removedFixture));
                 }
                 else
                 {
@@ -145,7 +146,7 @@ internal class LineupState
 
                         if (lineups != null)
                         {
-                            await _publishEndpoint.Publish(lineups);
+                            await PublishAsync(lineups);
                         }
                         else
                         {
@@ -188,6 +189,13 @@ internal class LineupState
         }
 
         return true;
+    }
+
+    private async Task PublishAsync<T>(T message) where T : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        await publisher.Publish(message);
     }
 
     public void LogState()

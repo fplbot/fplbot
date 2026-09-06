@@ -1,4 +1,5 @@
 using Fpl.Search;
+using FplBot.Config;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
@@ -53,6 +54,14 @@ public static class ServiceCollectionFplBotSlackWebExtensions
             .AddInteractiveBlockActionsHandler<InteractiveBlocksActionHandler>()
             .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>()
             .AddNoOpAppMentionHandler<UnknownAppMentionCommandHandler>();
+
+        // Slackbot framework registers handlers as singleton; re-register as scoped
+        // so they can consume scoped services (e.g. IPublishEndpoint, ISearchService).
+        services.ReRegisterAsScoped<IShortcutAppMentions, HelpEventHandler>();
+        services.ReRegisterAsScoped<IHandleAppMentions, FplStandingsCommandHandler>();
+        services.ReRegisterAsScoped<IHandleAppMentions, DebugHandler>();
+        services.ReRegisterAsScoped<IHandleAppMentions, FplSearchHandler>();
+        services.ReRegisterAsScoped<INoOpAppMentions, UnknownAppMentionCommandHandler>();
         return services;
     }
 }

@@ -4,6 +4,7 @@ using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
@@ -12,18 +13,18 @@ internal class FixtureState
 {
     private readonly IFixtureClient _fixtureClient;
     private readonly IGlobalSettingsClient _settingsClient;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<FixtureState> _logger;
 
     private ICollection<Player> _players;
     private ICollection<Fixture> _currentGameweekFixtures;
     private ICollection<Team> _teams;
 
-    public FixtureState(IFixtureClient fixtureClient,IGlobalSettingsClient settingsClient, IPublishEndpoint publishEndpoint, ILogger<FixtureState> logger)
+    public FixtureState(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient, IServiceScopeFactory scopeFactory, ILogger<FixtureState> logger)
     {
         _fixtureClient = fixtureClient;
         _settingsClient = settingsClient;
-        _publishEndpoint = publishEndpoint;
+        _scopeFactory = scopeFactory;
         _logger = logger;
 
         _currentGameweekFixtures = new List<Fixture>();
@@ -55,14 +56,14 @@ internal class FixtureState
 
         _players = after;
 
-        if (fixtureEvents.Any())
+        if (fixtureEvents.Any() || finishedFixtures.Any())
         {
-            await _publishEndpoint.Publish(new FixtureEventsOccured(fixtureEvents.ToList()));
-        }
-
-        foreach (var fixture in finishedFixtures)
-        {
-            await _publishEndpoint.Publish(new FixtureFinished(fixture));
+            using var publishScope = _scopeFactory.CreateScope();
+            var publisher = publishScope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+            if (fixtureEvents.Any())
+                await publisher.Publish(new FixtureEventsOccured(fixtureEvents.ToList()));
+            foreach (var fixture in finishedFixtures)
+                await publisher.Publish(new FixtureFinished(fixture));
         }
     }
 }

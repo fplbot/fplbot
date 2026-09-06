@@ -2,10 +2,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.HttpClients;
+using FplBot.Config;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord.Data;
 using FplBot.Discord.Handlers.SlashCommands;
+using FplBot.WebApi.Configurations;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
@@ -32,6 +34,9 @@ public static class ServiceCollectionExtensions
             .AddSlashCommandHandler<FollowSlashCommandHandler>()
             .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()
             .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>();
+        services.AddOptions<DiscordClientOptions>()
+            .ValidateWithFluentValidation(new DiscordClientOptionsValidator())
+            .ValidateOnStart();
         return services;
     }
 }

@@ -1,15 +1,14 @@
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
-using Microsoft.AspNetCore.Mvc;
 
 namespace FplBot.WebApi.Endpoints.Test.GameweekEnd;
 
 public static class TestGwEnd
 {
-    public static async Task<IActionResult> Get(IWebHostEnvironment env, ISendEndpointProvider sendEndpointProvider)
+    public static async Task<IResult> Get(IWebHostEnvironment env, ISendEndpointProvider sendEndpointProvider)
     {
         if (env.IsProduction())
-            return new UnauthorizedResult();
+            return TypedResults.Unauthorized();
 
         var discordEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri("queue:FplBot.EventHandlers.Discord"));
         var cmd = new PublishGameweekFinishedToGuild("893932860162064414", "897565955587186838", 1996879, 4);
@@ -19,6 +18,6 @@ public static class TestGwEnd
         var cmdSlack = new PublishStandingsToSlackWorkspace("t016b9n3u7p".ToUpper(), "#fplbot-test", 1996879, 4);
         await slackEndpoint.Send(cmdSlack);
 
-        return new AcceptedResult("", cmd);
+        return TypedResults.Accepted("", cmd);
     }
 }

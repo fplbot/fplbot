@@ -69,7 +69,7 @@ public class StateTests
     private static FixtureState CreateAllMockState()
     {
         _messageSession = new TestPublishEndpoint();
-        return new FixtureState(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), _messageSession, A.Fake<ILogger<FixtureState>>());
+        return new FixtureState(A.Fake<IFixtureClient>(),A.Fake<IGlobalSettingsClient>(), new TestScopeFactory(_messageSession), A.Fake<ILogger<FixtureState>>());
     }
 
     private static FixtureState CreateMultipleFinishedFixturesScenario()
@@ -214,7 +214,7 @@ public class StateTests
         });
 
         _messageSession = new TestPublishEndpoint();
-        return new FixtureState(fixtureClient, settingsClient, _messageSession, A.Fake<ILogger<FixtureState>>());
+        return new FixtureState(fixtureClient, settingsClient, new TestScopeFactory(_messageSession), A.Fake<ILogger<FixtureState>>());
     }
 
 

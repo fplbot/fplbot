@@ -12,5 +12,6 @@
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.5.3" />
     <PackageReference Include="Aspire.Hosting.Redis" Version="13.5.3" />
     <PackageReference Include="AlmostServiceBus.Aspire.Hosting" Version="0.3.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
   </ItemGroup>
 </Project>

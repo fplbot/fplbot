@@ -1,4 +1,5 @@
 using Discord.Net.HttpClients;
+using FplBot.Config;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +18,9 @@ public static class ServiceCollectionExtensions
             c.DiscordApplicationId = config["DiscordAppId"] ?? string.Empty;
             c.DiscordAppToken = config["DISCORD_TOKEN"] ?? string.Empty;
         });
+        services.AddOptions<DiscordClientOptions>()
+            .ValidateWithFluentValidation(new DiscordClientOptionsValidator())
+            .ValidateOnStart();
         return services;
     }
 

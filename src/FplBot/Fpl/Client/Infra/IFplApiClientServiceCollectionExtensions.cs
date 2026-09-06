@@ -1,6 +1,7 @@
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
+using FplBot.Config;
 using Microsoft.Extensions.Configuration;
 
 // ReSharper disable once CheckNamespace
@@ -10,7 +11,10 @@ public static class IFplApiClientServiceCollectionExtensions
 {
     public static IServiceCollection AddFplApiClient(this IServiceCollection services, IConfiguration config)
     {
-        services.Configure<FplApiClientOptions>(config.GetSection("fpl"));
+        services.AddOptions<FplApiClientOptions>()
+            .Bind(config.GetSection("fpl"))
+            .ValidateWithFluentValidation(new FplApiClientOptionsValidator())
+            .ValidateOnStart();
         AddFplApiClientBase(services, config);
         return services;
     }

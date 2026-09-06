@@ -1,6 +1,7 @@
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
+using FplBot.Config;
 using FplBot.Core.RecurringActions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,26 +19,30 @@ public static class SearchServiceCollectionExtensions
 {
     public static IServiceCollection AddSearching(this IServiceCollection services, IConfiguration config)
     {
-        services.Configure<SearchOptions>(config);
+        services.AddOptions<SearchOptions>()
+            .Bind(config)
+            .ValidateWithFluentValidation(new SearchOptionsValidator())
+            .ValidateOnStart();
         services.AddSingleton<IElasticClient>(provider =>
         {
-            var searchOpts = provider.GetRequiredService<IOptions<SearchOptions>>();
-            var searchOptions = searchOpts.Value;
-            searchOptions.Validate();
+            var searchOptions = provider.GetRequiredService<IOptions<SearchOptions>>().Value;
             var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));
             connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
             return new ElasticClient(connectionSettings);
         });
 
-        services.AddSingleton<ISearchService, SearchService>();
-        services.AddSingleton<IIndexingClient, IndexingClient>();
+        services.AddScoped<ISearchService, SearchService>();
+        services.AddScoped<IIndexingClient, IndexingClient>();
         return services;
     }
 
     public static IServiceCollection AddIndexingServices(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer connection)
     {
-services.TryAddSingleton<IConnectionMultiplexer>(connection);
-        services.Configure<SearchOptions>(config.GetSection("search"));
+        services.TryAddSingleton<IConnectionMultiplexer>(connection);
+        services.AddOptions<SearchOptions>()
+            .Bind(config.GetSection("search"))
+            .ValidateWithFluentValidation(new SearchOptionsValidator())
+            .ValidateOnStart();
         services.AddSingleton<IIndexingClient, IndexingClient>();
 
         services.AddSingleton<SlowEntryIndexProvider>();
@@ -50,9 +55,7 @@ services.TryAddSingleton<IConnectionMultiplexer>(connection);
         services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
         services.AddSingleton<IElasticClient>(provider =>
         {
-            var searchOpts = provider.GetRequiredService<IOptions<SearchOptions>>();
-            var searchOptions = searchOpts.Value;
-            searchOptions.Validate();
+            var searchOptions = provider.GetRequiredService<IOptions<SearchOptions>>().Value;
             var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));
             connectionSettings.BasicAuthentication(searchOptions.Username, searchOptions.Password);
             return new ElasticClient(connectionSettings);
