@@ -1,4 +1,3 @@
-using FplBot.EventHandlers;
 using FplBot.Hosting;
 using FplBot.WebApi.Infrastructure;
 using MassTransit;
@@ -15,11 +14,7 @@ public class WebApiService : IFplBotService
         services.ConfigureWebApp(config, env, redis);
     }
 
-    public void ConfigureMassTransit(IBusRegistrationConfigurator cfg)
-    {
-        cfg.AddConsumer<AppInstalledHandler>();
-        cfg.AddConsumer<IndexQueryCommandHandler>();
-    }
+    public void ConfigureMassTransit(IBusRegistrationConfigurator cfg) { }
 
     public void ConfigureApp(WebApplication app) => app.UseWebApp();
 }

@@ -126,6 +126,7 @@ public static class WebApplicationBuilderExtensions
             .AddRazorPages()
             .AddRazorPagesOptions(options =>
             {
+                options.RootDirectory = "/Services/WebApi/Pages";
                 options.Conventions.AuthorizeFolder("/admin", "IsAdmin");
                 options.Conventions.AllowAnonymousToPage("/*");
             });
