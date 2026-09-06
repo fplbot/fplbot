@@ -42,6 +42,7 @@ jobs:
         env:
           VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
           INFOVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/login-action@v1
         with:
           registry: registry.heroku.com

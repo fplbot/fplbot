@@ -10,6 +10,9 @@ jobs:
   ci-on-ubuntu:
     name: ci
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-dotnet@v3
@@ -20,3 +23,4 @@ jobs:
         env:
           fpl__login: ${{ secrets.fpl__login }}
           fpl__password: ${{ secrets.fpl__password }}
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
