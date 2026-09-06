@@ -1,7 +1,4 @@
 using System.Net.Security;
-using FplBot.Data;
-using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.EventPublishers;
 using FplBot.Services.SearchIndexer;

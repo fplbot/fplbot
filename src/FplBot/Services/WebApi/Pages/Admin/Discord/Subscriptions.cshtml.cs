@@ -1,7 +1,5 @@
-using Discord.Net.Endpoints.Hosting;
 using FplBot.Data;
 using FplBot.Data.Discord;
-using FplBot.Discord.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;

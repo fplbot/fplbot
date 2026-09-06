@@ -1,8 +1,6 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Fpl.EventPublishers.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers;
 

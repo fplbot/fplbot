@@ -2,7 +2,6 @@ using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
 using FplBot.Config;
-using Microsoft.Extensions.Configuration;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;

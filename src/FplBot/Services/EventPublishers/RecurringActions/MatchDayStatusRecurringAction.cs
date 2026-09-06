@@ -2,7 +2,6 @@ using CronBackgroundServices;
 using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.States;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.RecurringActions;
 

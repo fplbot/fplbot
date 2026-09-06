@@ -2,7 +2,6 @@ using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
 using Fpl.Client.Abstractions;
 using FplBot.Data.Discord;
-using FplBot.Discord.Data;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 

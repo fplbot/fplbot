@@ -1,13 +1,9 @@
 using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.Events;
-using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
 

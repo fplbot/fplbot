@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Http.Logging;
-using Microsoft.Extensions.Logging;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;

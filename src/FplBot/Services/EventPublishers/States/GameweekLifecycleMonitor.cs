@@ -4,8 +4,6 @@ using Fpl.Client.Models;
 using Fpl.EventPublishers.Events;
 using MassTransit;
 using MediatR;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
 

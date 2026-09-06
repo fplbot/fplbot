@@ -1,5 +1,4 @@
 using FplBot.WebApi.Infrastructure;
-using Xunit;
 
 namespace FplBot.Tests;
 

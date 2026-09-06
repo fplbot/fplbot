@@ -1,6 +1,5 @@
 using FplBot.Data.Slack;
 using FplBot.WebApi.Slack.Abstractions;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;

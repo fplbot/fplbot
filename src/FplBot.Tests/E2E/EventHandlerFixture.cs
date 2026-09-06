@@ -2,8 +2,6 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
-using FplBot.Data.Slack;
-using FplBot.EventHandlers.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Services.EventHandlers;

@@ -3,7 +3,6 @@ using Fpl.Client.Models;
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 

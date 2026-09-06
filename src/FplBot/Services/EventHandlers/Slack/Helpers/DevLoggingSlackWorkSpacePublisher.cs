@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack.Helpers;

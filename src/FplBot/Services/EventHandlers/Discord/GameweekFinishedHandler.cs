@@ -1,5 +1,4 @@
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using FplBot.Data.Discord;
 using FplBot.EventHandlers.Discord.Helpers;
 using FplBot.Formatting;

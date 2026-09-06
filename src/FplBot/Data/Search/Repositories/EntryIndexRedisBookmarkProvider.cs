@@ -1,5 +1,4 @@
 using Fpl.Search.Data.Abstractions;
-using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace Fpl.Search.Data.Repositories;

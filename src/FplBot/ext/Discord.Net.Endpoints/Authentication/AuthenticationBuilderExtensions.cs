@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Discord.Net.Endpoints.Authentication;
 

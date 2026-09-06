@@ -1,7 +1,6 @@
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
-using Microsoft.Extensions.Hosting;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack;

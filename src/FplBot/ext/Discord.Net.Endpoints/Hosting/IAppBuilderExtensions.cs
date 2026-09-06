@@ -1,5 +1,4 @@
 using Discord.Net.Endpoints.Middleware;
-using Microsoft.AspNetCore.Builder;
 
 namespace Discord.Net.Endpoints.Hosting;
 

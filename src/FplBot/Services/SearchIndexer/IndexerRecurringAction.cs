@@ -1,7 +1,6 @@
 using CronBackgroundServices;
 using Fpl.Search;
 using Fpl.Search.Indexing;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FplBot.Core.RecurringActions;

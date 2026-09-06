@@ -2,7 +2,6 @@
 using Fpl.Client.Models;
 
 using System.Net;
-using System.Net.Http.Json;
 
 namespace Fpl.Client;
 

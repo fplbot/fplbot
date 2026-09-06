@@ -1,5 +1,4 @@
 using System.Net.Security;
-using Aspire.Hosting.Eventing;
 using StackExchange.Redis;
 
 internal static class DevSeeder

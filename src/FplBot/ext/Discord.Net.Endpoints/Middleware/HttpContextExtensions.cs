@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace Discord.Net.Endpoints.Middleware;
 
 internal static class HttpContextExtensions

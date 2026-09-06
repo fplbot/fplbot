@@ -1,8 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using Fpl.Client.Abstractions;
+﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Microsoft.Extensions.Logging;
 
 namespace FplBot.Formatting.Helpers;
 

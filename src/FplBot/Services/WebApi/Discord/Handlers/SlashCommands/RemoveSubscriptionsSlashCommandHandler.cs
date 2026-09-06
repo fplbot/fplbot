@@ -1,7 +1,6 @@
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
 using FplBot.Data.Discord;
-using FplBot.Discord.Data;
 using FplBot.Discord.Extensions;
 using FplBot.Formatting;
 

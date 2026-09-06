@@ -1,6 +1,5 @@
 ﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using System.Net.Http.Json;
 
 
 namespace Fpl.Client;

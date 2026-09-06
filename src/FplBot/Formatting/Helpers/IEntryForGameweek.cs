@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Fpl.Client.Models;
 
 namespace FplBot.Formatting.Helpers;

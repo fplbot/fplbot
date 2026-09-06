@@ -1,5 +1,4 @@
 using Fpl.Search.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.Search.Indexing;
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace FplBot.Formatting;
 
 public static class DateTimeExtensions

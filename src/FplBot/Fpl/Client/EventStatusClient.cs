@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Discord.Net.Endpoints.Hosting;
 
 public static class ServiceCollectionExtensions

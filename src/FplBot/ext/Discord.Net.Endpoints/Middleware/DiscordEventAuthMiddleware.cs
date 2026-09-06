@@ -1,7 +1,5 @@
 using Discord.Net.Endpoints.Authentication;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace Discord.Net.Endpoints.Middleware;
 

@@ -2,7 +2,6 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Helpers;
-using Fpl.EventPublishers.RecurringActions;
 using Fpl.EventPublishers.States;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;

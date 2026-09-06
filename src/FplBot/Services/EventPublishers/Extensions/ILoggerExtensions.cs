@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Fpl.EventPublishers.Extensions;
 
 internal static class ILoggerExtensions

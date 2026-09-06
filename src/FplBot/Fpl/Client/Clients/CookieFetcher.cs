@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Fpl.Client.Clients;
 
 public class CookieFetcher

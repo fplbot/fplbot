@@ -1,4 +1,3 @@
-using System.Net.Security;
 using Fpl.Search.Data.Repositories;
 using FplBot.Data;
 using FplBot.Data.Discord;
@@ -8,8 +7,6 @@ using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using Testcontainers.Redis;
-using Xunit;
-using Xunit.Abstractions;
 using EventSubscription = FplBot.Data.Slack.EventSubscription;
 
 namespace FplBot.Tests;

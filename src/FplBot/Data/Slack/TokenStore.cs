@@ -1,6 +1,5 @@
 using FplBot.Data;
 using FplBot.Data.Slack;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;

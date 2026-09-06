@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Discord.Net.Endpoints.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace Discord.Net.Endpoints.Middleware;
 

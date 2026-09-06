@@ -4,9 +4,6 @@ using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Hosting;
 using MassTransit;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 using DiscordFixtureEventsHandler = FplBot.EventHandlers.Discord.FixtureEventsHandler;

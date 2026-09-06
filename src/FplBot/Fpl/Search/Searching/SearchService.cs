@@ -1,5 +1,4 @@
 using Fpl.Search.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nest;
 using System.Text.RegularExpressions;

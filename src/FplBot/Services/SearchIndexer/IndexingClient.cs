@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Nest;
 
 namespace Fpl.Search.Indexing;

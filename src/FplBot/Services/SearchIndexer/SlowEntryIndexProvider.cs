@@ -3,7 +3,6 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Fpl.Search.Indexing;

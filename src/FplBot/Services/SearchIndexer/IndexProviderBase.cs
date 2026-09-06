@@ -1,7 +1,6 @@
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.Search.Indexing;
 

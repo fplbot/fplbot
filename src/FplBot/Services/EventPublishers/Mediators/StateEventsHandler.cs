@@ -2,7 +2,6 @@ using Fpl.EventPublishers.Events;
 using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.States;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.Mediators;
 

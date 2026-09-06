@@ -6,7 +6,6 @@ using Fpl.Search.Searching;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.WebApi.Slack.Abstractions;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 

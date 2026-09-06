@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using FplBot.Formatting.FixtureStats.Formatters;
 using FplBot.Messaging.Contracts.Events.v1;
 

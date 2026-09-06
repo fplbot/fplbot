@@ -1,6 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
 using FplBot.Data;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 

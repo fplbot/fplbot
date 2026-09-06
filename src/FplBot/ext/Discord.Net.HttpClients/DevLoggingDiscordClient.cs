@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
 namespace Discord.Net.HttpClients;
 
 public class DevLoggingDiscordClient : IDiscordClient

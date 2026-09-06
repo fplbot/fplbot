@@ -2,7 +2,6 @@ using System.Net;
 using Discord.Net.HttpClients;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
-using Microsoft.Extensions.Hosting;
 
 namespace FplBot.EventHandlers.Discord;
 

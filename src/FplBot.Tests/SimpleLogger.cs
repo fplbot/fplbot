@@ -4,8 +4,6 @@ using FplBot.Data.Slack;
 using FplBot.Discord.Data;
 using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Logging;
-using Slackbot.Net.Abstractions.Hosting;
-using Xunit.Abstractions;
 
 namespace FplBot.Tests;
 

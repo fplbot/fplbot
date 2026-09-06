@@ -1,5 +1,3 @@
-using System.Net;
-
 namespace Fpl.Client.Clients;
 
 public class FplDelegatingHandler : DelegatingHandler

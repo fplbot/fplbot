@@ -7,8 +7,6 @@ using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.RecurringActions;
 

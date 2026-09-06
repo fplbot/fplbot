@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Fpl.Client.Models;
 
 namespace FplBot.Formatting;

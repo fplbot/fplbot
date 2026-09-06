@@ -3,8 +3,6 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Fpl.EventPublishers.States;
 

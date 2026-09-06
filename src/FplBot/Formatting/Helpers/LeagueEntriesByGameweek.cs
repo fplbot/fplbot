@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Microsoft.Extensions.Logging;
 
 namespace FplBot.Formatting.Helpers;
 

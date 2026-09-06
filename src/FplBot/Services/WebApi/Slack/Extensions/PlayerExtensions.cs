@@ -1,5 +1,4 @@
 using Fpl.Client.Models;
-using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.WebApi.Slack.Extensions;
 

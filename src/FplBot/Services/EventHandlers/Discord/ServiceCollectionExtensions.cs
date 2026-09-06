@@ -2,8 +2,6 @@ using Discord.Net.HttpClients;
 using FplBot.Config;
 using FplBot.Data;
 using FplBot.Data.Discord;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.EventHandlers.Discord;
 
