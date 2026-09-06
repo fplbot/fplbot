@@ -1,21 +1,17 @@
+using FplBot.Data;
 using FplBot.Data.Slack;
 
 namespace FplBot.Tests.Helpers;
 
 public class InMemorySlackTeamRepository : ISlackTeamRepository
 {
-    private readonly int _leagueId;
-
-    public InMemorySlackTeamRepository()
-    {
-        _leagueId = 15263;
-    }
+    private readonly int _leagueId = 15263;
 
     public Task<SlackTeam> GetTeam(string teamId)
     {
         return Task.FromResult(new SlackTeam
         {
-            Subscriptions = new EventSubscription[0],
+            Subscriptions = [],
             FplBotSlackChannel = "#lol",
             FplbotLeagueId = _leagueId
         });

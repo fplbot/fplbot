@@ -9,16 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests;
 
-public class NearDeadlineTests
+public class NearDeadlineTests(ITestOutputHelper helper)
 {
-    private readonly ITestOutputHelper _helper;
-    private readonly DateTimeUtils _deadlineChecker;
-
-    public NearDeadlineTests(ITestOutputHelper helper)
-    {
-        _helper = helper;
-        _deadlineChecker = Factory.Create<DateTimeUtils>();
-    }
+    private readonly DateTimeUtils _deadlineChecker = Factory.Create<DateTimeUtils>();
 
     [Fact]
     public void WhenDayBefore()
@@ -47,7 +40,7 @@ public class NearDeadlineTests
             var isTheMinute = _deadlineChecker.IsWithinMinutesToDate(60, deadline);
             if (!isTheMinute)
             {
-                _helper.WriteLine($"Not true for {i} - {_deadlineChecker.NowUtcOverride-deadline}");
+                helper.WriteLine($"Not true for {i} - {_deadlineChecker.NowUtcOverride-deadline}");
             }
 
             Assert.True(isTheMinute);

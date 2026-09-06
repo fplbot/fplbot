@@ -7,34 +7,22 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
+public class FplBotJoinedChannelHandler(
+    ILogger<FplBotJoinedChannelHandler> logger,
+    ISlackWorkSpacePublisher publisher,
+    ISlackClientBuilder slackClientService,
+    ISlackTeamRepository teamRepo,
+    ILeagueClient leagueClient,
+    IConfiguration configuration)
+    : IHandleMemberJoinedChannel
 {
-    private readonly ILogger<FplBotJoinedChannelHandler> _logger;
-    private readonly ISlackWorkSpacePublisher _publisher;
-    private readonly ISlackClientBuilder _slackClientService;
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ILeagueClient _leagueClient;
-    private readonly string? _slackAppId;
-
-    public FplBotJoinedChannelHandler(ILogger<FplBotJoinedChannelHandler> logger,
-        ISlackWorkSpacePublisher publisher,
-        ISlackClientBuilder slackClientService,
-        ISlackTeamRepository teamRepo,
-        ILeagueClient leagueClient,
-        IConfiguration configuration)
-    {
-        _logger = logger;
-        _publisher = publisher;
-        _slackClientService = slackClientService;
-        _teamRepo = teamRepo;
-        _leagueClient = leagueClient;
-        _slackAppId = configuration["SlackAppId"];
-    }
+    private readonly ILogger<FplBotJoinedChannelHandler> _logger = logger;
+    private readonly string? _slackAppId = configuration["SlackAppId"];
 
     public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, MemberJoinedChannelEvent joinedEvent)
     {
-        var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
-        var slackClient = _slackClientService.Build(team.AccessToken);
+        var team = await teamRepo.GetTeam(eventMetadata.Team_Id);
+        var slackClient = slackClientService.Build(team.AccessToken);
         var userProfile = await slackClient.UserProfile(joinedEvent.User);
         if (userProfile.Profile.Api_App_Id == _slackAppId)
         {
@@ -44,7 +32,7 @@ public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
             {
                 try
                 {
-                    var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
+                    var league = await leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
                     if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
                     {
                         setupMessage = $"I'm pushing notifications relevant to {league?.Properties?.Name} into {ChannelName()}. ";
@@ -73,7 +61,7 @@ public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
                 setupMessage = "To get notifications for a league, use my `@fplbot follow` command";
             }
 
-            await _publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
+            await publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
             return new EventHandledResponse("OK");
         }
         return new EventHandledResponse($"IGNORED FOR {userProfile.Profile.Real_Name}");

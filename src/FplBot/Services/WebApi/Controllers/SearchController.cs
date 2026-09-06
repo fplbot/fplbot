@@ -6,21 +6,15 @@ namespace FplBot.WebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class SearchController : ControllerBase
+public class SearchController(ISearchService searchService, ILogger<SearchController> logger)
+    : ControllerBase
 {
-    private readonly ISearchService _searchService;
-    private readonly ILogger<SearchController> _logger;
-
-    public SearchController(ISearchService searchService, ILogger<SearchController> logger)
-    {
-        _searchService = searchService;
-        _logger = logger;
-    }
+    private readonly ILogger<SearchController> _logger = logger;
 
     [HttpGet("entries/{id:int}")]
     public async Task<IActionResult> GetEntry(int id)
     {
-        var entry = await _searchService.GetEntry(id);
+        var entry = await searchService.GetEntry(id);
 
         if (entry == null)
         {
@@ -38,7 +32,7 @@ public class SearchController : ControllerBase
             Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
         };
 
-        var searchResult = await _searchService.SearchForEntry(query, page, 10, metaData);
+        var searchResult = await searchService.SearchForEntry(query, page, 10, metaData);
 
         if (searchResult.TotalPages < page && !searchResult.Any())
         {
@@ -60,7 +54,7 @@ public class SearchController : ControllerBase
             Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
         };
 
-        var searchResult = await _searchService.SearchForLeague(query, page, 10, metaData, countryToBoost);
+        var searchResult = await searchService.SearchForLeague(query, page, 10, metaData, countryToBoost);
 
         if (searchResult.TotalPages < page && !searchResult.Any())
         {
@@ -82,7 +76,7 @@ public class SearchController : ControllerBase
             Client = QueryClient.Web, Actor = Request?.HttpContext.Connection.RemoteIpAddress?.ToString()
         };
 
-        var searchResult = await _searchService.SearchAny(query, page, 10, metaData, type);
+        var searchResult = await searchService.SearchAny(query, page, 10, metaData, type);
 
         if (searchResult.TotalPages < page && !searchResult.Any())
         {

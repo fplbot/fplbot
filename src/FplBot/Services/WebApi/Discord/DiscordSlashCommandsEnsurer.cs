@@ -1,33 +1,25 @@
 using Discord.Net.HttpClients;
-using FplBot.Data.Discord;
 
 namespace FplBot.Discord;
 
-public class DiscordSlashCommandsEnsurer
+public class DiscordSlashCommandsEnsurer(DiscordClient client, ILogger<DiscordSlashCommandsEnsurer> logger)
 {
-    private readonly DiscordClient _client;
-    private readonly ILogger<DiscordSlashCommandsEnsurer> _logger;
-
-    public DiscordSlashCommandsEnsurer(DiscordClient client, ILogger<DiscordSlashCommandsEnsurer> logger)
-    {
-        _client = client;
-        _logger = logger;
-    }
+    private readonly ILogger<DiscordSlashCommandsEnsurer> _logger = logger;
 
     public async Task DeleteGuildSlashCommands(string guild)
     {
-        var applicationsCommands = await _client.ApplicationsCommandForGuildGet(guild);
+        var applicationsCommands = await client.ApplicationsCommandForGuildGet(guild);
 
         foreach (var applicationsCommand in applicationsCommands)
         {
-            await _client.ApplicationsCommandForGuildDelete(guild, applicationsCommand.Id);
+            await client.ApplicationsCommandForGuildDelete(guild, applicationsCommand.Id);
             await Task.Delay(5000);
         }
     }
 
     public async Task InstallGuildSlashCommandsInGuild(string? guild = null)
     {
-        await _client.ApplicationsCommandPost(
+        await client.ApplicationsCommandPost(
             "help",
             "Shows help",
             guild);
@@ -36,7 +28,7 @@ public class DiscordSlashCommandsEnsurer
 
         await Task.Delay(3000);
 
-        await _client.ApplicationsCommandPost("follow",
+        await client.ApplicationsCommandPost("follow",
             "Follow a FPL league in this channel",
             guild,
             new ApplicationCommandOptions
@@ -49,7 +41,7 @@ public class DiscordSlashCommandsEnsurer
 
         await Task.Delay(3000);
 
-        await _client.ApplicationsCommandPost("subscriptions",
+        await client.ApplicationsCommandPost("subscriptions",
             "Manage subscription",
             guild,
             OptionWithOptions("add", OptionWithChoices("event")),
@@ -87,6 +79,6 @@ public class DiscordSlashCommandsEnsurer
 
     public async Task<IEnumerable<DiscordClient.ApplicationsCommand>> GetAllForGuild(string guildId)
     {
-        return await _client.ApplicationsCommandForGuildGet(guildId);
+        return await client.ApplicationsCommandForGuildGet(guildId);
     }
 }

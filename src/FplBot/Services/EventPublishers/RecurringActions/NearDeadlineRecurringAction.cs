@@ -5,23 +5,15 @@ using Fpl.EventPublishers.States;
 
 namespace Fpl.EventPublishers.RecurringActions;
 
-internal class NearDeadlineRecurringAction : IRecurringAction
+internal class NearDeadlineRecurringAction(NearDeadLineMonitor monitor, ILogger<NearDeadlineRecurringAction> logger)
+    : IRecurringAction
 {
-    private readonly NearDeadLineMonitor _monitor;
-    private readonly ILogger<NearDeadlineRecurringAction> _logger;
-
-    public NearDeadlineRecurringAction(NearDeadLineMonitor monitor, ILogger<NearDeadlineRecurringAction> logger)
-    {
-        _monitor = monitor;
-        _logger = logger;
-    }
-
     public async Task Process(CancellationToken token)
     {
-        using var scope = _logger.BeginCorrelationScope();
-        using var scope2 = _logger.AddContext("NeardeadlineCheck");
-        _logger.LogInformation($"Running {nameof(NearDeadlineRecurringAction)}");
-        await _monitor.EveryMinuteTick();
+        using var scope = logger.BeginCorrelationScope();
+        using var scope2 = logger.AddContext("NeardeadlineCheck");
+        logger.LogInformation($"Running {nameof(NearDeadlineRecurringAction)}");
+        await monitor.EveryMinuteTick();
     }
 
     public string Cron => CronPatterns.EveryMinuteAt20Seconds;

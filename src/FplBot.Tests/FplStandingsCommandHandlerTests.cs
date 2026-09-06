@@ -4,14 +4,9 @@ using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests;
 
-public class FplStandingsCommandHandlerTests
+public class FplStandingsCommandHandlerTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions _client;
-
-    public FplStandingsCommandHandlerTests(ITestOutputHelper logger)
-    {
-        _client = Factory.GetHandler<FplStandingsCommandHandler>(logger);
-    }
+    private readonly IHandleAppMentions _client = Factory.GetHandler<FplStandingsCommandHandler>(logger);
 
     [Theory(Skip = "Humbug før sesongen er i gang?")]
     [InlineData("@fplbot standings")]

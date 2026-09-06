@@ -2,19 +2,12 @@
 
 namespace FplBot.WebApi.Slack.Helpers;
 
-internal class GameweekHelper : IGameweekHelper
+internal class GameweekHelper(IGlobalSettingsClient gameweekClient) : IGameweekHelper
 {
-    private readonly IGlobalSettingsClient _gameweekClient;
-
-    public GameweekHelper(IGlobalSettingsClient gameweekClient)
-    {
-        _gameweekClient = gameweekClient;
-    }
-
     public async Task<int?> ExtractGameweekOrFallbackToCurrent(string messageText, string pattern)
     {
         var extractedGw = MessageHelper.ExtractGameweek(messageText, pattern);
-        return extractedGw ?? (await _gameweekClient.GetGlobalSettings())?.Gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
+        return extractedGw ?? (await gameweekClient.GetGlobalSettings())?.Gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
     }
 }
 

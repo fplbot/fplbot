@@ -1,6 +1,7 @@
 using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.EventPublishers;
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 
@@ -316,7 +317,7 @@ public static class TestBuilder
         {
             TeamId = SlackTeamId,
             FplbotLeagueId = LeagueId,
-            Subscriptions = new [] { EventSubscription.All }
+            Subscriptions = [EventSubscription.All]
         };
     }
 

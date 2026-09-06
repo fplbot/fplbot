@@ -3,14 +3,9 @@ using Fpl.EventPublishers.Models.Mappers;
 
 namespace FplBot.Tests;
 
-public class PriceMonitorTests
+public class PriceMonitorTests(ITestOutputHelper helper)
 {
-    private readonly ITestOutputHelper _helper;
-
-    public PriceMonitorTests(ITestOutputHelper helper)
-    {
-        _helper = helper;
-    }
+    private readonly ITestOutputHelper _helper = helper;
 
     [Fact]
     public void GetChangedPlayers_WhenNoPlayers_ReturnsNoChanges()

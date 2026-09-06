@@ -5,20 +5,13 @@ using System.Net;
 
 namespace Fpl.Client;
 
-public class LeagueClient : ILeagueClient
+public class LeagueClient(HttpClient client) : ILeagueClient
 {
-    private readonly HttpClient _client;
-
-    public LeagueClient(HttpClient client)
-    {
-        _client = client;
-    }
-
     public async Task<ClassicLeague?> GetClassicLeague(int leagueId, int page = 1, bool tolerate404 = false)
     {
         try
         {
-            return await _client.GetFromJsonAsync<ClassicLeague>($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}", JsonConvert.JsonSerializerOptions);
+            return await client.GetFromJsonAsync<ClassicLeague>($"/api/leagues-classic/{leagueId}/standings/?page_standings={page}", JsonConvert.JsonSerializerOptions);
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {
@@ -28,6 +21,6 @@ public class LeagueClient : ILeagueClient
 
     public async Task<HeadToHeadLeague?> GetHeadToHeadLeague(int leagueId)
     {
-        return await _client.GetFromJsonAsync<HeadToHeadLeague>($"/api/leagues-h2h/{leagueId}/standings/", JsonConvert.JsonSerializerOptions);
+        return await client.GetFromJsonAsync<HeadToHeadLeague>($"/api/leagues-h2h/{leagueId}/standings/", JsonConvert.JsonSerializerOptions);
     }
 }

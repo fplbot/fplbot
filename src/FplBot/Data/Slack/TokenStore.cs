@@ -1,4 +1,3 @@
-using FplBot.Data;
 using FplBot.Data.Slack;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
@@ -8,17 +7,17 @@ namespace FplBot.WebApi.Slack.Data;
 
 public class TokenStore : ITokenStore
 {
-    private string _accessTokenField = "accessToken";
-    private string _channelField = "fplchannel";
-    private string _leagueField = "fplleagueId";
-    private string _teamNameField = "teamName";
-    private string _teamIdField = "teamId";
-    private string _subscriptionsField = "subscriptions";
+    private readonly string _accessTokenField = "accessToken";
+    private readonly string _channelField = "fplchannel";
+    private readonly string _leagueField = "fplleagueId";
+    private readonly string _teamNameField = "teamName";
+    private readonly string _teamIdField = "teamId";
+    private readonly string _subscriptionsField = "subscriptions";
 
 
     private readonly IConnectionMultiplexer _redis;
-    private IDatabase _db;
-    private string _server;
+    private readonly IDatabase _db;
+    private readonly string _server;
     private readonly ILogger<TokenStore> _logger;
 
     public TokenStore(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<TokenStore> logger)

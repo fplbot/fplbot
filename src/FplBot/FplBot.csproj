@@ -50,4 +50,17 @@
     <PackageReference Include="MinimalHttpLogger" Version="3.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Integrations\" />
+  </ItemGroup>
+
+  <Target Name="CopyWwwrootToOutput" AfterTargets="Build">
+    <ItemGroup>
+      <_WwwRootFiles Include="$(MSBuildProjectDirectory)/Services/WebApi/wwwroot/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WwwRootFiles)"
+          DestinationFiles="@(_WwwRootFiles->'$(OutputPath)Services/WebApi/wwwroot/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

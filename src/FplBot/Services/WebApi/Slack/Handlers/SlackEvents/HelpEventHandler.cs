@@ -9,33 +9,26 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-public class HelpEventHandler : IShortcutAppMentions
+public class HelpEventHandler(
+    IEnumerable<IHandleAppMentions> allHandlers,
+    ISlackClientBuilder slackClientService,
+    ISlackTeamRepository tokenStore,
+    ILogger<HelpEventHandler> logger,
+    ILeagueClient leagueClient)
+    : IShortcutAppMentions
 {
-    private readonly IEnumerable<IHandleAppMentions> _handlers;
-    private readonly ISlackClientBuilder _slackClientService;
-    private readonly ISlackTeamRepository _tokenStore;
-    private readonly ILogger<HelpEventHandler> _logger;
-    private readonly ILeagueClient _leagueClient;
-
-    public HelpEventHandler(IEnumerable<IHandleAppMentions> allHandlers, ISlackClientBuilder slackClientService, ISlackTeamRepository tokenStore, ILogger<HelpEventHandler> logger, ILeagueClient leagueClient)
-    {
-        _handlers = allHandlers;
-        _slackClientService = slackClientService;
-        _tokenStore = tokenStore;
-        _logger = logger;
-        _leagueClient = leagueClient;
-    }
+    private readonly ILogger<HelpEventHandler> _logger = logger;
 
     public async Task Handle(EventMetaData eventMetadata, AppMentionEvent @event)
     {
-        var team = await _tokenStore.GetTeam(eventMetadata.Team_Id);
-        var slackClient = _slackClientService.Build(team.AccessToken);
+        var team = await tokenStore.GetTeam(eventMetadata.Team_Id);
+        var slackClient = slackClientService.Build(team.AccessToken);
         var text = $"*HELP:*\n";
         if (team.HasChannelAndLeagueSetup())
         {
             try
             {
-                var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId!.Value);
+                var league = await leagueClient.GetClassicLeague(team.FplbotLeagueId!.Value);
                 text += $"Currently following {league?.Properties?.Name} in {ChannelName()}\n";
             }
             catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
@@ -57,7 +50,7 @@ public class HelpEventHandler : IShortcutAppMentions
             text += $"Active subscriptions:\n{Formatter.BulletPoints(team.Subscriptions)}\n";
 
         await slackClient.ChatPostMessage(@event.Channel, text);
-        var handlerHelp = _handlers.Select(handler => handler.GetHelpDescription())
+        var handlerHelp = allHandlers.Select(handler => handler.GetHelpDescription())
             .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
             .Aggregate($"\n*Available commands:*", (current, tuple) => current + $"\n• `@fplbot {tuple.HandlerTrigger}` : _{tuple.Description}_");
 

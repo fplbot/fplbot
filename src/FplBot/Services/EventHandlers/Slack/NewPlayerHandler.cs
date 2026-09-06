@@ -7,22 +7,14 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class NewPlayerHandler : IConsumer<NewPlayersRegistered>, IConsumer<PremiershipPlayerTransferred>
+public class NewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<NewPlayerHandler> logger)
+    : IConsumer<NewPlayersRegistered>, IConsumer<PremiershipPlayerTransferred>
 {
-    private readonly ISlackTeamRepository _slackTeamRepo;
-    private readonly ILogger<NewPlayerHandler> _logger;
-
-    public NewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<NewPlayerHandler> logger)
-    {
-        _slackTeamRepo = slackTeamRepo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<NewPlayersRegistered> context)
     {
         var notification = context.Message;
-        _logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
-        var slackTeams = await _slackTeamRepo.GetAllTeams();
+        logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
+        var slackTeams = await slackTeamRepo.GetAllTeams();
         var filtered = notification.NewPlayers.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
@@ -38,15 +30,15 @@ public class NewPlayerHandler : IConsumer<NewPlayersRegistered>, IConsumer<Premi
         }
         else
         {
-            _logger.LogInformation("All new players irrelevant, so not sending any notification");
+            logger.LogInformation("All new players irrelevant, so not sending any notification");
         }
     }
 
     public async Task Consume(ConsumeContext<PremiershipPlayerTransferred> context)
     {
         var notification = context.Message;
-        _logger.LogInformation($"Handling {notification.Transfers.Count()} new transfers");
-        var slackTeams = await _slackTeamRepo.GetAllTeams();
+        logger.LogInformation($"Handling {notification.Transfers.Count()} new transfers");
+        var slackTeams = await slackTeamRepo.GetAllTeams();
         var formatted = Formatter.FormatTransferredPlayers(notification.Transfers);
         foreach (var slackTeam in slackTeams)
         {

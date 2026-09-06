@@ -5,14 +5,9 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Tests;
 
-public class FplHandlersTests
+public class FplHandlersTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions[] _allHandlers;
-
-    public FplHandlersTests(ITestOutputHelper logger)
-    {
-        _allHandlers = Factory.GetAllHandlers(logger).ToArray();
-    }
+    private readonly IHandleAppMentions[] _allHandlers = Factory.GetAllHandlers(logger).ToArray();
 
     [Theory]
     [InlineData("<@BOTID123> subscribe standings", typeof(FplSubscribeCommandHandler))]

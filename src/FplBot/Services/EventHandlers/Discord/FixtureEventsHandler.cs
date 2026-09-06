@@ -11,28 +11,19 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<PublishFixtureEventsToGuild>
+public class FixtureEventsHandler(
+    IGuildRepository repo,
+    ILogger<FixtureEventsHandler> logger,
+    IGlobalSettingsClient globalSettingsClient,
+    ILeagueEntriesByGameweek leagueEntriesByGameweek,
+    ITransfersByGameWeek transfersByGameWeek)
+    : IConsumer<FixtureEventsOccured>, IConsumer<PublishFixtureEventsToGuild>
 {
-    private readonly IGuildRepository _repo;
-    private readonly ILogger<FixtureEventsHandler> _logger;
-    private readonly IGlobalSettingsClient _globalSettingsClient;
-    private readonly ILeagueEntriesByGameweek _leagueEntriesByGameweek;
-    private readonly ITransfersByGameWeek _transfersByGameWeek;
-
-    public FixtureEventsHandler(IGuildRepository repo, ILogger<FixtureEventsHandler> logger, IGlobalSettingsClient globalSettingsClient, ILeagueEntriesByGameweek leagueEntriesByGameweek, ITransfersByGameWeek transfersByGameWeek)
-    {
-        _repo = repo;
-        _logger = logger;
-        _globalSettingsClient = globalSettingsClient;
-        _leagueEntriesByGameweek = leagueEntriesByGameweek;
-        _transfersByGameWeek = transfersByGameWeek;
-    }
-
     public async Task Consume(ConsumeContext<FixtureEventsOccured> context)
     {
         var message = context.Message;
-        _logger.LogInformation($"Handling {message.FixtureEvents.Count} new fixture events");
-        var subs = await _repo.GetAllGuildSubscriptions();
+        logger.LogInformation($"Handling {message.FixtureEvents.Count} new fixture events");
+        var subs = await repo.GetAllGuildSubscriptions();
 
         foreach (var sub in subs)
         {
@@ -43,21 +34,21 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
     public async Task Consume(ConsumeContext<PublishFixtureEventsToGuild> context)
     {
         var message = context.Message;
-        _logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.GuildId} and {message.ChannelId}");
-        var sub = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
+        logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.GuildId} and {message.ChannelId}");
+        var sub = await repo.GetGuildSubscription(message.GuildId, message.ChannelId);
         if (sub != null)
         {
             TauntData? tauntData = null;
             if (sub.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
             {
-                var gws = await _globalSettingsClient.GetGlobalSettings();
+                var gws = await globalSettingsClient.GetGlobalSettings();
                 var currentGw = gws?.Gameweeks.GetCurrentGameweek();
                 IEnumerable<GameweekEntry> entries = new List<GameweekEntry>();
                 IEnumerable<TransfersByGameWeek.Transfer> transfers = new List<TransfersByGameWeek.Transfer>();
                 if (currentGw != null)
                 {
-                    entries = await _leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, sub.LeagueId.Value);
-                    transfers = await _transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, sub.LeagueId.Value);
+                    entries = await leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, sub.LeagueId.Value);
+                    transfers = await transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, sub.LeagueId.Value);
                 }
 
                 tauntData = new TauntData(transfers, entries);
@@ -70,7 +61,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
         }
         else
         {
-            _logger.LogInformation($"Guild {message.GuildId} in channel {message.ChannelId} not subbing to fixture events. Not sending");
+            logger.LogInformation($"Guild {message.GuildId} in channel {message.ChannelId} not subbing to fixture events. Not sending");
         }
     }
 }

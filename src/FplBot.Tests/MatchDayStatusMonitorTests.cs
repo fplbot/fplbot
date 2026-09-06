@@ -114,8 +114,8 @@ public class MatchDayStatusMonitorTests
         return new(EventStatusClient, new TestScopeFactory(Mediator), A.Fake<ILogger<MatchDayStatusMonitor>>());
     }
 
-    private IEventStatusClient EventStatusClient = A.Fake<IEventStatusClient>();
-    private TestPublishEndpoint Mediator = new();
+    private readonly IEventStatusClient EventStatusClient = A.Fake<IEventStatusClient>();
+    private readonly TestPublishEndpoint Mediator = new();
 
     private static class Some
     {

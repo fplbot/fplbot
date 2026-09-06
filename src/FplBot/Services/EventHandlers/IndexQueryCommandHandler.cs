@@ -6,25 +6,17 @@ using Microsoft.Extensions.Options;
 
 namespace FplBot.EventHandlers;
 
-public class IndexQueryCommandHandler : IConsumer<IndexQuery>
+public class IndexQueryCommandHandler(
+    IIndexingClient indexingClient,
+    IOptions<SearchOptions> options,
+    ILogger<IndexQueryCommandHandler> logger)
+    : IConsumer<IndexQuery>
 {
-    private readonly IIndexingClient _indexingClient;
-    private readonly SearchOptions _options;
-    private readonly ILogger<IndexQueryCommandHandler> _logger;
-
-    public IndexQueryCommandHandler(
-        IIndexingClient indexingClient,
-        IOptions<SearchOptions> options,
-        ILogger<IndexQueryCommandHandler> logger)
-    {
-        _indexingClient = indexingClient;
-        _options = options.Value;
-        _logger = logger;
-    }
+    private readonly SearchOptions _options = options.Value;
 
     public async Task Consume(ConsumeContext<IndexQuery> context)
     {
-        await _indexingClient.Index([context.Message], _options.AnalyticsIndex, context.CancellationToken);
-        _logger.LogInformation("Indexed query \"{query}\"", context.Message.Query);
+        await indexingClient.Index([context.Message], _options.AnalyticsIndex, context.CancellationToken);
+        logger.LogInformation("Indexed query \"{query}\"", context.Message.Query);
     }
 }

@@ -1,4 +1,4 @@
-namespace FplBot.Data.Discord;
+namespace FplBot.Data;
 
 public enum EventSubscription
 {

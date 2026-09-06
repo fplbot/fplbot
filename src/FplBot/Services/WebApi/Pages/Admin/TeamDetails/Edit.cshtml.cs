@@ -6,29 +6,19 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails;
 
-public class Edit : PageModel
+public class Edit(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, ISlackClientBuilder builder)
+    : PageModel
 {
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ISlackClientBuilder _builder;
-    private readonly ILeagueClient _leagueClient;
-
-    public Edit(ISlackTeamRepository teamRepo, ILeagueClient leagueClient, ISlackClientBuilder builder)
-    {
-        _teamRepo = teamRepo;
-        _leagueClient = leagueClient;
-        _builder = builder;
-    }
-
     public async Task OnGet(string teamId)
     {
         var teamIdToUpper = teamId.ToUpper();
-        var team = await _teamRepo.GetTeam(teamIdToUpper);
+        var team = await teamRepo.GetTeam(teamIdToUpper);
         Team = team;
         LeagueName = "Unknown league / league not found!";
         try
         {
             if(team.FplbotLeagueId.HasValue)
-                LeagueName = (await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value))?.Properties?.Name ?? LeagueName;
+                LeagueName = (await leagueClient.GetClassicLeague(team.FplbotLeagueId.Value))?.Properties?.Name ?? LeagueName;
         }
         catch (Exception)
         {
@@ -37,7 +27,7 @@ public class Edit : PageModel
 
     public async Task<IActionResult> OnPost(string teamId, int leagueId, string channel, EventSubscription[] subscriptions)
     {
-        var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+        var league = await leagueClient.GetClassicLeague(leagueId, tolerate404:true);
         if(league == null)
         {
             TempData["msg"] = "⚠️ League does not exist.\n";
@@ -53,9 +43,9 @@ public class Edit : PageModel
             TempData["msg"] += $"WARN. Could not find updated channel in via Slack API lookup. Channels: {channelsText}";
         }
 
-        await _teamRepo.UpdateLeagueId(teamId, leagueId);
-        await _teamRepo.UpdateChannel(teamId, channel);
-        await _teamRepo.UpdateSubscriptions(teamId, subscriptions);
+        await teamRepo.UpdateLeagueId(teamId, leagueId);
+        await teamRepo.UpdateChannel(teamId, channel);
+        await teamRepo.UpdateSubscriptions(teamId, subscriptions);
 
         TempData["msg"]+= "Updated!";
         return RedirectToPage("Edit");
@@ -66,8 +56,8 @@ public class Edit : PageModel
 
     private async Task<ISlackClient> CreateSlackClient(string teamId)
     {
-        var token = await _teamRepo.GetTeam(teamId);
-        var slackClient = _builder.Build(token: token.AccessToken);
+        var token = await teamRepo.GetTeam(teamId);
+        var slackClient = builder.Build(token: token.AccessToken);
         return slackClient;
     }
 }

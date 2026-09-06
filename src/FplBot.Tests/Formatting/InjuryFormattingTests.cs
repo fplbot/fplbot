@@ -4,15 +4,8 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Tests.Formatting;
 
-public class InjuryFormattingTests
+public class InjuryFormattingTests(ITestOutputHelper helper)
 {
-    private readonly ITestOutputHelper _helper;
-
-    public InjuryFormattingTests(ITestOutputHelper helper)
-    {
-        _helper = helper;
-    }
-
     [Theory]
     [InlineData("50% chance of playing", "75% chance of playing", "Increased chance of playing")]
     [InlineData("75% chance of playing", "50% chance of playing", "Decreased chance of playing")]
@@ -139,7 +132,7 @@ public class InjuryFormattingTests
             Doubtful(75,25),
             Available()
         });
-        _helper.WriteLine(formatted);
+        helper.WriteLine(formatted);
     }
 
     private InjuredPlayerUpdate Doubtful(int from = 25, int to = 50)

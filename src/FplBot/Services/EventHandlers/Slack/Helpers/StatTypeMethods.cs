@@ -1,4 +1,3 @@
-using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.EventHandlers.Slack.Helpers;

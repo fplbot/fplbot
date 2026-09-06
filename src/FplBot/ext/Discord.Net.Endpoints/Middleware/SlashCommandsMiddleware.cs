@@ -98,11 +98,11 @@ internal class SlashCommandsMiddleware
         };
     }
 
-    private JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = new Lowercase(),
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+    private readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
+                                                               {
+                                                                   PropertyNamingPolicy = new Lowercase(),
+                                                                   DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                                                               };
 }
 
 public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null);

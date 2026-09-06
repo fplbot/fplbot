@@ -1,7 +1,6 @@
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.HttpClients;
 using FplBot.Config;
-using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord.Data;
 using FplBot.Discord.Handlers.SlashCommands;

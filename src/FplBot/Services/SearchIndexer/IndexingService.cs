@@ -2,42 +2,30 @@ using Fpl.Search.Models;
 
 namespace Fpl.Search.Indexing;
 
-public class IndexingService : IIndexingService
+public class IndexingService(
+    IIndexingClient indexingClient,
+    IIndexProvider<EntryItem> entryIndexProvider,
+    IIndexProvider<LeagueItem> leagueIndexProvider,
+    ISingleEntryIndexProvider singleEntryIndexProvider,
+    ILogger<IndexingClient> logger)
+    : IIndexingService
 {
-    private readonly ILogger<IndexingClient> _logger;
-    private readonly IIndexingClient _indexingClient;
-    private readonly IIndexProvider<EntryItem> _entryIndexProvider;
-    private readonly IIndexProvider<LeagueItem> _leagueIndexProvider;
-    private readonly ISingleEntryIndexProvider _singleEntryIndexProvider;
-
-    public IndexingService(
-        IIndexingClient indexingClient,
-        IIndexProvider<EntryItem> entryIndexProvider,
-        IIndexProvider<LeagueItem> leagueIndexProvider,
-        ISingleEntryIndexProvider singleEntryIndexProvider,
-        ILogger<IndexingClient> logger)
-    {
-        _indexingClient = indexingClient;
-        _entryIndexProvider = entryIndexProvider;
-        _leagueIndexProvider = leagueIndexProvider;
-        _singleEntryIndexProvider = singleEntryIndexProvider;
-        _logger = logger;
-    }
+    private readonly ILogger<IndexingClient> _logger = logger;
 
     public async Task IndexEntries(CancellationToken token, Action<int>? pageProgress = null)
     {
-        await Index(_entryIndexProvider, pageProgress, token);
+        await Index(entryIndexProvider, pageProgress, token);
     }
 
     public async Task IndexSingleEntry(int entryId, CancellationToken token)
     {
-        var entryItem = await _singleEntryIndexProvider.GetSingleEntryToIndex(entryId);
-        await _indexingClient.Index(new[] {entryItem!}, _singleEntryIndexProvider.IndexName, token);
+        var entryItem = await singleEntryIndexProvider.GetSingleEntryToIndex(entryId);
+        await indexingClient.Index(new[] {entryItem!}, singleEntryIndexProvider.IndexName, token);
     }
 
     public async Task IndexLeagues(CancellationToken token, Action<int>? pageProgress = null)
     {
-        await Index(_leagueIndexProvider, pageProgress, token);
+        await Index(leagueIndexProvider, pageProgress, token);
     }
 
     private async Task Index<T>(IIndexProvider<T> indexProvider, Action<int>? pageProgress, CancellationToken token) where T : class
@@ -55,7 +43,7 @@ public class IndexingService : IIndexingService
 
             if (items.Any())
             {
-                await _indexingClient.Index(items, indexProvider.IndexName, token);
+                await indexingClient.Index(items, indexProvider.IndexName, token);
             }
 
             i += batchSize;

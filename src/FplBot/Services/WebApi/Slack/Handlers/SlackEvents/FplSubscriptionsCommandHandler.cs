@@ -7,25 +7,18 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-internal class FplSubscriptionsCommandHandler : HandleAppMentionBase
+internal class FplSubscriptionsCommandHandler(
+    ISlackWorkSpacePublisher workspacePublisher,
+    ISlackTeamRepository teamRepo,
+    ILogger<FplSubscriptionsCommandHandler> logger)
+    : HandleAppMentionBase
 {
-    private readonly ISlackWorkSpacePublisher _workspacePublisher;
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ILogger<FplSubscriptionsCommandHandler> _logger;
-
-    public FplSubscriptionsCommandHandler(ISlackWorkSpacePublisher workspacePublisher, ISlackTeamRepository teamRepo, ILogger<FplSubscriptionsCommandHandler> logger)
-    {
-        _workspacePublisher = workspacePublisher;
-        _teamRepo = teamRepo;
-        _logger = logger;
-    }
-
     public override string[] Commands => new[] { "subscriptions" };
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {
         var subscriptionInfo = await GetCurrentSubscriptions(eventMetadata.Team_Id, appMentioned);
-        await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
+        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
         return new EventHandledResponse(subscriptionInfo);
     }
 
@@ -33,7 +26,7 @@ internal class FplSubscriptionsCommandHandler : HandleAppMentionBase
     {
         try
         {
-            var team = await _teamRepo.GetTeam(teamId);
+            var team = await teamRepo.GetTeam(teamId);
             var currentSubscriptions = team.Subscriptions;
 
             if (currentSubscriptions.Count() < 1)
@@ -51,7 +44,7 @@ internal class FplSubscriptionsCommandHandler : HandleAppMentionBase
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message, e);
+            logger.LogError(e.Message, e);
             return $"Oops, could not get subscriptions.";
         }
     }

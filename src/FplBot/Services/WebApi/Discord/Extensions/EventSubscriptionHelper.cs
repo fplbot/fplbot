@@ -1,5 +1,3 @@
-using FplBot.Data.Discord;
-
 namespace FplBot.Discord.Extensions;
 
 public static class EventSubscriptionHelper

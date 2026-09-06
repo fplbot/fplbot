@@ -6,27 +6,19 @@ using FplBot.Discord.Extensions;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class HelpSlashCommandHandler : ISlashCommandHandler
+public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient client) : ISlashCommandHandler
 {
-    private readonly IGuildRepository _store;
-    private readonly ILeagueClient _client;
-
-    public HelpSlashCommandHandler(IGuildRepository store, ILeagueClient client)
-    {
-        _store = store;
-        _client = client;
-    }
     public string CommandName => "help";
 
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
         var content = "";
-        var sub = await _store.GetGuildSubscription(context.GuildId, context.ChannelId);
+        var sub = await store.GetGuildSubscription(context.GuildId, context.ChannelId);
         if (sub != null)
         {
             if (sub.LeagueId.HasValue)
             {
-                var league = await _client.GetClassicLeague(sub.LeagueId.Value, tolerate404:true);
+                var league = await client.GetClassicLeague(sub.LeagueId.Value, tolerate404:true);
                 if(league != null)
                     content += $"\n**League:**\nCurrently following the '{league.Properties?.Name}' league";
             }

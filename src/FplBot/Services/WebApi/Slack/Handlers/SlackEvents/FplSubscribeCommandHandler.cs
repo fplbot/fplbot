@@ -8,25 +8,18 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-internal class FplSubscribeCommandHandler : HandleAppMentionBase
+internal class FplSubscribeCommandHandler(
+    ISlackWorkSpacePublisher workspacePublisher,
+    ISlackTeamRepository teamRepo,
+    ILogger<FplSubscriptionsCommandHandler> logger)
+    : HandleAppMentionBase
 {
-    private readonly ISlackWorkSpacePublisher _workspacePublisher;
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ILogger<FplSubscriptionsCommandHandler> _logger;
-
-    public FplSubscribeCommandHandler(ISlackWorkSpacePublisher workspacePublisher, ISlackTeamRepository teamRepo, ILogger<FplSubscriptionsCommandHandler> logger)
-    {
-        _workspacePublisher = workspacePublisher;
-        _teamRepo = teamRepo;
-        _logger = logger;
-    }
-
     public override string[] Commands => new[] {"subscribe", "unsubscribe"};
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {
         var subscriptionInfo = await GetAndUpdateSubscriptionInfo(eventMetadata.Team_Id, appMentioned);
-        await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
+        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
         return new EventHandledResponse(subscriptionInfo);
     }
 
@@ -34,7 +27,7 @@ internal class FplSubscribeCommandHandler : HandleAppMentionBase
     {
         try
         {
-            var team = await _teamRepo.GetTeam(teamId);
+            var team = await teamRepo.GetTeam(teamId);
             var currentSubscriptions = team.Subscriptions;
             (var inputSubscriptions, var unableToParse) = ParseSubscriptionsFromInput(appMentioned);
 
@@ -52,13 +45,13 @@ internal class FplSubscribeCommandHandler : HandleAppMentionBase
                 UnsubscribeToEvents(inputSubscriptions, currentSubscriptions) :
                 SubscribeToEvents(inputSubscriptions, currentSubscriptions);
 
-            await _teamRepo.UpdateSubscriptions(teamId, newSubscriptions);
+            await teamRepo.UpdateSubscriptions(teamId, newSubscriptions);
 
             return FormatSubscriptionMessage(newSubscriptions, unableToParse);
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message, e);
+            logger.LogError(e.Message, e);
             return $"Oops, could not update subscriptions.";
         }
     }

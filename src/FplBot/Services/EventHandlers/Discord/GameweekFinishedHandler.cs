@@ -8,30 +8,19 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
-    IConsumer<PublishGameweekFinishedToGuild>
+public class GameweekFinishedHandler(
+    IGuildRepository repo,
+    ILogger<GameweekFinishedHandler> logger,
+    IGlobalSettingsClient settingsClient,
+    ILeagueClient leagueClient)
+    : IConsumer<GameweekFinished>,
+        IConsumer<PublishGameweekFinishedToGuild>
 {
-    private readonly IGuildRepository _repo;
-    private readonly ILogger<GameweekFinishedHandler> _logger;
-    private readonly IGlobalSettingsClient _settingsClient;
-    private readonly ILeagueClient _leagueClient;
-
-    public GameweekFinishedHandler(IGuildRepository repo,
-        ILogger<GameweekFinishedHandler> logger,
-        IGlobalSettingsClient settingsClient,
-        ILeagueClient leagueClient)
-    {
-        _repo = repo;
-        _logger = logger;
-        _settingsClient = settingsClient;
-        _leagueClient = leagueClient;
-    }
-
     public async Task Consume(ConsumeContext<GameweekFinished> context)
     {
         var message = context.Message;
-        _logger.LogInformation($"Gameweek {message.FinishedGameweek.Id} finished");
-        var allSubs = await _repo.GetAllGuildSubscriptions();
+        logger.LogInformation($"Gameweek {message.FinishedGameweek.Id} finished");
+        var allSubs = await repo.GetAllGuildSubscriptions();
         foreach (var sub in allSubs)
         {
             await context.Publish(new PublishGameweekFinishedToGuild(sub.GuildId, sub.ChannelId, sub.LeagueId, message.FinishedGameweek.Id));
@@ -41,14 +30,14 @@ public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
     public async Task Consume(ConsumeContext<PublishGameweekFinishedToGuild> context)
     {
         var message = context.Message;
-        var sub = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
+        var sub = await repo.GetGuildSubscription(message.GuildId, message.ChannelId);
 
         if (sub != null && message.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
         {
-            var settings = await _settingsClient.GetGlobalSettings();
+            var settings = await settingsClient.GetGlobalSettings();
             var gameweeks = settings?.Gameweeks ?? new List<Fpl.Client.Models.Gameweek>();
             var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
-            var league = await _leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
+            var league = await leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
             if (league != null && gw != null)
             {
                 if (league.Properties?.StartEvent is var startEvent && message.GameweekId >= startEvent)

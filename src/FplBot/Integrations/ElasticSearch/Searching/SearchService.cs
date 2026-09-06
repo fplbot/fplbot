@@ -7,29 +7,19 @@ using MassTransit;
 
 namespace Fpl.Search.Searching;
 
-public class SearchService : ISearchService
+public class SearchService(
+    IElasticClient elasticClient,
+    IPublishEndpoint publishEndpoint,
+    ILogger<SearchService> logger,
+    IOptions<SearchOptions> options)
+    : ISearchService
 {
-    private readonly IElasticClient _elasticClient;
-    private readonly IPublishEndpoint _publishEndpoint;
-    private readonly ILogger<SearchService> _logger;
-    private readonly SearchOptions _options;
+    private readonly SearchOptions _options = options.Value;
     private readonly Regex _adminCountryRegex = new Regex("^[a-zA-Z]{2}$");
-
-    public SearchService(
-        IElasticClient elasticClient,
-        IPublishEndpoint publishEndpoint,
-        ILogger<SearchService> logger,
-        IOptions<SearchOptions> options)
-    {
-        _elasticClient = elasticClient;
-        _publishEndpoint = publishEndpoint;
-        _logger = logger;
-        _options = options.Value;
-    }
 
     public async Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData)
     {
-        var response = await _elasticClient.SearchAsync<EntryItem>(x => x
+        var response = await elasticClient.SearchAsync<EntryItem>(x => x
             .Index(_options.EntriesIndex)
             .From(page * maxHits)
             .Size(maxHits)
@@ -50,23 +40,23 @@ public class SearchService : ISearchService
             .Preference(metaData?.Actor)
         );
 
-        _logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
+        logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-        await _publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.EntriesIndex, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.EntriesIndex, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
         return new SearchResult<EntryItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
     }
 
     public async Task<EntryItem?> GetEntry(int id)
     {
-        var response = await _elasticClient.GetAsync<EntryItem>(id, desc => desc.Index(_options.EntriesIndex));
+        var response = await elasticClient.GetAsync<EntryItem>(id, desc => desc.Index(_options.EntriesIndex));
 
         return response.Found ? response.Source : null;
     }
 
     public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string? countryToBoost = null)
     {
-        var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
+        var response = await elasticClient.SearchAsync<LeagueItem>(x => x
             .Index(_options.LeaguesIndex)
             .From(page * maxHits)
             .Size(maxHits)
@@ -80,9 +70,9 @@ public class SearchService : ISearchService
             .Preference(metaData?.Actor)
         );
 
-        _logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
+        logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-        await _publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex, countryToBoost, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex, countryToBoost, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
         return new SearchResult<LeagueItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
     }
@@ -112,7 +102,7 @@ public class SearchService : ISearchService
     public async Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData, SearchType searchType = SearchType.All)
     {
         var indexPattern = GetIndexPatternToSearch(searchType);
-        var response = await _elasticClient.SearchAsync<ILazyDocument>(s => s
+        var response = await elasticClient.SearchAsync<ILazyDocument>(s => s
             .Index(indexPattern)
             .From(page * maxHits)
             .Size(maxHits)
@@ -147,7 +137,7 @@ public class SearchService : ISearchService
         if (!response.IsValid)
             throw new Exception(response.DebugInformation, response.OriginalException);
 
-        await _publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, indexPattern, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, indexPattern, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
         return new SearchResult<dynamic>(response.Hits.Select(h =>
         {

@@ -6,27 +6,19 @@ using Fpl.Search.Data.Abstractions;
 
 namespace Fpl.Search.Indexing;
 
-public class LeagueIndexProvider : IndexProviderBase, IIndexProvider<LeagueItem>
+public class LeagueIndexProvider(
+    ILeagueClient leagueClient,
+    IEntryClient entryClient,
+    ILeagueIndexBookmarkProvider indexBookmarkProvider,
+    ILogger<IndexProviderBase> logger,
+    IOptions<SearchOptions> options)
+    : IndexProviderBase(leagueClient, logger), IIndexProvider<LeagueItem>
 {
-    private readonly IEntryClient _entryClient;
-    private readonly IIndexBookmarkProvider _indexBookmarkProvider;
-    private readonly ILogger<IndexProviderBase> _logger;
-    private readonly SearchOptions _options;
+    private readonly IIndexBookmarkProvider _indexBookmarkProvider = indexBookmarkProvider;
+    private readonly ILogger<IndexProviderBase> _logger = logger;
+    private readonly SearchOptions _options = options.Value;
     private int _currentConsecutiveCountOfMissingLeagues;
     private int _bookmarkCounter;
-
-    public LeagueIndexProvider(
-        ILeagueClient leagueClient,
-        IEntryClient entryClient,
-        ILeagueIndexBookmarkProvider indexBookmarkProvider,
-        ILogger<IndexProviderBase> logger,
-        IOptions<SearchOptions> options) : base(leagueClient, logger)
-    {
-        _entryClient = entryClient;
-        _indexBookmarkProvider = indexBookmarkProvider;
-        _logger = logger;
-        _options = options.Value;
-    }
 
     public string IndexName => _options.LeaguesIndex;
     public Task<int> StartIndexingFrom => _indexBookmarkProvider.GetBookmark();
@@ -54,7 +46,7 @@ public class LeagueIndexProvider : IndexProviderBase, IIndexProvider<LeagueItem>
         if (adminsToFetch.Any())
         {
             var admins =
-                await ClientHelper.PolledRequests(() => adminsToFetch.Select(x => _entryClient.Get(x)).ToArray(),
+                await ClientHelper.PolledRequests(() => adminsToFetch.Select(x => entryClient.Get(x)).ToArray(),
                     _logger);
             foreach (var leagueItem in items)
             {

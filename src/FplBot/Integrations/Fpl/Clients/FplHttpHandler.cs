@@ -1,17 +1,10 @@
 namespace Fpl.Client.Clients;
 
-public class FplDelegatingHandler : DelegatingHandler
+public class FplDelegatingHandler(CookieFetcher cookieFetcher) : DelegatingHandler
 {
-    private readonly CookieFetcher _cookieFetcher;
-
-    public FplDelegatingHandler(CookieFetcher cookieFetcher)
-    {
-        _cookieFetcher = cookieFetcher;
-    }
-
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var sessionCookie = await _cookieFetcher.GetSessionCookie();
+        var sessionCookie = await cookieFetcher.GetSessionCookie();
         request.Headers.Add("Cookie", sessionCookie);
 
 

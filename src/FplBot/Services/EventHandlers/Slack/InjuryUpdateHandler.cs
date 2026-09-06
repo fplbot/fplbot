@@ -7,26 +7,18 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class InjuryUpdateHandler : IConsumer<InjuryUpdateOccured>
+public class InjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogger<InjuryUpdateHandler> logger)
+    : IConsumer<InjuryUpdateOccured>
 {
-    private readonly ISlackTeamRepository _slackTeamRepo;
-    private readonly ILogger<InjuryUpdateHandler> _logger;
-
-    public InjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogger<InjuryUpdateHandler> logger)
-    {
-        _slackTeamRepo = slackTeamRepo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<InjuryUpdateOccured> context)
     {
         var notification = context.Message;
-        _logger.LogInformation($"Handling {notification.PlayersWithInjuryUpdates.Count()} injury updates");
+        logger.LogInformation($"Handling {notification.PlayersWithInjuryUpdates.Count()} injury updates");
         var filtered = notification.PlayersWithInjuryUpdates.Where(c => c.Player.IsRelevant());
         if (filtered.Any())
         {
             var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-            var slackTeams = await _slackTeamRepo.GetAllTeams();
+            var slackTeams = await slackTeamRepo.GetAllTeams();
             foreach (var slackTeam in slackTeams)
             {
                 if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
@@ -37,7 +29,7 @@ public class InjuryUpdateHandler : IConsumer<InjuryUpdateOccured>
         }
         else
         {
-            _logger.LogInformation("All updates injuries irrelevant, so not sending any notification");
+            logger.LogInformation("All updates injuries irrelevant, so not sending any notification");
         }
     }
 }

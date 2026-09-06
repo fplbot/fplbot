@@ -3,24 +3,20 @@ using StackExchange.Redis;
 
 namespace Fpl.Search.Data.Repositories;
 
-public class LeagueIndexRedisBookmarkProvider : ILeagueIndexBookmarkProvider
+public class LeagueIndexRedisBookmarkProvider(
+    IConnectionMultiplexer redis,
+    ILogger<LeagueIndexRedisBookmarkProvider> logger)
+    : ILeagueIndexBookmarkProvider
 {
-    private readonly ILogger<LeagueIndexRedisBookmarkProvider> _logger;
-    private readonly IDatabase _db;
+    private readonly IDatabase _db = redis.GetDatabase();
     private const string BookmarkKey = "leagueIndexBookmark";
-
-    public LeagueIndexRedisBookmarkProvider(IConnectionMultiplexer redis, ILogger<LeagueIndexRedisBookmarkProvider> logger)
-    {
-        _logger = logger;
-        _db = redis.GetDatabase();
-    }
 
     public async Task<int> GetBookmark()
     {
         var valid = (await _db.StringGetAsync(BookmarkKey)).TryParse(out int bookmark);
 
         if(!valid)
-            _logger.LogWarning($"Unable to parse {BookmarkKey} from db");
+            logger.LogWarning($"Unable to parse {BookmarkKey} from db");
 
         return valid ? bookmark : 1;
     }
@@ -30,7 +26,7 @@ public class LeagueIndexRedisBookmarkProvider : ILeagueIndexBookmarkProvider
         var success = await _db.StringSetAsync(BookmarkKey, bookmark);
         if (!success)
         {
-            _logger.LogError($"Unable to set {BookmarkKey} in db");
+            logger.LogError($"Unable to set {BookmarkKey} in db");
         }
     }
 }

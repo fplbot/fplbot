@@ -6,15 +6,8 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-public class DebugHandler : IHandleAppMentions
+public class DebugHandler(IPublishEndpoint publishEndpoint) : IHandleAppMentions
 {
-    private readonly IPublishEndpoint _publishEndpoint;
-
-    public DebugHandler(IPublishEndpoint publishEndpoint)
-    {
-        _publishEndpoint = publishEndpoint;
-    }
-
     public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
     {
         var debugDetails = MetaService.DebugInfo();
@@ -29,7 +22,7 @@ public class DebugHandler : IHandleAppMentions
         {
             debugInfo += $"️▪️ <https://github.com/fplbot/fplbot/tree/{debugDetails.Sha}|{debugDetails.Sha?.Substring(0, debugDetails.Sha.Length - 1)}>\n";
         }
-        await _publishEndpoint.Publish(new PublishToSlack(eventMetadata.Team_Id, slackEvent.Channel, debugInfo));
+        await publishEndpoint.Publish(new PublishToSlack(eventMetadata.Team_Id, slackEvent.Channel, debugInfo));
         return new EventHandledResponse("OK");
     }
 

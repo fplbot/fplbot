@@ -3,14 +3,9 @@ using Microsoft.Extensions.Options;
 
 namespace Fpl.Client.Clients;
 
-public class Authenticator
+public class Authenticator(IOptions<FplApiClientOptions> options)
 {
-    private readonly FplApiClientOptions _options;
-
-    public Authenticator(IOptions<FplApiClientOptions> options)
-    {
-        _options = options.Value;
-    }
+    private readonly FplApiClientOptions _options = options.Value;
 
     public async Task<CookieCollection> Authenticate()
     {

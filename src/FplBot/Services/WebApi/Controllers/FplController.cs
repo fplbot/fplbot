@@ -5,23 +5,14 @@ namespace FplBot.WebApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FplController : ControllerBase
+public class FplController(ILeagueClient leagueClient, ILogger<FplController> logger) : ControllerBase
 {
-    private readonly ILeagueClient _leagueClient;
-    private readonly ILogger<FplController> _logger;
-
-    public FplController(ILeagueClient leagueClient, ILogger<FplController> logger)
-    {
-        _leagueClient = leagueClient;
-        _logger = logger;
-    }
-
     [HttpGet("leagues/{leagueId}")]
     public async Task<IActionResult> GetLeague(int leagueId)
     {
         try
         {
-            var league = await _leagueClient.GetClassicLeague(leagueId);
+            var league = await leagueClient.GetClassicLeague(leagueId);
             if (league == null) return NotFound();
             return Ok(new
             {
@@ -31,7 +22,7 @@ public class FplController : ControllerBase
         }
         catch (HttpRequestException e)
         {
-            _logger.LogWarning(e.ToString());
+            logger.LogWarning(e.ToString());
         }
 
         return NotFound();

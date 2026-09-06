@@ -4,20 +4,14 @@ using Microsoft.Extensions.Options;
 
 namespace Fpl.Search.Indexing;
 
-public class EntryIndexProvider : IndexProviderBase, IIndexProvider<EntryItem>, ISingleEntryIndexProvider
+public class EntryIndexProvider(
+    ILeagueClient leagueClient,
+    IEntryClient entryClient,
+    ILogger<IndexProviderBase> logger,
+    IOptions<SearchOptions> options)
+    : IndexProviderBase(leagueClient, logger), IIndexProvider<EntryItem>, ISingleEntryIndexProvider
 {
-    private readonly IEntryClient _entryClient;
-    private readonly SearchOptions _options;
-
-    public EntryIndexProvider(
-        ILeagueClient leagueClient,
-        IEntryClient entryClient,
-        ILogger<IndexProviderBase> logger,
-        IOptions<SearchOptions> options) : base(leagueClient, logger)
-    {
-        _entryClient = entryClient;
-        _options = options.Value;
-    }
+    private readonly SearchOptions _options = options.Value;
 
     public string IndexName => _options.EntriesIndex;
     public Task<int> StartIndexingFrom => Task.FromResult(1);
@@ -38,7 +32,7 @@ public class EntryIndexProvider : IndexProviderBase, IIndexProvider<EntryItem>, 
 
     public async Task<EntryItem?> GetSingleEntryToIndex(int entryId)
     {
-        var entry = await _entryClient.Get(entryId);
+        var entry = await entryClient.Get(entryId);
         return entry == null ? null : new EntryItem { Id = entry.Id, RealName = entry.PlayerFullName, TeamName = entry.TeamName };
     }
 }

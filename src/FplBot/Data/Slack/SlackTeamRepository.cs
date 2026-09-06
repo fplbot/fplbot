@@ -8,14 +8,14 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly ILogger<SlackTeamRepository> _logger;
 
     private readonly IConnectionMultiplexer _redis;
-    private IDatabase _db;
-    private string _server;
+    private readonly IDatabase _db;
+    private readonly string _server;
 
-    private string _accessTokenField = "accessToken";
-    private string _channelField = "fplchannel";
-    private string _leagueField = "fplleagueId";
-    private string _teamNameField = "teamName";
-    private string _subscriptionsField = "subscriptions";
+    private readonly string _accessTokenField = "accessToken";
+    private readonly string _channelField = "fplchannel";
+    private readonly string _leagueField = "fplleagueId";
+    private readonly string _teamNameField = "teamName";
+    private readonly string _subscriptionsField = "subscriptions";
 
     public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
     {

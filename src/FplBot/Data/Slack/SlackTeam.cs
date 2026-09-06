@@ -2,11 +2,6 @@ namespace FplBot.Data.Slack;
 
 public class SlackTeam
 {
-    public SlackTeam()
-    {
-        Subscriptions = new List<EventSubscription>();
-    }
-
     public string? TeamId { get; set; }
     public string? TeamName { get; set; }
     public string? Scope { get; set; }
@@ -22,5 +17,5 @@ public class SlackTeam
     /// <summary>
     /// WIP
     /// </summary>
-    public IEnumerable<EventSubscription> Subscriptions { get; set; }
+    public IEnumerable<EventSubscription> Subscriptions { get; set; } = new List<EventSubscription>();
 }

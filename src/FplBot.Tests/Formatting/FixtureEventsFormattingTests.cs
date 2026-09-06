@@ -11,15 +11,8 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace FplBot.Tests;
 
-public class FixtureEventsFormattingTests
+public class FixtureEventsFormattingTests(ITestOutputHelper helper)
 {
-    private readonly ITestOutputHelper _helper;
-
-    public FixtureEventsFormattingTests(ITestOutputHelper helper)
-    {
-        _helper = helper;
-    }
-
     [Theory]
     [InlineData("Kohn Jorsnes", "kors", "Magnus Carlsen", "Magnus Carlsen")]
     [InlineData("Magnus Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
@@ -35,7 +28,7 @@ public class FixtureEventsFormattingTests
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true,FormattingType.Slack, CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
         foreach (var formatttedEvent in formattedEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
         // Assert
         var formattedEvent = formattedEvents.First();
@@ -60,7 +53,7 @@ public class FixtureEventsFormattingTests
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true,FormattingType.Slack, CreateMultipleTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
         foreach (var formatttedEvent in formattedEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
         // Assert
         Assert.Single(formattedEvents);
@@ -76,7 +69,7 @@ public class FixtureEventsFormattingTests
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, FormattingType.Slack, CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
         Assert.Contains("PlayerWebname scored a goal", formattedEvents.First().Details);
     }
@@ -87,7 +80,7 @@ public class FixtureEventsFormattingTests
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateRedCardEvent(), subscribes => true, FormattingType.Slack, CreateMultipleTransferInForRedCardedPlayer());
         foreach (var formatttedEvent in formattedEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
 
         Assert.Single(formattedEvents);
@@ -108,7 +101,7 @@ public class FixtureEventsFormattingTests
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
+            helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
         Assert.Contains("~PlayerWebname scored a goal! ⚽️~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
     }
@@ -120,7 +113,7 @@ public class FixtureEventsFormattingTests
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title} {string.Join("\n", formatttedEvent.Details)}");
+            helper.WriteLine($"{formatttedEvent.Title} {string.Join("\n", formatttedEvent.Details)}");
         }
         Assert.Contains("~~PlayerWebname scored a goal! ⚽️~~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
     }
@@ -131,7 +124,7 @@ public class FixtureEventsFormattingTests
         var disordEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateIrrelevantEvents(), subscribes => true,  FormattingType.Discord);
         foreach (var formatttedEvent in disordEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
+            helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
         }
         Assert.Single(disordEvents);
         Assert.Contains("scored a goal", disordEvents.First().Details);
@@ -140,7 +133,7 @@ public class FixtureEventsFormattingTests
         var slackEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateIrrelevantEvents(), subscribes => true, FormattingType.Slack);
         foreach (var formatttedEvent in slackEvents)
         {
-            _helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
+            helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
         }
         Assert.Single(slackEvents);
         Assert.Contains("scored a goal", slackEvents.First().Details);

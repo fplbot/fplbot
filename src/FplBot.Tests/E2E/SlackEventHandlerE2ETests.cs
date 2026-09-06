@@ -1,25 +1,19 @@
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Tests.E2E;
 
-public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAsyncLifetime
+public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputHelper output)
+    : IClassFixture<EventHandlerFixture>, IAsyncLifetime
 {
-    private readonly EventHandlerFixture _fixture;
-    private readonly ITestOutputHelper _output;
     private string? _teamId;
-
-    public SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputHelper output)
-    {
-        _fixture = fixture;
-        _output = output;
-    }
 
     public async Task InitializeAsync()
     {
         _teamId = Guid.NewGuid().ToString("N");
-        _fixture.SlackCapture.Reset();
-        await _fixture.FlushRedisAsync();
+        fixture.SlackCapture.Reset();
+        await fixture.FlushRedisAsync();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -29,7 +23,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     {
         await SeedTeam(_teamId!, "#injuries", EventSubscription.InjuryUpdates);
 
-        await _fixture.Bus.Publish(new InjuryUpdateOccured(new[]
+        await fixture.Bus.Publish(new InjuryUpdateOccured(new[]
         {
             new InjuredPlayerUpdate(
                 new InjuredPlayer(1, "Salah", 25.0, new TeamDescription(14, "LIV", "Liverpool")),
@@ -37,8 +31,8 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
                 new InjuryStatus("d", "Knee injury"))
         }));
 
-        var msg = await _fixture.SlackCapture.WaitForMessageAsync();
-        _output.WriteLine($"Received: {msg.Text}");
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        output.WriteLine($"Received: {msg.Text}");
 
         Assert.Equal("#injuries", msg.Channel);
         Assert.Contains("Salah", msg.Text);
@@ -49,7 +43,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     {
         await SeedTeam(_teamId!, "#main", EventSubscription.Standings);
 
-        await _fixture.Bus.Publish(new InjuryUpdateOccured(new[]
+        await fixture.Bus.Publish(new InjuryUpdateOccured(new[]
         {
             new InjuredPlayerUpdate(
                 new InjuredPlayer(1, "Salah", 25.0, new TeamDescription(14, "LIV", "Liverpool")),
@@ -58,7 +52,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         }));
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
     [Fact]
@@ -66,7 +60,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     {
         await SeedTeam(_teamId!, "#prices", EventSubscription.PriceChanges);
 
-        await _fixture.Bus.Publish(new PlayersPriceChanged(new List<PlayerWithPriceChange>
+        await fixture.Bus.Publish(new PlayersPriceChanged(new List<PlayerWithPriceChange>
         {
             new PlayerWithPriceChange(
                 PlayerId: 1,
@@ -78,8 +72,8 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
                 TeamShortName: "MCI")
         }));
 
-        var msg = await _fixture.SlackCapture.WaitForMessageAsync();
-        _output.WriteLine($"Received: {msg.Text}");
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        output.WriteLine($"Received: {msg.Text}");
 
         Assert.Equal("#prices", msg.Channel);
         Assert.Contains("Haaland", msg.Text);
@@ -90,7 +84,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
     {
         await SeedTeam(_teamId!, "#main", EventSubscription.Standings, EventSubscription.InjuryUpdates);
 
-        await _fixture.Bus.Publish(new PlayersPriceChanged(new List<PlayerWithPriceChange>
+        await fixture.Bus.Publish(new PlayersPriceChanged(new List<PlayerWithPriceChange>
         {
             new PlayerWithPriceChange(
                 PlayerId: 1,
@@ -103,7 +97,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         }));
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
     [Fact]
@@ -115,7 +109,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         await SeedTeam(subscribedTeamId!, "#injuries", EventSubscription.InjuryUpdates);
         await SeedTeam(unsubscribedTeamId, "#main", EventSubscription.Standings);
 
-        await _fixture.Bus.Publish(new InjuryUpdateOccured(new[]
+        await fixture.Bus.Publish(new InjuryUpdateOccured(new[]
         {
             new InjuredPlayerUpdate(
                 new InjuredPlayer(1, "Salah", 25.0, new TeamDescription(14, "LIV", "Liverpool")),
@@ -123,18 +117,18 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
                 new InjuryStatus("d", "Knee injury"))
         }));
 
-        var msg = await _fixture.SlackCapture.WaitForMessageAsync();
-        _output.WriteLine($"Received: {msg.Text}");
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        output.WriteLine($"Received: {msg.Text}");
 
         Assert.Equal("#injuries", msg.Channel);
 
         // No second message should arrive
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
     private Task SeedTeam(string teamId, string channel, params EventSubscription[] subscriptions)
-        => _fixture.Store.Insert(new SlackTeam
+        => fixture.Store.Insert(new SlackTeam
         {
             TeamId = teamId,
             TeamName = "Test Team",

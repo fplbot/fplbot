@@ -3,28 +3,18 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Formatting.FixtureStats.Formatters;
 
-internal class TauntyFormatter : IFormat
+internal class TauntyFormatter(IDescribeTaunts describer, TauntData tauntData, FormattingType formattingType)
+    : IFormat
 {
-    private readonly IDescribeTaunts _describer;
-    private readonly TauntData _tauntData;
-    private readonly FormattingType _formattingType;
-
-    public TauntyFormatter(IDescribeTaunts describer, TauntData tauntData, FormattingType formattingType)
-    {
-        _describer = describer;
-        _tauntData = tauntData;
-        _formattingType = formattingType;
-    }
-
     public IEnumerable<string> Format(IEnumerable<PlayerEvent> goalEvents)
     {
         return goalEvents.GroupBy(g => g.Player).Select(g =>
         {
-            var message = string.Format(_describer.EventDescriptionSingular, $"{g.Key.WebName}", _describer.EventEmoji);
+            var message = string.Format(describer.EventDescriptionSingular, $"{g.Key.WebName}", describer.EventEmoji);
             if (g.Count() > 1)
             {
-                var multipleEmojis = String.Concat(Enumerable.Repeat(_describer.EventEmoji, g.Count()));
-                message = string.Format(_describer.EventDescriptionPlural, $"{g.Key.WebName}", g.Count(), multipleEmojis);
+                var multipleEmojis = String.Concat(Enumerable.Repeat(describer.EventEmoji, g.Count()));
+                message = string.Format(describer.EventDescriptionPlural, $"{g.Key.WebName}", g.Count(), multipleEmojis);
             }
             if (g.Any(g => g.IsRemoved))
             {
@@ -32,8 +22,8 @@ internal class TauntyFormatter : IFormat
             }
             else
             {
-                var tauntibleEntries = _tauntData.GetTauntibleEntries(g.Key, _describer.Type);
-                var jokeFormat = _describer.JokePool.GetRandom();
+                var tauntibleEntries = tauntData.GetTauntibleEntries(g.Key, describer.Type);
+                var jokeFormat = describer.JokePool.GetRandom();
                 var append = tauntibleEntries.Any() && jokeFormat != null ? $" {string.Format(jokeFormat, string.Join(", ", tauntibleEntries))}" : null;
                 message += append;
             }
@@ -45,7 +35,7 @@ internal class TauntyFormatter : IFormat
 
     private string StrikeThrough()
     {
-        switch (_formattingType)
+        switch (formattingType)
         {
             case FormattingType.Slack:
                 return "~";

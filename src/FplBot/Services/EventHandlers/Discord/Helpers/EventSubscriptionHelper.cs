@@ -1,4 +1,3 @@
-using FplBot.Data.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.EventHandlers.Discord.Helpers;

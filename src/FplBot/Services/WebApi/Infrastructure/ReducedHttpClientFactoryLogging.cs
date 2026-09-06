@@ -15,15 +15,9 @@ internal static class ServiceCollectionExtensions
     }
 }
 
-internal class ReducedLoggingHttpMessageHandlerBuilderFilter : IHttpMessageHandlerBuilderFilter
+internal class ReducedLoggingHttpMessageHandlerBuilderFilter(ILoggerFactory loggerFactory)
+    : IHttpMessageHandlerBuilderFilter
 {
-    private readonly ILoggerFactory _loggerFactory;
-
-    public ReducedLoggingHttpMessageHandlerBuilderFilter(ILoggerFactory loggerFactory)
-    {
-        _loggerFactory = loggerFactory;
-    }
-
     public Action<HttpMessageHandlerBuilder> Configure(Action<HttpMessageHandlerBuilder> next)
     {
         return builder =>
@@ -31,7 +25,7 @@ internal class ReducedLoggingHttpMessageHandlerBuilderFilter : IHttpMessageHandl
             next(builder);
 
             var loggerName = !string.IsNullOrEmpty(builder.Name) ? builder.Name : "Default";
-            var innerLogger = _loggerFactory.CreateLogger($"System.Net.Http.HttpClient.{loggerName}.ClientHandler");
+            var innerLogger = loggerFactory.CreateLogger($"System.Net.Http.HttpClient.{loggerName}.ClientHandler");
             var toRemove = builder.AdditionalHandlers.Where(h => (h is LoggingHttpMessageHandler) || h is LoggingScopeHttpMessageHandler).Select(h => h).ToList();
             foreach (var delegatingHandler in toRemove)
             {
@@ -42,15 +36,8 @@ internal class ReducedLoggingHttpMessageHandlerBuilderFilter : IHttpMessageHandl
     }
 }
 
-public class MinimalLoggingHandler : DelegatingHandler
+public class MinimalLoggingHandler(ILogger logger) : DelegatingHandler
 {
-    private readonly ILogger _logger;
-
-    public MinimalLoggingHandler(ILogger logger)
-    {
-        _logger = logger;
-    }
-
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (request == null)
@@ -60,7 +47,7 @@ public class MinimalLoggingHandler : DelegatingHandler
 
         var stopwatch = ValueStopwatch.StartNew();
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation($"{request.Method} {request.RequestUri} - {response.StatusCode} in {stopwatch.GetElapsedTime().TotalMilliseconds}ms");
+        logger.LogInformation($"{request.Method} {request.RequestUri} - {response.StatusCode} in {stopwatch.GetElapsedTime().TotalMilliseconds}ms");
 
         return response;
     }
@@ -69,7 +56,7 @@ public class MinimalLoggingHandler : DelegatingHandler
     {
         private static readonly double TimestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
 
-        private long _startTimestamp;
+        private readonly long _startTimestamp;
 
         public bool IsActive => _startTimestamp != 0;
 

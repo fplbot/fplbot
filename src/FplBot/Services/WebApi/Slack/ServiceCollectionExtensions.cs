@@ -1,5 +1,4 @@
 using Fpl.Search;
-using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;

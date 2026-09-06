@@ -1,5 +1,3 @@
-using FplBot.Data.Slack;
-
 namespace FplBot.WebApi.Slack.Helpers;
 
 public static class EventSubscriptionHelper

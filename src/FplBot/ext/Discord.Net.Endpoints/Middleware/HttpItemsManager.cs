@@ -3,17 +3,8 @@ using System.Text.Json;
 
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class HttpItemsManager
+internal class HttpItemsManager(RequestDelegate next, ILogger<HttpItemsManager> logger)
 {
-    private readonly RequestDelegate _next;
-    private ILogger<HttpItemsManager> _logger;
-
-    public HttpItemsManager(RequestDelegate next, ILogger<HttpItemsManager> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task Invoke(HttpContext context)
     {
         context.Request.EnableBuffering();
@@ -23,7 +14,7 @@ internal class HttpItemsManager
         if (body.StartsWith("{"))
         {
             var jObject = JsonDocument.Parse(body);
-            _logger.LogTrace(body);
+            logger.LogTrace(body);
             bool hasType = jObject.RootElement.TryGetProperty("type", out JsonElement typeValue);
             if (hasType)
             {
@@ -41,6 +32,6 @@ internal class HttpItemsManager
         }
         context.Request.Body.Position = 0;
 
-        await _next(context);
+        await next(context);
     }
 }

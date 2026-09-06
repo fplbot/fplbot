@@ -10,24 +10,16 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-internal class FplPlayerCommandHandler : HandleAppMentionBase
+internal class FplPlayerCommandHandler(
+    ISlackWorkSpacePublisher workSpacePublisher,
+    IGlobalSettingsClient globalSettingsClient)
+    : HandleAppMentionBase
 {
-    private readonly ISlackWorkSpacePublisher _workSpacePublisher;
-    private IGlobalSettingsClient _globalSettingsClient;
-
-    public FplPlayerCommandHandler(
-        ISlackWorkSpacePublisher workSpacePublisher,
-        IGlobalSettingsClient globalSettingsClient)
-    {
-        _workSpacePublisher = workSpacePublisher;
-        _globalSettingsClient = globalSettingsClient;
-    }
-
     public override string[] Commands => new[] { "player" };
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+        var globalSettings = await globalSettingsClient.GetGlobalSettings();
         var players = globalSettings!.Players;
         var teams = globalSettings.Teams;
 
@@ -38,13 +30,13 @@ internal class FplPlayerCommandHandler : HandleAppMentionBase
 
         if (mostPopularMatchingPlayer == null)
         {
-            await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, $"Couldn't find {name}");
+            await workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, $"Couldn't find {name}");
             return new EventHandledResponse($"Found no matching player for {name}: ");
         }
 
         var playerName = $"{mostPopularMatchingPlayer.FirstName} {mostPopularMatchingPlayer.SecondName}";
 
-        await _workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
+        await workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, new ChatPostMessageRequest
         {
             Channel = message.Channel,
             Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams)

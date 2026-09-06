@@ -5,20 +5,13 @@ using System.Net;
 
 namespace Fpl.Client;
 
-public class EntryClient : IEntryClient
+public class EntryClient(HttpClient client) : IEntryClient
 {
-    private readonly HttpClient _client;
-
-    public EntryClient(HttpClient client)
-    {
-        _client = client;
-    }
-
     public async Task<BasicEntry?> Get(int teamId, bool tolerate404 = false)
     {
         try
         {
-            return await _client.GetFromJsonAsync<BasicEntry>($"/api/entry/{teamId}/", JsonConvert.JsonSerializerOptions);
+            return await client.GetFromJsonAsync<BasicEntry>($"/api/entry/{teamId}/", JsonConvert.JsonSerializerOptions);
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {
@@ -30,7 +23,7 @@ public class EntryClient : IEntryClient
     {
         try
         {
-            return await _client.GetFromJsonAsync<EntryPicks>($"/api/entry/{teamId}/event/{gameweek}/picks/", JsonConvert.JsonSerializerOptions);
+            return await client.GetFromJsonAsync<EntryPicks>($"/api/entry/{teamId}/event/{gameweek}/picks/", JsonConvert.JsonSerializerOptions);
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {

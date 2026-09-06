@@ -4,20 +4,13 @@ using System.Net;
 
 namespace Fpl.Client;
 
-public class EntryHistoryClient : IEntryHistoryClient
+public class EntryHistoryClient(HttpClient client) : IEntryHistoryClient
 {
-    private readonly HttpClient _client;
-
-    public EntryHistoryClient(HttpClient client)
-    {
-        _client = client;
-    }
-
     public async Task<(int teamId, EntryHistory entryHistory)?> GetHistory(int teamId, bool tolerate404 = false)
     {
         try
         {
-            return (teamId, await _client.GetFromJsonAsync<EntryHistory>($"/api/entry/{teamId}/history/", JsonConvert.JsonSerializerOptions))!;
+            return (teamId, await client.GetFromJsonAsync<EntryHistory>($"/api/entry/{teamId}/history/", JsonConvert.JsonSerializerOptions))!;
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {

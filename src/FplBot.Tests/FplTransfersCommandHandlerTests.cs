@@ -4,14 +4,9 @@ using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests;
 
-public class FplTransfersCommandHandlerTests
+public class FplTransfersCommandHandlerTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions _client;
-
-    public FplTransfersCommandHandlerTests(ITestOutputHelper logger)
-    {
-        _client = Factory.GetHandler<FplTransfersCommandHandler>(logger);
-    }
+    private readonly IHandleAppMentions _client = Factory.GetHandler<FplTransfersCommandHandler>(logger);
 
     [Theory]
     [InlineData("@fplbot transfers")]

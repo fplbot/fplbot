@@ -2,19 +2,13 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Fpl.Client.Clients;
 
-public class CookieCache
+public class CookieCache(IDistributedCache cache)
 {
-    private readonly IDistributedCache _cache;
-    private string AuthCookieCacheKey = "authcookie";
-
-    public CookieCache(IDistributedCache cache)
-    {
-        _cache = cache;
-    }
+    private readonly string AuthCookieCacheKey = "authcookie";
 
     public async Task<string?> GetAsync()
     {
-        return await _cache.GetStringAsync(AuthCookieCacheKey);
+        return await cache.GetStringAsync(AuthCookieCacheKey);
     }
 
     public async Task SetAsync(string cookie, DateTime cookieExpiration)
@@ -26,6 +20,6 @@ public class CookieCache
             AbsoluteExpiration = expiration
         };
 
-        await _cache.SetStringAsync(AuthCookieCacheKey, cookie, entryOptions);
+        await cache.SetStringAsync(AuthCookieCacheKey, cookie, entryOptions);
     }
 }

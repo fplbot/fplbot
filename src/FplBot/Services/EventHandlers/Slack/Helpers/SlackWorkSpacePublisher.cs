@@ -5,23 +5,15 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack.Helpers;
 
-public class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
+public class SlackWorkSpacePublisher(
+    ISlackTeamRepository repository,
+    ISlackClientBuilder builder,
+    ILogger<SlackWorkSpacePublisher> logger)
+    : ISlackWorkSpacePublisher
 {
-
-    private readonly ISlackTeamRepository _repository;
-    private readonly ISlackClientBuilder _slackClientBuilder;
-    private readonly ILogger<SlackWorkSpacePublisher> _logger;
-
-    public SlackWorkSpacePublisher(ISlackTeamRepository repository, ISlackClientBuilder builder, ILogger<SlackWorkSpacePublisher> logger)
-    {
-        _repository = repository;
-        _slackClientBuilder = builder;
-        _logger = logger;
-    }
-
     public async Task PublishToAllWorkspaceChannels(string msg)
     {
-        var teams = await _repository.GetAllTeams();
+        var teams = await repository.GetAllTeams();
         foreach (var team in teams)
         {
             await PublishToWorkspace(team.TeamId!, team.FplBotSlackChannel!, msg);
@@ -42,21 +34,21 @@ public class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
 
     public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
     {
-        var team = await _repository.GetTeam(teamId);
+        var team = await repository.GetTeam(teamId);
         if (team.AccessToken is not null)
         {
             await PublishUsingToken(team.AccessToken,messages);
         }
         else
         {
-            _logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", teamId);
+            logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", teamId);
         }
 
     }
 
     private async Task PublishUsingToken(string token, params ChatPostMessageRequest[] messages)
     {
-        var slackClient = _slackClientBuilder.Build(token);
+        var slackClient = builder.Build(token);
         foreach (var message in messages)
         {
             try
@@ -65,23 +57,23 @@ public class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
 
                 if (!res.Ok)
                 {
-                    _logger.LogWarning($"Could not post to {message.Channel}. {res.Error}");
+                    logger.LogWarning($"Could not post to {message.Channel}. {res.Error}");
                 }
             }
             catch (WellKnownSlackApiException sae)
             {
                 if (sae.Error == "account_inactive")
                 {
-                    _logger.LogWarning(sae, $"Inactive token!");
+                    logger.LogWarning(sae, $"Inactive token!");
                 }
                 else
                 {
-                    _logger.LogWarning(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
+                    logger.LogWarning(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
                 }
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e, e.Message);
+                logger.LogWarning(e, e.Message);
             }
         }
     }

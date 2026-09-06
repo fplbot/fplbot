@@ -10,28 +10,20 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<ProcessGameweekStartedForGuildChannel>
+public class GameweekStartedHandler(
+    IGuildRepository repo,
+    ILeagueClient leagueClient,
+    ICaptainsByGameWeek captainsByGameweek,
+    ITransfersByGameWeek transfersByGameweek,
+    ILogger<GameweekStartedHandler> logger)
+    : IConsumer<GameweekJustBegan>, IConsumer<ProcessGameweekStartedForGuildChannel>
 {
     private const int MemberCountForLargeLeague = 25;
-    private readonly IGuildRepository _repo;
-    private readonly ILeagueClient _leagueClient;
-    private readonly ILogger<GameweekStartedHandler> _logger;
-    private readonly ICaptainsByGameWeek _captainsByGameweek;
-    private readonly ITransfersByGameWeek _transfersByGameweek;
-
-    public GameweekStartedHandler(IGuildRepository repo, ILeagueClient leagueClient, ICaptainsByGameWeek captainsByGameweek, ITransfersByGameWeek transfersByGameweek, ILogger<GameweekStartedHandler> logger)
-    {
-        _repo = repo;
-        _leagueClient = leagueClient;
-        _logger = logger;
-        _captainsByGameweek = captainsByGameweek;
-        _transfersByGameweek = transfersByGameweek;
-    }
 
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
         var notification = context.Message;
-        var subs = await _repo.GetAllGuildSubscriptions();
+        var subs = await repo.GetAllGuildSubscriptions();
         foreach (var team in subs)
         {
             await context.Publish(new ProcessGameweekStartedForGuildChannel(team.GuildId, team.ChannelId, notification.NewGameweek.Id));
@@ -43,14 +35,14 @@ public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<Pr
         var message = context.Message;
         var newGameweek = message.GameweekId;
 
-        var team = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
+        var team = await repo.GetGuildSubscription(message.GuildId, message.ChannelId);
 
         var messages = new List<RichMesssage>();
 
         ClassicLeague? league = null;
         if (team.LeagueId.HasValue)
         {
-            league = await _leagueClient.GetClassicLeague(team.LeagueId.Value, tolerate404:true);
+            league = await leagueClient.GetClassicLeague(team.LeagueId.Value, tolerate404:true);
         }
 
         var leagueExists = league != null;
@@ -62,17 +54,17 @@ public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<Pr
 
         if (leagueExists && leagueStarted && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
         {
-            var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.LeagueId!.Value);
+            var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.LeagueId!.Value);
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
-                string captainsByGameWeek = _captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
+                string captainsByGameWeek = captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
                 messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
-                string captainsChartByGameWeek = _captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
+                string captainsChartByGameWeek = captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
                 messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
             }
             else
             {
-                string captainsByGameWeek = _captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
+                string captainsByGameWeek = captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
                 messages.Add(new RichMesssage("Captain stats:", captainsByGameWeek));
             }
 
@@ -83,14 +75,14 @@ public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<Pr
         }
         else
         {
-            _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
         }
 
         if (leagueExists && leagueStarted && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
         {
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
-                var transfersByGameweekTexts = await _transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId!.Value, includeExternalLinks:false);
+                var transfersByGameweekTexts = await transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId!.Value, includeExternalLinks:false);
                 // Discord max limit is 2000 chars, so chunking by 4 managers
                 if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
                 {
@@ -119,7 +111,7 @@ public class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<Pr
         }
         else
         {
-            _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
         }
 
         foreach (var richMessage in messages)

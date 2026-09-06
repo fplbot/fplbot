@@ -5,31 +5,21 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-internal class GameweekLifecycleMonitor
+internal class GameweekLifecycleMonitor(
+    IGlobalSettingsClient gwClient,
+    ILogger<GameweekLifecycleMonitor> logger,
+    IServiceScopeFactory scopeFactory,
+    IFixtureState fixtureState,
+    ILineupState lineupState)
 {
-    private readonly IGlobalSettingsClient _gwClient;
-    private readonly ILogger<GameweekLifecycleMonitor> _logger;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IFixtureState _fixtureState;
-    private readonly ILineupState _lineupState;
-
     private Gameweek? _storedCurrent;
-
-    public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IServiceScopeFactory scopeFactory, IFixtureState fixtureState, ILineupState lineupState)
-    {
-        _gwClient = gwClient;
-        _logger = logger;
-        _scopeFactory = scopeFactory;
-        _fixtureState = fixtureState;
-        _lineupState = lineupState;
-    }
 
     public async Task EveryOtherMinuteTick(CancellationToken token)
     {
         GlobalSettings? globalSettings;
         try
         {
-            globalSettings = await _gwClient.GetGlobalSettings();
+            globalSettings = await gwClient.GetGlobalSettings();
         }
         catch (Exception e) when (LogError(e))
         {
@@ -45,12 +35,12 @@ internal class GameweekLifecycleMonitor
 
         if (_storedCurrent == null)
         {
-            _logger.LogDebug("Executing initial fetch");
+            logger.LogDebug("Executing initial fetch");
             _storedCurrent = fetchedCurrent;
             if (fetchedCurrent != null)
             {
-                await _fixtureState.Reset(fetchedCurrent.Id);
-                await _lineupState.Reset(fetchedCurrent.IsFinished ? fetchedCurrent.Id + 1 : fetchedCurrent.Id);
+                await fixtureState.Reset(fetchedCurrent.Id);
+                await lineupState.Reset(fetchedCurrent.IsFinished ? fetchedCurrent.Id + 1 : fetchedCurrent.Id);
                 return;
             }
             else
@@ -58,42 +48,42 @@ internal class GameweekLifecycleMonitor
                 _storedCurrent = fetchedNext;
                 if (fetchedNext != null)
                 {
-                    await _fixtureState.Reset(fetchedNext.Id);
-                    await _lineupState.Reset(fetchedNext.IsFinished ? fetchedNext.Id + 1 : fetchedNext.Id);
+                    await fixtureState.Reset(fetchedNext.Id);
+                    await lineupState.Reset(fetchedNext.IsFinished ? fetchedNext.Id + 1 : fetchedNext.Id);
                     return;
                 }
             }
         }
 
-        _logger.LogDebug($"Stored: {_storedCurrent?.Id} & FetchedCurrent: {fetchedCurrent?.Id} & FetchedNext:{fetchedNext?.Id}");
+        logger.LogDebug($"Stored: {_storedCurrent?.Id} & FetchedCurrent: {fetchedCurrent?.Id} & FetchedNext:{fetchedNext?.Id}");
 
         if (fetchedCurrent == null)
         {
             if (fetchedNext != null)
             {
-                _logger.LogDebug("No gw marked as current. Using next");
+                logger.LogDebug("No gw marked as current. Using next");
                 fetchedCurrent = fetchedNext;
             }
             else
             {
-                _logger.LogDebug("No gw marked as current or next. Skipping");
+                logger.LogDebug("No gw marked as current or next. Skipping");
                 return;
             }
         }
 
         if (IsFirstGameweekChangingToCurrent(fetchedCurrent) || IsChangeToNewGameweek(fetchedCurrent))
         {
-            using (var scope = _scopeFactory.CreateScope())
+            using (var scope = scopeFactory.CreateScope())
                 await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new(fetchedCurrent.Id)));
-            await _fixtureState.Reset(fetchedCurrent.Id);
-            await _lineupState.Reset(fetchedCurrent.Id);
+            await fixtureState.Reset(fetchedCurrent.Id);
+            await lineupState.Reset(fetchedCurrent.Id);
             _storedCurrent = fetchedCurrent;
             return;
         }
 
         if (IsChangeToFinishedGameweek(fetchedCurrent))
         {
-            using (var scope = _scopeFactory.CreateScope())
+            using (var scope = scopeFactory.CreateScope())
                 await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new(fetchedCurrent.Id)));
             _storedCurrent = fetchedCurrent;
             return;
@@ -101,25 +91,25 @@ internal class GameweekLifecycleMonitor
 
         if (!_storedCurrent!.IsFinished && _storedCurrent.IsCurrent)
         {
-            await _fixtureState.Refresh(_storedCurrent.Id);
-            await _lineupState.Refresh(_storedCurrent.Id);
+            await fixtureState.Refresh(_storedCurrent.Id);
+            await lineupState.Refresh(_storedCurrent.Id);
             _storedCurrent = fetchedCurrent;
             return;
         }
 
         if (_storedCurrent.IsFinished && _storedCurrent.IsCurrent)
         {
-            await _fixtureState.Refresh(_storedCurrent.Id);
+            await fixtureState.Refresh(_storedCurrent.Id);
             if (_storedCurrent.Id < 38)
-                await _lineupState.Refresh(_storedCurrent.Id + 1);
-            _lineupState.LogState();
+                await lineupState.Refresh(_storedCurrent.Id + 1);
+            lineupState.LogState();
             _storedCurrent = fetchedCurrent;
             return;
         }
 
         if (_storedCurrent.IsNext && _storedCurrent.Id == 1)
         {
-            await _lineupState.Refresh(1);
+            await lineupState.Refresh(1);
             _storedCurrent = fetchedCurrent;
             return;
         }
@@ -146,11 +136,11 @@ internal class GameweekLifecycleMonitor
     {
         if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
         {
-            _logger.LogWarning("Game is updating");
+            logger.LogWarning("Game is updating");
         }
         else
         {
-            _logger.LogError(e, e.Message);
+            logger.LogError(e, e.Message);
         }
 
         return true;
