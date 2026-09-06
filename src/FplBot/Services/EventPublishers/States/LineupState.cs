@@ -11,35 +11,25 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-internal class LineupState : ILineupState
+internal class LineupState(
+    IFixtureClient fixtureClient,
+    IPulseLiveClient pulseClient,
+    IGlobalSettingsClient globalSettingsClient,
+    IServiceScopeFactory scopeFactory,
+    ILogger<LineupState> logger)
+    : ILineupState
 {
-    private readonly IFixtureClient _fixtureClient;
-    private readonly IPulseLiveClient _pulseClient;
-    private readonly IGlobalSettingsClient _globalSettingsClient;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<LineupState> _logger;
-    private readonly Dictionary<int, MatchDetails> _matchDetails;
+    private readonly Dictionary<int, MatchDetails> _matchDetails = new();
     private ICollection<Fixture> _currentFixtures = new List<Fixture>();
     private Dictionary<int, string?> _teamShortNames = new();
-
-    public LineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient, IServiceScopeFactory scopeFactory, ILogger<LineupState> logger)
-    {
-        _fixtureClient = fixtureClient;
-        _pulseClient = pulseClient;
-        _globalSettingsClient = globalSettingsClient;
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-        _matchDetails = new Dictionary<int, MatchDetails>();
-        _currentFixtures = new List<Fixture>();
-    }
 
     public async Task Reset(int gw)
     {
         _matchDetails.Clear();
         try
         {
-            _currentFixtures = await _fixtureClient.GetFixturesByGameweek(gw) ?? new List<Fixture>();
-            var settings = await _globalSettingsClient.GetGlobalSettings();
+            _currentFixtures = await fixtureClient.GetFixturesByGameweek(gw) ?? new List<Fixture>();
+            var settings = await globalSettingsClient.GetGlobalSettings();
             _teamShortNames = settings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? new Dictionary<int, string?>();
         }
         catch (Exception e) when (LogError(e))
@@ -49,7 +39,7 @@ internal class LineupState : ILineupState
 
         foreach (var fixture in _currentFixtures)
         {
-            var lineups = await _pulseClient.GetMatchDetails(fixture.Code);
+            var lineups = await pulseClient.GetMatchDetails(fixture.Code);
             if (lineups != null)
             {
                 _matchDetails[fixture.Code] = lineups;
@@ -57,7 +47,7 @@ internal class LineupState : ILineupState
             else
             {
                 // retry:
-                var retry = await _pulseClient.GetMatchDetails(fixture.Code);
+                var retry = await pulseClient.GetMatchDetails(fixture.Code);
                 if (retry != null)
                 {
                     _matchDetails[fixture.Code] = retry;
@@ -71,7 +61,7 @@ internal class LineupState : ILineupState
         ICollection<Fixture>? updatedFixtures;
         try
         {
-            updatedFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
+            updatedFixtures = await fixtureClient.GetFixturesByGameweek(gw);
         }
         catch (Exception e) when (LogError(e))
         {
@@ -88,12 +78,12 @@ internal class LineupState : ILineupState
 
     private async Task CheckForRemovedFixtures(ICollection<Fixture> updatedFixtures, int gw)
     {
-        using var scope = _logger.AddContext("CheckForRemovedFixtures");
+        using var scope = logger.AddContext("CheckForRemovedFixtures");
         var currentEvent = _currentFixtures.First().Event;
         var updatedEvent = updatedFixtures.First().Event;
         if (updatedEvent != currentEvent)
         {
-            _logger.LogWarning("Checking fixtures for different gameweek. {Current} vs {Updated}. Aborting.", currentEvent, updatedEvent );
+            logger.LogWarning("Checking fixtures for different gameweek. {Current} vs {Updated}. Aborting.", currentEvent, updatedEvent );
             return;
         }
 
@@ -104,7 +94,7 @@ internal class LineupState : ILineupState
                 var isFixtureRemoved = updatedFixtures.All(f => f.Id != currentFixture.Id);
                 if (isFixtureRemoved)
                 {
-                    var settings = await _globalSettingsClient.GetGlobalSettings();
+                    var settings = await globalSettingsClient.GetGlobalSettings();
                     var teams = settings?.Teams ?? new List<Team>();
                     var homeTeam = teams.First(t => t.Id == currentFixture.HomeTeamId);
                     var awayTeam = teams.First(t => t.Id == currentFixture.AwayTeamId);
@@ -115,7 +105,7 @@ internal class LineupState : ILineupState
                 }
                 else
                 {
-                    _logger.LogTrace("Fixture {FixtureId} not removed", currentFixture.Id);
+                    logger.LogTrace("Fixture {FixtureId} not removed", currentFixture.Id);
                 }
             }
             catch (Exception e) when (LogError(e))
@@ -126,12 +116,12 @@ internal class LineupState : ILineupState
 
     private async Task CheckForLineups(ICollection<Fixture> fixtures)
     {
-        using var scope = _logger.AddContext("CheckForLineups");
+        using var scope = logger.AddContext("CheckForLineups");
         foreach (var fixture in fixtures.Where(f => f.Started != true))
         {
             try
             {
-                var updatedMatchDetails = await _pulseClient.GetMatchDetails(fixture.Code);
+                var updatedMatchDetails = await pulseClient.GetMatchDetails(fixture.Code);
                 if (_matchDetails.ContainsKey(fixture.Code) && updatedMatchDetails != null)
                 {
                     var storedDetails = _matchDetails[fixture.Code];
@@ -140,7 +130,7 @@ internal class LineupState : ILineupState
                     {
                         var homeAbbr = _teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?") ?? "?";
                     var awayAbbr = _teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
-                    var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, fixture.Code, homeAbbr, awayAbbr, e => _logger.LogError(e, e.Message));
+                    var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, fixture.Code, homeAbbr, awayAbbr, e => logger.LogError(e, e.Message));
 
                         if (lineups != null)
                         {
@@ -148,20 +138,20 @@ internal class LineupState : ILineupState
                         }
                         else
                         {
-                            _logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.Code });
+                            logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.Code });
                             var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
                             {
                                 WriteIndented = true
                             };
-                            _logger.LogWarning(System.Text.Json.JsonSerializer.Serialize(updatedMatchDetails, options));
+                            logger.LogWarning(System.Text.Json.JsonSerializer.Serialize(updatedMatchDetails, options));
                         }
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Could not do match diff matchdetails for {PulseId}", new { fixture.Code });
-                    _logger.LogDebug($"Contains({fixture.Code}): {_matchDetails.ContainsKey(fixture.Code)}");
-                    _logger.LogDebug($"Details for ({fixture.Code})? : {updatedMatchDetails != null}");
+                    logger.LogWarning("Could not do match diff matchdetails for {PulseId}", new { fixture.Code });
+                    logger.LogDebug($"Contains({fixture.Code}): {_matchDetails.ContainsKey(fixture.Code)}");
+                    logger.LogDebug($"Details for ({fixture.Code})? : {updatedMatchDetails != null}");
                 }
 
                 if (updatedMatchDetails != null)
@@ -179,11 +169,11 @@ internal class LineupState : ILineupState
     {
         if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
         {
-            _logger.LogWarning("Game is updating");
+            logger.LogWarning("Game is updating");
         }
         else
         {
-            _logger.LogError(e, e.Message);
+            logger.LogError(e, e.Message);
         }
 
         return true;
@@ -191,7 +181,7 @@ internal class LineupState : ILineupState
 
     private async Task PublishAsync<T>(T message) where T : class
     {
-        using var scope = _scopeFactory.CreateScope();
+        using var scope = scopeFactory.CreateScope();
         var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
         await publisher.Publish(message);
     }
@@ -203,6 +193,6 @@ internal class LineupState : ILineupState
         {
             logstring.Append($"\n{key} - Lineups: {_matchDetails[key].HomeTeam?.TeamId}-{_matchDetails[key].AwayTeam?.TeamId} {_matchDetails[key].HasLineUps()}");
         }
-        _logger.LogInformation(logstring.ToString());
+        logger.LogInformation(logstring.ToString());
     }
 }
