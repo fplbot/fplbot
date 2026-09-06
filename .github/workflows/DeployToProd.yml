@@ -27,7 +27,7 @@ jobs:
           ref: ${{ github.head_ref }}
       - name: Set version
         run: |
-          VERSION="$(date +%Y%m).$(date +%d).${{ github.run_number }}"
+          VERSION="$(date +%Y).$(date +%m).$(date +%d).${{ github.run_number }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "INFOVERSION=$VERSION+${{ github.sha }}" >> $GITHUB_ENV
       - name: Install Heroku CLI
