@@ -1,6 +1,7 @@
 using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
 namespace Fpl.EventPublishers.States;
@@ -27,7 +28,9 @@ internal class GameweekLifecycleMonitor(
         }
 
         if (globalSettings == null)
+        {
             return;
+        }
 
         var gameweeks = globalSettings.Gameweeks;
         var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
@@ -43,19 +46,18 @@ internal class GameweekLifecycleMonitor(
                 await lineupState.Reset(fetchedCurrent.IsFinished ? fetchedCurrent.Id + 1 : fetchedCurrent.Id);
                 return;
             }
-            else
+
+            _storedCurrent = fetchedNext;
+            if (fetchedNext != null)
             {
-                _storedCurrent = fetchedNext;
-                if (fetchedNext != null)
-                {
-                    await fixtureState.Reset(fetchedNext.Id);
-                    await lineupState.Reset(fetchedNext.IsFinished ? fetchedNext.Id + 1 : fetchedNext.Id);
-                    return;
-                }
+                await fixtureState.Reset(fetchedNext.Id);
+                await lineupState.Reset(fetchedNext.IsFinished ? fetchedNext.Id + 1 : fetchedNext.Id);
+                return;
             }
         }
 
-        logger.LogDebug($"Stored: {_storedCurrent?.Id} & FetchedCurrent: {fetchedCurrent?.Id} & FetchedNext:{fetchedNext?.Id}");
+        logger.LogDebug(
+            $"Stored: {_storedCurrent?.Id} & FetchedCurrent: {fetchedCurrent?.Id} & FetchedNext:{fetchedNext?.Id}");
 
         if (fetchedCurrent == null)
         {
@@ -74,7 +76,11 @@ internal class GameweekLifecycleMonitor(
         if (IsFirstGameweekChangingToCurrent(fetchedCurrent) || IsChangeToNewGameweek(fetchedCurrent))
         {
             using (var scope = scopeFactory.CreateScope())
-                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekJustBegan(new(fetchedCurrent.Id)));
+            {
+                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
+                    .Publish(new GameweekJustBegan(new NewGameweek(fetchedCurrent.Id)));
+            }
+
             await fixtureState.Reset(fetchedCurrent.Id);
             await lineupState.Reset(fetchedCurrent.Id);
             _storedCurrent = fetchedCurrent;
@@ -84,7 +90,11 @@ internal class GameweekLifecycleMonitor(
         if (IsChangeToFinishedGameweek(fetchedCurrent))
         {
             using (var scope = scopeFactory.CreateScope())
-                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new FplBot.Messaging.Contracts.Events.v1.GameweekFinished(new(fetchedCurrent.Id)));
+            {
+                await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
+                    .Publish(new GameweekFinished(new FinishedGameweek(fetchedCurrent.Id)), token);
+            }
+
             _storedCurrent = fetchedCurrent;
             return;
         }
@@ -101,7 +111,10 @@ internal class GameweekLifecycleMonitor(
         {
             await fixtureState.Refresh(_storedCurrent.Id);
             if (_storedCurrent.Id < 38)
+            {
                 await lineupState.Refresh(_storedCurrent.Id + 1);
+            }
+
             lineupState.LogState();
             _storedCurrent = fetchedCurrent;
             return;
@@ -111,7 +124,6 @@ internal class GameweekLifecycleMonitor(
         {
             await lineupState.Refresh(1);
             _storedCurrent = fetchedCurrent;
-            return;
         }
     }
 
@@ -128,7 +140,7 @@ internal class GameweekLifecycleMonitor(
     private bool IsFirstGameweekChangingToCurrent(Gameweek fetchedCurrent)
     {
         var isFirstGameweekBeginning = _storedCurrent!.Id == 1 && fetchedCurrent.Id == 1;
-        var isFirstGameweekChangeToCurrent = _storedCurrent.IsCurrent == false && fetchedCurrent.IsCurrent;
+        var isFirstGameweekChangeToCurrent = !_storedCurrent.IsCurrent && fetchedCurrent.IsCurrent;
         return isFirstGameweekBeginning && isFirstGameweekChangeToCurrent;
     }
 

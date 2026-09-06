@@ -18,7 +18,7 @@ public class MatchDayStatusMonitor(
         EventStatusResponse? fetched;
         try
         {
-            fetched = await eventStatusClient.GetEventStatus();
+            fetched = await eventStatusClient.GetEventStatus(token);
         }
         catch (Exception e) when (LogError(e))
         {
