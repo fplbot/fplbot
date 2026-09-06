@@ -217,6 +217,6 @@ public class PlayerUpdatesRecurringActionTests
     private static PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient)
     {
         _messageSession = new TestPublishEndpoint();
-        return new PlayerUpdatesRecurringAction(playerClient, _messageSession, A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
+        return new PlayerUpdatesRecurringAction(playerClient, new TestScopeFactory(_messageSession), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
     }
 }

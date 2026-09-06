@@ -124,7 +124,7 @@ public class NearDeadlineTests
         var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
 
-        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, session, dontCareLogger);
+        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, new TestScopeFactory(session), dontCareLogger);
 
         await handler.EveryMinuteTick();
 
@@ -144,7 +144,7 @@ public class NearDeadlineTests
         var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 21, 10, 0, 0) };
 
-        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, session, dontCareLogger);
+        var handler = new NearDeadLineMonitor(fakeSettingsClient, dateTimeUtils, new TestScopeFactory(session), dontCareLogger);
 
         await handler.EveryMinuteTick();
 

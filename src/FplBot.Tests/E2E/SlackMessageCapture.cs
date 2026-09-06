@@ -5,7 +5,7 @@ namespace FplBot.Tests.E2E;
 
 public class SlackMessageCapture
 {
-    private Channel<ChatPostMessageRequest> _channel = Channel.CreateUnbounded<ChatPostMessageRequest>();
+    private Channel<ChatPostMessageRequest> _channel = System.Threading.Channels.Channel.CreateUnbounded<ChatPostMessageRequest>();
 
     public void Record(ChatPostMessageRequest req) => _channel.Writer.TryWrite(req);
 
@@ -17,6 +17,6 @@ public class SlackMessageCapture
 
     public void Reset()
     {
-        _channel = Channel.CreateUnbounded<ChatPostMessageRequest>();
+        _channel = System.Threading.Channels.Channel.CreateUnbounded<ChatPostMessageRequest>();
     }
 }

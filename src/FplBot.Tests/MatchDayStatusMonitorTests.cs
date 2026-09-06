@@ -112,7 +112,7 @@ public class MatchDayStatusMonitorTests
 
     public MatchDayStatusMonitor CreateMatchDayStatusMonitor( )
     {
-        return new(EventStatusClient, Mediator, A.Fake<ILogger<MatchDayStatusMonitor>>());
+        return new(EventStatusClient, new TestScopeFactory(Mediator), A.Fake<ILogger<MatchDayStatusMonitor>>());
     }
 
     private IEventStatusClient EventStatusClient = A.Fake<IEventStatusClient>();

@@ -20,7 +20,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
@@ -37,7 +37,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -54,7 +54,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -73,7 +73,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -94,7 +94,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -118,7 +118,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -141,7 +141,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -164,7 +164,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
@@ -187,7 +187,7 @@ public class GameweekLifecycleMonitorTests
 
         var mediator = A.Fake<IMediator>();
         var session = new TestPublishEndpoint();
-        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, session);
+        var action = new GameweekLifecycleMonitor(gameweekClient, A.Fake<ILogger<GameweekLifecycleMonitor>>(), mediator, new TestScopeFactory(session));
 
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
