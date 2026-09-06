@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
