@@ -5,48 +5,49 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);NU1903;NU1904</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Messaging -->
-    <PackageReference Include="MassTransit" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" />
+    <PackageReference Include="MassTransit" Version="8.3.6" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.3.6" />
 
     <!-- Data / Redis -->
-    <PackageReference Include="StackExchange.Redis" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
+    <PackageReference Include="StackExchange.Redis" Version="2.7.27" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.0" />
 
     <!-- Search -->
-    <PackageReference Include="NEST" />
+    <PackageReference Include="NEST" Version="7.14.1" />
 
     <!-- Event scheduling -->
-    <PackageReference Include="CronBackgroundServices" />
+    <PackageReference Include="CronBackgroundServices" Version="8.0.0" />
 
     <!-- Formatting -->
-    <PackageReference Include="Fastenshtein" />
+    <PackageReference Include="Fastenshtein" Version="1.0.0.7" />
 
     <!-- Web / Auth -->
-    <PackageReference Include="AspNet.Security.OAuth.Slack" />
-    <PackageReference Include="NSec.Cryptography" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
+    <PackageReference Include="AspNet.Security.OAuth.Slack" Version="5.0.11" />
+    <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.0" />
 
     <!-- Slack -->
-    <PackageReference Include="Slackbot.Net.Endpoints" />
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" />
+    <PackageReference Include="Slackbot.Net.Endpoints" Version="7.0.1" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="7.0.1" />
 
     <!-- Logging -->
-    <PackageReference Include="Serilog.AspNetCore" />
-    <PackageReference Include="Serilog.Enrichers.CorrelationId" />
-    <PackageReference Include="Serilog.Extensions.Hosting" />
-    <PackageReference Include="Serilog.Formatting.Compact" />
-    <PackageReference Include="Serilog.Settings.Configuration" />
-    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
+    <PackageReference Include="Serilog.Enrichers.CorrelationId" Version="3.0.1" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="3.2.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
 
     <!-- Misc -->
-    <PackageReference Include="MediatR" />
-    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
-    <PackageReference Include="MinimalHttpLogger" />
+    <PackageReference Include="MediatR" Version="9.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="MinimalHttpLogger" Version="0.1.2" />
   </ItemGroup>
 
 </Project>
