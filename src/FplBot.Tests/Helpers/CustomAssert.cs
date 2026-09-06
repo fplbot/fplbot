@@ -14,6 +14,6 @@ public static class CustomAssert
             return;
         }
 
-        throw new ContainsException(string.Join("\n", possibleSubstrings), actualString);
+        throw new XunitException($"Expected actual string to contain any of:\n{string.Join("\n", possibleSubstrings)}\nActual: {actualString}");
     }
 }

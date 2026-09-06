@@ -21,13 +21,13 @@
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.11" />
 
     <!-- Search -->
-    <PackageReference Include="NEST" Version="7.14.1" />
+    <PackageReference Include="NEST" Version="7.17.5" />
 
     <!-- Event scheduling -->
     <PackageReference Include="CronBackgroundServices" Version="8.0.0" />
 
     <!-- Formatting -->
-    <PackageReference Include="Fastenshtein" Version="1.0.0.7" />
+    <PackageReference Include="Fastenshtein" Version="1.0.12" />
 
     <!-- Web / Auth -->
     <PackageReference Include="AspNet.Security.OAuth.Slack" Version="10.0.0" />
