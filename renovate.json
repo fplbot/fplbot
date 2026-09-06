@@ -1,0 +1,122 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Oslo",
+  "schedule": ["before 6am on Monday"],
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Group xunit packages",
+      "matchPackageNames": [
+        "xunit",
+        "xunit.runner.visualstudio",
+        "xunit.abstractions"
+      ],
+      "groupName": "xunit",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group Microsoft.Extensions.* packages",
+      "matchPackagePatterns": ["^Microsoft\\.Extensions\\."],
+      "groupName": "Microsoft.Extensions",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group Microsoft.AspNetCore.* packages",
+      "matchPackagePatterns": ["^Microsoft\\.AspNetCore\\."],
+      "groupName": "Microsoft.AspNetCore",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group Microsoft.NET.* packages",
+      "matchPackagePatterns": ["^Microsoft\\.NET\\."],
+      "groupName": "Microsoft.NET",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group Serilog packages",
+      "matchPackagePatterns": ["^Serilog"],
+      "groupName": "Serilog",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group MassTransit packages — pin to major 8, skip major bumps",
+      "matchPackagePatterns": ["^MassTransit"],
+      "groupName": "MassTransit",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false,
+      "ignorePaths": [],
+      "allowedVersions": "<9"
+    },
+    {
+      "description": "Group Slackbot.Net packages",
+      "matchPackagePatterns": ["^Slackbot\\.Net"],
+      "groupName": "Slackbot.Net",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false
+    },
+    {
+      "description": "Group Testcontainers packages",
+      "matchPackagePatterns": ["^Testcontainers"],
+      "groupName": "Testcontainers",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group GitHub Actions — actions org",
+      "matchManagers": ["github-actions"],
+      "matchPackagePatterns": ["^actions/"],
+      "groupName": "GitHub Actions (actions/*)",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group GitHub Actions — other orgs",
+      "matchManagers": ["github-actions"],
+      "matchPackagePatterns": ["^(?!actions/)"],
+      "groupName": "GitHub Actions (third-party)",
+      "automerge": false,
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Never automerge major bumps for any package",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Automerge patch updates for safe utility packages",
+      "matchPackageNames": [
+        "FakeItEasy",
+        "coverlet.collector",
+        "GitHubActionsTestLogger",
+        "Bullseye",
+        "SimpleExec",
+        "Fastenshtein",
+        "MinimalHttpLogger"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ],
+  "nuget": {
+    "enabled": true
+  },
+  "ignorePaths": []
+}
