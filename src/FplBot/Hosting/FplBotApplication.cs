@@ -1,5 +1,7 @@
 using System.Net.Security;
 using FplBot.Data;
+using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.EventPublishers;
 using FplBot.Services.SearchIndexer;
@@ -43,6 +45,7 @@ public static class FplBotApplication
         {
             foreach (var svc in active)
                 svc.ConfigureMassTransit(x);
+            x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
             ConfigureAzureServiceBus(x, builder.Configuration);
         });
 
@@ -68,6 +71,7 @@ public static class FplBotApplication
                 {
                     foreach (var svc in active)
                         svc.ConfigureMassTransit(x);
+                    x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
                     ConfigureAzureServiceBus(x, ctx.Configuration);
                 });
 
@@ -107,6 +111,7 @@ public static class FplBotApplication
                                        "Service bus connection string not configured. Set ConnectionStrings__servicebus or ASB_CONNECTIONSTRING.");
             bus.Host(connectionString);
             bus.UseServiceBusMessageScheduler();
+            bus.DefaultMessageTimeToLive = TimeSpan.FromHours(2);
             bus.ConfigureEndpoints(ctx);
         });
     }

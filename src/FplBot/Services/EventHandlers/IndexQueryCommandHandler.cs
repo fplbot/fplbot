@@ -4,7 +4,7 @@ using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 using Microsoft.Extensions.Options;
 
-namespace FplBot.WebApi.Handlers.Commands;
+namespace FplBot.EventHandlers;
 
 public class IndexQueryCommandHandler : IConsumer<IndexQuery>
 {

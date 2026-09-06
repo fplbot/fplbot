@@ -42,7 +42,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
 
         foreach (var slackTeam in slackTeams)
         {
-            await context.Publish(new PublishFixtureEventsToSlackWorkspace(slackTeam.TeamId!, message.FixtureEvents));
+            await context.Publish(new PublishFixtureEventsToSlackWorkspace(slackTeam.TeamId!, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
         }
     }
 

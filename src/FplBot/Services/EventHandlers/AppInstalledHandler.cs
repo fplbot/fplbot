@@ -4,7 +4,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.WebApi.Handlers.Events;
+namespace FplBot.EventHandlers;
 
 public class AppInstalledHandler(IGuildRepository guildRepo,
     ISlackTeamRepository slackRepo,

@@ -36,7 +36,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
 
         foreach (var sub in subs)
         {
-            await context.Publish(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents));
+            await context.Publish(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
         }
     }
 

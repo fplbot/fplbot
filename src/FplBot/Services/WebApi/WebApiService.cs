@@ -1,6 +1,5 @@
+using FplBot.EventHandlers;
 using FplBot.Hosting;
-using FplBot.WebApi.Handlers.Commands;
-using FplBot.WebApi.Handlers.Events;
 using FplBot.WebApi.Infrastructure;
 using MassTransit;
 using StackExchange.Redis;
