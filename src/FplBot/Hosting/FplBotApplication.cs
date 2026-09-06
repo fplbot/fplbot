@@ -1,4 +1,5 @@
 using System.Net.Security;
+using FplBot.Data;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.EventPublishers;
 using FplBot.Services.SearchIndexer;
@@ -99,8 +100,7 @@ public static class FplBotApplication
     {
         cfg.UsingAzureServiceBus((ctx, bus) =>
         {
-            var connectionString = config.GetConnectionString("servicebus")
-                                   ?? config["ASB_CONNECTIONSTRING"]
+            var connectionString = config["ASB_CONNECTIONSTRING"]
                                    ?? throw new InvalidOperationException(
                                        "Service bus connection string not configured. Set ConnectionStrings__servicebus or ASB_CONNECTIONSTRING.");
             bus.Host(connectionString);
@@ -111,9 +111,9 @@ public static class FplBotApplication
 
     private static ConnectionMultiplexer BuildRedisConnection(IConfiguration config)
     {
-        var connectionString = config.GetConnectionString("redis") ?? config["REDIS_URL"];
+        var connectionString = config["REDIS_URL"];
         if (connectionString == null)
-            throw new InvalidOperationException("Redis connection string not configured. Set ConnectionStrings__redis or REDIS_URL.");
+            throw new InvalidOperationException("Redis connection string not configured. Set REDIS_URL.");
 
         if (connectionString.StartsWith("redis://", StringComparison.OrdinalIgnoreCase)
             || connectionString.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase))
@@ -129,9 +129,8 @@ public static class FplBotApplication
         var uri = new Uri(redisUrl);
         var userInfo = uri.UserInfo.Split(':');
         var host = uri.Host + ":" + uri.Port;
-        return new ConfigurationOptions
+        var options = new ConfigurationOptions
         {
-            ClientName = userInfo[0],
             Password = userInfo.Length > 1 ? userInfo[1] : null,
             EndPoints = { host },
             Ssl = redisUrl.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase),
@@ -141,5 +140,8 @@ public static class FplBotApplication
                 RemoteCertificateValidationCallback = (_, _, _, _) => true,
             }
         };
+        if (!string.IsNullOrEmpty(userInfo[0]))
+            options.User = userInfo[0];
+        return options;
     }
 }
