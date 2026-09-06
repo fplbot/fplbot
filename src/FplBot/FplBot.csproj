@@ -24,14 +24,14 @@
     <PackageReference Include="NEST" Version="7.17.5" />
 
     <!-- Event scheduling -->
-    <PackageReference Include="CronBackgroundServices" Version="8.0.0" />
+    <PackageReference Include="CronBackgroundServices" Version="9.0.0" />
 
     <!-- Formatting -->
     <PackageReference Include="Fastenshtein" Version="1.0.12" />
 
     <!-- Web / Auth -->
     <PackageReference Include="AspNet.Security.OAuth.Slack" Version="10.0.0" />
-    <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
+    <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.11" />
 
     <!-- Slack -->
@@ -47,7 +47,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
 
     <!-- Misc -->
-    <PackageReference Include="MinimalHttpLogger" Version="0.1.2" />
+    <PackageReference Include="MinimalHttpLogger" Version="3.0.1" />
   </ItemGroup>
 
 </Project>
