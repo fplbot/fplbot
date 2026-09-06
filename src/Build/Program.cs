@@ -12,7 +12,7 @@ var targets = new Targets();
 targets.Add("test",
     "Run all tests (self-contained — no external Redis or ASB required)",
     async () => await Command.RunAsync("dotnet",
-        """test src --logger "GitHubActions;report-warnings=false" """));
+        """test src -p:TreatWarningsAsErrors=true --logger "GitHubActions;report-warnings=false" """));
 
 targets.Add("docker-build",
     "Build the Docker image once and tag it locally for all process types",
