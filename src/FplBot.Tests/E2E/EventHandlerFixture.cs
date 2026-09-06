@@ -23,6 +23,7 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using StackExchange.Redis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.Redis;
 
 namespace FplBot.Tests.E2E;
