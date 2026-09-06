@@ -1,5 +1,4 @@
 using Fpl.Search;
-using FplBot.Config;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
@@ -35,7 +34,7 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();
         services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
-        services.AddSingleton<IUninstall, AppUninstaller>();
+        services.AddScoped<IUninstall, AppUninstaller>();
         services.AddSlackBotEvents<TokenStore>()
             .AddShortcut<HelpEventHandler>()
             .AddAppMentionHandler<FplPlayerCommandHandler>()
@@ -55,13 +54,6 @@ public static class ServiceCollectionFplBotSlackWebExtensions
             .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>()
             .AddNoOpAppMentionHandler<UnknownAppMentionCommandHandler>();
 
-        // Slackbot framework registers handlers as singleton; re-register as scoped
-        // so they can consume scoped services (e.g. IPublishEndpoint, ISearchService).
-        services.ReRegisterAsScoped<IShortcutAppMentions, HelpEventHandler>();
-        services.ReRegisterAsScoped<IHandleAppMentions, FplStandingsCommandHandler>();
-        services.ReRegisterAsScoped<IHandleAppMentions, DebugHandler>();
-        services.ReRegisterAsScoped<IHandleAppMentions, FplSearchHandler>();
-        services.ReRegisterAsScoped<INoOpAppMentions, UnknownAppMentionCommandHandler>();
         return services;
     }
 }
