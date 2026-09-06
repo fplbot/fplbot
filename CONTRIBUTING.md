@@ -19,10 +19,6 @@ Then add an `appsettings.Local.json` file (gitignored) in the relevant service d
 
 | Key | Description |
 |-----|-------------|
-| `fpl__login` | FPL account email |
-| `fpl__password` | FPL account password |
-| `ConnectionStrings__redis` | Redis connection string (or `REDIS_URL`) |
-| `ConnectionStrings__servicebus` | ASB connection string (or `ASB_CONNECTIONSTRING`) |
 | `CLIENT_ID` | Slack app client ID |
 | `CLIENT_SECRET` | Slack app client secret |
 | `DISCORD_CLIENT_ID` | Discord app client ID |

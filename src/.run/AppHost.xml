@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="AppHost" type="DotNetProject" factoryName=".NET Project">
-    <option name="PROJECT_PATH" value="$PROJECT_DIR$/FplBot.AppHost/FplBot.AppHost.csproj" />
-    <method v="2" />
-  </configuration>
-</component>
