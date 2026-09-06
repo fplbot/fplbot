@@ -57,9 +57,7 @@
       "description": "Group MassTransit packages — pin to major 8, skip major bumps",
       "matchPackagePatterns": ["^MassTransit"],
       "groupName": "MassTransit",
-      "matchUpdateTypes": ["minor", "patch"],
       "automerge": false,
-      "ignorePaths": [],
       "allowedVersions": "<9"
     },
     {
@@ -84,14 +82,6 @@
       "groupName": "GitHub Actions (actions/*)",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
-      "description": "Group GitHub Actions — other orgs",
-      "matchManagers": ["github-actions"],
-      "matchPackagePatterns": ["^(?!actions/)"],
-      "groupName": "GitHub Actions (third-party)",
-      "automerge": false,
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
