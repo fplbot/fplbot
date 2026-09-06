@@ -78,6 +78,7 @@ public class EventHandlerFixture : IAsyncLifetime
             .Build();
 
         _host = Host.CreateDefaultBuilder()
+            .UseEnvironment("Testing")
             .ConfigureServices((_, services) =>
             {
                 services.AddSingleton<IConnectionMultiplexer>(_multiplexer);
