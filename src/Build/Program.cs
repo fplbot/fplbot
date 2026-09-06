@@ -14,20 +14,16 @@ targets.Add("test",
     async () => await Command.RunAsync("dotnet",
         """test src --logger "GitHubActions;report-warnings=false" """));
 
-targets.Add("docker-build-test",
-    "Build the Docker image and tag it for all test app process types",
-    async () => await BuildImage($"registry.heroku.com/{TestApp}"));
-
-targets.Add("docker-build-prod",
-    "Build the Docker image and tag it for all prod app process types",
-    async () => await BuildImage($"registry.heroku.com/{ProdApp}"));
+targets.Add("docker-build",
+    "Build the Docker image once and tag it locally for all process types",
+    async () => await BuildImage());
 
 targets.Add("docker-push-test",
-    "Push all process-type tags to the Heroku test registry (requires HEROKU_TOKEN)",
+    "Retag and push local images to the Heroku test registry (requires HEROKU_TOKEN)",
     async () => await PushImages($"registry.heroku.com/{TestApp}"));
 
 targets.Add("docker-push-prod",
-    "Push all process-type tags to the Heroku prod registry (requires HEROKU_TOKEN)",
+    "Retag and push local images to the Heroku prod registry (requires HEROKU_TOKEN)",
     async () => await PushImages($"registry.heroku.com/{ProdApp}"));
 
 targets.Add("deploy-test",
@@ -42,7 +38,7 @@ targets.Add("deploy-prod",
 
 await targets.RunAndExitAsync(args);
 
-async Task BuildImage(string registry)
+async Task BuildImage()
 {
     var buildArgs = $"--build-arg INFOVERSION={infoVersion} --build-arg VERSION={version} -f ./src/Dockerfile ./src";
     var baseTag = "fplbot-runtime:current";
@@ -52,7 +48,7 @@ async Task BuildImage(string registry)
     {
         var tmp = Path.GetTempFileName();
         await File.WriteAllTextAsync(tmp, $"FROM {baseTag}\nCMD [\"--services\", \"{serviceName}\"]");
-        await Command.RunAsync("docker", $"build -t {registry}/{processType} -f {tmp} .");
+        await Command.RunAsync("docker", $"build -t fplbot/{processType} -f {tmp} .");
         File.Delete(tmp);
     }
 }
@@ -60,7 +56,10 @@ async Task BuildImage(string registry)
 async Task PushImages(string registry)
 {
     foreach (var processType in ProcessServices().Keys)
+    {
+        await Command.RunAsync("docker", $"tag fplbot/{processType} {registry}/{processType}");
         await Command.RunAsync("docker", $"push {registry}/{processType}");
+    }
 }
 
 Dictionary<string, string> ProcessServices() => new()

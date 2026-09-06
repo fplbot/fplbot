@@ -43,7 +43,7 @@ jobs:
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Build docker images
-        run: dotnet run --project src/Build -- docker-build-test
+        run: dotnet run --project src/Build -- docker-build
         env:
           VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
           INFOVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
