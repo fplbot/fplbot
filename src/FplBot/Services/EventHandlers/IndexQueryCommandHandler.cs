@@ -24,7 +24,7 @@ public class IndexQueryCommandHandler : IConsumer<IndexQuery>
 
     public async Task Consume(ConsumeContext<IndexQuery> context)
     {
-        await _indexingClient.Index(new[] { context.Message }, _options.AnalyticsIndex, new CancellationToken());
+        await _indexingClient.Index([context.Message], _options.AnalyticsIndex, context.CancellationToken);
         _logger.LogInformation("Indexed query \"{query}\"", context.Message.Query);
     }
 }

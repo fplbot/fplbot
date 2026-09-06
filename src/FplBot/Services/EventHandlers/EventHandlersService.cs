@@ -47,7 +47,6 @@ public class EventHandlersService : IFplBotService
     public void ConfigureMassTransit(IBusRegistrationConfigurator cfg)
     {
         cfg.AddConsumer<AppInstalledHandler>();
-        cfg.AddConsumer<IndexQueryCommandHandler>();
         cfg.AddConsumer<BroadcastHandler>();
         cfg.AddConsumer<DiscordFixtureEventsHandler>();
         cfg.AddConsumer<DiscordFixtureFulltimeHandler>();
