@@ -30,7 +30,7 @@
     <PackageReference Include="Fastenshtein" Version="1.0.0.7" />
 
     <!-- Web / Auth -->
-    <PackageReference Include="AspNet.Security.OAuth.Slack" Version="5.0.11" />
+    <PackageReference Include="AspNet.Security.OAuth.Slack" Version="10.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.0" />
 

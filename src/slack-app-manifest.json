@@ -1,0 +1,38 @@
+{
+  "_comment": "Manifest for the FplBotDevelop Slack app (dev credentials committed to appsettings.json). App ID: A0BV9MKL214. To recreate: run src/create-slack-dev-app.py (requires Slack CLI login as a workspace owner).",
+  "display_information": {
+    "name": "FplBotDevelop"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "FplBotDevelop",
+      "always_online": false
+    }
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "http://localhost:1337/signin-slack",
+      "http://localhost:1337/oauth/authorize"
+    ],
+    "scopes": {
+      "bot": [
+        "app_mentions:read",
+        "chat:write",
+        "chat:write.customize",
+        "chat:write.public",
+        "users.profile:read",
+        "users:read",
+        "users:read.email",
+        "groups:read",
+        "channels:read",
+        "incoming-webhook"
+      ]
+    }
+  },
+  "settings": {
+    "interactivity": { "is_enabled": false },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

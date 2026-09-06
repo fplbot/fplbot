@@ -12,6 +12,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Authentication;
 using Slackbot.Net.Endpoints.Hosting;
 using StackExchange.Redis;
@@ -25,6 +26,11 @@ public static class WebApplicationBuilderExtensions
         services.AddOptions<SlackOptions>()
             .Bind(configuration)
             .ValidateWithFluentValidation(new SlackOptionsValidator())
+            .ValidateOnStart();
+
+        services.AddOptions<SlackAdminOptions>()
+            .Bind(configuration.GetSection("admin"))
+            .ValidateWithFluentValidation(new SlackAdminOptionsValidator())
             .ValidateOnStart();
 
         services.AddOptions<DiscordWebOptions>()
@@ -93,8 +99,6 @@ public static class WebApplicationBuilderExtensions
             })
             .AddSlack(c =>
             {
-                c.ClientId = configuration.GetValue<string>("CLIENT_ID") ?? "";
-                c.ClientSecret = configuration.GetValue<string>("CLIENT_SECRET") ?? "";
                 c.Scope.Add("identity.team");
                 c.Events.OnRemoteFailure = r =>
                 {
@@ -113,12 +117,29 @@ public static class WebApplicationBuilderExtensions
                 c.PublicKey = configuration.GetValue<string>("DISCORD_PUBLICKEY") ?? "";
             });
 
+        services.AddSingleton<IPostConfigureOptions<SlackAuthenticationOptions>>(sp =>
+            new PostConfigureOptions<SlackAuthenticationOptions>(
+                SlackAuthenticationDefaults.AuthenticationScheme,
+                opts =>
+                {
+                    var admin = sp.GetRequiredService<IOptions<SlackAdminOptions>>().Value;
+                    opts.ClientId = admin.SlackClientId ?? "";
+                    opts.ClientSecret = admin.SlackClientSecret ?? "";
+                }));
+
+        var allowedTeamId = configuration["admin:AllowedTeamId"];
+        var allowedUserIds = (configuration["admin:AllowedUserIds"] ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
         services.AddAuthorization(options =>
         {
             options.AddPolicy("IsAdmin", b =>
             {
-                b.RequireClaim("urn:slack:team_id", "T016B9N3U7P");
-                b.RequireClaim("urn:slack:user_id", "U016CP6EPR8", "U0172HKTB08", "U016CSWNXAP");
+                b.RequireAuthenticatedUser();
+                if (!string.IsNullOrEmpty(allowedTeamId))
+                    b.RequireClaim("urn:slack:team_id", allowedTeamId);
+                if (allowedUserIds.Length > 0)
+                    b.RequireClaim("urn:slack:user_id", allowedUserIds);
             });
         });
 
