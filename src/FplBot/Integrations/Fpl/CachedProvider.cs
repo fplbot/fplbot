@@ -7,7 +7,7 @@ internal class CacheProvider(IDistributedCache cache, ILogger<CacheProvider> log
 {
     public async Task<T?> GetCachedOrFetch<T>(string url, Func<string, Task<string>> jsonFetch, TimeSpan expireIn) where T: class
     {
-        string? cacheObj = await cache.GetStringAsync(url);
+        var cacheObj = await cache.GetStringAsync(url);
         if (!string.IsNullOrEmpty(cacheObj))
         {
             logger.LogInformation($"CACHE HIT: {url}");

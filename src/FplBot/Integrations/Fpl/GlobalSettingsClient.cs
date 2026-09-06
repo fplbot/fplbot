@@ -7,6 +7,6 @@ public class GlobalSettingsClient(HttpClient httpClient, ICacheProvider client) 
 {
     public Task<GlobalSettings?> GetGlobalSettings()
     {
-        return client.GetCachedOrFetch<GlobalSettings>("/api/bootstrap-static/",url => httpClient.GetStringAsync(url), TimeSpan.FromMinutes(5)); //max-age=300, stale-while-revalidate=1800, stale-if-error=3600
+        return client.GetCachedOrFetch<GlobalSettings>("/api/bootstrap-static/",httpClient.GetStringAsync, TimeSpan.FromMinutes(5)); //max-age=300, stale-while-revalidate=1800, stale-if-error=3600
     }
 }

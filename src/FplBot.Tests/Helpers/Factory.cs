@@ -1,6 +1,5 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Clients;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,7 +63,6 @@ public static class Factory
         services.Replace<ITokenStore>(new DontCareRepo());
         services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository());
         services.Replace<IElasticClient>(elasticClient);
-        services.AddSingleton<ILogger<CookieFetcher>, XUnitTestOutputLogger<CookieFetcher>>(s => new XUnitTestOutputLogger<CookieFetcher>(logger));
         services.AddSingleton<IPublishEndpoint>(A.Fake<IPublishEndpoint>());
         services.AddFplWorkers();
         var provider = services.BuildServiceProvider();

@@ -7,7 +7,7 @@ public class LiveClient(HttpClient httpClient, ICacheProvider client) : ILiveCli
 {
     public async Task<ICollection<LiveItem>?> GetLiveItems(int gameweek, bool isOngoingGameweek = false)
     {
-        var response = await client.GetCachedOrFetch<LiveResponse>($"/api/event/{gameweek}/live/", url => httpClient.GetStringAsync(url), isOngoingGameweek ? TimeSpan.FromMinutes(5) : TimeSpan.FromHours(24));
+        var response = await client.GetCachedOrFetch<LiveResponse>($"/api/event/{gameweek}/live/", httpClient.GetStringAsync, isOngoingGameweek ? TimeSpan.FromMinutes(5) : TimeSpan.FromHours(24));
         return response?.Elements;
     }
 }

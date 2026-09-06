@@ -1,7 +1,6 @@
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Clients;
-using FplBot.Config;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;
@@ -10,17 +9,6 @@ public static class IFplApiClientServiceCollectionExtensions
 {
     public static IServiceCollection AddFplApiClient(this IServiceCollection services, IConfiguration config)
     {
-        services.AddOptions<FplApiClientOptions>()
-            .Bind(config.GetSection("fpl"))
-            .ValidateWithFluentValidation(new FplApiClientOptionsValidator())
-            .ValidateOnStart();
-        AddFplApiClientBase(services, config);
-        return services;
-    }
-
-    private static void AddFplApiClientBase(IServiceCollection services, IConfiguration config)
-    {
-        services.AddTransient<FplDelegatingHandler>();
         services.AddSingleton<ICacheProvider, CacheProvider>();
         services.AddHttpClient<IEntryClient, EntryClient>();
         services.AddHttpClient<IEntryHistoryClient, EntryHistoryClient>();
@@ -31,8 +19,6 @@ public static class IFplApiClientServiceCollectionExtensions
         services.AddHttpClient<ILiveClient, LiveClient>();
         services.AddHttpClient<IEventStatusClient, EventStatusClient>();
         services.ConfigureOptions<FplClientOptionsConfigurator>();
-        services.AddSingleton<Authenticator>();
-        services.AddSingleton<CookieFetcher>();
-        services.AddSingleton<CookieCache>();
+        return services;
     }
 }
