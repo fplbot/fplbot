@@ -10,9 +10,6 @@ jobs:
   ci-on-ubuntu:
     name: ci
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -20,7 +17,3 @@ jobs:
           dotnet-version: "10.0.x"
       - name: Test
         run: dotnet run --project src/Build -- test
-        env:
-          fpl__login: ${{ secrets.fpl__login }}
-          fpl__password: ${{ secrets.fpl__password }}
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

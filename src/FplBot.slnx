@@ -1,6 +1,10 @@
 <Solution>
-  <Project Path="Build/Build.csproj" />
-  <Project Path="FplBot.AppHost/FplBot.AppHost.csproj" />
+  <Project Path="Build/Build.csproj">
+    <ConfigurationRule BuildType="None" />
+  </Project>
+  <Project Path="FplBot.AppHost/FplBot.AppHost.csproj">
+    <ConfigurationRule BuildType="None" />
+  </Project>
   <Project Path="FplBot.Tests/FplBot.Tests.csproj" />
   <Project Path="FplBot/FplBot.csproj" />
 </Solution>
