@@ -74,12 +74,9 @@ public class TestPublishEndpoint : IPublishEndpoint
     public ConnectHandle ConnectPublishObserver(IPublishObserver observer) => throw new NotImplementedException();
 }
 
-public class TestScopeFactory : IServiceScopeFactory
+public class TestScopeFactory(TestPublishEndpoint publisher) : IServiceScopeFactory
 {
-    private readonly TestPublishEndpoint _publisher;
-    public TestScopeFactory(TestPublishEndpoint publisher) => _publisher = publisher;
-
-    public IServiceScope CreateScope() => new TestScope(_publisher);
+    public IServiceScope CreateScope() => new TestScope(publisher);
 
     private class TestScope(TestPublishEndpoint publisher) : IServiceScope
     {
@@ -94,19 +91,16 @@ public class TestScopeFactory : IServiceScopeFactory
     }
 }
 
-public class PublishedMessageCollection : IEnumerable<TestPublishEndpoint.PublishedMessage>
+public class PublishedMessageCollection(List<TestPublishEndpoint.PublishedMessage> messages)
+    : IEnumerable<TestPublishEndpoint.PublishedMessage>
 {
-    private readonly List<TestPublishEndpoint.PublishedMessage> _messages;
-
-    public PublishedMessageCollection(List<TestPublishEndpoint.PublishedMessage> messages) => _messages = messages;
-
-    public TestPublishEndpoint.PublishedMessage this[int index] => _messages[index];
-    public int Length => _messages.Count;
-    public int Count => _messages.Count;
+    public TestPublishEndpoint.PublishedMessage this[int index] => messages[index];
+    public int Length => messages.Count;
+    public int Count => messages.Count;
 
     public IEnumerable<TestPublishEndpoint.PublishedMessage> Containing<T>() =>
-        _messages.Where(m => m.Message is T);
+        messages.Where(m => m.Message is T);
 
-    public IEnumerator<TestPublishEndpoint.PublishedMessage> GetEnumerator() => _messages.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => _messages.GetEnumerator();
+    public IEnumerator<TestPublishEndpoint.PublishedMessage> GetEnumerator() => messages.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => messages.GetEnumerator();
 }

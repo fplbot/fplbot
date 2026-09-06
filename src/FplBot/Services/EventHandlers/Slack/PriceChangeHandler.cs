@@ -7,24 +7,17 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class PriceChangeHandler : IConsumer<PlayersPriceChanged>, IConsumer<PublishPriceChangesToSlackWorkspace>
+public class PriceChangeHandler(
+    ISlackWorkSpacePublisher publisher,
+    ISlackTeamRepository slackTeamRepo,
+    ILogger<PriceChangeHandler> logger)
+    : IConsumer<PlayersPriceChanged>, IConsumer<PublishPriceChangesToSlackWorkspace>
 {
-    private readonly ISlackWorkSpacePublisher _publisher;
-    private readonly ISlackTeamRepository _slackTeamRepo;
-    private readonly ILogger<PriceChangeHandler> _logger;
-
-    public PriceChangeHandler(ISlackWorkSpacePublisher publisher, ISlackTeamRepository slackTeamRepo, ILogger<PriceChangeHandler> logger)
-    {
-        _publisher = publisher;
-        _slackTeamRepo = slackTeamRepo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<PlayersPriceChanged> context)
     {
         var notification = context.Message;
-        _logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
-        var slackTeams = await _slackTeamRepo.GetAllTeams();
+        logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
+        var slackTeams = await slackTeamRepo.GetAllTeams();
         foreach (var slackTeam in slackTeams)
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
@@ -37,17 +30,17 @@ public class PriceChangeHandler : IConsumer<PlayersPriceChanged>, IConsumer<Publ
     public async Task Consume(ConsumeContext<PublishPriceChangesToSlackWorkspace> context)
     {
         var message = context.Message;
-        _logger.LogInformation($"Publish price changes to {message.WorkspaceId}");
+        logger.LogInformation($"Publish price changes to {message.WorkspaceId}");
         var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
-            var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
+            var slackTeam = await slackTeamRepo.GetTeam(message.WorkspaceId);
             var formatted = Formatter.FormatPriceChanged(filtered);
-            await _publisher.PublishToWorkspace(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted);
+            await publisher.PublishToWorkspace(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted);
         }
         else
         {
-            _logger.LogInformation("All price changes were irrelevant, so not sending any notification");
+            logger.LogInformation("All price changes were irrelevant, so not sending any notification");
         }
     }
 }

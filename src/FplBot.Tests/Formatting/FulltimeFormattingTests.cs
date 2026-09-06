@@ -3,19 +3,12 @@ using FplBot.Formatting;
 
 namespace FplBot.Tests.Formatting;
 
-public class FulltimeFormattingTests
+public class FulltimeFormattingTests(ITestOutputHelper helper)
 {
-    private readonly ITestOutputHelper _helper;
-
-    public FulltimeFormattingTests(ITestOutputHelper helper)
-    {
-        _helper = helper;
-    }
-
     [Fact]
     public void Distributed()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 10),
             BonusPointsPlayer("player-D", 20),
@@ -28,7 +21,7 @@ public class FulltimeFormattingTests
     [Fact]
     public void SharedFirstPlace()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 10),
             BonusPointsPlayer("player-D", 20),
@@ -41,7 +34,7 @@ public class FulltimeFormattingTests
     [Fact]
     public void AllSharedFirstPlace()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 10),
             BonusPointsPlayer("player-D", 20),
@@ -54,7 +47,7 @@ public class FulltimeFormattingTests
     [Fact]
     public void TiedSecondPlace()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 10),
             BonusPointsPlayer("player-D", 20),
@@ -67,7 +60,7 @@ public class FulltimeFormattingTests
     [Fact]
     public void TiedSecondPlaceForThreePlayers()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 10),
             BonusPointsPlayer("player-D", 30),
@@ -80,7 +73,7 @@ public class FulltimeFormattingTests
     [Fact]
     public void TiedThirdPlace()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 10),
             BonusPointsPlayer("player-D", 20),
@@ -93,7 +86,7 @@ public class FulltimeFormattingTests
     [Fact]
     public void TiedThirdPlaceForMultiplePlayers()
     {
-        _helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
         {
             BonusPointsPlayer("player-E", 20),
             BonusPointsPlayer("player-D", 20),
@@ -115,7 +108,7 @@ public class FulltimeFormattingTests
         };
 
         var output = Formatter.FormatProvisionalFinished(fixture);
-        _helper.WriteLine(output);
+        helper.WriteLine(output);
 
         Assert.DoesNotContain("Bonus points:", output);
         Assert.Contains("Defensive contributions:", output);
@@ -132,7 +125,7 @@ public class FulltimeFormattingTests
         fixture.DefensiveContributions = new[] { DefensiveContributionPlayer("player-D", 11) };
 
         var output = Formatter.FormatProvisionalFinished(fixture);
-        _helper.WriteLine(output);
+        helper.WriteLine(output);
 
         var bonusIndex = output.IndexOf("Bonus points:", StringComparison.Ordinal);
         var dcIndex = output.IndexOf("Defensive contributions:", StringComparison.Ordinal);

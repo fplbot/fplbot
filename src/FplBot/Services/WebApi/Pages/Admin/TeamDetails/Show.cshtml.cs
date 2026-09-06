@@ -10,33 +10,24 @@ using Slackbot.Net.SlackClients.Http.Exceptions;
 
 namespace FplBot.WebApi.Pages.Admin.TeamDetails;
 
-public class TeamDetailsIndex : PageModel
+public class TeamDetailsIndex(
+    ISlackTeamRepository teamRepo,
+    ILogger<TeamDetailsIndex> logger,
+    IOptions<OAuthOptions> slackAppOptions,
+    ISlackClientBuilder builder,
+    ILeagueClient leagueClient)
+    : PageModel
 {
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ISlackClientBuilder _builder;
-    private readonly ILeagueClient _leagueClient;
-    private readonly IOptions<OAuthOptions> _slackAppOptions;
-    private readonly ILogger<TeamDetailsIndex> _logger;
-
-    public TeamDetailsIndex(ISlackTeamRepository teamRepo, ILogger<TeamDetailsIndex> logger, IOptions<OAuthOptions> slackAppOptions, ISlackClientBuilder builder, ILeagueClient leagueClient)
-    {
-        _teamRepo = teamRepo;
-        _logger = logger;
-        _slackAppOptions = slackAppOptions;
-        _builder = builder;
-        _leagueClient = leagueClient;
-    }
-
     public async Task OnGet(string teamId)
     {
         var teamIdToUpper = teamId.ToUpper();
-        var team = await _teamRepo.GetTeam(teamIdToUpper);
+        var team = await teamRepo.GetTeam(teamIdToUpper);
         if (team != null)
         {
             Team = team;
             if (team.FplbotLeagueId.HasValue)
             {
-                var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
+                var league = await leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
                 League = league;
             }
 
@@ -48,7 +39,7 @@ public class TeamDetailsIndex : PageModel
             }
             catch (Exception e)
             {
-                _logger.LogError(e, e.Message);
+                logger.LogError(e, e.Message);
             }
         }
     }
@@ -58,11 +49,11 @@ public class TeamDetailsIndex : PageModel
 
     public async Task<IActionResult> OnPost(string teamId)
     {
-        _logger.LogInformation($"Deleting {teamId}");
+        logger.LogInformation($"Deleting {teamId}");
         var slackClient = await CreateSlackClient(teamId);
         try
         {
-            var res = await slackClient.AppsUninstall(_slackAppOptions.Value.CLIENT_ID, _slackAppOptions.Value.CLIENT_SECRET);
+            var res = await slackClient.AppsUninstall(slackAppOptions.Value.CLIENT_ID, slackAppOptions.Value.CLIENT_SECRET);
             if (res.Ok)
             {
                 TempData["msg"] = "Uninstall queued, and will be handled at some point";
@@ -74,7 +65,7 @@ public class TeamDetailsIndex : PageModel
         }
         catch (WellKnownSlackApiException e) when (e.Message is "account_inactive" or "not_authed")
         {
-            await _teamRepo.DeleteByTeamId(teamId);
+            await teamRepo.DeleteByTeamId(teamId);
             TempData["msg"] = "Token no longer valid. Team deleted.";
         }
 
@@ -84,8 +75,8 @@ public class TeamDetailsIndex : PageModel
 
     private async Task<ISlackClient> CreateSlackClient(string teamId)
     {
-        var team = await _teamRepo.GetTeam(teamId);
-        var slackClient = _builder.Build(token: team.AccessToken);
+        var team = await teamRepo.GetTeam(teamId);
+        var slackClient = builder.Build(token: team.AccessToken);
         return slackClient;
     }
     public SlackTeam? Team { get; set; }

@@ -6,22 +6,15 @@ using FplBot.Formatting;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
+public class RemoveSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashCommandHandler
 {
-    private readonly IGuildRepository _repo;
-
-    public RemoveSubscriptionSlashCommandHandler(IGuildRepository repo)
-    {
-        _repo = repo;
-    }
-
     public string CommandName => "subscriptions";
 
     public string SubCommandName => "remove";
 
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
-        var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+        var existingSub = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
 
         if (existingSub == null || !existingSub.Subscriptions.Any())
         {
@@ -33,7 +26,7 @@ public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
         bool isLastSub = existingSub.Subscriptions.Count() == 1 && existingSub.Subscriptions.First() == eventSub;
         if (existingSub.LeagueId == null && (isLastSub || eventSub == EventSubscription.All))
         {
-            await _repo.DeleteGuildSubscription(context.GuildId, context.ChannelId);
+            await repo.DeleteGuildSubscription(context.GuildId, context.ChannelId);
             return Respond($"✅ Success!", $"Removed subscription to this channel.");
         }
         bool existingIsAll = existingSub.Subscriptions.Count() == 1 && existingSub.Subscriptions.First() == EventSubscription.All;
@@ -41,8 +34,8 @@ public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
         {
             var allTypes = EventSubscriptionHelper.GetAllSubscriptionTypes().ToList();
             allTypes.Remove(EventSubscription.All);
-            await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = allTypes });
-            var updatedFromAll = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+            await repo.UpdateGuildSubscription(existingSub with { Subscriptions = allTypes });
+            var updatedFromAll = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
             return Respond($"✅ Success!", $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(updatedFromAll?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
         }
 
@@ -57,8 +50,8 @@ public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
             updated.Remove(eventSub);
         }
 
-        await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = updated });
-        var regularUpdate = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+        await repo.UpdateGuildSubscription(existingSub with { Subscriptions = updated });
+        var regularUpdate = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
         if (regularUpdate?.Subscriptions.Any() == true)
         {
             return Respond($"✅ Success!", $"Unsubscribed from {eventSub}. Updated list:\n{Formatter.BulletPoints(regularUpdate.Subscriptions)}");

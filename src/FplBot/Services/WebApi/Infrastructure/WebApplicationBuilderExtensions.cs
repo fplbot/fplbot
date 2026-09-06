@@ -10,6 +10,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Configurations;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
@@ -127,21 +128,22 @@ public static class WebApplicationBuilderExtensions
                     opts.ClientSecret = admin.SlackClientSecret ?? "";
                 }));
 
-        var allowedTeamId = configuration["admin:AllowedTeamId"];
-        var allowedUserIds = (configuration["admin:AllowedUserIds"] ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("IsAdmin", b =>
+        services.AddAuthorization();
+        services.AddOptions<AuthorizationOptions>()
+            .Configure<IOptions<SlackAdminOptions>>((authOptions, adminOpts) =>
             {
-                b.RequireAuthenticatedUser();
-                if (!string.IsNullOrEmpty(allowedTeamId))
-                    b.RequireClaim("urn:slack:team_id", allowedTeamId);
-                if (allowedUserIds.Length > 0)
-                    b.RequireClaim("urn:slack:user_id", allowedUserIds);
+                var admin = adminOpts.Value;
+                var allowedUserIds = (admin.AllowedUserIds ?? "")
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                authOptions.AddPolicy("IsAdmin", b =>
+                {
+                    b.RequireAuthenticatedUser();
+                    if (!string.IsNullOrEmpty(admin.AllowedTeamId))
+                        b.RequireClaim("urn:slack:team_id", admin.AllowedTeamId);
+                    if (allowedUserIds.Length > 0)
+                        b.RequireClaim("urn:slack:user_id", allowedUserIds);
+                });
             });
-        });
 
         var mvcBuilder = services
             .AddRazorPages()

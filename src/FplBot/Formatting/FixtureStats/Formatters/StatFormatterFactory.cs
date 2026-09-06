@@ -3,17 +3,8 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Formatting.FixtureStats.Formatters;
 
-internal class StatFormatterFactory
+internal class StatFormatterFactory(TauntData? tauntData, FormattingType formattingType)
 {
-    private readonly TauntData? _tauntData;
-    private readonly FormattingType _formattingType;
-
-    public StatFormatterFactory(TauntData? tauntData, FormattingType formattingType)
-    {
-        _tauntData = tauntData;
-        _formattingType = formattingType;
-    }
-
     public IFormat Create(StatType type)
     {
         return type switch
@@ -30,9 +21,9 @@ internal class StatFormatterFactory
 
     public IFormat CreateFormatter(IDescribeEvents describer)
     {
-        if (_tauntData != null && describer is IDescribeTaunts tauntDescriber)
-            return new TauntyFormatter(tauntDescriber, _tauntData, _formattingType);
+        if (tauntData != null && describer is IDescribeTaunts tauntDescriber)
+            return new TauntyFormatter(tauntDescriber, tauntData, formattingType);
 
-        return new RegularFormatter(describer, _formattingType);
+        return new RegularFormatter(describer, formattingType);
     }
 }

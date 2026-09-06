@@ -8,24 +8,17 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class LineupReadyHandler : IConsumer<LineupReady>, IConsumer<PublishLineupsToSlackWorkspace>
+public class LineupReadyHandler(
+    ISlackTeamRepository slackTeamRepo,
+    ISlackClientBuilder builder,
+    ILogger<LineupReadyHandler> logger)
+    : IConsumer<LineupReady>, IConsumer<PublishLineupsToSlackWorkspace>
 {
-    private readonly ISlackTeamRepository _slackTeamRepo;
-    private readonly ISlackClientBuilder _builder;
-    private readonly ILogger<LineupReadyHandler> _logger;
-
-    public LineupReadyHandler(ISlackTeamRepository slackTeamRepo, ISlackClientBuilder builder, ILogger<LineupReadyHandler> logger)
-    {
-        _slackTeamRepo = slackTeamRepo;
-        _builder = builder;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<LineupReady> context)
     {
         var message = context.Message;
-        _logger.LogInformation("Handling new lineups");
-        var slackTeams = await _slackTeamRepo.GetAllTeams();
+        logger.LogInformation("Handling new lineups");
+        var slackTeams = await slackTeamRepo.GetAllTeams();
 
         foreach (var slackTeam in slackTeams)
         {
@@ -39,8 +32,8 @@ public class LineupReadyHandler : IConsumer<LineupReady>, IConsumer<PublishLineu
     public async Task Consume(ConsumeContext<PublishLineupsToSlackWorkspace> context)
     {
         var message = context.Message;
-        var team = await _slackTeamRepo.GetTeam(message.WorkspaceId);
-        var slackClient = _builder.Build(team.AccessToken);
+        var team = await slackTeamRepo.GetTeam(message.WorkspaceId);
+        var slackClient = builder.Build(team.AccessToken);
         var lineups = message.Lineups;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* 👇";
 

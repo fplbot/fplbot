@@ -7,23 +7,14 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class PriceChangeHandler : IConsumer<PlayersPriceChanged>
+public class PriceChangeHandler(IGuildRepository repo, ILogger<PriceChangeHandler> logger)
+    : IConsumer<PlayersPriceChanged>
 {
-
-    private readonly IGuildRepository _repo;
-    private readonly ILogger<PriceChangeHandler> _logger;
-
-    public PriceChangeHandler(IGuildRepository repo, ILogger<PriceChangeHandler> logger)
-    {
-        _repo = repo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<PlayersPriceChanged> context)
     {
         var notification = context.Message;
-        _logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
-        var guildSubs = await _repo.GetAllGuildSubscriptions();
+        logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
+        var guildSubs = await repo.GetAllGuildSubscriptions();
         var filtered = notification.PlayersWithPriceChanges.Where(c => c.IsRelevant());
 
         if (filtered.Any())

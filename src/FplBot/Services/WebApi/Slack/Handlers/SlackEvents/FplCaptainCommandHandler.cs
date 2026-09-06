@@ -7,26 +7,13 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-internal class FplCaptainCommandHandler : HandleAppMentionBase
+internal class FplCaptainCommandHandler(
+    ICaptainsByGameWeek captainsByGameWeek,
+    IGameweekHelper gameweekHelper,
+    ISlackTeamRepository slackTeamsRepo,
+    ISlackWorkSpacePublisher workspacePublisher)
+    : HandleAppMentionBase
 {
-    private readonly ICaptainsByGameWeek _captainsByGameWeek;
-    private readonly IGameweekHelper _gameweekHelper;
-    private readonly ISlackTeamRepository _slackTeamsRepo;
-    private readonly ISlackWorkSpacePublisher _workspacePublisher;
-
-    public FplCaptainCommandHandler(
-        ICaptainsByGameWeek captainsByGameWeek,
-        IGameweekHelper gameweekHelper,
-        ISlackTeamRepository slackTeamsRepo,
-        ISlackWorkSpacePublisher workspacePublisher
-    )
-    {
-        _captainsByGameWeek = captainsByGameWeek;
-        _gameweekHelper = gameweekHelper;
-        _slackTeamsRepo = slackTeamsRepo;
-        _workspacePublisher = workspacePublisher;
-    }
-
     public override string[] Commands => new[] { "captains" };
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent incomingMessage)
@@ -38,23 +25,23 @@ internal class FplCaptainCommandHandler : HandleAppMentionBase
         {
             gwPattern = $"{Commands.First()} chart {{gw}}|{Commands.First()} {{gw}} chart";
         }
-        var gameWeek = await _gameweekHelper.ExtractGameweekOrFallbackToCurrent(incomingMessage.Text, gwPattern);
+        var gameWeek = await gameweekHelper.ExtractGameweekOrFallbackToCurrent(incomingMessage.Text, gwPattern);
 
         if (!gameWeek.HasValue)
         {
-            await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, "Invalid gameweek :grimacing:");
+            await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, "Invalid gameweek :grimacing:");
             return new EventHandledResponse("Invalid gameweek");
         }
 
-        var setup = await _slackTeamsRepo.GetTeam(eventMetadata.Team_Id);
+        var setup = await slackTeamsRepo.GetTeam(eventMetadata.Team_Id);
 
         string outgoingMessage;
         if (setup.FplbotLeagueId.HasValue)
         {
-            var captainPicks = await _captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, setup.FplbotLeagueId.Value);
+            var captainPicks = await captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, setup.FplbotLeagueId.Value);
             outgoingMessage = isChartRequest
-                ? _captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, captainPicks)
-                : _captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, captainPicks);
+                ? captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, captainPicks)
+                : captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, captainPicks);
         }
         else
         {
@@ -62,7 +49,7 @@ internal class FplCaptainCommandHandler : HandleAppMentionBase
         }
 
 
-        await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, outgoingMessage);
+        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, outgoingMessage);
 
         return new EventHandledResponse(outgoingMessage);
     }

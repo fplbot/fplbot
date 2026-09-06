@@ -7,19 +7,12 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class LineupReadyHandler : IConsumer<LineupReady>
+public class LineupReadyHandler(IGuildRepository guildRepository) : IConsumer<LineupReady>
 {
-    private readonly IGuildRepository _guildRepository;
-
-    public LineupReadyHandler(IGuildRepository guildRepository)
-    {
-        _guildRepository = guildRepository;
-    }
-
     public async Task Consume(ConsumeContext<LineupReady> context)
     {
         var message = context.Message;
-        var subs = await _guildRepository.GetAllGuildSubscriptions();
+        var subs = await guildRepository.GetAllGuildSubscriptions();
         var lineups = message.Lineup;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* ";
         var formattedLineup = Formatter.FormatLineup(lineups);

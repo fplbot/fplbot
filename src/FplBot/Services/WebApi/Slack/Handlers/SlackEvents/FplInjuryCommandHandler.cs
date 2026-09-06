@@ -7,22 +7,16 @@ using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-internal class FplInjuryCommandHandler : HandleAppMentionBase
+internal class FplInjuryCommandHandler(
+    ISlackWorkSpacePublisher workspacePublisher,
+    IGlobalSettingsClient globalSettingsClient)
+    : HandleAppMentionBase
 {
-    private readonly ISlackWorkSpacePublisher _workspacePublisher;
-    private readonly IGlobalSettingsClient _globalSettingsClient;
-
-    public FplInjuryCommandHandler(ISlackWorkSpacePublisher workspacePublisher, IGlobalSettingsClient globalSettingsClient)
-    {
-        _workspacePublisher = workspacePublisher;
-        _globalSettingsClient = globalSettingsClient;
-    }
-
     public override string[] Commands => new[] { "injuries" };
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var globalSettings = await _globalSettingsClient.GetGlobalSettings();
+        var globalSettings = await globalSettingsClient.GetGlobalSettings();
 
         var injuredPlayers = FindInjuredPlayers(globalSettings?.Players ?? new List<Player>());
 
@@ -32,7 +26,7 @@ internal class FplInjuryCommandHandler : HandleAppMentionBase
         {
             return new EventHandledResponse("Not found");
         }
-        await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, textToSend);
+        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, textToSend);
 
         return new EventHandledResponse(textToSend);
     }

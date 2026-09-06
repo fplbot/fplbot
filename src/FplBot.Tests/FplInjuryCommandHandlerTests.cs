@@ -4,14 +4,9 @@ using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests;
 
-public class FplInjuryCommandHandlerTests
+public class FplInjuryCommandHandlerTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions _client;
-
-    public FplInjuryCommandHandlerTests(ITestOutputHelper logger)
-    {
-        _client = Factory.GetHandler<FplInjuryCommandHandler>(logger);
-    }
+    private readonly IHandleAppMentions _client = Factory.GetHandler<FplInjuryCommandHandler>(logger);
 
     [Theory]
     [InlineData("@fplbot injuries")]

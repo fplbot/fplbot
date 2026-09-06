@@ -1,4 +1,3 @@
-using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
 using Slackbot.Net.SlackClients.Http.Extensions;

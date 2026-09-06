@@ -9,23 +9,16 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
+public class AppHomeOpenedEventHandler(
+    ISlackClientBuilder builder,
+    ISlackTeamRepository repo,
+    ILogger<AppHomeOpenedEvent> logger)
+    : IHandleAppHomeOpened
 {
-    private readonly ISlackClientBuilder _builder;
-    private readonly ISlackTeamRepository _repo;
-    private readonly ILogger<AppHomeOpenedEvent> _logger;
-
-    public AppHomeOpenedEventHandler(ISlackClientBuilder builder, ISlackTeamRepository repo, ILogger<AppHomeOpenedEvent> logger)
-    {
-        _builder = builder;
-        _repo = repo;
-        _logger = logger;
-    }
-
     public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppHomeOpenedEvent appHomeEvent)
     {
-        var team = await _repo.GetTeam(eventMetadata.Team_Id);
-        var client = _builder.Build(team.AccessToken);
+        var team = await repo.GetTeam(eventMetadata.Team_Id);
+        var client = builder.Build(team.AccessToken);
 
 
 
@@ -38,7 +31,7 @@ public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
         }
         catch (WellKnownSlackApiException se)
         {
-            _logger.LogError(se.Message, se);
+            logger.LogError(se.Message, se);
             return new EventHandledResponse(se.Message);
         }
     }

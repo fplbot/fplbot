@@ -5,16 +5,9 @@ using Slackbot.Net.Endpoints.Models.Interactive.BlockActions;
 
 namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
-public class InteractiveBlocksActionHandler : IHandleInteractiveBlockActions
+public class InteractiveBlocksActionHandler(ISlackTeamRepository teamRepo, ILeagueClient leagueClient)
+    : IHandleInteractiveBlockActions
 {
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ILeagueClient _leagueClient;
-
-    public InteractiveBlocksActionHandler(ISlackTeamRepository teamRepo, ILeagueClient leagueClient)
-    {
-        _teamRepo = teamRepo;
-        _leagueClient = leagueClient;
-    }
     public async Task<EventHandledResponse> Handle(BlockActionInteraction blockActionEvent)
     {
         var actionsBlock = blockActionEvent.Actions.FirstOrDefault(x => x.action_id.Equals("fpl_league_id_action"));
@@ -33,14 +26,14 @@ public class InteractiveBlocksActionHandler : IHandleInteractiveBlockActions
 
         try
         {
-            await _leagueClient.GetClassicLeague(newLeagueID);
+            await leagueClient.GetClassicLeague(newLeagueID);
         }
         catch (Exception)
         {
             return new EventHandledResponse("VALIDATION_ERRORS");
         }
 
-        await _teamRepo.UpdateLeagueId(blockActionEvent.Team.Id, newLeagueID);
+        await teamRepo.UpdateLeagueId(blockActionEvent.Team.Id, newLeagueID);
 
 
 

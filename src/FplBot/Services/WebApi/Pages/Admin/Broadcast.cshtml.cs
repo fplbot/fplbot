@@ -5,24 +5,12 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FplBot.WebApi.Pages.Admin;
 
-public class Broadcast : PageModel
+public class Broadcast(ISlackTeamRepository teamRepo, ISlackWorkSpacePublisher publisher, ILogger<Broadcast> logger)
+    : PageModel
 {
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ISlackWorkSpacePublisher _publisher;
-    private readonly ILogger<Broadcast> _logger;
-
-    public Broadcast(ISlackTeamRepository teamRepo, ISlackWorkSpacePublisher publisher, ILogger<Broadcast> logger)
-    {
-        _teamRepo = teamRepo;
-        _publisher = publisher;
-        _logger = logger;
-        Workspaces = new List<SlackTeam>();
-
-    }
-
     public async Task OnGet()
     {
-        var teams = await _teamRepo.GetAllTeams();
+        var teams = await teamRepo.GetAllTeams();
         foreach (var t in teams)
         {
             Workspaces.Add(t);
@@ -31,10 +19,10 @@ public class Broadcast : PageModel
 
     public async Task<IActionResult> OnPost(string message)
     {
-        _logger.LogInformation($"BROADCASTING TO ALL WORKSPACES");
+        logger.LogInformation($"BROADCASTING TO ALL WORKSPACES");
         try
         {
-            await _publisher.PublishToAllWorkspaceChannels(message);
+            await publisher.PublishToAllWorkspaceChannels(message);
             TempData["msg"] = "Broadcasted!";
         }
         catch (Exception e)
@@ -45,5 +33,5 @@ public class Broadcast : PageModel
         return RedirectToPage("Broadcast");
     }
 
-    public List<SlackTeam> Workspaces { get; set; }
+    public List<SlackTeam> Workspaces { get; set; } = new();
 }

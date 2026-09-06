@@ -5,21 +5,13 @@ using Fpl.Client.Models;
 
 namespace FplBot.Formatting.Helpers;
 
-public class CaptainsByGameWeek : ICaptainsByGameWeek
+public class CaptainsByGameWeek(
+    IGlobalSettingsClient globalSettingsClient,
+    ILeagueClient leagueClient,
+    IEntryForGameweek entryForGameweek,
+    ILogger<CaptainsByGameWeek> logger)
+    : ICaptainsByGameWeek
 {
-    private readonly IGlobalSettingsClient _globalSettingsClient;
-    private readonly ILeagueClient _leagueClient;
-    private readonly IEntryForGameweek _entryForGameweek;
-    private readonly ILogger<CaptainsByGameWeek> _logger;
-
-    public CaptainsByGameWeek(IGlobalSettingsClient globalSettingsClient, ILeagueClient leagueClient, IEntryForGameweek entryForGameweek, ILogger<CaptainsByGameWeek> logger)
-    {
-        _globalSettingsClient = globalSettingsClient;
-        _leagueClient = leagueClient;
-        _entryForGameweek = entryForGameweek;
-        _logger = logger;
-    }
-
     public string GetCaptainsByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeExternalLinks = true)
     {
         var sb = new StringBuilder();
@@ -111,8 +103,8 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
 
     public async Task<IEnumerable<EntryCaptainPick>> GetEntryCaptainPicks(int gameweek, int leagueId)
     {
-        var leagueTask = _leagueClient.GetClassicLeague(leagueId);
-        var playersTask = _globalSettingsClient.GetGlobalSettings();
+        var leagueTask = leagueClient.GetClassicLeague(leagueId);
+        var playersTask = globalSettingsClient.GetGlobalSettings();
 
         var league = await leagueTask;
         var players = await playersTask;
@@ -147,7 +139,7 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
     {
         try
         {
-            var entryForGameweekTask = _entryForGameweek.GetEntryForGameweek(entry, gameweek);
+            var entryForGameweekTask = entryForGameweek.GetEntryForGameweek(entry, gameweek);
             var entryPicksForGameweek = await entryForGameweekTask;
 
             if (entryPicksForGameweek == null)
@@ -163,7 +155,7 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message, e);
+            logger.LogError(e.Message, e);
             return null;
         }
     }

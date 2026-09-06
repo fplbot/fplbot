@@ -4,14 +4,9 @@ using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests;
 
-public class FplSearchCommandHandlerTests
+public class FplSearchCommandHandlerTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions _client;
-
-    public FplSearchCommandHandlerTests(ITestOutputHelper logger)
-    {
-        _client = Factory.GetHandler<FplSearchHandler>(logger);
-    }
+    private readonly IHandleAppMentions _client = Factory.GetHandler<FplSearchHandler>(logger);
 
     [Fact(Skip = "integration")]
     public async Task SearchForSkjelbek()

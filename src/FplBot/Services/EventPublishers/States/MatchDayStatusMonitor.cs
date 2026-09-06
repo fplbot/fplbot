@@ -6,26 +6,19 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-public class MatchDayStatusMonitor
+public class MatchDayStatusMonitor(
+    IEventStatusClient eventStatusClient,
+    IServiceScopeFactory scopeFactory,
+    ILogger<MatchDayStatusMonitor> logger)
 {
-    private readonly IEventStatusClient _eventStatusClient;
-    private readonly IServiceScopeFactory _scopeFactory;
     private EventStatusResponse? _storedCurrent;
-    private ILogger<MatchDayStatusMonitor> _logger;
-
-    public MatchDayStatusMonitor(IEventStatusClient eventStatusClient, IServiceScopeFactory scopeFactory, ILogger<MatchDayStatusMonitor> logger)
-    {
-        _eventStatusClient = eventStatusClient;
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-    }
 
     public async Task EveryFiveMinutesTick(CancellationToken token)
     {
         EventStatusResponse? fetched;
         try
         {
-            fetched = await _eventStatusClient.GetEventStatus();
+            fetched = await eventStatusClient.GetEventStatus(token);
         }
         catch (Exception e) when (LogError(e))
         {
@@ -38,36 +31,36 @@ public class MatchDayStatusMonitor
         // init/ app-startup
         if (_storedCurrent == null)
         {
-            _logger.LogDebug("Executing initial fetch");
+            logger.LogDebug("Executing initial fetch");
             _storedCurrent = fetched;
             return;
         }
 
-        _logger.LogInformation("Checking status");
+        logger.LogInformation("Checking status");
         var bonusAdded = GetBonusAdded(fetched, _storedCurrent);
         var pointsReady = GetPointsReady(fetched, _storedCurrent);
         var leaguesStatusChanged = fetched.Leagues != _storedCurrent.Leagues && fetched.Leagues == EventStatusConstants.LeaguesStatus.Updated;
 
         if (bonusAdded != null || pointsReady != null || leaguesStatusChanged)
         {
-            using var scope = _scopeFactory.CreateScope();
+            using var scope = scopeFactory.CreateScope();
             var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             if (bonusAdded != null)
             {
-                _logger.LogInformation("Bonus added!");
+                logger.LogInformation("Bonus added!");
                 await publish.Publish(bonusAdded);
             }
 
             if (pointsReady != null)
             {
-                _logger.LogInformation("Points ready!");
+                logger.LogInformation("Points ready!");
                 await publish.Publish(pointsReady);
             }
 
             if (leaguesStatusChanged)
             {
-                _logger.LogInformation($"League status changed from ${_storedCurrent.Leagues} to ${fetched.Leagues}");
+                logger.LogInformation($"League status changed from ${_storedCurrent.Leagues} to ${fetched.Leagues}");
                 await publish.Publish(new MatchdayLeaguesUpdated());
             }
         }
@@ -79,11 +72,11 @@ public class MatchDayStatusMonitor
     {
         if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
         {
-            _logger.LogWarning("Game is updating");
+            logger.LogWarning("Game is updating");
         }
         else
         {
-            _logger.LogError(e, e.Message);
+            logger.LogError(e, e.Message);
         }
 
         return true;

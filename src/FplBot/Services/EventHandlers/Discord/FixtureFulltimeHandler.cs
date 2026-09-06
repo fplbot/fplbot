@@ -9,27 +9,21 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class FixtureFulltimeHandler : IConsumer<FixtureFinished>
+public class FixtureFulltimeHandler(
+    IGuildRepository teamRepo,
+    ILogger<NearDeadlineHandler> logger,
+    IGlobalSettingsClient settingsClient,
+    IFixtureClient fixtureClient)
+    : IConsumer<FixtureFinished>
 {
-    private readonly IGuildRepository _teamRepo;
-    private readonly ILogger<NearDeadlineHandler> _logger;
-    private readonly IGlobalSettingsClient _settingsClient;
-    private readonly IFixtureClient _fixtureClient;
-
-    public FixtureFulltimeHandler(IGuildRepository teamRepo, ILogger<NearDeadlineHandler> logger, IGlobalSettingsClient settingsClient, IFixtureClient fixtureClient)
-    {
-        _teamRepo = teamRepo;
-        _logger = logger;
-        _settingsClient = settingsClient;
-        _fixtureClient = fixtureClient;
-    }
+    private readonly ILogger<NearDeadlineHandler> _logger = logger;
 
     public async Task Consume(ConsumeContext<FixtureFinished> context)
     {
         var message = context.Message;
-        var subs = await _teamRepo.GetAllGuildSubscriptions();
-        var settings = await _settingsClient.GetGlobalSettings();
-        var fixtures = await _fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
+        var subs = await teamRepo.GetAllGuildSubscriptions();
+        var settings = await settingsClient.GetGlobalSettings();
+        var fixtures = await fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId)!;
         var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";

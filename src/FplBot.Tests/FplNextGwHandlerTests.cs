@@ -6,14 +6,9 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace FplBot.Tests;
 
-public class FplNextGwHandlerTests
+public class FplNextGwHandlerTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions _client;
-
-    public FplNextGwHandlerTests(ITestOutputHelper logger)
-    {
-        _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
-    }
+    private readonly IHandleAppMentions _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
 
     [Theory(Skip = "Disable it temporary until ihaztimetofix")]
     [InlineData("@fplbot nextgw")]

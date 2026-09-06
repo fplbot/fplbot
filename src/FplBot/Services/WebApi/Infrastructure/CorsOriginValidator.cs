@@ -17,7 +17,7 @@ public static class CorsOriginValidator
         "https://fplsearch.com"
     };
 
-    private static Regex HerokuReviewAppsOriginRegex = new Regex("https:\\/\\/fplbotfrontend-pr-\\d+.herokuapp.com");
+    private static readonly Regex HerokuReviewAppsOriginRegex = new Regex("https:\\/\\/fplbotfrontend-pr-\\d+.herokuapp.com");
 
     public static bool ValidateOrigin(string origin)
     {

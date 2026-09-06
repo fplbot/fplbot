@@ -10,28 +10,17 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-internal class GameweekFinishedHandler : IConsumer<GameweekFinished>, IConsumer<PublishStandingsToSlackWorkspace>
+internal class GameweekFinishedHandler(
+    ISlackWorkSpacePublisher publisher,
+    ISlackTeamRepository teamsRepo,
+    ILeagueClient leagueClient,
+    IGlobalSettingsClient settingsClient)
+    : IConsumer<GameweekFinished>, IConsumer<PublishStandingsToSlackWorkspace>
 {
-    private readonly ISlackWorkSpacePublisher _publisher;
-    private readonly ILeagueClient _leagueClient;
-    private readonly IGlobalSettingsClient _settingsClient;
-    private readonly ISlackTeamRepository _teamRepo;
-
-    public GameweekFinishedHandler(ISlackWorkSpacePublisher publisher,
-        ISlackTeamRepository teamsRepo,
-        ILeagueClient leagueClient,
-        IGlobalSettingsClient settingsClient)
-    {
-        _publisher = publisher;
-        _teamRepo = teamsRepo;
-        _leagueClient = leagueClient;
-        _settingsClient = settingsClient;
-    }
-
     public async Task Consume(ConsumeContext<GameweekFinished> context)
     {
         var notification = context.Message;
-        var teams = await _teamRepo.GetAllTeams();
+        var teams = await teamsRepo.GetAllTeams();
         foreach (var team in teams)
         {
             if (team.HasRegisteredFor(EventSubscription.Standings))
@@ -44,12 +33,12 @@ internal class GameweekFinishedHandler : IConsumer<GameweekFinished>, IConsumer<
     public async Task Consume(ConsumeContext<PublishStandingsToSlackWorkspace> context)
     {
         var message = context.Message;
-        var settings = await _settingsClient.GetGlobalSettings();
+        var settings = await settingsClient.GetGlobalSettings();
         var gameweeks = settings?.Gameweeks ?? new List<Gameweek>();
         var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
         try
         {
-            var league = await _leagueClient.GetClassicLeague(message.LeagueId);
+            var league = await leagueClient.GetClassicLeague(message.LeagueId);
             if (league == null) return;
             var leagueStarted = league.Properties?.StartEvent is var startEvent && message.GameweekId >= startEvent;
             if (leagueStarted && gw != null)
@@ -64,12 +53,12 @@ internal class GameweekFinishedHandler : IConsumer<GameweekFinished>, IConsumer<
                 {
                     messages.Add(worst);
                 }
-                await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
+                await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
             }
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
-            await _publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
+            await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
         }
     }
 }

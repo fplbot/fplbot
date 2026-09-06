@@ -65,29 +65,17 @@ internal static class SearchHelper
         return new SearchResult<T>(currentWinner, lowestDistance);
     }
 
-    private class SearchResultWithPri<T>
+    private class SearchResultWithPri<T>(int pri, SearchResult<T> searchResult)
     {
-        public int Pri { get; }
-        public SearchResult<T> SearchResult { get; }
-
-        public SearchResultWithPri(int pri, SearchResult<T> searchResult)
-        {
-            Pri = pri;
-            SearchResult = searchResult;
-        }
+        public int Pri { get; } = pri;
+        public SearchResult<T> SearchResult { get; } = searchResult;
     }
 }
 
-internal class SearchResult<T>
+internal class SearchResult<T>(T? item, int levenshteinDistance)
 {
-    public T? Item { get; }
-    public int LevenshteinDistance { get; }
-
-    public SearchResult(T? item, int levenshteinDistance)
-    {
-        Item = item;
-        LevenshteinDistance = levenshteinDistance;
-    }
+    public T? Item { get; } = item;
+    public int LevenshteinDistance { get; } = levenshteinDistance;
 }
 
 internal interface ISearchableProperty
@@ -95,23 +83,14 @@ internal interface ISearchableProperty
     string[] AsStrings { get; }
 }
 
-internal class SearchableProperty : ISearchableProperty
+internal class SearchableProperty(string property) : ISearchableProperty
 {
-    private readonly string _property;
-    public SearchableProperty(string property)
-    {
-        _property = property;
-    }
-    public string[] AsStrings => new[] { _property };
+    public string[] AsStrings => new[] { property };
 }
 
-internal class SearchablePropertyCollection : ISearchableProperty
+internal class SearchablePropertyCollection(string[] properties) : ISearchableProperty
 {
-    public SearchablePropertyCollection(string[] properties)
-    {
-        AsStrings = properties;
-    }
-    public string[] AsStrings { get; }
+    public string[] AsStrings { get; } = properties;
 }
 
 internal static class SearchablePropertyExtensions

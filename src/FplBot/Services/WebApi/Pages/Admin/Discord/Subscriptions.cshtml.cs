@@ -1,4 +1,3 @@
-using FplBot.Data;
 using FplBot.Data.Discord;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -7,25 +6,18 @@ using StackExchange.Redis;
 
 namespace FplBot.WebApi.Pages.Admin.Discord;
 
-public class Subscriptions : PageModel
+public class Subscriptions(IGuildRepository repo, IConnectionMultiplexer plexer, IOptions<RedisOptions> options)
+    : PageModel
 {
-    private readonly IGuildRepository _repo;
-    private readonly IServer _server;
-    private readonly IDatabase _db;
-
-    public Subscriptions(IGuildRepository repo, IConnectionMultiplexer plexer, IOptions<RedisOptions> options)
-    {
-        _repo = repo;
-        _db = plexer.GetDatabase();
-        _server = plexer.GetServer(options.Value.GetRedisServerHostAndPort);
-    }
+    private readonly IServer _server = plexer.GetServer(options.Value.GetRedisServerHostAndPort);
+    private readonly IDatabase _db = plexer.GetDatabase();
 
     public async Task OnGet()
     {
-        var guilds = await _repo.GetAllGuilds();
+        var guilds = await repo.GetAllGuilds();
 
         GuildsWithSubs = new List<GuildWithSubs>();
-        var allsubs = await _repo.GetAllGuildSubscriptions();
+        var allsubs = await repo.GetAllGuildSubscriptions();
         foreach (var guild in guilds)
         {
             var subs = allsubs.Where(s => s.GuildId == guild.Id);
@@ -44,7 +36,7 @@ public class Subscriptions : PageModel
 
     public async Task<IActionResult> OnPostDeleteSub(string guildId, string channelId)
     {
-        await _repo.DeleteGuildSubscription(guildId, channelId);
+        await repo.DeleteGuildSubscription(guildId, channelId);
         TempData["msg"] = $"Deleted sub {guildId}-{channelId}";
         return RedirectToPage("Subscriptions");
     }

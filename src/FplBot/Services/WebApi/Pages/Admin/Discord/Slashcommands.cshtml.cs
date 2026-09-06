@@ -5,19 +5,13 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FplBot.WebApi.Pages.Admin.Discord;
 
-public class Slashcommands : PageModel
+public class Slashcommands(DiscordSlashCommandsEnsurer ensurer) : PageModel
 {
     private const string TestGuildId = "893932860162064414";
-    private readonly DiscordSlashCommandsEnsurer _ensurer;
-
-    public Slashcommands(DiscordSlashCommandsEnsurer ensurer)
-    {
-        _ensurer = ensurer;
-    }
 
     public async Task OnGet()
     {
-        Commands = await _ensurer.GetAllForGuild(TestGuildId);
+        Commands = await ensurer.GetAllForGuild(TestGuildId);
     }
 
     public IEnumerable<DiscordClient.ApplicationsCommand> Commands { get; set; } = null!;
@@ -25,21 +19,21 @@ public class Slashcommands : PageModel
     public async Task<IActionResult> OnPostUninstallSlashCommands()
     {
         TempData["msg"]+= "Uninstall queued!";
-        await _ensurer.DeleteGuildSlashCommands(TestGuildId);
+        await ensurer.DeleteGuildSlashCommands(TestGuildId);
         return RedirectToPage("Slashcommands");
     }
 
     public async Task<IActionResult> OnPostInstallSlashCommands()
     {
         TempData["msg"]+= "Install queued!";
-        await _ensurer.InstallGuildSlashCommandsInGuild(TestGuildId);
+        await ensurer.InstallGuildSlashCommandsInGuild(TestGuildId);
         return RedirectToPage("Slashcommands");
     }
 
     public async Task<IActionResult> OnPostInstallGlobalSlashCommands()
     {
         TempData["msg"]+= "Global install queued!";
-        await _ensurer.InstallGuildSlashCommandsInGuild();
+        await ensurer.InstallGuildSlashCommandsInGuild();
         return RedirectToPage("Slashcommands");
     }
 }

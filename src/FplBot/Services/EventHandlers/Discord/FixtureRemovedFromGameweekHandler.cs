@@ -6,22 +6,16 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class FixtureRemovedFromGameweekHandler : IConsumer<FixtureRemovedFromGameweek>
+public class FixtureRemovedFromGameweekHandler(
+    IGuildRepository guildRepo,
+    ILogger<FixtureRemovedFromGameweekHandler> logger)
+    : IConsumer<FixtureRemovedFromGameweek>
 {
-    private readonly IGuildRepository _guildRepo;
-    private readonly ILogger<FixtureRemovedFromGameweekHandler> _logger;
-
-    public FixtureRemovedFromGameweekHandler(IGuildRepository guildRepo, ILogger<FixtureRemovedFromGameweekHandler> logger)
-    {
-        _guildRepo = guildRepo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<FixtureRemovedFromGameweek> context)
     {
         var message = context.Message;
-        _logger.LogInformation("Fixture removed from gameweek {Message}", message);
-        var subs = await _guildRepo.GetAllGuildSubscriptions();
+        logger.LogInformation("Fixture removed from gameweek {Message}", message);
+        var subs = await guildRepo.GetAllGuildSubscriptions();
 
         foreach (var sub in subs)
         {

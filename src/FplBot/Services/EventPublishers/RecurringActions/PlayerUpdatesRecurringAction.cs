@@ -10,24 +10,17 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.RecurringActions;
 
-public class PlayerUpdatesRecurringAction : IRecurringAction
+public class PlayerUpdatesRecurringAction(
+    IGlobalSettingsClient settingsClient,
+    IServiceScopeFactory scopeFactory,
+    ILogger<PlayerUpdatesRecurringAction> logger)
+    : IRecurringAction
 {
-    private readonly IGlobalSettingsClient _settingsClient;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<PlayerUpdatesRecurringAction> _logger;
-    private ICollection<Player> _players;
-
-    public PlayerUpdatesRecurringAction(IGlobalSettingsClient settingsClient, IServiceScopeFactory scopeFactory, ILogger<PlayerUpdatesRecurringAction> logger)
-    {
-        _settingsClient = settingsClient;
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-        _players = new List<Player>();
-    }
+    private ICollection<Player> _players = new List<Player>();
 
     public async Task Process(CancellationToken stoppingToken)
     {
-        using var scope = _logger.BeginCorrelationScope();
+        using var scope = logger.BeginCorrelationScope();
         try
         {
             await PublishIfChanges();
@@ -39,17 +32,17 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
 
     private async Task PublishIfChanges()
     {
-        var settings = await _settingsClient.GetGlobalSettings();
+        var settings = await settingsClient.GetGlobalSettings();
         if (_players == null || !_players.Any())
         {
-            _logger.LogInformation($"Init state");
+            logger.LogInformation($"Init state");
             _players = settings?.Players ?? new List<Fpl.Client.Models.Player>();
             return;
         }
 
-        _logger.LogInformation($"Refreshing");
+        logger.LogInformation($"Refreshing");
 
-        var globalSettings = await _settingsClient.GetGlobalSettings();
+        var globalSettings = await settingsClient.GetGlobalSettings();
         var after = globalSettings?.Players ?? new List<Fpl.Client.Models.Player>();
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
         var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
@@ -60,7 +53,7 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
 
         if (priceChanges.Any() || injuryUpdates.Any() || newPlayers.Any() || transfers.Any())
         {
-            using var scope = _scopeFactory.CreateScope();
+            using var scope = scopeFactory.CreateScope();
             var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             if (priceChanges.Any())
@@ -81,11 +74,11 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
     {
         if (e is HttpRequestException { StatusCode: HttpStatusCode.ServiceUnavailable })
         {
-            _logger.LogWarning("Game is updating");
+            logger.LogWarning("Game is updating");
         }
         else
         {
-            _logger.LogError(e, e.Message);
+            logger.LogError(e, e.Message);
         }
 
         return true;

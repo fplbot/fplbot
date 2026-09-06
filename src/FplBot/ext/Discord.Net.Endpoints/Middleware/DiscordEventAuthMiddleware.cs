@@ -3,15 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class DiscordEventAuthMiddleware
+internal class DiscordEventAuthMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public DiscordEventAuthMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task Invoke(HttpContext ctx, ILogger<DiscordEventAuthMiddleware> logger)
     {
         bool success = false;
@@ -27,7 +20,7 @@ internal class DiscordEventAuthMiddleware
 
         if (success)
         {
-            await _next(ctx);
+            await next(ctx);
         }
         else
         {

@@ -1,5 +1,6 @@
 using Discord.Net.Endpoints.Hosting;
 using FplBot.WebApi.Endpoints.Test;
+using Microsoft.Extensions.FileProviders;
 using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 
@@ -21,7 +22,11 @@ public static class WebAppExtensions
         if(!env.IsDevelopment())
             app.UseHttpsRedirection();
 
-        app.UseStaticFiles();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(
+                Path.Combine(app.Environment.ContentRootPath, "Services", "WebApi", "wwwroot"))
+        });
         app.UseRouting();
         app.UseCors(CorsOriginValidator.CustomCorsPolicyName);
         app.UseCookiePolicy();

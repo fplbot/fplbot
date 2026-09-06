@@ -7,26 +7,18 @@ using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using Testcontainers.Redis;
-using EventSubscription = FplBot.Data.Slack.EventSubscription;
 
 namespace FplBot.Tests;
 
-public class RedisIntegrationTests : IAsyncLifetime
+public class RedisIntegrationTests(ITestOutputHelper helper) : IAsyncLifetime
 {
-    private readonly ITestOutputHelper _helper;
-    private readonly RedisContainer _redisContainer;
+    private readonly RedisContainer _redisContainer = new RedisBuilder("redis:latest").Build();
     private SlackTeamRepository _repo = null!;
     private LeagueIndexRedisBookmarkProvider _bookmarkProvider = null!;
     private IServer _server = null!;
     private DiscordGuildRepository _guildRepo = null!;
     private DiscordGuildStore _guildStore = null!;
     private TokenStore _store = null!;
-
-    public RedisIntegrationTests(ITestOutputHelper helper)
-    {
-        _helper = helper;
-        _redisContainer = new RedisBuilder("redis:latest").Build();
-    }
 
     public async Task InitializeAsync()
     {
@@ -40,11 +32,11 @@ public class RedisIntegrationTests : IAsyncLifetime
         var discordOpts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = fakeUrl });
 
         _server = multiplexer.GetServer(connectionString);
-        _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(_helper));
-        _store = new TokenStore(multiplexer, opts, new SimpleLogger(_helper));
-        _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(_helper));
-        _guildRepo = new DiscordGuildRepository(multiplexer, discordOpts, new SimpleLogger(_helper));
-        _guildStore = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(_helper));
+        _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(helper));
+        _store = new TokenStore(multiplexer, opts, new SimpleLogger(helper));
+        _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(helper));
+        _guildRepo = new DiscordGuildRepository(multiplexer, discordOpts, new SimpleLogger(helper));
+        _guildStore = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(helper));
     }
 
     public async Task DisposeAsync()
@@ -195,7 +187,7 @@ public class RedisIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task Insert_Works()
     {
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, new[] { Data.Discord.EventSubscription.All }));
+        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, new[] { EventSubscription.All }));
 
         var guildSub = await _guildRepo.GetGuildSubscription("Guild1", "Channel1");
         Assert.NotNull(guildSub);
@@ -205,11 +197,11 @@ public class RedisIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task GetMany_Works()
     {
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { Data.Discord.EventSubscription.All }));
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { Data.Discord.EventSubscription.Standings }));
+        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { EventSubscription.All }));
+        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { EventSubscription.Standings }));
 
         foreach(var key in _server.Keys(pattern: "GuildSubs-Guild2-Channel-*")) {
-            _helper.WriteLine(key);
+            helper.WriteLine(key);
         }
 
         var subs = await _guildRepo.GetAllGuildSubscriptions();
@@ -219,8 +211,8 @@ public class RedisIntegrationTests : IAsyncLifetime
         var sub1 = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
         var sub2 = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
 
-        Assert.Equal(Data.Discord.EventSubscription.All, sub1.Subscriptions.First());
-        Assert.Equal(Data.Discord.EventSubscription.Standings, sub2.Subscriptions.First());
+        Assert.Equal(EventSubscription.All, sub1.Subscriptions.First());
+        Assert.Equal(EventSubscription.Standings, sub2.Subscriptions.First());
 
         var all = await _guildRepo.GetAllGuildSubscriptions();
         Assert.Equal(2, all.Count());
@@ -229,20 +221,20 @@ public class RedisIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task Update_Works()
     {
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { Data.Discord.EventSubscription.All }));
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { Data.Discord.EventSubscription.Standings }));
+        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, new[] { EventSubscription.All }));
+        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, new[] { EventSubscription.Standings }));
 
         var sub2 = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
-        var update = sub2 with { Subscriptions = new[] { Data.Discord.EventSubscription.Lineups } };
+        var update = sub2 with { Subscriptions = new[] { EventSubscription.Lineups } };
         await _guildRepo.UpdateGuildSubscription(update);
 
         var sub2Updated = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
         Assert.Single(sub2Updated.Subscriptions);
-        Assert.Equal(Data.Discord.EventSubscription.Lineups, sub2Updated.Subscriptions.First());
+        Assert.Equal(EventSubscription.Lineups, sub2Updated.Subscriptions.First());
 
         var sub1NotUpdated = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
         Assert.Single(sub1NotUpdated.Subscriptions);
-        Assert.Equal(Data.Discord.EventSubscription.All, sub1NotUpdated.Subscriptions.First());
+        Assert.Equal(EventSubscription.All, sub1NotUpdated.Subscriptions.First());
     }
 
 }

@@ -7,39 +7,28 @@ using Microsoft.Extensions.Options;
 
 namespace Fpl.Search.Indexing;
 
-public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryItem>, ISingleEntryIndexProvider
+public class SlowEntryIndexProvider(
+    ILeagueClient leagueClient,
+    IEntryClient entryClient,
+    IEntryHistoryClient entryHistoryClient,
+    IEntryIndexBookmarkProvider indexBookmarkProvider,
+    ILogger<IndexProviderBase> logger,
+    IOptions<SearchOptions> options)
+    : IndexProviderBase(leagueClient, logger), IIndexProvider<EntryItem>, ISingleEntryIndexProvider
 {
-    private readonly IEntryClient _entryClient;
-    private readonly IEntryHistoryClient _entryHistoryClient;
-    private readonly IEntryIndexBookmarkProvider _indexBookmarkProvider;
-    private readonly ILogger<IndexProviderBase> _logger;
-    private readonly SearchOptions _options;
+    private readonly ILogger<IndexProviderBase> _logger = logger;
+    private readonly SearchOptions _options = options.Value;
     private int _currentConsecutiveCountOfMissingEntries;
     private int _bookmarkCounter;
 
-    public SlowEntryIndexProvider(
-        ILeagueClient leagueClient,
-        IEntryClient entryClient,
-        IEntryHistoryClient entryHistoryClient,
-        IEntryIndexBookmarkProvider indexBookmarkProvider,
-        ILogger<IndexProviderBase> logger,
-        IOptions<SearchOptions> options) : base(leagueClient, logger)
-    {
-        _entryClient = entryClient;
-        _entryHistoryClient = entryHistoryClient;
-        _indexBookmarkProvider = indexBookmarkProvider;
-        _logger = logger;
-        _options = options.Value;
-    }
-
     public string IndexName => _options.EntriesIndex;
-    public Task<int> StartIndexingFrom => _indexBookmarkProvider.GetBookmark();
+    public Task<int> StartIndexingFrom => indexBookmarkProvider.GetBookmark();
 
     public Task Init() => Task.CompletedTask;
 
     public async Task<(EntryItem[], bool)> GetBatchToIndex(int i, int batchSize)
     {
-        var entryBatch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryClient.Get(n, tolerate404: true)).ToArray(), _logger);
+        var entryBatch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => entryClient.Get(n, tolerate404: true)).ToArray(), _logger);
         var items = entryBatch
             .Where(x => x != null && x.Exists)
             .Select(y => new EntryItem { Id = y!.Id, TeamName = y.TeamName, RealName = y.PlayerFullName, Country = y.PlayerRegionShortIso }).ToArray();
@@ -50,7 +39,7 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
         }
         else
         {
-            var historyBatch = (await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryHistoryClient.GetHistory(n, tolerate404: true)).ToArray(), _logger))
+            var historyBatch = (await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => entryHistoryClient.GetHistory(n, tolerate404: true)).ToArray(), _logger))
                 .Where(x => x.HasValue)
                 .Select(x => x!.Value)
                 .ToArray();
@@ -74,17 +63,17 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
         {
             if (_options.ResetIndexingBookmarkWhenDone)
             {
-                await _indexBookmarkProvider.SetBookmark(1);
+                await indexBookmarkProvider.SetBookmark(1);
             }
             else
             {
                 var resetBookmarkTo = i - _options.ConsecutiveCountOfMissingLeaguesBeforeStoppingIndexJob;
-                await _indexBookmarkProvider.SetBookmark(resetBookmarkTo > 1 ? resetBookmarkTo : 1);
+                await indexBookmarkProvider.SetBookmark(resetBookmarkTo > 1 ? resetBookmarkTo : 1);
             }
         }
         else if (_bookmarkCounter > 50) // Set a bookmark at every 50th batch
         {
-            await _indexBookmarkProvider.SetBookmark(i + batchSize);
+            await indexBookmarkProvider.SetBookmark(i + batchSize);
             _bookmarkCounter = 0;
         }
         else
@@ -97,8 +86,8 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
 
     public async Task<EntryItem?> GetSingleEntryToIndex(int entryId)
     {
-        var entry = await _entryClient.Get(entryId);
-        var history = (await _entryHistoryClient.GetHistory(entryId))?.entryHistory;
+        var entry = await entryClient.Get(entryId);
+        var history = (await entryHistoryClient.GetHistory(entryId))?.entryHistory;
 
         return new EntryItem
         {

@@ -5,22 +5,16 @@ using Fpl.EventPublishers.States;
 
 namespace Fpl.EventPublishers.RecurringActions;
 
-internal class GameweekLifecycleRecurringAction : IRecurringAction
+internal class GameweekLifecycleRecurringAction(
+    GameweekLifecycleMonitor monitor,
+    ILogger<GameweekLifecycleRecurringAction> logger)
+    : IRecurringAction
 {
-    private readonly GameweekLifecycleMonitor _monitor;
-    private readonly ILogger<GameweekLifecycleRecurringAction> _logger;
-
-    public GameweekLifecycleRecurringAction(GameweekLifecycleMonitor monitor, ILogger<GameweekLifecycleRecurringAction> logger)
-    {
-        _monitor = monitor;
-        _logger = logger;
-    }
-
     public async Task Process(CancellationToken token)
     {
-        using var scope = _logger.BeginCorrelationScope();
-        _logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
-        await _monitor.EveryOtherMinuteTick(token);
+        using var scope = logger.BeginCorrelationScope();
+        logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
+        await monitor.EveryOtherMinuteTick(token);
     }
 
     public string Cron => CronPatterns.EveryOtherMinute;

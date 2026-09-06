@@ -7,28 +7,14 @@ using Fpl.Client.Models;
 
 namespace FplBot.Formatting;
 
-public class TransfersByGameWeek : ITransfersByGameWeek
+public class TransfersByGameWeek(
+    ILeagueClient leagueClient,
+    IGlobalSettingsClient globalSettingsClient,
+    ITransfersClient transfersClient,
+    IEntryClient entryClient,
+    ILogger<TransfersByGameWeek> logger)
+    : ITransfersByGameWeek
 {
-    private readonly ILeagueClient _leagueClient;
-    private readonly IGlobalSettingsClient _globalSettingsClient;
-    private readonly ITransfersClient _transfersClient;
-    private readonly IEntryClient _entryClient;
-    private readonly ILogger<TransfersByGameWeek> _logger;
-
-    public TransfersByGameWeek(
-        ILeagueClient leagueClient,
-        IGlobalSettingsClient globalSettingsClient,
-        ITransfersClient transfersClient,
-        IEntryClient entryClient,
-        ILogger<TransfersByGameWeek> logger)
-    {
-        _leagueClient = leagueClient;
-        _globalSettingsClient = globalSettingsClient;
-        _transfersClient = transfersClient;
-        _entryClient = entryClient;
-        _logger = logger;
-    }
-
     public async Task<IEnumerable<Transfer>> GetTransfersByGameweek(int gw, int leagueId)
     {
         if (gw < 2)
@@ -38,14 +24,14 @@ public class TransfersByGameWeek : ITransfersByGameWeek
 
         try
         {
-            var league = await _leagueClient.GetClassicLeague(leagueId);
+            var league = await leagueClient.GetClassicLeague(leagueId);
 
             var playerTransfers = new ConcurrentBag<Transfer>();
             var entries = league?.Standings?.Entries ?? new List<ClassicLeagueEntry>();
 
             await Task.WhenAll(entries.Select(async entry =>
             {
-                var transfers = (await _transfersClient.GetTransfers(entry.Entry) ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gw).Select(x =>
+                var transfers = (await transfersClient.GetTransfers(entry.Entry) ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gw).Select(x =>
                 {
                     var e = entries.Single(e => e.Entry == x.Entry);
                     return new Transfer
@@ -72,14 +58,14 @@ public class TransfersByGameWeek : ITransfersByGameWeek
         }
         catch (Exception e)
         {
-            _logger.LogError(e, e.Message);
+            logger.LogError(e, e.Message);
             return Enumerable.Empty<Transfer>();
         }
     }
 
     private bool LogWarning(HttpRequestException hre, int gw, int leagueId)
     {
-        _logger.LogWarning("Could not get transfers in {GW} for {LeagueId}", gw, leagueId);
+        logger.LogWarning("Could not get transfers in {GW} for {LeagueId}", gw, leagueId);
         return hre.StatusCode == HttpStatusCode.NotFound;
     }
 
@@ -100,8 +86,8 @@ public class TransfersByGameWeek : ITransfersByGameWeek
             return new TransfersPayload(new List<TransfersMessage> { new("No transfers are made the first gameweek.") });
         }
 
-        var leagueTask = _leagueClient.GetClassicLeague(leagueId);
-        var settingsTask = _globalSettingsClient.GetGlobalSettings();
+        var leagueTask = leagueClient.GetClassicLeague(leagueId);
+        var settingsTask = globalSettingsClient.GetGlobalSettings();
 
         var league = await leagueTask;
         var settings = await settingsTask;
@@ -159,8 +145,8 @@ public class TransfersByGameWeek : ITransfersByGameWeek
             return "No transfers are made the first gameweek.";
         }
 
-        var leagueTask = _leagueClient.GetClassicLeague(leagueId);
-        var settingsTask = _globalSettingsClient.GetGlobalSettings();
+        var leagueTask = leagueClient.GetClassicLeague(leagueId);
+        var settingsTask = globalSettingsClient.GetGlobalSettings();
 
         var league = await leagueTask;
         var settings = await settingsTask;
@@ -212,8 +198,8 @@ public class TransfersByGameWeek : ITransfersByGameWeek
 
     private async Task<EntryTranfers> GetTransfersTextForEntry(ClassicLeagueEntry entry, int gameweek, ICollection<Player> players, bool includeExternaLinks)
     {
-        var transfersTask = _transfersClient.GetTransfers(entry.Entry);
-        var picksTask = _entryClient.GetPicks(entry.Entry, gameweek);
+        var transfersTask = transfersClient.GetTransfers(entry.Entry);
+        var picksTask = entryClient.GetPicks(entry.Entry, gameweek);
 
         var transfers = (await transfersTask ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gameweek).Select(x => new
         {
@@ -274,7 +260,7 @@ public class TransfersByGameWeek : ITransfersByGameWeek
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message, e);
+                logger.LogError(e.Message, e);
             }
         }
 

@@ -5,28 +5,21 @@ using FplBot.Formatting;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class AddSubscriptionSlashCommandHandler : ISlashCommandHandler
+public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashCommandHandler
 {
-    private readonly IGuildRepository _repo;
-
-    public AddSubscriptionSlashCommandHandler(IGuildRepository repo)
-    {
-        _repo = repo;
-    }
-
     public string CommandName => "subscriptions";
 
     public string SubCommandName => "add";
 
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
-        var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+        var existingSub = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
         EventSubscription newEventSub = Enum.Parse<EventSubscription>(context.CommandInput!.Value);
 
         if (existingSub == null)
         {
-            await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
-            var newSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+            await repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
+            var newSub = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
             return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(newSub?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
         }
 
@@ -46,8 +39,8 @@ public class AddSubscriptionSlashCommandHandler : ISlashCommandHandler
             updatedList = new List<EventSubscription> { newEventSub };
         }
 
-        await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = updatedList});
-        var all = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
+        await repo.UpdateGuildSubscription(existingSub with { Subscriptions = updatedList});
+        var all = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
         return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(all?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
     }
 

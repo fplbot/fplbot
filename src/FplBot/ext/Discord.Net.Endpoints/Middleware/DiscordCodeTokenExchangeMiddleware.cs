@@ -6,14 +6,9 @@ using Microsoft.Extensions.Options;
 
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class DiscordCodeTokenExchangeMiddleware
+internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    private readonly RequestDelegate _next = next;
 
     public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildStore guildStore, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
     {

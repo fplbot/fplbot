@@ -6,25 +6,16 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class NearDeadlineHandler :
-    IConsumer<OneHourToDeadline>,
-    IConsumer<TwentyFourHoursToDeadline>
+public class NearDeadlineHandler(IGuildRepository teamRepo, ILogger<NearDeadlineHandler> logger)
+    :
+        IConsumer<OneHourToDeadline>,
+        IConsumer<TwentyFourHoursToDeadline>
 {
-    private readonly IGuildRepository _teamRepo;
-
-    private readonly ILogger<NearDeadlineHandler> _logger;
-
-    public NearDeadlineHandler(IGuildRepository teamRepo, ILogger<NearDeadlineHandler> logger)
-    {
-        _teamRepo = teamRepo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<OneHourToDeadline> context)
     {
         var message = context.Message;
-        _logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var allGuilds = await _teamRepo.GetAllGuildSubscriptions();
+        logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
+        var allGuilds = await teamRepo.GetAllGuildSubscriptions();
         var text = $"😱 Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes! @here";
         foreach (var guild in allGuilds)
         {
@@ -38,8 +29,8 @@ public class NearDeadlineHandler :
     public async Task Consume(ConsumeContext<TwentyFourHoursToDeadline> context)
     {
         var message = context.Message;
-        _logger.LogInformation($"Notifying about 24 hours to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var allGuilds = await _teamRepo.GetAllGuildSubscriptions();
+        logger.LogInformation($"Notifying about 24 hours to (gw{message.GameweekNearingDeadline.Id}) deadline");
+        var allGuilds = await teamRepo.GetAllGuildSubscriptions();
         var text = $"⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
         foreach (var guild in allGuilds)
         {

@@ -32,13 +32,9 @@ public static class IAppBuilderExtensions
 
 public class DiscordOAuthOptions
 {
-    public DiscordOAuthOptions()
-    {
-        OnSuccess = (_,_,_) => Task.CompletedTask;
-    }
     public string? CLIENT_ID { get; set; }
     public string? CLIENT_SECRET { get; set; }
     public string SuccessRedirectUri { get; set; } = "/success";
     public string ErrorRedirectUri { get; set; } = "/error";
-    public Func<string, string, IServiceProvider, Task> OnSuccess { get; set; }
+    public Func<string, string, IServiceProvider, Task> OnSuccess { get; set; } = (_,_,_) => Task.CompletedTask;
 }

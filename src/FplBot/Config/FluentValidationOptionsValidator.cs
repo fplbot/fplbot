@@ -8,9 +8,7 @@ public class FluentValidationOptionsValidator<T>(IValidator<T> validator) : IVal
     public ValidateOptionsResult Validate(string? name, T options)
     {
         var result = validator.Validate(options);
-        if (result.IsValid)
-            return ValidateOptionsResult.Success;
-        return ValidateOptionsResult.Fail(result.Errors.Select(e => e.ErrorMessage));
+        return result.IsValid ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(result.Errors.Select(e => e.ErrorMessage));
     }
 }
 
