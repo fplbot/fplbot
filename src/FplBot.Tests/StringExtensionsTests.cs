@@ -8,7 +8,7 @@ public class StringExtensionsTests
     [InlineData("fixtureassists, bøler", new []{EventSubscription.FixtureAssists}, new []{"bøler"})]
     [InlineData("fixtureassists, fixturegoals", new []{EventSubscription.FixtureAssists, EventSubscription.FixtureGoals}, null)]
     [InlineData("fixtureassists, fixturegoals, all, cardss", new []{EventSubscription.FixtureAssists, EventSubscription.FixtureGoals, EventSubscription.All}, new []{"cardss"})]
-    public void ParseSubscriptionString_ShouldWork(string input, EventSubscription[] expected, string[] unableToParse)
+    public void ParseSubscriptionString_ShouldWork(string input, EventSubscription[] expected, string[]? unableToParse)
     {
         // Act
         var (result, errors) = input.ParseSubscriptionString(",");

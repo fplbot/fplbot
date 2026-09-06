@@ -78,7 +78,7 @@ public class InjuryFormattingTests
     [Theory]
     [InlineData(null, null, null)]
     [InlineData(null, "50% chance of playing", "News update")]
-    public void AllKindsOfDoubtful(string fromNews, string toNews, string expected)
+    public void AllKindsOfDoubtful(string? fromNews, string? toNews, string? expected)
     {
         var change = Formatter.Change(new InjuredPlayerUpdate(
 

@@ -232,7 +232,7 @@ public static class Formatter
                 (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
                 (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
                 (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
-                (_, _) when update.Updated.News.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) => "🦇 COVID-19 🦇",
+                (_, _) when update.Updated.News?.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) == true => "🦇 COVID-19 🦇",
                 (_, PlayerStatuses.Injured) => "🤕 Injured",
                 (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
                 (_, PlayerStatuses.Suspended) => "❌ Suspended",

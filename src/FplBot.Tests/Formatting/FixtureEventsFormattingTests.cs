@@ -26,7 +26,7 @@ public class FixtureEventsFormattingTests
     [InlineData("Magnus", "carlsen", "Magnus Carlsen", "<@U123>")]
     [InlineData("Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
     [InlineData(null, "carlsen", "Magnus Carlsen", "Magnus Carlsen")]
-    public void ProducesCorrectTauntString(string slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
+    public void ProducesCorrectTauntString(string? slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
     {
         // Arrange
 
@@ -51,7 +51,7 @@ public class FixtureEventsFormattingTests
     [InlineData("Magnus", "carlsen", "Magnus Carlsen", "<@U123>")]
     [InlineData("Carlsen", "carlsen", "Magnus Carlsen", "<@U123>")]
     [InlineData(null, "carlsen", "Magnus Carlsen", "Magnus Carlsen")]
-    public void ProducesSingleTauntString(string slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
+    public void ProducesSingleTauntString(string? slackUserRealName, string slackUserHandle, string entryName, string expectedTauntName)
     {
         // Arrange
 
@@ -218,7 +218,7 @@ public class FixtureEventsFormattingTests
         };
     }
 
-    private TauntData CreateTransferOutForGoalScorerContext(string slackUserRealName, string slackUserHandle, string entryName)
+    private TauntData CreateTransferOutForGoalScorerContext(string? slackUserRealName, string slackUserHandle, string entryName)
     {
         User[] users = new[]
         {
@@ -236,7 +236,7 @@ public class FixtureEventsFormattingTests
             entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
     }
 
-    private TauntData CreateMultipleTransferOutForGoalScorerContext(string slackUserRealName, string slackUserHandle, string entryName)
+    private TauntData CreateMultipleTransferOutForGoalScorerContext(string? slackUserRealName, string slackUserHandle, string entryName)
     {
         User[] users = new[]
         {
