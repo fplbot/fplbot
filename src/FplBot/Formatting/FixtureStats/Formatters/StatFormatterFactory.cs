@@ -5,10 +5,10 @@ namespace FplBot.Formatting.FixtureStats.Formatters;
 
 internal class StatFormatterFactory
 {
-    private readonly TauntData _tauntData;
+    private readonly TauntData? _tauntData;
     private readonly FormattingType _formattingType;
 
-    public StatFormatterFactory(TauntData tauntData, FormattingType formattingType)
+    public StatFormatterFactory(TauntData? tauntData, FormattingType formattingType)
     {
         _tauntData = tauntData;
         _formattingType = formattingType;

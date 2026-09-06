@@ -8,7 +8,7 @@ public class PlayerSeasonHistory
     public int Id { get; set; }
 
     [JsonPropertyName("season_name")]
-    public string SeasonName { get; set; }
+    public string? SeasonName { get; set; }
 
     [JsonPropertyName("element_code")]
     public int ElementCode { get; set; }

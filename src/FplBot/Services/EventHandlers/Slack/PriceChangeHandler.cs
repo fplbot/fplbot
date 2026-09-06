@@ -29,7 +29,7 @@ public class PriceChangeHandler : IConsumer<PlayersPriceChanged>, IConsumer<Publ
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
             {
-                await context.Publish(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId, notification.PlayersWithPriceChanges.ToList()));
+                await context.Publish(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId!, notification.PlayersWithPriceChanges.ToList()));
             }
         }
     }
@@ -43,7 +43,7 @@ public class PriceChangeHandler : IConsumer<PlayersPriceChanged>, IConsumer<Publ
         {
             var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
             var formatted = Formatter.FormatPriceChanged(filtered);
-            await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted);
+            await _publisher.PublishToWorkspace(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted);
         }
         else
         {

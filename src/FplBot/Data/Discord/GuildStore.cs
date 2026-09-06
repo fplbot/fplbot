@@ -34,7 +34,7 @@ public class DiscordGuildStore : IGuildStore
         await _db.HashSetAsync(FromGuildIdToGuildKey(guild.Id), hashEntries.ToArray());
     }
 
-    public async Task<Guild> DeleteGuild(string guildId)
+    public async Task<Guild?> DeleteGuild(string guildId)
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("Guild-*"));
 

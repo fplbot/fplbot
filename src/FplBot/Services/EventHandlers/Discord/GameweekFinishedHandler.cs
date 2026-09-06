@@ -47,12 +47,12 @@ public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
         if (sub != null && message.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
         {
             var settings = await _settingsClient.GetGlobalSettings();
-            var gameweeks = settings.Gameweeks;
+            var gameweeks = settings?.Gameweeks ?? new List<Fpl.Client.Models.Gameweek>();
             var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
             var league = await _leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
-            if (league != null)
+            if (league != null && gw != null)
             {
-                if (league.Properties.StartEvent is var startEvent && message.GameweekId >= startEvent)
+                if (league.Properties?.StartEvent is var startEvent && message.GameweekId >= startEvent)
                 {
                     var messages = new List<RichMesssage>();
                     var intro = Formatter.FormatGameweekFinished(gw, league);
@@ -63,7 +63,7 @@ public class GameweekFinishedHandler : IConsumer<GameweekFinished>,
                     {
                         new ("ℹ️ Gameweek finished!",intro),
                         new ("ℹ️ Standings", standings),
-                        new ("ℹ️ Top 3", topThree),
+                        new ("ℹ️ Top 3", topThree ?? string.Empty),
                     });
 
                     if (worst is not null)

@@ -44,18 +44,18 @@ public class PlayerUpdatesRecurringAction : IRecurringAction
         if (_players == null || !_players.Any())
         {
             _logger.LogInformation($"Init state");
-            _players = settings.Players;
+            _players = settings?.Players ?? new List<Fpl.Client.Models.Player>();
             return;
         }
 
         _logger.LogInformation($"Refreshing");
 
         var globalSettings = await _settingsClient.GetGlobalSettings();
-        var after = globalSettings.Players;
-        var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, globalSettings.Teams);
-        var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, globalSettings.Teams);
-        var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, globalSettings.Teams);
-        var transfers = PlayerChangesEventsExtractor.GetInternalPLTransfers(after, _players, globalSettings.Teams);
+        var after = globalSettings?.Players ?? new List<Fpl.Client.Models.Player>();
+        var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
+        var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
+        var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
+        var transfers = PlayerChangesEventsExtractor.GetInternalPLTransfers(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
 
         _players = after;
 

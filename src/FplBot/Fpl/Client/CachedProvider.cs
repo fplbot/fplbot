@@ -15,9 +15,9 @@ internal class CacheProvider : ICacheProvider
         _logger = logger;
     }
 
-    public async Task<T> GetCachedOrFetch<T>(string url, Func<string, Task<string>> jsonFetch, TimeSpan expireIn) where T: class
+    public async Task<T?> GetCachedOrFetch<T>(string url, Func<string, Task<string>> jsonFetch, TimeSpan expireIn) where T: class
     {
-        string cacheObj = await _cache.GetStringAsync(url);
+        string? cacheObj = await _cache.GetStringAsync(url);
         if (!string.IsNullOrEmpty(cacheObj))
         {
             _logger.LogInformation($"CACHE HIT: {url}");
@@ -38,5 +38,5 @@ internal class CacheProvider : ICacheProvider
 
 public interface ICacheProvider
 {
-    Task<T> GetCachedOrFetch<T>(string url, Func<string, Task<string>> jsonFetch, TimeSpan expireIn) where T:class;
+    Task<T?> GetCachedOrFetch<T>(string url, Func<string, Task<string>> jsonFetch, TimeSpan expireIn) where T:class;
 }

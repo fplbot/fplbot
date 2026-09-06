@@ -8,7 +8,7 @@ public class Gameweek
     public int Id { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("deadline_time")]
     public DateTime Deadline { get; set; }

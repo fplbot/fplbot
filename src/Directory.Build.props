@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress known vulnerability warnings from .NET 10 transitive packages that cannot be independently upgraded -->
+    <NoWarn>$(NoWarn);NU1903;NU1904</NoWarn>
+  </PropertyGroup>
+</Project>

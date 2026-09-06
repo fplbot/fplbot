@@ -65,10 +65,10 @@ public class TokenStore : ITokenStore
             hashEntries.Add(hashEntry);
         }
 
-        await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId), hashEntries.ToArray());
+        await _db.HashSetAsync(FromTeamIdToTeamKey(slackTeam.TeamId ?? string.Empty), hashEntries.ToArray());
     }
 
-    public async Task<Workspace> Delete(string teamId)
+    public async Task<Workspace?> Delete(string teamId)
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
 

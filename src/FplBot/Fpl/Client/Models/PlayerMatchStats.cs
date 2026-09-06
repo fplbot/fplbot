@@ -11,7 +11,7 @@ public class PlayerMatchStats
     public DateTime KickoffTime { get; set; }
 
     [JsonPropertyName("kickoff_time_formatted")]
-    public string FormattedKickoffTime { get; set; }
+    public string? FormattedKickoffTime { get; set; }
 
     [JsonPropertyName("team_h_score")]
     public int? HomeTeamScore { get; set; }

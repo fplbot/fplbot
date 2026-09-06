@@ -22,7 +22,7 @@ internal class SlashCommandsMiddleware
         var slashCommand = context.Items[HttpItemKeys.SlashCommandsKey] as JsonDocument;
         context.Response.StatusCode = 200;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync<object>(await CreateJsonResponse(slashCommand), SerializerOptions);
+        await context.Response.WriteAsJsonAsync<object>(await CreateJsonResponse(slashCommand!), SerializerOptions);
     }
 
     private async Task<object> CreateJsonResponse(JsonDocument doc)
@@ -35,7 +35,7 @@ internal class SlashCommandsMiddleware
         _logger.LogInformation($"Handling slash command {commandName}");
         var slashCommandType = data.GetProperty("type").GetInt32();
         var hasOptions = data.TryGetProperty("options", out JsonElement opts);
-        SlashCommandInput slashCommandInput = null;
+        SlashCommandInput? slashCommandInput = null;
         var isSubCommand = false;
         if (hasOptions)
         {
@@ -53,14 +53,14 @@ internal class SlashCommandsMiddleware
 
             JsonElement valueElement = chosenOption.GetProperty("value");
             JsonValueKind jsonValueKind = valueElement.ValueKind;
-            string value = jsonValueKind == JsonValueKind.Number ? valueElement.GetInt32().ToString() : valueElement.GetString();
-            slashCommandInput = new SlashCommandInput(subCommandName, value, subCommandName);
+            string value = jsonValueKind == JsonValueKind.Number ? valueElement.GetInt32().ToString() : (valueElement.GetString() ?? string.Empty);
+            slashCommandInput = new SlashCommandInput(subCommandName ?? string.Empty, value, subCommandName ?? string.Empty);
         }
 
-        ISlashCommandHandler handler = null;
+        ISlashCommandHandler? handler = null;
         if (isSubCommand)
         {
-            handler = _handlers.FirstOrDefault(h => h.CommandName == commandName && h.SubCommandName == slashCommandInput.SubCommandName);
+            handler = _handlers.FirstOrDefault(h => h.CommandName == commandName && h.SubCommandName == slashCommandInput!.SubCommandName);
         }
         else
         {
@@ -69,7 +69,7 @@ internal class SlashCommandsMiddleware
 
         if (handler != null)
         {
-            SlashCommandContext slashCommandContext = new(guildId, channelId, slashCommandInput);
+            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput);
             var handled = await handler.Handle(slashCommandContext);
             if (handled is ChannelMessageWithSourceResponse channelMessageRes)
             {
@@ -107,7 +107,7 @@ internal class SlashCommandsMiddleware
     };
 }
 
-public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput CommandInput = null);
+public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null);
 public record SlashCommandInput(string Name, string Value, string SubCommandName);
 
 internal class Lowercase : JsonNamingPolicy

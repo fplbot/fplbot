@@ -98,7 +98,7 @@ public static class SlackFormatter
         return httpClient.SendAsync(req).GetAwaiter().GetResult().IsSuccessStatusCode;
     }
 
-    private static string GetChanceOfPlayingWarningIfRelevant(int? chanceOfPlaying, string news)
+    private static string? GetChanceOfPlayingWarningIfRelevant(int? chanceOfPlaying, string? news)
     {
         if (!chanceOfPlaying.HasValue || chanceOfPlaying.Value == 100)
         {

@@ -18,7 +18,7 @@ public class EntryHistoryClient : IEntryHistoryClient
     {
         try
         {
-            return (teamId, await _client.GetFromJsonAsync<EntryHistory>($"/api/entry/{teamId}/history/", JsonConvert.JsonSerializerOptions));
+            return (teamId, await _client.GetFromJsonAsync<EntryHistory>($"/api/entry/{teamId}/history/", JsonConvert.JsonSerializerOptions))!;
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {

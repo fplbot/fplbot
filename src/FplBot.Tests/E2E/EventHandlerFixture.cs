@@ -130,6 +130,12 @@ public class EventHandlerFixture : IAsyncLifetime
 
     public IBus Bus => _host.Services.GetRequiredService<IBus>();
 
+    public async Task FlushRedisAsync()
+    {
+        var server = _multiplexer.GetServer(_multiplexer.GetEndPoints().First());
+        await server.FlushAllDatabasesAsync();
+    }
+
     public async Task DisposeAsync()
     {
         await _host.StopAsync();

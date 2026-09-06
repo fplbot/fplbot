@@ -29,7 +29,7 @@ public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
             return Respond($"🤷‍♀️O RLY?", $"Did not find any subscription(s) in this channel to remove!");
         }
 
-        EventSubscription eventSub = Enum.Parse<EventSubscription>(context.CommandInput.Value);
+        EventSubscription eventSub = Enum.Parse<EventSubscription>(context.CommandInput!.Value);
 
         bool isLastSub = existingSub.Subscriptions.Count() == 1 && existingSub.Subscriptions.First() == eventSub;
         if (existingSub.LeagueId == null && (isLastSub || eventSub == EventSubscription.All))
@@ -44,7 +44,7 @@ public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
             allTypes.Remove(EventSubscription.All);
             await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = allTypes });
             var updatedFromAll = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            return Respond($"✅ Success!", $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(updatedFromAll.Subscriptions)}");
+            return Respond($"✅ Success!", $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(updatedFromAll?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
         }
 
         var updated = new List<EventSubscription>(existingSub.Subscriptions);
@@ -60,7 +60,7 @@ public class RemoveSubscriptionSlashCommandHandler : ISlashCommandHandler
 
         await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = updated });
         var regularUpdate = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-        if (regularUpdate.Subscriptions.Any())
+        if (regularUpdate?.Subscriptions.Any() == true)
         {
             return Respond($"✅ Success!", $"Unsubscribed from {eventSub}. Updated list:\n{Formatter.BulletPoints(regularUpdate.Subscriptions)}");
         }

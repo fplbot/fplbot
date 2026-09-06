@@ -25,7 +25,7 @@ public class IndexingService : IIndexingService
         _logger = logger;
     }
 
-    public async Task IndexEntries(CancellationToken token, Action<int> pageProgress = null)
+    public async Task IndexEntries(CancellationToken token, Action<int>? pageProgress = null)
     {
         await Index(_entryIndexProvider, pageProgress, token);
     }
@@ -33,15 +33,15 @@ public class IndexingService : IIndexingService
     public async Task IndexSingleEntry(int entryId, CancellationToken token)
     {
         var entryItem = await _singleEntryIndexProvider.GetSingleEntryToIndex(entryId);
-        await _indexingClient.Index(new[] {entryItem}, _singleEntryIndexProvider.IndexName, token);
+        await _indexingClient.Index(new[] {entryItem!}, _singleEntryIndexProvider.IndexName, token);
     }
 
-    public async Task IndexLeagues(CancellationToken token, Action<int> pageProgress = null)
+    public async Task IndexLeagues(CancellationToken token, Action<int>? pageProgress = null)
     {
         await Index(_leagueIndexProvider, pageProgress, token);
     }
 
-    private async Task Index<T>(IIndexProvider<T> indexProvider, Action<int> pageProgress, CancellationToken token) where T : class
+    private async Task Index<T>(IIndexProvider<T> indexProvider, Action<int>? pageProgress, CancellationToken token) where T : class
     {
         var i = await indexProvider.StartIndexingFrom;
         const int batchSize = 8;
@@ -73,7 +73,7 @@ public class IndexingService : IIndexingService
 
 public interface IIndexingService
 {
-    Task IndexEntries(CancellationToken token, Action<int> pageProgress = null);
+    Task IndexEntries(CancellationToken token, Action<int>? pageProgress = null);
     Task IndexSingleEntry(int entryId, CancellationToken token);
-    Task IndexLeagues(CancellationToken token, Action<int> pageProgress = null);
+    Task IndexLeagues(CancellationToken token, Action<int>? pageProgress = null);
 }

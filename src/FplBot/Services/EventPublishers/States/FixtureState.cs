@@ -35,23 +35,23 @@ internal class FixtureState
     {
         using var scope = _logger.AddContext("StateInit");
         _logger.LogInformation($"Running reset for gw {newGameweek}");
-        _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek);
+        _currentGameweekFixtures = await _fixtureClient.GetFixturesByGameweek(newGameweek) ?? new List<Fixture>();
         var settings = await _settingsClient.GetGlobalSettings();
-        _players = settings.Players;
-        _teams = settings.Teams;
+        _players = settings?.Players ?? new List<Player>();
+        _teams = settings?.Teams ?? new List<Team>();
     }
 
     public async Task Refresh(int currentGameweek)
     {
         using var scope = _logger.AddContext("StateRefresh");
         _logger.LogInformation($"Refreshing {currentGameweek}");
-        var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek);
+        var latest = await _fixtureClient.GetFixturesByGameweek(currentGameweek) ?? new List<Fixture>();
         var fixtureEvents = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, _currentGameweekFixtures, _players, _teams);
         var finishedFixtures = LiveEventsExtractor.GetProvisionalFinishedFixtures(latest, _currentGameweekFixtures, _teams, _players);
         _currentGameweekFixtures = latest;
 
         var globalSettings = await _settingsClient.GetGlobalSettings();
-        var after = globalSettings.Players;
+        var after = globalSettings?.Players ?? new List<Player>();
 
         _players = after;
 

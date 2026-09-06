@@ -4,5 +4,5 @@ namespace Fpl.Client.Abstractions;
 
 public interface ITransfersClient
 {
-    Task<ICollection<Transfer>> GetTransfers(int teamId);
+    Task<ICollection<Transfer>?> GetTransfers(int teamId);
 }

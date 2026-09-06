@@ -16,7 +16,7 @@ public static class AuthenticationBuilderExtensions
 public class DiscordEventsAuthenticationOptions : AuthenticationSchemeOptions
 {
     [Required]
-    public string PublicKey { get; set; }
+    public string PublicKey { get; set; } = null!;
 }
 
 public static class DiscordEventsAuthenticationConstants

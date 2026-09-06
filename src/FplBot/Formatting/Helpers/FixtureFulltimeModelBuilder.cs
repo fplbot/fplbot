@@ -26,8 +26,8 @@ public static class FixtureFulltimeModelBuilder
             var bonusPointsHome = fixture.Stats.FirstOrDefault(s => s.Identifier == FplConstants.StatIdentifiers.Bps)?.HomeStats;
             var bonusPointsAway = fixture.Stats.FirstOrDefault(s => s.Identifier == FplConstants.StatIdentifiers.Bps)?.AwayStats;
 
-            var home = bonusPointsHome.Select(BpsFilter).ToList();
-            var away = bonusPointsAway.Select(BpsFilter).ToList();
+            var home = (bonusPointsHome ?? Enumerable.Empty<FixtureStatValue>()).Select(BpsFilter).ToList();
+            var away = (bonusPointsAway ?? Enumerable.Empty<FixtureStatValue>()).Select(BpsFilter).ToList();
             var aggregated = home.Concat(away).OrderByDescending(bpp => bpp.BonusPoints);
             return aggregated;
 
@@ -62,12 +62,13 @@ public static class FixtureFulltimeModelBuilder
 
             return home.Concat(away)
                 .Select(ToDefensiveContributionPlayer)
-                .Where(dc => dc != null && ReachedThreshold(dc))
+                .Where(dc => dc != null && ReachedThreshold(dc!))
+                .Select(dc => dc!)
                 .OrderByDescending(dc => dc.Contributions)
                 .ThenBy(dc => dc.Player.WebName)
                 .ToList();
 
-            DefensiveContributionPlayer ToDefensiveContributionPlayer(FixtureStatValue value)
+            DefensiveContributionPlayer? ToDefensiveContributionPlayer(FixtureStatValue value)
             {
                 var player = players.FirstOrDefault(p => p.Id == value.Element);
                 if (player == null)

@@ -46,8 +46,8 @@ internal class DiscordCodeTokenExchangeMiddleware
         var parameters = new List<KeyValuePair<string,string>>
         {
             new ("code", code),
-            new ("client_id", options.Value.CLIENT_ID),
-            new ("client_secret", options.Value.CLIENT_SECRET),
+            new ("client_id", options.Value.CLIENT_ID ?? string.Empty),
+            new ("client_secret", options.Value.CLIENT_SECRET ?? string.Empty),
             new ("grant_type", "authorization_code"),
             new ("redirect_uri", redirectUri.ToString())
         };
@@ -64,8 +64,8 @@ internal class DiscordCodeTokenExchangeMiddleware
             var guild = jsonDoc.GetProperty("guild");
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
-            await guildStore.Insert(new Guild(guildId, guild_name));
-            await options.Value.OnSuccess(guildId, guild_name, provider);
+            await guildStore.Insert(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
+            await options.Value.OnSuccess(guildId ?? string.Empty, guild_name ?? string.Empty, provider);
             ctx.Response.Redirect(options.Value.SuccessRedirectUri);
         }
         else

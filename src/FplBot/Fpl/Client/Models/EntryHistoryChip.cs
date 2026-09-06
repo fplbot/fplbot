@@ -6,13 +6,13 @@ namespace Fpl.Client.Models;
 public class EntryHistoryChip
 {
     [JsonPropertyName("played_time_formatted")]
-    public string FormattedPlayedTime { get; set; }
+    public string? FormattedPlayedTime { get; set; }
 
     [JsonPropertyName("status")]
-    public string Status { get; set; }
+    public string? Status { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("time")]
     public DateTime Time { get; set; }

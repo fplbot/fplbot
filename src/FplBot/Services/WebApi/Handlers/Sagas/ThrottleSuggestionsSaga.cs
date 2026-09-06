@@ -170,6 +170,7 @@ public class AggregatedSuggestionsHandler : IConsumer<PublishAggregatedEntrySugg
         try
         {
             var entry = await _entryClient.Get(message.EntryId);
+            if (entry == null) throw new Exception($"Entry {message.EntryId} not found");
             text = $"{Link(entry)} for {entry.PlayerFullName}{Counting(message.SuggestionCount)}. \n{Formatter.BulletPoints(message.Descriptions)}";
         }
         catch (Exception)
@@ -186,11 +187,12 @@ public class AggregatedSuggestionsHandler : IConsumer<PublishAggregatedEntrySugg
         try
         {
             var entry = await _entryClient.Get(message.EntryId);
+            if (entry == null) throw new Exception($"Entry {message.EntryId} not found");
             var settings = await _settings.GetGlobalSettings();
-            var player = settings.Players.FirstOrDefault(p => p.Id == message.PlayerId);
+            var player = settings?.Players.FirstOrDefault(p => p.Id == message.PlayerId);
             if (player != null)
             {
-                var team = settings.Teams.FirstOrDefault(t => t.Id == player.TeamId);
+                var team = settings?.Teams.FirstOrDefault(t => t.Id == player.TeamId);
                 text = $"{Link(entry)} for {player.FullName} ({team?.ShortName}){Counting(message.SuggestionCount)}";
             }
             else

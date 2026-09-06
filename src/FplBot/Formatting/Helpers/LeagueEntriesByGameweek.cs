@@ -25,14 +25,15 @@ public class LeagueEntriesByGameweek : ILeagueEntriesByGameweek
         {
             var league = await _leagueClient.GetClassicLeague(leagueId);
 
-            var entries = league.Standings.Entries;
+            var entries = league?.Standings?.Entries ?? new List<ClassicLeagueEntry>();
 
             var entryDictionary = new ConcurrentBag<GameweekEntry>();
 
             await Task.WhenAll(entries.Select(async entry =>
             {
-                var gameweekEntries = await _entryForGameweek.GetEntryForGameweek((ClassicLeagueEntry)entry, gw);
-                entryDictionary.Add(gameweekEntries);
+                var gameweekEntry = await _entryForGameweek.GetEntryForGameweek((ClassicLeagueEntry)entry, gw);
+                if (gameweekEntry != null)
+                    entryDictionary.Add(gameweekEntry);
             }));
 
             return entryDictionary;

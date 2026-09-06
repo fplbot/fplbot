@@ -32,9 +32,9 @@ internal class HttpItemsManager
                 int typeValueAsInt = typeValue.GetInt32();
                 var kvp = typeValueAsInt switch
                 {
-                    1 => new KeyValuePair<object, object>(HttpItemKeys.PingKey, typeValueAsInt),
-                    2 => new KeyValuePair<object, object>(HttpItemKeys.SlashCommandsKey, jObject),
-                    _ => new KeyValuePair<object, object>(HttpItemKeys.UnhandledKey, typeValueAsInt)
+                    1 => new KeyValuePair<object, object?>(HttpItemKeys.PingKey, typeValueAsInt),
+                    2 => new KeyValuePair<object, object?>(HttpItemKeys.SlashCommandsKey, jObject),
+                    _ => new KeyValuePair<object, object?>(HttpItemKeys.UnhandledKey, typeValueAsInt)
                 };
                 context.Items.Add(HttpItemKeys.TypeKey, typeValueAsInt);
                 context.Items.Add(kvp);

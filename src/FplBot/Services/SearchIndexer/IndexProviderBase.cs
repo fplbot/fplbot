@@ -16,7 +16,7 @@ public abstract class IndexProviderBase
         _logger = logger;
     }
 
-    protected Task<ClassicLeague[]> GetBatchOfLeagues(int i, int batchSize, Func<ILeagueClient, int, Task<ClassicLeague>> getLeagueByIterator)
+    protected Task<ClassicLeague?[]> GetBatchOfLeagues(int i, int batchSize, Func<ILeagueClient, int, Task<ClassicLeague?>> getLeagueByIterator)
     {
         return ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => getLeagueByIterator(_leagueClient, n)).ToArray(), _logger);
     }

@@ -8,7 +8,7 @@ namespace Fpl.EventPublishers;
 
 internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
 {
-    public async Task<MatchDetails> GetMatchDetails(int pulseId)
+    public async Task<MatchDetails?> GetMatchDetails(int pulseId)
     {
         try
         {
@@ -36,10 +36,10 @@ internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logge
 public class MatchDetails
 {
     [JsonPropertyName("home_team")]
-    public TeamLineup HomeTeam { get; set; }
+    public TeamLineup? HomeTeam { get; set; }
 
     [JsonPropertyName("away_team")]
-    public TeamLineup AwayTeam { get; set; }
+    public TeamLineup? AwayTeam { get; set; }
 
     public bool HasLineUps() => HomeTeam?.HasLineups() == true && AwayTeam?.HasLineups() == true;
     public bool HasTeams() => HomeTeam != null && AwayTeam != null;
@@ -54,7 +54,7 @@ public class TeamLineup
     public IEnumerable<PulsePlayer> Players { get; set; } = new List<PulsePlayer>();
 
     [JsonPropertyName("formation")]
-    public PulseFormation Formation { get; set; }
+    public PulseFormation? Formation { get; set; }
 
     public bool HasLineups() =>
         Players != null && Players.Any() &&
@@ -67,19 +67,19 @@ public class PulsePlayer
     public int Id { get; set; }
 
     [JsonPropertyName("firstName")]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
     [JsonPropertyName("lastName")]
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
 
     [JsonPropertyName("knownName")]
-    public string KnownName { get; set; }
+    public string? KnownName { get; set; }
 
     [JsonPropertyName("isCaptain")]
     public bool IsCaptain { get; set; }
 
     [JsonPropertyName("position")]
-    public string Position { get; set; }
+    public string? Position { get; set; }
 
     public string DisplayName => KnownName ?? LastName ?? $"{FirstName} {LastName}".Trim();
 
@@ -89,15 +89,15 @@ public class PulsePlayer
         "Defender" => "D",
         "Midfielder" => "M",
         "Forward" => "F",
-        _ => Position
+        _ => Position ?? string.Empty
     };
 }
 
 public class PulseFormation
 {
     [JsonPropertyName("formation")]
-    public string Label { get; set; }
+    public string? Label { get; set; }
 
     [JsonPropertyName("lineup")]
-    public IEnumerable<IEnumerable<int>> Lineup { get; set; }
+    public IEnumerable<IEnumerable<int>>? Lineup { get; set; }
 }

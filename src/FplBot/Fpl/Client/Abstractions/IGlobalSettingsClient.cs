@@ -4,5 +4,5 @@ namespace Fpl.Client.Abstractions;
 
 public interface IGlobalSettingsClient
 {
-    Task<GlobalSettings> GetGlobalSettings();
+    Task<GlobalSettings?> GetGlobalSettings();
 }

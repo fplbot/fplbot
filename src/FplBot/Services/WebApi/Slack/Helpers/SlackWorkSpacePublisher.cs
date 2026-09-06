@@ -26,7 +26,7 @@ internal class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
         var teams = await _repository.GetAllTeams();
         foreach (var team in teams)
         {
-            await PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, msg);
+            await PublishToWorkspace(team.TeamId ?? "", team.FplBotSlackChannel ?? "", msg);
         }
     }
 
@@ -47,7 +47,7 @@ internal class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
     public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
     {
         var team = await _repository.GetTeam(teamId);
-        await PublishUsingToken(team.AccessToken,messages);
+        await PublishUsingToken(team.AccessToken ?? "",messages);
     }
 
     private async Task PublishUsingToken(string token, params ChatPostMessageRequest[] messages)

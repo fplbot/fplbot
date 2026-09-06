@@ -24,7 +24,7 @@ internal class FplInjuryCommandHandler : HandleAppMentionBase
     {
         var globalSettings = await _globalSettingsClient.GetGlobalSettings();
 
-        var injuredPlayers = FindInjuredPlayers(globalSettings.Players);
+        var injuredPlayers = FindInjuredPlayers(globalSettings?.Players ?? new List<Player>());
 
         var textToSend = Formatter.GetInjuredPlayers(injuredPlayers);
 

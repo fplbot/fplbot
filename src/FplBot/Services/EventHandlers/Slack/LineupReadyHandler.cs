@@ -31,7 +31,7 @@ public class LineupReadyHandler : IConsumer<LineupReady>, IConsumer<PublishLineu
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.Lineups))
             {
-                await context.Publish(new PublishLineupsToSlackWorkspace(slackTeam.TeamId, message.Lineup));
+                await context.Publish(new PublishLineupsToSlackWorkspace(slackTeam.TeamId!, message.Lineup));
             }
         }
     }
@@ -51,7 +51,7 @@ public class LineupReadyHandler : IConsumer<LineupReady>, IConsumer<PublishLineu
             await context.Publish(new PublishSlackThreadMessage
             (
                 message.WorkspaceId,
-                team.FplBotSlackChannel,
+                team.FplBotSlackChannel!,
                 res.ts,
                 formattedLineup
             ));

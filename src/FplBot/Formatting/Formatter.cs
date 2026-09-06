@@ -16,9 +16,9 @@ public static class Formatter
     {
         var sb = new StringBuilder();
 
-        var sortedByRank = league.Standings.Entries.OrderBy(x => x.Rank);
+        var sortedByRank = (league.Standings?.Entries ?? new List<ClassicLeagueEntry>()).OrderBy(x => x.Rank);
 
-        var numPlayers = league.Standings.Entries.Count;
+        var numPlayers = league.Standings?.Entries.Count ?? 0;
 
         if (gameweek == null)
         {
@@ -31,16 +31,16 @@ public static class Formatter
         foreach (var player in sortedByRank)
         {
             var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
-            string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName;
+            string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName ?? "";
             sb.Append($"\n{player.Rank}. {entryOrLink} - {player.Total} {arrow}");
         }
 
         return sb.ToString();
     }
 
-    public static string GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
+    public static string? GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
-        var topThree = league.Standings.Entries
+        var topThree = (league.Standings?.Entries ?? new List<ClassicLeagueEntry>())
             .GroupBy(e => e.EventTotal)
             .OrderByDescending(g => g.Key)
             .Take(3)
@@ -60,7 +60,7 @@ public static class Formatter
             var group = topThree[i];
             foreach (var entry in group)
             {
-                string entryOrEntryLink = includeExternalLinks ? entry.GetEntryLink(gameweek.Id) : entry.EntryName;
+                string entryOrEntryLink = includeExternalLinks ? entry.GetEntryLink(gameweek.Id) : entry.EntryName ?? "";
                 sb.Append($"{Formatter.RankEmoji(i)} {entryOrEntryLink} - {entry.EventTotal}\n");
             }
         }
@@ -68,10 +68,10 @@ public static class Formatter
         return sb.ToString();
     }
 
-    public static string GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
+    public static string? GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
-        var worst = league.Standings.Entries.MinBy(e => e.EventTotal);
-        string entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
+        var worst = (league.Standings?.Entries ?? new List<ClassicLeagueEntry>()).MinBy(e => e.EventTotal);
+        string? entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
         return worst == null ? null : $"💩 {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
     }
 
@@ -222,7 +222,7 @@ public static class Formatter
         return sb.ToString();
     }
 
-    public static string Change(InjuredPlayerUpdate update)
+    public static string? Change(InjuredPlayerUpdate update)
     {
         return (update.Previous, update.Updated) switch
         {
@@ -429,9 +429,9 @@ public static class Formatter
         var globalAverage = (int)Math.Round((double)gw.AverageScore);
 
         var leagueAvgTxt = "";
-        if (league.Standings.Entries.Any())
+        if (league.Standings?.Entries.Any() == true)
         {
-            var leagueAverage = (int)Math.Round((double)league.Standings.Entries.Average(entry => entry.EventTotal));
+            var leagueAverage = (int)Math.Round((double)league.Standings!.Entries.Average(entry => entry.EventTotal));
             leagueAvgTxt = $" Your league's average was *{leagueAverage}* points.";
         }
 
@@ -460,7 +460,7 @@ public static class Formatter
             0 => "🥇",
             1 => "🥈",
             2 => "🥉",
-            _ => FormattingConstants.Emojis.NatureEmojis.GetRandom()
+            _ => FormattingConstants.Emojis.NatureEmojis.GetRandom() ?? "🌿"
         };
     }
 
@@ -469,7 +469,7 @@ public static class Formatter
         var textToSend = $"ℹ️ <https://fantasy.premierleague.com/fixtures/{gwId}|{name.ToUpper()}>";
         textToSend += $"\nDeadline: {deadline.WithOffset(tzOffset):yyyy-MM-dd HH:mm}\n";
 
-        var groupedByDay = fixtures.GroupBy(f => f.KickOffTime.Value.Date);
+        var groupedByDay = fixtures.GroupBy(f => f.KickOffTime!.Value.Date);
 
         foreach (var group in groupedByDay)
         {
@@ -478,7 +478,7 @@ public static class Formatter
             {
                 var homeTeam = teams.First(t => t.Id == fixture.HomeTeamId);
                 var awayTeam = teams.First(t => t.Id == fixture.AwayTeamId);
-                var fixtureKickOffTime = fixture.KickOffTime.Value.WithOffset(tzOffset);
+                var fixtureKickOffTime = fixture.KickOffTime!.Value.WithOffset(tzOffset);
                 textToSend += $"\n•{fixtureKickOffTime:HH:mm} {homeTeam.ShortName}-{awayTeam.ShortName}";
             }
 
@@ -490,14 +490,14 @@ public static class Formatter
 
     public static string FormatEntryItem(EntryItem entryItem, int? gameweek)
     {
-        return GetEntryLink(entryItem.Id, entryItem.TeamName, gameweek) + $" ({entryItem.RealName})";
+        return GetEntryLink(entryItem.Id, entryItem.TeamName ?? "", gameweek) + $" ({entryItem.RealName})";
     }
 
     public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)
     {
-        return GetLeagueLink(leagueItem.Id, leagueItem.Name) +
+        return GetLeagueLink(leagueItem.Id, leagueItem.Name ?? "") +
                (leagueItem.AdminEntry.HasValue ?
-                   $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName, leagueItem.AdminCountry), gameweek)})"
+                   $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName ?? "", leagueItem.AdminCountry ?? ""), gameweek)})"
                    : null);
     }
 
@@ -511,7 +511,7 @@ public static class Formatter
         return leagueAdminName + " " + FormatCountryShortIso(leagueAdminCountryShortIso);
     }
 
-    public static string FormatCountryShortIso(string countryIso)
+    public static string? FormatCountryShortIso(string countryIso)
     {
         if (string.IsNullOrEmpty(countryIso))
         {

@@ -14,7 +14,7 @@ internal class GameweekHelper : IGameweekHelper
     public async Task<int?> ExtractGameweekOrFallbackToCurrent(string messageText, string pattern)
     {
         var extractedGw = MessageHelper.ExtractGameweek(messageText, pattern);
-        return extractedGw ?? (await _gameweekClient.GetGlobalSettings()).Gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
+        return extractedGw ?? (await _gameweekClient.GetGlobalSettings())?.Gameweeks.SingleOrDefault(x => x.IsCurrent)?.Id;
     }
 }
 

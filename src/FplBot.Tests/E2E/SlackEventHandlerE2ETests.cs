@@ -16,11 +16,11 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         _output = output;
     }
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         _teamId = Guid.NewGuid().ToString("N");
         _fixture.SlackCapture.Reset();
-        return Task.CompletedTask;
+        await _fixture.FlushRedisAsync();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

@@ -53,7 +53,7 @@ public class TeamDetailsIndex : PageModel
         }
     }
 
-    public ClassicLeague League { get; set; }
+    public ClassicLeague? League { get; set; }
     public bool? ChannelStatus { get; set; }
 
     public async Task<IActionResult> OnPost(string teamId)
@@ -88,5 +88,5 @@ public class TeamDetailsIndex : PageModel
         var slackClient = _builder.Build(token: team.AccessToken);
         return slackClient;
     }
-    public SlackTeam Team { get; set; }
+    public SlackTeam? Team { get; set; }
 }

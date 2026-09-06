@@ -14,9 +14,9 @@ public class LiveClient : ILiveClient
         _client = client;
     }
 
-    public async Task<ICollection<LiveItem>> GetLiveItems(int gameweek, bool isOngoingGameweek = false)
+    public async Task<ICollection<LiveItem>?> GetLiveItems(int gameweek, bool isOngoingGameweek = false)
     {
         var response = await _client.GetCachedOrFetch<LiveResponse>($"/api/event/{gameweek}/live/", url => _httpClient.GetStringAsync(url), isOngoingGameweek ? TimeSpan.FromMinutes(5) : TimeSpan.FromHours(24));
-        return response.Elements;
+        return response?.Elements;
     }
 }

@@ -13,13 +13,13 @@ public class Event
     public bool DataChecked { get; set; }
 
     [JsonPropertyName("deadline_time")]
-    public string DeadlineTime { get; set; }
+    public string? DeadlineTime { get; set; }
 
     [JsonPropertyName("deadline_time_epoch")]
     public long DeadlineTimeEpoch { get; set; }
 
     [JsonPropertyName("deadline_time_formatted")]
-    public string DeadlineTimeFormatted { get; set; }
+    public string? DeadlineTimeFormatted { get; set; }
 
     [JsonPropertyName("deadline_time_game_offset")]
     public int DeadlineTimeGameOffset { get; set; }
@@ -46,5 +46,5 @@ public class Event
     public bool IsPrevious { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 }

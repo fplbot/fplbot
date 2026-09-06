@@ -28,10 +28,10 @@ internal class FplStandingsCommandHandler : HandleAppMentionBase
     {
         var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
         var settings =  await _globalSettingsClient.GetGlobalSettings();
-        var gameweek = settings.Gameweeks.GetCurrentGameweek();
+        var gameweek = settings!.Gameweeks.GetCurrentGameweek();
         if (team.HasChannelAndLeagueSetup())
         {
-            await _publishEndpoint.Publish(new PublishStandingsToSlackWorkspace(team.TeamId, appMentioned.Channel, team.FplbotLeagueId.Value, gameweek.Id));
+            await _publishEndpoint.Publish(new PublishStandingsToSlackWorkspace(team.TeamId ?? "", appMentioned.Channel, team.FplbotLeagueId!.Value, gameweek!.Id));
         }
 
         return new EventHandledResponse("OK");

@@ -18,22 +18,22 @@ public class BasicEntry
     public int? FavouriteTeamId { get; set; }
 
     [JsonPropertyName("player_first_name")]
-    public string PlayerFirstName { get; set; }
+    public string? PlayerFirstName { get; set; }
 
     [JsonPropertyName("player_last_name")]
-    public string PlayerLastName { get; set; }
+    public string? PlayerLastName { get; set; }
 
     [JsonPropertyName("player_region_id")]
     public int PlayerRegionId { get; set; }
 
     [JsonPropertyName("player_region_name")]
-    public string PlayerRegionName { get; set; }
+    public string? PlayerRegionName { get; set; }
 
     [JsonPropertyName("player_region_iso_code_short")]
-    public string PlayerRegionShortIso { get; set; }
+    public string? PlayerRegionShortIso { get; set; }
 
     [JsonPropertyName("player_region_iso_code_long")]
-    public string PlayerRegionLongIso { get; set; }
+    public string? PlayerRegionLongIso { get; set; }
 
     [JsonPropertyName("summary_overall_points")]
     public int? SummaryOverallPoints { get; set; }
@@ -51,17 +51,17 @@ public class BasicEntry
     public int? CurrentEvent { get; set; }
 
     [JsonPropertyName("leagues")]
-    public EntryLeagues Leagues { get; set; }
+    public EntryLeagues? Leagues { get; set; }
 
     [JsonPropertyName("name")]
-    public string TeamName { get; set; }
+    public string? TeamName { get; set; }
 
     [JsonPropertyName("kit")]
-    public string Kit { get; set; }
+    public string? Kit { get; set; }
 
     public string PlayerFullName => $"{PlayerFirstName} {PlayerLastName}";
 
     [JsonPropertyName("detail")]
-    public string Detail { get; set; }
+    public string? Detail { get; set; }
     public bool Exists => Detail != "Not found.";
 }

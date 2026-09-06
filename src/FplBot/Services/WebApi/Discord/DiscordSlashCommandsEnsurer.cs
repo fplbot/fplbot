@@ -27,7 +27,7 @@ public class DiscordSlashCommandsEnsurer
         }
     }
 
-    public async Task InstallGuildSlashCommandsInGuild(string guild = null)
+    public async Task InstallGuildSlashCommandsInGuild(string? guild = null)
     {
         await _client.ApplicationsCommandPost(
             "help",

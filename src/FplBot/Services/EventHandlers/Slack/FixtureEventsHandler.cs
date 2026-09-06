@@ -42,7 +42,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
 
         foreach (var slackTeam in slackTeams)
         {
-            await context.Publish(new PublishFixtureEventsToSlackWorkspace(slackTeam.TeamId, message.FixtureEvents));
+            await context.Publish(new PublishFixtureEventsToSlackWorkspace(slackTeam.TeamId!, message.FixtureEvents));
         }
     }
 
@@ -52,11 +52,11 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
         _logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.WorkspaceId}");
         var slackTeam = await _slackTeamRepo.GetTeam(message.WorkspaceId);
 
-        TauntData tauntData = null;
+        TauntData? tauntData = null;
         if (slackTeam.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts) && slackTeam.FplbotLeagueId.HasValue)
         {
             var gws = await _globalSettingsClient.GetGlobalSettings();
-            var currentGw = gws.Gameweeks.GetCurrentGameweek();
+            var currentGw = gws?.Gameweeks.GetCurrentGameweek();
             var slackUsers = await GetSlackUsers(slackTeam);
             IEnumerable<GameweekEntry> entries = new List<GameweekEntry>();
             IEnumerable<TransfersByGameWeek.Transfer> transfers = new List<TransfersByGameWeek.Transfer>();
@@ -73,7 +73,7 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
         {
             var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, slackTeam.Subscriptions.ContainsStat, FormattingType.Slack, tauntData);
             var formattedStr = eventMessages.Select(evtMsg => $"{evtMsg.Title}\n{evtMsg.Details}");
-            await _publisher.PublishToWorkspace(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formattedStr.ToArray());
+            await _publisher.PublishToWorkspace(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formattedStr.ToArray());
         }
     }
 

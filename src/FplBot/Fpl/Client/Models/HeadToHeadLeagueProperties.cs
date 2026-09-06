@@ -8,7 +8,7 @@ public class HeadToHeadLeagueProperties
     public int Id { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("has_started")]
     public bool HasStarted { get; set; }
@@ -17,7 +17,7 @@ public class HeadToHeadLeagueProperties
     public bool CanDelete { get; set; }
 
     [JsonPropertyName("short_name")]
-    public string ShortName { get; set; }
+    public string? ShortName { get; set; }
 
     [JsonPropertyName("created")]
     public DateTime CreatedAt { get; set; }
@@ -38,10 +38,10 @@ public class HeadToHeadLeagueProperties
     public int? Size { get; set; }
 
     [JsonPropertyName("league_type")]
-    public string LeagueType { get; set; }
+    public string? LeagueType { get; set; }
 
     [JsonPropertyName("_scoring")]
-    public string Scoring { get; set; }
+    public string? Scoring { get; set; }
 
     [JsonPropertyName("ko_rounds")]
     public int ReprocessStandings { get; set; }

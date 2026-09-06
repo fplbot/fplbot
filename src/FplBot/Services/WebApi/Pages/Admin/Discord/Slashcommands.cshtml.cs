@@ -20,7 +20,7 @@ public class Slashcommands : PageModel
         Commands = await _ensurer.GetAllForGuild(TestGuildId);
     }
 
-    public IEnumerable<DiscordClient.ApplicationsCommand> Commands { get; set; }
+    public IEnumerable<DiscordClient.ApplicationsCommand> Commands { get; set; } = null!;
 
     public async Task<IActionResult> OnPostUninstallSlashCommands()
     {

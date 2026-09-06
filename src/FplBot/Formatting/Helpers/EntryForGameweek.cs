@@ -18,14 +18,14 @@ public class EntryForGameweek: IEntryForGameweek
         _logger = logger;
     }
 
-    public async Task<GameweekEntry> GetEntryForGameweek(ClassicLeagueEntry entry, int gameweek)
+    public async Task<GameweekEntry?> GetEntryForGameweek(ClassicLeagueEntry entry, int gameweek)
     {
         try
         {
             var entryPicksTask = _entryClient.GetPicks(entry.Entry, gameweek);
             var entryPicks = await entryPicksTask;
 
-            return new GameweekEntry(entry.Entry, entry.PlayerName, entry.EntryName, entryPicks);
+            return new GameweekEntry(entry.Entry, entry.PlayerName ?? "", entry.EntryName ?? "", entryPicks);
         }
         catch (Exception e)
         {
@@ -34,7 +34,7 @@ public class EntryForGameweek: IEntryForGameweek
         }
     }
 
-    public async Task<GameweekEntry> GetEntryForGameweek(GenericEntry entry, int gameweek)
+    public async Task<GameweekEntry?> GetEntryForGameweek(GenericEntry entry, int gameweek)
     {
         try
         {

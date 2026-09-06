@@ -43,7 +43,7 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
         var entryBatch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryClient.Get(n, tolerate404: true)).ToArray(), _logger);
         var items = entryBatch
             .Where(x => x != null && x.Exists)
-            .Select(y => new EntryItem { Id = y.Id, TeamName = y.TeamName, RealName = y.PlayerFullName, Country = y.PlayerRegionShortIso }).ToArray();
+            .Select(y => new EntryItem { Id = y!.Id, TeamName = y.TeamName, RealName = y.PlayerFullName, Country = y.PlayerRegionShortIso }).ToArray();
 
         if (!items.Any())
         {
@@ -53,7 +53,7 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
         {
             var historyBatch = (await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => _entryHistoryClient.GetHistory(n, tolerate404: true)).ToArray(), _logger))
                 .Where(x => x.HasValue)
-                .Select(x => x.Value)
+                .Select(x => x!.Value)
                 .ToArray();
 
             foreach (var entryItem in items)
@@ -96,14 +96,14 @@ public class SlowEntryIndexProvider : IndexProviderBase, IIndexProvider<EntryIte
         return (items, couldBeMore);
     }
 
-    public async Task<EntryItem> GetSingleEntryToIndex(int entryId)
+    public async Task<EntryItem?> GetSingleEntryToIndex(int entryId)
     {
         var entry = await _entryClient.Get(entryId);
         var history = (await _entryHistoryClient.GetHistory(entryId))?.entryHistory;
 
         return new EntryItem
         {
-            Id = entry.Id,
+            Id = entry!.Id,
             RealName = entry.PlayerFullName,
             TeamName = entry.TeamName,
             Country = entry.PlayerRegionShortIso,

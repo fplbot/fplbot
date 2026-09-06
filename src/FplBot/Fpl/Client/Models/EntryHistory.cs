@@ -6,11 +6,11 @@ namespace Fpl.Client.Models;
 public class EntryHistory
 {
     [JsonPropertyName("chips")]
-    public ICollection<EntryHistoryChip> Chips { get; set; }
+    public ICollection<EntryHistoryChip> Chips { get; set; } = [];
 
     [JsonPropertyName("past")]
-    public ICollection<EntrySeasonHistory> SeasonHistory { get; set; }
+    public ICollection<EntrySeasonHistory> SeasonHistory { get; set; } = [];
 
     [JsonPropertyName("current")]
-    public ICollection<EventEntryHistory> GameweekHistory { get; set; }
+    public ICollection<EventEntryHistory> GameweekHistory { get; set; } = [];
 }

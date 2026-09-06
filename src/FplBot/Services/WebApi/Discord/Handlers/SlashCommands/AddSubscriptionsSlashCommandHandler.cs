@@ -22,13 +22,13 @@ public class AddSubscriptionSlashCommandHandler : ISlashCommandHandler
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
         var existingSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-        EventSubscription newEventSub = Enum.Parse<EventSubscription>(context.CommandInput.Value);
+        EventSubscription newEventSub = Enum.Parse<EventSubscription>(context.CommandInput!.Value);
 
         if (existingSub == null)
         {
             await _repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
             var newSub = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(newSub.Subscriptions)}");
+            return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(newSub?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
         }
 
         if (existingSub.Subscriptions.Contains(newEventSub))
@@ -49,7 +49,7 @@ public class AddSubscriptionSlashCommandHandler : ISlashCommandHandler
 
         await _repo.UpdateGuildSubscription(existingSub with { Subscriptions = updatedList});
         var all = await _repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-        return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(all.Subscriptions)}");
+        return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(all?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
     }
 
     private static ChannelMessageWithSourceEmbedResponse Respond(string title, string description)

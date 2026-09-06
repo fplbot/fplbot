@@ -40,16 +40,16 @@ public class LeagueIndexProvider : IndexProviderBase, IIndexProvider<LeagueItem>
     public async Task<(LeagueItem[], bool)> GetBatchToIndex(int i, int batchSize)
     {
         var batch = await GetBatchOfLeagues(i, batchSize,
-            (client, x) => client.GetClassicLeague(x, tolerate404: true));
+            async (client, x) => (await client.GetClassicLeague(x, tolerate404: true))!);
         var items = batch
             .Where(x => x != null && x.Exists)
             .Select(x => new LeagueItem
             {
-                Id = x.Properties.Id, Name = x.Properties.Name, AdminEntry = x.Properties.AdminEntry
+                Id = x!.Properties!.Id, Name = x.Properties!.Name, AdminEntry = x.Properties!.AdminEntry
             })
             .ToArray();
 
-        var adminsToFetch = items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry.Value).Distinct()
+        var adminsToFetch = items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry!.Value).Distinct()
             .ToArray();
 
         if (adminsToFetch.Any())
@@ -59,7 +59,7 @@ public class LeagueIndexProvider : IndexProviderBase, IIndexProvider<LeagueItem>
                     _logger);
             foreach (var leagueItem in items)
             {
-                var admin = admins.SingleOrDefault(a => a.Id == leagueItem.AdminEntry);
+                var admin = admins.SingleOrDefault(a => a != null && a.Id == leagueItem.AdminEntry);
                 if (admin != null)
                 {
                     leagueItem.AdminName = admin.PlayerFullName;

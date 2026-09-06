@@ -4,5 +4,5 @@ namespace Fpl.Client.Abstractions;
 
 public interface ILiveClient
 {
-    Task<ICollection<LiveItem>> GetLiveItems(int gameweek, bool isOngoingGameweek = false);
+    Task<ICollection<LiveItem>?> GetLiveItems(int gameweek, bool isOngoingGameweek = false);
 }

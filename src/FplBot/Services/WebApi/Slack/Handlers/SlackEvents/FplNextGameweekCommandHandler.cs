@@ -1,4 +1,5 @@
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.WebApi.Slack.Abstractions;
@@ -35,16 +36,16 @@ public class FplNextGameweekCommandHandler : HandleAppMentionBase
         var settings = await _globalSettingsClient.GetGlobalSettings();
 
         var users = await usersTask;
-        var gameweeks = settings.Gameweeks;
-        var teams = settings.Teams;
+        var gameweeks = settings?.Gameweeks ?? new List<Fpl.Client.Models.Gameweek>();
+        var teams = settings?.Teams ?? new List<Fpl.Client.Models.Team>();
 
         var nextGw = gameweeks.First(gw => gw.IsNext);
-        var fixtures = await _fixtureClient.GetFixturesByGameweek(nextGw.Id);
+        var fixtures = await _fixtureClient.GetFixturesByGameweek(nextGw.Id) ?? new List<Fpl.Client.Models.Fixture>();
 
         var user = users.Members.FirstOrDefault(x => x.Id == slackEvent.User);
         var userTzOffset = user?.Tz_Offset ?? 0;
 
-        var textToSend = Formatter.FixturesForGameweek(nextGw.Id, nextGw.Name, nextGw.Deadline, fixtures, teams, userTzOffset);
+        var textToSend = Formatter.FixturesForGameweek(nextGw.Id, nextGw.Name ?? "", nextGw.Deadline, fixtures, teams, userTzOffset);
 
         await _workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, slackEvent.Channel, textToSend);
 

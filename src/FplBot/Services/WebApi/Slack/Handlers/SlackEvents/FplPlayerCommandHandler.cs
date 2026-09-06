@@ -28,10 +28,10 @@ internal class FplPlayerCommandHandler : HandleAppMentionBase
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
         var globalSettings = await _globalSettingsClient.GetGlobalSettings();
-        var players = globalSettings.Players;
+        var players = globalSettings!.Players;
         var teams = globalSettings.Teams;
 
-        var name = ParseArguments(message);
+        var name = ParseArguments(message) ?? "";
 
         var allPlayers = players.OrderByDescending(player => player.OwnershipPercentage);
         var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
@@ -53,7 +53,7 @@ internal class FplPlayerCommandHandler : HandleAppMentionBase
         return new EventHandledResponse($"Found matching player for {name}: " + playerName);
     }
 
-    private static Player FindMostPopularMatchingPlayer(Player[] players, string name)
+    private static Player? FindMostPopularMatchingPlayer(Player[] players, string name)
     {
         if (PlayerNickNames.NickNameToRealNameMap.ContainsKey(name))
         {
@@ -64,33 +64,33 @@ internal class FplPlayerCommandHandler : HandleAppMentionBase
             players,
             name,
             x => $"{x.FirstName} {x.SecondName}".Searchable(),
-            x => x.SecondName.Searchable(),
-            x => x.FirstName.Searchable(),
-            x => x.WebName.Searchable());
+            x => (x.SecondName ?? "").Searchable(),
+            x => (x.FirstName ?? "").Searchable(),
+            x => (x.WebName ?? "").Searchable());
 
         if (IsGoodEnoughMatch(name, bestMatchInRegularSearch))
         {
-            return bestMatchInRegularSearch.Item;
+            return bestMatchInRegularSearch!.Item;
         }
 
         var bestMatchInSplitSecondNameSearch = SearchHelper.Find(
             players,
             name,
-            x => x.SecondName.Replace("-", " ").Split(" ").Searchable());
+            x => (x.SecondName ?? "").Replace("-", " ").Split(" ").Searchable());
 
         if (IsGoodEnoughMatch(name, bestMatchInSplitSecondNameSearch))
         {
-            return bestMatchInSplitSecondNameSearch.Item;
+            return bestMatchInSplitSecondNameSearch!.Item;
         }
 
         var bestMatchInSplitFirstNameSearch = SearchHelper.Find(
             players,
             name,
-            x => x.FirstName.Replace("-", " ").Split(" ").Searchable());
+            x => (x.FirstName ?? "").Replace("-", " ").Split(" ").Searchable());
 
         if (IsGoodEnoughMatch(name, bestMatchInSplitFirstNameSearch))
         {
-            return bestMatchInSplitFirstNameSearch.Item;
+            return bestMatchInSplitFirstNameSearch!.Item;
         }
 
         var bestMatchInAbbreviationSearch = SearchHelper.Find(
@@ -100,18 +100,18 @@ internal class FplPlayerCommandHandler : HandleAppMentionBase
 
         if (IsPerfectMatch(bestMatchInAbbreviationSearch))
         {
-            return bestMatchInAbbreviationSearch.Item;
+            return bestMatchInAbbreviationSearch!.Item;
         }
 
         return bestMatchInRegularSearch?.Item;
     }
 
-    private static bool IsGoodEnoughMatch(string name, SearchResult<Player> mostPopularMatchingPlayer)
+    private static bool IsGoodEnoughMatch(string name, SearchResult<Player>? mostPopularMatchingPlayer)
     {
         return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance < 2 && name.Length > 3;
     }
 
-    private static bool IsPerfectMatch(SearchResult<Player> mostPopularMatchingPlayer)
+    private static bool IsPerfectMatch(SearchResult<Player>? mostPopularMatchingPlayer)
     {
         return mostPopularMatchingPlayer != null && mostPopularMatchingPlayer.LevenshteinDistance == 0;
     }

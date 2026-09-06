@@ -8,16 +8,16 @@ public class ClassicLeagueEntry
     public int Id { get; set; }
 
     [JsonPropertyName("entry_name")]
-    public string EntryName { get; set; }
+    public string? EntryName { get; set; }
 
     [JsonPropertyName("event_total")]
     public int EventTotal { get; set; }
 
     [JsonPropertyName("player_name")]
-    public string PlayerName { get; set; }
+    public string? PlayerName { get; set; }
 
     [JsonPropertyName("movement")]
-    public string Movement { get; set; }
+    public string? Movement { get; set; }
 
     [JsonPropertyName("own_entry")]
     public bool OwnEntry { get; set; }

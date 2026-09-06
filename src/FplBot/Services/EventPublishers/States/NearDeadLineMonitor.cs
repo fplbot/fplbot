@@ -27,7 +27,7 @@ internal class NearDeadLineMonitor
 
     public async Task EveryMinuteTick()
     {
-        GlobalSettings globalSettings;
+        GlobalSettings? globalSettings;
         try
         {
             globalSettings = await _globalSettingsClient.GetGlobalSettings();
@@ -36,6 +36,10 @@ internal class NearDeadLineMonitor
         {
             return;
         }
+
+        if (globalSettings == null)
+            return;
+
         var gweeks = globalSettings.Gameweeks;
 
         var next = gweeks.FirstOrDefault(gw => gw.IsNext);
@@ -43,10 +47,10 @@ internal class NearDeadLineMonitor
         if (next != null)
         {
             if (_dateTimeUtils.IsWithinMinutesToDate(60, next.Deadline))
-                await _publishEndpoint.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name,next.Deadline)));
+                await _publishEndpoint.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
 
             if (_dateTimeUtils.IsWithinMinutesToDate(24*60, next.Deadline))
-                await _publishEndpoint.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name,next.Deadline)));
+                await _publishEndpoint.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
         }
         else
         {

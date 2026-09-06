@@ -8,19 +8,19 @@ public class Entry
     public int Id { get; set; }
 
     [JsonPropertyName("player_first_name")]
-    public string PlayerFirstName { get; set; }
+    public string? PlayerFirstName { get; set; }
 
     [JsonPropertyName("player_last_name")]
-    public string PlayerLastName { get; set; }
+    public string? PlayerLastName { get; set; }
 
     [JsonPropertyName("player_region_id")]
     public int PlayerRegionId { get; set; }
 
     [JsonPropertyName("player_region_name")]
-    public string PlayerRegionName { get; set; }
+    public string? PlayerRegionName { get; set; }
 
     [JsonPropertyName("player_region_short_iso")]
-    public string PlayerRegionShortIso { get; set; }
+    public string? PlayerRegionShortIso { get; set; }
 
     [JsonPropertyName("summary_overall_points")]
     public int? SummaryOverallPoints { get; set; }
@@ -50,7 +50,7 @@ public class Entry
     public int TotalLoansActive { get; set; }
 
     [JsonPropertyName("transfers_or_loans")]
-    public string TransfersOrLoans { get; set; }
+    public string? TransfersOrLoans { get; set; }
 
     [JsonPropertyName("deleted")]
     public bool Deleted { get; set; }
@@ -62,7 +62,7 @@ public class Entry
     public DateTime JoinedTime { get; set; }
 
     [JsonPropertyName("name")]
-    public string TeamName { get; set; }
+    public string? TeamName { get; set; }
 
     [JsonPropertyName("bank")]
     public int Bank { get; set; }
@@ -71,7 +71,7 @@ public class Entry
     public int Value { get; set; }
 
     [JsonPropertyName("kit")]
-    public string Kit { get; set; }
+    public string? Kit { get; set; }
 
     [JsonPropertyName("event_transfers")]
     public int EventTransfers { get; set; }
@@ -83,7 +83,7 @@ public class Entry
     public int ExtraFreeTransfers { get; set; }
 
     [JsonPropertyName("strategy")]
-    public string Strategy { get; set; }
+    public string? Strategy { get; set; }
 
     [JsonPropertyName("favourite_team")]
     public int? FavouriteTeamId { get; set; }

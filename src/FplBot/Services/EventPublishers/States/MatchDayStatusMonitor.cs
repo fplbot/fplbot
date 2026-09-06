@@ -11,7 +11,7 @@ public class MatchDayStatusMonitor
 {
     private readonly IEventStatusClient _eventStatusClient;
     private readonly IPublishEndpoint _publishEndpoint;
-    private EventStatusResponse _storedCurrent;
+    private EventStatusResponse? _storedCurrent;
     private ILogger<MatchDayStatusMonitor> _logger;
 
     public MatchDayStatusMonitor(IEventStatusClient eventStatusClient, IPublishEndpoint publishEndpoint, ILogger<MatchDayStatusMonitor> logger)
@@ -23,7 +23,7 @@ public class MatchDayStatusMonitor
 
     public async Task EveryFiveMinutesTick(CancellationToken token)
     {
-        EventStatusResponse fetched;
+        EventStatusResponse? fetched;
         try
         {
             fetched = await _eventStatusClient.GetEventStatus();
@@ -32,6 +32,9 @@ public class MatchDayStatusMonitor
         {
             return;
         }
+
+        if (fetched == null)
+            return;
 
         // init/ app-startup
         if (_storedCurrent == null)
@@ -83,7 +86,7 @@ public class MatchDayStatusMonitor
         return true;
     }
 
-    private static MatchdayBonusPointsAdded GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)
+    private static MatchdayBonusPointsAdded? GetBonusAdded(EventStatusResponse fetched, EventStatusResponse current)
     {
         var fetchedStatus = fetched.Status;
         var currentStatus = current.Status;
@@ -92,13 +95,13 @@ public class MatchDayStatusMonitor
         {
             var currentEventStatus = currentStatus.FirstOrDefault(c => c.Date == eventStatus.Date);
             if (currentEventStatus?.BonusAdded == false && eventStatus.BonusAdded)
-                return new MatchdayBonusPointsAdded(eventStatus.Event, eventStatus.Date);
+                return new MatchdayBonusPointsAdded(eventStatus.Event, eventStatus.Date ?? string.Empty);
         }
 
         return null;
     }
 
-    private static MatchdayMatchPointsAdded GetPointsReady(EventStatusResponse fetched, EventStatusResponse current)
+    private static MatchdayMatchPointsAdded? GetPointsReady(EventStatusResponse fetched, EventStatusResponse current)
     {
         var fetchedStatus = fetched.Status;
         var currentStatus = current.Status;
@@ -107,7 +110,7 @@ public class MatchDayStatusMonitor
         {
             var currentEventStatus = currentStatus.FirstOrDefault(c => c.Date == eventStatus.Date);
             if (currentEventStatus?.PointsStatus != EventStatusConstants.PointStatus.Ready && eventStatus.PointsStatus == EventStatusConstants.PointStatus.Ready)
-                return new MatchdayMatchPointsAdded(eventStatus.Event, eventStatus.Date);
+                return new MatchdayMatchPointsAdded(eventStatus.Event, eventStatus.Date ?? string.Empty);
         }
 
         return null;

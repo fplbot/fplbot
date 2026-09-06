@@ -58,14 +58,14 @@ public class SearchService : ISearchService
         return new SearchResult<EntryItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
     }
 
-    public async Task<EntryItem> GetEntry(int id)
+    public async Task<EntryItem?> GetEntry(int id)
     {
         var response = await _elasticClient.GetAsync<EntryItem>(id, desc => desc.Index(_options.EntriesIndex));
 
         return response.Found ? response.Source : null;
     }
 
-    public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null)
+    public async Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string? countryToBoost = null)
     {
         var response = await _elasticClient.SearchAsync<LeagueItem>(x => x
             .Index(_options.LeaguesIndex)
@@ -88,7 +88,7 @@ public class SearchService : ISearchService
         return new SearchResult<LeagueItem>(response.Hits.Select(h => h.Source).ToArray(), response.Total, page, maxHits);
     }
 
-    private Func<SortDescriptor<LeagueItem>, IPromise<IList<ISort>>> GetLeagueSortDescriptor(string countryToBoost)
+    private Func<SortDescriptor<LeagueItem>, IPromise<IList<ISort>>> GetLeagueSortDescriptor(string? countryToBoost)
     {
         if (countryToBoost != null && _adminCountryRegex.IsMatch(countryToBoost))
         {
@@ -185,14 +185,14 @@ public class SearchService : ISearchService
 
 public class SearchContainer
 {
-    public object Source { get; set; }
-    public string Type { get; set; }
+    public object Source { get; set; } = null!;
+    public string? Type { get; set; }
 }
 
 public interface ISearchService
 {
     Task<SearchResult<EntryItem>> SearchForEntry(string query, int page, int maxHits, SearchMetaData metaData);
-    Task<EntryItem> GetEntry(int id);
-    Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string countryToBoost = null);
+    Task<EntryItem?> GetEntry(int id);
+    Task<SearchResult<LeagueItem>> SearchForLeague(string query, int page, int maxHits, SearchMetaData metaData, string? countryToBoost = null);
     Task<SearchResult<dynamic>> SearchAny(string query, int page, int maxHits, SearchMetaData metaData, SearchType searchType = SearchType.All);
 }

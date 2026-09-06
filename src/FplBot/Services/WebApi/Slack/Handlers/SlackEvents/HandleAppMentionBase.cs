@@ -11,6 +11,6 @@ public abstract class HandleAppMentionBase : IHandleAppMentions
     public string CommandsFormatted => string.Join(",", Commands);
     public abstract Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent);
     public virtual bool ShouldHandle(AppMentionEvent slackEvent) => Commands.Any(c => slackEvent.Text.TextAfterFirstSpace().StartsWith(c, StringComparison.InvariantCultureIgnoreCase));
-    protected string ParseArguments(AppMentionEvent message) => MessageHelper.ExtractArgs(message.Text, Commands.Select(c => $"{c} {{args}}").ToArray());
+    protected string? ParseArguments(AppMentionEvent message) => MessageHelper.ExtractArgs(message.Text, Commands.Select(c => $"{c} {{args}}").ToArray());
     public abstract (string, string) GetHelpDescription();
 }

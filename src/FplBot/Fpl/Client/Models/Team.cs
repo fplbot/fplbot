@@ -11,8 +11,8 @@ public class Team
     public int Id { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("short_name")]
-    public string ShortName { get; set; }
+    public string? ShortName { get; set; }
 }

@@ -31,7 +31,7 @@ public class AppHomeOpenedEventHandler : IHandleAppHomeOpened
 
 
         var viewPublishRequest = BuildViewRequest(appHomeEvent.User, team.FplbotLeagueId);
-        ViewPublishResponse res = null;
+        ViewPublishResponse? res = null;
         try
         {
             res = await client.ViewPublish(viewPublishRequest);

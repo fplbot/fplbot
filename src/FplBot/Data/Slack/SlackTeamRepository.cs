@@ -45,7 +45,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         if (fetchedTeamData[2].HasValue)
         {
-            team.FplbotLeagueId = int.Parse(fetchedTeamData[2]);
+            team.FplbotLeagueId = int.Parse((string)fetchedTeamData[2]!);
         }
 
         var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
@@ -110,12 +110,12 @@ public class SlackTeamRepository : ISlackTeamRepository
         foreach (var key in allTeamKeys)
         {
             var token = await _db.HashGetAsync(key,_accessTokenField);
-            tokens.Add(token);
+            tokens.Add(token.ToString() ?? string.Empty);
         }
         return tokens.Select(t => t.ToString());
     }
 
-    public async Task<string> GetTokenByTeamId(string teamId)
+    public async Task<string?> GetTokenByTeamId(string teamId)
     {
         return await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), _accessTokenField);
     }
@@ -135,7 +135,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         var teams = new List<SlackTeam>();
         foreach (var key in allTeamKeys)
         {
-            var teamId = FromKeyToTeamId(key);
+            var teamId = FromKeyToTeamId(key.ToString());
 
             var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField});
 
@@ -153,7 +153,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
             if (fetchedTeamData[2].HasValue)
             {
-                slackTeam.FplbotLeagueId = int.Parse(fetchedTeamData[2]);
+                slackTeam.FplbotLeagueId = int.Parse((string)fetchedTeamData[2]!);
             }
 
             var subs = GetSubscriptions(teamId, fetchedTeamData[4]);

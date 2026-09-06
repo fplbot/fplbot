@@ -11,7 +11,7 @@ public static class ClassicLeagueEntryExtensions
 
     public static string GetEntryLink(this ClassicLeagueEntry entry, int? gameweek)
     {
-        return Formatter.GetEntryLink(entry.Entry, entry.EntryName, gameweek);
+        return Formatter.GetEntryLink(entry.Entry, entry.EntryName ?? "", gameweek);
     }
 
     public static string GetEntryTransferLink(this ClassicLeagueEntry entry)

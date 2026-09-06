@@ -33,7 +33,8 @@ internal class TauntyFormatter : IFormat
             else
             {
                 var tauntibleEntries = _tauntData.GetTauntibleEntries(g.Key, _describer.Type);
-                var append = tauntibleEntries.Any() ? $" {string.Format(_describer.JokePool.GetRandom(), string.Join(", ", tauntibleEntries))}" : null;
+                var jokeFormat = _describer.JokePool.GetRandom();
+                var append = tauntibleEntries.Any() && jokeFormat != null ? $" {string.Format(jokeFormat, string.Join(", ", tauntibleEntries))}" : null;
                 message += append;
             }
 

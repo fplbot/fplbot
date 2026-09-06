@@ -31,7 +31,7 @@ public class InjuryUpdateHandler : IConsumer<InjuryUpdateOccured>
             {
                 if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
                 {
-                    await context.Publish(new PublishToSlack(slackTeam.TeamId, slackTeam.FplBotSlackChannel, formatted));
+                    await context.Publish(new PublishToSlack(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted));
                 }
             }
         }

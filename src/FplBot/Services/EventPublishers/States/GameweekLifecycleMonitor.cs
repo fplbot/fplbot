@@ -15,7 +15,7 @@ internal class GameweekLifecycleMonitor
     private readonly IMediator _mediator;
     private readonly IPublishEndpoint _publishEndpoint;
 
-    private Gameweek _storedCurrent;
+    private Gameweek? _storedCurrent;
 
     public GameweekLifecycleMonitor(IGlobalSettingsClient gwClient, ILogger<GameweekLifecycleMonitor> logger, IMediator mediator, IPublishEndpoint publishEndpoint)
     {
@@ -27,7 +27,7 @@ internal class GameweekLifecycleMonitor
 
     public async Task EveryOtherMinuteTick(CancellationToken token)
     {
-        GlobalSettings globalSettings;
+        GlobalSettings? globalSettings;
         try
         {
             globalSettings = await _gwClient.GetGlobalSettings();
@@ -36,6 +36,9 @@ internal class GameweekLifecycleMonitor
         {
             return;
         }
+
+        if (globalSettings == null)
+            return;
 
         var gameweeks = globalSettings.Gameweeks;
         var fetchedCurrent = gameweeks.FirstOrDefault(gw => gw.IsCurrent);
@@ -94,7 +97,7 @@ internal class GameweekLifecycleMonitor
             return;
         }
 
-        if (!_storedCurrent.IsFinished && _storedCurrent.IsCurrent)
+        if (!_storedCurrent!.IsFinished && _storedCurrent.IsCurrent)
         {
             await _mediator.Publish(new GameweekCurrentlyOnGoing(_storedCurrent), token);
             _storedCurrent = fetchedCurrent;
@@ -118,17 +121,17 @@ internal class GameweekLifecycleMonitor
 
     private bool IsChangeToNewGameweek(Gameweek fetchedCurrent)
     {
-        return fetchedCurrent.Id > _storedCurrent.Id;
+        return fetchedCurrent.Id > _storedCurrent!.Id;
     }
 
     private bool IsChangeToFinishedGameweek(Gameweek fetchedCurrent)
     {
-        return fetchedCurrent.Id == _storedCurrent.Id && !_storedCurrent.IsFinished && fetchedCurrent.IsFinished;
+        return fetchedCurrent.Id == _storedCurrent!.Id && !_storedCurrent.IsFinished && fetchedCurrent.IsFinished;
     }
 
     private bool IsFirstGameweekChangingToCurrent(Gameweek fetchedCurrent)
     {
-        var isFirstGameweekBeginning = _storedCurrent.Id == 1 && fetchedCurrent.Id == 1;
+        var isFirstGameweekBeginning = _storedCurrent!.Id == 1 && fetchedCurrent.Id == 1;
         var isFirstGameweekChangeToCurrent = _storedCurrent.IsCurrent == false && fetchedCurrent.IsCurrent;
         return isFirstGameweekBeginning && isFirstGameweekChangeToCurrent;
     }

@@ -13,7 +13,7 @@ public class TauntData
     public Func<string, string> EntryNameToHandle { get; }
 
 
-    public TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague, IEnumerable<GameweekEntry> gameweekEntries, Func<string, string> entryNameToHandle = null)
+    public TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague, IEnumerable<GameweekEntry> gameweekEntries, Func<string, string>? entryNameToHandle = null)
     {
         TransfersForLeague = transfersForLeague;
         GameweekEntries = gameweekEntries;

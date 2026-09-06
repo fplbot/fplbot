@@ -35,7 +35,7 @@ public class Subscriptions : PageModel
         }
     }
 
-    public List<GuildWithSubs> GuildsWithSubs { get; set; }
+    public List<GuildWithSubs> GuildsWithSubs { get; set; } = null!;
 
     public async Task<IActionResult> OnPostDeleteKey(string key)
     {

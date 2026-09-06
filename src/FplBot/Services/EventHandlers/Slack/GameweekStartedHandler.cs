@@ -42,7 +42,7 @@ internal class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<
         var teams = await _teamRepo.GetAllTeams();
         foreach (var team in teams)
         {
-            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(team.TeamId, notification.NewGameweek.Id));
+            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(team.TeamId!, notification.NewGameweek.Id));
         }
     }
 
@@ -55,7 +55,7 @@ internal class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<
 
         var messages = new List<string>();
 
-        ClassicLeague league = null;
+        ClassicLeague? league = null;
         if (team.FplbotLeagueId.HasValue)
         {
             league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404:true);
@@ -65,12 +65,12 @@ internal class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<
         var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
 
         if(leagueExists && leagueStarted && (team.HasRegisteredFor(EventSubscription.Captains) || team.HasRegisteredFor(EventSubscription.Transfers)))
-            await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, $"Gameweek {message.GameweekId}!");
+            await _publisher.PublishToWorkspace(team.TeamId!, team.FplBotSlackChannel!, $"Gameweek {message.GameweekId}!");
 
         if (leagueExists && leagueStarted && team.HasRegisteredFor(EventSubscription.Captains))
         {
-            var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.FplbotLeagueId.Value);
-            if (league.Standings.Entries.Count < MemberCountForLargeLeague)
+            var captainPicks = await _captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.FplbotLeagueId!.Value);
+            if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
                 messages.Add(_captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks));
                 messages.Add(_captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks));
@@ -94,20 +94,20 @@ internal class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<
         {
             try
             {
-                if (league.Standings.Entries.Count < MemberCountForLargeLeague)
+                if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
                 {
-                    messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.FplbotLeagueId.Value));
+                    messages.Add(await _transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, team.FplbotLeagueId!.Value));
                 }
                 else
                 {
-                    var externalLink = $"See https://www.fplbot.app/leagues/{team.FplbotLeagueId.Value} for all transfers";
+                    var externalLink = $"See https://www.fplbot.app/leagues/{team.FplbotLeagueId!.Value} for all transfers";
                     messages.Add(externalLink);
                 }
 
             }
             catch(HttpRequestException hre) when(hre.StatusCode == HttpStatusCode.TooManyRequests) // fallback
             {
-                var externalLink = $"See https://www.fplbot.app/leagues/{team.FplbotLeagueId.Value} for all transfers";
+                var externalLink = $"See https://www.fplbot.app/leagues/{team.FplbotLeagueId!.Value} for all transfers";
                 messages.Add(externalLink);
             }
         }
@@ -120,6 +120,6 @@ internal class GameweekStartedHandler : IConsumer<GameweekJustBegan>, IConsumer<
             _logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.TeamId, leagueStarted);
         }
 
-        await _publisher.PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, messages.ToArray());
+        await _publisher.PublishToWorkspace(team.TeamId!, team.FplBotSlackChannel!, messages.ToArray());
     }
 }

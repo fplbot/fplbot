@@ -8,16 +8,16 @@ public class PlayerFixture
     public int Id { get; set; }
 
     [JsonPropertyName("kickoff_time_formatted")]
-    public string FormattedKickoffTime { get; set; }
+    public string? FormattedKickoffTime { get; set; }
 
     [JsonPropertyName("event_name")]
-    public string EventName { get; set; }
+    public string? EventName { get; set; }
 
     [JsonPropertyName("opponent_name")]
-    public string OpponentName { get; set; }
+    public string? OpponentName { get; set; }
 
     [JsonPropertyName("opponent_short_name")]
-    public string OpponentShortName { get; set; }
+    public string? OpponentShortName { get; set; }
 
     [JsonPropertyName("is_home")]
     public bool IsHome { get; set; }

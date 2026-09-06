@@ -14,7 +14,7 @@ public class EntryHeadToHeadLeague
     public int? EntryLastRank { get; set; }
 
     [JsonPropertyName("entry_movement")]
-    public string EntryMovement { get; set; }
+    public string? EntryMovement { get; set; }
 
     [JsonPropertyName("entry_change")]
     public bool? EntryChange { get; set; }
@@ -32,16 +32,16 @@ public class EntryHeadToHeadLeague
     public bool? EntryCanForum { get; set; }
 
     [JsonPropertyName("entry_code")]
-    public string EntryCode { get; set; }
+    public string? EntryCode { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("is_cup")]
     public bool IsCup { get; set; }
 
     [JsonPropertyName("short_name")]
-    public string ShortName { get; set; }
+    public string? ShortName { get; set; }
 
     [JsonPropertyName("created")]
     public DateTime Created { get; set; }
@@ -62,10 +62,10 @@ public class EntryHeadToHeadLeague
     public int? Size { get; set; }
 
     [JsonPropertyName("league_type")]
-    public string LeagueType { get; set; }
+    public string? LeagueType { get; set; }
 
     [JsonPropertyName("_scoring")]
-    public string Scoring { get; set; }
+    public string? Scoring { get; set; }
 
     [JsonPropertyName("ko_rounds")]
     public int KnockoutRounds { get; set; }

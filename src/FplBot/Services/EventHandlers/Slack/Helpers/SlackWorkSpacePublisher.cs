@@ -24,7 +24,7 @@ public class SlackWorkSpacePublisher : ISlackWorkSpacePublisher
         var teams = await _repository.GetAllTeams();
         foreach (var team in teams)
         {
-            await PublishToWorkspace(team.TeamId, team.FplBotSlackChannel, msg);
+            await PublishToWorkspace(team.TeamId!, team.FplBotSlackChannel!, msg);
         }
     }
 

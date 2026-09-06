@@ -29,8 +29,8 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
     {
         IHeaderDictionary headers = Request.Headers;
 
-        string timestamp = headers[TimestampHeaderName].FirstOrDefault();
-        string signature = headers[SignatureHeaderName].FirstOrDefault();
+        string? timestamp = headers[TimestampHeaderName].FirstOrDefault();
+        string? signature = headers[SignatureHeaderName].FirstOrDefault();
 
         if (timestamp == null)
         {

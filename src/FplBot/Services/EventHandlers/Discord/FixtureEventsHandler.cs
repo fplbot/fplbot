@@ -47,11 +47,11 @@ public class FixtureEventsHandler : IConsumer<FixtureEventsOccured>, IConsumer<P
         var sub = await _repo.GetGuildSubscription(message.GuildId, message.ChannelId);
         if (sub != null)
         {
-            TauntData tauntData = null;
+            TauntData? tauntData = null;
             if (sub.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
             {
                 var gws = await _globalSettingsClient.GetGlobalSettings();
-                var currentGw = gws.Gameweeks.GetCurrentGameweek();
+                var currentGw = gws?.Gameweeks.GetCurrentGameweek();
                 IEnumerable<GameweekEntry> entries = new List<GameweekEntry>();
                 IEnumerable<TransfersByGameWeek.Transfer> transfers = new List<TransfersByGameWeek.Transfer>();
                 if (currentGw != null)

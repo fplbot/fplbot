@@ -34,9 +34,9 @@ public class FixtureFulltimeHandler : IConsumer<FixtureFinished>, IConsumer<Publ
         _logger.LogInformation("Handling fixture full time");
         var teams = await _slackTeamRepo.GetAllTeams();
         var settings = await _settingsClient.GetGlobalSettings();
-        var fixtures = await _fixtureClient.GetFixtures();
-        var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
-        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings.Teams, settings.Players, fplfixture);
+        var fixtures = await _fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
+        var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId)!;
+        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
 
@@ -44,7 +44,7 @@ public class FixtureFulltimeHandler : IConsumer<FixtureFinished>, IConsumer<Publ
         {
             if (slackTeam.HasRegisteredFor(EventSubscription.FixtureFullTime))
             {
-                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId, title, threadMessage));
+                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId!, title, threadMessage));
             }
         }
     }

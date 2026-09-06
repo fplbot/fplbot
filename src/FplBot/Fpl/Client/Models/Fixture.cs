@@ -8,7 +8,7 @@ public class Fixture
     public int Id { get; set; }
 
     [JsonPropertyName("kickoff_time_formatted")]
-    public string FormattedKickOffTime { get; set; }
+    public string? FormattedKickOffTime { get; set; }
 
     [JsonPropertyName("started")]
     public bool? Started { get; set; }
@@ -20,7 +20,7 @@ public class Fixture
     public DateTime? DeadlineTime { get; set; }
 
     [JsonPropertyName("deadline_time_formatted")]
-    public string FormattedDeadlineTime { get; set; }
+    public string? FormattedDeadlineTime { get; set; }
 
     [JsonPropertyName("stats")]
     public FixtureStat[] Stats { get; set; } = Array.Empty<FixtureStat>();

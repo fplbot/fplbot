@@ -64,7 +64,7 @@ namespace Discord.Net.HttpClients
         }
 
         // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
-        public async Task ApplicationsCommandPost(string name, string description, string guildId, params ApplicationCommandOptions[] options)
+        public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options)
         {
             object value = new
             {
@@ -184,7 +184,7 @@ namespace Discord.Net.HttpClients
             var res = await _client.GetFromJsonAsync<IEnumerable<ApplicationsCommand>>(
                 $"api/v8/applications/{_options.Value.DiscordApplicationId}/guilds/{guildId}/commands",
                 SerializerOptions);
-            return res;
+            return res ?? Enumerable.Empty<ApplicationsCommand>();
         }
 
         public record Channel(long Id, string Name, int Type);
@@ -194,14 +194,14 @@ namespace Discord.Net.HttpClients
         {
             var res = await _client.GetAsync($"/api/v8/guilds/{guildId}/channels");
             res.EnsureSuccessStatusCode();
-            return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions);
+            return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions) ?? Enumerable.Empty<Channel>();
         }
 
         public async Task<Guild> GuildGet(string guildId)
         {
             var res = await _client.GetAsync($"/api/v8/guilds/{guildId}");
             res.EnsureSuccessStatusCode();
-            return await res.Content.ReadFromJsonAsync<Guild>(SerializerOptions);
+            return await res.Content.ReadFromJsonAsync<Guild>(SerializerOptions) ?? throw new InvalidOperationException("Failed to deserialize Guild response");
         }
 
         private JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
@@ -219,20 +219,19 @@ namespace Discord.Net.HttpClients
         /// STRING	3
         /// INTEGER	4
         public int Type { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
         public bool Required { get; set; }
 
-        public ApplicationCommandChoices[] Choices { get; set; }
+        public ApplicationCommandChoices[]? Choices { get; set; }
 
-        public ApplicationCommandOptions[] Options { get; set; }
+        public ApplicationCommandOptions[]? Options { get; set; }
     }
 
     public class ApplicationCommandChoices
     {
-        public string Name { get; set; }
-        public string Value { get; set; }
-
+        public string? Name { get; set; }
+        public string? Value { get; set; }
     }
 
     internal class Lowercase : JsonNamingPolicy

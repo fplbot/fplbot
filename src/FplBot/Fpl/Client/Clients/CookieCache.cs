@@ -12,7 +12,7 @@ public class CookieCache
         _cache = cache;
     }
 
-    public async Task<string> GetAsync()
+    public async Task<string?> GetAsync()
     {
         return await _cache.GetStringAsync(AuthCookieCacheKey);
     }

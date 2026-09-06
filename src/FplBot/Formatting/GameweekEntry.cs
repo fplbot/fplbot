@@ -8,25 +8,25 @@ public class GameweekEntry
 {
     public GameweekEntry () { }
 
-    public GameweekEntry(int entryId, string playerName, string realName, EntryPicks entryPicks)
+    public GameweekEntry(int entryId, string playerName, string realName, EntryPicks? entryPicks)
     {
         EntryId = entryId;
         EntryName = playerName;
         EntryRealName = realName;
-        EventEntryHistory = entryPicks.EventEntryHistory;
-        Picks = entryPicks.Picks;
-        ActiveChip = entryPicks.ActiveChip;
+        EventEntryHistory = entryPicks?.EventEntryHistory!;
+        Picks = entryPicks?.Picks!;
+        ActiveChip = entryPicks?.ActiveChip!;
     }
 
     public int EntryId { get; set; }
-    public string EntryName { get; set; }
-    public string EntryRealName { get; set; }
+    public string EntryName { get; set; } = null!;
+    public string EntryRealName { get; set; } = null!;
 
-    public EventEntryHistory EventEntryHistory { get; set; }
+    public EventEntryHistory EventEntryHistory { get; set; } = null!;
 
-    public ICollection<Pick> Picks { get; set; }
+    public ICollection<Pick> Picks { get; set; } = null!;
 
-    public string ActiveChip { get; set; }
+    public string ActiveChip { get; set; } = null!;
 
     public int Bank { get { return EventEntryHistory.Bank; } }
 

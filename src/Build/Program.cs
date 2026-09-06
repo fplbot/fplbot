@@ -45,18 +45,31 @@ await targets.RunAndExitAsync(args);
 async Task BuildImage(string registry)
 {
     var buildArgs = $"--build-arg INFOVERSION={infoVersion} --build-arg VERSION={version} -f ./src/Dockerfile ./src";
-    await Command.RunAsync("docker", $"build -t {registry}/web {buildArgs}");
-    foreach (var service in ProcessTypes()[1..])
-        await Command.RunAsync("docker", $"tag {registry}/web {registry}/{service}");
+    var baseTag = "fplbot-runtime:current";
+    await Command.RunAsync("docker", $"build -t {baseTag} {buildArgs}");
+
+    foreach (var (processType, serviceName) in ProcessServices())
+    {
+        var tmp = Path.GetTempFileName();
+        await File.WriteAllTextAsync(tmp, $"FROM {baseTag}\nCMD [\"--services\", \"{serviceName}\"]");
+        await Command.RunAsync("docker", $"build -t {registry}/{processType} -f {tmp} .");
+        File.Delete(tmp);
+    }
 }
 
 async Task PushImages(string registry)
 {
-    foreach (var service in ProcessTypes())
-        await Command.RunAsync("docker", $"push {registry}/{service}");
+    foreach (var processType in ProcessServices().Keys)
+        await Command.RunAsync("docker", $"push {registry}/{processType}");
 }
 
-string[] ProcessTypes() => ["web", "eventpublisher", "indexer", "eventhandler"];
+Dictionary<string, string> ProcessServices() => new()
+{
+    ["web"]             = "WebApi",
+    ["eventpublisher"]  = "EventPublishers",
+    ["eventhandler"]    = "EventHandlers",
+    ["indexer"]         = "SearchIndexer",
+};
 
 static string Env(string name, string fallback) =>
     Environment.GetEnvironmentVariable(name) is { Length: > 0 } v ? v : fallback;

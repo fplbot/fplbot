@@ -11,28 +11,28 @@ public class HeadToHeadLeagueMatch
     public int TeamAId { get; set; }
 
     [JsonPropertyName("entry_1_name")]
-    public string TeamAName { get; set; }
+    public string? TeamAName { get; set; }
 
     [JsonPropertyName("entry_1_player_name")]
-    public string TeamAPlayerName { get; set; }
+    public string? TeamAPlayerName { get; set; }
 
     [JsonPropertyName("entry_2_entry")]
     public int TeamBId { get; set; }
 
     [JsonPropertyName("entry_2_name")]
-    public string TeamBName { get; set; }
+    public string? TeamBName { get; set; }
 
     [JsonPropertyName("entry_2_player_name")]
-    public string TeamBPlayerName { get; set; }
+    public string? TeamBPlayerName { get; set; }
 
     [JsonPropertyName("is_knockout")]
     public bool IsKnockout { get; set; }
 
     [JsonPropertyName("winner")]
-    public string Winner { get; set; }
+    public string? Winner { get; set; }
 
     [JsonPropertyName("tiebreak")]
-    public string Tiebreak { get; set; }
+    public string? Tiebreak { get; set; }
 
     [JsonPropertyName("own_entry")]
     public bool OwnEntry { get; set; }
@@ -68,7 +68,7 @@ public class HeadToHeadLeagueMatch
     public int TeamBTotal { get; set; }
 
     [JsonPropertyName("seed_value")]
-    public string SeedValue { get; set; }
+    public string? SeedValue { get; set; }
 
     [JsonPropertyName("event")]
     public int Event { get; set; }

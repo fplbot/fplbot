@@ -42,7 +42,7 @@ public class NearDeadlineHandler :
             if (team.HasRegisteredFor(EventSubscription.Deadlines))
             {
                 var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
-                var command = new PublishToSlack(team.TeamId, team.FplBotSlackChannel, text);
+                var command = new PublishToSlack(team.TeamId!, team.FplBotSlackChannel!, text);
                 await context.Publish(command);
             }
         }
@@ -58,7 +58,7 @@ public class NearDeadlineHandler :
         {
             if (team.HasRegisteredFor(EventSubscription.Deadlines))
             {
-                var command = new PublishDeadlineNotificationToSlackWorkspace(team.TeamId, message.GameweekNearingDeadline);
+                var command = new PublishDeadlineNotificationToSlackWorkspace(team.TeamId!, message.GameweekNearingDeadline);
                 await context.Publish(command);
             }
         }
@@ -92,10 +92,10 @@ public class NearDeadlineHandler :
 
         async Task PublishFixtures(ISlackClient slackClient, string ts)
         {
-            var fixtures = await _fixtures.GetFixturesByGameweek(message.Gameweek.Id);
-            var teams = (await _globalSettingsClient.GetGlobalSettings()).Teams;
+            var fixtures = await _fixtures.GetFixturesByGameweek(message.Gameweek.Id) ?? new List<Fpl.Client.Models.Fixture>();
+            var teams = (await _globalSettingsClient.GetGlobalSettings())?.Teams ?? new List<Fpl.Client.Models.Team>();
             var users = await slackClient.UsersList();
-            var user = users.Members.FirstOrDefault(u =>
+            var user = users.Members?.FirstOrDefault(u =>
                 u.Is_Admin); // could have selected app_install user here, if we had this stored
             var userTzOffset = user?.Tz_Offset ?? 0;
             var messageGameweekNearingDeadline = message.Gameweek;

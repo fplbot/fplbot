@@ -8,7 +8,7 @@ public record EventStatusResponse
     public ICollection<EventStatus> Status { get; set; } = new List<EventStatus>();
 
     [JsonPropertyName("leagues")]
-    public string Leagues { get; set; }
+    public string? Leagues { get; set; }
 }
 
 public record EventStatus
@@ -20,13 +20,13 @@ public record EventStatus
     /// YYYY-MM-dd
     /// </summary>
     [JsonPropertyName("date")]
-    public string Date { get; set; }
+    public string? Date { get; set; }
 
     [JsonPropertyName("event")]
     public int Event { get; set; }
 
     [JsonPropertyName("points")]
-    public string PointsStatus { get; set; }
+    public string? PointsStatus { get; set; }
 }
 
 public class EventStatusConstants

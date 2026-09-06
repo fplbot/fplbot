@@ -8,31 +8,31 @@ public class Player
     public int Id { get; set; }
 
     [JsonPropertyName("photo")]
-    public string Photo { get; set; }
+    public string? Photo { get; set; }
 
     [JsonPropertyName("web_name")]
-    public string WebName { get; set; }
+    public string? WebName { get; set; }
 
     [JsonPropertyName("team_code")]
     public int TeamCode { get; set; }
 
     [JsonPropertyName("status")]
-    public string Status { get; set; }
+    public string? Status { get; set; }
 
     [JsonPropertyName("code")]
     public int Code { get; set; }
 
     [JsonPropertyName("first_name")]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
     [JsonPropertyName("second_name")]
-    public string SecondName { get; set; }
+    public string? SecondName { get; set; }
 
     [JsonPropertyName("squad_number")]
     public int? SquadNumber { get; set; }
 
     [JsonPropertyName("news")]
-    public string News { get; set; }
+    public string? News { get; set; }
 
     [JsonPropertyName("now_cost")]
     public int NowCost { get; set; }

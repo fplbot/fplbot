@@ -20,8 +20,8 @@ internal class LineupState
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<LineupState> _logger;
     private readonly Dictionary<int, MatchDetails> _matchDetails;
-    private ICollection<Fixture> _currentFixtures;
-    private Dictionary<int, string> _teamShortNames = new();
+    private ICollection<Fixture> _currentFixtures = new List<Fixture>();
+    private Dictionary<int, string?> _teamShortNames = new();
 
     public LineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient, IPublishEndpoint publishEndpoint, ILogger<LineupState> logger)
     {
@@ -39,9 +39,9 @@ internal class LineupState
         _matchDetails.Clear();
         try
         {
-            _currentFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
+            _currentFixtures = await _fixtureClient.GetFixturesByGameweek(gw) ?? new List<Fixture>();
             var settings = await _globalSettingsClient.GetGlobalSettings();
-            _teamShortNames = settings.Teams.ToDictionary(t => t.Id, t => t.ShortName);
+            _teamShortNames = settings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? new Dictionary<int, string?>();
         }
         catch (Exception e) when (LogError(e))
         {
@@ -69,7 +69,7 @@ internal class LineupState
 
     public async Task Refresh(int gw)
     {
-        ICollection<Fixture> updatedFixtures;
+        ICollection<Fixture>? updatedFixtures;
         try
         {
             updatedFixtures = await _fixtureClient.GetFixturesByGameweek(gw);
@@ -78,6 +78,9 @@ internal class LineupState
         {
             return;
         }
+
+        if (updatedFixtures == null)
+            return;
 
         await CheckForLineups(updatedFixtures);
         await CheckForRemovedFixtures(updatedFixtures, gw);
@@ -103,12 +106,12 @@ internal class LineupState
                 if (isFixtureRemoved)
                 {
                     var settings = await _globalSettingsClient.GetGlobalSettings();
-                    var teams = settings.Teams;
+                    var teams = settings?.Teams ?? new List<Team>();
                     var homeTeam = teams.First(t => t.Id == currentFixture.HomeTeamId);
                     var awayTeam = teams.First(t => t.Id == currentFixture.AwayTeamId);
                     var removedFixture = new RemovedFixture(currentFixture.Id,
-                        new (homeTeam.Id, homeTeam.Name, homeTeam.ShortName),
-                        new (awayTeam.Id, awayTeam.Name, awayTeam.ShortName));
+                        new (homeTeam.Id, homeTeam.Name ?? string.Empty, homeTeam.ShortName ?? string.Empty),
+                        new (awayTeam.Id, awayTeam.Name ?? string.Empty, awayTeam.ShortName ?? string.Empty));
                     await _publishEndpoint.Publish(new FixtureRemovedFromGameweek(gw, removedFixture));
                 }
                 else
@@ -125,7 +128,7 @@ internal class LineupState
     private async Task CheckForLineups(ICollection<Fixture> fixtures)
     {
         using var scope = _logger.AddContext("CheckForLineups");
-        foreach (var fixture in fixtures.Where(f => !f.Started.Value))
+        foreach (var fixture in fixtures.Where(f => f.Started != true))
         {
             try
             {
@@ -136,8 +139,8 @@ internal class LineupState
                     var lineupsConfirmed = !storedDetails.HasLineUps() && updatedMatchDetails.HasLineUps();
                     if (lineupsConfirmed)
                     {
-                        var homeAbbr = _teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?");
-                    var awayAbbr = _teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?");
+                        var homeAbbr = _teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?") ?? "?";
+                    var awayAbbr = _teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
                     var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, fixture.Code, homeAbbr, awayAbbr, e => _logger.LogError(e, e.Message));
 
                         if (lineups != null)

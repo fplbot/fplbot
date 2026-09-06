@@ -14,7 +14,7 @@ public class GlobalSettingsClient : IGlobalSettingsClient
         _client = client;
     }
 
-    public Task<GlobalSettings> GetGlobalSettings()
+    public Task<GlobalSettings?> GetGlobalSettings()
     {
         return _client.GetCachedOrFetch<GlobalSettings>("/api/bootstrap-static/",url => _httpClient.GetStringAsync(url), TimeSpan.FromMinutes(5)); //max-age=300, stale-while-revalidate=1800, stale-if-error=3600
     }

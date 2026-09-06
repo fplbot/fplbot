@@ -42,8 +42,8 @@ public class LiveEventsExtractor
                     (
                         new FixtureScore(
 
-                            new FixtureTeam(homeTeam.Id, homeTeam.Name, homeTeam.ShortName),
-                            new FixtureTeam(awayTeam.Id, awayTeam.Name, awayTeam.ShortName),
+                            new FixtureTeam(homeTeam!.Id, homeTeam.Name ?? string.Empty, homeTeam.ShortName ?? string.Empty),
+                            new FixtureTeam(awayTeam!.Id, awayTeam.Name ?? string.Empty, awayTeam.ShortName ?? string.Empty),
                             fixture.Minutes,
                             homeTeamScore,
                             awayTeamScore
@@ -77,7 +77,7 @@ public class LiveEventsExtractor
 
 internal class FixtureComparer : IEqualityComparer<Fixture>
 {
-    public bool Equals(Fixture x, Fixture y)
+    public bool Equals(Fixture? x, Fixture? y)
     {
         if (ReferenceEquals(x, y)) return true;
         if (ReferenceEquals(x, null)) return false;

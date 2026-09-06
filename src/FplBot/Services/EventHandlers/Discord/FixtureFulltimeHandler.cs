@@ -29,9 +29,9 @@ public class FixtureFulltimeHandler : IConsumer<FixtureFinished>
         var message = context.Message;
         var subs = await _teamRepo.GetAllGuildSubscriptions();
         var settings = await _settingsClient.GetGlobalSettings();
-        var fixtures = await _fixtureClient.GetFixtures();
-        var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
-        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings.Teams, settings.Players, fplfixture);
+        var fixtures = await _fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
+        var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId)!;
+        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
         foreach (var sub in subs)

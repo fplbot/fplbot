@@ -12,7 +12,7 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
 
     }
 
-    public void Configure(string name, HttpClientFactoryOptions options)
+    public void Configure(string? name, HttpClientFactoryOptions options)
     {
         if (IsOneOf(name))
         {
@@ -26,7 +26,7 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
         }
     }
 
-    private static bool IsOneOf(string name)
+    private static bool IsOneOf(string? name)
     {
         return name is nameof(IEntryClient) ||
                name is nameof(IEntryHistoryClient) ||

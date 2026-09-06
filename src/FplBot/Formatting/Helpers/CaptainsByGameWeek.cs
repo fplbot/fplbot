@@ -123,42 +123,46 @@ public class CaptainsByGameWeek : ICaptainsByGameWeek
         var players = await playersTask;
 
         var entries = new List<GenericEntry>();
-        if (league.Standings.Entries.Any())
+        if (league?.Standings?.Entries.Any() == true)
         {
             entries = league.Standings.Entries.OrderBy(x => x.Rank).ToList().Select(e => new GenericEntry
             {
                 Entry = e.Entry,
-                EntryName = e.EntryName
+                EntryName = e.EntryName ?? ""
 
             }).ToList();
         }
-        else
+        else if (league?.NewEntries?.Entries != null)
         {
             entries = league.NewEntries.Entries.ToList().Select(e => new GenericEntry
             {
                 Entry = e.Entry,
-                EntryName = e.EntryName
+                EntryName = e.EntryName ?? ""
 
             }).ToList();
         }
 
-        var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, players.Players)));
+        var allPlayers = players?.Players ?? new List<Player>();
+        var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, allPlayers)));
 
-        return entryCaptainPicks.WhereNotNull();
+        return entryCaptainPicks.Where(x => x != null).Select(x => x!);
     }
 
-    private async Task<EntryCaptainPick> GetEntryCaptainPick(GenericEntry entry, int gameweek, ICollection<Player> players)
+    private async Task<EntryCaptainPick?> GetEntryCaptainPick(GenericEntry entry, int gameweek, ICollection<Player> players)
     {
         try
         {
             var entryForGameweekTask = _entryForGameweek.GetEntryForGameweek(entry, gameweek);
             var entryPicksForGameweek = await entryForGameweekTask;
 
+            if (entryPicksForGameweek == null)
+                return null;
+
             return new EntryCaptainPick
             {
                 Entry = entry,
-                Captain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.Captain.PlayerId),
-                ViceCaptain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.ViceCaptain.PlayerId),
+                Captain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.Captain.PlayerId) ?? null!,
+                ViceCaptain = players.SingleOrDefault(player => player.Id == entryPicksForGameweek.ViceCaptain.PlayerId) ?? null!,
                 IsTripleCaptain = entryPicksForGameweek.ActiveChip == FplConstants.ChipNames.TripleCaptain
             };
         }

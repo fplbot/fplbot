@@ -32,7 +32,7 @@ public class Pick
     public bool HasPlayed { get; set; }
 
     [JsonPropertyName("stats")]
-    public PickStats Stats { get; set; }
+    public PickStats? Stats { get; set; }
 
     [JsonPropertyName("multiplier")]
     public int Multiplier { get; set; }

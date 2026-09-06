@@ -2,10 +2,10 @@ namespace Fpl.Client.Clients;
 
 public class FplApiClientOptions
 {
-    public string Login { get; set; }
-    public string Password { get; set; }
+    public required string Login { get; set; }
+    public required string Password { get; set; }
 
-    public string REDIS_URL { get; set; }
+    public required string REDIS_URL { get; set; }
 
     public void Validate()
     {

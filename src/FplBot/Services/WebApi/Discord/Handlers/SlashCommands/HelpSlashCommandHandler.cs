@@ -28,7 +28,7 @@ public class HelpSlashCommandHandler : ISlashCommandHandler
             {
                 var league = await _client.GetClassicLeague(sub.LeagueId.Value, tolerate404:true);
                 if(league != null)
-                    content += $"\n**League:**\nCurrently following the '{league.Properties.Name}' league";
+                    content += $"\n**League:**\nCurrently following the '{league.Properties?.Name}' league";
             }
             else
             {

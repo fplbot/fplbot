@@ -85,8 +85,8 @@ public static class WebApplicationBuilderExtensions
             })
             .AddSlack(c =>
             {
-                c.ClientId = configuration.GetValue<string>("CLIENT_ID");
-                c.ClientSecret = configuration.GetValue<string>("CLIENT_SECRET");
+                c.ClientId = configuration.GetValue<string>("CLIENT_ID") ?? "";
+                c.ClientSecret = configuration.GetValue<string>("CLIENT_SECRET") ?? "";
                 c.Scope.Add("identity.team");
                 c.Events.OnRemoteFailure = r =>
                 {
@@ -98,11 +98,11 @@ public static class WebApplicationBuilderExtensions
             })
             .AddSlackbotEvents(c =>
             {
-                c.SigningSecret = configuration.GetValue<string>("CLIENT_SIGNING_SECRET");
+                c.SigningSecret = configuration.GetValue<string>("CLIENT_SIGNING_SECRET") ?? "";
             })
             .AddDiscordbotEvents(c =>
             {
-                c.PublicKey = configuration.GetValue<string>("DISCORD_PUBLICKEY");
+                c.PublicKey = configuration.GetValue<string>("DISCORD_PUBLICKEY") ?? "";
             });
 
         services.AddAuthorization(options =>

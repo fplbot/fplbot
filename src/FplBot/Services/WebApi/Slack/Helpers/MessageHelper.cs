@@ -22,7 +22,7 @@ public static class MessageHelper
     /// <param name="messageText">Message text</param>
     /// <param name="pattern">Pattern (excluding bot handle). E.g. "player {args}"</param>
     /// <returns>Extracted arguments if found</returns>
-    public static string ExtractArgs(string messageText, string pattern)
+    public static string? ExtractArgs(string messageText, string pattern)
     {
         return FindMatch(messageText, $"{pattern.Replace("{args}", "(.+)?")}");
     }
@@ -33,7 +33,7 @@ public static class MessageHelper
     /// <param name="messageText">Message text</param>
     /// <param name="patterns">Patterns (excluding bot handle). E.g. ["subscribe {args}", "unsubscribe {args}"]</param>
     /// <returns>Extracted arguments if found</returns>
-    public static string ExtractArgs(string messageText, string[] patterns)
+    public static string? ExtractArgs(string messageText, string[] patterns)
     {
         foreach (string pattern in patterns)
         {
@@ -45,7 +45,7 @@ public static class MessageHelper
         return null;
     }
 
-    private static string FindMatch(string input, string regexPattern)
+    private static string? FindMatch(string input, string regexPattern)
     {
         var regex = new Regex(regexPattern);
         var result = regex.Match(input).Groups;

@@ -6,7 +6,7 @@ internal static class SearchHelper
 {
     private const int LevenshteinDistanceThreshold = 3;
 
-    public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
+    public static SearchResult<T>? Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
     {
         var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new {Pri = idx, Prop = prop}).ToArray();
 
@@ -42,7 +42,7 @@ internal static class SearchHelper
         var lev = new Fastenshtein.Levenshtein(normalizedInput);
 
         var lowestDistance = int.MaxValue;
-        var currentWinner = default(T);
+        T? currentWinner = default;
 
         foreach (var item in collection)
         {
@@ -80,10 +80,10 @@ internal static class SearchHelper
 
 internal class SearchResult<T>
 {
-    public T Item { get; }
+    public T? Item { get; }
     public int LevenshteinDistance { get; }
 
-    public SearchResult(T item, int levenshteinDistance)
+    public SearchResult(T? item, int levenshteinDistance)
     {
         Item = item;
         LevenshteinDistance = levenshteinDistance;

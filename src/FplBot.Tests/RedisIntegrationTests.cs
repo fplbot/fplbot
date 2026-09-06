@@ -28,7 +28,7 @@ public class RedisIntegrationTests : IAsyncLifetime
     public RedisIntegrationTests(ITestOutputHelper helper)
     {
         _helper = helper;
-        _redisContainer = new RedisBuilder().Build();
+        _redisContainer = new RedisBuilder("redis:latest").Build();
     }
 
     public async Task InitializeAsync()

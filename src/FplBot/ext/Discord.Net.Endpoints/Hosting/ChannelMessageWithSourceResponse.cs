@@ -7,5 +7,5 @@ public class ChannelMessageWithSourceResponse : SlashCommandResponse
         Type = 4;
     }
 
-    public string Content { get; set; }
+    public string? Content { get; set; }
 }

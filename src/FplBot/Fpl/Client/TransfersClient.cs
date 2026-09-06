@@ -13,7 +13,7 @@ public class TransfersClient : ITransfersClient
         _client = client;
     }
 
-    public async Task<ICollection<Transfer>> GetTransfers(int teamId)
+    public async Task<ICollection<Transfer>?> GetTransfers(int teamId)
     {
         return await _client.GetFromJsonAsync<ICollection<Transfer>>($"/api/entry/{teamId}/transfers", JsonConvert.JsonSerializerOptions);
     }

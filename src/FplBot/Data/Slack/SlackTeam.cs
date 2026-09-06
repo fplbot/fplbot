@@ -7,11 +7,11 @@ public class SlackTeam
         Subscriptions = new List<EventSubscription>();
     }
 
-    public string TeamId { get; set; }
-    public string TeamName { get; set; }
-    public string Scope { get; set; }
-    public string AccessToken { get; set; }
-    public string FplBotSlackChannel { get; set; }
+    public string? TeamId { get; set; }
+    public string? TeamName { get; set; }
+    public string? Scope { get; set; }
+    public string? AccessToken { get; set; }
+    public string? FplBotSlackChannel { get; set; }
     public int? FplbotLeagueId { get; set; }
 
     public bool HasChannelAndLeagueSetup()

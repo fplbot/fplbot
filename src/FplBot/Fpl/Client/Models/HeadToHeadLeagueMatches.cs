@@ -12,5 +12,5 @@ public class HeadToHeadLeagueMatches
     public int Number { get; set; }
 
     [JsonPropertyName("results")]
-    public ICollection<HeadToHeadLeagueMatch> Matches { get; set; }
+    public ICollection<HeadToHeadLeagueMatch> Matches { get; set; } = [];
 }

@@ -44,7 +44,7 @@ public static class EnumarableExtensions
         return string.Join(separator, array.Take(array.Length - 1)) + lastSeparator + array.Last();
     }
 
-    public static T GetRandom<T>(this IEnumerable<T> enumerable)
+    public static T? GetRandom<T>(this IEnumerable<T> enumerable)
     {
         var array = enumerable.MaterializeToArray();
         if (!array.Any())

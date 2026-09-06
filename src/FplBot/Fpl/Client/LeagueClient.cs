@@ -15,7 +15,7 @@ public class LeagueClient : ILeagueClient
         _client = client;
     }
 
-    public async Task<ClassicLeague> GetClassicLeague(int leagueId, int page = 1, bool tolerate404 = false)
+    public async Task<ClassicLeague?> GetClassicLeague(int leagueId, int page = 1, bool tolerate404 = false)
     {
         try
         {
@@ -27,7 +27,7 @@ public class LeagueClient : ILeagueClient
         }
     }
 
-    public async Task<HeadToHeadLeague> GetHeadToHeadLeague(int leagueId)
+    public async Task<HeadToHeadLeague?> GetHeadToHeadLeague(int leagueId)
     {
         return await _client.GetFromJsonAsync<HeadToHeadLeague>($"/api/leagues-h2h/{leagueId}/standings/", JsonConvert.JsonSerializerOptions);
     }

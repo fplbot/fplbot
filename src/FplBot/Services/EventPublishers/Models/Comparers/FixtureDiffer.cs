@@ -15,14 +15,14 @@ public static class FixtureDiffer
 
         foreach (var stat in newFixture.Stats)
         {
-            var type = StatHelper.FromStatString(stat.Identifier);
+            var type = StatHelper.FromStatString(stat.Identifier ?? string.Empty);
             if (type is StatType.Unknown or StatType.YellowCards or StatType.Saves or StatType.Bonus)
             {
                 continue;
             }
 
             var oldStat = oldFixture.Stats.FirstOrDefault(s => s.Identifier == stat.Identifier);
-            var newPlayerEvents = DiffStat(stat, oldStat, players);
+            var newPlayerEvents = DiffStat(stat, oldStat!, players);
 
             if (newPlayerEvents.Any())
             {
@@ -37,8 +37,8 @@ public static class FixtureDiffer
     {
         var diffs = new List<PlayerEvent>();
 
-        diffs.AddRange(DiffStat(TeamType.Home, newStat.HomeStats, oldStat?.HomeStats, players));
-        diffs.AddRange(DiffStat(TeamType.Away, newStat.AwayStats, oldStat?.AwayStats, players));
+        diffs.AddRange(DiffStat(TeamType.Home, newStat.HomeStats, oldStat?.HomeStats!, players));
+        diffs.AddRange(DiffStat(TeamType.Away, newStat.AwayStats, oldStat?.AwayStats!, players));
 
         return diffs;
     }
@@ -55,13 +55,15 @@ public static class FixtureDiffer
         {
             var oldStat = oldStats?.FirstOrDefault(old => old.Element == newStat.Element);
             var player = players.FirstOrDefault(p => p.Id == newStat.Element);
+            if (player == null)
+                continue;
             // Player had no stats from last check, so we add as new stat
             if (oldStat == null)
             {
                 var count = newStat.Value;
                 while (count > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName), teamType, false));
+                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, false));
                     count--;
                 }
 
@@ -80,7 +82,7 @@ public static class FixtureDiffer
             {
                 while (newStatsCount > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName), teamType, false));
+                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, false));
                     newStatsCount--;
                 }
 
@@ -93,7 +95,7 @@ public static class FixtureDiffer
             {
                 while (removedStats > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName), teamType, true));
+                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, true));
                     removedStats--;
                 }
             }
@@ -107,12 +109,12 @@ public static class FixtureDiffer
                 var newStat = newStats.FirstOrDefault(x => x.Element == oldStat.Element);
 
                 // Player had a stat previously that is now removed, so we add as removed stat
-                if (newStat == null)
+                if (newStat == null && player != null)
                 {
                     var oldStatCount = oldStat.Value;
                     while (oldStatCount > 0)
                     {
-                        diffs.Add(new PlayerEvent(new (player.Id, player.WebName), teamType, true));
+                        diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, true));
                         oldStatCount--;
                     }
                 }

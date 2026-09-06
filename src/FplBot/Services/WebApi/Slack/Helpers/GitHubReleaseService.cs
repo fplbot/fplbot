@@ -7,7 +7,7 @@ namespace FplBot.WebApi.Slack.Helpers;
 
 public static class GitHubReleaseService
 {
-    class Release { public string Body { get; set; }}
+    class Release { public string? Body { get; set; }}
 
     public static async Task<string> GetReleaseNotes(string majorMinorPatch)
     {
@@ -19,7 +19,7 @@ public static class GitHubReleaseService
 
             var json = await httpClient.GetStringAsync(requestUri);
             var res = JsonSerializer.Deserialize<Release>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
-            string resBody = res?.Body;
+            string? resBody = res?.Body;
             var splitted = resBody?.Split("\n");
             var listed = splitted?.Select(s =>
             {

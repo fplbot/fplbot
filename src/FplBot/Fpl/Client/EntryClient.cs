@@ -15,7 +15,7 @@ public class EntryClient : IEntryClient
         _client = client;
     }
 
-    public async Task<BasicEntry> Get(int teamId, bool tolerate404 = false)
+    public async Task<BasicEntry?> Get(int teamId, bool tolerate404 = false)
     {
         try
         {
@@ -27,7 +27,7 @@ public class EntryClient : IEntryClient
         }
     }
 
-    public async Task<EntryPicks> GetPicks(int teamId, int gameweek, bool tolerate404 = false)
+    public async Task<EntryPicks?> GetPicks(int teamId, int gameweek, bool tolerate404 = false)
     {
         try
         {

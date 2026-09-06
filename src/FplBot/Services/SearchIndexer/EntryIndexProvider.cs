@@ -28,23 +28,24 @@ public class EntryIndexProvider : IndexProviderBase, IIndexProvider<EntryItem>, 
     public async Task<(EntryItem[], bool)> GetBatchToIndex(int i, int batchSize)
     {
         var batch = await GetBatchOfLeagues(i, batchSize, (client, x) => client.GetClassicLeague(Constants.GlobalOverallLeagueId, x));
-        var items = batch.SelectMany(x =>
-            x.Standings.Entries
+        var validBatch = batch.Where(x => x != null).Select(x => x!).ToArray();
+        var items = validBatch.SelectMany(x =>
+            (x.Standings?.Entries ?? Enumerable.Empty<Fpl.Client.Models.ClassicLeagueEntry>())
                 .Select(y => new EntryItem { Id = y.Entry, TeamName = y.EntryName, RealName = y.PlayerName })).ToArray();
-        var couldBeMore = batch.All(x => x.Standings.HasNext);
+        var couldBeMore = validBatch.All(x => x.Standings?.HasNext == true);
 
         return (items, couldBeMore);
     }
 
-    public async Task<EntryItem> GetSingleEntryToIndex(int entryId)
+    public async Task<EntryItem?> GetSingleEntryToIndex(int entryId)
     {
         var entry = await _entryClient.Get(entryId);
-        return new EntryItem { Id = entry.Id, RealName = entry.PlayerFullName, TeamName = entry.TeamName };
+        return entry == null ? null : new EntryItem { Id = entry.Id, RealName = entry.PlayerFullName, TeamName = entry.TeamName };
     }
 }
 
 public interface ISingleEntryIndexProvider
 {
     string IndexName { get; }
-    Task<EntryItem> GetSingleEntryToIndex(int entryId);
+    Task<EntryItem?> GetSingleEntryToIndex(int entryId);
 }

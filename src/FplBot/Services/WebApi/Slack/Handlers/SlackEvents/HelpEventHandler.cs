@@ -36,8 +36,8 @@ public class HelpEventHandler : IShortcutAppMentions
         {
             try
             {
-                var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
-                text += $"Currently following {league.Properties.Name} in {ChannelName()}\n";
+                var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId!.Value);
+                text += $"Currently following {league?.Properties?.Name} in {ChannelName()}\n";
             }
             catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
@@ -46,7 +46,7 @@ public class HelpEventHandler : IShortcutAppMentions
 
             string ChannelName()
             {
-                return team.FplBotSlackChannel.StartsWith("#") ? team.FplBotSlackChannel : $"<#{team.FplBotSlackChannel}>";
+                return team.FplBotSlackChannel?.StartsWith("#") == true ? team.FplBotSlackChannel : $"<#{team.FplBotSlackChannel}>";
             }
         }
         else

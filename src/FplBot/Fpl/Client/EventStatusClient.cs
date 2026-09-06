@@ -13,7 +13,7 @@ public class EventStatusClient : IEventStatusClient
         _client = client;
     }
 
-    public async Task<EventStatusResponse> GetEventStatus()
+    public async Task<EventStatusResponse?> GetEventStatus()
     {
         return await _client.GetFromJsonAsync<EventStatusResponse>($"/api/event-status/");
     }

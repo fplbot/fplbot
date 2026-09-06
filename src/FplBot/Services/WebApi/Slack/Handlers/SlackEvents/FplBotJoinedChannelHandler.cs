@@ -16,7 +16,7 @@ public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
     private readonly ISlackClientBuilder _slackClientService;
     private readonly ISlackTeamRepository _teamRepo;
     private readonly ILeagueClient _leagueClient;
-    private readonly string _slackAppId;
+    private readonly string? _slackAppId;
 
     public FplBotJoinedChannelHandler(ILogger<FplBotJoinedChannelHandler> logger,
         ISlackWorkSpacePublisher publisher,
@@ -49,7 +49,7 @@ public class FplBotJoinedChannelHandler : IHandleMemberJoinedChannel
                     var league = await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value);
                     if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
                     {
-                        setupMessage = $"I'm pushing notifications relevant to {league.Properties.Name} into {ChannelName()}. ";
+                        setupMessage = $"I'm pushing notifications relevant to {league?.Properties?.Name} into {ChannelName()}. ";
                         if (team.FplBotSlackChannel != joinedEvent.Channel)
                         {
                             setupMessage += "If you want to have notifications in this channel instead, use the `@fplbot follow` command in this channel.";

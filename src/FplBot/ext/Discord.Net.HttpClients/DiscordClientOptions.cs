@@ -2,7 +2,7 @@ namespace Discord.Net.HttpClients
 {
     public class DiscordClientOptions
     {
-        public string DiscordApplicationId { get; set; }
-        public string DiscordAppToken { get; set; }
+        public required string DiscordApplicationId { get; set; }
+        public required string DiscordAppToken { get; set; }
     }
 }

@@ -21,7 +21,7 @@ public class FollowSlashCommandHandler : ISlashCommandHandler
 
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
-        var leagueId = int.Parse(context.CommandInput.Value);
+        var leagueId = int.Parse(context.CommandInput!.Value);
         var league = await _leagueClient.GetClassicLeague(leagueId, tolerate404:true);
 
         if(league == null)
@@ -35,11 +35,11 @@ public class FollowSlashCommandHandler : ISlashCommandHandler
                 EventSubscription.All
             }));
 
-            return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. (Auto-subbed to all events) ");
+            return Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. (Auto-subbed to all events) ");
         }
 
         await _repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
-        return Respond($"Now following the '{$"{league.Properties.Name}"}' FPL league. " );
+        return Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. " );
 
     }
 

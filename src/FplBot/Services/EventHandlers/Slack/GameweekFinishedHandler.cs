@@ -36,7 +36,7 @@ internal class GameweekFinishedHandler : IConsumer<GameweekFinished>, IConsumer<
         {
             if (team.HasRegisteredFor(EventSubscription.Standings))
             {
-                await context.Publish(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, notification.FinishedGameweek.Id));
+                await context.Publish(new PublishStandingsToSlackWorkspace(team.TeamId!, team.FplBotSlackChannel!, team.FplbotLeagueId!.Value, notification.FinishedGameweek.Id));
             }
         }
     }
@@ -45,20 +45,21 @@ internal class GameweekFinishedHandler : IConsumer<GameweekFinished>, IConsumer<
     {
         var message = context.Message;
         var settings = await _settingsClient.GetGlobalSettings();
-        var gameweeks = settings.Gameweeks;
+        var gameweeks = settings?.Gameweeks ?? new List<Gameweek>();
         var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
         try
         {
             var league = await _leagueClient.GetClassicLeague(message.LeagueId);
-            var leagueStarted = league.Properties.StartEvent is var startEvent && message.GameweekId >= startEvent;
-            if (leagueStarted)
+            if (league == null) return;
+            var leagueStarted = league.Properties?.StartEvent is var startEvent && message.GameweekId >= startEvent;
+            if (leagueStarted && gw != null)
             {
                 var intro = Formatter.FormatGameweekFinished(gw, league);
                 var standings = Formatter.GetStandings(league, gw);
                 var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
                 var worst = Formatter.GetWorstGameweekEntry(league, gw);
 
-                var messages = new List<string> { intro, standings, topThree};
+                var messages = new List<string> { intro, standings, topThree ?? string.Empty};
                 if (worst is not null)
                 {
                     messages.Add(worst);

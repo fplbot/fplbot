@@ -47,7 +47,7 @@ public class FplSearchHandler : HandleAppMentionBase
     {
         var term = ParseArguments(message);
 
-        SlackTeam slackTeam = null;
+        SlackTeam? slackTeam = null;
         try
         {
             slackTeam = await _slackTeamRepo.GetTeam(eventMetadata.Team_Id);
@@ -57,12 +57,12 @@ public class FplSearchHandler : HandleAppMentionBase
             _logger.LogError(e, "Unable to get team {teamId} during search.", eventMetadata.Team_Id);
         }
 
-        string countryToBoost = await GetCountryToBoost(slackTeam);
+        string? countryToBoost = await GetCountryToBoost(slackTeam);
 
         var searchMetaData = GetSearchMetaData(slackTeam, message);
 
-        var entriesTask = _searchService.SearchForEntry(term, 0, 10, searchMetaData);
-        var leaguesTask = _searchService.SearchForLeague(term, 0, 10, searchMetaData, countryToBoost);
+        var entriesTask = _searchService.SearchForEntry(term ?? "", 0, 10, searchMetaData);
+        var leaguesTask = _searchService.SearchForLeague(term ?? "", 0, 10, searchMetaData, countryToBoost);
 
         var entries = await entriesTask;
         var leagues = await leaguesTask;
@@ -76,8 +76,8 @@ public class FplSearchHandler : HandleAppMentionBase
             try
             {
                 var globalSettings = await _globalSettingsClient.GetGlobalSettings();
-                var gameweeks = globalSettings.Gameweeks;
-                currentGameweek = gameweeks.GetCurrentGameweek().Id;
+                var gameweeks = globalSettings!.Gameweeks;
+                currentGameweek = gameweeks.GetCurrentGameweek()?.Id;
             }
             catch (Exception e)
             {
@@ -118,7 +118,7 @@ public class FplSearchHandler : HandleAppMentionBase
         return new EventHandledResponse(sb.ToString());
     }
 
-    private static SearchMetaData GetSearchMetaData(SlackTeam slackTeam, AppMentionEvent message)
+    private static SearchMetaData GetSearchMetaData(SlackTeam? slackTeam, AppMentionEvent message)
     {
         var metaData = new SearchMetaData
         {
@@ -128,9 +128,9 @@ public class FplSearchHandler : HandleAppMentionBase
         return metaData;
     }
 
-    private async Task<string> GetCountryToBoost(SlackTeam slackTeam)
+    private async Task<string?> GetCountryToBoost(SlackTeam? slackTeam)
     {
-        string countryToBoost = null;
+        string? countryToBoost = null;
         if (slackTeam?.FplbotLeagueId != null)
         {
             var league = await _leagueClient.GetClassicLeague(slackTeam.FplbotLeagueId.Value);

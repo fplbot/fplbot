@@ -5,11 +5,11 @@ namespace Fpl.Client.Models;
 public class PlayerSummary
 {
     [JsonPropertyName("history_past")]
-    public ICollection<PlayerSeasonHistory> SeasonHistory { get; set; }
+    public ICollection<PlayerSeasonHistory>? SeasonHistory { get; set; }
 
     [JsonPropertyName("fixtures")]
-    public ICollection<PlayerFixture> Fixtures { get; set; }
+    public ICollection<PlayerFixture>? Fixtures { get; set; }
 
     [JsonPropertyName("history")]
-    public ICollection<PlayerMatchStats> MatchStats { get; set; }
+    public ICollection<PlayerMatchStats>? MatchStats { get; set; }
 }

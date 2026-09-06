@@ -6,7 +6,7 @@ internal static class HttpContextExtensions
 {
     public static int GetDiscordType(this HttpContext ctx)
     {
-        return int.Parse(ctx.Items[HttpItemKeys.TypeKey].ToString());
+        return int.Parse(ctx.Items[HttpItemKeys.TypeKey]!.ToString()!);
     }
 
     public static bool IsUnhandledDiscordType(this HttpContext ctx)

@@ -9,17 +9,17 @@ internal static class ILoggerExtensions
     private const string CorrelationId = "CorrelationId";
     private const string Context = "Context";
 
-    public static IDisposable BeginCorrelationScope(this ILogger logger)
+    public static IDisposable? BeginCorrelationScope(this ILogger logger)
     {
         return logger.BeginScope(new Dictionary<string, object> {[CorrelationId] = Guid.NewGuid()});
     }
 
-    public static IDisposable AddContext(this ILogger logger, string context)
+    public static IDisposable? AddContext(this ILogger logger, string context)
     {
         return logger.BeginScope(new Dictionary<string, object> {[Context] = context});
     }
 
-    public static IDisposable AddContext(this ILogger logger, params Tuple<string,string>[] keyvaluepair)
+    public static IDisposable? AddContext(this ILogger logger, params Tuple<string,string>[] keyvaluepair)
     {
         var dictionary = keyvaluepair.ToDictionary<Tuple<string, string>, string, object>(kvp => kvp.Item1, kvp => kvp.Item2);
         return logger.BeginScope(dictionary);

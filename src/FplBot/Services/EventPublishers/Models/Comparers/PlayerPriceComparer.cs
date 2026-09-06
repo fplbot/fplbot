@@ -4,7 +4,7 @@ namespace Fpl.EventPublishers.Models.Comparers;
 
 public class PlayerPriceComparer : IEqualityComparer<Player>
 {
-    public bool Equals(Player x, Player y)
+    public bool Equals(Player? x, Player? y)
     {
         if (x == null && y == null)
             return true;

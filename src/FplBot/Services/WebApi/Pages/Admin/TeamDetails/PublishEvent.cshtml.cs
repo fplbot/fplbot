@@ -42,11 +42,11 @@ public class PublishEvent : PageModel
         if (subscriptions.Contains(EventSubscription.Standings))
         {
             var settings = await _gameweekClient.GetGlobalSettings();
-            var gameweek = settings.Gameweeks.GetCurrentGameweek();
+            var gameweek = settings!.Gameweeks.GetCurrentGameweek();
             if (team.FplbotLeagueId.HasValue && !string.IsNullOrEmpty(team.FplBotSlackChannel))
             {
                 var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:FplBot.EventHandlers.Slack"));
-                await endpoint.Send(new PublishStandingsToSlackWorkspace(team.TeamId, team.FplBotSlackChannel, team.FplbotLeagueId.Value, gameweek.Id));
+                await endpoint.Send(new PublishStandingsToSlackWorkspace(team.TeamId ?? "", team.FplBotSlackChannel ?? "", team.FplbotLeagueId.Value, gameweek!.Id));
                 TempData["msg"] = $"Published standings to {teamId}";
             }
             else
@@ -62,5 +62,5 @@ public class PublishEvent : PageModel
         return RedirectToPage(nameof(PublishEvent));
     }
 
-    public SlackTeam Team { get; set; }
+    public SlackTeam Team { get; set; } = null!;
 }

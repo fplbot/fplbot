@@ -21,7 +21,7 @@ public static class SearchServiceCollectionExtensions
         services.Configure<SearchOptions>(config);
         services.AddSingleton<IElasticClient>(provider =>
         {
-            var searchOpts = provider.GetService<IOptions<SearchOptions>>();
+            var searchOpts = provider.GetRequiredService<IOptions<SearchOptions>>();
             var searchOptions = searchOpts.Value;
             searchOptions.Validate();
             var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));
@@ -50,7 +50,7 @@ services.TryAddSingleton<IConnectionMultiplexer>(connection);
         services.AddSingleton<IEntryIndexBookmarkProvider, EntryIndexRedisBookmarkProvider>();
         services.AddSingleton<IElasticClient>(provider =>
         {
-            var searchOpts = provider.GetService<IOptions<SearchOptions>>();
+            var searchOpts = provider.GetRequiredService<IOptions<SearchOptions>>();
             var searchOptions = searchOpts.Value;
             searchOptions.Validate();
             var connectionSettings = new ConnectionSettings(new Uri(searchOptions.IndexUri));

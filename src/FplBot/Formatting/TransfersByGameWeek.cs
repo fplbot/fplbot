@@ -46,18 +46,18 @@ public class TransfersByGameWeek : ITransfersByGameWeek
             var league = await _leagueClient.GetClassicLeague(leagueId);
 
             var playerTransfers = new ConcurrentBag<Transfer>();
-            var entries = league.Standings.Entries;
+            var entries = league?.Standings?.Entries ?? new List<ClassicLeagueEntry>();
 
             await Task.WhenAll(entries.Select(async entry =>
             {
-                var transfers = (await _transfersClient.GetTransfers(entry.Entry)).Where(x => x.Event == gw).Select(x =>
+                var transfers = (await _transfersClient.GetTransfers(entry.Entry) ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gw).Select(x =>
                 {
                     var e = entries.Single(e => e.Entry == x.Entry);
                     return new Transfer
                     {
                         EntryId = x.Entry,
-                        EntryName = e.PlayerName,
-                        EntryRealName = e.EntryName,
+                        EntryName = e.PlayerName ?? "",
+                        EntryRealName = e.EntryName ?? "",
                         PlayerTransferredIn = x.ElementIn,
                         PlayerTransferredOut = x.ElementOut
                     };
@@ -118,9 +118,9 @@ public class TransfersByGameWeek : ITransfersByGameWeek
 
         var didNoTransfers = new ConcurrentBag<ClassicLeagueEntry>();
 
-        await Task.WhenAll(league.Standings.Entries
+        await Task.WhenAll((league?.Standings?.Entries ?? new List<ClassicLeagueEntry>())
             .OrderBy(x => x.Rank)
-            .Select(entry => GetTransfersTextForEntry(entry, gw, settings.Players, includeExternalLinks))
+            .Select(entry => GetTransfersTextForEntry(entry, gw, settings?.Players ?? new List<Player>(), includeExternalLinks))
             .ToArray()
             .ForEach(async entryTransfersTask =>
             {
@@ -149,7 +149,7 @@ public class TransfersByGameWeek : ITransfersByGameWeek
         {
             string @join = didNoTransfers.Select(x => {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
-                return namedWho;
+                return namedWho ?? "";
             }).Join();
             sb.Add(new($"\n{@join} saved their transfer 😴"));
         }
@@ -175,9 +175,9 @@ public class TransfersByGameWeek : ITransfersByGameWeek
 
         var didNoTransfers = new ConcurrentBag<ClassicLeagueEntry>();
 
-        await Task.WhenAll(league.Standings.Entries
+        await Task.WhenAll((league?.Standings?.Entries ?? new List<ClassicLeagueEntry>())
             .OrderBy(x => x.Rank)
-            .Select(entry => GetTransfersTextForEntry(entry, gw, settings.Players, includeExternalLinks))
+            .Select(entry => GetTransfersTextForEntry(entry, gw, settings?.Players ?? new List<Player>(), includeExternalLinks))
             .ToArray()
             .ForEach(async entryTransfersTask =>
             {
@@ -206,7 +206,7 @@ public class TransfersByGameWeek : ITransfersByGameWeek
         {
             string @join = didNoTransfers.Select(x => {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
-                return namedWho;
+                return namedWho ?? "";
             }).Join();
             sb.Append($"\n{@join} saved their transfer 😴");
         }
@@ -220,7 +220,7 @@ public class TransfersByGameWeek : ITransfersByGameWeek
         var transfersTask = _transfersClient.GetTransfers(entry.Entry);
         var picksTask = _entryClient.GetPicks(entry.Entry, gameweek);
 
-        var transfers = (await transfersTask).Where(x => x.Event == gameweek).Select(x => new
+        var transfers = (await transfersTask ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gameweek).Select(x => new
         {
             EntryId = x.Entry,
             PlayerTransferredOut = GetPlayerName(players, x.ElementOut),
@@ -237,10 +237,11 @@ public class TransfersByGameWeek : ITransfersByGameWeek
             try
             {
                 var picks = await picksTask;
-                var transferCost = picks.EventEntryHistory.EventTransfersCost;
+                if (picks == null) return new EntryTranfers { Entry = entry, DidTransfer = false, Text = "" };
+                var transferCost = picks.EventEntryHistory?.EventTransfersCost ?? 0;
                 var wildcardPlayed = picks.ActiveChip == FplConstants.ChipNames.Wildcard;
                 var freeHitPlayed = picks.ActiveChip == FplConstants.ChipNames.FreeHit;
-                string entryLinkOrName = includeExternaLinks ? entry.GetEntryLink(gameweek) : entry.EntryName;
+                string entryLinkOrName = includeExternaLinks ? entry.GetEntryLink(gameweek) : entry.EntryName ?? "";
                 if (wildcardPlayed)
                 {
                     sb.Append($"{entryLinkOrName} threw a WILDCAAAAARD 🔥🔥🔥\n");
@@ -259,7 +260,7 @@ public class TransfersByGameWeek : ITransfersByGameWeek
                 {
                     sb.Append($"   Made use of {transfers.Length} transfers. Final 11:\n");
                     var firstEleven = picks.Picks.OrderBy(p => p.TeamPosition).Take(11);
-                    var starters = firstEleven.Select(first11pick => players.SingleOrDefault(x => x.Id == first11pick.PlayerId)).ToList();
+                    var starters = firstEleven.Select(first11pick => players.SingleOrDefault(x => x.Id == first11pick.PlayerId)).Where(p => p != null).Select(p => p!).ToList();
                     foreach (var playerGroup in starters.GroupBy(p => p.Position))
                     {
                         var playersInPos = string.Join("  ", playerGroup.Select(p => p.WebName));
@@ -293,22 +294,22 @@ public class TransfersByGameWeek : ITransfersByGameWeek
     private static string GetPlayerName(IEnumerable<Player> players, int playerId)
     {
         var player = players.SingleOrDefault(x => x.Id == playerId);
-        return player != null ? $"{player.FirstName.First()}. {player.SecondName}" : "";
+        return player != null ? $"{player.FirstName?.First()}. {player.SecondName}" : "";
     }
 
     public class Transfer
     {
         public int EntryId { get; set; }
-        public string EntryName { get; set; }
-        public string EntryRealName { get; set; }
+        public string EntryName { get; set; } = null!;
+        public string EntryRealName { get; set; } = null!;
         public int PlayerTransferredOut { get; set; }
         public int PlayerTransferredIn { get; set; }
     }
 
     private class EntryTranfers
     {
-        public ClassicLeagueEntry Entry { get; set; }
-        public string Text { get; set; }
+        public ClassicLeagueEntry Entry { get; set; } = null!;
+        public string Text { get; set; } = null!;
         public bool DidTransfer { get; set; }
     }
 }

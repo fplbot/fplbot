@@ -22,10 +22,11 @@ public class FplController : ControllerBase
         try
         {
             var league = await _leagueClient.GetClassicLeague(leagueId);
+            if (league == null) return NotFound();
             return Ok(new
             {
-                LeagueName = league.Properties.Name,
-                LeagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Entry == league.Properties.AdminEntry)?.PlayerName
+                LeagueName = league.Properties?.Name,
+                LeagueAdmin = league.Standings?.Entries.FirstOrDefault(e => e.Entry == league.Properties?.AdminEntry)?.PlayerName
             });
         }
         catch (HttpRequestException e)

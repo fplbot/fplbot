@@ -34,7 +34,7 @@ public class DiscordGuildRepository : IGuildRepository
         {
             var teamId = FromKeyToGuildId(key);
             var fetchedTeamData = await _db.HashGetAsync(key, new[] { _nameField });
-            guilds.Add(new GuildRepoGuild(teamId, fetchedTeamData[0]));
+            guilds.Add(new GuildRepoGuild(teamId, fetchedTeamData[0].ToString() ?? string.Empty));
         }
 
         return guilds;
@@ -48,8 +48,8 @@ public class DiscordGuildRepository : IGuildRepository
         {
             var guildId = FromKeyToGuildId(key);
             var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
-            var subs = ParseSubscriptionString(fetchedTeamData[3], " ");
-            guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], (int?)fetchedTeamData[2], subs));
+            var subs = ParseSubscriptionString(fetchedTeamData[3].ToString(), " ");
+            guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1].ToString() ?? string.Empty, (int?)fetchedTeamData[2], subs));
         }
 
         return guilds;
@@ -62,11 +62,11 @@ public class DiscordGuildRepository : IGuildRepository
         foreach (var key in allKeys)
         {
             var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
-            var subs = ParseSubscriptionString(fetchedTeamData[3], " ");
-            guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1], (int?)fetchedTeamData[2], subs));
+            var subs = ParseSubscriptionString(fetchedTeamData[3].ToString(), " ");
+            guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1].ToString() ?? string.Empty, (int?)fetchedTeamData[2], subs));
         }
 
-        return guilds.FirstOrDefault();
+        return guilds.FirstOrDefault()!;
     }
 
     public async Task DeleteGuildSubscription(string guildId, string channelId)
@@ -114,12 +114,12 @@ public class DiscordGuildRepository : IGuildRepository
         return $"GuildSubs-{guildId}-Channel-{channelId}";
     }
 
-    private static string FromKeyToGuildId(string key)
+    private static string FromKeyToGuildId(string? key)
     {
-        return key.Split('-')[1];
+        return key?.Split('-')[1] ?? string.Empty;
     }
 
-    private static IEnumerable<EventSubscription> ParseSubscriptionString(string subscriptionString, string delimiter)
+    private static IEnumerable<EventSubscription> ParseSubscriptionString(string? subscriptionString, string delimiter)
     {
         var events = new List<EventSubscription>();
         var erroneous = new List<string>();

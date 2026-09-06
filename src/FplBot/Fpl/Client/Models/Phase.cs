@@ -8,7 +8,7 @@ public class Phase
     public long Id { get; set; }
 
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("start_event")]
     public long StartEvent { get; set; }

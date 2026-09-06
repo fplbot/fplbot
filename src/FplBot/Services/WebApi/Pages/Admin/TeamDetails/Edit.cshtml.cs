@@ -28,7 +28,7 @@ public class Edit : PageModel
         try
         {
             if(team.FplbotLeagueId.HasValue)
-                LeagueName = (await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value)).Properties.Name;
+                LeagueName = (await _leagueClient.GetClassicLeague(team.FplbotLeagueId.Value))?.Properties?.Name ?? LeagueName;
         }
         catch (Exception)
         {
@@ -61,8 +61,8 @@ public class Edit : PageModel
         return RedirectToPage("Edit");
     }
 
-    public SlackTeam Team { get; set; }
-    public string LeagueName { get; set; }
+    public SlackTeam Team { get; set; } = null!;
+    public string LeagueName { get; set; } = null!;
 
     private async Task<ISlackClient> CreateSlackClient(string teamId)
     {

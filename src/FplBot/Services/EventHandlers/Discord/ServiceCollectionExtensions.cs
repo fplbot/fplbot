@@ -14,8 +14,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGuildRepository, DiscordGuildRepository>();
         services.AddDiscordHttpClient(c =>
         {
-            c.DiscordApplicationId = config["DiscordAppId"];
-            c.DiscordAppToken = config["DISCORD_TOKEN"];
+            c.DiscordApplicationId = config["DiscordAppId"] ?? string.Empty;
+            c.DiscordAppToken = config["DISCORD_TOKEN"] ?? string.Empty;
         });
         return services;
     }

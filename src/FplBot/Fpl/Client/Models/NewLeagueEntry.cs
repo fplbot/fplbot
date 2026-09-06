@@ -8,13 +8,13 @@ public class NewLeagueEntry
     public int Id { get; set; }
 
     [JsonPropertyName("entry_name")]
-    public string EntryName { get; set; }
+    public string? EntryName { get; set; }
 
     [JsonPropertyName("player_first_name")]
-    public string PlayerFirstName { get; set; }
+    public string? PlayerFirstName { get; set; }
 
     [JsonPropertyName("player_last_name")]
-    public string PlayerLastName { get; set; }
+    public string? PlayerLastName { get; set; }
 
     [JsonPropertyName("joined_time")]
     public DateTime JoinedAt { get; set; }

@@ -11,5 +11,5 @@ public class NewLeagueEntries
     public int Number { get; set; }
 
     [JsonPropertyName("results")]
-    public ICollection<NewLeagueEntry> Entries { get; set; }
+    public ICollection<NewLeagueEntry> Entries { get; set; } = [];
 }

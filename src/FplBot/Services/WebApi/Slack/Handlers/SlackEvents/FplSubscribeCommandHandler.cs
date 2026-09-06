@@ -99,7 +99,7 @@ internal class FplSubscribeCommandHandler : HandleAppMentionBase
 
     private static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
     {
-        var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, new []{ "subscribe {args}", "unsubscribe {args}"});
+        var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, new []{ "subscribe {args}", "unsubscribe {args}"}) ?? "";
         return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
     }
 

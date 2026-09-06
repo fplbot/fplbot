@@ -14,12 +14,12 @@ public class FixtureClient : IFixtureClient
         _client = client;
     }
 
-    public async Task<ICollection<Fixture>> GetFixtures()
+    public async Task<ICollection<Fixture>?> GetFixtures()
     {
         return await _client.GetFromJsonAsync<ICollection<Fixture>>("/api/fixtures/", JsonConvert.JsonSerializerOptions);
     }
 
-    public async Task<ICollection<Fixture>> GetFixturesByGameweek(int id)
+    public async Task<ICollection<Fixture>?> GetFixturesByGameweek(int id)
     {
         return await _client.GetFromJsonAsync<ICollection<Fixture>>($"/api/fixtures/?event={id}", JsonConvert.JsonSerializerOptions);
     }

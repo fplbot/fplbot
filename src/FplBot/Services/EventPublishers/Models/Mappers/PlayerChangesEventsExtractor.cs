@@ -20,12 +20,12 @@ public static class PlayerChangesEventsExtractor
         return compared.Select(p => new PlayerWithPriceChange
         (
             p.ToPlayer.Id,
-            p.ToPlayer.WebName,
+            p.ToPlayer.WebName ?? string.Empty,
             p.ToPlayer.CostChangeEvent,
             p.ToPlayer.NowCost,
             p.ToPlayer.OwnershipPercentage,
-            p.Team.Id,
-            p.Team.ShortName
+            p.Team?.Id ?? 0,
+            p.Team?.ShortName ?? string.Empty
         ));
     }
 
@@ -55,10 +55,10 @@ public static class PlayerChangesEventsExtractor
         var updates = diff.Select(newPlayer => new NewPlayer
         (
             newPlayer.Id,
-            newPlayer.WebName,
+            newPlayer.WebName ?? string.Empty,
             newPlayer.NowCost,
-            teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Id,
-            teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode).Name
+            teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode)?.Id ?? 0,
+            teams.FirstOrDefault(t => t.Code == newPlayer.TeamCode)?.Name ?? string.Empty
         ));
         return updates;
     }
@@ -86,7 +86,7 @@ public static class PlayerChangesEventsExtractor
 
             if (fromTeam != null && toTeam != null)
             {
-                updates.Add(new InternalPremiershipTransfer(player.WebName, fromTeam?.ShortName, toTeam?.ShortName));
+                updates.Add(new InternalPremiershipTransfer(player.WebName ?? string.Empty, fromTeam.ShortName ?? string.Empty, toTeam.ShortName ?? string.Empty));
             }
 
         }
@@ -124,12 +124,12 @@ public static class PlayerChangesEventsExtractor
             var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
             if (fromPlayer != null)
             {
-                Team team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
+                var team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
                 updates.Add(new InjuredPlayerUpdate
                 (
-                    new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName, fromPlayer.OwnershipPercentage, new TeamDescription(team.Id, team.ShortName, team.Name)),
-                    new InjuryStatus(fromPlayer.Status, fromPlayer.News),
-                    new InjuryStatus(player.Status, player.News)
+                    new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName ?? string.Empty, fromPlayer.OwnershipPercentage, new TeamDescription(team?.Id ?? 0, team?.ShortName ?? string.Empty, team?.Name ?? string.Empty)),
+                    new InjuryStatus(fromPlayer.Status ?? string.Empty, fromPlayer.News ?? string.Empty),
+                    new InjuryStatus(player.Status ?? string.Empty, player.News ?? string.Empty)
                 ));
             }
         }
