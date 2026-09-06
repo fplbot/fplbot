@@ -30,23 +30,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           env: test
           ref: ${{ github.head_ref }}
-      - run: echo "ACTIONS_ALLOW_UNSECURE_COMMANDS=true" >> $GITHUB_ENV
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v0
-        with:
-          versionSpec: "5.x"
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v0
-        with:
-          useConfigFile: true
+      - name: Set version
+        run: |
+          VERSION="$(date +%Y%m).$(date +%d).${{ github.run_number }}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "INFOVERSION=$VERSION+${{ github.sha }}" >> $GITHUB_ENV
       - name: Install Heroku CLI
         run: curl https://cli-assets.heroku.com/install.sh | sh
       - name: Build docker images
         run: dotnet run --project src/Build -- docker-build
         env:
-          VERSION: ${{ steps.gitversion.outputs.fullSemVer }}
-          INFOVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+          VERSION: ${{ env.VERSION }}
+          INFOVERSION: ${{ env.INFOVERSION }}
           NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/login-action@v1
         with:
