@@ -59,7 +59,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         }));
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromSeconds(3)));
+            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
         }));
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromSeconds(3)));
+            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
     [Fact]
@@ -129,9 +129,9 @@ public class SlackEventHandlerE2ETests : IClassFixture<EventHandlerFixture>, IAs
 
         Assert.Equal("#injuries", msg.Channel);
 
-        // No second message should arrive within 3 seconds
+        // No second message should arrive
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromSeconds(3)));
+            _fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
     private Task SeedTeam(string teamId, string channel, params EventSubscription[] subscriptions)

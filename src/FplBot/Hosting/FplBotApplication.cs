@@ -34,6 +34,8 @@ public static class FplBotApplication
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Host.UseSerilog(ConfigureSerilog);
+        if (Environment.GetEnvironmentVariable("PORT") is { } port)
+            builder.WebHost.UseUrls($"http://+:{port}");
 
         var redisConn = BuildRedisConnection(builder.Configuration);
         ConfigureCommon(builder.Services, builder.Configuration, redisConn);
