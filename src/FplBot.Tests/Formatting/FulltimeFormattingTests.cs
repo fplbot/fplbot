@@ -139,6 +139,18 @@ public class FulltimeFormattingTests
         Assert.True(bonusIndex >= 0);
         Assert.True(dcIndex > bonusIndex);
         Assert.Contains("▪️ player-D (11)", output);
+        Assert.Contains("▪️ 1p player-C\n\nDefensive contributions:", output);
+    }
+
+    [Fact]
+    public void DefensiveContributionsOnly_DoesNotStartWithBlankLine()
+    {
+        var fixture = GetProvisionalFinishedFixture();
+        fixture.DefensiveContributions = new[] { DefensiveContributionPlayer("player-A", 12) };
+
+        var output = Formatter.FormatProvisionalFinished(fixture);
+
+        Assert.StartsWith("\nDefensive contributions:\n", output);
     }
 
     [Fact]
