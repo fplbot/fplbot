@@ -46,6 +46,7 @@ jobs:
           base-ref: ${{ steps.base.outputs.ref }}
           head-ref: ${{ inputs.head-ref }}
           instructions: ${{ steps.instructions.outputs.path }}
+          model: claude-sonnet-5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
