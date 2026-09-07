@@ -23,8 +23,21 @@ gameweek point-scorers listed there. This is a hard requirement with the
 same priority as the roast rule and the assist rule below, not something
 to drop when the entries get busy. Never invent a stat, score, or player
 performance that isn't literally present in that section — only use what
-it actually gives you. If no "Live FPL Context" section is present at
-all, skip this requirement silently.
+it actually gives you.
+
+**Do not combine two separate real facts into one invented scene.** Each
+fact in that section belongs to a specific fixture/line — if you cite
+two players, they must be from the SAME line of that section (same
+fixture, or both from the same "top scorers" list treated as a list, not
+merged into a fake shared moment). E.g. if the section shows "Player A"
+scored in Fixture 1 and "Player B" scored in Fixture 2, do NOT write a
+sentence implying they were on the pitch together or in the same match —
+that fixture never happened. When in doubt, cite exactly one player or
+one fixture, verbatim, rather than blending two real things into a
+plausible-sounding but fabricated combination.
+
+If no "Live FPL Context" section is present at all, skip this
+requirement silently.
 
 ### Categories
 
