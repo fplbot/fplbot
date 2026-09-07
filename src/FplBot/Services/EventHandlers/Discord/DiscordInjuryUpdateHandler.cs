@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class InjuryUpdateHandler(IGuildRepository repo, ILogger<InjuryUpdateHandler> logger)
+public class DiscordInjuryUpdateHandler(IGuildRepository repo, ILogger<DiscordInjuryUpdateHandler> logger)
     : IConsumer<InjuryUpdateOccured>
 {
     public async Task Consume(ConsumeContext<InjuryUpdateOccured> context)

@@ -10,12 +10,12 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class NearDeadlineHandler(
+public class SlackNearDeadlineHandler(
     ISlackTeamRepository teamRepo,
     ISlackClientBuilder builder,
     IGlobalSettingsClient globalSettingsClient,
     IFixtureClient fixtures,
-    ILogger<NearDeadlineHandler> logger)
+    ILogger<SlackNearDeadlineHandler> logger)
     :
         IConsumer<OneHourToDeadline>,
         IConsumer<TwentyFourHoursToDeadline>,

@@ -11,13 +11,13 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-internal class GameweekStartedHandler(
+internal class SlackGameweekStartedHandler(
     ICaptainsByGameWeek captainsByGameweek,
     ITransfersByGameWeek transfersByGameweek,
     ISlackWorkSpacePublisher publisher,
     ISlackTeamRepository teamsRepo,
     ILeagueClient leagueClient,
-    ILogger<GameweekStartedHandler> logger)
+    ILogger<SlackGameweekStartedHandler> logger)
     : IConsumer<GameweekJustBegan>, IConsumer<ProcessGameweekStartedForSlackWorkspace>
 {
     private const int MemberCountForLargeLeague = 25;

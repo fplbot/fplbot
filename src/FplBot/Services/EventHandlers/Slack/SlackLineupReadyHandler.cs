@@ -8,10 +8,10 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class LineupReadyHandler(
+public class SlackLineupReadyHandler(
     ISlackTeamRepository slackTeamRepo,
     ISlackClientBuilder builder,
-    ILogger<LineupReadyHandler> logger)
+    ILogger<SlackLineupReadyHandler> logger)
     : IConsumer<LineupReady>, IConsumer<PublishLineupsToSlackWorkspace>
 {
     public async Task Consume(ConsumeContext<LineupReady> context)

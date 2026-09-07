@@ -11,9 +11,9 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class FixtureEventsHandler(
+public class DiscordFixtureEventsHandler(
     IGuildRepository repo,
-    ILogger<FixtureEventsHandler> logger,
+    ILogger<DiscordFixtureEventsHandler> logger,
     IGlobalSettingsClient globalSettingsClient,
     ILeagueEntriesByGameweek leagueEntriesByGameweek,
     ITransfersByGameWeek transfersByGameWeek)

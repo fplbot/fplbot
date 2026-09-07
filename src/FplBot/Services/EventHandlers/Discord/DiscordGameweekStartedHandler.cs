@@ -10,12 +10,12 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class GameweekStartedHandler(
+public class DiscordGameweekStartedHandler(
     IGuildRepository repo,
     ILeagueClient leagueClient,
     ICaptainsByGameWeek captainsByGameweek,
     ITransfersByGameWeek transfersByGameweek,
-    ILogger<GameweekStartedHandler> logger)
+    ILogger<DiscordGameweekStartedHandler> logger)
     : IConsumer<GameweekJustBegan>, IConsumer<ProcessGameweekStartedForGuildChannel>
 {
     private const int MemberCountForLargeLeague = 25;

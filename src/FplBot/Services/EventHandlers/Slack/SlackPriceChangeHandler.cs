@@ -7,10 +7,10 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class PriceChangeHandler(
+public class SlackPriceChangeHandler(
     ISlackWorkSpacePublisher publisher,
     ISlackTeamRepository slackTeamRepo,
-    ILogger<PriceChangeHandler> logger)
+    ILogger<SlackPriceChangeHandler> logger)
     : IConsumer<PlayersPriceChanged>, IConsumer<PublishPriceChangesToSlackWorkspace>
 {
     public async Task Consume(ConsumeContext<PlayersPriceChanged> context)

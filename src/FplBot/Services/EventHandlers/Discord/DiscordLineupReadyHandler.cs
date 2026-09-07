@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class LineupReadyHandler(IGuildRepository guildRepository) : IConsumer<LineupReady>
+public class DiscordLineupReadyHandler(IGuildRepository guildRepository) : IConsumer<LineupReady>
 {
     public async Task Consume(ConsumeContext<LineupReady> context)
     {

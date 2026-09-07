@@ -13,14 +13,14 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class FixtureEventsHandler(
+public class SlackFixtureEventsHandler(
     ISlackWorkSpacePublisher publisher,
     ISlackTeamRepository slackTeamRepo,
     ISlackClientBuilder service,
     ILeagueEntriesByGameweek leagueEntriesByGameweek,
     ITransfersByGameWeek transfersByGameWeek,
     IGlobalSettingsClient globalSettingsClient,
-    ILogger<FixtureEventsHandler> logger)
+    ILogger<SlackFixtureEventsHandler> logger)
     : IConsumer<FixtureEventsOccured>, IConsumer<PublishFixtureEventsToSlackWorkspace>
 {
     public async Task Consume(ConsumeContext<FixtureEventsOccured> context)

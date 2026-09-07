@@ -11,10 +11,10 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class FixtureFulltimeHandler(
+public class SlackFixtureFulltimeHandler(
     ISlackClientBuilder builder,
     ISlackTeamRepository slackTeamRepo,
-    ILogger<FixtureFulltimeHandler> logger,
+    ILogger<SlackFixtureFulltimeHandler> logger,
     IGlobalSettingsClient settingsClient,
     IFixtureClient fixtureClient)
     : IConsumer<FixtureFinished>, IConsumer<PublishFulltimeMessageToSlackWorkspace>

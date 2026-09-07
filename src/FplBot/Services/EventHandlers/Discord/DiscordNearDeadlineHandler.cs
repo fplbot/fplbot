@@ -6,7 +6,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class NearDeadlineHandler(IGuildRepository teamRepo, ILogger<NearDeadlineHandler> logger)
+public class DiscordNearDeadlineHandler(IGuildRepository teamRepo, ILogger<DiscordNearDeadlineHandler> logger)
     :
         IConsumer<OneHourToDeadline>,
         IConsumer<TwentyFourHoursToDeadline>

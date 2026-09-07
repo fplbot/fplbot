@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class NewPlayersHandler(IGuildRepository repo, ILogger<InjuryUpdateHandler> logger)
+public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewPlayersHandler> logger)
     : IConsumer<NewPlayersRegistered>, IConsumer<PremiershipPlayerTransferred>
 {
     public async Task Consume(ConsumeContext<NewPlayersRegistered> context)
