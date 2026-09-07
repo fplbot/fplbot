@@ -54,6 +54,13 @@ jobs:
         run: echo "tag=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add live gameweek context to release notes instructions
+        id: instructions
+        if: steps.prev_tag.outputs.tag != ''
+        run: |
+          cp .github/release-notes-instructions.md "$RUNNER_TEMP/release-notes-instructions.md"
+          python3 .github/scripts/build-release-notes-context.py >> "$RUNNER_TEMP/release-notes-instructions.md" || true
+          echo "path=$RUNNER_TEMP/release-notes-instructions.md" >> "$GITHUB_OUTPUT"
       - name: Generate release notes
         id: notes
         continue-on-error: true
@@ -62,6 +69,7 @@ jobs:
         with:
           base-ref: ${{ steps.prev_tag.outputs.tag }}
           head-ref: ${{ github.sha }}
+          instructions: ${{ steps.instructions.outputs.path }}
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       - name: Create Release

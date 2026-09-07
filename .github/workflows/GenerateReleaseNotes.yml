@@ -33,12 +33,19 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add live gameweek context to release notes instructions
+        id: instructions
+        run: |
+          cp .github/release-notes-instructions.md "$RUNNER_TEMP/release-notes-instructions.md"
+          python3 .github/scripts/build-release-notes-context.py >> "$RUNNER_TEMP/release-notes-instructions.md" || true
+          echo "path=$RUNNER_TEMP/release-notes-instructions.md" >> "$GITHUB_OUTPUT"
       - name: Generate release notes
         id: notes
         uses: github/copilot-release-notes@main
         with:
           base-ref: ${{ steps.base.outputs.ref }}
           head-ref: ${{ inputs.head-ref }}
+          instructions: ${{ steps.instructions.outputs.path }}
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       - name: Show generated notes

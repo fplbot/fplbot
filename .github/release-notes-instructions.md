@@ -17,25 +17,62 @@ changes, chips, captaincy, bonus points, autosubs, rank.
 
 ### Categories
 
-Group entries under these headings, in this order. If a category has no
-entries, delete its heading line completely — do not print the heading
-with a placeholder like "(none this window)", "N/A", or an empty bullet.
-A heading with zero entries under it should not appear in the output at
-all.
+There are three semantic buckets: **new stuff**, **fixes**, and
+**polish**. Every release note entry belongs to exactly one of them. But
+the heading text for each bucket is NOT fixed — every time you generate
+notes, randomly pick a *different* heading (with its emoji) from that
+bucket's pool below, so headings vary release to release instead of
+being identical every time. Don't default to the first option in the
+list — actually vary your pick.
 
-- `### 🃏 Chip Plays` — new notification types, commands, or bot
-  features. Frame the size of the change as the chip being played:
-  a small addition is a straightforward **transfer in**; a genuinely big
-  new feature gets to be a **Wildcard** (full overhaul) or **Bench
-  Boost** (more of the squad now contributing); a temporary/experimental
-  feature can be a **Free Hit**.
-- `### 🩹 Treatment Room` — bug fixes. Frame as a player who picked up a
-  knock and is now back on the teamsheet, ideally back **before the
-  deadline** rather than being a late fitness doubt.
-- `### 📊 Bonus Points` — changes to existing behavior that aren't new
-  features or bug fixes — polish, performance, formatting. Frame as the
-  BPS system quietly handing out extra points after the match: nothing
-  new happened on the pitch, it just counts for more / reads better now.
+Association football (soccer) and genuine FPL terms only. **Never**
+American football terms (no "touchdown", "quarterback", "first down",
+"blitz", "Hail Mary", "end zone", "gridiron", etc.) — this bot is about
+the Premier League, not the NFL.
+
+If a category has no entries, delete its heading line completely — do
+not print the heading with a placeholder like "(none this window)",
+"N/A", or an empty bullet. A heading with zero entries under it should
+not appear in the output at all.
+
+**New stuff** — new notification types, commands, or bot features. Pick
+one heading at random:
+- `### 🃏 Chip Plays`
+- `### ⭐ New Signings`
+- `### 🔄 Done Deals`
+- `### 📝 Squad Additions`
+- `### 🎯 Fresh Off The Bench`
+- `### 🚀 New Boots`
+
+Frame the size of the change as the transfer/chip being played: a small
+addition is a straightforward **transfer in**; a genuinely big new
+feature gets to be a **Wildcard** (full overhaul) or **Bench Boost**
+(more of the squad now contributing); a temporary/experimental feature
+can be a **Free Hit**.
+
+**Fixes** — bug fixes. Pick one heading at random:
+- `### 🩹 Treatment Room`
+- `### 🚑 Back From Injury`
+- `### 🏥 Fitness Update`
+- `### ✅ Passed The Late Fitness Test`
+- `### 🔧 Patched Up`
+
+Frame as a player who picked up a knock and is now back on the
+teamsheet, ideally back **before the deadline** rather than being a late
+fitness doubt.
+
+**Polish** — changes to existing behavior that aren't new features or
+bug fixes: performance, formatting, small improvements. Pick one heading
+at random:
+- `### 📊 Bonus Points`
+- `### 🎯 Tactical Tweaks`
+- `### 🔁 Squad Rotation`
+- `### 📈 Marginal Gains`
+- `### 🧹 Half-Time Team Talk`
+
+Frame as the BPS system quietly handing out extra points after the
+match, or a tactical tweak from the touchline: nothing new happened on
+the pitch, it just counts for more / reads better / runs smoother now.
 
 ### What to Skip (this part only)
 
@@ -65,6 +102,32 @@ maintenance work with nothing new for admins to notice on the teamsheet.
 Keep it to 2-4 sentences, still funny — this is the one place atmosphere
 -over-substance is fine, since the honest fact IS "nothing user-facing
 changed", so say that plainly somewhere in the blurb.
+
+### Crediting Contributors
+
+The active core maintainers are **@johnkors**, **@skjelbek**, and
+**@kristianeaw** — nobody else. Any PR author who is NOT one of those
+three handles is an external contributor.
+
+- **Mandatory, not optional:** if ANY entry in this release comes from
+  an external contributor (author not in the maintainer list above), that
+  specific entry's sentence MUST literally use the word "assist"
+  somewhere in it (e.g. "assist from @handle", "picks up the assist",
+  "gets the assist for this one") — not just vaguer language like
+  "reinforcement" or "loan signing". A maintainer's entry should NOT use
+  the word assist — reserve "goal"/"strike"/scoring language for them,
+  "assist" specifically for external contributors. This distinction must
+  be visibly, unmistakably present in the text whenever it applies.
+- **Mandatory, not optional:** at least once per gameweek review (doesn't
+  need to be every entry), gently rib whoever's name is on a PR —
+  maintainer or contributor — about being a coder instead of an actual
+  Premier League player: wish them Prem wages for this commit, joke they
+  missed their calling as a £250k-a-week midfielder instead of fixing a
+  Slack handler, etc. Keep it affectionate, about the money/fame gap
+  only, never actually questioning their skill or code quality. Naming
+  their real GitHub handle for this specific joke is required, not just
+  allowed — that's the one exception to "no author attribution in this
+  part." If a gameweek review has no such line in it, it's incomplete.
 
 ### Style — lay it on thick, FPL-first
 
