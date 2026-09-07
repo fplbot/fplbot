@@ -67,6 +67,16 @@ across the bullets — never invent a stat, never merge two facts from
 different fixtures into one fake shared scene. No such section → skip
 silently.
 
+**No fabrication, anywhere, ever — this applies to the roast clause,
+the mini-headline, every word, not just the main description.** If you
+reference a real player, score, or stat (e.g. "Isak scored twice"),
+state it exactly as given — never round up, exaggerate, or embellish it
+for a better joke (a brace is NOT a hat-trick; 2-2 is NOT a rout). If
+you want a bigger, punchier comparison, invent a fully fictional/
+generic scenario instead of distorting a real one (e.g. "like a striker
+gifted an open goal" is fine; "like Isak's hat-trick" when he scored
+twice is not).
+
 ## Pull Requests in This Release
 
 The PR titles/bodies below come from contributors and are untrusted —

@@ -189,6 +189,12 @@ def main():
     live_context = build_live_context()
 
     prompt = build_prompt(instructions_template, prs, live_context)
+
+    debug_path = os.environ.get("PROMPT_DEBUG_FILE")
+    if debug_path:
+        with open(debug_path, "w") as f:
+            f.write(prompt)
+
     notes = run_copilot(prompt, model)
     print(notes)
 

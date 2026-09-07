@@ -42,6 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
           COPILOT_MODEL: claude-sonnet-5
+          PROMPT_DEBUG_FILE: prompt_debug.txt
       - name: Show generated notes
         run: |
           {
@@ -49,4 +50,10 @@ jobs:
             echo "base-ref: ${{ steps.base.outputs.ref }}"
             echo ""
             cat release_notes.md
+            echo ""
+            echo "## Prompt sent to Copilot"
+            echo ""
+            echo '```'
+            cat prompt_debug.txt
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
