@@ -46,7 +46,7 @@ internal class SlackGameweekFinishedHandler(
                 var intro = Formatter.FormatGameweekFinished(gw, league);
                 var standings = Formatter.GetStandings(league, gw);
                 var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
-                var worst = Formatter.GetWorstGameweekEntry(league, gw);
+                var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw);
 
                 var messages = new List<string> { intro, standings, topThree ?? string.Empty};
                 if (worst is not null)
