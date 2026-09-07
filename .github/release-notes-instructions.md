@@ -12,8 +12,11 @@ football clichés and metaphors are not just allowed, they are mandatory.
 
 ### Categories
 
-Group entries under these headings, in this order. Omit a heading
-entirely if it has no entries.
+Group entries under these headings, in this order. If a category has no
+entries, delete its heading line completely — do not print the heading
+with a placeholder like "(none this window)", "N/A", or an empty bullet.
+A heading with zero entries under it should not appear in the output at
+all.
 
 - `### ⚽ New Signings` — new notification types, commands, or bot features
 - `### 🩹 Treatment Room` — bug fixes (describe the user-visible symptom
