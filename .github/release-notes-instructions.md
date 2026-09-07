@@ -39,6 +39,21 @@ Do not generate commentary entries for:
 (These are still fair game for Part 2 below — never silently dropped
 entirely, just kept out of the commentary.)
 
+### The Goalless Draw
+
+If, after applying the skip list above, there are **zero** entries across
+all three categories (i.e. the release is nothing but chores, CI,
+refactors, dependency bumps, etc.) — do NOT print any of the three
+category headings. Instead write a short, genuinely funny "nothing to
+see here" blurb, framed as commentary on a dreadful 0-0 draw: openly
+mock how uneventful the match was, lean into pundit disappointment
+("we were promised fireworks, we got a testimonial"), and be honest that
+this release is all backstage/pitch-maintenance work with nothing new
+for admins to notice matchday-side. Keep it to 2-4 sentences, still
+funny, still football-mad — this is the one place atmosphere-over-
+substance is fine, since the honest fact IS "nothing user-facing
+changed", so say that plainly somewhere in the blurb.
+
 ### Style — lay it on thick
 
 - Write for a non-technical Slack/Discord admin, not a developer. No
@@ -101,11 +116,11 @@ that fact, it doesn't substitute for it.
 
 ---
 
-## Part 2 — the match report (for developers)
+## Part 2 — the detailed match report (for developers)
 
-A separate, plain, precise, technical section under a `### 📋 Match
-Report` heading, aimed at engineers reading this on GitHub. No football
-bits here — just facts.
+A separate, plain, precise, technical section under a `### 📋 Detailed
+Match Report` heading, aimed at engineers reading this on GitHub. No
+football bits here — just facts.
 
 - Include **every** merged PR, with nothing skipped — including CI/CD,
   dependency bumps, refactors, and internal tooling changes that Part 1
