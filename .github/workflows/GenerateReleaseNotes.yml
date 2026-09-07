@@ -47,6 +47,7 @@ jobs:
           head-ref: ${{ inputs.head-ref }}
           instructions: ${{ steps.instructions.outputs.path }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       - name: Show generated notes
         run: |

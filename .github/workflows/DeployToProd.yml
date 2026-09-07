@@ -71,6 +71,7 @@ jobs:
           head-ref: ${{ github.sha }}
           instructions: ${{ steps.instructions.outputs.path }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
