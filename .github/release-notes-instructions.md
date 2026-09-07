@@ -15,6 +15,17 @@ welcome as seasoning, but the primary flavor must be genuine **Fantasy
 Premier League** mechanics — gameweeks, deadlines, transfers, price
 changes, chips, captaincy, bonus points, autosubs, rank.
 
+**If a "Live FPL Context" section appears further down this document,
+using it is MANDATORY, not optional flavor.** You MUST work in at least
+one real, specific fact from it somewhere in the gameweek review — an
+actual fixture scoreline, an actual goalscorer, or one of the actual top
+gameweek point-scorers listed there. This is a hard requirement with the
+same priority as the roast rule and the assist rule below, not something
+to drop when the entries get busy. Never invent a stat, score, or player
+performance that isn't literally present in that section — only use what
+it actually gives you. If no "Live FPL Context" section is present at
+all, skip this requirement silently.
+
 ### Categories
 
 There are three semantic buckets: **new stuff**, **fixes**, and
