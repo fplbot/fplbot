@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json, sys, urllib.request
 
 def fetch(url):
