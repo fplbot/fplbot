@@ -147,17 +147,32 @@ entirely, just kept out of the commentary.)
 
 If, after applying the skip list above, there are **zero** qualifying
 entries (i.e. the release is nothing but chores, CI, refactors,
-dependency bumps, etc.) — do NOT print any headlines at all. Instead
+dependency bumps, etc.) — do NOT print any category headings. Instead
 write a short, genuinely funny "nothing to see here" blurb, framed as an
-FPL **blank gameweek**: the fixture
-computer left this one empty, every one of your players is on a bye, 0-0
-snorefest, no points on the board either way. Lean into pundit/manager
-disappointment ("we were promised a double gameweek, we got a bye
-week"), and be honest that this release is all backstage/pitch-
-maintenance work with nothing new for admins to notice on the teamsheet.
-Keep it to 2-4 sentences, still funny — this is the one place atmosphere
--over-substance is fine, since the honest fact IS "nothing user-facing
-changed", so say that plainly somewhere in the blurb.
+FPL **blank gameweek**: the fixture computer left this one empty, every
+one of your players is on a bye, 0-0 snorefest, no points on the board
+either way. Lean into pundit/manager disappointment ("we were promised a
+double gameweek, we got a bye week"), and be honest that this release is
+all backstage/pitch-maintenance work with nothing new for admins to
+notice on the teamsheet. Keep it to 2-4 sentences, still funny — this is
+the one place atmosphere-over-substance is fine, since the honest fact
+IS "nothing user-facing changed", so say that plainly somewhere in the
+blurb.
+
+**Critical — this blurb MUST be an actual JSON entry, not prose written
+outside the JSON block.** The tool that renders this output only ever
+reads from the `entries` array; anything you write as free text before,
+after, or around the JSON is silently discarded and never appears
+anywhere — including any reasoning or explanation you write about why
+there are no qualifying entries. So even in the zero-entries case, you
+must still produce exactly one entry object: give it a tag like "😴
+Blank Gameweek" (or similar, no `#` characters — same rule as other
+headings), put the funny blurb text as its `description`, and set `pr`
+to any one of the real PR numbers from this release (pick one; it
+doesn't matter which, this is just to satisfy the schema) and `author`
+to that PR's real author. Do not skip creating this entry — an empty
+`entries` array here means the commentary section renders as nothing at
+all, which is worse than the blurb.
 
 ### Crediting Contributors
 
