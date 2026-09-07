@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class PriceChangeHandler(IGuildRepository repo, ILogger<PriceChangeHandler> logger)
+public class DiscordPriceChangeHandler(IGuildRepository repo, ILogger<DiscordPriceChangeHandler> logger)
     : IConsumer<PlayersPriceChanged>
 {
     public async Task Consume(ConsumeContext<PlayersPriceChanged> context)

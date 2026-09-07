@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class InjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogger<InjuryUpdateHandler> logger)
+public class SlackInjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogger<SlackInjuryUpdateHandler> logger)
     : IConsumer<InjuryUpdateOccured>
 {
     public async Task Consume(ConsumeContext<InjuryUpdateOccured> context)

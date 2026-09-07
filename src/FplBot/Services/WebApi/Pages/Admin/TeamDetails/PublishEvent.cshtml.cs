@@ -45,7 +45,7 @@ public class PublishEvent : PageModel
             var gameweek = settings!.Gameweeks.GetCurrentGameweek();
             if (team.FplbotLeagueId.HasValue && !string.IsNullOrEmpty(team.FplBotSlackChannel))
             {
-                var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:FplBot.EventHandlers.Slack"));
+                var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:gameweekfinishedhandler"));
                 await endpoint.Send(new PublishStandingsToSlackWorkspace(team.TeamId ?? "", team.FplBotSlackChannel ?? "", team.FplbotLeagueId.Value, gameweek!.Id));
                 TempData["msg"] = $"Published standings to {teamId}";
             }

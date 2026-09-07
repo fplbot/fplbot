@@ -6,9 +6,9 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class FixtureRemovedFromGameweekHandler(
+public class DiscordFixtureRemovedHandler(
     IGuildRepository guildRepo,
-    ILogger<FixtureRemovedFromGameweekHandler> logger)
+    ILogger<DiscordFixtureRemovedHandler> logger)
     : IConsumer<FixtureRemovedFromGameweek>
 {
     public async Task Consume(ConsumeContext<FixtureRemovedFromGameweek> context)

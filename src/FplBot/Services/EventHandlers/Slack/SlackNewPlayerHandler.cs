@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class NewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<NewPlayerHandler> logger)
+public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<SlackNewPlayerHandler> logger)
     : IConsumer<NewPlayersRegistered>, IConsumer<PremiershipPlayerTransferred>
 {
     public async Task Consume(ConsumeContext<NewPlayersRegistered> context)

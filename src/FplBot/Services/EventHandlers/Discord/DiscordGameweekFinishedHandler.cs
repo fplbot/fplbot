@@ -8,9 +8,9 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class GameweekFinishedHandler(
+public class DiscordGameweekFinishedHandler(
     IGuildRepository repo,
-    ILogger<GameweekFinishedHandler> logger,
+    ILogger<DiscordGameweekFinishedHandler> logger,
     IGlobalSettingsClient settingsClient,
     ILeagueClient leagueClient)
     : IConsumer<GameweekFinished>,

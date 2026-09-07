@@ -9,14 +9,14 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class FixtureFulltimeHandler(
+public class DiscordFixtureFulltimeHandler(
     IGuildRepository teamRepo,
-    ILogger<NearDeadlineHandler> logger,
+    ILogger<DiscordFixtureFulltimeHandler> logger,
     IGlobalSettingsClient settingsClient,
     IFixtureClient fixtureClient)
     : IConsumer<FixtureFinished>
 {
-    private readonly ILogger<NearDeadlineHandler> _logger = logger;
+    private readonly ILogger<DiscordFixtureFulltimeHandler> _logger = logger;
 
     public async Task Consume(ConsumeContext<FixtureFinished> context)
     {

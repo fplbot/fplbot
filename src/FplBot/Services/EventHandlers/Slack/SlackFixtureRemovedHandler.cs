@@ -6,9 +6,9 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-public class FixtureRemovedFromGameweekHandler(
+public class SlackFixtureRemovedHandler(
     ISlackTeamRepository teamRepo,
-    ILogger<FixtureRemovedFromGameweekHandler> logger)
+    ILogger<SlackFixtureRemovedHandler> logger)
     : IConsumer<FixtureRemovedFromGameweek>
 {
     public async Task Consume(ConsumeContext<FixtureRemovedFromGameweek> context)

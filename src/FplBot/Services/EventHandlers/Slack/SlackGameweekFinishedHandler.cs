@@ -10,7 +10,7 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-internal class GameweekFinishedHandler(
+internal class SlackGameweekFinishedHandler(
     ISlackWorkSpacePublisher publisher,
     ISlackTeamRepository teamsRepo,
     ILeagueClient leagueClient,
