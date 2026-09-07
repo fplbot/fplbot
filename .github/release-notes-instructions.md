@@ -55,27 +55,46 @@ entirely, just kept out of the commentary.)
 - Describe the feature/fix/change AS IF it were a player, a tactical
   switch, or a moment in a match — but the actual behavior described must
   still be accurate and understandable underneath the bit.
+- **The metaphor is seasoning, not the substance.** Every entry MUST make
+  it unambiguously clear, in plain terms, what actually changed and what
+  the admin will now see or no longer see — a reader must not have to
+  already know what the bug/feature was to understand the entry. If you
+  had to strip out every football word, a factual sentence describing the
+  real behavior change should still be sitting there underneath. Never
+  write an entry that is pure atmosphere with no recoverable fact in it
+  (e.g. "went missing in the tunnel" on its own is NOT enough — say what
+  went missing, when, and what happens differently now that it's fixed).
+- Concrete beats vague: name the actual notification/command/setting
+  affected and the actual before/after behavior, not just "a niggle" or
+  "some tweaks".
 - Do NOT invent or reference real, named footballers (living or
   retired) — use generic archetypes only ("the new striker", "the
   veteran centre-back", "the super-sub"), never a real person's name.
 - Use present tense: "Add", "Fix", "Show" — commentary is happening live.
-- Keep each entry to one or two sentences, punchy, like a commentary
-  soundbite, not a paragraph.
+- One to three sentences per entry — long enough to actually explain the
+  change, short enough to still read like a commentary soundbite, not a
+  press release.
 - No PR numbers or author attribution in this part.
 
 ### Example Entries
 
 - `### ⚽ New Signings`
-  - Deadline reminders just got a new striker up top — you'll hear from
-    them earlier, and they don't miss a chance to remind you before the
-    whistle blows.
+  - New striker up top: deadline reminders now fire a full hour before
+    the transfer window shuts, not just 15 minutes before — no more
+    getting caught cold at the death.
 - `### 🩹 Treatment Room`
-  - The captaincy alert had picked up a knock and was going missing at
-    kick-off — the physio's had a look, and it's back on the teamsheet
-    for every gameweek now.
+  - The captaincy alert had been going missing whenever a workspace
+    uninstalled and reinstalled the bot — no reminder would fire at all
+    for that team. Physio's sorted it: the alert is back on the
+    teamsheet and fires every gameweek again, reinstall or not.
 - `### 🎯 Tactical Tweaks`
-  - Price change notifications switched formation — tighter at the back,
-    fewer needless final-third giveaways, same clinical finish.
+  - Price change notifications used to batch every player rise/fall
+    into one wall-of-text message. Tighter shape now — one clean line
+    per player, same info, way less scrolling to find your guy.
+
+Note how each example names the exact notification/command affected and
+the precise before → after behavior — the football flourish decorates
+that fact, it doesn't substitute for it.
 
 ---
 
