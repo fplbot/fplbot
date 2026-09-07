@@ -79,9 +79,9 @@ jobs:
         run: |
           if [ -n "$NOTES" ]; then
             printf '%s\n' "$NOTES" > release_notes.md
-            gh release create ${{ env.VERSION }} --notes-file release_notes.md
+            gh release create ${{ env.VERSION }} --title "${{ env.VERSION }}" --notes-file release_notes.md
           else
-            gh release create ${{ env.VERSION }} --generate-notes
+            gh release create ${{ env.VERSION }} --title "${{ env.VERSION }}" --generate-notes
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
