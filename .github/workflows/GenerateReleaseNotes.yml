@@ -1,0 +1,60 @@
+name: generate-release-notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      base-ref:
+        description: "Tag/branch/SHA to compare from (defaults to the latest published release)"
+        required: false
+      head-ref:
+        description: "Tag/branch/SHA to compare to"
+        required: false
+        default: "HEAD"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  generate-release-notes:
+    name: generate-release-notes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Resolve base ref
+        id: base
+        run: |
+          if [ -n "${{ inputs.base-ref }}" ]; then
+            echo "ref=${{ inputs.base-ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add live gameweek context to release notes instructions
+        id: instructions
+        run: |
+          cp .github/release-notes-instructions.md "$RUNNER_TEMP/release-notes-instructions.md"
+          python3 .github/scripts/build-release-notes-context.py >> "$RUNNER_TEMP/release-notes-instructions.md" || true
+          echo "path=$RUNNER_TEMP/release-notes-instructions.md" >> "$GITHUB_OUTPUT"
+      - name: Generate release notes
+        id: notes
+        uses: github/copilot-release-notes@main
+        with:
+          base-ref: ${{ steps.base.outputs.ref }}
+          head-ref: ${{ inputs.head-ref }}
+          instructions: ${{ steps.instructions.outputs.path }}
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      - name: Show generated notes
+        run: |
+          {
+            echo "## Generated release notes"
+            echo "base-ref: ${{ steps.base.outputs.ref }}"
+            echo ""
+            echo "$NOTES"
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          NOTES: ${{ steps.notes.outputs.release-notes }}
