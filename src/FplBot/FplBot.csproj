@@ -54,13 +54,9 @@
     <Folder Include="Integrations\" />
   </ItemGroup>
 
-  <Target Name="CopyWwwrootToOutput" AfterTargets="Build">
-    <ItemGroup>
-      <_WwwRootFiles Include="$(MSBuildProjectDirectory)/Services/WebApi/wwwroot/**/*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_WwwRootFiles)"
-          DestinationFiles="@(_WwwRootFiles->'$(OutputPath)Services/WebApi/wwwroot/%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-  </Target>
+  <ItemGroup>
+    <Content Remove="Services/WebApi/wwwroot/**/*" />
+    <Content Include="Services/WebApi/wwwroot/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>
