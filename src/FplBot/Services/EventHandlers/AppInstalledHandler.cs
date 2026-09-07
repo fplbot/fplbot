@@ -29,19 +29,23 @@ public class AppInstalledHandler(IGuildRepository guildRepo,
             _ => null
         };
 
+        var definition = context.Message.Platform == ChatPlatform.Discord ? "Discord guild" : "Slack workspace";
+        var installMsg = $"🎉 A new {definition} ('{context.Message.TeamName}') installed @fplbot!";
+
+        var token = config.GetValue<string>("SlackToken_FplBot_Workspace");
+        var env = config.GetValue<string>("DOTNET_ENVIRONMENT");
+        var prefix = env == "Production" ? "" : $"{env}: ";
+        var client = builder.Build(token);
+        await client.ChatPostMessage("#fplbot-notifications", $"{prefix}{installMsg}");
+
         if (text is not null)
         {
             logger.LogInformation("Sending count msg. {Count} {Platform} installs", count, context.Message.Platform);
-
-            var token = config.GetValue<string>("SlackToken_FplBot_Workspace");
-            var env = config.GetValue<string>("DOTNET_ENVIRONMENT");
-            var prefix = env == "Production" ? "" : $"{env}: ";
-            var client = builder.Build(token);
             await client.ChatPostMessage("#fplbot-notifications", $"{prefix}{text}");
         }
         else
         {
-            logger.LogInformation("No message sent for {Platform} install. Count is {Count}", context.Message.Platform, count);
+            logger.LogInformation("No count msg for {Platform} install. Count is {Count}", context.Message.Platform, count);
         }
     }
 }
