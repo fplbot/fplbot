@@ -42,8 +42,8 @@ requirement silently.
 ### Categories
 
 There are three semantic buckets: **new stuff**, **fixes**, and
-**polish**. Every release note entry belongs to exactly one of them. But
-the heading text for each bucket is NOT fixed — every time you generate
+**polish**. Every release note entry belongs to exactly one of them. The
+heading text for each bucket is NOT fixed — every time you generate
 notes, randomly pick a *different* heading (with its emoji) from that
 bucket's pool below, so headings vary release to release instead of
 being identical every time. Don't default to the first option in the
@@ -56,17 +56,22 @@ the Premier League, not the NFL.
 
 If a category has no entries, delete its heading line completely — do
 not print the heading with a placeholder like "(none this window)",
-"N/A", or an empty bullet. A heading with zero entries under it should
-not appear in the output at all.
+"N/A", or an empty bullet.
+
+**Important — no markdown syntax in the heading itself:** pick just the
+emoji + words below, with NO leading `#` characters and no backticks.
+The rendering tool automatically turns this into a heading for you; if
+you type `#`s yourself it renders as a broken doubled heading like
+`### ### Chip Plays`.
 
 **New stuff** — new notification types, commands, or bot features. Pick
-one heading at random:
-- `### 🃏 Chip Plays`
-- `### ⭐ New Signings`
-- `### 🔄 Done Deals`
-- `### 📝 Squad Additions`
-- `### 🎯 Fresh Off The Bench`
-- `### 🚀 New Boots`
+one heading at random (emoji + words only):
+- 🃏 Chip Plays
+- ⭐ New Signings
+- 🔄 Done Deals
+- 📝 Squad Additions
+- 🎯 Fresh Off The Bench
+- 🚀 New Boots
 
 Frame the size of the change as the transfer/chip being played: a small
 addition is a straightforward **transfer in**; a genuinely big new
@@ -74,12 +79,13 @@ feature gets to be a **Wildcard** (full overhaul) or **Bench Boost**
 (more of the squad now contributing); a temporary/experimental feature
 can be a **Free Hit**.
 
-**Fixes** — bug fixes. Pick one heading at random:
-- `### 🩹 Treatment Room`
-- `### 🚑 Back From Injury`
-- `### 🏥 Fitness Update`
-- `### ✅ Passed The Late Fitness Test`
-- `### 🔧 Patched Up`
+**Fixes** — bug fixes. Pick one heading at random (emoji + words only,
+same rule as above — no `#` characters):
+- 🩹 Treatment Room
+- 🚑 Back From Injury
+- 🏥 Fitness Update
+- ✅ Passed The Late Fitness Test
+- 🔧 Patched Up
 
 Frame as a player who picked up a knock and is now back on the
 teamsheet, ideally back **before the deadline** rather than being a late
@@ -87,16 +93,42 @@ fitness doubt.
 
 **Polish** — changes to existing behavior that aren't new features or
 bug fixes: performance, formatting, small improvements. Pick one heading
-at random:
-- `### 📊 Bonus Points`
-- `### 🎯 Tactical Tweaks`
-- `### 🔁 Squad Rotation`
-- `### 📈 Marginal Gains`
-- `### 🧹 Half-Time Team Talk`
+at random (emoji + words only, same rule as above — no `#` characters):
+- 📊 Bonus Points
+- 🎯 Tactical Tweaks
+- 🔁 Squad Rotation
+- 📈 Marginal Gains
+- 🧹 Half-Time Team Talk
 
 Frame as the BPS system quietly handing out extra points after the
 match, or a tactical tweak from the touchline: nothing new happened on
 the pitch, it just counts for more / reads better / runs smoother now.
+
+### Per-Entry Headline
+
+**Every entry, regardless of which category it's grouped under, opens
+with its own bold-italic tabloid mini-headline as the very first line of
+its text**, then a blank line, then the actual explanation paragraph.
+Format exactly like this (including the blank line):
+
+```
+***Some punchy tabloid-style question or exclamation***
+
+The actual explanation paragraph goes here, same rules as before...
+```
+
+- The mini-headline is markdown bold-italic: `***text***` (three
+  asterisks each side) — not a `#` heading, just bold-italic text on its
+  own line.
+- Short, punchy, tabloid back-page energy — can be a question ("No show
+  back in town?") or an exclamation ("Back with a blast!"). Football/FPL
+  flavored, no NFL terms.
+- Every entry needs one, and no two entries in the same release should
+  reuse the same mini-headline.
+- This mini-headline lives INSIDE the entry's own text (i.e. it's part
+  of the same field the rest of the entry's writing goes in) — it is
+  NOT a separate heading and does not replace the shared category
+  heading above it.
 
 ### What to Skip (this part only)
 
@@ -113,11 +145,11 @@ entirely, just kept out of the commentary.)
 
 ### The Blank Gameweek
 
-If, after applying the skip list above, there are **zero** entries across
-all three categories (i.e. the release is nothing but chores, CI,
-refactors, dependency bumps, etc.) — do NOT print any of the three
-category headings. Instead write a short, genuinely funny "nothing to
-see here" blurb, framed as an FPL **blank gameweek**: the fixture
+If, after applying the skip list above, there are **zero** qualifying
+entries (i.e. the release is nothing but chores, CI, refactors,
+dependency bumps, etc.) — do NOT print any headlines at all. Instead
+write a short, genuinely funny "nothing to see here" blurb, framed as an
+FPL **blank gameweek**: the fixture
 computer left this one empty, every one of your players is on a bye, 0-0
 snorefest, no points on the board either way. Lean into pundit/manager
 disappointment ("we were promised a double gameweek, we got a bye
@@ -211,24 +243,27 @@ three handles is an external contributor.
   only ("the new striker", "the template captain", "the differential
   pick"), never a real person's name.
 - Use present tense: "Add", "Fix", "Show" — commentary is happening live.
-- One to three sentences per entry — long enough to actually explain the
-  change, short enough to still read like a commentary soundbite, not a
-  press release.
+- **Max two sentences per entry: one for what changed, one for the
+  mandatory roast line below.** Never three or more. This is a
+  commentator's soundbite, not a match report — say what changed, land
+  the joke, done. The whole gameweek review, across all categories
+  combined, should be short enough to read in one breath — favor punchy
+  one-liners over building out a scene.
 - No PR numbers or author attribution in this part.
 
 ### Example Entries
 
-- `### 🃏 Chip Plays`
+- 🃏 Chip Plays
   - Playing the Bench Boost on deadline reminders: they now fire a full
     hour before the transfer window shuts instead of just 15 minutes
     before, so nobody's left making a panic transfer at the death.
-- `### 🩹 Treatment Room`
+- 🩹 Treatment Room
   - The captaincy alert had been ruled out whenever a workspace
     uninstalled and reinstalled the bot — no armband reminder at all for
     that team, gameweek after gameweek. Passed its late fitness test:
     it's back reminding every team before every deadline, reinstall or
     not.
-- `### 📊 Bonus Points`
+- 📊 Bonus Points
   - Price change notifications used to dump every rise and fall into one
     wall-of-text message. BPS has been recalculated — one clean line per
     player now, same green/red arrows, way less scrolling to find your
@@ -243,19 +278,44 @@ fact, it doesn't substitute for it.
 
 ## Part 2 — the detailed match report (for developers)
 
-A separate, plain, precise, technical section under a `### 📋 Detailed
-Match Report` heading, aimed at engineers reading this on GitHub. No
-football or FPL bits here — just facts.
+A separate, plain, technical section headed "📋 Detailed Match Report"
+(that exact text, no `#` characters — the rendering tool adds the
+markdown heading syntax itself). A short, flat bullet list — no
+sub-headings, no `Fixes`/`Features`/`Chores` grouping, just bullets
+directly under the one heading.
 
-- Include **every** merged PR, with nothing skipped — including CI/CD,
-  dependency bumps, refactors, and internal tooling changes that Part 1
-  leaves out.
-- One line per PR: `<concise technical description> (#<pr_number>) by
-  @<author>`
-- Group as a flat list, or under `Fixes` / `Features` / `Chores` /
-  `Dependencies` sub-bullets if there are more than ~8 entries — whichever
-  is more scannable.
-- Use normal engineering language here (consumer, handler, endpoint,
-  dependency name, etc. are all fine) — this part is for developers, be
-  precise rather than cute.
-- Keep each line short — this is a scan-and-click reference, not prose.
+**Override the general instruction elsewhere to create one entry per
+PR.** Instead, group PRs by what they actually accomplished:
+- Multiple PRs that are really the same piece of work (a fix + a
+  follow-up fix for the same bug, a feature + its immediate correction,
+  etc.) become ONE bullet covering all of them together.
+- Unrelated PRs each get their own bullet.
+- Every PR must appear in exactly one bullet somewhere — never dropped.
+
+Format per bullet: `<very short description, ~6 words> by @<author>` —
+if a bullet covers PRs by more than one author, list every distinct
+author once each, e.g. `by @author1, @author2`.
+
+**PR numbers — this is important and depends on how many PRs the bullet
+covers:**
+- **Bullet covers exactly ONE PR:** do NOT write any `(#N)` yourself.
+  Leave it off entirely. The rendering tool automatically appends the
+  real `(#N)` after the bullet — writing your own produces an ugly
+  duplicate like `(#375) (#375)`.
+- **Bullet covers TWO OR MORE PRs (a grouped bullet):** manually write
+  `(#N, #N)` yourself at the end, comma-separated, since the tool can
+  only auto-append a single number and can't represent a group on its
+  own. Set that entry's `pr` field to the LAST number in your list, so
+  the tool's auto-appended number echoes the last item you already
+  wrote (e.g. you write `(#378, #379)`, tool adds `(#379)` right after
+  — reads as a harmless echo, not something out of place). This one
+  small trailing repeat on grouped bullets only is an unavoidable quirk
+  of the tool — leave it, don't fight it.
+
+Example shape (this exact level of brevity, not longer — note only the
+grouped bullet has manual parens):
+- Fix release-notes generation by @johnkors (#378, #379)
+- Fix static asset files bug by @johnkors
+- Fix ASB queues to scale Discord/Slack separately by @johnkors
+- Normal engineering language is fine (consumer, handler, endpoint,
+  dependency name, etc.) — brevity matters more than completeness here.
