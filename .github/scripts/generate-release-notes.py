@@ -51,10 +51,7 @@ def build_live_context():
             "",
         ]
         if cur:
-            lines.append(
-                f"Current: GW{cur['id']} ({cur['name']}) - finished: {cur['finished']}, "
-                f"average score: {cur['average_entry_score']}, highest score: {cur['highest_score']}"
-            )
+            lines.append(f"Current: GW{cur['id']} ({cur['name']}) - finished: {cur['finished']}")
         if nxt:
             lines.append(f"Next: GW{nxt['id']} ({nxt['name']}) - deadline: {nxt['deadline_time']}")
 

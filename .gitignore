@@ -346,3 +346,4 @@ local.settings.json
 __azurite**
 __blobstorage__/
 .claude/
+.tmp/
