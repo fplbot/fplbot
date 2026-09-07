@@ -1,16 +1,19 @@
 # Release Notes Style Guide
 
-FplBot is a Fantasy Premier League chatbot for Slack and Discord. The
-audience for these notes is workspace/guild admins who installed the bot —
-not developers. Write for them, and write it **football-mad**: every entry
-should sound like a matchday commentator lost the plot describing a
-changelog. Silly football clichés and metaphors are not just allowed, they
-are mandatory.
+FplBot is a Fantasy Premier League chatbot for Slack and Discord. Produce
+release notes in **two parts**, always both, in this order.
 
-## Categories
+## Part 1 — the matchday commentary (for admins, football-mad)
 
-Group entries under these headings, in this order. Omit a heading entirely
-if it has no entries.
+A human, non-technical summary for the workspace/guild admins who
+installed the bot. Write it **football-mad**: every entry should sound
+like a matchday commentator lost the plot describing a changelog. Silly
+football clichés and metaphors are not just allowed, they are mandatory.
+
+### Categories
+
+Group entries under these headings, in this order. Omit a heading
+entirely if it has no entries.
 
 - `### ⚽ New Signings` — new notification types, commands, or bot features
 - `### 🩹 Treatment Room` — bug fixes (describe the user-visible symptom
@@ -20,9 +23,9 @@ if it has no entries.
   features or bug fixes (formation changes, a bit of extra pace, sharper
   finishing)
 
-## What to Skip
+### What to Skip (this part only)
 
-Do not generate entries for:
+Do not generate commentary entries for:
 - CI/CD, build, Dockerfile, or deployment pipeline changes
 - Dependency/package bumps, unless they fix a security vulnerability or a
   user-visible bug
@@ -30,7 +33,10 @@ Do not generate entries for:
   change
 - Changes to internal docs, CLAUDE.md, or repo tooling
 
-## Style — lay it on thick
+(These are still fair game for Part 2 below — never silently dropped
+entirely, just kept out of the commentary.)
+
+### Style — lay it on thick
 
 - Write for a non-technical Slack/Discord admin, not a developer. No
   jargon ("consumer", "handler", "MassTransit", "Redis", etc.) — ever.
@@ -55,13 +61,9 @@ Do not generate entries for:
 - Use present tense: "Add", "Fix", "Show" — commentary is happening live.
 - Keep each entry to one or two sentences, punchy, like a commentary
   soundbite, not a paragraph.
+- No PR numbers or author attribution in this part.
 
-## Entry Format
-
-`<description>` — no PR numbers or author attribution, this is a
-matchday-style changelog, not a dev changelog.
-
-## Example Entries
+### Example Entries
 
 - `### ⚽ New Signings`
   - Deadline reminders just got a new striker up top — you'll hear from
@@ -74,3 +76,24 @@ matchday-style changelog, not a dev changelog.
 - `### 🎯 Tactical Tweaks`
   - Price change notifications switched formation — tighter at the back,
     fewer needless final-third giveaways, same clinical finish.
+
+---
+
+## Part 2 — the match report (for developers)
+
+A separate, plain, precise, technical section under a `### 📋 Match
+Report` heading, aimed at engineers reading this on GitHub. No football
+bits here — just facts.
+
+- Include **every** merged PR, with nothing skipped — including CI/CD,
+  dependency bumps, refactors, and internal tooling changes that Part 1
+  leaves out.
+- One line per PR: `<concise technical description> (#<pr_number>) by
+  @<author>`
+- Group as a flat list, or under `Fixes` / `Features` / `Chores` /
+  `Dependencies` sub-bullets if there are more than ~8 entries — whichever
+  is more scannable.
+- Use normal engineering language here (consumer, handler, endpoint,
+  dependency name, etc. are all fine) — this part is for developers, be
+  precise rather than cute.
+- Keep each line short — this is a scan-and-click reference, not prose.
