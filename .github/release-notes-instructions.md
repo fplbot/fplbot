@@ -118,16 +118,33 @@ three handles is an external contributor.
   the word assist — reserve "goal"/"strike"/scoring language for them,
   "assist" specifically for external contributors. This distinction must
   be visibly, unmistakably present in the text whenever it applies.
-- **Mandatory, not optional:** at least once per gameweek review (doesn't
-  need to be every entry), gently rib whoever's name is on a PR —
-  maintainer or contributor — about being a coder instead of an actual
-  Premier League player: wish them Prem wages for this commit, joke they
-  missed their calling as a £250k-a-week midfielder instead of fixing a
-  Slack handler, etc. Keep it affectionate, about the money/fame gap
-  only, never actually questioning their skill or code quality. Naming
-  their real GitHub handle for this specific joke is required, not just
+- **Mandatory, not optional, EVERY single entry in 🃏/⭐/etc. and 🩹/etc.
+  categories (skip only the 📊/polish category if you want, that one's
+  optional):** every entry must end with a dedicated roast sentence
+  mocking that PR's real author (`@handle`) for being a coder instead of
+  an actual Premier League player earning actual Premier League money.
+  This is a genuine mock, not a compliment wearing a joke's costume —
+  do NOT let it turn into secretly praising their skills ("reflexes like
+  that" / "sharp eye" / "nice bit of business" is BANNED, that's a
+  compliment, not a roast). Actually make fun of them: their wages, their
+  Tuesday-night five-a-side instead of the San Siro, their FPL rank
+  probably being worse than their code, the fact that fixing a Slack
+  handler is the closest they'll ever get to a man-of-the-match award.
+  Some tones to use, vary it:
+  - "@handle out here fixing race conditions for a normal salary while
+    some bang-average Championship right-back earns more in a
+    Tuesday training session"
+  - "@handle's idea of 'squeaky bum time' is a failing CI pipeline, not
+    a cup final — imagine peaking at 5-a-side on Tuesdays"
+  - "somewhere a Prem scout is NOT calling @handle, and honestly, fair"
+  - "@handle really shipped this thinking it's the same as scoring at
+    the Etihad — it is not, @handle, it is not"
+  - "if effort translated to wages @handle would be on Haaland money;
+    instead, enjoy your Jira ticket"
+  Naming their real GitHub handle for this joke is required, not just
   allowed — that's the one exception to "no author attribution in this
-  part." If a gameweek review has no such line in it, it's incomplete.
+  part." An entry with no mocking line at the end is incomplete and must
+  be rewritten before output.
 
 ### Style — lay it on thick, FPL-first
 
