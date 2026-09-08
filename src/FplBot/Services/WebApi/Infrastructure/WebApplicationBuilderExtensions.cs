@@ -51,8 +51,11 @@ public static class WebApplicationBuilderExtensions
                 opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
 
-        var successUri = env.IsProduction() ? "https://www.fplbot.app/success" : "https://test.fplbot.app/success";
-        var errorUri = env.IsProduction() ? "https://www.fplbot.app/error" : "https://test.fplbot.app/error";
+        // In dev, /success is served by the Vite dev server (not this backend), so send the
+        // browser there after the OAuth callback. /error stays on the backend — it's still a
+        // Razor Page shared with the admin login flow, not part of the Vue SPA.
+        var successUri = env.IsDevelopment() ? "http://localhost:5173/success" : "/success";
+        var errorUri = "/error";
 
         services.AddSlackbotDistribution(c =>
         {

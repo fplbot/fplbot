@@ -22,10 +22,11 @@ public static class WebAppExtensions
         if(!env.IsDevelopment())
             app.UseHttpsRedirection();
 
+        var wwwrootProvider = new PhysicalFileProvider(
+            Path.Combine(app.Environment.ContentRootPath, "Services", "WebApi", "wwwroot"));
         app.UseStaticFiles(new StaticFileOptions
         {
-            FileProvider = new PhysicalFileProvider(
-                Path.Combine(app.Environment.ContentRootPath, "Services", "WebApi", "wwwroot"))
+            FileProvider = wwwrootProvider
         });
         app.UseRouting();
         app.UseCors(CorsOriginValidator.CustomCorsPolicyName);
@@ -41,6 +42,10 @@ public static class WebAppExtensions
         );
         app.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
         app.MapRazorPages();
+        app.MapFallbackToFile("index.html", new StaticFileOptions
+        {
+            FileProvider = wwwrootProvider
+        });
     }
 
     private static void UseMinimalEndpoints(this WebApplication app, params (string BaseRoute, Action<WebApplication, string> RouteToEndpoint)[] mappings)

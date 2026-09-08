@@ -40,9 +40,11 @@ await targets.RunAndExitAsync(args);
 
 async Task BuildImage()
 {
-    var buildArgs = $"--build-arg INFOVERSION={infoVersion} --build-arg VERSION={version} -f ./src/Dockerfile ./src";
+    await BuildClientApp();
+    await PublishBackend();
+
     var baseTag = "fplbot-runtime:current";
-    await Command.RunAsync("docker", $"build -t {baseTag} {buildArgs}");
+    await Command.RunAsync("docker", $"build -t {baseTag} -f ./src/Dockerfile ./src/publish");
 
     foreach (var (processType, serviceName) in ProcessServices())
     {
@@ -51,6 +53,23 @@ async Task BuildImage()
         await Command.RunAsync("docker", $"build -t fplbot/{processType} -f {tmp} .");
         File.Delete(tmp);
     }
+}
+
+async Task BuildClientApp()
+{
+    var clientAppDir = Path.Combine("src", "FplBot", "Services", "WebApi", "ClientApp");
+    await Command.RunAsync("npm", "ci", clientAppDir);
+    await Command.RunAsync("npm", "run build", clientAppDir);
+}
+
+async Task PublishBackend()
+{
+    var publishDir = Path.Combine("src", "publish");
+    if (Directory.Exists(publishDir))
+        Directory.Delete(publishDir, recursive: true);
+
+    await Command.RunAsync("dotnet",
+        $"publish src/FplBot -o {publishDir} -c Release /p:Version={version} /p:InformationalVersion={infoVersion}");
 }
 
 async Task PushImages(string registry)
