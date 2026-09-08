@@ -34,7 +34,14 @@ public static class FplBotApplication
         var builder = WebApplication.CreateBuilder(args);
         builder.Host.UseSerilog(ConfigureSerilog);
         var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
-        builder.WebHost.UseUrls($"http://+:{port}");
+        // Slack requires OAuth redirect_uris to be https — even for localhost. In dev, serve
+        // https on localhost using the trusted ASP.NET Core dev cert (`dotnet dev-certs https
+        // --trust`) — the cert is issued for CN=localhost, so bind that host specifically
+        // rather than "+". In prod (Heroku/containers), TLS is terminated at the platform
+        // router and the app must stay reachable on all interfaces, so keep "+" and http.
+        builder.WebHost.UseUrls(builder.Environment.IsDevelopment()
+            ? $"https://localhost:{port}"
+            : $"http://+:{port}");
 
         var redisConn = BuildRedisConnection(builder.Configuration);
         ConfigureCommon(builder.Services, builder.Configuration, redisConn);

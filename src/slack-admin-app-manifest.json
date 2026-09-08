@@ -5,7 +5,7 @@
   },
   "oauth_config": {
     "redirect_urls": [
-      "http://localhost:1337/signin-slack"
+      "https://localhost:1337/signin-slack"
     ],
     "scopes": {
       "user": ["identity.basic", "identity.team"]
