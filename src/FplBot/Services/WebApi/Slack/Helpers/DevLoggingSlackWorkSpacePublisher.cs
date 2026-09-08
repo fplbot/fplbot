@@ -1,8 +1,9 @@
+using FplBot.WebApi.Slack.Abstractions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.EventHandlers.Slack.Helpers;
+namespace FplBot.WebApi.Slack.Helpers;
 
-public class DevLoggingSlackWorkSpacePublisher(
+internal class DevLoggingSlackWorkSpacePublisher(
     SlackWorkSpacePublisher inner,
     IHostEnvironment env,
     ILogger<DevLoggingSlackWorkSpacePublisher> logger)
@@ -11,7 +12,7 @@ public class DevLoggingSlackWorkSpacePublisher(
     public async Task PublishToAllWorkspaceChannels(string msg)
     {
         if (!env.IsDevelopment()) { await inner.PublishToAllWorkspaceChannels(msg); return; }
-        logger.LogInformation("\n[DEV] Slack → ALL WORKSPACES\n\n{Message}\n", msg);
+        logger.LogInformation("\n[DEV] Slack → All workspaces\n\n{Message}\n", msg);
     }
 
     public async Task PublishToWorkspace(string teamId, string channel, params string[] messages)

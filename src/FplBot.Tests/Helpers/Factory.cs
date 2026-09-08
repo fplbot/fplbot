@@ -3,6 +3,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -64,6 +65,10 @@ public static class Factory
         services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository());
         services.Replace<IElasticClient>(elasticClient);
         services.AddSingleton<IPublishEndpoint>(A.Fake<IPublishEndpoint>());
+
+        var hostEnvironment = A.Fake<IHostEnvironment>();
+        A.CallTo(() => hostEnvironment.EnvironmentName).Returns("Production");
+        services.AddSingleton(hostEnvironment);
         services.AddFplWorkers();
         var provider = services.BuildServiceProvider();
         return provider;

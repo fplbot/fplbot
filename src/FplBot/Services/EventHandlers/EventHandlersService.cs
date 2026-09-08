@@ -51,5 +51,6 @@ public class EventHandlersService : IFplBotService
         cfg.AddConsumer<SlackNewPlayerHandler>();
         cfg.AddConsumer<SlackPriceChangeHandler>();
         cfg.AddConsumer<PublishToSlackHandler>();
+        cfg.AddConsumer<BroadcastToSlackHandler>();
     }
 }

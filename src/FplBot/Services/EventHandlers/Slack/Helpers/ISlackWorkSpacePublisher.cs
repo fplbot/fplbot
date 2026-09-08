@@ -4,6 +4,10 @@ namespace FplBot.EventHandlers.Slack.Helpers;
 
 public interface ISlackWorkSpacePublisher
 {
+    /// <summary>
+    /// Publishes to the install-channel of ALL installed workspaces
+    /// </summary>
+    Task PublishToAllWorkspaceChannels(string msg);
 
     /// <summary>
     /// Publishes to single workspaces to the channel provided

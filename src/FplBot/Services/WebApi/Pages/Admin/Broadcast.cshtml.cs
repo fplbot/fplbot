@@ -1,11 +1,12 @@
 using FplBot.Data.Slack;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FplBot.WebApi.Pages.Admin;
 
-public class Broadcast(ISlackTeamRepository teamRepo, ISlackWorkSpacePublisher publisher, ILogger<Broadcast> logger)
+public class Broadcast(ISlackTeamRepository teamRepo, ISendEndpointProvider sendEndpointProvider, ILogger<Broadcast> logger)
     : PageModel
 {
     public async Task OnGet()
@@ -19,15 +20,16 @@ public class Broadcast(ISlackTeamRepository teamRepo, ISlackWorkSpacePublisher p
 
     public async Task<IActionResult> OnPost(string message)
     {
-        logger.LogInformation($"BROADCASTING TO ALL WORKSPACES");
+        logger.LogInformation($"ENQUEUEING BROADCAST TO SLACK");
         try
         {
-            await publisher.PublishToAllWorkspaceChannels(message);
-            TempData["msg"] = "Broadcasted!";
+            var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(EventHandlers.Slack.BroadcastToSlackHandler)}"));
+            await endpoint.Send(new BroadcastToSlack(message));
+            TempData["msg"] = "Slack Broadcast enqueued!";
         }
         catch (Exception e)
         {
-            TempData["msg"] = $"Broadcast failed '{e}'";
+            TempData["msg"] = $"Broadcast to Slack failed '{e}'";
         }
 
         return RedirectToPage("Broadcast");

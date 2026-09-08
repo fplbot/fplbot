@@ -1,6 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data.Slack;
+using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +46,7 @@ public class PublishEvent : PageModel
             var gameweek = settings!.Gameweeks.GetCurrentGameweek();
             if (team.FplbotLeagueId.HasValue && !string.IsNullOrEmpty(team.FplBotSlackChannel))
             {
-                var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:slackgameweekfinishedhandler"));
+                var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
                 await endpoint.Send(new PublishStandingsToSlackWorkspace(team.TeamId ?? "", team.FplBotSlackChannel ?? "", team.FplbotLeagueId.Value, gameweek!.Id));
                 TempData["msg"] = $"Published standings to {teamId}";
             }
