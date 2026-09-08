@@ -13,7 +13,8 @@ public class DiscordFixtureFulltimeHandler(
     IGuildRepository teamRepo,
     ILogger<DiscordFixtureFulltimeHandler> logger,
     IGlobalSettingsClient settingsClient,
-    IFixtureClient fixtureClient)
+    IFixtureClient fixtureClient,
+    ILiveClient liveClient)
     : IConsumer<FixtureFinished>
 {
     private readonly ILogger<DiscordFixtureFulltimeHandler> _logger = logger;
@@ -25,7 +26,10 @@ public class DiscordFixtureFulltimeHandler(
         var settings = await settingsClient.GetGlobalSettings();
         var fixtures = await fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId)!;
-        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture);
+        var liveItems = fplfixture.Event.HasValue
+            ? await liveClient.GetLiveItems(fplfixture.Event.Value, isOngoingGameweek: true)
+            : null;
+        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture, liveItems);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
         foreach (var sub in subs)
