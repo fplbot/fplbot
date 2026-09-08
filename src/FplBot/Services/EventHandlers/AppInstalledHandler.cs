@@ -10,6 +10,7 @@ public class AppInstalledHandler(IGuildRepository guildRepo,
     ISlackTeamRepository slackRepo,
     ISlackClientBuilder builder,
     IConfiguration config,
+    IHostEnvironment env,
     ILogger<AppInstalledHandler> logger) : IConsumer<AppInstalled>
 {
     public async Task Consume(ConsumeContext<AppInstalled> context)
@@ -38,10 +39,18 @@ public class AppInstalledHandler(IGuildRepository guildRepo,
         else
             logger.LogInformation("No count msg for {Platform} install. Count is {Count}", context.Message.Platform, count);
 
+        var envName = config.GetValue<string>("DOTNET_ENVIRONMENT");
+        var prefix = envName == "Production" ? "" : $"{envName}: ";
+        var message = $"{prefix}{fullMsg}";
+
+        if (env.IsDevelopment())
+        {
+            logger.LogInformation("[DEV] Slack → #fplbot-notifications\n{Message}", message);
+            return;
+        }
+
         var token = config.GetValue<string>("SlackToken_FplBot_Workspace");
-        var env = config.GetValue<string>("DOTNET_ENVIRONMENT");
-        var prefix = env == "Production" ? "" : $"{env}: ";
         var client = builder.Build(token);
-        await client.ChatPostMessage("#fplbot-notifications", $"{prefix}{fullMsg}");
+        await client.ChatPostMessage("#fplbot-notifications", message);
     }
 }

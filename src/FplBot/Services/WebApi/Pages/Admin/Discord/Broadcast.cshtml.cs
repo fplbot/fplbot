@@ -14,7 +14,7 @@ public class Broadcast(ISendEndpointProvider sendEndpointProvider, ILogger<Admin
         logger.LogInformation($"ENQUEUEING BROADCAST TO DISCORD");
         try
         {
-            var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri("queue:FplBot.EventHandlers.Discord"));
+            var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(EventHandlers.Discord.BroadcastHandler)}"));
             await endpoint.Send(new BroadcastToDiscord(message, selectedFilter));
             TempData["msg"] = $"Discord Broadcast enqueued using {selectedFilter}!";
         }

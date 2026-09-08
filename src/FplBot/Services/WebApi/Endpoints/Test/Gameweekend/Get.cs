@@ -10,11 +10,11 @@ public static class TestGwEnd
         if (env.IsProduction())
             return TypedResults.Unauthorized();
 
-        var discordEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri("queue:FplBot.EventHandlers.Discord"));
+        var discordEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(FplBot.EventHandlers.Discord.DiscordGameweekFinishedHandler)}"));
         var cmd = new PublishGameweekFinishedToGuild("893932860162064414", "897565955587186838", 1996879, 4);
         await discordEndpoint.Send(cmd);
 
-        var slackEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri("queue:FplBot.EventHandlers.Slack"));
+        var slackEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(FplBot.EventHandlers.Slack.SlackGameweekFinishedHandler)}"));
         var cmdSlack = new PublishStandingsToSlackWorkspace("t016b9n3u7p".ToUpper(), "#fplbot-test", 1996879, 4);
         await slackEndpoint.Send(cmdSlack);
 

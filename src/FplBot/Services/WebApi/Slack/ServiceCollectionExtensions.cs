@@ -20,7 +20,7 @@ public static class ServiceCollectionFplBotSlackWebExtensions
     public static IServiceCollection AddFplBotSlackWebEndpoints(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection)
     {
         services.Configure<RedisOptions>(config);
-        services.TryAddSingleton<IConnectionMultiplexer>(redisConnection);
+        services.TryAddSingleton(redisConnection);
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
         services.AddFplApiClient(config);
         services.AddSearching(config.GetSection("Search"));
@@ -30,7 +30,8 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();
-        services.AddSingleton<ISlackWorkSpacePublisher,SlackWorkSpacePublisher>();
+        services.AddSingleton<SlackWorkSpacePublisher>();
+        services.AddSingleton<ISlackWorkSpacePublisher, DevLoggingSlackWorkSpacePublisher>();
         services.AddScoped<IUninstall, AppUninstaller>();
         services.AddSlackBotEvents<TokenStore>()
             .AddShortcut<HelpEventHandler>()

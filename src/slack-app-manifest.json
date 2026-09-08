@@ -11,8 +11,7 @@
   },
   "oauth_config": {
     "redirect_urls": [
-      "http://localhost:1337/signin-slack",
-      "http://localhost:1337/oauth/authorize"
+      "https://localhost:1337/oauth/authorize"
     ],
     "scopes": {
       "bot": [
