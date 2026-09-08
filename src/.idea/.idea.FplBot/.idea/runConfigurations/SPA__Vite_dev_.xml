@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SPA (Vite dev)" type="js.build_tools.npm" temporary="false" nameIsGenerated="false">
+    <package-json value="$PROJECT_DIR$/FplBot/Services/WebApi/ClientApp/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="dev" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>
