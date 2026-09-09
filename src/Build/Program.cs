@@ -10,9 +10,17 @@ var infoVersion = Env("INFOVERSION", version);
 var targets = new Targets();
 
 targets.Add("test",
-    "Run all tests (self-contained — no external Redis or ASB required)",
+    "Run all tests",
     async () => await Command.RunAsync("dotnet",
         """test src -p:TreatWarningsAsErrors=true --logger "GitHubActions;report-warnings=false" """));
+
+targets.Add("client-build",
+    "Install dependencies and build the WebApi ClientApp",
+    async () => await BuildClientApp());
+
+targets.Add("ci",
+    "Run tests and build the client app (used by CI)",
+    ["test", "client-build"]);
 
 targets.Add("docker-build",
     "Build the Docker image once and tag it locally for all process types",
