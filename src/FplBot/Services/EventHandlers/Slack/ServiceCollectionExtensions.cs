@@ -12,8 +12,7 @@ public static class ServiceCollectionExtensions
         services.Configure<RedisOptions>(config);
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
         services.AddDevAwareSlackClientBuilder(env);
-        services.AddSingleton<SlackWorkSpacePublisher>();
-        services.AddSingleton<ISlackWorkSpacePublisher, DevLoggingSlackWorkSpacePublisher>();
+        services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
         return services;
     }
 
