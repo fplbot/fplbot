@@ -1,9 +1,9 @@
 <Solution>
   <Project Path="Build/Build.csproj">
-    <ConfigurationRule BuildType="None" />
+    <Build Solution="Debug|*" Project="false" />
   </Project>
   <Project Path="FplBot.AppHost/FplBot.AppHost.csproj">
-    <ConfigurationRule BuildType="None" />
+    <Build Solution="Debug|*" Project="false" />
   </Project>
   <Project Path="FplBot.Tests/FplBot.Tests.csproj" />
   <Project Path="FplBot/FplBot.csproj" />
