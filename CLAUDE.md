@@ -26,7 +26,33 @@ Each service implements `IFplBotService` and registers its own DI, consumers, an
 dotnet run --project src/FplBot  # runs all 4 services together (dev mode)
 ```
 
-All secrets have safe dev defaults in `appsettings.json`. No real credentials are needed to run locally.
+All secrets have safe dev defaults in `appsettings.json`. No real credentials are needed to run locally — in Development, `DevLoggingSlackClient`/`DevLoggingDiscordClient` short-circuit outbound Slack/Discord calls into log lines instead of hitting the real APIs.
+
+### Testing against a real Discord app
+
+The `"dev"` placeholders in `appsettings.json` cannot be replaced with a real bot token/secret —
+never commit real credentials, even for a throwaway bot: GitHub's secret scanning partnership with
+Discord detects and revokes tokens the moment they're pushed, regardless of intent.
+
+If you need to exercise the real Discord API path (bypassing the dev-logging wrapper, or verifying
+real interaction webhooks), use [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets)
+instead — they live outside the repo in your user profile and are auto-loaded in Development by
+both `WebApplication.CreateBuilder` (WebApi) and `Host.CreateDefaultBuilder` (EventHandlers/
+EventPublishers/SearchIndexer), no code changes needed:
+
+```bash
+dotnet user-secrets set DISCORD_TOKEN "..." --project src/FplBot
+dotnet user-secrets set DISCORD_CLIENT_ID "..." --project src/FplBot
+dotnet user-secrets set DISCORD_CLIENT_SECRET "..." --project src/FplBot
+dotnet user-secrets set DISCORD_PUBLICKEY "..." --project src/FplBot
+dotnet user-secrets set DiscordAppId "..." --project src/FplBot
+```
+
+All five values must come from the *same* Discord Application (Developer Portal → your app →
+Bot tab for the token, General Information tab for the rest) — they're tied together as one
+identity, so mixing values from different apps fails (wrong bot invited, signature verification
+failures, etc). There's no API/CLI to create a Discord Application programmatically; it's a
+one-time manual step at discord.com/developers/applications.
 
 ## MassTransit — the critical pattern
 
