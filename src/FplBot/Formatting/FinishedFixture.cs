@@ -10,4 +10,5 @@ public class FinishedFixture
 
     public IEnumerable<BonusPointsPlayer> BonusPoints { get; set; } = new List<BonusPointsPlayer>();
     public IEnumerable<DefensiveContributionPlayer> DefensiveContributions { get; set; } = new List<DefensiveContributionPlayer>();
+    public IEnumerable<TopPerformer> TopPerformers { get; set; } = new List<TopPerformer>();
 }

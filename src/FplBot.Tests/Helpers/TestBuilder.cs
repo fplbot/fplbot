@@ -358,6 +358,31 @@ public static class TestBuilder
         return player;
     }
 
+    public static Player WithTeamId(this Player player, int teamId)
+    {
+        player.TeamId = teamId;
+        return player;
+    }
+
+    // A live item for a player with one "explain" entry per fixture. The points are spread over two
+    // stats so tests cover the summing of a fixture's stats.
+    public static LiveItem LiveItem(int playerId, params (int FixtureId, int Points)[] fixtures)
+    {
+        return new LiveItem
+        {
+            Id = playerId,
+            Explain = fixtures.Select(f => new LiveItemExplain
+            {
+                Fixture = f.FixtureId,
+                Stats = new List<LiveItemExplainStat>
+                {
+                    new() { Identifier = "minutes", Points = 1, Value = 90 },
+                    new() { Identifier = "bonus", Points = f.Points - 1, Value = f.Points - 1 }
+                }
+            }).ToList()
+        };
+    }
+
     public static Player WithPosition(this Player player, FplPlayerPosition position)
     {
         player.Position = position;

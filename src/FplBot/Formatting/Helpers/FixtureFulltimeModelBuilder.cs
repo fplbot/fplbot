@@ -5,7 +5,10 @@ namespace FplBot.Formatting.Helpers;
 
 public static class FixtureFulltimeModelBuilder
 {
-    public static FinishedFixture CreateFinishedFixture(ICollection<Team> teams, ICollection<Player> players, Fixture n)
+    // Number of players listed under "Top performers". Players tied with the last one are kept as well.
+    public const int TopPerformersCount = 5;
+
+    public static FinishedFixture CreateFinishedFixture(ICollection<Team> teams, ICollection<Player> players, Fixture n, ICollection<LiveItem>? liveItems = null)
     {
         return new FinishedFixture
         {
@@ -13,8 +16,60 @@ public static class FixtureFulltimeModelBuilder
             HomeTeam = teams.First(t => t.Id == n.HomeTeamId),
             AwayTeam = teams.First(t => t.Id == n.AwayTeamId),
             BonusPoints = CreateBonusPlayers(players, n),
-            DefensiveContributions = CreateDefensiveContributionPlayers(players, n)
+            DefensiveContributions = CreateDefensiveContributionPlayers(players, n),
+            TopPerformers = CreateTopPerformers(players, n, liveItems)
         };
+    }
+
+    // The live endpoint (event/{gw}/live) reports, per player, an "explain" breakdown with the points earned
+    // in each fixture of the gameweek. Summing the entry for this fixture gives the player's points for this
+    // match alone, which keeps double gameweeks correct. The points are provisional at this stage, just like
+    // the bonus points and defensive contributions.
+    private static IEnumerable<TopPerformer> CreateTopPerformers(ICollection<Player> players, Fixture fixture, ICollection<LiveItem>? liveItems)
+    {
+        try
+        {
+            if (liveItems == null || liveItems.Count == 0)
+                return new List<TopPerformer>();
+
+            var ranked = liveItems
+                .Select(ToTopPerformer)
+                .Where(tp => tp != null && tp.Points > 0)
+                .Select(tp => tp!)
+                .OrderByDescending(tp => tp.Points)
+                .ThenBy(tp => tp.Player.WebName)
+                .ToList();
+
+            if (ranked.Count <= TopPerformersCount)
+                return ranked;
+
+            var cutoff = ranked[TopPerformersCount - 1].Points;
+            return ranked.Where(tp => tp.Points >= cutoff).ToList();
+
+            TopPerformer? ToTopPerformer(LiveItem item)
+            {
+                var explain = item.Explain.FirstOrDefault(e => e.Fixture == fixture.Id);
+                if (explain == null)
+                    return null;
+
+                var player = players.FirstOrDefault(p => p.Id == item.Id);
+                if (player == null)
+                    return null;
+
+                if (player.TeamId != fixture.HomeTeamId && player.TeamId != fixture.AwayTeamId)
+                    return null;
+
+                return new TopPerformer
+                {
+                    Player = player,
+                    Points = explain.Stats.Sum(s => s.Points)
+                };
+            }
+        }
+        catch
+        {
+            return new List<TopPerformer>();
+        }
     }
 
     private static IEnumerable<BonusPointsPlayer> CreateBonusPlayers(ICollection<Player> players, Fixture fixture)

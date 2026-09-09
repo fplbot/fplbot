@@ -347,6 +347,17 @@ public static class Formatter
             fullTimeReport += $"\nDefensive contributions:\n";
             fullTimeReport += BulletPoints(defensiveContributionsOutput);
         }
+
+        if (fixture.TopPerformers.Any())
+        {
+            var topPerformersOutput = CreateTopPerformersOutput(fixture);
+            if (fullTimeReport.Length > 0)
+            {
+                fullTimeReport += "\n"; // blank line between the previous section and the top performers
+            }
+            fullTimeReport += $"\nTop performers:\n";
+            fullTimeReport += BulletPoints(topPerformersOutput);
+        }
         return fullTimeReport;
     }
 
@@ -356,6 +367,14 @@ public static class Formatter
             .OrderByDescending(dc => dc.Contributions)
             .ThenBy(dc => dc.Player.WebName)
             .Select(dc => $"{dc.Player.WebName} ({dc.Contributions})");
+    }
+
+    public static IEnumerable<string> CreateTopPerformersOutput(FinishedFixture fixture)
+    {
+        return fixture.TopPerformers
+            .OrderByDescending(tp => tp.Points)
+            .ThenBy(tp => tp.Player.WebName)
+            .Select(tp => $"{tp.Player.WebName} ({tp.Points}p)");
     }
 
     static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)
