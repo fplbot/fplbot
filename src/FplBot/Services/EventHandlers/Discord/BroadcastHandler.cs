@@ -9,7 +9,7 @@ public class BroadcastHandler(IGuildRepository repo, ILogger<BroadcastHandler> l
     public async Task Consume(ConsumeContext<BroadcastToDiscord> context)
     {
         var message = context.Message;
-        logger.LogInformation("BROADCASTING {Message} TO DISCORD USING filter {ChannelFilter}", message.Message, message.Filter);
+        logger.LogInformation("HANDLING BROADCAST OF {Message} TO DISCORD USING filter {ChannelFilter}", message.Message, message.Filter);
 
         if (message.Filter == ChannelFilter.NotSet)
         {
@@ -39,7 +39,7 @@ public class BroadcastHandler(IGuildRepository repo, ILogger<BroadcastHandler> l
             }
             else
             {
-                if (guild.GuildId == "893932860162064414")
+                if (guild.GuildId == "1546966580007542937")
                 {
                     await SendToGuild(message, context, guild, guildfilter);
                 }
