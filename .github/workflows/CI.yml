@@ -3,15 +3,11 @@ name: CI
 on:
   push:
     branches:
-      - "**"
       - "main"
   pull_request:
 
 jobs:
   ci-on-ubuntu:
-    if: >
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository
     name: ci
     runs-on: ubuntu-latest
     steps:
