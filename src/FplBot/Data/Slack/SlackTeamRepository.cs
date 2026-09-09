@@ -124,7 +124,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     private static string FromKeyToTeamId(string key)
     {
-        return key.Split('-')[1];
+        return key.Substring(key.IndexOf('-') + 1);
     }
 
     public async Task<IEnumerable<SlackTeam>> GetAllTeams()

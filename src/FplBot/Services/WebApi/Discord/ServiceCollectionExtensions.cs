@@ -12,7 +12,7 @@ namespace FplBot.Discord;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddFplBotDiscordWebEndpoints(this IServiceCollection services, IConfiguration config,
-        ConnectionMultiplexer connection)
+        ConnectionMultiplexer connection, IHostEnvironment env)
     {
         services.AddSingleton<DiscordSlashCommandsEnsurer>();
         services.AddDiscordHttpClient(c =>
@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
             c.DiscordApplicationId = config["DiscordAppId"] ?? string.Empty;
             c.DiscordAppToken = config["DISCORD_TOKEN"] ?? string.Empty;
         });
+        services.UseRealDiscordClientOutsideDevelopment(env);
         services.Configure<RedisOptions>(config);
 
         services.TryAddSingleton<IConnectionMultiplexer>(connection);

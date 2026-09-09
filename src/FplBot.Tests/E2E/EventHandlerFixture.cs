@@ -95,7 +95,9 @@ public class EventHandlerFixture : IAsyncLifetime
                 services.AddSingleton<IEventStatusClient>(A.Fake<IEventStatusClient>());
 
                 // Discord and Slack services (EventHandlersService.Configure calls AddSlackServices internally)
-                new EventHandlersService().Configure(services, config, _multiplexer, null!);
+                var fakeHostEnvironment = A.Fake<IHostEnvironment>();
+                A.CallTo(() => fakeHostEnvironment.EnvironmentName).Returns("Testing");
+                new EventHandlersService().Configure(services, config, _multiplexer, fakeHostEnvironment);
 
                 // Replace the real ISlackClientBuilder with the capturing fake — must come AFTER Configure()
                 // because Configure() calls AddSlackServices() which re-registers the real builder.

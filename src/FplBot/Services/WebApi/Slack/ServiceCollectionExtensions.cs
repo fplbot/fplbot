@@ -9,6 +9,7 @@ using FplBot.WebApi.Slack.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
+using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
 
@@ -17,14 +18,14 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionFplBotSlackWebExtensions
 {
-    public static IServiceCollection AddFplBotSlackWebEndpoints(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection)
+    public static IServiceCollection AddFplBotSlackWebEndpoints(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection, IHostEnvironment env)
     {
         services.Configure<RedisOptions>(config);
         services.TryAddSingleton(redisConnection);
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
         services.AddFplApiClient(config);
         services.AddSearching(config.GetSection("Search"));
-        services.AddSlackClientBuilder();
+        services.AddDevAwareSlackClientBuilder(env);
         services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
         services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
         services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
