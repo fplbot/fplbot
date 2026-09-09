@@ -25,7 +25,12 @@ public class DiscordFixtureFulltimeHandler(
         var subs = await teamRepo.GetAllGuildSubscriptions();
         var settings = await settingsClient.GetGlobalSettings();
         var fixtures = await fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
-        var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId)!;
+        var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
+        if (fplfixture == null)
+        {
+            _logger.LogWarning("Could not find fixture {FixtureId} in FPL API", message.FixtureId);
+            return;
+        }
         var liveItems = fplfixture.Event.HasValue
             ? await liveClient.GetLiveItems(fplfixture.Event.Value, isOngoingGameweek: true)
             : null;

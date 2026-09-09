@@ -4,7 +4,6 @@ using Fpl.Client.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -46,7 +45,9 @@ public static class Factory
         var configuration = config.Build();
 
         var services = new ServiceCollection();
-        services.AddFplBotSlackWebEndpoints(configuration, A.Fake<IConnectionMultiplexer>());
+        var hostEnvironment = A.Fake<IHostEnvironment>();
+        A.CallTo(() => hostEnvironment.EnvironmentName).Returns("Testing");
+        services.AddFplBotSlackWebEndpoints(configuration, A.Fake<IConnectionMultiplexer>(), hostEnvironment);
         services.AddDistributedMemoryCache();
 
         SlackClient = A.Fake<ISlackClient>();
@@ -66,8 +67,6 @@ public static class Factory
         services.Replace<IElasticClient>(elasticClient);
         services.AddSingleton<IPublishEndpoint>(A.Fake<IPublishEndpoint>());
 
-        var hostEnvironment = A.Fake<IHostEnvironment>();
-        A.CallTo(() => hostEnvironment.EnvironmentName).Returns("Production");
         services.AddSingleton(hostEnvironment);
         services.AddFplWorkers();
         var provider = services.BuildServiceProvider();

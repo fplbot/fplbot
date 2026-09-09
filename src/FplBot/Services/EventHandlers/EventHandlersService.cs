@@ -15,8 +15,8 @@ public class EventHandlersService : IFplBotService
 
     public void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env)
     {
-        services.AddDiscordServices(config);
-        services.AddSlackServices(config);
+        services.AddDiscordServices(config, env);
+        services.AddSlackServices(config, env);
         services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
         services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
         services.AddSingleton<IEntryForGameweek, EntryForGameweek>();

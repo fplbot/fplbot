@@ -83,8 +83,8 @@ public static class WebApplicationBuilderExtensions
         });
 
         services.Configure<AnalyticsOptions>(configuration);
-        services.AddFplBotSlackWebEndpoints(configuration, redisConn);
-        services.AddFplBotDiscordWebEndpoints(configuration, redisConn);
+        services.AddFplBotSlackWebEndpoints(configuration, redisConn, env);
+        services.AddFplBotDiscordWebEndpoints(configuration, redisConn, env);
         services.AddIndexingServices(configuration, redisConn);
 
         services.AddAuthentication(options =>
