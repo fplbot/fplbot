@@ -24,6 +24,48 @@ const router = createRouter({
       name: "success",
       component: () => import("./views/SuccessView.vue"),
     },
+    {
+      path: "/admin",
+      component: () => import("./layouts/AdminLayout.vue"),
+      children: [
+        {
+          path: "",
+          name: "admin-home",
+          component: () => import("./views/admin/AdminHomeView.vue"),
+        },
+        {
+          path: "slack/broadcast",
+          name: "admin-slack-broadcast",
+          component: () => import("./views/admin/SlackBroadcastView.vue"),
+        },
+        {
+          path: "discord/broadcast",
+          name: "admin-discord-broadcast",
+          component: () => import("./views/admin/DiscordBroadcastView.vue"),
+        },
+        {
+          path: "indexing",
+          name: "admin-indexing",
+          component: () => import("./views/admin/IndexingView.vue"),
+        },
+        {
+          path: "discord/slashcommands",
+          name: "admin-discord-slashcommands",
+          component: () => import("./views/admin/DiscordSlashCommandsView.vue"),
+        },
+        {
+          path: "discord/subscriptions",
+          name: "admin-discord-subscriptions",
+          component: () => import("./views/admin/DiscordSubscriptionsView.vue"),
+        },
+        {
+          path: "teams/:teamId",
+          name: "admin-team-details",
+          component: () => import("./views/admin/TeamDetailsView.vue"),
+          props: true,
+        },
+      ],
+    },
   ],
 });
 
