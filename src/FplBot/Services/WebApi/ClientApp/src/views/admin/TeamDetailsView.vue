@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import {
-  getTeam,
-  updateTeam,
-  uninstallTeam,
-  publishTeamEvent,
-  ALL_EVENT_SUBSCRIPTIONS,
-  type TeamDetails,
-  type EventSubscription,
-} from "../../api/admin";
+import { getTeam, updateTeam, uninstallTeam, publishTeamEvent, ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
+import type { TeamDetails, EventSubscription } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const props = defineProps<{ teamId: string }>();

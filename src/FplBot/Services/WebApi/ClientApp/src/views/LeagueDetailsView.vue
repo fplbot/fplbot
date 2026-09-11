@@ -2,7 +2,8 @@
 import { ref, onMounted } from "vue";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
-import { getLeagueDetails, type LeagueDetails } from "../api/leagues";
+import { getLeagueDetails } from "../api/api";
+import type { LeagueDetails } from "../api/types";
 
 const props = defineProps<{ id: string }>();
 

@@ -6,9 +6,8 @@ import {
   installSlashCommands,
   installGlobalSlashCommands,
   uninstallSlashCommands,
-  type DiscordSlashCommand,
-  type SlashCommandDefinition,
-} from "../../api/admin";
+} from "../../api/api";
+import type { DiscordSlashCommand, SlashCommandDefinition } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const definitions = ref<SlashCommandDefinition[]>([]);

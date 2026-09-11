@@ -2,7 +2,7 @@
 import { onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useAdminAuth } from "../composables/useAdminAuth";
-import { loginUrl, logout } from "../api/admin";
+import { loginUrl, logout } from "../api/api";
 
 const route = useRoute();
 const { state, me, refresh } = useAdminAuth();

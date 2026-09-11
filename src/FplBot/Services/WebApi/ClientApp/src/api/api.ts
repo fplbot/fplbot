@@ -1,3 +1,23 @@
+import type {
+  AdminMe,
+  Bookmarks,
+  ChannelFilter,
+  DiscordSlashCommand,
+  EventSubscription,
+  GuildWithSubs,
+  InstallUrlResponse,
+  LeagueDetails,
+  MessageResponse,
+  PagedResult,
+  SearchAnyResponse,
+  SearchAnyResult,
+  SearchType,
+  SlashCommandDefinition,
+  TeamDetails,
+  TeamSummary,
+  UpdateTeamRequest,
+} from "./types";
+
 export class AdminApiError extends Error {
   status: number;
   // Server-provided detail from an application/problem+json body (RFC 9457), when present.
@@ -35,25 +55,7 @@ function postJson<T>(url: string, body?: unknown, method: string = "POST"): Prom
   });
 }
 
-// Matches the backend EventSubscription enum (FplBot.Data.EventSubscription), serialized as
-// strings via the JsonStringEnumConverter registered for minimal API JSON responses.
-export type EventSubscription =
-  | "All"
-  | "Standings"
-  | "Captains"
-  | "Transfers"
-  | "FixtureGoals"
-  | "FixtureAssists"
-  | "FixtureCards"
-  | "FixturePenaltyMisses"
-  | "FixtureFullTime"
-  | "Taunts"
-  | "PriceChanges"
-  | "InjuryUpdates"
-  | "Deadlines"
-  | "Lineups"
-  | "NewPlayers"
-  | "FixtureRemovedFromGameweek";
+// ---- Admin: auth ----
 
 export const ALL_EVENT_SUBSCRIPTIONS: EventSubscription[] = [
   "All", "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
@@ -61,54 +63,9 @@ export const ALL_EVENT_SUBSCRIPTIONS: EventSubscription[] = [
   "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek",
 ];
 
-// Matches FplBot.Messaging.Contracts.Commands.v1.ChannelFilter.
-export type ChannelFilter =
-  | "NotSet"
-  | "AllChannels"
-  | "AllChannelsDevServer"
-  | "OnlyChannelsFollowingALeagueDevServer"
-  | "OnlyChannelsFollowingALeague";
-
 export const ALL_CHANNEL_FILTERS: ChannelFilter[] = [
   "AllChannels", "AllChannelsDevServer", "OnlyChannelsFollowingALeagueDevServer", "OnlyChannelsFollowingALeague",
 ];
-
-export interface AdminMe {
-  name: string | null;
-  teamId: string | null;
-  teamName: string | null;
-  userId: string | null;
-  isAdmin: boolean;
-}
-
-export interface PagedResult<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-}
-
-export interface TeamSummary {
-  teamId: string;
-  teamName: string | null;
-  channel: string | null;
-  leagueId: number | null;
-  subscriptions: EventSubscription[];
-}
-
-export interface TeamDetails {
-  teamId: string;
-  teamName: string | null;
-  channel: string | null;
-  leagueId: number | null;
-  leagueName: string | null;
-  subscriptions: EventSubscription[];
-  channelStatus: boolean | null;
-}
-
-export interface MessageResponse {
-  message: string;
-}
 
 export async function getMe(): Promise<AdminMe | null> {
   const res = await fetch("/api/admin/me", { credentials: "include" });
@@ -124,6 +81,8 @@ export function loginUrl(returnUrl?: string): string {
 export async function logout(): Promise<void> {
   await request<void>("/api/admin/logout", { method: "POST" });
 }
+
+// ---- Admin: Slack teams ----
 
 export function getTeams(query: string, page: number, pageSize: number): Promise<PagedResult<TeamSummary>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
@@ -141,12 +100,6 @@ export function uninstallTeam(teamId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/teams/${teamId}/uninstall`);
 }
 
-export interface UpdateTeamRequest {
-  leagueId: number;
-  channel: string;
-  subscriptions: EventSubscription[];
-}
-
 export function updateTeam(teamId: string, body: UpdateTeamRequest): Promise<{ updated: boolean; warnings: string[] }> {
   return postJson(`/api/admin/teams/${teamId}`, body, "PUT");
 }
@@ -159,14 +112,7 @@ export function broadcastToSlack(message: string): Promise<MessageResponse> {
   return postJson("/api/admin/slack/broadcast", { message });
 }
 
-export function broadcastToDiscord(message: string, filter: ChannelFilter): Promise<MessageResponse> {
-  return postJson("/api/admin/discord/broadcast", { message, filter });
-}
-
-export interface Bookmarks {
-  leagueIndexingBookmark: number;
-  entryIndexingBookmark: number;
-}
+// ---- Admin: search indexing bookmarks ----
 
 export function getBookmarks(): Promise<Bookmarks> {
   return request("/api/admin/indexing/bookmarks");
@@ -180,20 +126,14 @@ export function setEntryBookmark(bookmark: number): Promise<MessageResponse> {
   return postJson("/api/admin/indexing/bookmarks/entry", { bookmark });
 }
 
-export interface DiscordSlashCommand {
-  id: string;
-  name: string;
-  description: string;
+// ---- Admin: Discord ----
+
+export function broadcastToDiscord(message: string, filter: ChannelFilter): Promise<MessageResponse> {
+  return postJson("/api/admin/discord/broadcast", { message, filter });
 }
 
 export function getSlashCommands(): Promise<DiscordSlashCommand[]> {
   return request("/api/admin/discord/slashcommands");
-}
-
-export interface SlashCommandDefinition {
-  name: string;
-  description: string;
-  optionsSummary: string;
 }
 
 export function getSlashCommandDefinitions(): Promise<SlashCommandDefinition[]> {
@@ -212,19 +152,6 @@ export function uninstallSlashCommands(): Promise<MessageResponse> {
   return postJson("/api/admin/discord/slashcommands/uninstall");
 }
 
-export interface GuildSubscription {
-  guildId: string;
-  channelId: string;
-  leagueId: number | null;
-  subscriptions: EventSubscription[];
-}
-
-export interface GuildWithSubs {
-  guildId: string;
-  guildName: string;
-  subscriptions: GuildSubscription[];
-}
-
 export function getDiscordSubscriptions(query: string, page: number, pageSize: number): Promise<PagedResult<GuildWithSubs>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
   return request(`/api/admin/discord/subscriptions?${params.toString()}`);
@@ -232,4 +159,47 @@ export function getDiscordSubscriptions(query: string, page: number, pageSize: n
 
 export function deleteDiscordSubscription(guildId: string, channelId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/subscriptions/${guildId}/${channelId}`, { method: "DELETE" });
+}
+
+// ---- OAuth (public site install buttons) ----
+
+export async function redirectToSlackInstall(): Promise<void> {
+  const res = await fetch("/api/oauth/install-url");
+  const data: InstallUrlResponse = await res.json();
+  window.location.href = data.redirectUri;
+}
+
+export async function redirectToDiscordInstall(): Promise<void> {
+  const res = await fetch("/api/oauth/install-url-discord");
+  const data: InstallUrlResponse = await res.json();
+  window.location.href = data.redirectUri;
+}
+
+// ---- Search ----
+
+export async function searchAny(
+  query: string,
+  page: number,
+  type: SearchType = "All"
+): Promise<SearchAnyResult> {
+  const params = new URLSearchParams({ query, page: String(page), type });
+  const res = await fetch(`/api/search/any?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Search request failed with status ${res.status}`);
+  }
+  const data: SearchAnyResponse = await res.json();
+  return data.hits;
+}
+
+// ---- League details (public site) ----
+
+export async function getLeagueDetails(leagueId: number): Promise<LeagueDetails | null> {
+  const res = await fetch(`/api/fpl/leagues/${leagueId}/details`);
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`League details request failed with status ${res.status}`);
+  }
+  return res.json();
 }

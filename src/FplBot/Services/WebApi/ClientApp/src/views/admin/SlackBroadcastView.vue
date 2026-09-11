@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { broadcastToSlack } from "../../api/admin";
+import { broadcastToSlack } from "../../api/api";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const message = ref("");

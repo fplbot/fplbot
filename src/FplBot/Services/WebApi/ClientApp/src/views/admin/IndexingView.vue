@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { getBookmarks, setLeagueBookmark, setEntryBookmark } from "../../api/admin";
+import { getBookmarks, setLeagueBookmark, setEntryBookmark } from "../../api/api";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const leagueBookmark = ref(0);

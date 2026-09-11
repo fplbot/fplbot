@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { getDiscordSubscriptions, deleteDiscordSubscription, type GuildWithSubs } from "../../api/admin";
+import { getDiscordSubscriptions, deleteDiscordSubscription } from "../../api/api";
+import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const query = ref("");

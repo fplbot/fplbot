@@ -1,5 +1,6 @@
 import { ref } from "vue";
-import { getMe, AdminApiError, type AdminMe } from "../api/admin";
+import { getMe, AdminApiError } from "../api/api";
+import type { AdminMe } from "../api/types";
 
 export type AdminAuthState = "loading" | "anonymous" | "forbidden" | "authorized" | "error";
 

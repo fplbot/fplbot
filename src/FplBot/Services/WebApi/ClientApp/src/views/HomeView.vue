@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
-import { redirectToSlackInstall, redirectToDiscordInstall } from "../api/oauth";
+import { redirectToSlackInstall, redirectToDiscordInstall } from "../api/api";
 
 const router = useRouter();
 const searchValue = ref("");

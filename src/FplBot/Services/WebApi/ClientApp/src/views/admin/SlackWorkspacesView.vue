@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { getTeams, type TeamSummary } from "../../api/admin";
+import { getTeams } from "../../api/api";
+import type { TeamSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const query = ref("");

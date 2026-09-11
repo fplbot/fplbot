@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { broadcastToDiscord, ALL_CHANNEL_FILTERS, type ChannelFilter } from "../../api/admin";
+import { broadcastToDiscord, ALL_CHANNEL_FILTERS } from "../../api/api";
+import type { ChannelFilter } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const message = ref("");
