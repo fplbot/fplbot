@@ -25,19 +25,17 @@ and any services unrelated to your change alone.
 ```bash
 dotnet build --no-incremental src/FplBot/FplBot.csproj
 cd src/FplBot
-ASPNETCORE_ENVIRONMENT=Development ./bin/Debug/net10.0/FplBot --services WebApi > /tmp/webapi.log 2>&1 &
-DOTNET_ENVIRONMENT=Development   ./bin/Debug/net10.0/FplBot --services EventHandlers > /tmp/eventhandlers.log 2>&1 &
+DOTNET_ENVIRONMENT=Development ./bin/Debug/net11.0/FplBot --services WebApi > /tmp/webapi.log 2>&1 &
+DOTNET_ENVIRONMENT=Development ./bin/Debug/net11.0/FplBot --services EventHandlers > /tmp/eventhandlers.log 2>&1 &
 ```
 
-**Gotcha:** WebApi runs as a `WebApplication` (reads `ASPNETCORE_ENVIRONMENT`). EventHandlers/
-EventPublishers/SearchIndexer run as a generic `Host` via `Host.CreateDefaultBuilder`
-(`FplBotApplication.RunAsWorkerHost`), which reads `DOTNET_ENVIRONMENT` instead. Set both env vars
-when you need Development behavior across services, or check the "Hosting environment: ..." line
-in the startup log to confirm which one landed.
+`DOTNET_ENVIRONMENT` is all you need across every service, including WebApi — don't bother with
+`ASPNETCORE_ENVIRONMENT`. Check the "Hosting environment: ..." line in the startup log to confirm
+it landed.
 
 There is no `appsettings.Development.json` — dev safety comes from `env.IsDevelopment()` checks in
-code (dev-logging Slack/Discord client wrappers), not config overrides. Default `ASPNETCORE_ENVIRONMENT`/
-`DOTNET_ENVIRONMENT` when unset is `Production`.
+code (dev-logging Slack/Discord client wrappers), not config overrides. Default `DOTNET_ENVIRONMENT`
+when unset is `Production`.
 
 ## Redis access
 

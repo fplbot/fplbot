@@ -16,7 +16,8 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "11.0.x"
+          dotnet-quality: "preview"
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
