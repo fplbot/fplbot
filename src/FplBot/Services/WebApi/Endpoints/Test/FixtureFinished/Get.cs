@@ -1,4 +1,3 @@
-using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Test.FixtureFinished;

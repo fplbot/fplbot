@@ -52,10 +52,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Integrations\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Remove="Services/WebApi/wwwroot/**/*" />
     <Content Include="Services/WebApi/wwwroot/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

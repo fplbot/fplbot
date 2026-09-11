@@ -1,7 +1,6 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Data;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Services.EventHandlers;
