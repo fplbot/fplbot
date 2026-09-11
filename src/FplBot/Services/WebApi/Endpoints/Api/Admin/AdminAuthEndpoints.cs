@@ -9,11 +9,14 @@ public static class AdminAuthEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/login", Login).AllowAnonymous();
-        // Cast to Delegate: a handler whose only parameter is HttpContext is otherwise an
-        // exact signature match for RequestDelegate (via Task<IResult>-to-Task covariance),
-        // so MapPost would silently pick that overload and discard the returned IResult
-        // instead of writing it to the response (ASP0016).
-        group.MapPost("/logout", (Delegate)Logout).AllowAnonymous();
+        // Typed local instead of passing the Logout method group directly: a handler whose
+        // only parameter is HttpContext is otherwise an exact signature match for
+        // RequestDelegate (via Task<IResult>-to-Task covariance), so MapPost would silently
+        // pick that overload and discard the returned IResult instead of writing it to the
+        // response (ASP0016). A Func<HttpContext, Task<IResult>> value isn't implicitly
+        // convertible to RequestDelegate, so this can't be misresolved.
+        Func<HttpContext, Task<IResult>> logout = Logout;
+        group.MapPost("/logout", logout).AllowAnonymous();
         group.MapGet("/me", Me).RequireAuthorization();
     }
 
