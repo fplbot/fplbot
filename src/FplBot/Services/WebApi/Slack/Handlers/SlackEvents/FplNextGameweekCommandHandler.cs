@@ -16,7 +16,7 @@ public class FplNextGameweekCommandHandler(
     ISlackTeamRepository tokenStore)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "next" };
+    public override string[] Commands => ["next"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
     {

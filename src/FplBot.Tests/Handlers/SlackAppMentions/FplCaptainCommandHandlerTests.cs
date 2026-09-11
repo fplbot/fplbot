@@ -1,0 +1,52 @@
+using FplBot.Data.Slack;
+using FplBot.Tests.Helpers;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
+using Slackbot.Net.Endpoints.Abstractions;
+
+namespace FplBot.Tests.Handlers.SlackAppMentions;
+
+public class FplCaptainCommandHandlerTests(ITestOutputHelper logger)
+{
+    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplCaptainCommandHandler>(logger);
+
+    [Theory]
+    [InlineData("@fplbot captains")]
+    [InlineData("<@UREFQD887> captains")]
+    public async Task GetCaptainsShouldPostAllEntryCaptainPicks(string input)
+    {
+        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
+        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
+        Assert.StartsWith("💥", playerData.Response);
+    }
+
+    [Theory]
+    [InlineData("@fplbot captains 1")]
+    [InlineData("<@UREFQD887> captains 1")]
+    public async Task GetCaptainsForGameweekShouldPostAllEntryCaptainPicksForThatGameweek(string input)
+    {
+        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
+        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
+
+        Assert.StartsWith("💥", playerData.Response);
+    }
+
+    [Theory]
+    [InlineData("@fplbot captains chart")]
+    [InlineData("<@UREFQD887> captains chart")]
+    public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForCurrentGw(string input)
+    {
+        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
+        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
+        Assert.StartsWith("📊", playerData.Response);
+    }
+
+    [Theory]
+    [InlineData("<@UREFQD887> captains chart 19")]
+    [InlineData("<@UREFQD887> captains 19 chart")]
+    public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForExplicitGw(string input)
+    {
+        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
+        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
+        Assert.StartsWith("📊", playerData.Response);
+    }
+}

@@ -1,0 +1,75 @@
+using FplBot.Data.Slack;
+using FplBot.Tests.Helpers;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
+using Slackbot.Net.Endpoints.Abstractions;
+
+namespace FplBot.Tests.Handlers.SlackAppMentions;
+
+public class FplChangeLeagueIdHandlerTests(ITestOutputHelper logger)
+{
+    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplFollowLeagueHandler>(logger);
+
+    [Fact]
+    public async Task ChangeLeagueIdShouldUpdate()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow 126199");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("Thanks! You're now following", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ChangeToInvalidLeagueIdShouldNotUpdate()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow abc");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("Could not update league to id 'abc'. Make sure it's a single valid number.", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ChangeToNotFoundLeagueIdShouldNotUpdate()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow 0");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("Could not find league 0 :/ Could you find it at https://fantasy.premierleague.com/leagues/0/standings/c ?", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ChangeToMissingArgsProvidesHelpText()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("No leagueId provided. Usage: `@fplbot follow 123`", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ChangeToOtherNotFoundLeagueIdShouldNotUpdate()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow 11111111");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("Could not find league 11111111 :/ Could you find it at https://fantasy.premierleague.com/leagues/11111111/standings/c ?", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task HandlesFormattedPhoneNumberLinks()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow <tel:1234|1234>");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("Thanks! You're now following", response.Response, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("leagueId: 1234", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    [Fact]
+    public async Task HandlesMultipleNumbers()
+    {
+        var dummy = Factory.CreateDummyEvent(_client.Team, "follow 1234 5678");
+        var response = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        logger.WriteLine(response.Response);
+        Assert.Contains("Could not update league to id", response.Response, StringComparison.InvariantCultureIgnoreCase);
+    }
+}

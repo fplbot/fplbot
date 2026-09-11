@@ -14,7 +14,7 @@ internal class FplTransfersCommandHandler(
     ISlackTeamRepository slackTeamRepo)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "transfers" };
+    public override string[] Commands => ["transfers"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {

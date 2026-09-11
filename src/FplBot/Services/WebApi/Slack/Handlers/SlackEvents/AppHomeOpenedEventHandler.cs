@@ -43,8 +43,8 @@ public class AppHomeOpenedEventHandler(
             View = new View
             {
                 Type = PublishViewConstants.Home,
-                Blocks = new IBlock[]
-                {
+                Blocks =
+                [
                     new SectionBlock
                     {
                         type = BlockTypes.Section,
@@ -84,7 +84,7 @@ public class AppHomeOpenedEventHandler(
                         }
 
                     }
-                }
+                ]
             }
         };
     }

@@ -38,7 +38,7 @@ public class DiscordGuildStore : IGuildStore
 
         foreach (var key in allTeamKeys)
         {
-            var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _nameField });
+            var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _nameField]);
             if (fetchedTeamData[0] == guildId)
             {
                 await _db.KeyDeleteAsync(key);

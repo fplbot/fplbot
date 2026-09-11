@@ -14,7 +14,7 @@ internal class FplCaptainCommandHandler(
     ISlackWorkSpacePublisher workspacePublisher)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "captains" };
+    public override string[] Commands => ["captains"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent incomingMessage)
     {

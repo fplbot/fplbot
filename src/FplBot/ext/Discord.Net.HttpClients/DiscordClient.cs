@@ -172,7 +172,7 @@ namespace Discord.Net.HttpClients
             var res = await client.GetFromJsonAsync<IEnumerable<ApplicationsCommand>>(
                 $"api/v8/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands",
                 SerializerOptions);
-            return res ?? Enumerable.Empty<ApplicationsCommand>();
+            return res ?? [];
         }
 
         public record Channel(long Id, string Name, int Type);
@@ -182,7 +182,7 @@ namespace Discord.Net.HttpClients
         {
             var res = await client.GetAsync($"/api/v8/guilds/{guildId}/channels");
             res.EnsureSuccessStatusCode();
-            return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions) ?? Enumerable.Empty<Channel>();
+            return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions) ?? [];
         }
 
         public async Task<Guild> GuildGet(string guildId)

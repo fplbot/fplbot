@@ -34,7 +34,7 @@ public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient clien
 
                 if (!sub.Subscriptions.Contains(EventSubscription.All))
                 {
-                    var allTypesExceptSubs = allTypes.Except(sub.Subscriptions).Except(new []{ EventSubscription.All });
+                    var allTypesExceptSubs = allTypes.Except(sub.Subscriptions).Except([EventSubscription.All]);
                     content += $"\n\n**Not subscribing:**\n{string.Join("\n", allTypesExceptSubs.Select(s => $" ❌ {s}"))}";
                 }
             }
@@ -54,6 +54,6 @@ public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient clien
 
     private static ChannelMessageWithSourceEmbedResponse Respond(string content)
     {
-        return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed("ℹ️ HELP", content)} };
+        return new ChannelMessageWithSourceEmbedResponse() { Embeds = [new RichEmbed("ℹ️ HELP", content)] };
     }
 }

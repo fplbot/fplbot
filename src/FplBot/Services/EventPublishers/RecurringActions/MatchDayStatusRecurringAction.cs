@@ -6,7 +6,7 @@ using Fpl.EventPublishers.States;
 namespace Fpl.EventPublishers.RecurringActions;
 
 internal class MatchDayStatusRecurringAction(
-    MatchDayStatusMonitor monitor,
+    MatchdayEventPublishing monitor,
     ILogger<MatchDayStatusRecurringAction> logger)
     : IRecurringAction
 {

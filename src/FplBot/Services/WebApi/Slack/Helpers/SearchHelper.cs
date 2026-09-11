@@ -85,7 +85,7 @@ internal interface ISearchableProperty
 
 internal class SearchableProperty(string property) : ISearchableProperty
 {
-    public string[] AsStrings => new[] { property };
+    public string[] AsStrings => [property];
 }
 
 internal class SearchablePropertyCollection(string[] properties) : ISearchableProperty

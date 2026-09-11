@@ -27,7 +27,8 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task<SlackTeam> GetTeam(string teamId)
     {
-        var fetchedTeamData = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField});
+        var fetchedTeamData = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField
+        ]);
 
         var team = new SlackTeam
         {
@@ -58,7 +59,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         if (!fetchedTeamData.HasValue)
         {
-            return new List<EventSubscription>();
+            return [];
         }
 
         (var subs, var unableToParse) = fetchedTeamData.ToString().ParseSubscriptionString(delimiter: " ");
@@ -79,7 +80,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         if(newLeagueId == 0)
             throw new ArgumentNullException(nameof(newLeagueId));
 
-        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_leagueField, newLeagueId) });
+        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_leagueField, newLeagueId)]);
     }
 
     public async Task UpdateChannel(string teamId, string newChannel)
@@ -90,7 +91,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         if(string.IsNullOrEmpty(newChannel))
             throw new ArgumentNullException(nameof(newChannel));
 
-        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_channelField, newChannel) });
+        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_channelField, newChannel)]);
     }
 
     public async Task DeleteByTeamId(string teamId)
@@ -135,7 +136,8 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             var teamId = FromKeyToTeamId(key.ToString());
 
-            var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField});
+            var fetchedTeamData = await _db.HashGetAsync(key, [_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField
+            ]);
 
             var slackTeam = new SlackTeam
             {
@@ -168,6 +170,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         if(string.IsNullOrEmpty(teamId))
             throw new ArgumentNullException(nameof(teamId));
 
-        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), new [] { new HashEntry(_subscriptionsField, string.Join(" ", subscriptions)) });
+        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_subscriptionsField, string.Join(" ", subscriptions))
+        ]);
     }
 }

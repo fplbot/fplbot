@@ -15,7 +15,7 @@ internal class FplPlayerCommandHandler(
     IGlobalSettingsClient globalSettingsClient)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "player" };
+    public override string[] Commands => ["player"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {

@@ -47,12 +47,11 @@ public class DiscordGameweekFinishedHandler(
                     var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
                     var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
                     var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
-                    messages.AddRange(new RichMesssage[]
-                    {
+                    messages.AddRange([
                         new ("ℹ️ Gameweek finished!",intro),
                         new ("ℹ️ Standings", standings),
-                        new ("ℹ️ Top 3", topThree ?? string.Empty),
-                    });
+                        new ("ℹ️ Top 3", topThree ?? string.Empty)
+                    ]);
 
                     if (worst is not null)
                     {

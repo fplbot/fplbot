@@ -1,7 +1,6 @@
 using AspNet.Security.OAuth.Slack;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 

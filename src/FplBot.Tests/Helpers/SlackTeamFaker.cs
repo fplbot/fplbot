@@ -1,4 +1,5 @@
 using Bogus;
+using FplBot.Data;
 using FplBot.Data.Slack;
 
 namespace FplBot.Tests.Helpers;

@@ -6,16 +6,22 @@ public static class CorsOriginValidator
 {
     public const string CustomCorsPolicyName = "CustomDynamicHerokuReviewAppsCompliantCorsPolicy";
 
-    public static List<string> FixedOrigins = new List<string>
-    {
+    public static List<string> FixedOrigins =
+    [
         "http://localhost:3000",
+
         "https://fplbot-frontend.herokuapp.com",
+
         "https://fplbot-frontend-test.herokuapp.com",
+
         "https://www.fplbot.app",
+
         "https://test.fplbot.app",
+
         "https://www.fplsearch.com",
+
         "https://fplsearch.com"
-    };
+    ];
 
     private static readonly Regex HerokuReviewAppsOriginRegex = new Regex("https:\\/\\/fplbotfrontend-pr-\\d+.herokuapp.com");
 

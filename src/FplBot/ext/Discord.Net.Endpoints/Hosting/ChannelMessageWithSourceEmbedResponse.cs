@@ -5,7 +5,7 @@ public class ChannelMessageWithSourceEmbedResponse : SlashCommandResponse
     public ChannelMessageWithSourceEmbedResponse()
     {
         Type = 4;
-        Embeds = new List<RichEmbed>();
+        Embeds = [];
     }
 
     public List<RichEmbed> Embeds { get; set; }

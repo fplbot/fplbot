@@ -58,4 +58,8 @@
     <Using Include="Xunit.Abstractions" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Handlers\" />
+  </ItemGroup>
+
 </Project>

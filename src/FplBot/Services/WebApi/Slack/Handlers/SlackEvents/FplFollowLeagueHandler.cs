@@ -14,7 +14,7 @@ public class FplFollowLeagueHandler(
     ILogger<FplFollowLeagueHandler> logger)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "follow" };
+    public override string[] Commands => ["follow"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
@@ -54,7 +54,7 @@ public class FplFollowLeagueHandler(
                 await slackTeamRepository.UpdateChannel(eventMetadata.Team_Id, message.Channel);
                 if (!team.Subscriptions.Any())
                 {
-                    await slackTeamRepository.UpdateSubscriptions(eventMetadata.Team_Id, new[] { EventSubscription.All });
+                    await slackTeamRepository.UpdateSubscriptions(eventMetadata.Team_Id, [EventSubscription.All]);
                 }
                 var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in {ChannelName()}";
                 await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, success);

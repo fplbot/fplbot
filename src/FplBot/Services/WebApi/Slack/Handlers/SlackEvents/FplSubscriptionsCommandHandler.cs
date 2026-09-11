@@ -13,7 +13,7 @@ internal class FplSubscriptionsCommandHandler(
     ILogger<FplSubscriptionsCommandHandler> logger)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "subscriptions" };
+    public override string[] Commands => ["subscriptions"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {

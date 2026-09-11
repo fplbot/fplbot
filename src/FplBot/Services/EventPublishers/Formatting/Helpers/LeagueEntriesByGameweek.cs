@@ -1,0 +1,49 @@
+using System.Collections.Concurrent;
+using System.Net;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+
+namespace FplBot.Formatting.Helpers;
+
+public class LeagueEntriesByGameweek(
+    ILeagueClient leagueClient,
+    IEntryForGameweek entryForGameweek,
+    ILogger<LeagueEntriesByGameweek> logger)
+    : ILeagueEntriesByGameweek
+{
+    public async Task<IEnumerable<GameweekEntry>> GetEntriesForGameweek(int gw, int leagueId)
+    {
+        try
+        {
+            var league = await leagueClient.GetClassicLeague(leagueId);
+
+            var entries = league?.Standings?.Entries ?? new List<ClassicLeagueEntry>();
+
+            var entryDictionary = new ConcurrentBag<GameweekEntry>();
+
+            await Task.WhenAll(entries.Select(async entry =>
+            {
+                var gameweekEntry = await entryForGameweek.GetEntryForGameweek((ClassicLeagueEntry)entry, gw);
+                if (gameweekEntry != null)
+                    entryDictionary.Add(gameweekEntry);
+            }));
+
+            return entryDictionary;
+        }
+        catch (HttpRequestException hre) when (LogWarning(hre, gw, leagueId))
+        {
+            return [];
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+            return [];
+        }
+    }
+    private bool LogWarning(HttpRequestException hre, int gw, int leagueId)
+    {
+        logger.LogWarning("Could not get entries in {GW} for {LeagueId}", gw, leagueId);
+        return hre.StatusCode == HttpStatusCode.NotFound;
+    }
+
+}

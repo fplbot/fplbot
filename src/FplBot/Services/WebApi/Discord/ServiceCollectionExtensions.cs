@@ -20,7 +20,12 @@ public static class ServiceCollectionExtensions
             c.DiscordApplicationId = config["DiscordAppId"] ?? string.Empty;
             c.DiscordAppToken = config["DISCORD_TOKEN"] ?? string.Empty;
         });
-        services.UseRealDiscordClientOutsideDevelopment(env);
+        if (!env.IsDevelopment())
+        {
+            services.AddTransient<IDiscordClient>(sp => sp.GetRequiredService<DiscordClient>());
+        }
+
+        IServiceCollection temp = services;
         services.Configure<RedisOptions>(config);
 
         services.TryAddSingleton<IConnectionMultiplexer>(connection);

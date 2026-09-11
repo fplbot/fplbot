@@ -9,7 +9,7 @@ public static class StringExtensions
 
         if (string.IsNullOrWhiteSpace(subscriptionString))
         {
-            return (Enumerable.Empty<EventSubscription>(), Array.Empty<string>());
+            return ([], []);
         }
 
         var split = subscriptionString.Split(delimiter);

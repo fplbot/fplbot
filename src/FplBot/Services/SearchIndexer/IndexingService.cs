@@ -20,7 +20,7 @@ public class IndexingService(
     public async Task IndexSingleEntry(int entryId, CancellationToken token)
     {
         var entryItem = await singleEntryIndexProvider.GetSingleEntryToIndex(entryId);
-        await indexingClient.Index(new[] {entryItem!}, singleEntryIndexProvider.IndexName, token);
+        await indexingClient.Index([entryItem!], singleEntryIndexProvider.IndexName, token);
     }
 
     public async Task IndexLeagues(CancellationToken token, Action<int>? pageProgress = null)

@@ -17,7 +17,7 @@ public static class TestGoal
 
     private static FixtureEventsOccured FixtureEvents(StatType type, bool isRemoved)
     {
-        List<FixtureEvents> fixtureEventsList = new();
+        List<FixtureEvents> fixtureEventsList = [];
         FixtureTeam home = new(1, "HOM", "HomeTeam");
         FixtureTeam away = new(2, "AWA", "Away");
         FixtureScore fixtureScore = new(home, away, 35, 0, 1);
@@ -26,11 +26,13 @@ public static class TestGoal
         PlayerDetails playerDetails2 = new(2, Environment.MachineName);
         var teamDetails = TeamType.Home;
 
-        List<PlayerEvent> playerEvents = new()
-        {
+        List<PlayerEvent> playerEvents =
+        [
             new PlayerEvent(playerDetails1, teamDetails, IsRemoved: isRemoved),
-            new PlayerEvent(playerDetails2, teamDetails, false),
-        };
+
+            new PlayerEvent(playerDetails2, teamDetails, false)
+
+        ];
 
         statMap.Add(type, playerEvents);
 

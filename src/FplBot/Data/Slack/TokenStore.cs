@@ -72,7 +72,7 @@ public class TokenStore : ITokenStore
 
         foreach (var key in allTeamKeys)
         {
-            var fetchedTeamData = await _db.HashGetAsync(key, new RedisValue[] {_teamIdField, _teamNameField, _accessTokenField});
+            var fetchedTeamData = await _db.HashGetAsync(key, [_teamIdField, _teamNameField, _accessTokenField]);
             if (string.Compare(fetchedTeamData[0], teamId, StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 var workspace = new Workspace(TeamId: fetchedTeamData[0], TeamName: fetchedTeamData[1], Token: fetchedTeamData[2]);
