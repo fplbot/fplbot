@@ -1,7 +1,6 @@
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
 using Slackbot.Net.SlackClients.Http;
-using Slackbot.Net.SlackClients.Http.Extensions;
 
 namespace FplBot.EventHandlers.Slack;
 

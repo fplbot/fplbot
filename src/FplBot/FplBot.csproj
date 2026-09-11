@@ -6,7 +6,6 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);NU1903;NU1904</NoWarn>
-    <RazorPagesRootDirectory>Services/WebApi/Pages</RazorPagesRootDirectory>
     <UserSecretsId>fplbot-secrets</UserSecretsId>
   </PropertyGroup>
 
@@ -33,7 +32,6 @@
     <!-- Web / Auth -->
     <PackageReference Include="AspNet.Security.OAuth.Slack" Version="10.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.12" />
 
     <!-- Slack -->
     <PackageReference Include="Slackbot.Net.Endpoints" Version="8.1.4" />
@@ -49,10 +47,6 @@
 
     <!-- Misc -->
     <PackageReference Include="MinimalHttpLogger" Version="3.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Integrations\" />
   </ItemGroup>
 
   <ItemGroup>

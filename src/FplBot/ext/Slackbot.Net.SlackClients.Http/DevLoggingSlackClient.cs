@@ -20,12 +20,15 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 namespace Slackbot.Net.SlackClients.Http;
 
 /// <summary>
-/// Wraps a real ISlackClient in dev environments so anything that writes to Slack
-/// (posting/updating/uploading/reacting) is logged instead of sent, while reads
-/// still hit the real API. Reads are harmless (no scopes to post/mutate) and are
-/// often useful for local testing (e.g. resolving channel/user info).
+/// Stands in for a real ISlackClient in dev environments so nothing ever reaches the real
+/// Slack API: writes are logged and answered with a canned success, reads return static
+/// fake data. This is what lets the whole admin UI (and anything else built against
+/// ISlackClient) work end to end against Redis-seeded fake teams/guilds without a real
+/// bot token — see DevSeederLifecycleHook's "TeamId-DEV-SLACK" seed, whose channel id
+/// (C0DEV000001) is deliberately included below so admin team-edit's channel lookup
+/// succeeds against it out of the box.
 /// </summary>
-public class DevLoggingSlackClient(ISlackClient inner, ILogger<DevLoggingSlackClient> logger) : ISlackClient
+public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISlackClient
 {
     public Task<ChatPostMessageResponse> ChatPostMessage(string channel, string text)
     {
@@ -99,13 +102,97 @@ public class DevLoggingSlackClient(ISlackClient inner, ILogger<DevLoggingSlackCl
         return Task.FromResult(new Response { Ok = true });
     }
 
-    // Reads: pass through to the real client.
-    public Task<ChatGetPermalinkResponse> ChatGetPermalink(string channel, string message_ts) => inner.ChatGetPermalink(channel, message_ts);
-    public Task<UsersListResponse> UsersList() => inner.UsersList();
-    public Task<ConversationsListResponse> ConversationsListPublicChannels(int? limit = null, string? cursor = null) => inner.ConversationsListPublicChannels(limit, cursor);
-    public Task<ConversationsListResponse> ConversationsMembers(string channel) => inner.ConversationsMembers(channel);
-    public Task<ConversationsRepliesResponse> ConversationsReplies(string channel, string ts, int? limit = null, string? cursor = null) => inner.ConversationsReplies(channel, ts, limit, cursor);
-    public Task<ConversationsHistoryResponse> ConversationsHistory(string channel, int? limit = null, string? cursor = null) => inner.ConversationsHistory(channel, limit, cursor);
-    public Task<ConversationsOpenResponse> ConversationsOpen(string[] users) => inner.ConversationsOpen(users);
-    public Task<UserProfileResponse> UserProfile(string user) => inner.UserProfile(user);
+    // Reads: static fake data, no real API call — see class remarks. The seeded dev team's
+    // channel (C0DEV000001) is included in every channel-bearing response so admin flows
+    // that resolve/validate a channel work against it without any real Slack credentials.
+    private static readonly Conversation[] FakeChannels =
+    [
+        new Conversation { Id = "C0DEV000001", Name = "dev-fplbot", Is_Channel = true, Is_General = false },
+        new Conversation { Id = "C0GENERAL001", Name = "general", Is_Channel = true, Is_General = true },
+        new Conversation { Id = "C0RANDOM0001", Name = "random", Is_Channel = true }
+    ];
+
+    public Task<ChatGetPermalinkResponse> ChatGetPermalink(string channel, string message_ts)
+    {
+        logger.LogInformation("[DEV] Slack chat.getPermalink → {Channel}/{Ts} (fake)", channel, message_ts);
+        return Task.FromResult(new ChatGetPermalinkResponse
+        {
+            Ok = true,
+            Permalink = $"https://dev-fake.slack.local/archives/{channel}/p{message_ts.Replace(".", "")}"
+        });
+    }
+
+    public Task<UsersListResponse> UsersList()
+    {
+        logger.LogInformation("[DEV] Slack users.list (fake)");
+        return Task.FromResult(new UsersListResponse
+        {
+            Ok = true,
+            Members =
+            [
+                new User { Id = "U0DEVUSER01", Name = "dev.user", Real_name = "Dev User", Is_Bot = false }
+            ]
+        });
+    }
+
+    public Task<ConversationsListResponse> ConversationsListPublicChannels(int? limit = null, string? cursor = null)
+    {
+        logger.LogInformation("[DEV] Slack conversations.list (fake, {Count} channels)", FakeChannels.Length);
+        return Task.FromResult(new ConversationsListResponse
+        {
+            Ok = true,
+            Channels = FakeChannels,
+            Response_Metadata = new ResponseMetadata { Next_Cursor = "" }
+        });
+    }
+
+    public Task<ConversationsListResponse> ConversationsMembers(string channel)
+    {
+        logger.LogInformation("[DEV] Slack conversations.members → {Channel} (fake)", channel);
+        return Task.FromResult(new ConversationsListResponse
+        {
+            Ok = true,
+            Channels = FakeChannels,
+            Response_Metadata = new ResponseMetadata { Next_Cursor = "" }
+        });
+    }
+
+    public Task<ConversationsRepliesResponse> ConversationsReplies(string channel, string ts, int? limit = null, string? cursor = null)
+    {
+        logger.LogInformation("[DEV] Slack conversations.replies → {Channel}/{Ts} (fake, empty)", channel, ts);
+        return Task.FromResult(new ConversationsRepliesResponse { Ok = true, Messages = [] });
+    }
+
+    public Task<ConversationsHistoryResponse> ConversationsHistory(string channel, int? limit = null, string? cursor = null)
+    {
+        logger.LogInformation("[DEV] Slack conversations.history → {Channel} (fake, empty)", channel);
+        return Task.FromResult(new ConversationsHistoryResponse
+        {
+            Ok = true,
+            Messages = [],
+            Has_More = false,
+            Response_Metadata = new ResponseMetadata { Next_Cursor = "" }
+        });
+    }
+
+    public Task<ConversationsOpenResponse> ConversationsOpen(string[] users)
+    {
+        logger.LogInformation("[DEV] Slack conversations.open → {Users} (fake)", string.Join(",", users));
+        return Task.FromResult(new ConversationsOpenResponse { Ok = true, channel = new Channel { id = "D0DEVDM0001" } });
+    }
+
+    public Task<UserProfileResponse> UserProfile(string user)
+    {
+        logger.LogInformation("[DEV] Slack users.profile.get → {User} (fake)", user);
+        return Task.FromResult(new UserProfileResponse
+        {
+            Ok = true,
+            Profile = new GetUserProfile
+            {
+                Real_Name = "Dev User",
+                Display_Name = "dev.user",
+                Email = "dev.user@example.local"
+            }
+        });
+    }
 }
