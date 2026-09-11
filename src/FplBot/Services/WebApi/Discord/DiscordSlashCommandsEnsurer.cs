@@ -6,7 +6,7 @@ public record SlashCommandDefinition(string Name, string Description, Applicatio
 
 public record SlashCommandDefinitionSummary(string Name, string Description, string OptionsSummary);
 
-public class DiscordSlashCommandsEnsurer(DiscordClient client, ILogger<DiscordSlashCommandsEnsurer> logger)
+public class DiscordSlashCommandsEnsurer(IDiscordClient client, ILogger<DiscordSlashCommandsEnsurer> logger)
 {
     private readonly ILogger<DiscordSlashCommandsEnsurer> _logger = logger;
 
