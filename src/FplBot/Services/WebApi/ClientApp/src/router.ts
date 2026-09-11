@@ -59,7 +59,7 @@ const router = createRouter({
           children: [
             {
               path: "",
-              redirect: "/admin/discord/broadcast",
+              redirect: "/admin/discord/subscriptions",
             },
             {
               path: "broadcast",
