@@ -47,7 +47,7 @@ export async function searchAny(
   type: SearchType = "All"
 ): Promise<SearchAnyResult> {
   const params = new URLSearchParams({ query, page: String(page), type });
-  const res = await fetch(`/search/any?${params.toString()}`);
+  const res = await fetch(`/api/search/any?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`Search request failed with status ${res.status}`);
   }

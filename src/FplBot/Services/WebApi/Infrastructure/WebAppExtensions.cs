@@ -1,4 +1,7 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.WebApi.Endpoints.Api.Fpl;
+using FplBot.WebApi.Endpoints.Api.Oauth;
+using FplBot.WebApi.Endpoints.Api.Search;
 using FplBot.WebApi.Endpoints.Test;
 using Microsoft.Extensions.FileProviders;
 using Serilog;
@@ -40,6 +43,12 @@ public static class WebAppExtensions
         app.UseMinimalEndpoints(
             ("/debug", TestEndpoints.Map)
         );
+
+        var api = app.MapGroup("/api");
+        FplEndpoints.Map(api.MapGroup("/fpl").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
+        SearchEndpoints.Map(api.MapGroup("/search").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
+        InstallUrlEndpoints.Map(api.MapGroup("/oauth").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
+
         app.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
         app.MapRazorPages();
         app.MapFallbackToFile("index.html", new StaticFileOptions

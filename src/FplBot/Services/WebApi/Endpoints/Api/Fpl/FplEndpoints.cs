@@ -1,27 +1,23 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Microsoft.AspNetCore.Mvc;
 
-namespace FplBot.WebApi.Controllers;
+namespace FplBot.WebApi.Endpoints.Api.Fpl;
 
-[ApiController]
-[Route("[controller]")]
-public class FplController(
-    ILeagueClient leagueClient,
-    IEntryClient entryClient,
-    ITransfersClient transfersClient,
-    IEntryHistoryClient entryHistoryClient,
-    IGlobalSettingsClient globalSettingsClient,
-    ILogger<FplController> logger) : ControllerBase
+public static class FplEndpoints
 {
-    [HttpGet("leagues/{leagueId}")]
-    public async Task<IActionResult> GetLeague(int leagueId)
+    public static void Map(RouteGroupBuilder group)
+    {
+        group.MapGet("/leagues/{leagueId:int}", GetLeague);
+        group.MapGet("/leagues/{leagueId:int}/details", GetLeagueDetails);
+    }
+
+    private static async Task<IResult> GetLeague(int leagueId, ILeagueClient leagueClient, ILogger<Program> logger)
     {
         try
         {
             var league = await leagueClient.GetClassicLeague(leagueId);
-            if (league == null) return NotFound();
-            return Ok(new
+            if (league == null) return TypedResults.NotFound();
+            return TypedResults.Ok(new
             {
                 LeagueName = league.Properties?.Name,
                 LeagueAdmin = league.Standings?.Entries.FirstOrDefault(e => e.Entry == league.Properties?.AdminEntry)?.PlayerName
@@ -32,16 +28,22 @@ public class FplController(
             logger.LogWarning(e.ToString());
         }
 
-        return NotFound();
+        return TypedResults.NotFound();
     }
 
-    [HttpGet("leagues/{leagueId}/details")]
-    public async Task<IActionResult> GetLeagueDetails(int leagueId)
+    private static async Task<IResult> GetLeagueDetails(
+        int leagueId,
+        ILeagueClient leagueClient,
+        IEntryClient entryClient,
+        ITransfersClient transfersClient,
+        IEntryHistoryClient entryHistoryClient,
+        IGlobalSettingsClient globalSettingsClient,
+        ILogger<Program> logger)
     {
         try
         {
             var league = await leagueClient.GetClassicLeague(leagueId);
-            if (league?.Standings == null) return NotFound();
+            if (league?.Standings == null) return TypedResults.NotFound();
 
             var settings = await globalSettingsClient.GetGlobalSettings();
             var currentGw = settings?.Gameweeks.GetCurrentGameweek();
@@ -84,7 +86,7 @@ public class FplController(
                 }
             }
 
-            return Ok(new
+            return TypedResults.Ok(new
             {
                 leagueName = league.Properties?.Name,
                 leagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Entry == league.Properties?.AdminEntry)?.PlayerName,
@@ -107,6 +109,6 @@ public class FplController(
             logger.LogWarning(e.ToString());
         }
 
-        return NotFound();
+        return TypedResults.NotFound();
     }
 }

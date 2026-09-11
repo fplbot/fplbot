@@ -34,7 +34,7 @@ export interface LeagueDetails {
 }
 
 export async function getLeagueDetails(leagueId: number): Promise<LeagueDetails | null> {
-  const res = await fetch(`/fpl/leagues/${leagueId}/details`);
+  const res = await fetch(`/api/fpl/leagues/${leagueId}/details`);
   if (res.status === 404) {
     return null;
   }
