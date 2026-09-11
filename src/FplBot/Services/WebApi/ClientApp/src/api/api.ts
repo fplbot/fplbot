@@ -161,6 +161,10 @@ export function deleteDiscordSubscription(guildId: string, channelId: string): P
   return request(`/api/admin/discord/subscriptions/${guildId}/${channelId}`, { method: "DELETE" });
 }
 
+export function deleteAllDiscordSubscriptionsForGuild(guildId: string): Promise<MessageResponse> {
+  return request(`/api/admin/discord/guilds/${guildId}/subscriptions`, { method: "DELETE" });
+}
+
 export function deleteDiscordGuild(guildId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/guilds/${guildId}`, { method: "DELETE" });
 }

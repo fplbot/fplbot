@@ -32,6 +32,7 @@ public static class AdminDiscordEndpoints
 
         group.MapGet("/discord/subscriptions", GetSubscriptions);
         group.MapDelete("/discord/subscriptions/{guildId}/{channelId}", DeleteSubscription);
+        group.MapDelete("/discord/guilds/{guildId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{guildId}", DeleteGuild);
 
         group.MapPost("/discord/broadcast", BroadcastToDiscord);
@@ -145,6 +146,13 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
     }
 
+    private static async Task<IResult> DeleteAllSubscriptionsForGuild(string guildId, IGuildRepository repo, IMemoryCache cache)
+    {
+        var count = await DeleteSubscriptionsForGuild(guildId, repo);
+        InvalidateGuildCaches(cache);
+        return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
+    }
+
     // Removes the guild itself and every channel subscription under it — the same cleanup
     // GuildStatusChecker already does when it discovers a guild is no longer reachable, just
     // triggered manually from the admin UI instead of automatically. This only forgets our
@@ -152,14 +160,20 @@ public static class AdminDiscordEndpoints
     // "leave guild" support in DiscordClient today).
     private static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo, IMemoryCache cache)
     {
-        var subs = (await repo.GetAllGuildSubscriptions()).Where(s => s.GuildId == guildId);
+        await DeleteSubscriptionsForGuild(guildId, repo);
+        await repo.DeleteGuild(guildId);
+        InvalidateGuildCaches(cache);
+        return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
+    }
+
+    private static async Task<int> DeleteSubscriptionsForGuild(string guildId, IGuildRepository repo)
+    {
+        var subs = (await repo.GetAllGuildSubscriptions()).Where(s => s.GuildId == guildId).ToList();
         foreach (var sub in subs)
         {
             await repo.DeleteGuildSubscription(sub.GuildId, sub.ChannelId);
         }
-        await repo.DeleteGuild(guildId);
-        InvalidateGuildCaches(cache);
-        return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
+        return subs.Count;
     }
 
     private static void InvalidateGuildCaches(IMemoryCache cache)

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { getDiscordSubscriptions, deleteDiscordSubscription, deleteDiscordGuild } from "../../api/api";
+import {
+  getDiscordSubscriptions,
+  deleteDiscordSubscription,
+  deleteAllDiscordSubscriptionsForGuild,
+  deleteDiscordGuild,
+} from "../../api/api";
 import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
@@ -50,6 +55,21 @@ async function removeSub(guildId: string, channelId: string) {
   }
 }
 
+async function removeAllSubs(guildId: string, guildName: string) {
+  if (!confirm(`Delete all channel subscriptions for ${guildName} (${guildId})? The guild stays listed as installed.`)) return;
+  const key = `guild-subs-${guildId}`;
+  deleting.value = key;
+  error.value = "";
+  try {
+    await deleteAllDiscordSubscriptionsForGuild(guildId);
+    await load();
+  } catch (e) {
+    error.value = describeAdminError(e);
+  } finally {
+    deleting.value = null;
+  }
+}
+
 async function removeGuild(guildId: string, guildName: string) {
   if (!confirm(`Delete ${guildName} (${guildId})? This forgets all of fplbot's tracked data for this server — it does not remove the bot from Discord.`)) return;
   const key = `guild-${guildId}`;
@@ -84,13 +104,23 @@ async function removeGuild(guildId: string, guildName: string) {
         <div v-for="g in guilds" :key="g.guildId" class="guild">
           <div class="guild-header">
             <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
-            <button
-              class="btn small danger"
-              :disabled="deleting === `guild-${g.guildId}`"
-              @click="removeGuild(g.guildId, g.guildName)"
-            >
-              Delete guild
-            </button>
+            <div class="guild-actions">
+              <button
+                v-if="g.subscriptions.length > 0"
+                class="btn small danger"
+                :disabled="deleting === `guild-subs-${g.guildId}`"
+                @click="removeAllSubs(g.guildId, g.guildName)"
+              >
+                Delete all subs
+              </button>
+              <button
+                class="btn small danger"
+                :disabled="deleting === `guild-${g.guildId}`"
+                @click="removeGuild(g.guildId, g.guildName)"
+              >
+                Delete guild
+              </button>
+            </div>
           </div>
           <table v-if="g.subscriptions.length > 0" class="admin-table">
             <thead>
@@ -150,6 +180,12 @@ async function removeGuild(guildId: string, guildName: string) {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.5rem;
+}
+
+.guild-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .guild h3 {
