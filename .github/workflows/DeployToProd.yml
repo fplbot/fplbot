@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      deployments: write
       pull-requests: read
     steps:
       - uses: actions/checkout@v7
@@ -21,14 +20,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: start deployment
-        uses: bobheadxi/deployments@v1
-        id: deployment
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: production
-          ref: ${{ github.head_ref }}
       - name: Set version
         run: |
           VERSION="$(date +%Y).$(date +%m).$(date +%d).${{ github.run_number }}"
@@ -79,12 +70,3 @@ jobs:
           gh release create ${{ env.VERSION }} --title "${{ env.VERSION }}" --notes-file release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: update deployment status
-        uses: bobheadxi/deployments@v1
-        if: always()
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env: production

@@ -1,7 +1,6 @@
 name: deploy-to-test
 
 on:
-  pull_request:
   workflow_dispatch:
   push:
     branches:
@@ -11,15 +10,10 @@ on:
 
 jobs:
   deploy-ubuntu-test:
-    if: >
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.user.login != 'dependabot[bot]')
     name: deploy-to-test
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      deployments: write
       packages: read
     steps:
       - uses: actions/checkout@v7
@@ -31,14 +25,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: start deployment
-        uses: bobheadxi/deployments@v1
-        id: deployment
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: test
-          ref: ${{ github.head_ref }}
       - name: Set version
         run: |
           VERSION="$(date +%Y).$(date +%m).$(date +%d).${{ github.run_number }}"
@@ -62,12 +48,3 @@ jobs:
         run: dotnet run --project src/Build -- deploy-test
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_TOKEN }}
-      - name: update deployment status
-        uses: bobheadxi/deployments@v1
-        if: always()
-        with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env: test
