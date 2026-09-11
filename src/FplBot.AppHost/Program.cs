@@ -4,7 +4,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var redis = builder.AddRedis("redis", port: 6379)
     .WithArgs("--requirepass", "devpassword");
-builder.AddServiceBusEmulator("servicebus");
+builder.AddServiceBusEmulator("servicebus", dashboardPort:20000, port: 6000);
 var elasticsearch = builder.AddElasticsearch("elasticsearch",
         password: builder.AddParameter("elasticsearch-password", "dev", secret: true), port: 9200);
 
