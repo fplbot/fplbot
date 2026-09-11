@@ -4,7 +4,6 @@
     "config:recommended"
   ],
   "timezone": "Europe/Oslo",
-  "schedule": ["before 6am on Monday"],
   "prHourlyLimit": 5,
   "prConcurrentLimit": 10,
   "labels": ["dependencies"],
