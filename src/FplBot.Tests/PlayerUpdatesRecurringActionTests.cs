@@ -65,31 +65,29 @@ public class PlayerUpdatesRecurringActionTests
 
     private static PlayerUpdatesRecurringAction CreateTeamChangeScenario()
     {
-        var settingsClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
                 Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
                 Players = new List<Player>
                 {
                     TestBuilder.Player().FromHomeTeam(), TestBuilder.OtherPlayer().FromAwayTeam()
                 }
-            }
-        ).Once().Then.Returns(new GlobalSettings
-        {
-            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
-            Players = new List<Player>
+            },
+            new GlobalSettings
             {
-                TestBuilder.Player().FromAwayTeam(), TestBuilder.OtherPlayer().FromAwayTeam()
-            }
-        });
+                Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().FromAwayTeam(), TestBuilder.OtherPlayer().FromAwayTeam()
+                }
+            });
 
         return CreatePlayerBaseScenario(settingsClient);
     }
 
     private static PlayerUpdatesRecurringAction CreateNewInjuryScenario()
     {
-        var settingsClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
                 Teams = new List<Team>
                 {
@@ -100,19 +98,19 @@ public class PlayerUpdatesRecurringActionTests
                 {
                     TestBuilder.Player().WithStatus(PlayerStatuses.Available)
                 }
-            }
-        ).Once().Then.Returns(new GlobalSettings
-        {
-            Teams = new List<Team>
-            {
-                TestBuilder.HomeTeam(),
-                TestBuilder.AwayTeam()
             },
-            Players = new List<Player>
+            new GlobalSettings
             {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
-            }
-        });
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithStatus(PlayerStatuses.Injured)
+                }
+            });
 
 
         return CreatePlayerBaseScenario(settingsClient);
@@ -120,8 +118,7 @@ public class PlayerUpdatesRecurringActionTests
 
     private static PlayerUpdatesRecurringAction CreateChangeInDoubtfulnessScenario()
     {
-        var settingsClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
                 Teams = new List<Team>
                 {
@@ -132,27 +129,26 @@ public class PlayerUpdatesRecurringActionTests
                 {
                     TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 75% chance of playing"),
                 }
-            }
-        ).Once().Then.Returns(new GlobalSettings
-        {
-            Teams = new List<Team>
-            {
-                TestBuilder.HomeTeam(),
-                TestBuilder.AwayTeam()
             },
-            Players = new List<Player>
+            new GlobalSettings
             {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 25% chance of playing")
-            }
-        });
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 25% chance of playing")
+                }
+            });
 
         return CreatePlayerBaseScenario(settingsClient);
     }
 
     private static PlayerUpdatesRecurringAction CreateNewPlayerScenario()
     {
-        var settingsClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => settingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
                 Teams = new List<Team>
                 {
@@ -163,28 +159,27 @@ public class PlayerUpdatesRecurringActionTests
                 {
                     TestBuilder.Player().WithStatus(PlayerStatuses.Available)
                 }
-            }
-        ).Once().Then.Returns(new GlobalSettings
-        {
-            Teams = new List<Team>
-            {
-                TestBuilder.HomeTeam(),
-                TestBuilder.AwayTeam()
             },
-            Players = new List<Player>
+            new GlobalSettings
             {
-                TestBuilder.Player().WithStatus(PlayerStatuses.Available),
-                TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)
-            }
-        });
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithStatus(PlayerStatuses.Available),
+                    TestBuilder.OtherPlayer().WithStatus(PlayerStatuses.Available)
+                }
+            });
 
         return CreatePlayerBaseScenario(settingsClient);
     }
 
     private static PlayerUpdatesRecurringAction CreatePriceIncreaseScenario()
     {
-        var playerClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => playerClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var playerClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
                 Teams = new List<Team>
                 {
@@ -195,19 +190,19 @@ public class PlayerUpdatesRecurringActionTests
                 {
                     TestBuilder.Player()
                 }
-            }
-        ).Once().Then.Returns(new GlobalSettings
-        {
-            Teams = new List<Team>
-            {
-                TestBuilder.HomeTeam(),
-                TestBuilder.AwayTeam()
             },
-            Players = new List<Player>
+            new GlobalSettings
             {
-                TestBuilder.Player().WithCost(1)
-            }
-        });
+                Teams = new List<Team>
+                {
+                    TestBuilder.HomeTeam(),
+                    TestBuilder.AwayTeam()
+                },
+                Players = new List<Player>
+                {
+                    TestBuilder.Player().WithCost(1)
+                }
+            });
 
 
 

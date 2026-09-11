@@ -74,8 +74,7 @@ public class StateTests
 
     private static FixtureState CreateMultipleFinishedFixturesScenario()
     {
-        var playerClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+        var playerClient = GlobalSettingsClientBuilder.Returning(
             new GlobalSettings
             {
                 Teams =  new List<Team>
@@ -107,8 +106,7 @@ public class StateTests
 
     private static FixtureState CreateSingleFinishedFixturesScenario()
     {
-        var playerClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+        var playerClient = GlobalSettingsClientBuilder.Returning(
             new GlobalSettings
             {
                 Teams =  new List<Team>
@@ -143,8 +141,7 @@ public class StateTests
 
     private static FixtureState CreateNoFinishedFixturesScenario()
     {
-        var playerClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+        var playerClient = GlobalSettingsClientBuilder.Returning(
             new GlobalSettings
             {
                 Teams =  new List<Team>
@@ -174,8 +171,7 @@ public class StateTests
 
     private static FixtureState CreateGoalScoredScenario()
     {
-        var playerClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => playerClient.GetGlobalSettings()).Returns(
+        var playerClient = GlobalSettingsClientBuilder.Returning(
             new GlobalSettings
             {
                 Teams =  new List<Team>

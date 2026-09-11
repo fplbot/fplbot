@@ -53,8 +53,7 @@ public static class Factory
         SlackClient = A.Fake<ISlackClient>();
 
         var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonSerializer.Deserialize<GlobalSettings>(TestResources.Boostrap_Static_Json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-        var globalClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => globalClient.GetGlobalSettings()).Returns(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
+        var globalClient = GlobalSettingsClientBuilder.Returning(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
         var elasticClient = A.Fake<IElasticClient>();
 
         var slackClientServiceMock = A.Fake<ISlackClientBuilder>();
@@ -63,9 +62,9 @@ public static class Factory
         services.Replace<ISlackClientBuilder>(slackClientServiceMock);
         services.Replace<IGlobalSettingsClient>(globalClient);
         services.Replace<ITokenStore>(new DontCareRepo());
-        services.Replace<ISlackTeamRepository>(new InMemorySlackTeamRepository());
+        services.Replace<ISlackTeamRepository>(new SlackTeamRepositoryBuilder().Build());
         services.Replace<IElasticClient>(elasticClient);
-        services.AddSingleton<IPublishEndpoint>(A.Fake<IPublishEndpoint>());
+        services.Replace<IPublishEndpoint>(PublishEndpoint = new TestPublishEndpoint());
 
         services.AddSingleton(hostEnvironment);
         services.AddFplWorkers();
@@ -74,6 +73,7 @@ public static class Factory
     }
 
     public static ISlackClient SlackClient { get; set; } = null!;
+    public static TestPublishEndpoint PublishEndpoint { get; set; } = null!;
 
     private static void Replace<T>(this ServiceCollection services, T replacement) where T : class
     {

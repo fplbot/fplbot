@@ -87,8 +87,7 @@ public class MatchStatusTests
         var pulseFake = A.Fake<IPulseLiveClient>();
         A.CallTo(() => pulseFake.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code));
         A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
-        var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
@@ -110,8 +109,7 @@ public class MatchStatusTests
         var pulseClient = A.Fake<IPulseLiveClient>();
         A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.Code));
         A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
-        var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
@@ -133,8 +131,7 @@ public class MatchStatusTests
 
         var pulseClient = A.Fake<IPulseLiveClient>();
        _session = new TestPublishEndpoint();
-       var globalSettingsClient = A.Fake<IGlobalSettingsClient>();
-       A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+       var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
            {
                Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
                Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }

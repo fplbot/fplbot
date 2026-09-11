@@ -12,8 +12,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnFirstProcess_InitializesState()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GlobalSettingsWithGameweeks(SomeGameweeks()));
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -27,8 +26,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnFirstProcess_NoCurrentGameweekNoNextGameweek_DoesNothing()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(new List<Gameweek>()));
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GlobalSettingsWithGameweeks(new List<Gameweek>()));
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -43,8 +41,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnFirstProcessAndFollowing_InitializesAndRefreshes()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(SomeGameweeks()));
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GlobalSettingsWithGameweeks(SomeGameweeks()));
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -58,10 +55,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnGameweekTransition_PublishesMassTransitEventAndResetsState()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings())
-            .Returns(GameweeksBeforeTransition()).Once()
-            .Then.Returns(GameweeksAfterTransition());
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GameweeksBeforeTransition(), GameweeksAfterTransition());
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -77,10 +71,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnGameweekTransition_WithFollowingOngoing_RefreshesState()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings())
-            .Returns(GameweeksBeforeTransition()).Once()
-            .Then.Returns(GameweeksAfterTransition());
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GameweeksBeforeTransition(), GameweeksAfterTransition());
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -98,10 +89,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnGameweekFinished_PublishesMassTransitEventAndRefreshesState()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings())
-            .Returns(GameweeksBeforeTransition()).Once()
-            .Then.Returns(GameweeksWithCurrentNowMarkedAsFinished());
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GameweeksBeforeTransition(), GameweeksWithCurrentNowMarkedAsFinished());
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -118,8 +106,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task OnNoChanges_NoMassTransitEventsPublished()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GameweeksWithCurrentNowMarkedAsFinished());
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GameweeksWithCurrentNowMarkedAsFinished());
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -134,8 +121,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task InPreseason_InitializesAndRefreshesLineupState()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings()).Returns(GlobalSettingsWithGameweeks(Preseason()));
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GlobalSettingsWithGameweeks(Preseason()));
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 
@@ -150,10 +136,7 @@ public class GameweekLifecycleMonitorTests
     [Fact]
     public async Task FromPreseason_ToGw1_PublishesGw1Start()
     {
-        var gameweekClient = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => gameweekClient.GetGlobalSettings())
-            .Returns(GlobalSettingsWithGameweeks(Preseason())).Once()
-            .Then.Returns(GlobalSettingsWithGameweeks(Gw1Current()));
+        var gameweekClient = GlobalSettingsClientBuilder.Returning(GlobalSettingsWithGameweeks(Preseason()), GlobalSettingsWithGameweeks(Gw1Current()));
 
         var (action, fixtureState, lineupState, session) = BuildMonitor(gameweekClient);
 

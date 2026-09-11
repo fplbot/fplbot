@@ -52,8 +52,7 @@ public class EventHandlerFixture : IAsyncLifetime
         var globalSettings = JsonSerializer.Deserialize<GlobalSettings>(
             TestResources.Boostrap_Static_Json,
             new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-        var fakeGlobalSettings = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => fakeGlobalSettings.GetGlobalSettings()).Returns(globalSettings);
+        var fakeGlobalSettings = GlobalSettingsClientBuilder.Returning(globalSettings);
 
         var fakeFixtureClient = A.Fake<IFixtureClient>();
         A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns(new List<Fixture>());
