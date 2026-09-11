@@ -16,17 +16,15 @@ public static class WebAppExtensions
     {
         var env = app.Environment;
         app.UseSerilogRequestLogging();
-        if (env.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-        }
-        else
-        {
-            // Turns any unhandled exception into a clean application/problem+json response
-            // (via the IProblemDetailsService registered by AddProblemDetails()) instead of
-            // an empty 500 body or a leaked stack trace.
-            app.UseExceptionHandler();
-        }
+
+        // Always ProblemDetails, in every environment — there's no server-rendered HTML
+        // surface left to protect with UseDeveloperExceptionPage (no Razor Pages, every
+        // request is either the Vue SPA's static files, a signature-verified webhook, or
+        // JSON consumed via fetch, which an HTML dev-exception-page can't usefully show
+        // anyway). AddProblemDetails()'s CustomizeProblemDetails callback (see
+        // WebApplicationBuilderExtensions) still attaches the exception detail in
+        // Development, just as a JSON extension field instead of an HTML page.
+        app.UseExceptionHandler();
 
         // Fills in an application/problem+json body for any response that already has an
         // error status code but hasn't written content yet — e.g. TypedResults.NotFound(),

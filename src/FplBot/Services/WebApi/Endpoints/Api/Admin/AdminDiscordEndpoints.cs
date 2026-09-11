@@ -29,33 +29,55 @@ public static class AdminDiscordEndpoints
         group.MapDelete("/discord/subscriptions/{guildId}/{channelId}", DeleteSubscription);
     }
 
-    private static async Task<IResult> GetSlashCommands(DiscordSlashCommandsEnsurer ensurer)
-    {
-        var commands = await ensurer.GetAllForGuild(TestGuildId);
-        return TypedResults.Ok(commands);
-    }
+    private static Task<IResult> GetSlashCommands(DiscordSlashCommandsEnsurer ensurer, ILogger<Program> logger) =>
+        CallDiscord(
+            async () => TypedResults.Ok(await ensurer.GetAllForGuild(TestGuildId)),
+            "fetch slash commands from Discord", logger);
 
     private static IResult GetSlashCommandDefinitions()
     {
         return TypedResults.Ok(DiscordSlashCommandsEnsurer.GetDefinedCommandSummaries());
     }
 
-    private static async Task<IResult> InstallSlashCommands(DiscordSlashCommandsEnsurer ensurer)
-    {
-        await ensurer.InstallGuildSlashCommandsInGuild(TestGuildId);
-        return TypedResults.Ok(new { message = "Install queued!" });
-    }
+    private static Task<IResult> InstallSlashCommands(DiscordSlashCommandsEnsurer ensurer, ILogger<Program> logger) =>
+        CallDiscord(async () =>
+        {
+            await ensurer.InstallGuildSlashCommandsInGuild(TestGuildId);
+            return TypedResults.Ok(new { message = "Install queued!" });
+        }, "install slash commands to the test guild", logger);
 
-    private static async Task<IResult> InstallGlobalSlashCommands(DiscordSlashCommandsEnsurer ensurer)
-    {
-        await ensurer.InstallGuildSlashCommandsInGuild();
-        return TypedResults.Ok(new { message = "Global install queued!" });
-    }
+    private static Task<IResult> InstallGlobalSlashCommands(DiscordSlashCommandsEnsurer ensurer, ILogger<Program> logger) =>
+        CallDiscord(async () =>
+        {
+            await ensurer.InstallGuildSlashCommandsInGuild();
+            return TypedResults.Ok(new { message = "Global install queued!" });
+        }, "install slash commands globally", logger);
 
-    private static async Task<IResult> UninstallSlashCommands(DiscordSlashCommandsEnsurer ensurer)
+    private static Task<IResult> UninstallSlashCommands(DiscordSlashCommandsEnsurer ensurer, ILogger<Program> logger) =>
+        CallDiscord(async () =>
+        {
+            await ensurer.DeleteGuildSlashCommands(TestGuildId);
+            return TypedResults.Ok(new { message = "Uninstall queued!" });
+        }, "uninstall slash commands from the test guild", logger);
+
+    // Discord's HTTP client throws HttpRequestException on any non-2xx response (e.g. 401
+    // from an invalid/expired bot token) — surfaced here as 502 Bad Gateway, distinct from
+    // our own 500s: this means *we* are fine, an upstream dependency (Discord) rejected us.
+    // The detail is safe to show — it's Discord's status text, not our internals.
+    private static async Task<IResult> CallDiscord(Func<Task<IResult>> action, string actionDescription, ILogger logger)
     {
-        await ensurer.DeleteGuildSlashCommands(TestGuildId);
-        return TypedResults.Ok(new { message = "Uninstall queued!" });
+        try
+        {
+            return await action();
+        }
+        catch (HttpRequestException e)
+        {
+            logger.LogError(e, "Failed to {Action}", actionDescription);
+            return TypedResults.Problem(
+                title: $"Failed to {actionDescription}",
+                detail: $"Discord API request failed: {e.Message}",
+                statusCode: StatusCodes.Status502BadGateway);
+        }
     }
 
     private static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo, IMemoryCache cache)

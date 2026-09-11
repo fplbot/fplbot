@@ -50,6 +50,11 @@ export function describeAdminError(e: unknown): string {
     if (e.status === 400) {
       return e.detail ?? "That request wasn't valid — check the form and try again.";
     }
+    if (e.status === 502) {
+      // A curated, safe message we constructed server-side about an upstream dependency
+      // (Discord/Slack) failing — unlike a generic 500, this is fine to show verbatim.
+      return e.detail ?? "An upstream service (Discord/Slack) failed to respond. Please try again.";
+    }
     if (e.status >= 500) {
       // Deliberately ignore e.detail here even if present — a 500's detail could be an
       // internal error message, and this app never wants to surface that to the user.

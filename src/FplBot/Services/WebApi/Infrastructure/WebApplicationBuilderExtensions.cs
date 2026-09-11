@@ -12,6 +12,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Authentication;
@@ -164,8 +165,26 @@ public static class WebApplicationBuilderExtensions
 
         // Backs UseExceptionHandler()/UseStatusCodePages() in WebAppExtensions — every
         // error response from /api/** should be application/problem+json, never a bare
-        // status code or an unhandled-exception 500 with no body.
-        services.AddProblemDetails();
+        // status code or an unhandled-exception 500 with no body. In Development, also
+        // attach the actual exception (message + stack trace) as an extension field —
+        // this is the dev-diagnostics job UseDeveloperExceptionPage used to do, just
+        // delivered as JSON since there's no HTML page rendering it that a browser
+        // navigation would show; a fetch-based frontend can't use an HTML error page
+        // anyway. Never done outside Development — would leak internals.
+        services.AddProblemDetails(options =>
+        {
+            options.CustomizeProblemDetails = context =>
+            {
+                if (!context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+                    return;
+
+                var exception = context.HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error;
+                if (exception != null)
+                {
+                    context.ProblemDetails.Extensions["exception"] = exception.ToString();
+                }
+            };
+        });
 
         services.AddMemoryCache();
 
