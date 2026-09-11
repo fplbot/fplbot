@@ -16,20 +16,29 @@ const commands = ref<DiscordSlashCommand[]>([]);
 const loading = ref(true);
 const busy = ref(false);
 const feedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+const installedError = ref<string | null>(null);
 
 async function load() {
   loading.value = true;
+  // Independent try/catches, not Promise.all: the "currently installed" call hits the real
+  // Discord API and can fail on its own (e.g. no bot token in dev) without that meaning
+  // anything about the definitions call, which is purely local data.
   try {
-    const [defs, installed] = await Promise.all([getSlashCommandDefinitions(), getSlashCommands()]);
-    definitions.value = defs;
-    commands.value = installed;
+    definitions.value = await getSlashCommandDefinitions();
   } catch (e) {
     definitions.value = [];
-    commands.value = [];
     feedback.value = { type: "error", text: describeAdminError(e) };
-  } finally {
-    loading.value = false;
   }
+
+  try {
+    commands.value = await getSlashCommands();
+    installedError.value = null;
+  } catch (e) {
+    commands.value = [];
+    installedError.value = describeAdminError(e);
+  }
+
+  loading.value = false;
 }
 
 onMounted(load);
@@ -95,6 +104,7 @@ async function run(action: () => Promise<{ message: string }>) {
 
       <h2>Currently installed on the test guild</h2>
       <div v-if="loading" class="spinner"></div>
+      <p v-else-if="installedError" class="alert alert-error">{{ installedError }}</p>
       <table v-else class="admin-table">
         <thead>
           <tr>

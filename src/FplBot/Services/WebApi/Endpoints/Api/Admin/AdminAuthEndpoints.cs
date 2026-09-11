@@ -1,6 +1,7 @@
 using AspNet.Security.OAuth.Slack;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
@@ -9,14 +10,11 @@ public static class AdminAuthEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/login", Login).AllowAnonymous();
-        // Typed local instead of passing the Logout method group directly: a handler whose
-        // only parameter is HttpContext is otherwise an exact signature match for
-        // RequestDelegate (via Task<IResult>-to-Task covariance), so MapPost would silently
-        // pick that overload and discard the returned IResult instead of writing it to the
-        // response (ASP0016). A Func<HttpContext, Task<IResult>> value isn't implicitly
-        // convertible to RequestDelegate, so this can't be misresolved.
-        Func<HttpContext, Task<IResult>> logout = Logout;
-        group.MapPost("/logout", logout).AllowAnonymous();
+        group.MapPost("/logout", async (HttpContext httpContext) =>
+        {
+            await httpContext.SignOutAsync();
+            return TypedResults.NoContent();
+        });
         group.MapGet("/me", Me).RequireAuthorization();
     }
 
@@ -24,12 +22,6 @@ public static class AdminAuthEndpoints
         TypedResults.Challenge(
             new AuthenticationProperties { RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/admin" : returnUrl },
             authenticationSchemes: [SlackAuthenticationDefaults.AuthenticationScheme]);
-
-    private static async Task<IResult> Logout(HttpContext httpContext)
-    {
-        await httpContext.SignOutAsync();
-        return TypedResults.NoContent();
-    }
 
     private static async Task<IResult> Me(HttpContext httpContext, IAuthorizationService authorizationService)
     {
