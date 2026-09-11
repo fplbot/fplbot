@@ -10,6 +10,7 @@ import {
   type TeamDetails,
   type EventSubscription,
 } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const props = defineProps<{ teamId: string }>();
 const router = useRouter();
@@ -17,6 +18,7 @@ const router = useRouter();
 const team = ref<TeamDetails | null>(null);
 const loading = ref(true);
 const notFound = ref(false);
+const loadError = ref("");
 
 const leagueId = ref(0);
 const channel = ref("");
@@ -34,17 +36,22 @@ const uninstallFeedback = ref<{ type: "success" | "error"; text: string } | null
 async function load() {
   loading.value = true;
   notFound.value = false;
-  const data = await getTeam(props.teamId);
-  if (data == null) {
-    notFound.value = true;
+  loadError.value = "";
+  try {
+    const data = await getTeam(props.teamId);
+    if (data == null) {
+      notFound.value = true;
+      return;
+    }
+    team.value = data;
+    leagueId.value = data.leagueId ?? 0;
+    channel.value = data.channel ?? "";
+    editSubscriptions.value = [...data.subscriptions];
+  } catch (e) {
+    loadError.value = describeAdminError(e);
+  } finally {
     loading.value = false;
-    return;
   }
-  team.value = data;
-  leagueId.value = data.leagueId ?? 0;
-  channel.value = data.channel ?? "";
-  editSubscriptions.value = [...data.subscriptions];
-  loading.value = false;
 }
 
 onMounted(load);
@@ -65,7 +72,7 @@ async function submitEdit() {
     };
     await load();
   } catch (e) {
-    editFeedback.value = { type: "error", text: "Failed to update team." };
+    editFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     savingEdit.value = false;
   }
@@ -78,7 +85,7 @@ async function submitPublish() {
     const res = await publishTeamEvent(props.teamId, publishSubscriptions.value);
     publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
   } catch (e) {
-    publishFeedback.value = { type: "error", text: "Failed to publish event." };
+    publishFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     publishing.value = false;
   }
@@ -93,7 +100,7 @@ async function submitUninstall() {
     uninstallFeedback.value = { type: "success", text: res.message };
     setTimeout(() => router.push("/admin/slack"), 1500);
   } catch (e) {
-    uninstallFeedback.value = { type: "error", text: "Failed to uninstall." };
+    uninstallFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     uninstalling.value = false;
   }
@@ -106,6 +113,7 @@ async function submitUninstall() {
 
     <div v-if="loading" class="spinner"></div>
     <p v-else-if="notFound" class="alert alert-error">Team not found.</p>
+    <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>
 
     <template v-else-if="team">
       <h1>{{ team.teamName }}</h1>

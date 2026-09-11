@@ -1,15 +1,25 @@
 export class AdminApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  // Server-provided detail from an application/problem+json body (RFC 9457), when present.
+  detail?: string;
+  constructor(message: string, status: number, detail?: string) {
     super(message);
     this.status = status;
+    this.detail = detail;
   }
 }
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, { credentials: "include", ...init });
   if (!res.ok) {
-    throw new AdminApiError(`Request to ${input} failed with status ${res.status}`, res.status);
+    let detail: string | undefined;
+    try {
+      const problem = await res.json();
+      detail = typeof problem?.detail === "string" ? problem.detail : problem?.title;
+    } catch {
+      // Not a JSON/problem-details body (e.g. a webhook path or a raw text response) — no detail to surface.
+    }
+    throw new AdminApiError(`Request to ${input} failed with status ${res.status}`, res.status, detail);
   }
   if (res.status === 204) {
     return undefined as T;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { broadcastToDiscord, ALL_CHANNEL_FILTERS, type ChannelFilter } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const message = ref("");
 const filter = ref<ChannelFilter>("AllChannels");
@@ -16,7 +17,7 @@ async function submit() {
     feedback.value = { type: "success", text: res.message };
     message.value = "";
   } catch (e) {
-    feedback.value = { type: "error", text: "Failed to enqueue broadcast." };
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     sending.value = false;
   }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { broadcastToSlack } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const message = ref("");
 const sending = ref(false);
@@ -15,7 +16,7 @@ async function submit() {
     feedback.value = { type: "success", text: res.message };
     message.value = "";
   } catch (e) {
-    feedback.value = { type: "error", text: "Failed to enqueue broadcast." };
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     sending.value = false;
   }

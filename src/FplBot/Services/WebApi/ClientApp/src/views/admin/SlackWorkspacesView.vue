@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
 import { getTeams, type TeamSummary } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const query = ref("");
 const page = ref(1);
@@ -18,7 +19,7 @@ async function load() {
     teams.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
-    error.value = "Failed to load Slack workspaces.";
+    error.value = describeAdminError(e);
   } finally {
     loading.value = false;
   }

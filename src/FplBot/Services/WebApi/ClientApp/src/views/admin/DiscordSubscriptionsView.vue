@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
 import { getDiscordSubscriptions, deleteDiscordSubscription, type GuildWithSubs } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const query = ref("");
 const page = ref(1);
@@ -19,7 +20,7 @@ async function load() {
     guilds.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
-    error.value = "Failed to load Discord guilds.";
+    error.value = describeAdminError(e);
   } finally {
     loading.value = false;
   }
@@ -37,9 +38,12 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 async function removeSub(guildId: string, channelId: string) {
   const key = `${guildId}-${channelId}`;
   deleting.value = key;
+  error.value = "";
   try {
     await deleteDiscordSubscription(guildId, channelId);
     await load();
+  } catch (e) {
+    error.value = describeAdminError(e);
   } finally {
     deleting.value = null;
   }

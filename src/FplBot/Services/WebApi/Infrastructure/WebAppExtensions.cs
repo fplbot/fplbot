@@ -20,6 +20,20 @@ public static class WebAppExtensions
         {
             app.UseDeveloperExceptionPage();
         }
+        else
+        {
+            // Turns any unhandled exception into a clean application/problem+json response
+            // (via the IProblemDetailsService registered by AddProblemDetails()) instead of
+            // an empty 500 body or a leaked stack trace.
+            app.UseExceptionHandler();
+        }
+
+        // Fills in an application/problem+json body for any response that already has an
+        // error status code but hasn't written content yet — e.g. TypedResults.NotFound(),
+        // the cookie auth handler's 401/403 (see WebApplicationBuilderExtensions), or the
+        // 400 from a failed minimal-API parameter binding. Every /api/** error response
+        // should be a problem body, not a bare status code with an empty body.
+        app.UseStatusCodePages();
 
         app.UseForwardedHeaders();
         app.UseMiddleware<BlockedIpMiddleware>();

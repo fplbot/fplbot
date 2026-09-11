@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { getBookmarks, setLeagueBookmark, setEntryBookmark } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const leagueBookmark = ref(0);
 const entryBookmark = ref(0);
@@ -15,6 +16,8 @@ async function load() {
     const data = await getBookmarks();
     leagueBookmark.value = data.leagueIndexingBookmark;
     entryBookmark.value = data.entryIndexingBookmark;
+  } catch (e) {
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     loading.value = false;
   }
@@ -29,7 +32,7 @@ async function saveLeague() {
     const res = await setLeagueBookmark(leagueBookmark.value);
     feedback.value = { type: "success", text: res.message };
   } catch (e) {
-    feedback.value = { type: "error", text: "Failed to update league bookmark." };
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     savingLeague.value = false;
   }
@@ -42,7 +45,7 @@ async function saveEntry() {
     const res = await setEntryBookmark(entryBookmark.value);
     feedback.value = { type: "success", text: res.message };
   } catch (e) {
-    feedback.value = { type: "error", text: "Failed to update entry bookmark." };
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     savingEntry.value = false;
   }

@@ -54,7 +54,15 @@ const navLinks = [
       </div>
     </div>
 
-    <template v-else>
+    <div v-else-if="state === 'error'" class="gate">
+      <div class="card gate-card">
+        <h1>&#9888;&#65039; Something went wrong</h1>
+        <p class="lead">Couldn't check your admin session. This is usually transient.</p>
+        <button class="btn long" @click="refresh">Try again</button>
+      </div>
+    </div>
+
+    <template v-else-if="state === 'authorized'">
       <header class="admin-nav">
         <div class="container admin-nav-inner">
           <router-link to="/admin" class="brand">fplbot admin</router-link>

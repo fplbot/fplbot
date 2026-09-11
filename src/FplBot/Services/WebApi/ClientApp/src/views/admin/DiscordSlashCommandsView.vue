@@ -9,6 +9,7 @@ import {
   type DiscordSlashCommand,
   type SlashCommandDefinition,
 } from "../../api/admin";
+import { describeAdminError } from "../../composables/useAdminAuth";
 
 const definitions = ref<SlashCommandDefinition[]>([]);
 const commands = ref<DiscordSlashCommand[]>([]);
@@ -22,6 +23,10 @@ async function load() {
     const [defs, installed] = await Promise.all([getSlashCommandDefinitions(), getSlashCommands()]);
     definitions.value = defs;
     commands.value = installed;
+  } catch (e) {
+    definitions.value = [];
+    commands.value = [];
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     loading.value = false;
   }
@@ -37,7 +42,7 @@ async function run(action: () => Promise<{ message: string }>) {
     feedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
-    feedback.value = { type: "error", text: "Action failed." };
+    feedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     busy.value = false;
   }

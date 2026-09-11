@@ -162,6 +162,11 @@ public static class WebApplicationBuilderExtensions
             opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
 
+        // Backs UseExceptionHandler()/UseStatusCodePages() in WebAppExtensions — every
+        // error response from /api/** should be application/problem+json, never a bare
+        // status code or an unhandled-exception 500 with no body.
+        services.AddProblemDetails();
+
         services.AddMemoryCache();
 
         services.Configure<RouteOptions>(o =>
