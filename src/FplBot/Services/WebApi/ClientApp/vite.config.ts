@@ -37,8 +37,16 @@ export default defineConfig({
             url.startsWith("/@") ||
             url.startsWith("/src/") ||
             url.startsWith("/node_modules/");
+          // /api/** is always a real backend endpoint, even when it's reached via a
+          // full-page navigation rather than fetch — e.g. clicking the admin "Sign in
+          // with Slack" link navigates to GET /api/admin/login, which 302s onward to
+          // Slack. Without this exclusion the isPageNavigation bypass below would
+          // treat that navigation like a client-side SPA route and hand it back to
+          // Vite's own index.html instead of proxying it, so the link would appear to
+          // do nothing.
+          const isApiRequest = url.startsWith("/api/");
           const isPageNavigation = req.headers["sec-fetch-mode"] === "navigate";
-          if (isViteInternal || isPageNavigation) {
+          if (isViteInternal || (isPageNavigation && !isApiRequest)) {
             return req.url;
           }
         },

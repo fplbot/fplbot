@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
-using Slackbot.Net.SlackClients.Http.Extensions;
 using StackExchange.Redis;
 
 // ReSharper disable once CheckNamespace

@@ -17,10 +17,8 @@ public static class DevAwareServiceCollectionExtensions
             return services;
         }
 
-        // AddSlackClientBuilder() also registers ISlackClientBuilder -> SlackClientBuilder, which
-        // we'd immediately shadow below; register only what dev actually needs instead.
-        services.AddHttpClient();
-        services.AddSingleton<SlackClientBuilder>();
+        // No real SlackClientBuilder/HttpClient registered at all in Development — nothing
+        // needs one, since DevLoggingSlackClientBuilder never constructs a real client.
         services.AddSingleton<ISlackClientBuilder, DevLoggingSlackClientBuilder>();
         return services;
     }

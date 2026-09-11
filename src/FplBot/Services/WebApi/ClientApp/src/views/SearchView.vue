@@ -3,7 +3,8 @@ import { ref, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
-import { searchAny, type SearchAnyResult, type SearchType } from "../api/search";
+import { searchAny } from "../api/api";
+import type { SearchAnyResult, SearchType } from "../api/types";
 
 const route = useRoute();
 const router = useRouter();

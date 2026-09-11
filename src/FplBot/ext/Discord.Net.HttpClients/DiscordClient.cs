@@ -161,7 +161,11 @@ namespace Discord.Net.HttpClients
             res.EnsureSuccessStatusCode();
         }
 
-        public record ApplicationsCommand(string Id);
+        // Discord's response includes several more fields (application_id, guild_id, type,
+        // default_permission, options, ...) — only what the admin UI actually displays is
+        // captured here. The Lowercase naming policy below only lowercases whole property
+        // names (no snake_case splitting), so this only safely covers single-word fields.
+        public record ApplicationsCommand(string Id, string Name, string Description);
 
         public async Task<IEnumerable<ApplicationsCommand>> ApplicationsCommandForGuildGet(string guildId)
         {
