@@ -19,7 +19,7 @@
     <!-- Data / Redis -->
     <PackageReference Include="StackExchange.Redis" Version="3.1.31" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.12" />
 
     <!-- Search -->
     <PackageReference Include="NEST" Version="7.17.5" />
@@ -33,7 +33,7 @@
     <!-- Web / Auth -->
     <PackageReference Include="AspNet.Security.OAuth.Slack" Version="10.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.12" />
 
     <!-- Slack -->
     <PackageReference Include="Slackbot.Net.Endpoints" Version="8.1.4" />
