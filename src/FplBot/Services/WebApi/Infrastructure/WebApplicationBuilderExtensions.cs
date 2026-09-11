@@ -157,16 +157,6 @@ public static class WebApplicationBuilderExtensions
                 });
             });
 
-        var mvcBuilder = services
-            .AddRazorPages()
-            .AddRazorPagesOptions(options =>
-            {
-                options.RootDirectory = "/Services/WebApi/Pages";
-            });
-
-        if (env.IsDevelopment())
-            mvcBuilder.AddRazorRuntimeCompilation();
-
         services.ConfigureHttpJsonOptions(opts =>
         {
             opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter());

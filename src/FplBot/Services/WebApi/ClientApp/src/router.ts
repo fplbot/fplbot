@@ -25,6 +25,11 @@ const router = createRouter({
       component: () => import("./views/SuccessView.vue"),
     },
     {
+      path: "/error",
+      name: "error",
+      component: () => import("./views/ErrorView.vue"),
+    },
+    {
       path: "/admin",
       component: () => import("./layouts/AdminLayout.vue"),
       children: [

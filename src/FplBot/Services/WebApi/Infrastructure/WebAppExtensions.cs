@@ -61,7 +61,6 @@ public static class WebAppExtensions
         AdminIndexingEndpoints.Map(admin);
         AdminDiscordEndpoints.Map(admin);
 
-        app.MapRazorPages();
         app.MapFallbackToFile("index.html", new StaticFileOptions
         {
             FileProvider = wwwrootProvider
