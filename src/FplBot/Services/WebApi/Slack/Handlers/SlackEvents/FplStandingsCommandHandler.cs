@@ -21,7 +21,7 @@ internal class FplStandingsCommandHandler : HandleAppMentionBase
         _publishEndpoint = publishEndpoint;
     }
 
-    public override string[] Commands => new[] { "standings" };
+    public override string[] Commands => ["standings"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {

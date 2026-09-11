@@ -1,25 +1,17 @@
 using FakeItEasy;
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using FplBot.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FplBot.Data.Slack;
 using FplBot.WebApi.Slack.Data;
-using Nest;
-
 using MassTransit;
 using StackExchange.Redis;
 using Testcontainers.Redis;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace FplBot.Tests.Helpers;
 
@@ -72,20 +64,7 @@ public static class Factory
         services.AddDistributedMemoryCache();
 
         SlackClient = A.Fake<ISlackClient>();
-
-        var boostrapStaticPrGw_2020_11_Gw9_GwFinished = JsonSerializer.Deserialize<GlobalSettings>(TestResources.Boostrap_Static_Json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-        var globalClient = GlobalSettingsClientBuilder.Returning(boostrapStaticPrGw_2020_11_Gw9_GwFinished);
-        var elasticClient = A.Fake<IElasticClient>();
-
-        var slackClientServiceMock = A.Fake<ISlackClientBuilder>();
-        A.CallTo(() => slackClientServiceMock.Build(A<string>.Ignored)).Returns(SlackClient);
-
-        services.Replace<ISlackClientBuilder>(slackClientServiceMock);
-        services.Replace<IGlobalSettingsClient>(globalClient);
-        services.Replace<IElasticClient>(elasticClient);
         services.Replace<IPublishEndpoint>(PublishEndpoint = new TestPublishEndpoint());
-        // ISlackTeamRepository/ITokenStore are left registered as the real, Redis-backed
-        // SlackTeamRepository/TokenStore from AddFplBotSlackWebEndpoints — no fakes here.
 
         services.AddSingleton(hostEnvironment);
         services.AddFplWorkers();

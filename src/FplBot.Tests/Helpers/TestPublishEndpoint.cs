@@ -8,7 +8,7 @@ public class TestPublishEndpoint : IPublishEndpoint
 {
     public record PublishedMessage(object Message);
 
-    private readonly List<PublishedMessage> _messages = new();
+    private readonly List<PublishedMessage> _messages = [];
     public PublishedMessageCollection PublishedMessages => new(_messages);
 
     public Task Publish<T>(T message, CancellationToken cancellationToken = default) where T : class

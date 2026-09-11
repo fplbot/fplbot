@@ -14,7 +14,7 @@ internal class FplSubscribeCommandHandler(
     ILogger<FplSubscriptionsCommandHandler> logger)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] {"subscribe", "unsubscribe"};
+    public override string[] Commands => ["subscribe", "unsubscribe"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {
@@ -91,7 +91,8 @@ internal class FplSubscribeCommandHandler(
 
     private static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
     {
-        var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, new []{ "subscribe {args}", "unsubscribe {args}"}) ?? "";
+        var stringListOfEvents = MessageHelper.ExtractArgs(appMentioned.Text, ["subscribe {args}", "unsubscribe {args}"
+        ]) ?? "";
         return stringListOfEvents.ParseSubscriptionString(delimiter: ",");
     }
 

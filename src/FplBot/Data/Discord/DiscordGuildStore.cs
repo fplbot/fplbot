@@ -31,7 +31,7 @@ public class DiscordGuildRepository : IGuildRepository
         foreach (var key in allKeys)
         {
             var teamId = FromKeyToGuildId(key);
-            var fetchedTeamData = await _db.HashGetAsync(key, new[] { _nameField });
+            var fetchedTeamData = await _db.HashGetAsync(key, [_nameField]);
             guilds.Add(new GuildRepoGuild(teamId, fetchedTeamData[0].ToString() ?? string.Empty));
         }
 
@@ -45,7 +45,8 @@ public class DiscordGuildRepository : IGuildRepository
         foreach (var key in allKeys)
         {
             var guildId = FromKeyToGuildId(key);
-            var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
+            var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _channelIdField, _leagueIdField, _subscriptionsField
+            ]);
             var subs = ParseSubscriptionString(fetchedTeamData[3].ToString(), " ");
             guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1].ToString() ?? string.Empty, (int?)fetchedTeamData[2], subs));
         }
@@ -59,7 +60,8 @@ public class DiscordGuildRepository : IGuildRepository
         var guilds = new List<GuildFplSubscription>();
         foreach (var key in allKeys)
         {
-            var fetchedTeamData = await _db.HashGetAsync(key, new[] { _guildIdField, _channelIdField, _leagueIdField, _subscriptionsField });
+            var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _channelIdField, _leagueIdField, _subscriptionsField
+            ]);
             var subs = ParseSubscriptionString(fetchedTeamData[3].ToString(), " ");
             guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1].ToString() ?? string.Empty, (int?)fetchedTeamData[2], subs));
         }
@@ -124,7 +126,7 @@ public class DiscordGuildRepository : IGuildRepository
 
         if (string.IsNullOrWhiteSpace(subscriptionString))
         {
-            return Enumerable.Empty<EventSubscription>();
+            return [];
         }
 
         var split = subscriptionString.Split(delimiter);

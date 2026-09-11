@@ -23,7 +23,7 @@ public class Fixture
     public string? FormattedDeadlineTime { get; set; }
 
     [JsonPropertyName("stats")]
-    public FixtureStat[] Stats { get; set; } = Array.Empty<FixtureStat>();
+    public FixtureStat[] Stats { get; set; } = [];
 
     [JsonPropertyName("team_h_difficulty")]
     public int HomeTeamDifficulty { get; set; }

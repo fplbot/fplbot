@@ -1,10 +1,11 @@
 using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.PulseLive;
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 
-namespace FplBot.Tests;
+namespace FplBot.Tests.Helpers;
 
 public static class TestBuilder
 {
@@ -29,8 +30,8 @@ public static class TestBuilder
             HomeTeamId = 10,
             AwayTeamId = AwayTeamId,
             Started = true,
-            Stats = new[]
-            {
+            Stats =
+            [
                 new FixtureStat
                 {
                     Identifier = "goals_scored",
@@ -53,7 +54,7 @@ public static class TestBuilder
                     {
                     }
                 }
-            },
+            ],
             PulseId = fixtureCode
         };
     }
@@ -67,10 +68,10 @@ public static class TestBuilder
             HomeTeamId = HomeTeamId,
             AwayTeamId = AwayTeamId,
             Started = true,
-            Stats = new[]
-            {
+            Stats =
+            [
                 AddGoalsScored(goals, PlayerId)
-            },
+            ],
             HomeTeamScore = 0,
             AwayTeamScore = goals,
             PulseId = fixtureCode,
@@ -94,7 +95,7 @@ public static class TestBuilder
             {
                 Identifier = "goals_scored",
                 HomeStats = Array.Empty<FixtureStatValue>(),
-                AwayStats = new[] { awayGoal }
+                AwayStats = [awayGoal]
             };
             var updatedStats = fixture.Stats.Append(goalScoredStats);
             fixture.Stats = updatedStats.ToArray();
@@ -123,7 +124,7 @@ public static class TestBuilder
             goalScoredStats = new FixtureStat
             {
                 Identifier = "goals_scored",
-                HomeStats = new[] { homeGoal },
+                HomeStats = [homeGoal],
                 AwayStats = Array.Empty<FixtureStatValue>(),
             };
             var updatedStats = fixture.Stats.Append(goalScoredStats);
@@ -154,7 +155,7 @@ public static class TestBuilder
             {
                 Identifier = "own_goals",
                 HomeStats = Array.Empty<FixtureStatValue>(),
-                AwayStats = new[] { awayOwnGoal }
+                AwayStats = [awayOwnGoal]
             };
             var updatedStats = fixture.Stats.Append(ownGoalsStats);
             fixture.Stats = updatedStats.ToArray();
@@ -456,8 +457,8 @@ public static class TestBuilder
         var formation = new PulseFormation { Label = "4-4-2", Lineup = new List<int[]> { new[] { 1 } } };
         return new MatchDetails
         {
-            HomeTeam = new TeamLineup { TeamId = 1, Players = new[] { player }, Formation = formation },
-            AwayTeam = new TeamLineup { TeamId = 2, Players = new[] { player }, Formation = formation }
+            HomeTeam = new TeamLineup { TeamId = 1, Players = [player], Formation = formation },
+            AwayTeam = new TeamLineup { TeamId = 2, Players = [player], Formation = formation }
         };
     }
 

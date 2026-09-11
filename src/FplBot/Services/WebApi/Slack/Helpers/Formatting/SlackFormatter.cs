@@ -9,16 +9,18 @@ public static class SlackFormatter
     public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams)
     {
 
-        List<IBlock> playerCard = new List<IBlock>();
-
-        playerCard.Add(new SectionBlock
-        {
-            text = new Text
+        List<IBlock> playerCard =
+        [
+            new SectionBlock
             {
-                type = "mrkdwn",
-                text = $"*{player.FirstName} {player.SecondName}*"
+                text = new Text
+                       {
+                           type = "mrkdwn",
+                           text = $"*{player.FirstName} {player.SecondName}*"
+                       }
             }
-        });
+
+        ];
 
 
         var imageUrl = $"https://platform-static-files.s3.amazonaws.com/premierleague/photos/players/110x140/p{player.Code}.png";
@@ -40,7 +42,7 @@ public static class SlackFormatter
         var teamName = team != null ? team.Name : "";
 
         Text[] fields =
-        {
+        [
             new Text
             {
                 type = "mrkdwn",
@@ -66,7 +68,7 @@ public static class SlackFormatter
                 type = "mrkdwn",
                 text = $"*Assists*: {player.Assists}"
             }
-        };
+        ];
 
         playerCard.Add(new SectionBlock
         {

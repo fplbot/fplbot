@@ -1,4 +1,3 @@
-using Discord.Net.HttpClients;
 using FplBot.Data.Discord;
 using FplBot.Discord;
 using FplBot.EventHandlers.Discord;

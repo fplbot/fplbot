@@ -11,7 +11,7 @@ namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 internal class FplPricesHandler(ISlackWorkSpacePublisher workSpacePublisher, IGlobalSettingsClient globalSettingsClient)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "pricechanges" };
+    public override string[] Commands => ["pricechanges"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {

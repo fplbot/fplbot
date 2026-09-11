@@ -18,9 +18,10 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashC
 
         if (existingSub == null)
         {
-            await repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null, new[] { newEventSub }));
+            await repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, null,
+                [newEventSub]));
             var newSub = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(newSub?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
+            return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(newSub?.Subscriptions ?? [])}");
         }
 
         if (existingSub.Subscriptions.Contains(newEventSub))
@@ -32,20 +33,20 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashC
 
         if (newEventSub == EventSubscription.All)
         {
-            updatedList = new List<EventSubscription> { EventSubscription.All };
+            updatedList = [EventSubscription.All];
         }
         else if (existingSub.Subscriptions.Count() == 1 && existingSub.Subscriptions.First() == EventSubscription.All) // from "all" to "1 specific" => 1 specifc
         {
-            updatedList = new List<EventSubscription> { newEventSub };
+            updatedList = [newEventSub];
         }
 
         await repo.UpdateGuildSubscription(existingSub with { Subscriptions = updatedList});
         var all = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-        return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(all?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
+        return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(all?.Subscriptions ?? [])}");
     }
 
     private static ChannelMessageWithSourceEmbedResponse Respond(string title, string description)
     {
-        return new ChannelMessageWithSourceEmbedResponse() { Embeds = new List<RichEmbed>{ new RichEmbed(title, description)}};
+        return new ChannelMessageWithSourceEmbedResponse() { Embeds = [new RichEmbed(title, description)] };
     }
 }

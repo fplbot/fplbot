@@ -36,14 +36,14 @@ public class RemoveSubscriptionSlashCommandHandler(IGuildRepository repo) : ISla
             allTypes.Remove(EventSubscription.All);
             await repo.UpdateGuildSubscription(existingSub with { Subscriptions = allTypes });
             var updatedFromAll = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-            return Respond($"✅ Success!", $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(updatedFromAll?.Subscriptions ?? Enumerable.Empty<EventSubscription>())}");
+            return Respond($"✅ Success!", $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(updatedFromAll?.Subscriptions ?? [])}");
         }
 
         var updated = new List<EventSubscription>(existingSub.Subscriptions);
 
         if (eventSub == EventSubscription.All)
         {
-            updated = new List<EventSubscription>();
+            updated = [];
         }
         else
         {
@@ -64,10 +64,7 @@ public class RemoveSubscriptionSlashCommandHandler(IGuildRepository repo) : ISla
     {
         return new ChannelMessageWithSourceEmbedResponse()
         {
-            Embeds = new List<RichEmbed>
-            {
-                new(title, content)
-            }
+            Embeds = [new(title, content)]
         };
     }
 }

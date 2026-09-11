@@ -1,6 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Data;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Services.EventHandlers;
@@ -158,7 +159,7 @@ public class EventHandlerFixture : IAsyncLifetime
             });
 
         A.CallTo(() => fakeSlackClient.UsersList())
-            .Returns(Task.FromResult(new UsersListResponse { Ok = true, Members = Array.Empty<User>() }));
+            .Returns(Task.FromResult(new UsersListResponse { Ok = true, Members = [] }));
 
         return fakeSlackClient;
     }

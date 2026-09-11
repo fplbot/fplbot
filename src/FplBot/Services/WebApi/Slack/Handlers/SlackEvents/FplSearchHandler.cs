@@ -21,7 +21,7 @@ public class FplSearchHandler(
     ILogger<FplSearchHandler> logger)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "search" };
+    public override string[] Commands => ["search"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {

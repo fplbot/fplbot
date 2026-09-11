@@ -12,7 +12,7 @@ internal class FplInjuryCommandHandler(
     IGlobalSettingsClient globalSettingsClient)
     : HandleAppMentionBase
 {
-    public override string[] Commands => new[] { "injuries" };
+    public override string[] Commands => ["injuries"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {

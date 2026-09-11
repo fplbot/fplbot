@@ -1,6 +1,5 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;

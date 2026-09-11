@@ -20,10 +20,9 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
         var existingSub = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
         if (existingSub == null)
         {
-            await repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, new []
-            {
+            await repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, [
                 EventSubscription.All
-            }));
+            ]));
 
             return Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. (Auto-subbed to all events) ");
         }
@@ -37,10 +36,7 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
     {
         return new ChannelMessageWithSourceEmbedResponse()
         {
-            Embeds = new List<RichEmbed>
-            {
-                success ? new("✅ Success", content) : new ("⚠️ Error", content)
-            }
+            Embeds = [success ? new("✅ Success", content) : new("⚠️ Error", content)]
         };
     }
 }

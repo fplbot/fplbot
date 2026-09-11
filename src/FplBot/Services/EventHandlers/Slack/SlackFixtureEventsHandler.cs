@@ -75,13 +75,13 @@ public class SlackFixtureEventsHandler(
             var usersResponse = await slackClient.UsersList();
             if (usersResponse.Ok)
                 return usersResponse.Members;
-            return Enumerable.Empty<User>();
+            return [];
 
         }
         catch (Exception e)
         {
             logger.LogError(e, e.Message);
-            return Enumerable.Empty<User>();
+            return [];
         }
     }
 }
