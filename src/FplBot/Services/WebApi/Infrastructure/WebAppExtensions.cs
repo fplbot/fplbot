@@ -73,9 +73,28 @@ public static class WebAppExtensions
         AdminIndexingEndpoints.Map(admin);
         AdminDiscordEndpoints.Map(admin);
 
-        app.MapFallbackToFile("index.html", new StaticFileOptions
+        // A plain MapFallbackToFile("index.html") would serve the SPA shell for *any*
+        // unmatched request, including a typo'd /api/**, /debug/**, or webhook path —
+        // which would then hand a 200 HTML response to what should be a 404 from the
+        // backend (and, worse, dress it up as the Vue app's own funny 404 page, hiding a
+        // real routing problem). Anything under a known backend prefix that didn't match
+        // a real endpoint gets a genuine 404 (ProblemDetails, via UseStatusCodePages
+        // above) instead; everything else falls through to the SPA, whose own Vue Router
+        // catch-all renders the actual not-found page.
+        var reservedBackendPrefixes = new[] { "/api", "/debug", "/oauth", "/events", "/discord" };
+        app.MapFallback(async context =>
         {
-            FileProvider = wwwrootProvider
+            var path = context.Request.Path;
+            if (reservedBackendPrefixes.Any(prefix => path.StartsWithSegments(prefix)))
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+
+            context.Response.ContentType = "text/html";
+            var file = wwwrootProvider.GetFileInfo("index.html");
+            await using var stream = file.CreateReadStream();
+            await stream.CopyToAsync(context.Response.Body);
         });
     }
 
