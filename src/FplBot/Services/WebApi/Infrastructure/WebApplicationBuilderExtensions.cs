@@ -45,12 +45,6 @@ public static class WebApplicationBuilderExtensions
             .PersistKeysToStackExchangeRedis(redisConn)
             .SetApplicationName("fplbot");
 
-        services.AddControllers()
-            .AddJsonOptions(opts =>
-            {
-                opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
-
         // In dev, /success is served by the Vite dev server (not this backend), so send the
         // browser there after the OAuth callback. /error stays on the backend — it's still a
         // Razor Page shared with the admin login flow, not part of the Vue SPA.
@@ -97,9 +91,24 @@ public static class WebApplicationBuilderExtensions
             .AddCookie(o =>
             {
                 o.Cookie.Name = "fplbot-admin";
-                o.AccessDeniedPath = "/forbidden";
-                o.ReturnUrlParameter = "r";
-                o.ForwardChallenge = SlackAuthenticationDefaults.AuthenticationScheme;
+                o.Cookie.SameSite = SameSiteMode.Lax;
+                // Every resource behind this cookie now lives under /api/admin/** and is
+                // called via fetch from the Vue admin SPA, not via server-rendered pages —
+                // so on auth failure, return plain status codes instead of the default
+                // redirect-to-login/redirect-to-access-denied behavior (which would make a
+                // fetch() call transparently follow a redirect into an HTML page). The
+                // deliberate "log in" action (AdminAuthEndpoints.Login) challenges the Slack
+                // scheme directly by name, so it never goes through OnRedirectToLogin.
+                o.Events.OnRedirectToLogin = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+                o.Events.OnRedirectToAccessDenied = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
             })
             .AddSlack(c =>
             {
@@ -153,12 +162,17 @@ public static class WebApplicationBuilderExtensions
             .AddRazorPagesOptions(options =>
             {
                 options.RootDirectory = "/Services/WebApi/Pages";
-                options.Conventions.AuthorizeFolder("/admin", "IsAdmin");
-                options.Conventions.AllowAnonymousToPage("/*");
             });
 
         if (env.IsDevelopment())
             mvcBuilder.AddRazorRuntimeCompilation();
+
+        services.ConfigureHttpJsonOptions(opts =>
+        {
+            opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
+
+        services.AddMemoryCache();
 
         services.Configure<RouteOptions>(o =>
         {

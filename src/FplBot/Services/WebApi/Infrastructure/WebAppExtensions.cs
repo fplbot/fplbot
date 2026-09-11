@@ -1,4 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.WebApi.Endpoints.Api.Admin;
 using FplBot.WebApi.Endpoints.Api.Fpl;
 using FplBot.WebApi.Endpoints.Api.Oauth;
 using FplBot.WebApi.Endpoints.Api.Search;
@@ -49,7 +50,17 @@ public static class WebAppExtensions
         SearchEndpoints.Map(api.MapGroup("/search").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
         InstallUrlEndpoints.Map(api.MapGroup("/oauth").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
 
-        app.MapControllers().RequireCors(CorsOriginValidator.CustomCorsPolicyName);
+        // Two separate /admin groups on purpose: login/logout/me carry mixed per-route auth
+        // (see AdminAuthEndpoints), while everything else requires the IsAdmin policy as a
+        // group-wide convention. No CORS policy here — admin is cookie-authenticated and
+        // same-origin only by design.
+        AdminAuthEndpoints.Map(api.MapGroup("/admin"));
+        var admin = api.MapGroup("/admin").RequireAuthorization("IsAdmin");
+        AdminTeamsEndpoints.Map(admin);
+        AdminBroadcastEndpoints.Map(admin);
+        AdminIndexingEndpoints.Map(admin);
+        AdminDiscordEndpoints.Map(admin);
+
         app.MapRazorPages();
         app.MapFallbackToFile("index.html", new StaticFileOptions
         {
