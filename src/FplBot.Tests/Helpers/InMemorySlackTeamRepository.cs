@@ -2,17 +2,24 @@ using FplBot.Data.Slack;
 
 namespace FplBot.Tests.Helpers;
 
+// Fake team fields (channel/league id/name) intentionally match FplBot.AppHost's
+// DevSeederLifecycleHook "TeamId-DEV-SLACK" seed, so there's one consistent example
+// fake Slack team across unit tests and local dev instead of unrelated arbitrary values.
 public class InMemorySlackTeamRepository : ISlackTeamRepository
 {
-    private readonly int _leagueId = 15263;
+    private const int LeagueId = 12345;
+    private const string Channel = "C0DEV000001";
+    private const string TeamName = "Dev Slack Workspace";
 
     public Task<SlackTeam> GetTeam(string teamId)
     {
         return Task.FromResult(new SlackTeam
         {
+            TeamId = teamId,
+            TeamName = TeamName,
             Subscriptions = [],
-            FplBotSlackChannel = "#lol",
-            FplbotLeagueId = _leagueId
+            FplBotSlackChannel = Channel,
+            FplbotLeagueId = LeagueId
         });
     }
 
@@ -31,8 +38,10 @@ public class InMemorySlackTeamRepository : ISlackTeamRepository
         IEnumerable<SlackTeam> teams = new []{
             new SlackTeam
             {
-                FplbotLeagueId = _leagueId,
-                FplBotSlackChannel = "#lol",
+                TeamId = "DEV-SLACK",
+                TeamName = TeamName,
+                FplbotLeagueId = LeagueId,
+                FplBotSlackChannel = Channel,
                 Subscriptions = new EventSubscription[0]
             }
         };
