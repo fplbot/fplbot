@@ -68,9 +68,8 @@ public static class WebAppExtensions
         // same-origin only by design.
         AdminAuthEndpoints.Map(api.MapGroup("/admin"));
         var admin = api.MapGroup("/admin").RequireAuthorization("IsAdmin");
-        AdminTeamsEndpoints.Map(admin);
-        AdminBroadcastEndpoints.Map(admin);
-        AdminIndexingEndpoints.Map(admin);
+        AdminSlackEndpoints.Map(admin);
+        AdminSearchEndpoints.Map(admin);
         AdminDiscordEndpoints.Map(admin);
 
         // A plain MapFallbackToFile("index.html") would serve the SPA shell for *any*

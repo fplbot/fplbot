@@ -4,7 +4,7 @@ namespace FplBot.WebApi.Endpoints.Api.Admin;
 
 public record ChangeBookmarkRequest(int Bookmark);
 
-public static class AdminIndexingEndpoints
+public static class AdminSearchEndpoints
 {
     public static void Map(RouteGroupBuilder group)
     {

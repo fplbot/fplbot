@@ -10,7 +10,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace FplBot.Tests;
 
-public class AdminTeamsEndpointsTests
+public class AdminSlackEndpointsTests
 {
     private static SlackTeam Team(string id, string name) => new()
     {
@@ -36,7 +36,7 @@ public class AdminTeamsEndpointsTests
             Team("T2", "Other Workspace"),
             Team("T3", "Another blank one"));
 
-        var result = await AdminTeamsEndpoints.GetTeams("blank", 1, 25, repo, new MemoryCache(new MemoryCacheOptions()));
+        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, repo, new MemoryCache(new MemoryCacheOptions()));
 
         var ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(result);
         Assert.Equal(2, ok.Value!.TotalCount);
@@ -49,8 +49,8 @@ public class AdminTeamsEndpointsTests
         var teams = Enumerable.Range(1, 5).Select(i => Team($"T{i}", $"Team {i}")).ToArray();
         var repo = RepoWithTeams(teams);
 
-        var page1 = await AdminTeamsEndpoints.GetTeams(null, 1, 2, repo, new MemoryCache(new MemoryCacheOptions()));
-        var page2 = await AdminTeamsEndpoints.GetTeams(null, 2, 2, repo, new MemoryCache(new MemoryCacheOptions()));
+        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, repo, new MemoryCache(new MemoryCacheOptions()));
+        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, repo, new MemoryCache(new MemoryCacheOptions()));
 
         var page1Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page1);
         var page2Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page2);
@@ -67,7 +67,7 @@ public class AdminTeamsEndpointsTests
         var sendEndpointProvider = A.Fake<ISendEndpointProvider>();
         var gameweekClient = A.Fake<IGlobalSettingsClient>();
 
-        var result = await AdminTeamsEndpoints.PublishTeamEvent(
+        var result = await AdminSlackEndpoints.PublishTeamEvent(
             "T1", new PublishEventRequest([]), repo, sendEndpointProvider, gameweekClient);
 
         dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;
@@ -92,7 +92,7 @@ public class AdminTeamsEndpointsTests
             Gameweeks = [new Gameweek { Id = 4, IsCurrent = true }]
         }));
 
-        var result = await AdminTeamsEndpoints.PublishTeamEvent(
+        var result = await AdminSlackEndpoints.PublishTeamEvent(
             "t1", new PublishEventRequest([EventSubscription.Standings]), repo, sendEndpointProvider, gameweekClient);
 
         dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;

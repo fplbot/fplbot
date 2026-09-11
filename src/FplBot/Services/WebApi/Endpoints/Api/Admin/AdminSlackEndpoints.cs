@@ -19,7 +19,9 @@ public record UpdateTeamRequest(int LeagueId, string Channel, EventSubscription[
 
 public record PublishEventRequest(EventSubscription[] Subscriptions);
 
-public static class AdminTeamsEndpoints
+public record BroadcastRequest(string Message);
+
+public static class AdminSlackEndpoints
 {
     private const string TeamsCacheKey = "admin:teams";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
@@ -31,6 +33,22 @@ public static class AdminTeamsEndpoints
         group.MapPost("/teams/{teamId}/uninstall", Uninstall);
         group.MapPut("/teams/{teamId}", UpdateTeam);
         group.MapPost("/teams/{teamId}/publish-event", PublishTeamEvent);
+        group.MapPost("/slack/broadcast", BroadcastToSlack);
+    }
+
+    private static async Task<IResult> BroadcastToSlack(BroadcastRequest request, ISendEndpointProvider sendEndpointProvider, ILogger<Program> logger)
+    {
+        logger.LogInformation("ENQUEUEING BROADCAST TO SLACK");
+        try
+        {
+            var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(BroadcastToSlackHandler)}"));
+            await endpoint.Send(new FplBot.Messaging.Contracts.Commands.v1.BroadcastToSlack(request.Message));
+            return TypedResults.Ok(new { message = "Slack Broadcast enqueued!" });
+        }
+        catch (Exception e)
+        {
+            return TypedResults.Ok(new { message = $"Broadcast to Slack failed '{e}'" });
+        }
     }
 
     internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo, IMemoryCache cache)

@@ -1,11 +1,16 @@
 using Discord.Net.HttpClients;
 using FplBot.Data.Discord;
 using FplBot.Discord;
+using FplBot.EventHandlers.Discord;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
 public record GuildWithSubsDto(string GuildId, string GuildName, IEnumerable<GuildFplSubscription> Subscriptions);
+
+public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
 public static class AdminDiscordEndpoints
 {
@@ -27,6 +32,23 @@ public static class AdminDiscordEndpoints
 
         group.MapGet("/discord/subscriptions", GetSubscriptions);
         group.MapDelete("/discord/subscriptions/{guildId}/{channelId}", DeleteSubscription);
+
+        group.MapPost("/discord/broadcast", BroadcastToDiscord);
+    }
+
+    private static async Task<IResult> BroadcastToDiscord(DiscordBroadcastRequest request, ISendEndpointProvider sendEndpointProvider, ILogger<Program> logger)
+    {
+        logger.LogInformation("ENQUEUEING BROADCAST TO DISCORD");
+        try
+        {
+            var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(BroadcastHandler)}"));
+            await endpoint.Send(new FplBot.Messaging.Contracts.Commands.v1.BroadcastToDiscord(request.Message, request.Filter));
+            return TypedResults.Ok(new { message = $"Discord Broadcast enqueued using {request.Filter}!" });
+        }
+        catch (Exception e)
+        {
+            return TypedResults.Ok(new { message = $"Broadcast to Discord failed '{e}'" });
+        }
     }
 
     private static Task<IResult> GetSlashCommands(DiscordSlashCommandsEnsurer ensurer, ILogger<Program> logger) =>
