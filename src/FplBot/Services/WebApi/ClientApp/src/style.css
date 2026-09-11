@@ -208,3 +208,26 @@ a {
   margin-top: 1rem;
   font-size: 0.9rem;
 }
+
+.sub-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+
+.sub-nav a {
+  text-decoration: none;
+  color: #6b7280;
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+}
+
+.sub-nav a.router-link-exact-active {
+  color: var(--fpl-purple);
+  background: #f3e8ff;
+}

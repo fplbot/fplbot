@@ -171,13 +171,23 @@ export function setEntryBookmark(bookmark: number): Promise<MessageResponse> {
 }
 
 export interface DiscordSlashCommand {
-  name?: string;
-  description?: string;
-  [key: string]: unknown;
+  id: string;
+  name: string;
+  description: string;
 }
 
 export function getSlashCommands(): Promise<DiscordSlashCommand[]> {
   return request("/api/admin/discord/slashcommands");
+}
+
+export interface SlashCommandDefinition {
+  name: string;
+  description: string;
+  optionsSummary: string;
+}
+
+export function getSlashCommandDefinitions(): Promise<SlashCommandDefinition[]> {
+  return request("/api/admin/discord/slashcommands/definitions");
 }
 
 export function installSlashCommands(): Promise<MessageResponse> {

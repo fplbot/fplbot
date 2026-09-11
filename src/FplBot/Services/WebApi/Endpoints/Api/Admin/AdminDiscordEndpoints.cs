@@ -20,6 +20,7 @@ public static class AdminDiscordEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/discord/slashcommands", GetSlashCommands);
+        group.MapGet("/discord/slashcommands/definitions", GetSlashCommandDefinitions);
         group.MapPost("/discord/slashcommands/install", InstallSlashCommands);
         group.MapPost("/discord/slashcommands/install-global", InstallGlobalSlashCommands);
         group.MapPost("/discord/slashcommands/uninstall", UninstallSlashCommands);
@@ -32,6 +33,11 @@ public static class AdminDiscordEndpoints
     {
         var commands = await ensurer.GetAllForGuild(TestGuildId);
         return TypedResults.Ok(commands);
+    }
+
+    private static IResult GetSlashCommandDefinitions()
+    {
+        return TypedResults.Ok(DiscordSlashCommandsEnsurer.GetDefinedCommandSummaries());
     }
 
     private static async Task<IResult> InstallSlashCommands(DiscordSlashCommandsEnsurer ensurer)

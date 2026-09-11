@@ -35,33 +35,53 @@ const router = createRouter({
       children: [
         {
           path: "",
-          name: "admin-home",
-          component: () => import("./views/admin/AdminHomeView.vue"),
+          redirect: "/admin/slack",
         },
         {
-          path: "slack/broadcast",
-          name: "admin-slack-broadcast",
-          component: () => import("./views/admin/SlackBroadcastView.vue"),
+          path: "slack",
+          component: () => import("./views/admin/SlackSection.vue"),
+          children: [
+            {
+              path: "",
+              name: "admin-slack-workspaces",
+              component: () => import("./views/admin/SlackWorkspacesView.vue"),
+            },
+            {
+              path: "broadcast",
+              name: "admin-slack-broadcast",
+              component: () => import("./views/admin/SlackBroadcastView.vue"),
+            },
+          ],
         },
         {
-          path: "discord/broadcast",
-          name: "admin-discord-broadcast",
-          component: () => import("./views/admin/DiscordBroadcastView.vue"),
+          path: "discord",
+          component: () => import("./views/admin/DiscordSection.vue"),
+          children: [
+            {
+              path: "",
+              redirect: "/admin/discord/broadcast",
+            },
+            {
+              path: "broadcast",
+              name: "admin-discord-broadcast",
+              component: () => import("./views/admin/DiscordBroadcastView.vue"),
+            },
+            {
+              path: "slashcommands",
+              name: "admin-discord-slashcommands",
+              component: () => import("./views/admin/DiscordSlashCommandsView.vue"),
+            },
+            {
+              path: "subscriptions",
+              name: "admin-discord-subscriptions",
+              component: () => import("./views/admin/DiscordSubscriptionsView.vue"),
+            },
+          ],
         },
         {
           path: "indexing",
           name: "admin-indexing",
           component: () => import("./views/admin/IndexingView.vue"),
-        },
-        {
-          path: "discord/slashcommands",
-          name: "admin-discord-slashcommands",
-          component: () => import("./views/admin/DiscordSlashCommandsView.vue"),
-        },
-        {
-          path: "discord/subscriptions",
-          name: "admin-discord-subscriptions",
-          component: () => import("./views/admin/DiscordSubscriptionsView.vue"),
         },
         {
           path: "teams/:teamId",

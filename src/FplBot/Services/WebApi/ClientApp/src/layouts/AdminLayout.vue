@@ -21,12 +21,9 @@ async function handleLogout() {
 }
 
 const navLinks = [
-  { to: "/admin", label: "Home" },
-  { to: "/admin/slack/broadcast", label: "Slack Broadcast" },
-  { to: "/admin/discord/broadcast", label: "Discord Broadcast" },
-  { to: "/admin/indexing", label: "Indexing" },
-  { to: "/admin/discord/slashcommands", label: "Discord Slash Commands" },
-  { to: "/admin/discord/subscriptions", label: "Discord Subscriptions" },
+  { to: "/admin/slack", label: "Slack" },
+  { to: "/admin/discord", label: "Discord" },
+  { to: "/admin/indexing", label: "Search" },
 ];
 </script>
 

@@ -91,7 +91,7 @@ async function submitUninstall() {
   try {
     const res = await uninstallTeam(props.teamId);
     uninstallFeedback.value = { type: "success", text: res.message };
-    setTimeout(() => router.push("/admin"), 1500);
+    setTimeout(() => router.push("/admin/slack"), 1500);
   } catch (e) {
     uninstallFeedback.value = { type: "error", text: "Failed to uninstall." };
   } finally {
@@ -102,7 +102,7 @@ async function submitUninstall() {
 
 <template>
   <div>
-    <router-link to="/admin" class="back-link">&larr; Back to workspaces</router-link>
+    <router-link to="/admin/slack" class="back-link">&larr; Back to workspaces</router-link>
 
     <div v-if="loading" class="spinner"></div>
     <p v-else-if="notFound" class="alert alert-error">Team not found.</p>
