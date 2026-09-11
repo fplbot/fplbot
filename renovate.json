@@ -22,66 +22,82 @@
     },
     {
       "description": "Group Microsoft.Extensions.* packages",
-      "matchPackagePatterns": ["^Microsoft\\.Extensions\\."],
       "groupName": "Microsoft.Extensions",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^Microsoft\\.Extensions\\./"
+      ]
     },
     {
       "description": "Group Microsoft.AspNetCore.* packages",
-      "matchPackagePatterns": ["^Microsoft\\.AspNetCore\\."],
       "groupName": "Microsoft.AspNetCore",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^Microsoft\\.AspNetCore\\./"
+      ]
     },
     {
       "description": "Group Microsoft.NET.* packages",
-      "matchPackagePatterns": ["^Microsoft\\.NET\\."],
       "groupName": "Microsoft.NET",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^Microsoft\\.NET\\./"
+      ]
     },
     {
       "description": "Group Serilog packages",
-      "matchPackagePatterns": ["^Serilog"],
       "groupName": "Serilog",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^Serilog/"
+      ]
     },
     {
       "description": "Group MassTransit packages — pin to major 8, skip major bumps",
-      "matchPackagePatterns": ["^MassTransit"],
       "groupName": "MassTransit",
       "automerge": false,
-      "allowedVersions": "<9"
+      "allowedVersions": "<9",
+      "matchPackageNames": [
+        "/^MassTransit/"
+      ]
     },
     {
       "description": "Group Slackbot.Net packages",
-      "matchPackagePatterns": ["^Slackbot\\.Net"],
       "groupName": "Slackbot.Net",
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": false
+      "automerge": false,
+      "matchPackageNames": [
+        "/^Slackbot\\.Net/"
+      ]
     },
     {
       "description": "Group Testcontainers packages",
-      "matchPackagePatterns": ["^Testcontainers"],
       "groupName": "Testcontainers",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^Testcontainers/"
+      ]
     },
     {
       "description": "Group GitHub Actions — actions org",
       "matchManagers": ["github-actions"],
-      "matchPackagePatterns": ["^actions/"],
       "groupName": "GitHub Actions (actions/*)",
       "automerge": true,
       "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^actions//"
+      ]
     },
     {
       "description": "Never automerge major bumps for any package",
