@@ -136,7 +136,8 @@ public static class AdminTeamsEndpoints
         UpdateTeamRequest request,
         ISlackTeamRepository teamRepo,
         ILeagueClient leagueClient,
-        ISlackClientBuilder slackClientBuilder)
+        ISlackClientBuilder slackClientBuilder,
+        ILogger<Program> logger)
     {
         var teamIdToUpper = teamId.ToUpper();
         var team = await teamRepo.GetTeam(teamIdToUpper);
@@ -150,13 +151,24 @@ public static class AdminTeamsEndpoints
             warnings.Add("League does not exist.");
         }
 
-        var slackClient = slackClientBuilder.Build(token: team.AccessToken);
-        var channelsRes = await slackClient.ConversationsListPublicChannels(500);
-        var channelFound = channelsRes.Channels.Any(c => request.Channel == $"#{c.Name}" || request.Channel == c.Id);
-        if (!channelFound)
+        // A Slack API failure here (e.g. a dev-seeded team's fake token) is a warning, not
+        // a hard failure — same tolerance GetTeam already has for this exact call, and
+        // consistent with every other check in this handler: report it and still save.
+        try
         {
-            var channelsText = string.Join(',', channelsRes.Channels.Select(c => c.Name));
-            warnings.Add($"Could not find channel via Slack API lookup. Channels: {channelsText}");
+            var slackClient = slackClientBuilder.Build(token: team.AccessToken);
+            var channelsRes = await slackClient.ConversationsListPublicChannels(500);
+            var channelFound = channelsRes.Channels.Any(c => request.Channel == $"#{c.Name}" || request.Channel == c.Id);
+            if (!channelFound)
+            {
+                var channelsText = string.Join(',', channelsRes.Channels.Select(c => c.Name));
+                warnings.Add($"Could not find channel via Slack API lookup. Channels: {channelsText}");
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to verify channel {Channel} for team {TeamId} via Slack API", request.Channel, teamIdToUpper);
+            warnings.Add($"Could not verify channel via Slack API: {e.Message}");
         }
 
         await teamRepo.UpdateLeagueId(teamIdToUpper, request.LeagueId);
