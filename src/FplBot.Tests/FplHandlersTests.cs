@@ -7,7 +7,7 @@ namespace FplBot.Tests;
 
 public class FplHandlersTests(ITestOutputHelper logger)
 {
-    private readonly IHandleAppMentions[] _allHandlers = Factory.GetAllHandlers(logger).ToArray();
+    private readonly IHandleAppMentions[] _allHandlers = Factory.GetAllHandlers(logger).Handlers.ToArray();
 
     [Theory]
     [InlineData("<@BOTID123> subscribe standings", typeof(FplSubscribeCommandHandler))]

@@ -11,7 +11,7 @@ namespace FplBot.Tests;
 
 public class NearDeadlineTests(ITestOutputHelper helper)
 {
-    private readonly DateTimeUtils _deadlineChecker = Factory.Create<DateTimeUtils>();
+    private readonly DateTimeUtils _deadlineChecker = Factory.Create<DateTimeUtils>().Instance;
 
     [Fact]
     public void WhenDayBefore()
