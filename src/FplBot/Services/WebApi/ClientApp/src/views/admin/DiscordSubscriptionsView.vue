@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { getDiscordSubscriptions, deleteDiscordSubscription } from "../../api/api";
+import { getDiscordSubscriptions, deleteDiscordSubscription, deleteDiscordGuild } from "../../api/api";
 import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
@@ -49,6 +49,21 @@ async function removeSub(guildId: string, channelId: string) {
     deleting.value = null;
   }
 }
+
+async function removeGuild(guildId: string, guildName: string) {
+  if (!confirm(`Delete ${guildName} (${guildId})? This forgets all of fplbot's tracked data for this server — it does not remove the bot from Discord.`)) return;
+  const key = `guild-${guildId}`;
+  deleting.value = key;
+  error.value = "";
+  try {
+    await deleteDiscordGuild(guildId);
+    await load();
+  } catch (e) {
+    error.value = describeAdminError(e);
+  } finally {
+    deleting.value = null;
+  }
+}
 </script>
 
 <template>
@@ -67,7 +82,16 @@ async function removeSub(guildId: string, channelId: string) {
 
       <div v-else class="guild-list">
         <div v-for="g in guilds" :key="g.guildId" class="guild">
-          <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
+          <div class="guild-header">
+            <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
+            <button
+              class="btn small danger"
+              :disabled="deleting === `guild-${g.guildId}`"
+              @click="removeGuild(g.guildId, g.guildName)"
+            >
+              Delete guild
+            </button>
+          </div>
           <table v-if="g.subscriptions.length > 0" class="admin-table">
             <thead>
               <tr>
@@ -120,8 +144,16 @@ async function removeSub(guildId: string, channelId: string) {
   gap: 1.5rem;
 }
 
-.guild h3 {
+.guild-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 0.5rem;
+}
+
+.guild h3 {
+  margin-bottom: 0;
   font-size: 1rem;
 }
 

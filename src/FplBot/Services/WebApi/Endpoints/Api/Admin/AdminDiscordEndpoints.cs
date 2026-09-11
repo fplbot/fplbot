@@ -32,6 +32,7 @@ public static class AdminDiscordEndpoints
 
         group.MapGet("/discord/subscriptions", GetSubscriptions);
         group.MapDelete("/discord/subscriptions/{guildId}/{channelId}", DeleteSubscription);
+        group.MapDelete("/discord/guilds/{guildId}", DeleteGuild);
 
         group.MapPost("/discord/broadcast", BroadcastToDiscord);
     }
@@ -137,9 +138,33 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, page, pageSize, filtered.Count));
     }
 
-    private static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
+    private static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo, IMemoryCache cache)
     {
         await repo.DeleteGuildSubscription(guildId, channelId);
+        InvalidateGuildCaches(cache);
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
+    }
+
+    // Removes the guild itself and every channel subscription under it — the same cleanup
+    // GuildStatusChecker already does when it discovers a guild is no longer reachable, just
+    // triggered manually from the admin UI instead of automatically. This only forgets our
+    // own tracked data; it doesn't call Discord to remove the bot from the server (there's no
+    // "leave guild" support in DiscordClient today).
+    private static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo, IMemoryCache cache)
+    {
+        var subs = (await repo.GetAllGuildSubscriptions()).Where(s => s.GuildId == guildId);
+        foreach (var sub in subs)
+        {
+            await repo.DeleteGuildSubscription(sub.GuildId, sub.ChannelId);
+        }
+        await repo.DeleteGuild(guildId);
+        InvalidateGuildCaches(cache);
+        return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
+    }
+
+    private static void InvalidateGuildCaches(IMemoryCache cache)
+    {
+        cache.Remove(GuildsCacheKey);
+        cache.Remove(GuildSubsCacheKey);
     }
 }

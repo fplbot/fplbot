@@ -161,6 +161,10 @@ export function deleteDiscordSubscription(guildId: string, channelId: string): P
   return request(`/api/admin/discord/subscriptions/${guildId}/${channelId}`, { method: "DELETE" });
 }
 
+export function deleteDiscordGuild(guildId: string): Promise<MessageResponse> {
+  return request(`/api/admin/discord/guilds/${guildId}`, { method: "DELETE" });
+}
+
 // ---- OAuth (public site install buttons) ----
 
 export async function redirectToSlackInstall(): Promise<void> {
