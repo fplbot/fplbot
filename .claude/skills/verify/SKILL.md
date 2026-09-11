@@ -69,6 +69,40 @@ Blocked in Production (`env.IsProduction()` check in each handler).
 curl -sk -w "\nHTTP %{http_code}\n" "https://localhost:1337/debug/fixturefinished?fixtureId=1"
 ```
 
+## Smoke tests
+
+Two cheap checks that catch whole-app startup failures (bad TFM/runtime mismatch, DI wiring
+errors, static file pipeline broken) that unit tests won't — the `/debug` health/version endpoint,
+and the Vue SPA fallback route:
+
+```bash
+curl -sk -o /dev/null -w "GET /debug     -> %{http_code}\n" "https://localhost:1337/debug"
+curl -sk -o /dev/null -w "GET /leagues/1 -> %{http_code}\n" "https://localhost:1337/leagues/1"
+```
+
+Both must return `200`. `/debug` returns version/build JSON (`MetaService.DebugInfo` —
+`Services/WebApi/Endpoints/Test/DebugRoute.cs`). `/leagues/1` is a client-side Vue Router route
+(`/leagues/:id`); a 200 there means the SPA fallback route and static file pipeline are serving
+`index.html` correctly, regardless of whether league `1` actually exists (Vue Router resolves the
+id client-side).
+
+`deploy-to-test` only runs on push to `main` (not on PRs) — a PR alone doesn't get a review-app
+deploy. So the sequence for a change that touches WebApi startup/hosting is:
+
+1. Run both checks against `https://localhost:1337` locally before pushing.
+2. After merging to `main`, watch `deploy-to-test` finish (`gh run watch <run-id>` or
+   `gh run list --branch main --limit 5`).
+3. Re-run both checks against `https://test.fplbot.app` to confirm the deployed containers
+   actually came up:
+
+```bash
+curl -s -o /dev/null -w "GET /debug     -> %{http_code}\n" https://test.fplbot.app/debug
+curl -s -o /dev/null -w "GET /leagues/1 -> %{http_code}\n" https://test.fplbot.app/leagues/1
+```
+
+If either returns non-200 (or the connection fails outright), check `heroku logs --app
+blank-fplbot-test -n 100` for crash-looping dynos before assuming it's a transient deploy delay.
+
 ## Reading results
 
 Both WebApi and EventHandlers log to stdout (Serilog console sink) — `tail -f /tmp/*.log`. In
