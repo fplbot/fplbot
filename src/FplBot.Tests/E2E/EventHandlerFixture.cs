@@ -51,8 +51,7 @@ public class EventHandlerFixture : IAsyncLifetime
         var globalSettings = JsonSerializer.Deserialize<GlobalSettings>(
             TestResources.Boostrap_Static_Json,
             new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-        var fakeGlobalSettings = A.Fake<IGlobalSettingsClient>();
-        A.CallTo(() => fakeGlobalSettings.GetGlobalSettings()).Returns(globalSettings);
+        var fakeGlobalSettings = GlobalSettingsClientBuilder.Returning(globalSettings);
 
         var fakeFixtureClient = A.Fake<IFixtureClient>();
         A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns(new List<Fixture>());
@@ -94,9 +93,8 @@ public class EventHandlerFixture : IAsyncLifetime
                 services.AddSingleton<IEventStatusClient>(A.Fake<IEventStatusClient>());
 
                 // Discord and Slack services (EventHandlersService.Configure calls AddSlackServices internally)
-                var fakeHostEnvironment = A.Fake<IHostEnvironment>();
-                A.CallTo(() => fakeHostEnvironment.EnvironmentName).Returns("Testing");
-                new EventHandlersService().Configure(services, config, _multiplexer, fakeHostEnvironment);
+                var hostEnvironment = new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = "Testing" };
+                new EventHandlersService().Configure(services, config, _multiplexer, hostEnvironment);
 
                 // Replace the real ISlackClientBuilder with the capturing fake — must come AFTER Configure()
                 // because Configure() calls AddSlackServices() which re-registers the real builder.

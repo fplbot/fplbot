@@ -11,7 +11,7 @@ namespace FplBot.Tests;
 
 public class NearDeadlineTests(ITestOutputHelper helper)
 {
-    private readonly DateTimeUtils _deadlineChecker = Factory.Create<DateTimeUtils>();
+    private readonly DateTimeUtils _deadlineChecker = Factory.Create<DateTimeUtils>().Instance;
 
     [Fact]
     public void WhenDayBefore()
@@ -107,11 +107,10 @@ public class NearDeadlineTests(ITestOutputHelper helper)
     [Fact]
     public async Task OnlyPublishesOnceForFirstGameweek()
     {
-        var fakeSettingsClient = A.Fake<IGlobalSettingsClient>();
         var gameweek1 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,15,10,0,0)};
         var gameweek2 = new Gameweek { IsCurrent = false, IsNext = false, Deadline = new DateTime(2021,8,22,10,0,0)};
         var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
-        A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
+        var fakeSettingsClient = GlobalSettingsClientBuilder.Returning(globalSettings);
         var session = new TestPublishEndpoint();
         var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
@@ -127,11 +126,10 @@ public class NearDeadlineTests(ITestOutputHelper helper)
     [Fact]
     public async Task OnlyPublishesOnceForSecondGameweekWhenFirstGameweekIsCurrent()
     {
-        var fakeSettingsClient = A.Fake<IGlobalSettingsClient>();
         var gameweek1 = new Gameweek { IsCurrent = true, IsNext = false, Deadline = new DateTime(2021,8,15,10,0,0)};
         var gameweek2 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021,8,22,10,0,0)};
         var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
-        A.CallTo(() => fakeSettingsClient.GetGlobalSettings()).Returns(globalSettings);
+        var fakeSettingsClient = GlobalSettingsClientBuilder.Returning(globalSettings);
         var session = new TestPublishEndpoint();
         var dontCareLogger = A.Fake<ILogger<NearDeadLineMonitor>>();
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 21, 10, 0, 0) };
