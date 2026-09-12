@@ -3,6 +3,8 @@ using Discord.Net.HttpClients;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.Search;
+using Fpl.Search.Models;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
@@ -20,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Nest;
 using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
@@ -52,7 +55,7 @@ public class AppFixture : IAsyncLifetime
     public SlackMessageCapture SlackCapture { get; } = new();
     public TokenStore Store { get; private set; } = null!;
 
-    public async ValueTask InitializeAsync()
+    public virtual async ValueTask InitializeAsync()
     {
         await _redis.StartAsync();
 
@@ -116,6 +119,8 @@ public class AppFixture : IAsyncLifetime
 
         builder.Services.RemoveAll<IDiscordClient>();
         builder.Services.AddSingleton<IDiscordClient>(A.Fake<IDiscordClient>());
+
+        ConfigureSearchClient(builder.Services);
 
         _app = builder.Build();
         foreach (var svc in active)
@@ -204,13 +209,35 @@ public class AppFixture : IAsyncLifetime
         return sub;
     }
 
+    public async Task SeedSearchEntry(EntryItem entry)
+    {
+        var options = Services.GetRequiredService<IOptions<SearchOptions>>().Value;
+        var client = Services.GetRequiredService<IElasticClient>();
+        await client.IndexAsync(entry, i => i.Index(options.EntriesIndex).Id(entry.Id));
+        await client.Indices.RefreshAsync(options.EntriesIndex);
+    }
+
+    public async Task SeedSearchLeague(LeagueItem league)
+    {
+        var options = Services.GetRequiredService<IOptions<SearchOptions>>().Value;
+        var client = Services.GetRequiredService<IElasticClient>();
+        await client.IndexAsync(league, i => i.Index(options.LeaguesIndex).Id(league.Id));
+        await client.Indices.RefreshAsync(options.LeaguesIndex);
+    }
+
+    // No-op here: only the search-focused subclass (SearchAppFixture) needs a real
+    // Elasticsearch-backed IElasticClient; every other AppFixture consumer doesn't touch search.
+    protected virtual void ConfigureSearchClient(IServiceCollection services)
+    {
+    }
+
     public async Task FlushRedisAsync()
     {
         var server = _multiplexer.GetServer(_multiplexer.GetEndPoints().First());
         await server.FlushAllDatabasesAsync();
     }
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
         await _app.StopAsync();
         await _app.DisposeAsync();

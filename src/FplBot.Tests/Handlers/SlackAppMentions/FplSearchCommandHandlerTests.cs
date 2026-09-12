@@ -1,19 +1,20 @@
+using Fpl.Search.Models;
 using FplBot.Tests.E2E;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-[Collection("App")]
-public class FplSearchCommandHandlerTests(AppFixture fixture)
+[Collection("AppSearch")]
+public class FplSearchCommandHandlerTests(SearchAppFixture fixture)
 {
-    [Fact(Skip = "integration")]
+    [Fact]
     public async Task SearchForSkjelbek()
     {
-        await fixture.AskSlackbot("search skjelbek");
+        await fixture.SeedSearchEntry(new EntryItem { Id = 1, RealName = "Magnus Skjelbek", TeamName = "Kun Magüero" });
+
+        await fixture.AskSlackbot("<@UREFQD887> search skjelbek");
         var response = await fixture.SlackCapture.WaitForMessageAsync();
-        Assert.Equal("Matching teams:\n" +
-                     "▪️ <https://fantasy.premierleague.com/entry/192197/event/9|Kun Magüero> (Magnus Skjelbek)\n" +
-                     "▪️ <https://fantasy.premierleague.com/entry/76744/event/9|van de skjelbeek> (Lars Skjelbek)\n" +
-                     "▪️ <https://fantasy.premierleague.com/entry/3558015/event/9|Anders Balleklubb> (Anders Skjelbek)\n\n" +
-                     "Matching leagues:\nFound no matching leagues 🤷‍♂️", response.Text);
+
+        Assert.Contains("Matching teams:", response.Text);
+        Assert.Contains("Magnus Skjelbek", response.Text);
     }
 }
