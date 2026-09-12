@@ -4,6 +4,7 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
+using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
@@ -189,6 +190,18 @@ public class AppFixture : IAsyncLifetime
         configure?.Invoke(team);
         await Store.Insert(team);
         return team;
+    }
+
+    public async Task<GuildFplSubscription> SeedGuildSubscription(int? leagueId = null, IEnumerable<EventSubscription>? subscriptions = null)
+    {
+        var sub = new GuildFplSubscription(
+            Guid.NewGuid().ToString("N"),
+            Guid.NewGuid().ToString("N"),
+            leagueId,
+            subscriptions ?? []);
+
+        await Services.GetRequiredService<IGuildRepository>().InsertGuildSubscription(sub);
+        return sub;
     }
 
     public async Task FlushRedisAsync()
