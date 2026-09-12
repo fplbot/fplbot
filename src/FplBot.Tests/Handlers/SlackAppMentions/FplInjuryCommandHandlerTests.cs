@@ -10,7 +10,8 @@ public class FplInjuryCommandHandlerTests(AppFixture fixture)
     [InlineData("@fplbot injuries")]
     public async Task GetPlayerHandler(string input)
     {
-        var response = await fixture.AskSlackbot(input);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.NotEmpty(response.AllText());
     }
 }

@@ -10,7 +10,8 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> captains")]
     public async Task GetCaptainsShouldPostAllEntryCaptainPicks(string input)
     {
-        var response = await fixture.AskSlackbot(input);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.StartsWith("💥", response.Text);
     }
 
@@ -19,7 +20,8 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> captains 1")]
     public async Task GetCaptainsForGameweekShouldPostAllEntryCaptainPicksForThatGameweek(string input)
     {
-        var response = await fixture.AskSlackbot(input);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.StartsWith("💥", response.Text);
     }
 
@@ -28,7 +30,8 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> captains chart")]
     public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForCurrentGw(string input)
     {
-        var response = await fixture.AskSlackbot(input);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.StartsWith("📊", response.Text);
     }
 
@@ -37,7 +40,8 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> captains 19 chart")]
     public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForExplicitGw(string input)
     {
-        var response = await fixture.AskSlackbot(input);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.StartsWith("📊", response.Text);
     }
 }

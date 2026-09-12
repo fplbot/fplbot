@@ -11,7 +11,8 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> player haaland")]
     public async Task GetPlayerHandler(string input)
     {
-        var response = await fixture.AskSlackbot(input);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Contains("Haaland", response.AllText());
     }
 
@@ -20,7 +21,8 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> player ", "nonexistant")]
     public async Task GetPlayerHandlerNonPlayer(string input, string player)
     {
-        var response = await fixture.AskSlackbot($"{input}{player}");
+        await fixture.AskSlackbot($"{input}{player}");
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Equal("Couldn't find nonexistant", response.Text);
     }
 
@@ -33,7 +35,8 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("alisson", "Alisson Becker")]
     public async Task GetPlayer(string input, string expectedPlayer)
     {
-        var response = await fixture.AskSlackbot($"<@UREFQD887> player {input}");
+        await fixture.AskSlackbot($"<@UREFQD887> player {input}");
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Contains(expectedPlayer, response.AllText());
     }
 }
