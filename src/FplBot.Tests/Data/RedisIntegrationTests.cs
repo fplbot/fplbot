@@ -6,6 +6,7 @@ using FplBot.Discord.Data;
 using FplBot.Tests.Helpers;
 using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Options;
+using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
 
 namespace FplBot.Tests.Data;
@@ -164,6 +165,37 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
         Assert.Null(team.FplBotSlackChannel);
         Assert.Null(team.FplbotLeagueId);
         Assert.Empty(team.Subscriptions);
+    }
+
+    [Fact]
+    public async Task InsertWorkspace_RoutesThroughDomain_PersistsBareInstallation()
+    {
+        await _store.Insert(new Workspace("teamIdWs", "teamNameWs", "tokenWs"));
+
+        var team = await _repo.GetTeam("teamIdWs");
+
+        Assert.Equal("teamIdWs", team.TeamId);
+        Assert.Equal("teamNameWs", team.TeamName);
+        Assert.Equal("tokenWs", team.AccessToken);
+        Assert.Null(team.FplBotSlackChannel);
+        Assert.Null(team.FplbotLeagueId);
+        Assert.Empty(team.Subscriptions);
+    }
+
+    [Fact]
+    public async Task Delete_RoutesThroughDomainUninstall_WipesInstallationAndReturnsOriginalWorkspace()
+    {
+        await _store.Insert(new SlackTeam { TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureGoals, EventSubscription.Captains } });
+
+        var deleted = await _store.Delete("teamId1");
+
+        Assert.NotNull(deleted);
+        Assert.Equal("teamId1", deleted.TeamId);
+        Assert.Equal("teamName1", deleted.TeamName);
+        Assert.Equal("accessToken1", deleted.Token);
+
+        var tokensAfterDelete = await _repo.GetTokens();
+        Assert.Empty(tokensAfterDelete);
     }
 
     [Fact]
