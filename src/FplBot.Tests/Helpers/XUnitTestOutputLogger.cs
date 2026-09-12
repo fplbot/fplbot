@@ -6,7 +6,7 @@ public class XUnitTestOutputLogger<T>(ITestOutputHelper? helper = null) : ILogge
 {
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        helper?.WriteLine(state?.ToString());
+        helper?.WriteLine(state?.ToString() ?? string.Empty);
     }
 
     public bool IsEnabled(LogLevel logLevel)

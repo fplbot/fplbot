@@ -9,14 +9,14 @@ public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputH
 {
     public required string _teamId;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _teamId = Guid.NewGuid().ToString("N");
         fixture.SlackCapture.Reset();
         await fixture.FlushRedisAsync();
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task InjuryUpdate_WorkspaceSubscribedToInjuryUpdates_ReceivesSlackMessage()
@@ -28,7 +28,7 @@ public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputH
                 new InjuredPlayer(1, "Salah", 25.0, new TeamDescription(14, "LIV", "Liverpool")),
                 new InjuryStatus("a", ""),
                 new InjuryStatus("d", "Knee injury"))
-        ]));
+        ]), TestContext.Current.CancellationToken);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync();
         output.WriteLine($"Received: {msg.Text}");
@@ -47,7 +47,7 @@ public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputH
                 new InjuredPlayer(1, "Salah", 25.0, new TeamDescription(14, "LIV", "Liverpool")),
                 new InjuryStatus("a", ""),
                 new InjuryStatus("d", "Knee injury"))
-        ]));
+        ]), TestContext.Current.CancellationToken);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
@@ -67,7 +67,7 @@ public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputH
                 OwnershipPercentage: 30.5,
                 TeamId: 11,
                 TeamShortName: "MCI")
-        ]));
+        ]), TestContext.Current.CancellationToken);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync();
         output.WriteLine($"Received: {msg.Text}");
@@ -90,7 +90,7 @@ public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputH
                 OwnershipPercentage: 30.5,
                 TeamId: 11,
                 TeamShortName: "MCI")
-        ]));
+        ]), TestContext.Current.CancellationToken);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
@@ -110,7 +110,7 @@ public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputH
                 new InjuredPlayer(1, "Salah", 25.0, new TeamDescription(14, "LIV", "Liverpool")),
                 new InjuryStatus("a", ""),
                 new InjuryStatus("d", "Knee injury"))
-        ]));
+        ]), TestContext.Current.CancellationToken);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync();
         output.WriteLine($"Received: {msg.Text}");

@@ -21,7 +21,7 @@ public class RedisIntegrationTests(ITestOutputHelper helper) : IAsyncLifetime
     private DiscordGuildStore _guildStore = null!;
     private TokenStore _store = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _redisContainer.StartAsync();
 
@@ -40,7 +40,7 @@ public class RedisIntegrationTests(ITestOutputHelper helper) : IAsyncLifetime
         _guildStore = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(helper));
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _server?.FlushDatabase();
         await _redisContainer.DisposeAsync();
@@ -205,7 +205,7 @@ public class RedisIntegrationTests(ITestOutputHelper helper) : IAsyncLifetime
         ]));
 
         foreach(var key in _server.Keys(pattern: "GuildSubs-Guild2-Channel-*")) {
-            helper.WriteLine(key);
+            helper.WriteLine(key.ToString() ?? string.Empty);
         }
 
         var subs = await _guildRepo.GetAllGuildSubscriptions();

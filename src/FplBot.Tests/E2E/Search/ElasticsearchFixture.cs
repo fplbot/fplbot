@@ -16,7 +16,7 @@ public class ElasticsearchFixture : IAsyncLifetime
 
     public IElasticClient Client { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
 
@@ -27,7 +27,7 @@ public class ElasticsearchFixture : IAsyncLifetime
         Client = new ElasticClient(settings);
     }
 
-    public async Task DisposeAsync() => await _container.DisposeAsync();
+    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 }
 
 [CollectionDefinition("Elasticsearch")]
