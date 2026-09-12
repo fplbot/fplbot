@@ -34,6 +34,13 @@ public class SlackChannelSubscription
         return subscription;
     }
 
+    public static SlackChannelSubscription Reconstitute(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
+    {
+        var subscription = new SlackChannelSubscription(channelId) { FollowedLeagueId = followedLeagueId };
+        subscription.Events.Add(events);
+        return subscription;
+    }
+
     public void Follow(ClassicLeagueId leagueId)
     {
         FollowedLeagueId = leagueId;

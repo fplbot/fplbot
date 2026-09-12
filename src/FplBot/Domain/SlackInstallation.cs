@@ -18,6 +18,13 @@ public class SlackInstallation
 
     public static SlackInstallation Install(string teamId, string token) => new(teamId, token);
 
+    public static SlackInstallation Reconstitute(string teamId, string token, IEnumerable<SlackChannelSubscription> channelSubscriptions)
+    {
+        var installation = new SlackInstallation(teamId, token);
+        installation._channelSubscriptions.AddRange(channelSubscriptions);
+        return installation;
+    }
+
     public void Uninstall()
     {
         Token = null;

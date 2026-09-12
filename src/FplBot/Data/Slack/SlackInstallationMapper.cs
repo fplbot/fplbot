@@ -6,23 +6,16 @@ public static class SlackInstallationMapper
 {
     public static SlackInstallation ToDomain(SlackTeam team)
     {
-        var installation = SlackInstallation.Install(team.TeamId!, team.AccessToken ?? string.Empty);
+        var channels = new List<SlackChannelSubscription>();
 
         if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
         {
-            if (team.FplbotLeagueId is { } leagueId)
-            {
-                installation.Follow(team.FplBotSlackChannel, new ClassicLeagueId(leagueId));
-            }
-
-            var events = team.Subscriptions.Select(ToDomainEvent).ToArray();
-            if (events.Length > 0)
-            {
-                installation.Subscribe(team.FplBotSlackChannel, events);
-            }
+            var leagueId = team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null;
+            var events = team.Subscriptions.Select(ToDomainEvent);
+            channels.Add(SlackChannelSubscription.Reconstitute(team.FplBotSlackChannel, leagueId, events));
         }
 
-        return installation;
+        return SlackInstallation.Reconstitute(team.TeamId!, team.AccessToken ?? string.Empty, channels);
     }
 
     public static SlackTeam ToStorage(SlackInstallation installation, string? teamName)
