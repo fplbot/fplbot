@@ -38,8 +38,8 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
             Query("messi", "203.0.113.9", "Web"),
             Query("messi", "U999", "Slack"),
             Query("ronaldo", "203.0.113.9", "Web"),
-        ], index);
-        await elastic.Client.Indices.RefreshAsync(index);
+        ], index, TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 
@@ -57,8 +57,8 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
             Query("messi", "203.0.113.5", "Web"),
             Query("ronaldo", "203.0.113.5", "Web"),
             Query("messi", "U999", "Slack"), // actor is a Slack user id, not an IP — must be excluded
-        ], index);
-        await elastic.Client.Indices.RefreshAsync(index);
+        ], index, TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 
@@ -76,8 +76,8 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
             Query("ronaldo", "U111", "Slack"),
             Query("messi", "U222", "Slack"),
             Query("messi", "203.0.113.5", "Web"), // actor is an IP, not a Slack user id — must be excluded
-        ], index);
-        await elastic.Client.Indices.RefreshAsync(index);
+        ], index, TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 
@@ -96,8 +96,8 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
         await elastic.Client.IndexManyAsync([
             Query("recent", "203.0.113.5", "Web", DateTime.UtcNow.AddDays(-1)),
             Query("ancient", "203.0.113.5", "Web", DateTime.UtcNow.AddDays(-100)),
-        ], index);
-        await elastic.Client.Indices.RefreshAsync(index);
+        ], index, TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 

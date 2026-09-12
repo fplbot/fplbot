@@ -60,8 +60,8 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     {
         var (service, options, _) = NewSearchService();
         var entry = new EntryItem { Id = 42, RealName = "Messi" };
-        await elastic.Client.IndexAsync(entry, i => i.Index(options.EntriesIndex).Id(entry.Id));
-        await elastic.Client.Indices.RefreshAsync(options.EntriesIndex);
+        await elastic.Client.IndexAsync(entry, i => i.Index(options.EntriesIndex).Id(entry.Id), TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetEntry(42, service);
 
@@ -73,7 +73,7 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetEntry_NotFound_ReturnsNotFound()
     {
         var (service, options, _) = NewSearchService();
-        await elastic.Client.Indices.CreateAsync(options.EntriesIndex);
+        await elastic.Client.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetEntry(1, service);
 
@@ -100,8 +100,8 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetEntries_PageBeyondResultsAndNoHits_ReturnsBadRequest()
     {
         var (service, options, _) = NewSearchService();
-        await elastic.Client.Indices.CreateAsync(options.EntriesIndex);
-        await elastic.Client.Indices.RefreshAsync(options.EntriesIndex);
+        await elastic.Client.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetEntries("nobody", 5, HttpContextWithRemoteIp(), service);
 
@@ -143,8 +143,8 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetLeagues_PageBeyondResultsAndNoHits_ReturnsBadRequest()
     {
         var (service, options, _) = NewSearchService();
-        await elastic.Client.Indices.CreateAsync(options.LeaguesIndex);
-        await elastic.Client.Indices.RefreshAsync(options.LeaguesIndex);
+        await elastic.Client.Indices.CreateAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.Client.Indices.RefreshAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetLeagues("nobody", 5, "", HttpContextWithRemoteIp(), service);
 

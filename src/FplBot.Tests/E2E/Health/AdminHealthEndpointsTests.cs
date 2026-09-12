@@ -31,14 +31,14 @@ public class AdminHealthEndpointsTests(ElasticsearchFixture elastic)
         // outage, not a fake IConnectionMultiplexer — while leaving the shared Elasticsearch
         // fixture untouched so only the Redis dependency flips to unhealthy.
         var redisContainer = new RedisBuilder("redis:latest").Build();
-        await redisContainer.StartAsync();
+        await redisContainer.StartAsync(TestContext.Current.CancellationToken);
         var redis = await ConnectionMultiplexer.ConnectAsync(redisContainer.GetConnectionString());
 
         var beforeStop = await AdminHealthEndpoints.GetDependencyHealth(redis, elastic.Client);
         var beforeStopOk = Assert.IsType<Ok<DependencyHealthResponse>>(beforeStop);
         Assert.True(beforeStopOk.Value!.Healthy, DescribeFailures(beforeStopOk.Value));
 
-        await redisContainer.StopAsync();
+        await redisContainer.StopAsync(TestContext.Current.CancellationToken);
 
         var result = await AdminHealthEndpoints.GetDependencyHealth(redis, elastic.Client);
 

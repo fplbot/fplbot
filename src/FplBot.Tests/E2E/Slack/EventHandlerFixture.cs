@@ -34,7 +34,7 @@ public class EventHandlerFixture : IAsyncLifetime
     public SlackMessageCapture SlackCapture { get; } = new();
     public TokenStore Store { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _redis.StartAsync();
 
@@ -128,7 +128,7 @@ public class EventHandlerFixture : IAsyncLifetime
         await server.FlushAllDatabasesAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _host.StopAsync();
         _host.Dispose();
