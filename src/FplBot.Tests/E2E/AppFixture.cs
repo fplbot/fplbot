@@ -1,3 +1,5 @@
+using Discord.Net.Endpoints.Hosting;
+using Discord.Net.HttpClients;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -17,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
@@ -24,7 +27,9 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using StackExchange.Redis;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Testcontainers.Redis;
 
@@ -82,8 +87,9 @@ public class AppFixture : IAsyncLifetime
             .AddInMemoryCollection(new Dictionary<string, string?> { ["REDIS_URL"] = redisUrl })
             .Build();
 
-        var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseTestServer();
+        builder.Host.UseSerilog((_, lc) => lc.WriteTo.Console());
         builder.Configuration.AddConfiguration(config);
 
         var active = new List<IFplBotService> { new WebApiService(), new EventHandlersService() };
@@ -107,8 +113,12 @@ public class AppFixture : IAsyncLifetime
         builder.Services.RemoveAll<ISlackClientBuilder>();
         builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
 
+        builder.Services.RemoveAll<IDiscordClient>();
+        builder.Services.AddSingleton<IDiscordClient>(A.Fake<IDiscordClient>());
+
         _app = builder.Build();
-        _app.Map("/events", a => a.UseSlackbot(enableAuth: false));
+        foreach (var svc in active)
+            svc.ConfigureApp(_app);
 
         await _app.StartAsync();
         _client = _app.GetTestClient();
@@ -117,7 +127,7 @@ public class AppFixture : IAsyncLifetime
     public IBus Bus => _app.Services.GetRequiredService<IBus>();
     public IServiceProvider Services => _app.Services;
 
-    public async Task<ChatPostMessageRequest> AskSlackbot(SlackTeam team, string input)
+    public async Task AskSlackbot(SlackTeam team, string input)
     {
         var payload = new
         {
@@ -141,11 +151,37 @@ public class AppFixture : IAsyncLifetime
 
         var response = await _client.PostAsJsonAsync("/events", payload);
         response.EnsureSuccessStatusCode();
-
-        return await SlackCapture.WaitForMessageAsync();
     }
 
-    public async Task<ChatPostMessageRequest> AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
+    public async Task AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
+
+    public async Task<string> AskDiscord(string commandName, string? optionValue = null, string? subCommandName = null, string? guildId = null, string? channelId = null)
+    {
+        guildId ??= Guid.NewGuid().ToString("N");
+        channelId ??= Guid.NewGuid().ToString("N");
+
+        var data = new JsonObject { ["name"] = commandName, ["type"] = 1 };
+        if (optionValue != null)
+        {
+            var innerOption = new JsonObject { ["name"] = "value", ["value"] = optionValue };
+            data["options"] = subCommandName != null
+                ? new JsonArray(new JsonObject { ["name"] = subCommandName, ["options"] = new JsonArray(innerOption) })
+                : new JsonArray(innerOption);
+        }
+
+        var payload = new JsonObject
+        {
+            ["type"] = 2,
+            ["guild_id"] = guildId,
+            ["channel_id"] = channelId,
+            ["data"] = data
+        };
+
+        var response = await _client.PostAsync("/discord/events",
+            new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json"));
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
 
     public async Task<SlackTeam> SeedTeam(Action<SlackTeam>? configure = null)
     {

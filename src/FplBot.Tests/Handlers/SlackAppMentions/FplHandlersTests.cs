@@ -24,7 +24,8 @@ public class FplHandlersTests(AppFixture fixture)
     {
         // Arrange
         var mentionEvent = new AppMentionEvent { Text = input };
-        var allHandlers = fixture.Services.GetServices<IHandleAppMentions>();
+        using var scope = fixture.Services.CreateScope();
+        var allHandlers = scope.ServiceProvider.GetServices<IHandleAppMentions>();
 
         // Act / assert
         foreach (var handler in allHandlers)
