@@ -1,33 +1,22 @@
-using System.Text.RegularExpressions;
-
 namespace FplBot.WebApi.Infrastructure;
 
 public static class CorsOriginValidator
 {
-    public const string CustomCorsPolicyName = "CustomDynamicHerokuReviewAppsCompliantCorsPolicy";
+    public const string CorsPolicyName = "AllowedOriginsCorsPolicy";
 
     public static List<string> FixedOrigins =
     [
-        "http://localhost:3000",
+        "http://localhost:5162",
 
-        "https://fplbot-frontend.herokuapp.com",
-
-        "https://fplbot-frontend-test.herokuapp.com",
+        "https://localhost:1337",
 
         "https://www.fplbot.app",
 
-        "https://test.fplbot.app",
+        "https://fplbot.app",
 
-        "https://www.fplsearch.com",
-
-        "https://fplsearch.com"
+        "https://test.fplbot.app"
     ];
 
-    private static readonly Regex HerokuReviewAppsOriginRegex = new Regex("https:\\/\\/fplbotfrontend-pr-\\d+.herokuapp.com");
-
-    public static bool ValidateOrigin(string origin)
-    {
-        var isAFixedEnv = FixedOrigins.Any(o => o.Equals(origin, StringComparison.InvariantCultureIgnoreCase));
-        return isAFixedEnv || HerokuReviewAppsOriginRegex.IsMatch(origin);
-    }
+    public static bool ValidateOrigin(string origin) =>
+        FixedOrigins.Any(o => o.Equals(origin, StringComparison.InvariantCultureIgnoreCase));
 }

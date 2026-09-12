@@ -45,7 +45,7 @@ public static class WebAppExtensions
             FileProvider = wwwrootProvider
         });
         app.UseRouting();
-        app.UseCors(CorsOriginValidator.CustomCorsPolicyName);
+        app.UseCors(CorsOriginValidator.CorsPolicyName);
         app.UseCookiePolicy();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -58,9 +58,9 @@ public static class WebAppExtensions
         );
 
         var api = app.MapGroup("/api");
-        FplEndpoints.Map(api.MapGroup("/fpl").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
-        SearchEndpoints.Map(api.MapGroup("/search").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
-        InstallUrlEndpoints.Map(api.MapGroup("/oauth").RequireCors(CorsOriginValidator.CustomCorsPolicyName));
+        FplEndpoints.Map(api.MapGroup("/fpl").RequireCors(CorsOriginValidator.CorsPolicyName));
+        SearchEndpoints.Map(api.MapGroup("/search").RequireCors(CorsOriginValidator.CorsPolicyName));
+        InstallUrlEndpoints.Map(api.MapGroup("/oauth").RequireCors(CorsOriginValidator.CorsPolicyName));
 
         // Two separate /admin groups on purpose: login/logout/me carry mixed per-route auth
         // (see AdminAuthEndpoints), while everything else requires the IsAdmin policy as a
