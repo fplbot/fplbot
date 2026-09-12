@@ -2,10 +2,6 @@ using FplBot.Tests.E2E;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-// Dispatches through the real ISelectAppMentionEventHandlers selection logic (the same one the
-// real Slack webhook uses to pick a handler) instead of hand-picking a handler instance via DI —
-// asserts on the handler's returned response, not on any Slack client call (FplPlayerCommandHandler
-// doesn't post to Slack directly; it just returns a response string for the webhook to reply with).
 [Collection("App")]
 public class FplPlayerCommandHandlerTests(AppFixture fixture)
 {

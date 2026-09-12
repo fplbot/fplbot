@@ -29,15 +29,8 @@ using Testcontainers.Redis;
 
 namespace FplBot.Tests.E2E;
 
-// The one shared app slice for tests: composes both the EventHandlers service's DI graph
-// (real in-memory MassTransit bus + real consumers) and the WebApi service's DI graph
-// (real Slack app-mention dispatch via ISelectAppMentionEventHandlers), so a test can go in
-// through either a real webhook-dispatch entry point or a published event, and come out
-// through a real consumer, asserting on the final captured Slack message either way.
 public class AppFixture : IAsyncLifetime
 {
-    // Local-only: set REUSE_TEST_CONTAINERS=true to keep this container warm across
-    // `dotnet test` runs instead of tearing it down each time. Never set in CI.
     private static readonly bool ReuseContainers =
         Environment.GetEnvironmentVariable("REUSE_TEST_CONTAINERS") == "true";
 
@@ -82,10 +75,6 @@ public class AppFixture : IAsyncLifetime
                 Standings = new ClassicLeagueStandings { Entries = new List<ClassicLeagueEntry>() }
             });
 
-        // appsettings.json (copied from FplBot's own project) carries real dev-default values —
-        // including "search", DiscordAppId, DISCORD_TOKEN — that AddFplBotSlackWebEndpoints'
-        // startup validation needs. Only REDIS_URL needs overriding, to point at this test's
-        // ephemeral container instead of devenv's fixed instance.
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: true)
             .AddInMemoryCollection(new Dictionary<string, string?> { ["REDIS_URL"] = redisUrl })
@@ -97,23 +86,14 @@ public class AppFixture : IAsyncLifetime
             {
                 services.AddSingleton<IConnectionMultiplexer>(_multiplexer);
                 services.AddSingleton(_multiplexer);
-                // AppMentionEventHandlerSelector (Slackbot.Net.Endpoints) resolves handlers via
-                // IHttpContextAccessor.HttpContext.RequestServices, not an injected IServiceProvider
-                // — it expects to run inside a real ASP.NET Core request. We give it a synthetic
-                // HttpContext after the host starts (see below) so it can be called directly in
-                // tests without a real HTTP transport.
                 services.AddHttpContextAccessor();
                 services.AddStackExchangeRedisCache(o =>
                     o.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(_multiplexer));
 
-                // EventHandlers service (real MassTransit consumers) and WebApi service (real
-                // Slack app-mention dispatch) composed into one test host.
                 var hostEnvironment = new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = "Testing" };
                 new EventHandlersService().Configure(services, config, _multiplexer, hostEnvironment);
                 services.AddFplBotSlackWebEndpoints(config, _multiplexer, hostEnvironment);
 
-                // FPL API fakes — registered after both Configure() and AddFplBotSlackWebEndpoints()
-                // so they win the last-registration-wins resolution for constructor injection.
                 services.AddSingleton<IGlobalSettingsClient>(fakeGlobalSettings);
                 services.AddSingleton<IFixtureClient>(fakeFixtureClient);
                 services.AddSingleton<ILeagueClient>(fakeLeagueClient);
@@ -123,14 +103,9 @@ public class AppFixture : IAsyncLifetime
                 services.AddSingleton<IEntryHistoryClient>(A.Fake<IEntryHistoryClient>());
                 services.AddSingleton<IEventStatusClient>(A.Fake<IEventStatusClient>());
 
-                // Replace the real ISlackClientBuilder with the capturing fake — must come after
-                // both Configure() and AddFplBotSlackWebEndpoints(), which both register a real one.
-                // RemoveAll clears every descriptor registered by either call.
                 services.RemoveAll<ISlackClientBuilder>();
                 services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
 
-                // Formatting helpers used by GameweekStarted/Finished handlers — also registered
-                // by both calls above; re-registering here is redundant but harmless.
                 services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
                 services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
                 services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
@@ -150,11 +125,6 @@ public class AppFixture : IAsyncLifetime
     public IBus Bus => _host.Services.GetRequiredService<IBus>();
     public IServiceProvider Services => _host.Services;
 
-    // AppMentionEventHandlerSelector (Slackbot.Net.Endpoints) resolves handlers via
-    // IHttpContextAccessor.HttpContext.RequestServices, expecting to run inside a real ASP.NET
-    // Core request. IHttpContextAccessor is AsyncLocal-backed, so the HttpContext has to be set
-    // within the same async flow as the dispatch call, not once during fixture setup — hence
-    // this does both together rather than exposing the raw selector.
     public async Task<EventHandledResponse> DispatchAppMention(EventMetaData meta, AppMentionEvent slackEvent)
     {
         _host.Services.GetRequiredService<IHttpContextAccessor>().HttpContext =
@@ -165,9 +135,6 @@ public class AppFixture : IAsyncLifetime
         return await handlers.Single().Handle(meta, slackEvent);
     }
 
-    // Seeds a team via SlackTeamFaker, optionally customized (e.g. a specific FplbotLeagueId or
-    // Subscriptions) — for app-mention tests whose handler needs particular team state already
-    // set up before asking a question, rather than a throwaway team per call.
     public async Task<SlackTeam> SeedTeam(Action<SlackTeam>? configure = null)
     {
         var team = SlackTeamFaker.Generate();
@@ -183,7 +150,6 @@ public class AppFixture : IAsyncLifetime
         return response.Response;
     }
 
-    // Convenience for handlers that don't care about team state — a fresh team per call.
     public async Task<string> AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
 
     public async Task FlushRedisAsync()

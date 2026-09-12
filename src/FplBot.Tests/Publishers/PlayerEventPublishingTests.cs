@@ -11,11 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests.Publishers;
 
-// Feeds PlayerUpdatesRecurringAction two genuinely different before/after GlobalSettings
-// snapshots (mirrors GameweekEventPublishingTests' working two-poll-tick template) and, unlike
-// the old TestPublishEndpoint-only version of this file, publishes onto AppFixture's real
-// in-memory bus so the real Slack consumer actually handles the event — asserting on the
-// resulting Slack message, not just the raw published event shape.
 [Collection("App")]
 public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
 {
@@ -83,8 +78,6 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task WithPlayerTransferBetweenTwoPLTeams_EmitsEvent()
     {
-        // No Slack/Discord consumer handles PremiershipPlayerTransferred today, so there's no
-        // real "handling" to verify through the bus yet — stays on the raw-publish assertion.
         var messageSession = new TestPublishEndpoint();
         var state = CreateTeamChangeScenario(messageSession);
         await state.Process(CancellationToken.None);
