@@ -1,5 +1,4 @@
 using FplBot.Tests.E2E;
-using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
@@ -10,22 +9,12 @@ namespace FplBot.Tests.Handlers.SlackAppMentions;
 [Collection("App")]
 public class FplPlayerCommandHandlerTests(AppFixture fixture)
 {
-    private async Task<string> Ask(string input)
-    {
-        var team = SlackTeamFaker.Generate();
-        await fixture.Store.Insert(team);
-        var dummy = Factory.CreateDummyEvent(team, input);
-
-        var response = await fixture.DispatchAppMention(dummy.meta, dummy.@event);
-        return response.Response;
-    }
-
     [Theory]
     [InlineData("@fplbot player salah")]
     [InlineData("<@UREFQD887> player salah")]
     public async Task GetPlayerHandler(string input)
     {
-        var response = await Ask(input);
+        var response = await fixture.Ask(input);
         Assert.Contains("Found matching player for salah", response);
     }
 
@@ -34,7 +23,7 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> player ", "nonexistant")]
     public async Task GetPlayerHandlerNonPlayer(string input, string player)
     {
-        var response = await Ask($"{input}{player}");
+        var response = await fixture.Ask($"{input}{player}");
         Assert.Equal("Found no matching player for nonexistant: ", response);
     }
 
@@ -47,7 +36,7 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("alisson", "Alisson Becker")]
     public async Task GetPlayer(string input, string expectedPlayer)
     {
-        var response = await Ask($"<@UREFQD887> player {input}");
+        var response = await fixture.Ask($"<@UREFQD887> player {input}");
         Assert.Equal($"Found matching player for {input}: {expectedPlayer}", response);
     }
 }

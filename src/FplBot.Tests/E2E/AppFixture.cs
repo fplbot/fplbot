@@ -2,6 +2,7 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
+using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Services.EventHandlers;
@@ -163,6 +164,27 @@ public class AppFixture : IAsyncLifetime
         var handlers = await selector.GetAppMentionEventHandlerFor(meta, slackEvent);
         return await handlers.Single().Handle(meta, slackEvent);
     }
+
+    // Seeds a team via SlackTeamFaker, optionally customized (e.g. a specific FplbotLeagueId or
+    // Subscriptions) — for app-mention tests whose handler needs particular team state already
+    // set up before asking a question, rather than a throwaway team per call.
+    public async Task<SlackTeam> SeedTeam(Action<SlackTeam>? configure = null)
+    {
+        var team = SlackTeamFaker.Generate();
+        configure?.Invoke(team);
+        await Store.Insert(team);
+        return team;
+    }
+
+    public async Task<string> Ask(SlackTeam team, string input)
+    {
+        var dummy = Factory.CreateDummyEvent(team, input);
+        var response = await DispatchAppMention(dummy.meta, dummy.@event);
+        return response.Response;
+    }
+
+    // Convenience for handlers that don't care about team state — a fresh team per call.
+    public async Task<string> Ask(string input) => await Ask(await SeedTeam(), input);
 
     public async Task FlushRedisAsync()
     {
