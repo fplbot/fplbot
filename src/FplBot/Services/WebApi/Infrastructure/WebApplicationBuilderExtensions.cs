@@ -203,7 +203,7 @@ public static class WebApplicationBuilderExtensions
 
         services.AddCors(options =>
         {
-            options.AddPolicy(CorsOriginValidator.CustomCorsPolicyName, p =>
+            options.AddPolicy(CorsOriginValidator.CorsPolicyName, p =>
                 p.SetIsOriginAllowed(CorsOriginValidator.ValidateOrigin).AllowAnyHeader().AllowAnyMethod());
         });
 
