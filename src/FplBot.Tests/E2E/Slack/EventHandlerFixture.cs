@@ -27,7 +27,15 @@ namespace FplBot.Tests.E2E;
 
 public class EventHandlerFixture : IAsyncLifetime
 {
-    private readonly RedisContainer _redis = new RedisBuilder("redis:latest").Build();
+    // Local-only: set REUSE_TEST_CONTAINERS=true to keep this container warm across
+    // `dotnet test` runs instead of tearing it down each time. Never set in CI.
+    private static readonly bool ReuseContainers =
+        Environment.GetEnvironmentVariable("REUSE_TEST_CONTAINERS") == "true";
+
+    private readonly RedisContainer _redis = new RedisBuilder("redis:latest")
+        .WithReuse(ReuseContainers)
+        .WithLabel("reuse-id", "event-handler-fixture")
+        .Build();
     private IHost _host = null!;
     private ConnectionMultiplexer _multiplexer = null!;
 
@@ -133,7 +141,7 @@ public class EventHandlerFixture : IAsyncLifetime
         await _host.StopAsync();
         _host.Dispose();
         _multiplexer?.Dispose();
-        await _redis.DisposeAsync();
+        if (!ReuseContainers) await _redis.DisposeAsync();
     }
 
     private ISlackClient BuildCapturingSlackClient()

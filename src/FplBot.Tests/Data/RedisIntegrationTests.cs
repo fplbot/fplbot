@@ -7,44 +7,25 @@ using FplBot.Tests.Helpers;
 using FplBot.WebApi.Slack.Data;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
-using Testcontainers.Redis;
 
 namespace FplBot.Tests.Data;
 
-public class RedisIntegrationTests(ITestOutputHelper helper) : IAsyncLifetime
+public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputHelper helper)
+    : IClassFixture<RedisIntegrationFixture>, IAsyncLifetime
 {
-    private readonly RedisContainer _redisContainer = new RedisBuilder("redis:latest").Build();
-    private SlackTeamRepository _repo = null!;
-    private LeagueIndexRedisBookmarkProvider _bookmarkProvider = null!;
-    private IServer _server = null!;
-    private DiscordGuildRepository _guildRepo = null!;
-    private DiscordGuildStore _guildStore = null!;
-    private TokenStore _store = null!;
+    private static OptionsWrapper<RedisOptions> FakeOptions(RedisIntegrationFixture f) =>
+        new(new RedisOptions { REDIS_URL = $"redis://user:pass@{f.ConnectionString}" });
 
-    public async ValueTask InitializeAsync()
-    {
-        await _redisContainer.StartAsync();
+    private readonly IServer _server = fixture.Server;
+    private readonly SlackTeamRepository _repo = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
+    private readonly TokenStore _store = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
+    private readonly LeagueIndexRedisBookmarkProvider _bookmarkProvider = new(fixture.Multiplexer, new SimpleLogger(helper));
+    private readonly DiscordGuildRepository _guildRepo = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
+    private readonly DiscordGuildStore _guildStore = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
 
-        var connectionString = _redisContainer.GetConnectionString();
-        var multiplexer = await ConnectionMultiplexer.ConnectAsync(connectionString + ",allowAdmin=true");
+    public async ValueTask InitializeAsync() => await _server.FlushDatabaseAsync();
 
-        var fakeUrl = $"redis://user:pass@{connectionString}";
-        var opts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = fakeUrl });
-        var discordOpts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = fakeUrl });
-
-        _server = multiplexer.GetServer(connectionString);
-        _repo = new SlackTeamRepository(multiplexer, opts, new SimpleLogger(helper));
-        _store = new TokenStore(multiplexer, opts, new SimpleLogger(helper));
-        _bookmarkProvider = new LeagueIndexRedisBookmarkProvider(multiplexer, new SimpleLogger(helper));
-        _guildRepo = new DiscordGuildRepository(multiplexer, discordOpts, new SimpleLogger(helper));
-        _guildStore = new DiscordGuildStore(multiplexer, discordOpts, new SimpleLogger(helper));
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _server?.FlushDatabase();
-        await _redisContainer.DisposeAsync();
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task TestInsertAndFetchOne()
