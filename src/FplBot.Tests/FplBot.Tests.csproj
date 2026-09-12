@@ -11,7 +11,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Testing.Extensions.GitHubActionsReport" Version="2.4.0" />
-        <PackageReference Include="xunit.v3" Version="4.0.0" />
+        <PackageReference Include="xunit.v3" Version="4.0.1" />
         <PackageReference Include="FakeItEasy" Version="9.0.1" />
         <PackageReference Include="Bogus" Version="35.6.5" />
         <PackageReference Include="Testcontainers.Redis" Version="4.15.0" />
