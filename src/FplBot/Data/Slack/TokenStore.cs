@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
@@ -30,12 +31,8 @@ public class TokenStore : ITokenStore
 
     public async Task Insert(Workspace workspace)
     {
-        await Insert(new SlackTeam
-        {
-            TeamId = workspace.TeamId,
-            TeamName = workspace.TeamName,
-            AccessToken = workspace.Token
-        });
+        var installation = SlackInstallation.Install(workspace.TeamId, workspace.Token);
+        await Insert(SlackInstallationMapper.ToStorage(installation, workspace.TeamName));
     }
 
     public async Task Insert(SlackTeam slackTeam)
@@ -72,18 +69,36 @@ public class TokenStore : ITokenStore
 
         foreach (var key in allTeamKeys)
         {
-            var fetchedTeamData = await _db.HashGetAsync(key, [_teamIdField, _teamNameField, _accessTokenField]);
-            if (string.Compare(fetchedTeamData[0], teamId, StringComparison.InvariantCultureIgnoreCase) == 0)
+            var hash = await _db.HashGetAllAsync(key);
+            var storedTeamId = GetField(hash, _teamIdField);
+            if (string.Compare(storedTeamId, teamId, StringComparison.InvariantCultureIgnoreCase) != 0)
             {
-                var workspace = new Workspace(TeamId: fetchedTeamData[0], TeamName: fetchedTeamData[1], Token: fetchedTeamData[2]);
-                await _db.KeyDeleteAsync(key);
-                return workspace;
+                continue;
             }
 
+            var team = ToSlackTeam(hash);
+            var installation = SlackInstallationMapper.ToDomain(team);
+            installation.Uninstall();
+
+            await _db.KeyDeleteAsync(key);
+            return new Workspace(TeamId: team.TeamId!, TeamName: team.TeamName, Token: team.AccessToken ?? string.Empty);
         }
 
         return null;
     }
+
+    private SlackTeam ToSlackTeam(HashEntry[] hash) => new()
+    {
+        TeamId = GetField(hash, _teamIdField),
+        TeamName = GetField(hash, _teamNameField),
+        AccessToken = GetField(hash, _accessTokenField),
+        FplBotSlackChannel = GetField(hash, _channelField),
+        FplbotLeagueId = int.TryParse(GetField(hash, _leagueField), out var league) ? league : null,
+        Subscriptions = GetField(hash, _subscriptionsField)?.ParseSubscriptionString(" ").events ?? new List<EventSubscription>()
+    };
+
+    private static string? GetField(HashEntry[] hash, string field) =>
+        hash.FirstOrDefault(h => h.Name == field).Value;
 
     private static string FromTeamIdToTeamKey(string teamId)
     {
