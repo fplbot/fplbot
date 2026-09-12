@@ -1,22 +1,32 @@
-using FplBot.Data.Slack;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplPlayerCommandHandlerTests(ITestOutputHelper logger)
+// Dispatches through the real ISelectAppMentionEventHandlers selection logic (the same one the
+// real Slack webhook uses to pick a handler) instead of hand-picking a handler instance via DI —
+// asserts on the handler's returned response, not on any Slack client call (FplPlayerCommandHandler
+// doesn't post to Slack directly; it just returns a response string for the webhook to reply with).
+[Collection("App")]
+public class FplPlayerCommandHandlerTests(AppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplPlayerCommandHandler>(logger);
+    private async Task<string> Ask(string input)
+    {
+        var team = SlackTeamFaker.Generate();
+        await fixture.Store.Insert(team);
+        var dummy = Factory.CreateDummyEvent(team, input);
+
+        var response = await fixture.DispatchAppMention(dummy.meta, dummy.@event);
+        return response.Response;
+    }
 
     [Theory]
     [InlineData("@fplbot player salah")]
     [InlineData("<@UREFQD887> player salah")]
     public async Task GetPlayerHandler(string input)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-        Assert.Contains("Found matching player for salah", playerData.Response);
+        var response = await Ask(input);
+        Assert.Contains("Found matching player for salah", response);
     }
 
     [Theory]
@@ -24,10 +34,8 @@ public class FplPlayerCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("<@UREFQD887> player ", "nonexistant")]
     public async Task GetPlayerHandlerNonPlayer(string input, string player)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, $"{input}{player}");
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-
-        Assert.Equal("Found no matching player for nonexistant: ", playerData.Response);
+        var response = await Ask($"{input}{player}");
+        Assert.Equal("Found no matching player for nonexistant: ", response);
     }
 
     [Theory]
@@ -39,8 +47,7 @@ public class FplPlayerCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("alisson", "Alisson Becker")]
     public async Task GetPlayer(string input, string expectedPlayer)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, $"player {input}");
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-        Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.Response);
+        var response = await Ask($"<@UREFQD887> player {input}");
+        Assert.Equal($"Found matching player for {input}: {expectedPlayer}", response);
     }
 }

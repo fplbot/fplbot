@@ -4,8 +4,8 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Tests.E2E;
 
-public class SlackEventHandlerE2ETests(EventHandlerFixture fixture, ITestOutputHelper output)
-    : IClassFixture<EventHandlerFixture>, IAsyncLifetime
+[Collection("App")]
+public class SlackEventHandlerE2ETests(AppFixture fixture, ITestOutputHelper output) : IAsyncLifetime
 {
     public required string _teamId;
 
