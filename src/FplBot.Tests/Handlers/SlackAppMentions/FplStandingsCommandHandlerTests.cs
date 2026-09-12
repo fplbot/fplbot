@@ -1,22 +1,17 @@
-using FplBot.Data.Slack;
-using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
+using FplBot.Tests.E2E;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplStandingsCommandHandlerTests(ITestOutputHelper logger)
+[Collection("App")]
+public class FplStandingsCommandHandlerTests(AppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplStandingsCommandHandler>(logger);
-
     [Theory(Skip = "Humbug før sesongen er i gang?")]
     [InlineData("@fplbot standings")]
     [InlineData("<@UREFQD887> standings")]
-
     public async Task GetStandings(string input)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-        Assert.DoesNotContain("Oops", playerData.Response);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.DoesNotContain("Oops", response.Text);
     }
 }
