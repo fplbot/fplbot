@@ -12,7 +12,7 @@ var targets = new Targets();
 targets.Add("test",
     "Run all tests",
     async () => await Command.RunAsync("dotnet",
-        """test src -p:TreatWarningsAsErrors=true --logger "GitHubActions;report-warnings=false" """));
+        "test src -p:TreatWarningsAsErrors=true --report-gh"));
 
 targets.Add("client-build",
     "Install dependencies and build the WebApi ClientApp",
