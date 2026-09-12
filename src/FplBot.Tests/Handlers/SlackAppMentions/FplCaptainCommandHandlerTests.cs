@@ -1,22 +1,17 @@
-using FplBot.Data.Slack;
-using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
+using FplBot.Tests.E2E;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplCaptainCommandHandlerTests(ITestOutputHelper logger)
+[Collection("App")]
+public class FplCaptainCommandHandlerTests(AppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplCaptainCommandHandler>(logger);
-
     [Theory]
     [InlineData("@fplbot captains")]
     [InlineData("<@UREFQD887> captains")]
     public async Task GetCaptainsShouldPostAllEntryCaptainPicks(string input)
     {
-        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
-        Assert.StartsWith("💥", playerData.Response);
+        var response = await fixture.AskSlackbot(input);
+        Assert.StartsWith("💥", response);
     }
 
     [Theory]
@@ -24,10 +19,8 @@ public class FplCaptainCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("<@UREFQD887> captains 1")]
     public async Task GetCaptainsForGameweekShouldPostAllEntryCaptainPicksForThatGameweek(string input)
     {
-        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
-
-        Assert.StartsWith("💥", playerData.Response);
+        var response = await fixture.AskSlackbot(input);
+        Assert.StartsWith("💥", response);
     }
 
     [Theory]
@@ -35,9 +28,8 @@ public class FplCaptainCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("<@UREFQD887> captains chart")]
     public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForCurrentGw(string input)
     {
-        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
-        Assert.StartsWith("📊", playerData.Response);
+        var response = await fixture.AskSlackbot(input);
+        Assert.StartsWith("📊", response);
     }
 
     [Theory]
@@ -45,8 +37,7 @@ public class FplCaptainCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("<@UREFQD887> captains 19 chart")]
     public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForExplicitGw(string input)
     {
-        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
-        Assert.StartsWith("📊", playerData.Response);
+        var response = await fixture.AskSlackbot(input);
+        Assert.StartsWith("📊", response);
     }
 }

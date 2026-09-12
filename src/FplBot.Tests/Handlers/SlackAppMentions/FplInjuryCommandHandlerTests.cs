@@ -1,20 +1,15 @@
-using FplBot.Data.Slack;
-using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
+using FplBot.Tests.E2E;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplInjuryCommandHandlerTests(ITestOutputHelper logger)
+[Collection("App")]
+public class FplInjuryCommandHandlerTests(AppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplInjuryCommandHandler>(logger);
-
     [Theory]
     [InlineData("@fplbot injuries")]
     public async Task GetPlayerHandler(string input)
     {
-        var dummyEvent = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummyEvent.meta, dummyEvent.@event);
-        Assert.NotEmpty(playerData.Response);
+        var response = await fixture.AskSlackbot(input);
+        Assert.NotEmpty(response);
     }
 }

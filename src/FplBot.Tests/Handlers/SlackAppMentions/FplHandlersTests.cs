@@ -1,14 +1,14 @@
-﻿using FplBot.Tests.Helpers;
+using FplBot.Tests.E2E;
 using FplBot.WebApi.Slack.Handlers.SlackEvents;
+using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplHandlersTests(ITestOutputHelper logger)
+[Collection("App")]
+public class FplHandlersTests(AppFixture fixture)
 {
-    private readonly IHandleAppMentions[] _allHandlers = Factory.GetAllHandlers(logger).Handlers.ToArray();
-
     [Theory]
     [InlineData("<@BOTID123> subscribe standings", typeof(FplSubscribeCommandHandler))]
     [InlineData("<@BOTID123> subscribe captains", typeof(FplSubscribeCommandHandler))]
@@ -23,10 +23,11 @@ public class FplHandlersTests(ITestOutputHelper logger)
     public void OnlyExpectedSupportedHandlersShouldHandleCommand(string input, Type expectedSupportedHandler)
     {
         // Arrange
-        var mentionEvent = new AppMentionEvent {Text = input};
+        var mentionEvent = new AppMentionEvent { Text = input };
+        var allHandlers = fixture.Services.GetServices<IHandleAppMentions>();
 
         // Act / assert
-        foreach (var handler in _allHandlers)
+        foreach (var handler in allHandlers)
         {
             var handlerShouldHandleCommand = handler.ShouldHandle(mentionEvent);
             var handlerIsExpectedSupportedHandler = handler.GetType() == expectedSupportedHandler;
