@@ -1,4 +1,8 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FakeItEasy;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,6 +71,14 @@ public static class Factory
 
         SlackClient = A.Fake<ISlackClient>();
         services.Replace<IPublishEndpoint>(PublishEndpoint = new TestPublishEndpoint());
+
+        // Real FPL API clients otherwise hit the live fantasy.premierleague.com API on every
+        // Handle() call — slow (multi-second) and non-deterministic. Fake GetGlobalSettings()
+        // from a real, locally-embedded bootstrap-static snapshot instead (mirrors EventHandlerFixture).
+        var globalSettings = JsonSerializer.Deserialize<GlobalSettings>(
+            TestResources.Boostrap_Static_Json,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+        services.Replace<IGlobalSettingsClient>(GlobalSettingsClientBuilder.Returning(globalSettings));
 
         services.AddSingleton(hostEnvironment);
         services.AddFplWorkers();
