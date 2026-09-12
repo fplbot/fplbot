@@ -14,7 +14,7 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> player salah")]
     public async Task GetPlayerHandler(string input)
     {
-        var response = await fixture.Ask(input);
+        var response = await fixture.AskSlackbot(input);
         Assert.Contains("Found matching player for salah", response);
     }
 
@@ -23,7 +23,7 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("<@UREFQD887> player ", "nonexistant")]
     public async Task GetPlayerHandlerNonPlayer(string input, string player)
     {
-        var response = await fixture.Ask($"{input}{player}");
+        var response = await fixture.AskSlackbot($"{input}{player}");
         Assert.Equal("Found no matching player for nonexistant: ", response);
     }
 
@@ -36,7 +36,7 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     [InlineData("alisson", "Alisson Becker")]
     public async Task GetPlayer(string input, string expectedPlayer)
     {
-        var response = await fixture.Ask($"<@UREFQD887> player {input}");
+        var response = await fixture.AskSlackbot($"<@UREFQD887> player {input}");
         Assert.Equal($"Found matching player for {input}: {expectedPlayer}", response);
     }
 }

@@ -176,7 +176,7 @@ public class AppFixture : IAsyncLifetime
         return team;
     }
 
-    public async Task<string> Ask(SlackTeam team, string input)
+    public async Task<string> AskSlackbot(SlackTeam team, string input)
     {
         var dummy = Factory.CreateDummyEvent(team, input);
         var response = await DispatchAppMention(dummy.meta, dummy.@event);
@@ -184,7 +184,7 @@ public class AppFixture : IAsyncLifetime
     }
 
     // Convenience for handlers that don't care about team state — a fresh team per call.
-    public async Task<string> Ask(string input) => await Ask(await SeedTeam(), input);
+    public async Task<string> AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
 
     public async Task FlushRedisAsync()
     {
