@@ -71,6 +71,7 @@ public static class WebAppExtensions
         AdminSlackEndpoints.Map(admin);
         AdminSearchEndpoints.Map(admin);
         AdminDiscordEndpoints.Map(admin);
+        AdminHealthEndpoints.Map(admin, env);
 
         // A plain MapFallbackToFile("index.html") would serve the SPA shell for *any*
         // unmatched request, including a typo'd /api/**, /debug/**, or webhook path —

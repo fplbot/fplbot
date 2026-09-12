@@ -13,13 +13,13 @@ public static class SearchEndpoints
         group.MapGet("/any", GetAny);
     }
 
-    private static async Task<IResult> GetEntry(int id, ISearchService searchService)
+    internal static async Task<IResult> GetEntry(int id, ISearchService searchService)
     {
         var entry = await searchService.GetEntry(id);
         return entry == null ? TypedResults.NotFound() : TypedResults.Ok(entry);
     }
 
-    private static async Task<IResult> GetEntries(string query, int page, HttpContext httpContext, ISearchService searchService)
+    internal static async Task<IResult> GetEntries(string query, int page, HttpContext httpContext, ISearchService searchService)
     {
         var metaData = new SearchMetaData
         {
@@ -36,7 +36,7 @@ public static class SearchEndpoints
         return TypedResults.Ok(new { Hits = searchResult });
     }
 
-    private static async Task<IResult> GetLeagues(string query, int page, string countryToBoost, HttpContext httpContext, ISearchService searchService)
+    internal static async Task<IResult> GetLeagues(string query, int page, string countryToBoost, HttpContext httpContext, ISearchService searchService)
     {
         var metaData = new SearchMetaData
         {
@@ -53,7 +53,7 @@ public static class SearchEndpoints
         return TypedResults.Ok(new { Hits = searchResult });
     }
 
-    private static async Task<IResult> GetAny(string query, int page, HttpContext httpContext, ISearchService searchService, SearchType type = SearchType.All)
+    internal static async Task<IResult> GetAny(string query, int page, HttpContext httpContext, ISearchService searchService, SearchType type = SearchType.All)
     {
         var metaData = new SearchMetaData
         {

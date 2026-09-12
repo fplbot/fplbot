@@ -1,3 +1,4 @@
+using Fpl.Search.Analytics;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
@@ -29,6 +30,7 @@ public static class SearchServiceCollectionExtensions
 
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IIndexingClient, IndexingClient>();
+        services.AddScoped<ISearchAnalyticsService, SearchAnalyticsService>();
         return services;
     }
 

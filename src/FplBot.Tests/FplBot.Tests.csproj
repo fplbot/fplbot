@@ -23,6 +23,7 @@
         <PackageReference Include="FakeItEasy" Version="9.0.1" />
         <PackageReference Include="Bogus" Version="35.6.5" />
         <PackageReference Include="Testcontainers.Redis" Version="4.15.0" />
+        <PackageReference Include="Testcontainers.Elasticsearch" Version="4.15.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
         <PackageReference Include="StackExchange.Redis" Version="3.2.0" />
     </ItemGroup>
@@ -59,6 +60,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="E2E\Search\" />
     <Folder Include="Handlers\" />
   </ItemGroup>
 

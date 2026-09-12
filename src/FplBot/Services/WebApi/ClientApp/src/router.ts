@@ -79,9 +79,24 @@ const router = createRouter({
           ],
         },
         {
-          path: "indexing",
-          name: "admin-indexing",
-          component: () => import("./views/admin/IndexingView.vue"),
+          path: "search",
+          component: () => import("./views/admin/SearchSection.vue"),
+          children: [
+            {
+              path: "",
+              redirect: "/admin/search/indexing",
+            },
+            {
+              path: "indexing",
+              name: "admin-search-indexing",
+              component: () => import("./views/admin/IndexingView.vue"),
+            },
+            {
+              path: "analytics",
+              name: "admin-search-analytics",
+              component: () => import("./views/admin/SearchAnalyticsView.vue"),
+            },
+          ],
         },
         {
           path: "teams/:teamId",
