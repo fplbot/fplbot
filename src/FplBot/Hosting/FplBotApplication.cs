@@ -44,17 +44,8 @@ public static class FplBotApplication
             : $"http://+:{port}");
 
         var redisConn = BuildRedisConnection(builder.Configuration);
-        ConfigureCommon(builder.Services, builder.Configuration, redisConn);
-        builder.Services.AddMassTransit(x =>
-        {
-            foreach (var svc in active)
-                svc.ConfigureMassTransit(x);
-            x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
-            ConfigureAzureServiceBus(x, builder.Configuration);
-        });
-
-        foreach (var svc in active)
-            svc.Configure(builder.Services, builder.Configuration, redisConn, builder.Environment);
+        ConfigureServices(builder.Services, builder.Configuration, redisConn, builder.Environment, active,
+            cfg => ConfigureAzureServiceBus(cfg, builder.Configuration));
 
         var app = builder.Build();
         foreach (var svc in active)
@@ -70,21 +61,33 @@ public static class FplBotApplication
             .ConfigureServices((ctx, services) =>
             {
                 var redisConn = BuildRedisConnection(ctx.Configuration);
-                ConfigureCommon(services, ctx.Configuration, redisConn);
-                services.AddMassTransit(x =>
-                {
-                    foreach (var svc in active)
-                        svc.ConfigureMassTransit(x);
-                    x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
-                    ConfigureAzureServiceBus(x, ctx.Configuration);
-                });
-
-                foreach (var svc in active)
-                    svc.Configure(services, ctx.Configuration, redisConn, ctx.HostingEnvironment);
+                ConfigureServices(services, ctx.Configuration, redisConn, ctx.HostingEnvironment, active,
+                    cfg => ConfigureAzureServiceBus(cfg, ctx.Configuration));
             })
             .Build();
 
         await host.RunAsync();
+    }
+
+    public static void ConfigureServices(
+        IServiceCollection services,
+        IConfiguration config,
+        ConnectionMultiplexer redisConn,
+        IHostEnvironment env,
+        List<IFplBotService> active,
+        Action<IBusRegistrationConfigurator> configureBus)
+    {
+        ConfigureCommon(services, config, redisConn);
+        services.AddMassTransit(x =>
+        {
+            foreach (var svc in active)
+                svc.ConfigureMassTransit(x);
+            x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
+            configureBus(x);
+        });
+
+        foreach (var svc in active)
+            svc.Configure(services, config, redisConn, env);
     }
 
     private static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc)

@@ -1,23 +1,20 @@
-using FplBot.Data.Slack;
-using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
+using Fpl.Search.Models;
+using FplBot.Tests.E2E;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplSearchCommandHandlerTests(ITestOutputHelper logger)
+[Collection("AppSearch")]
+public class FplSearchCommandHandlerTests(SearchAppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplSearchHandler>(logger);
-
-    [Fact(Skip = "integration")]
+    [Fact]
     public async Task SearchForSkjelbek()
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, "search skjelbek");
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-        Assert.Equal("Matching teams:\n" +
-                     "▪️ <https://fantasy.premierleague.com/entry/192197/event/9|Kun Magüero> (Magnus Skjelbek)\n" +
-                     "▪️ <https://fantasy.premierleague.com/entry/76744/event/9|van de skjelbeek> (Lars Skjelbek)\n" +
-                     "▪️ <https://fantasy.premierleague.com/entry/3558015/event/9|Anders Balleklubb> (Anders Skjelbek)\n\n" +
-                     "Matching leagues:\nFound no matching leagues 🤷‍♂️", playerData.Response);
+        await fixture.SeedSearchEntry(new EntryItem { Id = 1, RealName = "Magnus Skjelbek", TeamName = "Kun Magüero" });
+
+        await fixture.AskSlackbot("<@UREFQD887> search skjelbek");
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
+
+        Assert.Contains("Matching teams:", response.Text);
+        Assert.Contains("Magnus Skjelbek", response.Text);
     }
 }

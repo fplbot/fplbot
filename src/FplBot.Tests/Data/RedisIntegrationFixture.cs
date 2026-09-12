@@ -4,7 +4,7 @@ using Testcontainers.Redis;
 namespace FplBot.Tests.Data;
 
 // One real Redis container, shared across every test in RedisIntegrationTests (mirrors
-// EventHandlerFixture's and ElasticsearchFixture's shared-container pattern). Each test
+// AppFixture's and ElasticsearchFixture's shared-container pattern). Each test
 // flushes the database before it runs so tests never see leftover state from another test.
 public class RedisIntegrationFixture : IAsyncLifetime
 {

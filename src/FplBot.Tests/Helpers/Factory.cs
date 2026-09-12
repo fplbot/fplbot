@@ -22,7 +22,7 @@ namespace FplBot.Tests.Helpers;
 public static class Factory
 {
     // One real Redis container, lazily started on first use and shared for the whole test run
-    // (mirrors EventHandlerFixture's pattern, just scoped to the process instead of one test class).
+    // (mirrors AppFixture's pattern, just scoped to the process instead of one test class).
     private static readonly Lazy<RedisContainer> RedisContainerInstance = new(() =>
     {
         var container = new RedisBuilder("redis:latest").Build();

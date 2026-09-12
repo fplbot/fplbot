@@ -1,22 +1,19 @@
-using FplBot.Data.Slack;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplPlayerCommandHandlerTests(ITestOutputHelper logger)
+[Collection("App")]
+public class FplPlayerCommandHandlerTests(AppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplPlayerCommandHandler>(logger);
-
     [Theory]
-    [InlineData("@fplbot player salah")]
-    [InlineData("<@UREFQD887> player salah")]
+    [InlineData("@fplbot player haaland")]
+    [InlineData("<@UREFQD887> player haaland")]
     public async Task GetPlayerHandler(string input)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, input);
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-        Assert.Contains("Found matching player for salah", playerData.Response);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Contains("Haaland", response.AllText());
     }
 
     [Theory]
@@ -24,10 +21,9 @@ public class FplPlayerCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("<@UREFQD887> player ", "nonexistant")]
     public async Task GetPlayerHandlerNonPlayer(string input, string player)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, $"{input}{player}");
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-
-        Assert.Equal("Found no matching player for nonexistant: ", playerData.Response);
+        await fixture.AskSlackbot($"{input}{player}");
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Equal("Couldn't find nonexistant", response.Text);
     }
 
     [Theory]
@@ -39,8 +35,8 @@ public class FplPlayerCommandHandlerTests(ITestOutputHelper logger)
     [InlineData("alisson", "Alisson Becker")]
     public async Task GetPlayer(string input, string expectedPlayer)
     {
-        var dummy = Factory.CreateDummyEvent(_client.Team, $"player {input}");
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
-        Assert.Equal($"Found matching player for {input}: {expectedPlayer}", playerData.Response);
+        await fixture.AskSlackbot($"<@UREFQD887> player {input}");
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Contains(expectedPlayer, response.AllText());
     }
 }

@@ -1,28 +1,29 @@
 using FakeItEasy;
-using FplBot.Data.Slack;
-using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using FplBot.Tests.E2E;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
-public class FplNextGwHandlerTests(ITestOutputHelper logger)
+[Collection("App")]
+public class FplNextGwHandlerTests(AppFixture fixture)
 {
-    private readonly (IHandleAppMentions Handler, SlackTeam Team) _client = Factory.GetHandler<FplNextGameweekCommandHandler>(logger);
-
-    [Theory(Skip = "Disable it temporary until ihaztimetofix")]
-    [InlineData("@fplbot nextgw")]
-    public async Task GetPlayerHandler(string input)
+    [Theory]
+    [InlineData("@fplbot next")]
+    [InlineData("<@UREFQD887> next")]
+    public async Task GetNextGameweekFixtures(string input)
     {
-        A.CallTo(() => Factory.SlackClient.UsersList())
-            .Returns(new UsersListResponse
-            {
-                Ok = true, Members = [new User { Id = "123" }]
-            });
-        var dummy = Factory.CreateDummyEventByUser(_client.Team, input, "123");
-        var playerData = await _client.Handler.Handle(dummy.meta, dummy.@event);
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(4)).Returns(new List<Fixture>
+        {
+            new() { HomeTeamId = 1, AwayTeamId = 2, KickOffTime = new DateTime(2026, 9, 12, 14, 0, 0, DateTimeKind.Utc) }
+        });
 
-        Assert.NotEmpty(playerData.Response);
+        await fixture.AskSlackbot(input);
+        var response = await fixture.SlackCapture.WaitForMessageAsync();
+
+        Assert.Contains("GAMEWEEK 4", response.Text);
+        Assert.Contains("ARS-AVL", response.Text);
     }
 }

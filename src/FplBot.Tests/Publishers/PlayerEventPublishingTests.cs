@@ -2,15 +2,31 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.RecurringActions;
-using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Data;
+using FplBot.Data.Slack;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests.Publishers;
 
-public class PlayerEventPublishingTests
+[Collection("App")]
+public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
 {
-    private static TestPublishEndpoint _messageSession = null!;
+    private const string Channel = "#players";
+
+    public async ValueTask InitializeAsync()
+    {
+        fixture.SlackCapture.Reset();
+        await fixture.FlushRedisAsync();
+        var team = SlackTeamFaker.Generate();
+        team.FplBotSlackChannel = Channel;
+        team.Subscriptions = [EventSubscription.PriceChanges, EventSubscription.InjuryUpdates, EventSubscription.NewPlayers];
+        await fixture.Store.Insert(team);
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task WithPriceIncrease()
@@ -18,8 +34,10 @@ public class PlayerEventPublishingTests
         var state = CreatePriceIncreaseScenario();
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
-        Assert.Single(_messageSession.PublishedMessages);
-        Assert.IsType<PlayersPriceChanged>(_messageSession.PublishedMessages[0].Message);
+
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Equal(Channel, msg.Channel);
+        Assert.Contains("PlayerWebname", msg.Text);
     }
 
     [Fact]
@@ -28,8 +46,10 @@ public class PlayerEventPublishingTests
         var state = CreateNewInjuryScenario();
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
-        Assert.Single(_messageSession.PublishedMessages);
-        Assert.IsType<InjuryUpdateOccured>(_messageSession.PublishedMessages[0].Message);
+
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Equal(Channel, msg.Channel);
+        Assert.Contains("PlayerWebname", msg.Text);
     }
 
     [Fact]
@@ -39,8 +59,8 @@ public class PlayerEventPublishingTests
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
 
-        Assert.Single(_messageSession.PublishedMessages);
-        Assert.IsType<NewPlayersRegistered>(_messageSession.PublishedMessages[0].Message);
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Equal(Channel, msg.Channel);
     }
 
     [Fact]
@@ -49,21 +69,25 @@ public class PlayerEventPublishingTests
         var state = CreateChangeInDoubtfulnessScenario();
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
-        Assert.Single(_messageSession.PublishedMessages);
-        Assert.IsType<InjuryUpdateOccured>(_messageSession.PublishedMessages[0].Message);
+
+        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        Assert.Equal(Channel, msg.Channel);
+        Assert.Contains("PlayerWebname", msg.Text);
     }
 
     [Fact]
     public async Task WithPlayerTransferBetweenTwoPLTeams_EmitsEvent()
     {
-        var state = CreateTeamChangeScenario();
+        var messageSession = new TestPublishEndpoint();
+        var state = CreateTeamChangeScenario(messageSession);
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
-        Assert.Single(_messageSession.PublishedMessages);
-        Assert.IsType<PremiershipPlayerTransferred>(_messageSession.PublishedMessages[0].Message);
+
+        Assert.Single(messageSession.PublishedMessages);
+        Assert.IsType<FplBot.Messaging.Contracts.Events.v1.PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
     }
 
-    private static PlayerUpdatesRecurringAction CreateTeamChangeScenario()
+    private static PlayerUpdatesRecurringAction CreateTeamChangeScenario(TestPublishEndpoint messageSession)
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
@@ -82,10 +106,10 @@ public class PlayerEventPublishingTests
                 }
             });
 
-        return CreatePlayerBaseScenario(settingsClient);
+        return new PlayerUpdatesRecurringAction(settingsClient, new TestScopeFactory(messageSession), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
     }
 
-    private static PlayerUpdatesRecurringAction CreateNewInjuryScenario()
+    private PlayerUpdatesRecurringAction CreateNewInjuryScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
@@ -112,11 +136,10 @@ public class PlayerEventPublishingTests
                 }
             });
 
-
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private static PlayerUpdatesRecurringAction CreateChangeInDoubtfulnessScenario()
+    private PlayerUpdatesRecurringAction CreateChangeInDoubtfulnessScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
@@ -146,7 +169,7 @@ public class PlayerEventPublishingTests
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private static PlayerUpdatesRecurringAction CreateNewPlayerScenario()
+    private PlayerUpdatesRecurringAction CreateNewPlayerScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
@@ -177,7 +200,7 @@ public class PlayerEventPublishingTests
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private static PlayerUpdatesRecurringAction CreatePriceIncreaseScenario()
+    private PlayerUpdatesRecurringAction CreatePriceIncreaseScenario()
     {
         var playerClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
             {
@@ -204,14 +227,9 @@ public class PlayerEventPublishingTests
                 }
             });
 
-
-
         return CreatePlayerBaseScenario(playerClient);
     }
 
-    private static PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient)
-    {
-        _messageSession = new TestPublishEndpoint();
-        return new PlayerUpdatesRecurringAction(playerClient, new TestScopeFactory(_messageSession), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
-    }
+    private PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>
+        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
 }

@@ -14,8 +14,10 @@ public class ElasticsearchFixture : IAsyncLifetime
     private static readonly bool ReuseContainers =
         Environment.GetEnvironmentVariable("REUSE_TEST_CONTAINERS") == "true";
 
+    // Version matches Aspire's AddElasticsearch default (see FplBot.AppHost/Program.cs) so the
+    // engine tests run against is the same one local dev/prod actually use.
     private readonly ElasticsearchContainer _container =
-        new ElasticsearchBuilder("docker.elastic.co/elasticsearch/elasticsearch:8.15.0")
+        new ElasticsearchBuilder("docker.elastic.co/elasticsearch/elasticsearch:8.17.3")
             .WithPassword("elastic")
             .WithReuse(ReuseContainers)
             .WithLabel("reuse-id", "elasticsearch-fixture")
