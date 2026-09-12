@@ -11,7 +11,7 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     public async Task GetCaptainsShouldPostAllEntryCaptainPicks(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.StartsWith("💥", response);
+        Assert.StartsWith("💥", response.Text);
     }
 
     [Theory]
@@ -20,7 +20,7 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     public async Task GetCaptainsForGameweekShouldPostAllEntryCaptainPicksForThatGameweek(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.StartsWith("💥", response);
+        Assert.StartsWith("💥", response.Text);
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForCurrentGw(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.StartsWith("📊", response);
+        Assert.StartsWith("📊", response.Text);
     }
 
     [Theory]
@@ -38,6 +38,6 @@ public class FplCaptainCommandHandlerTests(AppFixture fixture)
     public async Task GetCaptainsChartShouldPostAllEntryCaptainPicksInAChartForExplicitGw(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.StartsWith("📊", response);
+        Assert.StartsWith("📊", response.Text);
     }
 }

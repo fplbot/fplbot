@@ -1,4 +1,5 @@
 using FplBot.Tests.E2E;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
@@ -6,12 +7,12 @@ namespace FplBot.Tests.Handlers.SlackAppMentions;
 public class FplPlayerCommandHandlerTests(AppFixture fixture)
 {
     [Theory]
-    [InlineData("@fplbot player salah")]
-    [InlineData("<@UREFQD887> player salah")]
+    [InlineData("@fplbot player haaland")]
+    [InlineData("<@UREFQD887> player haaland")]
     public async Task GetPlayerHandler(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.Contains("Found matching player for salah", response);
+        Assert.Contains("Haaland", response.AllText());
     }
 
     [Theory]
@@ -20,7 +21,7 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     public async Task GetPlayerHandlerNonPlayer(string input, string player)
     {
         var response = await fixture.AskSlackbot($"{input}{player}");
-        Assert.Equal("Found no matching player for nonexistant: ", response);
+        Assert.Equal("Couldn't find nonexistant", response.Text);
     }
 
     [Theory]
@@ -33,6 +34,6 @@ public class FplPlayerCommandHandlerTests(AppFixture fixture)
     public async Task GetPlayer(string input, string expectedPlayer)
     {
         var response = await fixture.AskSlackbot($"<@UREFQD887> player {input}");
-        Assert.Equal($"Found matching player for {input}: {expectedPlayer}", response);
+        Assert.Contains(expectedPlayer, response.AllText());
     }
 }

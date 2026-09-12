@@ -1,4 +1,5 @@
 using FplBot.Tests.E2E;
+using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.Handlers.SlackAppMentions;
 
@@ -10,6 +11,6 @@ public class FplInjuryCommandHandlerTests(AppFixture fixture)
     public async Task GetPlayerHandler(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.NotEmpty(response);
+        Assert.NotEmpty(response.AllText());
     }
 }

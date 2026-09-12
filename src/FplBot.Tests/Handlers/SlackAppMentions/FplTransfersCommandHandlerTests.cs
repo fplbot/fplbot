@@ -11,7 +11,7 @@ public class FplTransfersCommandHandlerTests(AppFixture fixture)
     public async Task GetTransfersHandlerShouldPostTransfers(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.Contains("Transfers", response, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("Transfers", response.Text, StringComparison.InvariantCultureIgnoreCase);
     }
 
     [Theory]
@@ -19,7 +19,7 @@ public class FplTransfersCommandHandlerTests(AppFixture fixture)
     public async Task GetTransfersForExplicitGwShouldPostTransfersForGameweek(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.Contains("Transfers", response, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("Transfers", response.Text, StringComparison.InvariantCultureIgnoreCase);
     }
 
     [Theory]
@@ -28,6 +28,6 @@ public class FplTransfersCommandHandlerTests(AppFixture fixture)
     public async Task GetTransfersHandlerForGw1ShouldPostSpecialMessage(string input)
     {
         var response = await fixture.AskSlackbot(input);
-        Assert.Contains("Transfers", response, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("Transfers", response.Text, StringComparison.InvariantCultureIgnoreCase);
     }
 }

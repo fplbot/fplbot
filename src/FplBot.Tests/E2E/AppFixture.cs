@@ -3,26 +3,27 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
 using FplBot.Data.Slack;
-using FplBot.Formatting;
-using FplBot.Formatting.Helpers;
+using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
+using FplBot.Services.WebApi;
 using FplBot.Tests.Helpers;
 using FplBot.WebApi.Slack.Data;
 using MassTransit;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Slackbot.Net.Endpoints.Abstractions;
-using Slackbot.Net.Endpoints.Models.Events;
+using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using StackExchange.Redis;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Testcontainers.Redis;
@@ -38,8 +39,9 @@ public class AppFixture : IAsyncLifetime
         .WithReuse(ReuseContainers)
         .WithLabel("reuse-id", "app-fixture")
         .Build();
-    private IHost _host = null!;
+    private WebApplication _app = null!;
     private ConnectionMultiplexer _multiplexer = null!;
+    private HttpClient _client = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
     public TokenStore Store { get; private set; } = null!;
@@ -80,60 +82,70 @@ public class AppFixture : IAsyncLifetime
             .AddInMemoryCollection(new Dictionary<string, string?> { ["REDIS_URL"] = redisUrl })
             .Build();
 
-        _host = Host.CreateDefaultBuilder()
-            .UseEnvironment("Testing")
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton<IConnectionMultiplexer>(_multiplexer);
-                services.AddSingleton(_multiplexer);
-                services.AddHttpContextAccessor();
-                services.AddStackExchangeRedisCache(o =>
-                    o.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(_multiplexer));
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Configuration.AddConfiguration(config);
 
-                var hostEnvironment = new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = "Testing" };
-                new EventHandlersService().Configure(services, config, _multiplexer, hostEnvironment);
-                services.AddFplBotSlackWebEndpoints(config, _multiplexer, hostEnvironment);
+        var active = new List<IFplBotService> { new WebApiService(), new EventHandlersService() };
+        FplBotApplication.ConfigureServices(builder.Services, config, _multiplexer, builder.Environment, active,
+            cfg => cfg.UsingInMemory((ctx, c) => c.ConfigureEndpoints(ctx)));
 
-                services.AddSingleton<IGlobalSettingsClient>(fakeGlobalSettings);
-                services.AddSingleton<IFixtureClient>(fakeFixtureClient);
-                services.AddSingleton<ILeagueClient>(fakeLeagueClient);
-                services.AddSingleton<ITransfersClient>(A.Fake<ITransfersClient>());
-                services.AddSingleton<IEntryClient>(A.Fake<IEntryClient>());
-                services.AddSingleton<ILiveClient>(A.Fake<ILiveClient>());
-                services.AddSingleton<IEntryHistoryClient>(A.Fake<IEntryHistoryClient>());
-                services.AddSingleton<IEventStatusClient>(A.Fake<IEventStatusClient>());
+        builder.Services.AddSingleton<IConnectionMultiplexer>(_multiplexer);
+        builder.Services.AddSingleton(_multiplexer);
+        builder.Services.AddStackExchangeRedisCache(o =>
+            o.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(_multiplexer));
 
-                services.RemoveAll<ISlackClientBuilder>();
-                services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
+        builder.Services.AddSingleton<IGlobalSettingsClient>(fakeGlobalSettings);
+        builder.Services.AddSingleton<IFixtureClient>(fakeFixtureClient);
+        builder.Services.AddSingleton<ILeagueClient>(fakeLeagueClient);
+        builder.Services.AddSingleton<ITransfersClient>(A.Fake<ITransfersClient>());
+        builder.Services.AddSingleton<IEntryClient>(A.Fake<IEntryClient>());
+        builder.Services.AddSingleton<ILiveClient>(A.Fake<ILiveClient>());
+        builder.Services.AddSingleton<IEntryHistoryClient>(A.Fake<IEntryHistoryClient>());
+        builder.Services.AddSingleton<IEventStatusClient>(A.Fake<IEventStatusClient>());
 
-                services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
-                services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
-                services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
-                services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
+        builder.Services.RemoveAll<ISlackClientBuilder>();
+        builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
 
-                services.AddMassTransit(x =>
-                {
-                    new EventHandlersService().ConfigureMassTransit(x);
-                    x.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
-                });
-            })
-            .Build();
+        _app = builder.Build();
+        _app.Map("/events", a => a.UseSlackbot(enableAuth: false));
 
-        await _host.StartAsync();
+        await _app.StartAsync();
+        _client = _app.GetTestClient();
     }
 
-    public IBus Bus => _host.Services.GetRequiredService<IBus>();
-    public IServiceProvider Services => _host.Services;
+    public IBus Bus => _app.Services.GetRequiredService<IBus>();
+    public IServiceProvider Services => _app.Services;
 
-    public async Task<EventHandledResponse> DispatchAppMention(EventMetaData meta, AppMentionEvent slackEvent)
+    public async Task<ChatPostMessageRequest> AskSlackbot(SlackTeam team, string input)
     {
-        _host.Services.GetRequiredService<IHttpContextAccessor>().HttpContext =
-            new DefaultHttpContext { RequestServices = _host.Services };
+        var payload = new
+        {
+            token = "test",
+            team_id = team.TeamId,
+            api_app_id = "test",
+            type = "event_callback",
+            event_id = Guid.NewGuid().ToString(),
+            event_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            authed_users = new[] { "U0BOT" },
+            @event = new
+            {
+                type = "app_mention",
+                text = input,
+                user = "U12345",
+                channel = team.FplBotSlackChannel,
+                ts = "1234567890.123456",
+                event_ts = "1234567890.123456"
+            }
+        };
 
-        var selector = _host.Services.GetRequiredService<ISelectAppMentionEventHandlers>();
-        var handlers = await selector.GetAppMentionEventHandlerFor(meta, slackEvent);
-        return await handlers.Single().Handle(meta, slackEvent);
+        var response = await _client.PostAsJsonAsync("/events", payload);
+        response.EnsureSuccessStatusCode();
+
+        return await SlackCapture.WaitForMessageAsync();
     }
+
+    public async Task<ChatPostMessageRequest> AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
 
     public async Task<SlackTeam> SeedTeam(Action<SlackTeam>? configure = null)
     {
@@ -143,15 +155,6 @@ public class AppFixture : IAsyncLifetime
         return team;
     }
 
-    public async Task<string> AskSlackbot(SlackTeam team, string input)
-    {
-        var dummy = Factory.CreateDummyEvent(team, input);
-        var response = await DispatchAppMention(dummy.meta, dummy.@event);
-        return response.Response;
-    }
-
-    public async Task<string> AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
-
     public async Task FlushRedisAsync()
     {
         var server = _multiplexer.GetServer(_multiplexer.GetEndPoints().First());
@@ -160,8 +163,8 @@ public class AppFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await _host.StopAsync();
-        _host.Dispose();
+        await _app.StopAsync();
+        await _app.DisposeAsync();
         _multiplexer?.Dispose();
         if (!ReuseContainers) await _redis.DisposeAsync();
     }
