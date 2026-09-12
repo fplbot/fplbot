@@ -54,6 +54,11 @@ public class SlackChannelSubscription
         Events.Remove(fplEvent);
     }
 
+    public void Unsubscribe(FplEvent[] fplEvent)
+    {
+        Events.Remove(fplEvent);
+    }
+
     public bool IsSubscribedTo(FplEvent fplEvent)
     {
         return Events.Contains(fplEvent);

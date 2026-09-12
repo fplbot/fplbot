@@ -13,20 +13,6 @@ public class EventCollection
         return new EventCollection();
     }
 
-    public static EventCollection CreateSingle(FplEvent fplEvent)
-    {
-        var fplEventSet = new EventCollection();
-        fplEventSet.Add(fplEvent);
-        return fplEventSet;
-    }
-
-    public static EventCollection CreateMany(FplEvent[] fplEvents)
-    {
-        var fplEventSet = new EventCollection();
-        fplEventSet.Add(fplEvents);
-        return fplEventSet;
-    }
-
     public void Add(FplEvent fplEvent)
     {
         if (fplEvent == FplEvent.All)
@@ -55,6 +41,14 @@ public class EventCollection
     public bool Contains(FplEvent fplEvent)
     {
         return _events.Contains(FplEvent.All) || _events.Contains(fplEvent);
+    }
+
+    public void Remove(IEnumerable<FplEvent> fplEvents)
+    {
+        foreach (var fplEvent in fplEvents)
+        {
+            Remove(fplEvent);
+        }
     }
 
     public void Remove(FplEvent fplEvent)

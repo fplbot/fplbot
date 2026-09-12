@@ -21,6 +21,7 @@ public class SlackInstallation
     public void Uninstall()
     {
         Token = null;
+        _channelSubscriptions.Clear();
     }
 
     public void Follow(string channelId, ClassicLeagueId leagueId)
@@ -48,6 +49,11 @@ public class SlackInstallation
     }
 
     public void Unsubscribe(string channelId, FplEvent fplEvent)
+    {
+        FindChannel(channelId)?.Unsubscribe(fplEvent);
+    }
+
+    public void Unsubscribe(string channelId, FplEvent[] fplEvent)
     {
         FindChannel(channelId)?.Unsubscribe(fplEvent);
     }
