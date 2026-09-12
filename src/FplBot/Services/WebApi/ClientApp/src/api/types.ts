@@ -89,6 +89,22 @@ export interface Bookmarks {
   entryIndexingBookmark: number;
 }
 
+// ---- Admin: search analytics ----
+
+export interface TermCount {
+  term: string;
+  count: number;
+}
+
+export interface SearchAnalyticsResult {
+  from: string;
+  to: string;
+  totalQueries: number;
+  topQueries: TermCount[];
+  topIpAddresses: TermCount[];
+  topSlackSearchers: TermCount[];
+}
+
 // ---- Admin: Discord slash commands ----
 
 export interface DiscordSlashCommand {

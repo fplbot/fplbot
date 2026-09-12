@@ -28,7 +28,9 @@ public static class Factory
 
     private static readonly Lazy<string> RedisUrl = new(() => $"redis://user:pass@{RedisContainerInstance.Value.GetConnectionString()}");
 
-    private static readonly Lazy<IConnectionMultiplexer> RedisConnection = new(() =>
+    // Exposed so other test classes can point real (non-faked) dependents at the same shared
+    // Redis instance instead of spinning up their own container just to reach a healthy one.
+    public static readonly Lazy<IConnectionMultiplexer> RedisConnection = new(() =>
         ConnectionMultiplexer.Connect(RedisContainerInstance.Value.GetConnectionString() + ",allowAdmin=true"));
 
     public static (T Instance, SlackTeam Team) Create<T>(ITestOutputHelper? logger = null) where T : notnull

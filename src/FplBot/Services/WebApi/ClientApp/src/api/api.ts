@@ -9,6 +9,7 @@ import type {
   LeagueDetails,
   MessageResponse,
   PagedResult,
+  SearchAnalyticsResult,
   SearchAnyResponse,
   SearchAnyResult,
   SearchType,
@@ -124,6 +125,11 @@ export function setLeagueBookmark(bookmark: number): Promise<MessageResponse> {
 
 export function setEntryBookmark(bookmark: number): Promise<MessageResponse> {
   return postJson("/api/admin/indexing/bookmarks/entry", { bookmark });
+}
+
+export function getSearchAnalytics(days: number, size: number): Promise<SearchAnalyticsResult> {
+  const params = new URLSearchParams({ days: String(days), size: String(size) });
+  return request(`/api/admin/search/analytics?${params.toString()}`);
 }
 
 // ---- Admin: Discord ----

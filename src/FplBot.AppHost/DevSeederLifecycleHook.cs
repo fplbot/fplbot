@@ -111,7 +111,7 @@ internal static class DevSeeder
         try
         {
             Console.WriteLine("[DevSeeder] Starting Elasticsearch seed...");
-            using var http = new HttpClient { BaseAddress = new Uri("http://localhost:9200") };
+            using var http = new HttpClient { BaseAddress = new Uri("http://localhost:9201") };
             http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes("elastic:dev")));
 
