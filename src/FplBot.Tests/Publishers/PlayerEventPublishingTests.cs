@@ -2,8 +2,8 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.RecurringActions;
-using FplBot.Data;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,10 +20,9 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
     {
         fixture.SlackCapture.Reset();
         await fixture.FlushRedisAsync();
-        var team = SlackTeamFaker.Generate();
-        team.FplBotSlackChannel = Channel;
-        team.Subscriptions = [EventSubscription.PriceChanges, EventSubscription.InjuryUpdates, EventSubscription.NewPlayers];
-        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(SlackTeamRepository.ToDomain(team));
+        var installation = SlackInstallationFaker.Generate();
+        installation.Subscribe(Channel, [FplEvent.PriceChanges, FplEvent.InjuryUpdates, FplEvent.NewPlayers]);
+        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(installation);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -61,6 +60,7 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Equal(Channel, msg.Channel);
+        Assert.Contains("New player", msg.Text);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
 
         Assert.Single(messageSession.PublishedMessages);
-        Assert.IsType<FplBot.Messaging.Contracts.Events.v1.PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
+        Assert.IsType<Messaging.Contracts.Events.v1.PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
     }
 
     private static PlayerUpdatesRecurringAction CreateTeamChangeScenario(TestPublishEndpoint messageSession)

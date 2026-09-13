@@ -72,22 +72,24 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
 
         var team = await GetTeam(teamId);
-        return ToDomain(team);
+        return await LoadInstallation(team);
     }
 
-    public static SlackInstallation ToDomain(SlackTeam team)
+    private async Task<SlackInstallation> LoadInstallation(SlackTeam team)
     {
-        var channels = new List<SlackChannelSubscription>();
-
-        if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
-        {
-            var leagueId = team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null;
-            var events = team.Subscriptions.Select(ToDomainEvent);
-            channels.Add(SlackChannelSubscription.FromStorage(team.FplBotSlackChannel, leagueId, events));
-        }
-
+        var channels = await GetChannelSubscriptions(team.TeamId!);
         return SlackInstallation.Load(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty, channels, team.PendingRemoval ?? false);
     }
+
+    public static SlackInstallation ToDomainV1(SlackTeam team) =>
+        SlackInstallation.Load(
+            team.TeamId,
+            team.TeamName,
+            team.AccessToken,
+            string.IsNullOrEmpty(team.FplBotSlackChannel)
+                ? []
+                : [SlackChannelSubscription.Load(team.FplBotSlackChannel, team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null, team.Subscriptions.Select(ToDomainEvent))],
+            team.PendingRemoval ?? false);
 
     private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
 
@@ -110,7 +112,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         return subs.ToList<EventSubscription>();
     }
 
-    public async Task<SlackTeam?> FindByTeamId(string teamId)
+    public async Task<SlackTeam?> FindTeamLegacyDoNotUse(string teamId)
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
 
@@ -163,40 +165,29 @@ public class SlackTeamRepository : ISlackTeamRepository
     public async Task Save(SlackInstallation installation)
     {
         await Save(SlackInstallationMapper.ToStorage(installation));
+
+        foreach (var channel in installation.ChannelSubscriptions)
+        {
+            await SaveChannelSubscription(installation.TeamId, channel);
+        }
     }
 
     public async Task<SlackInstallation?> FindInstallationByTeamId(string teamId)
     {
-        var team = await FindByTeamId(teamId);
-        return team is null ? null : ToDomain(team);
+        var team = await FindTeamLegacyDoNotUse(teamId);
+        return team is null ? null : await LoadInstallation(team);
     }
 
-    public async Task UpdateLeagueId(string teamId, long newLeagueId)
+    public async Task Delete(SlackInstallation installation)
     {
-        if(string.IsNullOrEmpty(teamId))
-            throw new ArgumentNullException(nameof(teamId));
+        var teamId = installation.TeamId;
 
-        if(newLeagueId == 0)
-            throw new ArgumentNullException(nameof(newLeagueId));
-
-        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_leagueField, newLeagueId)]);
-    }
-
-    public async Task UpdateChannel(string teamId, string newChannel)
-    {
-        if(string.IsNullOrEmpty(teamId))
-            throw new ArgumentNullException(nameof(teamId));
-
-        if(string.IsNullOrEmpty(newChannel))
-            throw new ArgumentNullException(nameof(newChannel));
-
-        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_channelField, newChannel)]);
-    }
-
-    public async Task DeleteByTeamId(string teamId)
-    {
-        if(string.IsNullOrEmpty(teamId))
-            throw new ArgumentNullException(nameof(teamId));
+        var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
+        foreach (var channelId in channelIds)
+        {
+            await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId.ToString()));
+        }
+        await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
 
         await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
     }
@@ -268,19 +259,17 @@ public class SlackTeamRepository : ISlackTeamRepository
     public async Task<IEnumerable<SlackInstallation>> GetAllInstallations()
     {
         var teams = await GetAllTeamsLegacyDoNotUse();
-        return teams.Select(ToDomain);
+        var installations = new List<SlackInstallation>();
+
+        foreach (var team in teams)
+        {
+            installations.Add(await LoadInstallation(team));
+        }
+
+        return installations;
     }
 
-    public async Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
-    {
-        if(string.IsNullOrEmpty(teamId))
-            throw new ArgumentNullException(nameof(teamId));
-
-        await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_subscriptionsField, string.Join(" ", subscriptions))
-        ]);
-    }
-
-    public async Task SaveChannelSubscription(string teamId, SlackChannelSubscription channel)
+    private async Task SaveChannelSubscription(string teamId, SlackChannelSubscription channel)
     {
         var record = ToRecord(teamId, channel);
         var key = FromTeamAndChannelToChannelSubKey(teamId, channel.ChannelId);
@@ -316,7 +305,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
             int? leagueId = fetched[1].HasValue ? int.Parse((string)fetched[1]!) : null;
             var subs = GetSubscriptions(teamId, fetched[2]);
-            result.Add(ToDomain(new SlackChannelSubscriptionRecord(teamId, channelId, leagueId, subs)));
+            result.Add(ToDomainV2(new SlackChannelSubscriptionRecord(teamId, channelId, leagueId, subs)));
         }
 
         return result;
@@ -331,11 +320,11 @@ public class SlackTeamRepository : ISlackTeamRepository
     private static SlackChannelSubscriptionRecord ToRecord(string teamId, SlackChannelSubscription channel) =>
         new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, channel.Events.Current.Select(ToStorageEvent));
 
-    private static SlackChannelSubscription ToDomain(SlackChannelSubscriptionRecord record)
+    private static SlackChannelSubscription ToDomainV2(SlackChannelSubscriptionRecord record)
     {
         var leagueId = record.LeagueId is { } id ? new ClassicLeagueId(id) : null;
         var events = record.Subscriptions.Select(ToDomainEvent);
-        return SlackChannelSubscription.FromStorage(record.ChannelId, leagueId, events);
+        return SlackChannelSubscription.Load(record.ChannelId, leagueId, events);
     }
 
     private static EventSubscription ToStorageEvent(FplEvent e) => Enum.Parse<EventSubscription>(e.ToString());

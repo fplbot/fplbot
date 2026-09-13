@@ -29,7 +29,6 @@ internal class FplSubscribeCommandHandler(
         try
         {
             var installation = await teamRepo.GetInstallation(teamId);
-            var currentSubscriptions = ToEventSubscriptions(installation.GetChannel(appMentioned.Channel)?.Events.Current ?? []);
             (var inputSubscriptions, var unableToParse) = ParseSubscriptionsFromInput(appMentioned);
 
             if (inputSubscriptions.Count() < 1 && unableToParse.Count() < 1)
@@ -42,12 +41,21 @@ internal class FplSubscribeCommandHandler(
                 return $"I was not able to understand: *{string.Join(", ", unableToParse)}.* :confused: \n {FormatAllSubsAvailable()}";
             }
 
-            var newSubscriptions = appMentioned.Text.Contains("unsubscribe") ?
-                UnsubscribeToEvents(inputSubscriptions, currentSubscriptions) :
-                SubscribeToEvents(inputSubscriptions, currentSubscriptions);
+            var fplEvents = inputSubscriptions.Select(ToFplEvent).ToArray();
 
-            await teamRepo.UpdateSubscriptions(teamId, newSubscriptions);
+            if (appMentioned.Text.Contains("unsubscribe"))
+            {
+                installation.Unsubscribe(appMentioned.Channel, fplEvents);
+            }
+            else
+            {
+                installation.Subscribe(appMentioned.Channel, fplEvents);
+            }
 
+            await teamRepo.Save(installation);
+
+            var channel = installation.GetChannel(appMentioned.Channel);
+            var newSubscriptions = ToEventSubscriptions(channel?.Events.Current ?? []);
             return FormatSubscriptionMessage(newSubscriptions, unableToParse);
         }
         catch (Exception e)
@@ -57,38 +65,7 @@ internal class FplSubscribeCommandHandler(
         }
     }
 
-    private IEnumerable<EventSubscription> UnsubscribeToEvents(
-        IEnumerable<EventSubscription> inputSubscriptions,
-        IEnumerable<EventSubscription> currentSubscriptions
-    )
-    {
-        if (inputSubscriptions.Contains(EventSubscription.All)) { return new List<EventSubscription>(); }
-
-        if (currentSubscriptions.Contains(EventSubscription.All))
-        {
-            return EventSubscriptionHelper.GetAllSubscriptionTypes().Except(inputSubscriptions.Append(EventSubscription.All));
-        }
-
-        return currentSubscriptions.Except(inputSubscriptions);
-    }
-
-    private IEnumerable<EventSubscription> SubscribeToEvents(
-        IEnumerable<EventSubscription> inputSubscriptions,
-        IEnumerable<EventSubscription> currentSubscriptions
-    )
-    {
-        if (currentSubscriptions.Contains(EventSubscription.All))
-        {
-            return inputSubscriptions;
-        }
-
-        if (inputSubscriptions.Contains(EventSubscription.All))
-        {
-            return new List<EventSubscription>() { EventSubscription.All };
-        }
-
-        return currentSubscriptions.Union(inputSubscriptions);
-    }
+    private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(IEnumerable<FplEvent> events) =>
         events.Select(e => Enum.Parse<EventSubscription>(e.ToString()));

@@ -36,7 +36,7 @@ public class TeamMarkedForRemovalHandler(
         if(installation.Token is not { Length: > 0 })
         {
             logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team has no access token. Just deleting without telling Slack.", context.Message.TeamId);
-            await repository.DeleteByTeamId(context.Message.TeamId);
+            await repository.Delete(installation);
             return;
         }
 
@@ -58,7 +58,7 @@ public class TeamMarkedForRemovalHandler(
             logger.LogInformation("Slack apps.uninstall for {TeamId} failed (likely already revoked): {Message}. Deleting.", context.Message.TeamId, e.Message);
         }
 
-        await repository.DeleteByTeamId(context.Message.TeamId);
+        await repository.Delete(installation);
         logger.LogWarning("Team {TeamId} marked for removal has been deleted from the database", context.Message.TeamId);
     }
 }

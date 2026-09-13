@@ -20,13 +20,6 @@ public class SlackChannelSubscription
         return subscription;
     }
 
-    public static SlackChannelSubscription Subscribe(string channelId, FplEvent fplEvent)
-    {
-        var subscription = new SlackChannelSubscription(channelId);
-        subscription.Subscribe(fplEvent);
-        return subscription;
-    }
-
     public static SlackChannelSubscription Subscribe(string channelId, FplEvent[] fplEvents)
     {
         var subscription = new SlackChannelSubscription(channelId);
@@ -34,7 +27,7 @@ public class SlackChannelSubscription
         return subscription;
     }
 
-    public static SlackChannelSubscription FromStorage(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
+    public static SlackChannelSubscription Load(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
     {
         var subscription = new SlackChannelSubscription(channelId) { FollowedLeagueId = followedLeagueId };
         subscription.Events.Add(events);
@@ -44,6 +37,10 @@ public class SlackChannelSubscription
     public void Follow(ClassicLeagueId leagueId)
     {
         FollowedLeagueId = leagueId;
+        if (!Events.Current.Any())
+        {
+            Events.Add(FplEvent.All);
+        }
     }
 
     public void Subscribe(FplEvent fplEvent)

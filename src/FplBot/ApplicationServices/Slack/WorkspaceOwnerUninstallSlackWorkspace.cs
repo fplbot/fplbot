@@ -10,7 +10,7 @@ public class WorkspaceOwnerUninstallSlackWorkspace(ISlackTeamRepository reposito
     {
         var installation = await repository.GetInstallation(teamId);
         installation.Uninstall();
-        await repository.DeleteByTeamId(installation.TeamId);
+        await repository.Delete(installation);
         await publisher.Publish(new AppUninstalled(installation.TeamId, installation.TeamName));
     }
 }

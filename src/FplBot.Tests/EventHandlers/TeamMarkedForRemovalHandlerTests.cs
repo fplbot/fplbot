@@ -45,7 +45,7 @@ public class TeamMarkedForRemovalHandlerTests
         await _sut.Consume(BuildContext("T1"));
 
         A.CallTo(_slackClient).MustNotHaveHappened();
-        A.CallTo(() => _repository.DeleteByTeamId(A<string>._)).MustNotHaveHappened();
+        A.CallTo(() => _repository.Delete(A<SlackInstallation>._)).MustNotHaveHappened();
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class TeamMarkedForRemovalHandlerTests
 
         await _sut.Consume(BuildContext("T1"));
 
-        A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _repository.Delete(A<SlackInstallation>.That.Matches(i => i.TeamId == "T1"))).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class TeamMarkedForRemovalHandlerTests
 
         await _sut.Consume(BuildContext("T1"));
 
-        A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _repository.Delete(A<SlackInstallation>.That.Matches(i => i.TeamId == "T1"))).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class TeamMarkedForRemovalHandlerTests
 
         await _sut.Consume(BuildContext("T1"));
 
-        A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _repository.Delete(A<SlackInstallation>.That.Matches(i => i.TeamId == "T1"))).MustHaveHappenedOnceExactly();
     }
 
     private static ConsumeContext<TeamMarkedForRemoval> BuildContext(string teamId)

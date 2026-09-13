@@ -14,7 +14,7 @@ public class SlackInstallation
 
     public bool IsActive => Token is not null && !PendingRemoval;
 
-    private SlackInstallation(string teamId, string teamName, string token)
+    private SlackInstallation(string teamId, string teamName, string? token)
     {
         TeamId = teamId;
         TeamName = teamName;
@@ -23,7 +23,7 @@ public class SlackInstallation
 
     public static SlackInstallation Install(string teamId, string teamName, string token) => new(teamId, teamName, token);
 
-    public static SlackInstallation Load(string teamId, string teamName, string token, IEnumerable<SlackChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
+    public static SlackInstallation Load(string teamId, string teamName, string? token, IEnumerable<SlackChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
     {
         var installation = new SlackInstallation(teamId, teamName, token) { PendingRemoval = pendingRemoval };
         installation._channelSubscriptions.AddRange(channelSubscriptions);
