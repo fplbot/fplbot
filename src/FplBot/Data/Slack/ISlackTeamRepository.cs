@@ -12,4 +12,6 @@ public interface ISlackTeamRepository
     Task Delete(SlackInstallation installation);
 
     Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId);
+
+    Task DeleteChannelSubscription(string teamId, string channelId);
 }

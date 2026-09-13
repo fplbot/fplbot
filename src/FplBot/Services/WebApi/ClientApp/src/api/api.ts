@@ -3,6 +3,7 @@ import type {
   Bookmarks,
   ChannelFilter,
   DiscordSlashCommand,
+  EventSubscription,
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
@@ -100,6 +101,28 @@ export function publishStandings(teamId: string, channelId: string): Promise<{ p
 
 export function broadcastToSlack(message: string): Promise<MessageResponse> {
   return postJson("/api/admin/slack/broadcast", { message });
+}
+
+export const ALL_EVENT_SUBSCRIPTIONS: EventSubscription[] = [
+  "All", "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
+  "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates", "Deadlines",
+  "Lineups", "NewPlayers", "FixtureRemovedFromGameweek",
+];
+
+export function updateChannelSubscriptions(
+  teamId: string,
+  channelId: string,
+  subscriptions: EventSubscription[]
+): Promise<MessageResponse> {
+  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/subscriptions`, { subscriptions }, "PUT");
+}
+
+export function moveChannel(teamId: string, channelId: string, newChannelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/channel`, { newChannelId }, "PUT");
+}
+
+export function deleteChannelSubscription(teamId: string, channelId: string): Promise<MessageResponse> {
+  return request(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}`, { method: "DELETE" });
 }
 
 // ---- Admin: search indexing bookmarks ----

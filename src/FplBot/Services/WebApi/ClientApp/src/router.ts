@@ -104,6 +104,12 @@ const router = createRouter({
           component: () => import("./views/admin/TeamDetailsView.vue"),
           props: true,
         },
+        {
+          path: "teams/:teamId/channels/:channelId",
+          name: "admin-team-channel-manage",
+          component: () => import("./views/admin/TeamChannelManageView.vue"),
+          props: true,
+        },
       ],
     },
     {

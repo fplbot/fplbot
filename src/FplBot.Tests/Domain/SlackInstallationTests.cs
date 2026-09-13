@@ -208,4 +208,40 @@ public class SlackInstallationTests
             }
         }
     }
+
+    [Fact]
+    public void MoveChannel_MovesLeagueAndEventsToTheNewChannelId()
+    {
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
+        installation.Follow("C1", new ClassicLeagueId(42));
+        installation.Subscribe("C1", [FplEvent.Deadlines]);
+
+        installation.MoveChannel("C1", "C2");
+
+        var subscription = Assert.Single(installation.ChannelSubscriptions);
+        Assert.Equal("C2", subscription.ChannelId);
+        Assert.Equal(new ClassicLeagueId(42), subscription.FollowedLeagueId);
+        Assert.True(subscription.IsSubscribedTo(FplEvent.Deadlines));
+    }
+
+    [Fact]
+    public void MoveChannel_RemovesTheOldChannelId()
+    {
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+
+        installation.MoveChannel("C1", "C2");
+
+        Assert.Null(installation.GetChannel("C1"));
+    }
+
+    [Fact]
+    public void MoveChannel_OnUnknownChannel_DoesNothing()
+    {
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
+
+        installation.MoveChannel("C1", "C2");
+
+        Assert.Empty(installation.ChannelSubscriptions);
+    }
 }

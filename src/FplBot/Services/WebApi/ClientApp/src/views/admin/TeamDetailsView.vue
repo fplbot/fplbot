@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getTeam, uninstallTeam, publishStandings } from "../../api/api";
+import { getTeam, uninstallTeam, deleteChannelSubscription } from "../../api/api";
 import type { TeamDetails } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
@@ -12,11 +12,10 @@ const team = ref<TeamDetails | null>(null);
 const loading = ref(true);
 const loadError = ref("");
 
-const publishing = ref<string | null>(null);
-const publishFeedback = ref<{ channel: string; type: "success" | "error"; text: string } | null>(null);
-
 const uninstalling = ref(false);
 const uninstallFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
+const deleting = ref<string | null>(null);
 
 async function load() {
   loading.value = true;
@@ -37,16 +36,16 @@ async function load() {
 
 onMounted(load);
 
-async function submitPublish(channel: string) {
-  publishing.value = channel;
-  publishFeedback.value = null;
+async function removeChannelSub(channelId: string) {
+  if (!confirm(`Delete the subscription for channel ${channelId}?`)) return;
+  deleting.value = channelId;
   try {
-    const res = await publishStandings(props.teamId, channel);
-    publishFeedback.value = { channel, type: res.published ? "success" : "error", text: res.message };
+    await deleteChannelSubscription(props.teamId, channelId);
+    await load();
   } catch (e) {
-    publishFeedback.value = { channel, type: "error", text: describeAdminError(e) };
+    loadError.value = describeAdminError(e);
   } finally {
-    publishing.value = null;
+    deleting.value = null;
   }
 }
 
@@ -90,9 +89,6 @@ async function submitUninstall() {
       <div class="card">
         <h2>Channels</h2>
         <p v-if="team.pendingRemoval" class="status bad">Pending removal</p>
-        <p v-if="publishFeedback" :class="['alert', publishFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
-          {{ publishFeedback.text }}
-        </p>
         <table v-if="team.channels.length > 0" class="admin-table">
           <thead>
             <tr>
@@ -112,14 +108,19 @@ async function submitUninstall() {
                 <span v-if="c.channelStatus === true" class="status ok">&#10003; found</span>
                 <span v-else-if="c.channelStatus === false" class="status bad">&#10007; not found via Slack API</span>
               </td>
-              <td>
-                <button
-                  v-if="c.leagueId"
+              <td class="row-actions">
+                <router-link
                   class="btn small"
-                  :disabled="publishing === c.channel"
-                  @click="submitPublish(c.channel)"
+                  :to="{ name: 'admin-team-channel-manage', params: { teamId: team.teamId, channelId: c.channel } }"
                 >
-                  {{ publishing === c.channel ? "Publishing..." : "Publish standings" }}
+                  Manage
+                </router-link>
+                <button
+                  class="btn small danger"
+                  :disabled="deleting === c.channel"
+                  @click="removeChannelSub(c.channel)"
+                >
+                  Delete
                 </button>
               </td>
             </tr>
@@ -204,5 +205,12 @@ p.status {
 
 .danger-zone {
   border-color: #fecaca;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 </style>
