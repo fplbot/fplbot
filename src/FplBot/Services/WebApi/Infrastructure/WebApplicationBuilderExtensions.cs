@@ -58,6 +58,9 @@ public static class WebApplicationBuilderExtensions
             c.CLIENT_SECRET = configuration["CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=slack";
         });
+        services.AddOptions<OAuthOptions>()
+            .ValidateWithFluentValidation(new OAuthOptionsValidator())
+            .ValidateOnStart();
 
         services.AddDiscordBotDistribution(c =>
         {
