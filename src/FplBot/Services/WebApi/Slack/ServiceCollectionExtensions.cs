@@ -1,4 +1,5 @@
 using Fpl.Search;
+using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
@@ -32,7 +33,9 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
-        services.AddSlackBotEvents<TokenManager>()
+        services.AddSingleton<UninstallSlackWorkspace>();
+        services.AddSingleton<AdminUninstallSlackWorkspace>();
+        services.AddSlackBotEvents<WorkspaceInstallationHandler>()
             .AddShortcut<HelpEventHandler>()
             .AddAppMentionHandler<FplPlayerCommandHandler>()
             .AddAppMentionHandler<FplStandingsCommandHandler>()

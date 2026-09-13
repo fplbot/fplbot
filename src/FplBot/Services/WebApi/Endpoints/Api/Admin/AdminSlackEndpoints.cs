@@ -1,5 +1,6 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -123,6 +124,7 @@ public static class AdminSlackEndpoints
     private static async Task<IResult> Uninstall(
         string teamId,
         ISlackTeamRepository teamRepo,
+        AdminUninstallSlackWorkspace adminUninstallSlackWorkspace,
         ISlackClientBuilder slackClientBuilder,
         IOptions<OAuthOptions> slackAppOptions,
         ILogger<Program> logger)
@@ -143,7 +145,7 @@ public static class AdminSlackEndpoints
         }
         catch (WellKnownSlackApiException e) when (e.Message is "account_inactive" or "not_authed")
         {
-            await teamRepo.DeleteByTeamId(teamIdToUpper);
+            await adminUninstallSlackWorkspace.Execute(teamIdToUpper);
             return TypedResults.Ok(new { message = "Token no longer valid. Team deleted." });
         }
     }

@@ -5,6 +5,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search;
 using Fpl.Search.Models;
+using FplBot.ApplicationServices.Slack;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
@@ -52,7 +53,7 @@ public class AppFixture : IAsyncLifetime
     private HttpClient _client = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
-    public TokenManager Manager { get; private set; } = null!;
+    public WorkspaceInstallationHandler Manager { get; private set; } = null!;
 
     public virtual async ValueTask InitializeAsync()
     {
@@ -122,9 +123,10 @@ public class AppFixture : IAsyncLifetime
         foreach (var svc in active)
             svc.ConfigureApp(_app);
 
-        Manager = new TokenManager(
+        Manager = new WorkspaceInstallationHandler(
             _app.Services.GetRequiredService<ISlackTeamRepository>(),
-            _app.Services.GetRequiredService<IServiceScopeFactory>());
+            _app.Services.GetRequiredService<IServiceScopeFactory>(),
+            _app.Services.GetRequiredService<UninstallSlackWorkspace>());
 
         await _app.StartAsync();
         _client = _app.GetTestClient();
