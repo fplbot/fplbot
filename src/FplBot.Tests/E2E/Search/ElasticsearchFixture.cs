@@ -23,7 +23,7 @@ public class ElasticsearchFixture : IAsyncLifetime
             .WithLabel("reuse-id", "elasticsearch-fixture")
             .Build();
 
-    public IElasticClient Client { get; private set; } = null!;
+    public IElasticClient ElasticClient { get; private set; } = null!;
 
     public async ValueTask InitializeAsync()
     {
@@ -33,7 +33,7 @@ public class ElasticsearchFixture : IAsyncLifetime
             .BasicAuthentication("elastic", "elastic")
             .ServerCertificateValidationCallback(CertificateValidations.AllowAll);
 
-        Client = new ElasticClient(settings);
+        ElasticClient = new ElasticClient(settings);
     }
 
     public async ValueTask DisposeAsync()

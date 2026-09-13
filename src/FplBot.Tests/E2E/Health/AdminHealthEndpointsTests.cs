@@ -1,5 +1,4 @@
 using FplBot.Tests.E2E;
-using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -11,13 +10,25 @@ namespace FplBot.Tests.E2E.Health;
 
 // Exercises AdminHealthEndpoints against real Redis/Elasticsearch — including actually
 // stopping a container mid-test to simulate an outage — rather than faking either client.
+// Deliberately its own lightweight Redis connection rather than AppFixture: this class isn't
+// in the "App" collection, and a reachability check has no need for a whole running app.
 [Collection("Elasticsearch")]
-public class AdminHealthEndpointsTests(ElasticsearchFixture elastic)
+public class AdminHealthEndpointsTests(ElasticsearchFixture appFixture)
 {
+    private static readonly Lazy<RedisContainer> RedisContainerInstance = new(() =>
+    {
+        var container = new RedisBuilder("redis:latest").Build();
+        container.StartAsync().GetAwaiter().GetResult();
+        return container;
+    });
+
+    private static readonly Lazy<IConnectionMultiplexer> RedisConnection = new(() =>
+        ConnectionMultiplexer.Connect(RedisContainerInstance.Value.GetConnectionString() + ",allowAdmin=true"));
+
     [Fact]
     public async Task GetDependencyHealth_BothReachable_ReturnsHealthy()
     {
-        var result = await AdminHealthEndpoints.GetDependencyHealth(Factory.RedisConnection.Value, elastic.Client);
+        var result = await AdminHealthEndpoints.GetDependencyHealth(RedisConnection.Value, appFixture.ElasticClient);
 
         var ok = Assert.IsType<Ok<DependencyHealthResponse>>(result);
         Assert.True(ok.Value!.Healthy, DescribeFailures(ok.Value));
@@ -34,13 +45,13 @@ public class AdminHealthEndpointsTests(ElasticsearchFixture elastic)
         await redisContainer.StartAsync(TestContext.Current.CancellationToken);
         var redis = await ConnectionMultiplexer.ConnectAsync(redisContainer.GetConnectionString());
 
-        var beforeStop = await AdminHealthEndpoints.GetDependencyHealth(redis, elastic.Client);
+        var beforeStop = await AdminHealthEndpoints.GetDependencyHealth(redis, appFixture.ElasticClient);
         var beforeStopOk = Assert.IsType<Ok<DependencyHealthResponse>>(beforeStop);
         Assert.True(beforeStopOk.Value!.Healthy, DescribeFailures(beforeStopOk.Value));
 
         await redisContainer.StopAsync(TestContext.Current.CancellationToken);
 
-        var result = await AdminHealthEndpoints.GetDependencyHealth(redis, elastic.Client);
+        var result = await AdminHealthEndpoints.GetDependencyHealth(redis, appFixture.ElasticClient);
 
         var unavailable = Assert.IsType<JsonHttpResult<DependencyHealthResponse>>(result);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, unavailable.StatusCode);
@@ -62,7 +73,7 @@ public class AdminHealthEndpointsTests(ElasticsearchFixture elastic)
             .RequestTimeout(TimeSpan.FromSeconds(2));
         var unreachableClient = new ElasticClient(settings);
 
-        var result = await AdminHealthEndpoints.GetDependencyHealth(Factory.RedisConnection.Value, unreachableClient);
+        var result = await AdminHealthEndpoints.GetDependencyHealth(RedisConnection.Value, unreachableClient);
 
         var unavailable = Assert.IsType<JsonHttpResult<DependencyHealthResponse>>(result);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, unavailable.StatusCode);

@@ -34,8 +34,8 @@
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
 
     <!-- Slack -->
-    <PackageReference Include="Slackbot.Net.Endpoints" Version="8.1.4" />
-    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="8.1.4" />
+    <PackageReference Include="Slackbot.Net.Endpoints" Version="9.0.0-feature0043-2e5a9ff" />
+    <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="9.0.0-feature0043-2e5a9ff" />
 
     <!-- Logging -->
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />

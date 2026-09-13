@@ -28,20 +28,20 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
             AnalyticsIndex = $"analytics-{Guid.NewGuid():N}"
         };
         var publishEndpoint = new TestPublishEndpoint();
-        var service = new SearchService(elastic.Client, publishEndpoint, NullLogger<SearchService>.Instance, Options.Create(options));
+        var service = new SearchService(elastic.ElasticClient, publishEndpoint, NullLogger<SearchService>.Instance, Options.Create(options));
         return (service, options, publishEndpoint);
     }
 
     private async Task SeedEntries(string index, params EntryItem[] entries)
     {
-        await elastic.Client.IndexManyAsync(entries, index);
-        await elastic.Client.Indices.RefreshAsync(index);
+        await elastic.ElasticClient.IndexManyAsync(entries, index);
+        await elastic.ElasticClient.Indices.RefreshAsync(index);
     }
 
     private async Task SeedLeagues(string index, params LeagueItem[] leagues)
     {
-        await elastic.Client.IndexManyAsync(leagues, index);
-        await elastic.Client.Indices.RefreshAsync(index);
+        await elastic.ElasticClient.IndexManyAsync(leagues, index);
+        await elastic.ElasticClient.Indices.RefreshAsync(index);
     }
 
     private static HttpContext HttpContextWithRemoteIp(string? ip = "203.0.113.5")
@@ -60,8 +60,8 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     {
         var (service, options, _) = NewSearchService();
         var entry = new EntryItem { Id = 42, RealName = "Messi" };
-        await elastic.Client.IndexAsync(entry, i => i.Index(options.EntriesIndex).Id(entry.Id), TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.IndexAsync(entry, i => i.Index(options.EntriesIndex).Id(entry.Id), TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetEntry(42, service);
 
@@ -73,7 +73,7 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetEntry_NotFound_ReturnsNotFound()
     {
         var (service, options, _) = NewSearchService();
-        await elastic.Client.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetEntry(1, service);
 
@@ -100,8 +100,8 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetEntries_PageBeyondResultsAndNoHits_ReturnsBadRequest()
     {
         var (service, options, _) = NewSearchService();
-        await elastic.Client.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetEntries("nobody", 5, HttpContextWithRemoteIp(), service);
 
@@ -143,8 +143,8 @@ public class SearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetLeagues_PageBeyondResultsAndNoHits_ReturnsBadRequest()
     {
         var (service, options, _) = NewSearchService();
-        await elastic.Client.Indices.CreateAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.CreateAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
 
         var result = await SearchEndpoints.GetLeagues("nobody", 5, "", HttpContextWithRemoteIp(), service);
 

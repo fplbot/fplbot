@@ -10,7 +10,7 @@ namespace FplBot.Tests.Publishers;
 
 public class NearDeadlineEventPublishingTests(ITestOutputHelper helper)
 {
-    private readonly DateTimeUtils _deadlineChecker = Factory.Create<DateTimeUtils>().Instance;
+    private readonly DateTimeUtils _deadlineChecker = new();
 
     [Fact]
     public void WhenDayBefore()

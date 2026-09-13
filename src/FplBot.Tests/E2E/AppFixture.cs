@@ -193,7 +193,7 @@ public class AppFixture : IAsyncLifetime
     {
         var team = SlackTeamFaker.Generate();
         configure?.Invoke(team);
-        await Manager.Insert(team);
+        await Services.GetRequiredService<ISlackTeamRepository>().Save(team);
         return team;
     }
 
