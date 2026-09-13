@@ -9,6 +9,7 @@ using FplBot.ApplicationServices.Slack;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.WebApi;
@@ -195,9 +196,21 @@ public class AppFixture : IAsyncLifetime
 
     public async Task<SlackTeam> SeedTeam(Action<SlackTeam>? configure = null)
     {
-        var team = SlackTeamFaker.Generate();
+        var team = SlackTeamV1Faker.Generate();
         configure?.Invoke(team);
-        await Services.GetRequiredService<ISlackTeamRepository>().Save(SlackTeamRepository.ToDomain(team));
+
+        var channels = string.IsNullOrEmpty(team.FplBotSlackChannel)
+            ? Array.Empty<SlackChannelSubscription>()
+            : new[]
+            {
+                SlackChannelSubscription.Load(
+                    team.FplBotSlackChannel,
+                    team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null,
+                    team.Subscriptions.Select(s => Enum.Parse<FplEvent>(s.ToString())))
+            };
+
+        var installation = SlackInstallation.Load(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty, channels, team.PendingRemoval ?? false);
+        await Services.GetRequiredService<ISlackTeamRepository>().Save(installation);
         return team;
     }
 

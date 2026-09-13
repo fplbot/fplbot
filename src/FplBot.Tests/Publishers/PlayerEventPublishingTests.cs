@@ -2,8 +2,8 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.RecurringActions;
-using FplBot.Data;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,10 +20,10 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
     {
         fixture.SlackCapture.Reset();
         await fixture.FlushRedisAsync();
-        var team = SlackTeamFaker.Generate();
-        team.FplBotSlackChannel = Channel;
-        team.Subscriptions = [EventSubscription.PriceChanges, EventSubscription.InjuryUpdates, EventSubscription.NewPlayers];
-        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(SlackTeamRepository.ToDomain(team));
+        var team = SlackTeamV1Faker.Generate();
+        var installation = SlackInstallation.Install(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty);
+        installation.Subscribe(Channel, [FplEvent.PriceChanges, FplEvent.InjuryUpdates, FplEvent.NewPlayers]);
+        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(installation);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

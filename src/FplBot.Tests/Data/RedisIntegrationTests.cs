@@ -24,11 +24,11 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
         var installation = SlackInstallation.Install(teamId, teamName, token);
         if (channel is not null)
         {
+            installation.Subscribe(channel, (events ?? []).ToArray());
             if (leagueId.HasValue)
             {
                 installation.Follow(channel, new ClassicLeagueId(leagueId.Value));
             }
-            installation.Subscribe(channel, (events ?? []).ToArray());
         }
         return installation;
     }
@@ -66,7 +66,7 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
         await Repo.Save(Installation("teamId2", "teamName2", "accessToken2", "#123", 123));
         await Repo.Save(Installation("teamId3", "teamName3", "accessToken3", "#234", 234));
 
-        await Repo.DeleteByTeamId("teamId2");
+        await Repo.Delete(await Repo.GetInstallation("teamId2"));
 
         var teamsAfterDelete = await Repo.GetAllInstallations();
         Assert.Single(teamsAfterDelete);
@@ -82,7 +82,7 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
         Assert.NotNull(found);
         Assert.Equal("teamId2", found.TeamId);
 
-        await Repo.DeleteByTeamId(found.TeamId);
+        await Repo.Delete(found);
         var teamsAfterDelete = await Repo.GetAllInstallations();
         Assert.Empty(teamsAfterDelete);
     }
@@ -91,7 +91,9 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
     public async Task UpdatesLeagueId()
     {
         await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123", 123));
-        await Repo.UpdateLeagueId("teamId1", 456);
+        var installation = await Repo.GetInstallation("teamId1");
+        installation.Follow("#123", new ClassicLeagueId(456));
+        await Repo.Save(installation);
         var updated = await Repo.GetInstallation("teamId1");
 
         Assert.Equal(new ClassicLeagueId(456), Assert.Single(updated.ChannelSubscriptions).FollowedLeagueId);
@@ -101,7 +103,9 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
     public async Task Unsubscribe()
     {
         await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123", 123, [FplEvent.FixtureAssists, FplEvent.FixtureCards]));
-        await Repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureCards });
+        var installation = await Repo.GetInstallation("teamId1");
+        installation.Unsubscribe("#123", [FplEvent.FixtureAssists]);
+        await Repo.Save(installation);
         var updated = await Repo.GetInstallation("teamId1");
 
         var channel = Assert.Single(updated.ChannelSubscriptions);
@@ -112,7 +116,9 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
     public async Task Subscribe()
     {
         await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123", 123, [FplEvent.FixtureAssists, FplEvent.FixtureCards]));
-        await Repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards, EventSubscription.FixturePenaltyMisses });
+        var installation = await Repo.GetInstallation("teamId1");
+        installation.Subscribe("#123", [FplEvent.FixturePenaltyMisses]);
+        await Repo.Save(installation);
         var updated = await Repo.GetInstallation("teamId1");
 
         var channel = Assert.Single(updated.ChannelSubscriptions);
@@ -123,18 +129,19 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task GetInstallationWithNoSubscriptions_ReturnsEmptySubscriptions()
     {
-        await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123", 123));
+        await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123"));
         var installation = await Repo.GetInstallation("teamId1");
         var channel = Assert.Single(installation.ChannelSubscriptions);
         Assert.Empty(channel.Events.Current);
     }
 
     [Fact]
-    public async Task GetInstallationWithNoSubscriptions_UpdateToEmptyList_ReturnsEmptySubscriptions()
+    public async Task Unsubscribe_FromOnlySubscribedEvent_ReturnsEmptySubscriptions()
     {
-        await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123", 123));
-        await Repo.GetInstallation("teamId1");
-        await Repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { });
+        await Repo.Save(Installation("teamId1", "teamName1", "accessToken1", "#123", 123, [FplEvent.FixtureCards]));
+        var installation = await Repo.GetInstallation("teamId1");
+        installation.Unsubscribe("#123", [FplEvent.FixtureCards]);
+        await Repo.Save(installation);
         var updated = await Repo.GetInstallation("teamId1");
         var channel = Assert.Single(updated.ChannelSubscriptions);
         Assert.Empty(channel.Events.Current);

@@ -4,7 +4,7 @@ using FplBot.Data.Slack;
 
 namespace FplBot.Tests.Helpers;
 
-public static class SlackTeamFaker
+public static class SlackTeamV1Faker
 {
     private static readonly Faker<SlackTeam> Faker = new Faker<SlackTeam>()
         .RuleFor(t => t.TeamId, f => "T" + f.Random.Replace("##########"))

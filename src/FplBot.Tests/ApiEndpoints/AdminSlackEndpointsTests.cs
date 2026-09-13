@@ -1,7 +1,6 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using SlackInstallation = FplBot.Domain.SlackInstallation;
@@ -13,20 +12,13 @@ namespace FplBot.Tests.ApiEndpoints;
 
 public class AdminSlackEndpointsTests
 {
-    private static SlackTeam Team(string id, string name) => new()
-    {
-        TeamId = id,
-        TeamName = name,
-        FplBotSlackChannel = "#fplbot",
-        FplbotLeagueId = 123,
-        Subscriptions = []
-    };
+    private static SlackInstallation Team(string id, string name) => SlackInstallation.Load(id, name, "token", []);
 
-    private static ISlackTeamRepository RepoWithTeams(params SlackTeam[] teams)
+    private static ISlackTeamRepository RepoWithTeams(params SlackInstallation[] teams)
     {
         var repo = A.Fake<ISlackTeamRepository>();
-        var installations = teams.Select(SlackTeamRepository.ToDomain);
-        A.CallTo(() => repo.GetAllInstallations()).Returns(Task.FromResult(installations));
+
+        A.CallTo(() => repo.GetAllInstallations()).Returns(Task.FromResult(teams.AsEnumerable()));
         return repo;
     }
 

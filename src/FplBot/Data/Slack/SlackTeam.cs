@@ -2,7 +2,7 @@ namespace FplBot.Data.Slack;
 
 public class SlackTeam
 {
-    public string? TeamId { get; set; }
+    public required string TeamId { get; init; }
     public string TeamName { get; set; } = null!;
     public string? Scope { get; set; }
     public string? AccessToken { get; set; }
