@@ -12,6 +12,7 @@
       "description": "Group xunit packages",
       "matchPackageNames": [
         "xunit",
+        "xunit.v3",
         "xunit.runner.visualstudio",
         "xunit.abstractions"
       ],
@@ -113,7 +114,8 @@
         "Bullseye",
         "SimpleExec",
         "Fastenshtein",
-        "MinimalHttpLogger"
+        "MinimalHttpLogger",
+        "StackExchange.Redis"
       ],
       "automerge": true,
       "automergeType": "pr",
