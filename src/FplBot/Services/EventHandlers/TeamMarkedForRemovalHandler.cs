@@ -27,7 +27,7 @@ public class TeamMarkedForRemovalHandler(
             return;
         }
 
-        if (installation.PendingRemoval != true)
+        if (!installation.PendingRemoval)
         {
             logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team not marked for removal", context.Message.TeamId);
             return;
@@ -48,6 +48,10 @@ public class TeamMarkedForRemovalHandler(
             {
                 logger.LogWarning("Slack apps.uninstall for {TeamId} returned {Error}", context.Message.TeamId, response.Error);
             }
+            else
+            {
+                logger.LogInformation("Slack apps.uninstall for {TeamId} succeeded", context.Message.TeamId);
+            }
         }
         catch (WellKnownSlackApiException e)
         {
@@ -55,5 +59,6 @@ public class TeamMarkedForRemovalHandler(
         }
 
         await repository.DeleteByTeamId(context.Message.TeamId);
+        logger.LogWarning("Team {TeamId} marked for removal has been deleted from the database", context.Message.TeamId);
     }
 }
