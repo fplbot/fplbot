@@ -46,9 +46,14 @@ public class SlowEntryIndexProvider(
 
             foreach (var entryItem in items)
             {
-                var (_, entryHistory) = historyBatch.Single(x => x.teamId == entryItem.Id);
-                entryItem.NumberOfPastSeasons = entryHistory.SeasonHistory.Count;
-                entryItem.Thumbprint = ToEntryThumbprint(entryHistory);
+                var match = historyBatch.SingleOrDefault(x => x.teamId == entryItem.Id);
+                if (match.entryHistory == null)
+                {
+                    continue;
+                }
+
+                entryItem.NumberOfPastSeasons = match.entryHistory.SeasonHistory.Count;
+                entryItem.Thumbprint = ToEntryThumbprint(match.entryHistory);
             }
 
             _currentConsecutiveCountOfMissingEntries = 0;
