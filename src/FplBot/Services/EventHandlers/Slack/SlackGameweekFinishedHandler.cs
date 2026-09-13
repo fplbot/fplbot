@@ -4,6 +4,7 @@ using Fpl.Client.Models;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
+using FplEvent = FplBot.Domain.FplEvent;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -23,9 +24,9 @@ internal class SlackGameweekFinishedHandler(
         var installations = await teamsRepo.GetAllInstallations();
         foreach (var installation in installations)
         {
-            if (installation.HasRegisteredFor(FplBot.Domain.FplEvent.Standings))
+            var channelsWithLeague = installation.GetSubscriptionsTo(FplEvent.Standings).Where(c => c.FollowedLeagueId is not null);
+            foreach (var channel in channelsWithLeague)
             {
-                var channel = installation.PrimaryChannel()!;
                 await context.Publish(new PublishStandingsToSlackWorkspace(installation.TeamId, channel.ChannelId, (int)channel.FollowedLeagueId!.Value, notification.FinishedGameweek.Id));
             }
         }

@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace FplBot.Domain;
 
 public class SlackInstallation
@@ -73,6 +75,13 @@ public class SlackInstallation
         FindChannel(channelId)?.Unsubscribe(fplEvent);
     }
 
+    public SlackChannelSubscription? GetChannel(string channelId) => FindChannel(channelId);
+
     private SlackChannelSubscription? FindChannel(string channelId) =>
         _channelSubscriptions.FirstOrDefault(c => c.ChannelId == channelId);
+
+    public IEnumerable<SlackChannelSubscription> GetSubscriptionsTo(FplEvent fplEvent)
+    {
+        return _channelSubscriptions.Where(c => c.IsSubscribedTo(fplEvent));
+    }
 }

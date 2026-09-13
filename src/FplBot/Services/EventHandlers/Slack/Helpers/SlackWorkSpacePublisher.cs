@@ -16,10 +16,9 @@ public class SlackWorkSpacePublisher(
         var installations = await repository.GetAllInstallations();
         foreach (var installation in installations)
         {
-            var channelId = installation.PrimaryChannel()?.ChannelId;
-            if (channelId is not null)
+            foreach (var channel in installation.ChannelSubscriptions)
             {
-                await PublishToWorkspace(installation.TeamId, channelId, msg);
+                await PublishToWorkspace(installation.TeamId, channel.ChannelId, msg);
             }
         }
     }

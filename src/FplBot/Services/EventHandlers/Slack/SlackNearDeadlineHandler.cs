@@ -29,10 +29,10 @@ public class SlackNearDeadlineHandler(
         var allInstallations = await teamRepo.GetAllInstallations();
         foreach (var installation in allInstallations)
         {
-            if (installation.HasRegisteredFor(FplEvent.Deadlines))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
                 var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
-                var command = new PublishToSlack(installation.TeamId, installation.PrimaryChannel()!.ChannelId, text);
+                var command = new PublishToSlack(installation.TeamId, channel.ChannelId, text);
                 await context.Publish(command);
             }
         }
@@ -46,9 +46,9 @@ public class SlackNearDeadlineHandler(
         var allInstallations = await teamRepo.GetAllInstallations();
         foreach (var installation in allInstallations)
         {
-            if (installation.HasRegisteredFor(FplEvent.Deadlines))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
-                var command = new PublishDeadlineNotificationToSlackWorkspace(installation.TeamId, message.GameweekNearingDeadline);
+                var command = new PublishDeadlineNotificationToSlackWorkspace(installation.TeamId, channel.ChannelId, message.GameweekNearingDeadline);
                 await context.Publish(command);
             }
         }
@@ -60,7 +60,7 @@ public class SlackNearDeadlineHandler(
         string notification = $"⏳ Gameweek {message.Gameweek.Id} deadline in 24 hours!";
 
         var installation = await teamRepo.GetInstallation(message.WorkspaceId);
-        var channelId = installation.PrimaryChannel()?.ChannelId;
+        var channelId = message.ChannelId;
         if (installation.Token is not null)
         {
             await PublishToTeam();

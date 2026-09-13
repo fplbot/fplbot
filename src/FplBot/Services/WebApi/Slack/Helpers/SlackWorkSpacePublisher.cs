@@ -1,5 +1,4 @@
 using FplBot.Data.Slack;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
@@ -18,7 +17,10 @@ internal class SlackWorkSpacePublisher(
         var installations = await repository.GetAllInstallations();
         foreach (var installation in installations)
         {
-            await PublishToWorkspace(installation.TeamId, installation.PrimaryChannel()?.ChannelId ?? "", msg);
+            foreach (var channel in installation.ChannelSubscriptions)
+            {
+                await PublishToWorkspace(installation.TeamId, channel.ChannelId, msg);
+            }
         }
     }
 

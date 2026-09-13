@@ -5,7 +5,6 @@ using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Data.Slack;
 using FplBot.Domain;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -39,7 +38,7 @@ public class FplSearchHandler(
             logger.LogError(e, "Unable to get team {teamId} during search.", eventMetadata.Team_Id);
         }
 
-        var leagueId = installation?.PrimaryChannel()?.FollowedLeagueId?.Value;
+        var leagueId = installation?.GetChannel(message.Channel)?.FollowedLeagueId?.Value;
 
         string? countryToBoost = await GetCountryToBoost(leagueId);
 

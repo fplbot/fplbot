@@ -39,27 +39,36 @@ internal class SlackGameweekStartedHandler(
         var newGameweek = message.GameweekId;
 
         var installation = await teamsRepo.GetInstallation(message.WorkspaceId);
-        var channel = installation.PrimaryChannel();
-        var leagueId = channel?.FollowedLeagueId?.Value;
-
-        var messages = new List<string>();
-
-        ClassicLeague? league = null;
-        if (leagueId.HasValue)
+        foreach (var sub in installation.ChannelSubscriptions)
         {
-            league = await leagueClient.GetClassicLeague((int)leagueId.Value, tolerate404:true);
+            await DoSubHandling(installation.TeamId, sub, newGameweek);
+        }
+    }
+
+    private async Task DoSubHandling(string teamId, SlackChannelSubscription sub, int newGameweek)
+    {
+        var messages = new List<string>();
+        ClassicLeague? league = null;
+        if (sub.FollowedLeagueId is not null)
+        {
+            league = await leagueClient.GetClassicLeague((int)sub.FollowedLeagueId.Value, tolerate404:true);
         }
 
         var leagueExists = league != null;
         var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
 
-        if(leagueExists && leagueStarted && (installation.HasRegisteredFor(FplEvent.Captains) || installation.HasRegisteredFor(FplEvent.Transfers)))
-            await publisher.PublishToWorkspace(installation.TeamId, channel!.ChannelId, $"Gameweek {message.GameweekId}!");
-
-        if (leagueExists && leagueStarted && installation.HasRegisteredFor(FplEvent.Captains))
+        if(leagueExists && leagueStarted)
         {
-            var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, (int)leagueId!.Value);
-            if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
+            if (sub.IsSubscribedTo(FplEvent.Captains) || sub.IsSubscribedTo(FplEvent.Transfers))
+            {
+                await publisher.PublishToWorkspace(teamId, sub.ChannelId, $"Gameweek {newGameweek}!");
+            }
+        }
+
+        if (league is {Standings: {} standings} && leagueStarted && sub.IsSubscribedTo(FplEvent.Captains))
+        {
+            var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, (int)sub.FollowedLeagueId!.Value);
+            if (standings.Entries.Count < MemberCountForLargeLeague)
             {
                 messages.Add(captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks));
                 messages.Add(captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks));
@@ -70,45 +79,45 @@ internal class SlackGameweekStartedHandler(
             }
 
         }
-        else if (leagueId.HasValue && !leagueExists && installation.HasRegisteredFor(FplEvent.Captains))
+        else if (sub.FollowedLeagueId is {} && !leagueExists && sub.IsSubscribedTo(FplEvent.Captains))
         {
-            messages.Add($"⚠️ You're subscribing to captains notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future.");
+            messages.Add($"⚠️ You're subscribing to captains notifications, but following a league ({sub.FollowedLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future.");
         }
         else
         {
-            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation.TeamId, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", teamId, leagueStarted);
         }
 
-        if (leagueExists && leagueStarted && installation.HasRegisteredFor(FplEvent.Transfers))
+        if (leagueExists && leagueStarted && sub.IsSubscribedTo(FplEvent.Transfers))
         {
             try
             {
                 if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
                 {
-                    messages.Add(await transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)leagueId!.Value));
+                    messages.Add(await transfersByGameweek.GetTransfersByGameweekTexts(newGameweek, (int)sub.FollowedLeagueId!.Value));
                 }
                 else
                 {
-                    var externalLink = $"See https://www.fplbot.app/leagues/{leagueId!.Value} for all transfers";
+                    var externalLink = $"See https://www.fplbot.app/leagues/{sub.FollowedLeagueId!.Value} for all transfers";
                     messages.Add(externalLink);
                 }
 
             }
             catch(HttpRequestException hre) when(hre.StatusCode == HttpStatusCode.TooManyRequests) // fallback
             {
-                var externalLink = $"See https://www.fplbot.app/leagues/{leagueId!.Value} for all transfers";
+                var externalLink = $"See https://www.fplbot.app/leagues/{sub.FollowedLeagueId!.Value} for all transfers";
                 messages.Add(externalLink);
             }
         }
-        else if (leagueId.HasValue && !leagueExists && installation.HasRegisteredFor(FplEvent.Transfers))
+        else if (sub.FollowedLeagueId is {} && !leagueExists && sub.IsSubscribedTo(FplEvent.Transfers))
         {
-            messages.Add($"⚠️ You're subscribing to transfers notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future.");
+            messages.Add($"⚠️ You're subscribing to transfers notifications, but following a league ({sub.FollowedLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future.");
         }
         else
         {
-            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation.TeamId, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", teamId, leagueStarted);
         }
 
-        await publisher.PublishToWorkspace(installation.TeamId, channel!.ChannelId, messages.ToArray());
+        await publisher.PublishToWorkspace(teamId, sub.ChannelId, messages.ToArray());
     }
 }

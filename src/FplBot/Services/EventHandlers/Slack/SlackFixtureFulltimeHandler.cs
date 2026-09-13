@@ -43,9 +43,9 @@ public class SlackFixtureFulltimeHandler(
 
         foreach (var installation in installations)
         {
-            if (installation.HasRegisteredFor(FplEvent.FixtureFullTime))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureFullTime))
             {
-                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(installation.TeamId, title, threadMessage));
+                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(installation.TeamId, channel.ChannelId, title, threadMessage));
             }
         }
     }
@@ -56,7 +56,7 @@ public class SlackFixtureFulltimeHandler(
         var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
         if (installation.Token is not null)
         {
-            var channelId = installation.PrimaryChannel()?.ChannelId;
+            var channelId = message.ChannelId;
             var slackClient = builder.Build(installation.Token);
             var res = await slackClient.ChatPostMessage(channelId, message.Title);
             if(!string.IsNullOrEmpty(message.ThreadMessage) && res.Ok)

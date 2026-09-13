@@ -1,5 +1,4 @@
 ﻿using FplBot.Data.Slack;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting.Helpers;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using FplBot.Services.WebApi.Slack.Helpers;
@@ -35,7 +34,7 @@ internal class FplCaptainCommandHandler(
         }
 
         var installation = await slackTeamsRepo.GetInstallation(eventMetadata.Team_Id);
-        var leagueId = installation.PrimaryChannel()?.FollowedLeagueId?.Value;
+        var leagueId = installation.GetChannel(incomingMessage.Channel)?.FollowedLeagueId?.Value;
 
         string outgoingMessage;
         if (leagueId.HasValue)

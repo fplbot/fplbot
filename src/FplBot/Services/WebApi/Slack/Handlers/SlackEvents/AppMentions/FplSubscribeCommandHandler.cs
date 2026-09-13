@@ -1,7 +1,6 @@
 using System.Text;
 using FplBot.Data.Slack;
 using FplBot.Domain;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using FplBot.Services.WebApi.Slack.Helpers;
@@ -30,7 +29,7 @@ internal class FplSubscribeCommandHandler(
         try
         {
             var installation = await teamRepo.GetInstallation(teamId);
-            var currentSubscriptions = ToEventSubscriptions(installation.PrimaryChannel()?.Events.Current ?? []);
+            var currentSubscriptions = ToEventSubscriptions(installation.GetChannel(appMentioned.Channel)?.Events.Current ?? []);
             (var inputSubscriptions, var unableToParse) = ParseSubscriptionsFromInput(appMentioned);
 
             if (inputSubscriptions.Count() < 1 && unableToParse.Count() < 1)

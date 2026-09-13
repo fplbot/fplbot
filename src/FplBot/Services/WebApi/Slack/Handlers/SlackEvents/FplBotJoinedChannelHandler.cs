@@ -1,6 +1,6 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
+using FplBot.Domain;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -23,50 +23,51 @@ public class FplBotJoinedChannelHandler(
     public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, MemberJoinedChannelEvent joinedEvent)
     {
         var installation = await teamRepo.GetInstallation(eventMetadata.Team_Id);
-        var followedChannel = installation.PrimaryChannel()?.ChannelId;
-        var leagueId = installation.PrimaryChannel()?.FollowedLeagueId?.Value;
         var slackClient = slackClientService.Build(installation.Token);
         var userProfile = await slackClient.UserProfile(joinedEvent.User);
-        if (userProfile.Profile.Api_App_Id == _slackAppId)
+        if (userProfile.Profile.Api_App_Id != _slackAppId)
         {
-            var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
-            var setupMessage = "";
-            if (leagueId.HasValue)
-            {
-                try
-                {
-                    var league = await leagueClient.GetClassicLeague((int)leagueId.Value);
-                    if (!string.IsNullOrEmpty(followedChannel))
-                    {
-                        setupMessage = $"I'm pushing notifications relevant to {league?.Properties?.Name} into {ChannelName()}. ";
-                        if (followedChannel != joinedEvent.Channel)
-                        {
-                            setupMessage += "If you want to have notifications in this channel instead, use the `@fplbot follow` command in this channel.";
-                        }
-
-                        // Back-compat as we currently have a mix of:
-                        // - display names (#name)
-                        // - channel_ids (C12351)
-                        // Man be removed next season when we require updates to leagueids
-                        string ChannelName()
-                        {
-                            return followedChannel.StartsWith("#") ? followedChannel : $"<#{followedChannel}>";
-                        }
-                    }
-                }
-                catch (HttpRequestException e) when (e.Message.Contains("404"))
-                {
-                    setupMessage = $"I'm currently following no valid league. The invalid leagueid is `{leagueId}`. Use `@fplbot follow` to setup a new valid leagueid.";
-                }
-            }
-            else
-            {
-                setupMessage = "To get notifications for a league, use my `@fplbot follow` command";
-            }
-
-            await publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
-            return new EventHandledResponse("OK");
+            return new EventHandledResponse($"IGNORED FOR {userProfile.Profile.Real_Name}");
         }
-        return new EventHandledResponse($"IGNORED FOR {userProfile.Profile.Real_Name}");
+
+        var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
+        var setupMessage = await DescribeSetup(installation, joinedEvent.Channel);
+
+        await publisher.PublishToWorkspace(eventMetadata.Team_Id, joinedEvent.Channel, introMessage, setupMessage);
+        return new EventHandledResponse("OK");
     }
+
+    private async Task<string> DescribeSetup(SlackInstallation installation, string joinedChannel)
+    {
+        var thisChannel = installation.GetChannel(joinedChannel);
+
+        if (thisChannel?.FollowedLeagueId is { } leagueId)
+        {
+            try
+            {
+                var league = await leagueClient.GetClassicLeague((int)leagueId.Value);
+                return $"I'm already pushing notifications relevant to {league?.Properties?.Name} into this channel.";
+            }
+            catch (HttpRequestException e) when (e.Message.Contains("404"))
+            {
+                return $"I'm currently following no valid league here. The invalid leagueid is `{leagueId.Value}`. Use `@fplbot follow` to set up a new valid leagueid.";
+            }
+        }
+
+        var otherChannels = installation.ChannelSubscriptions.Where(c => c.ChannelId != joinedChannel).ToList();
+        if (otherChannels.Count == 0)
+        {
+            return "To get notifications for a league, use my `@fplbot follow` command in this channel.";
+        }
+
+        var channelNames = string.Join(", ", otherChannels.Select(c => ChannelName(c.ChannelId)));
+        return $"I'm not set up in this channel yet, but I'm already active in {channelNames}. Use `@fplbot follow` in this channel too if you want notifications here as well.";
+    }
+
+    // Back-compat as we currently have a mix of:
+    // - display names (#name)
+    // - channel_ids (C12351)
+    // Man be removed next season when we require updates to leagueids
+    private static string ChannelName(string channelId) =>
+        channelId.StartsWith("#") ? channelId : $"<#{channelId}>";
 }

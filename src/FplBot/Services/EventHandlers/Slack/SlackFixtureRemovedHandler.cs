@@ -20,8 +20,7 @@ public class SlackFixtureRemovedHandler(
         var installations = await teamRepo.GetAllInstallations();
         foreach (var installation in installations)
         {
-            var channel = installation.PrimaryChannel();
-            if (channel is not null && channel.IsSubscribedTo(FplEvent.FixtureAssists))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureRemovedFromGameweek))
             {
                 var fixture = $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}";
                 var msg = $"❌ *Fixture off!*\n {fixture} has been removed from gameweek {message.Gameweek}!";

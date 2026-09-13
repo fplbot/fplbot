@@ -17,13 +17,14 @@ public class SlackPriceChangeHandler(
     public async Task Consume(ConsumeContext<PlayersPriceChanged> context)
     {
         var notification = context.Message;
-        logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
+        logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count} price updates");
         var installations = await slackTeamRepo.GetAllInstallations();
         foreach (var installation in installations)
         {
-            if (installation.HasRegisteredFor(FplEvent.PriceChanges))
+            var subs = installation.GetSubscriptionsTo(FplEvent.PriceChanges);
+            foreach (var sub in subs)
             {
-                await context.Publish(new PublishPriceChangesToSlackWorkspace(installation.TeamId, notification.PlayersWithPriceChanges.ToList()));
+                await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId:installation.TeamId, ChannelId :sub.ChannelId, notification.PlayersWithPriceChanges.ToList()));
             }
         }
     }
@@ -32,12 +33,11 @@ public class SlackPriceChangeHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Publish price changes to {message.WorkspaceId}");
-        var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant());
-        if (filtered.Any())
+        var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant()).ToList();
+        if (filtered.Count != 0)
         {
-            var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
             var formatted = Formatter.FormatPriceChanged(filtered);
-            await publisher.PublishToWorkspace(installation.TeamId, installation.PrimaryChannel()!.ChannelId, formatted);
+            await publisher.PublishToWorkspace(message.WorkspaceId, message.ChannelId, formatted);
         }
         else
         {

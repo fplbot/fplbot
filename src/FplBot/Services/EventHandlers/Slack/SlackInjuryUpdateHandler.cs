@@ -22,9 +22,9 @@ public class SlackInjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogge
             var installations = await slackTeamRepo.GetAllInstallations();
             foreach (var installation in installations)
             {
-                if (installation.HasRegisteredFor(FplEvent.InjuryUpdates))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.InjuryUpdates))
                 {
-                    await context.Publish(new PublishToSlack(installation.TeamId, installation.PrimaryChannel()!.ChannelId, formatted));
+                    await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
                 }
             }
         }

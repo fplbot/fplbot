@@ -2,6 +2,7 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
@@ -49,13 +50,13 @@ public static class AdminSlackEndpoints
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
 
-        var teams = (await teamRepo.GetAllInstallations()).Select(SlackInstallationMapper.ToStorage).ToList();
+        var installations = (await teamRepo.GetAllInstallations()).ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
-            ? teams
-            : teams.Where(t =>
-                (t.TeamName?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (t.TeamId?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+            ? installations
+            : installations.Where(i =>
+                i.TeamName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                i.TeamId.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
         var items = filtered
             .Skip((page - 1) * pageSize)
@@ -66,8 +67,15 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, page, pageSize, filtered.Count));
     }
 
-    private static TeamSummaryDto ToDto(SlackTeam t) =>
-        new(t.TeamId ?? "", t.TeamName, t.FplBotSlackChannel, t.FplbotLeagueId, t.Subscriptions, t.PendingRemoval ?? false);
+    private static TeamSummaryDto ToDto(SlackInstallation installation)
+    {
+        var channel = installation.ChannelSubscriptions.FirstOrDefault();
+        var leagueId = channel?.FollowedLeagueId?.Value;
+        return new(installation.TeamId, installation.TeamName, channel?.ChannelId, leagueId.HasValue ? (int)leagueId.Value : null, ToEventSubscriptions(channel), installation.PendingRemoval);
+    }
+
+    private static IEnumerable<EventSubscription> ToEventSubscriptions(SlackChannelSubscription? channel) =>
+        channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
 
     private static async Task<IResult> GetTeam(
         string teamId,
@@ -79,21 +87,22 @@ public static class AdminSlackEndpoints
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
 
-        var team = SlackInstallationMapper.ToStorage(installation);
+        var channel = installation.ChannelSubscriptions.FirstOrDefault();
+        var leagueId = channel?.FollowedLeagueId?.Value;
 
         string? leagueName = null;
-        if (team.FplbotLeagueId.HasValue)
+        if (leagueId.HasValue)
         {
-            var league = await leagueClient.GetClassicLeague(team.FplbotLeagueId.Value, tolerate404: true);
+            var league = await leagueClient.GetClassicLeague((int)leagueId.Value, tolerate404: true);
             leagueName = league?.Properties?.Name;
         }
 
         bool? channelStatus = null;
         try
         {
-            var slackClient = slackClientBuilder.Build(token: team.AccessToken);
+            var slackClient = slackClientBuilder.Build(token: installation.Token);
             var channels = await slackClient.ConversationsListPublicChannels(500);
-            channelStatus = channels.Channels.Any(c => team.FplBotSlackChannel == $"#{c.Name}" || team.FplBotSlackChannel == c.Id);
+            channelStatus = channels.Channels.Any(c => channel?.ChannelId == $"#{c.Name}" || channel?.ChannelId == c.Id);
         }
         catch (Exception e)
         {
@@ -102,14 +111,14 @@ public static class AdminSlackEndpoints
 
         return TypedResults.Ok(new
         {
-            teamId = team.TeamId,
-            teamName = team.TeamName,
-            channel = team.FplBotSlackChannel,
-            leagueId = team.FplbotLeagueId,
+            teamId = installation.TeamId,
+            teamName = installation.TeamName,
+            channel = channel?.ChannelId,
+            leagueId,
             leagueName,
-            subscriptions = team.Subscriptions,
+            subscriptions = ToEventSubscriptions(channel),
             channelStatus,
-            pendingRemoval = team.PendingRemoval
+            pendingRemoval = installation.PendingRemoval
         });
     }
 
@@ -137,7 +146,6 @@ public static class AdminSlackEndpoints
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
 
-        var team = SlackInstallationMapper.ToStorage(installation);
         var warnings = new List<string>();
 
         var league = await leagueClient.GetClassicLeague(request.LeagueId, tolerate404: true);
@@ -151,7 +159,7 @@ public static class AdminSlackEndpoints
         // consistent with every other check in this handler: report it and still save.
         try
         {
-            var slackClient = slackClientBuilder.Build(token: team.AccessToken);
+            var slackClient = slackClientBuilder.Build(token: installation.Token);
             var channelsRes = await slackClient.ConversationsListPublicChannels(500);
             var channelFound = channelsRes.Channels.Any(c => request.Channel == $"#{c.Name}" || request.Channel == c.Id);
             if (!channelFound)
@@ -189,8 +197,6 @@ public static class AdminSlackEndpoints
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
 
-        var team = SlackInstallationMapper.ToStorage(installation);
-
         if (!request.Subscriptions.Contains(EventSubscription.Standings))
         {
             return TypedResults.Ok(new { published = false, message = "Unsupported event. Nothing published." });
@@ -199,13 +205,14 @@ public static class AdminSlackEndpoints
         var settings = await gameweekClient.GetGlobalSettings();
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
 
-        if (!team.FplbotLeagueId.HasValue || string.IsNullOrEmpty(team.FplBotSlackChannel))
+        var channel = installation.ChannelSubscriptions.FirstOrDefault();
+        if (channel?.FollowedLeagueId is null || string.IsNullOrEmpty(channel.ChannelId))
         {
             return TypedResults.Ok(new { published = false, message = $"Did not publish. Missing fpl league id for {teamIdToUpper}" });
         }
 
         var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToSlackWorkspace(team.TeamId ?? "", team.FplBotSlackChannel ?? "", team.FplbotLeagueId.Value, gameweek!.Id));
+        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.TeamId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
 
         return TypedResults.Ok(new { published = true, message = $"Published standings to {teamIdToUpper}" });
     }

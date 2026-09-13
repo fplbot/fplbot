@@ -1,7 +1,6 @@
 using System.Net;
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
@@ -23,10 +22,10 @@ public class HelpEventHandler(
     public async Task Handle(EventMetaData eventMetadata, AppMentionEvent @event)
     {
         var installation = await tokenStore.GetInstallation(eventMetadata.Team_Id);
-        var channel = installation.PrimaryChannel();
+        var channel = installation.GetChannel(@event.Channel);
         var slackClient = slackClientService.Build(installation.Token);
         var text = $"*HELP:*\n";
-        if (installation.HasChannelAndLeagueSetup())
+        if (channel?.FollowedLeagueId is not null)
         {
             var leagueId = channel!.FollowedLeagueId!.Value;
             try

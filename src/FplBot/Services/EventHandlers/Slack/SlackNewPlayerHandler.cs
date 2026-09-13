@@ -23,9 +23,9 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
 
             foreach (var installation in installations)
             {
-                if (installation.HasRegisteredFor(FplEvent.NewPlayers))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
                 {
-                    await context.Publish(new PublishToSlack(installation.TeamId, installation.PrimaryChannel()!.ChannelId, formatted));
+                    await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
                 }
             }
         }
@@ -43,9 +43,9 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
         var formatted = Formatter.FormatTransferredPlayers(notification.Transfers);
         foreach (var installation in installations)
         {
-            if (installation.HasRegisteredFor(FplEvent.NewPlayers))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
             {
-                await context.Publish(new PublishToSlack(installation.TeamId, installation.PrimaryChannel()!.ChannelId, formatted));
+                await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
             }
         }
     }

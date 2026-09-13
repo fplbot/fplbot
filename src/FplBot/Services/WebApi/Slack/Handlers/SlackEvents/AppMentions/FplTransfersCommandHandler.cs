@@ -1,5 +1,4 @@
 using FplBot.Data.Slack;
-using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using FplBot.Services.WebApi.Slack.Helpers;
@@ -23,7 +22,7 @@ internal class FplTransfersCommandHandler(
 
 
         var installation = await slackTeamRepo.GetInstallation(eventMetadata.Team_Id);
-        var leagueId = installation.PrimaryChannel()?.FollowedLeagueId?.Value;
+        var leagueId = installation.GetChannel(message.Channel)?.FollowedLeagueId?.Value;
         var messageToSend = "You don't follow any league yet. Use the `@fplbot follow` command first.";
         if (leagueId.HasValue)
         {

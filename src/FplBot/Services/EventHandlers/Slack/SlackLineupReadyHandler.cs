@@ -23,9 +23,9 @@ public class SlackLineupReadyHandler(
 
         foreach (var installation in installations)
         {
-            if (installation.HasRegisteredFor(FplEvent.Lineups))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Lineups))
             {
-                await context.Publish(new PublishLineupsToSlackWorkspace(installation.TeamId, message.Lineup));
+                await context.Publish(new PublishLineupsToSlackWorkspace(installation.TeamId, channel.ChannelId, message.Lineup));
             }
         }
     }
@@ -34,7 +34,7 @@ public class SlackLineupReadyHandler(
     {
         var message = context.Message;
         var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
-        var channelId = installation.PrimaryChannel()?.ChannelId;
+        var channelId = message.ChannelId;
         var slackClient = builder.Build(installation.Token);
         var lineups = message.Lineups;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* 👇";
@@ -46,7 +46,7 @@ public class SlackLineupReadyHandler(
             await context.Publish(new PublishSlackThreadMessage
             (
                 message.WorkspaceId,
-                channelId!,
+                channelId,
                 res.ts,
                 formattedLineup
             ));
