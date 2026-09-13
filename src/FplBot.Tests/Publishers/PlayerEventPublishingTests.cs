@@ -60,6 +60,7 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Equal(Channel, msg.Channel);
+        Assert.Contains("New player", msg.Text);
     }
 
     [Fact]
@@ -83,7 +84,7 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
 
         Assert.Single(messageSession.PublishedMessages);
-        Assert.IsType<FplBot.Messaging.Contracts.Events.v1.PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
+        Assert.IsType<Messaging.Contracts.Events.v1.PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
     }
 
     private static PlayerUpdatesRecurringAction CreateTeamChangeScenario(TestPublishEndpoint messageSession)
