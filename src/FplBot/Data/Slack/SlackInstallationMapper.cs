@@ -12,10 +12,10 @@ public static class SlackInstallationMapper
         {
             var leagueId = team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null;
             var events = team.Subscriptions.Select(ToDomainEvent);
-            channels.Add(SlackChannelSubscription.Reconstitute(team.FplBotSlackChannel, leagueId, events));
+            channels.Add(SlackChannelSubscription.FromStorage(team.FplBotSlackChannel, leagueId, events));
         }
 
-        return SlackInstallation.Reconstitute(team.TeamId!, team.AccessToken ?? string.Empty, channels);
+        return SlackInstallation.FromStorage(team.TeamId!, team.AccessToken ?? string.Empty, channels);
     }
 
     public static SlackTeam ToStorage(SlackInstallation installation, string? teamName)
