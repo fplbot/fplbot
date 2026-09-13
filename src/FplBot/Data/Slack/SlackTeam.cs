@@ -22,16 +22,7 @@ public class SlackTeam
 }
 
 
-public class SlackTeamV2
-{
-    public string? TeamId { get; set; }
-    public string TeamName { get; set; } = null!;
-    public string? Scope { get; set; }
-    public string? AccessToken { get; set; }
-    public bool? PendingRemoval { get; set; }
-}
-
-public record SlackTeamV2Subscription(string TeamId,
+public record SlackChannelSubscriptionRecord(string TeamId,
     string ChannelId,
     int? LeagueId,
     IEnumerable<EventSubscription> Subscriptions

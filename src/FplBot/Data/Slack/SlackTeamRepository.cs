@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using FplBot.Domain;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -11,6 +12,10 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _db;
     private readonly string _server;
+
+    // V2 storage stub: in-memory only, lost on restart. Stands in for a real Redis-backed
+    // SlackChannelSubscriptionRecord schema until that's built out.
+    private readonly ConcurrentDictionary<string, List<SlackChannelSubscriptionRecord>> _v2ChannelSubscriptions = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly string _accessTokenField = "accessToken";
     private readonly string _channelField = "fplchannel";
@@ -221,7 +226,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         return key.Substring(key.IndexOf('-') + 1);
     }
 
-    public async Task<IEnumerable<SlackTeam>> GetAllTeams()
+    public async Task<IEnumerable<SlackTeam>> GetAllTeamsLegacyDoNotUse()
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
         var teams = new List<SlackTeam>();
@@ -261,7 +266,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task<IEnumerable<SlackInstallation>> GetAllInstallations()
     {
-        var teams = await GetAllTeams();
+        var teams = await GetAllTeamsLegacyDoNotUse();
         return teams.Select(ToDomain);
     }
 
@@ -273,4 +278,45 @@ public class SlackTeamRepository : ISlackTeamRepository
         await _db.HashSetAsync(FromTeamIdToTeamKey(teamId), [new HashEntry(_subscriptionsField, string.Join(" ", subscriptions))
         ]);
     }
+
+    public Task SaveChannelSubscription(string teamId, SlackChannelSubscription channel)
+    {
+        var record = ToRecord(teamId, channel);
+        var records = _v2ChannelSubscriptions.GetOrAdd(teamId, _ => new List<SlackChannelSubscriptionRecord>());
+        lock (records)
+        {
+            records.RemoveAll(r => r.ChannelId == record.ChannelId);
+            records.Add(record);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId)
+    {
+        if (!_v2ChannelSubscriptions.TryGetValue(teamId, out var records))
+        {
+            return Task.FromResult(Enumerable.Empty<SlackChannelSubscription>());
+        }
+
+        List<SlackChannelSubscription> result;
+        lock (records)
+        {
+            result = records.Select(ToDomain).ToList();
+        }
+
+        return Task.FromResult<IEnumerable<SlackChannelSubscription>>(result);
+    }
+
+    private static SlackChannelSubscriptionRecord ToRecord(string teamId, SlackChannelSubscription channel) =>
+        new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, channel.Events.Current.Select(ToStorageEvent));
+
+    private static SlackChannelSubscription ToDomain(SlackChannelSubscriptionRecord record)
+    {
+        var leagueId = record.LeagueId is { } id ? new ClassicLeagueId(id) : null;
+        var events = record.Subscriptions.Select(ToDomainEvent);
+        return SlackChannelSubscription.FromStorage(record.ChannelId, leagueId, events);
+    }
+
+    private static EventSubscription ToStorageEvent(FplEvent e) => Enum.Parse<EventSubscription>(e.ToString());
 }

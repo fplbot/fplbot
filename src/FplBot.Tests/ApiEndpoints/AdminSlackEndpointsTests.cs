@@ -63,14 +63,18 @@ public class AdminSlackEndpointsTests
     }
 
     [Fact]
-    public async Task PublishTeamEvent_NoSubscriptionsSelected_DoesNotPublish()
+    public async Task PublishStandings_ChannelNotFollowingLeague_DoesNotPublish()
     {
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        installation.Subscribe("#fplbot", [FplBot.Domain.FplEvent.Standings]);
         var repo = A.Fake<ISlackTeamRepository>();
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
+
         var sendEndpointProvider = A.Fake<ISendEndpointProvider>();
         var gameweekClient = A.Fake<IGlobalSettingsClient>();
 
-        var result = await AdminSlackEndpoints.PublishTeamEvent(
-            "T1", new PublishEventRequest([]), repo, sendEndpointProvider, gameweekClient);
+        var result = await AdminSlackEndpoints.PublishStandings(
+            "T1", "#fplbot", repo, sendEndpointProvider, gameweekClient);
 
         dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;
         Assert.False((bool)value.published);
@@ -78,7 +82,7 @@ public class AdminSlackEndpointsTests
     }
 
     [Fact]
-    public async Task PublishTeamEvent_StandingsSelected_PublishesToCorrectQueue()
+    public async Task PublishStandings_ChannelFollowingLeague_PublishesToCorrectQueue()
     {
         var installation = SlackInstallation.Install("T1", "Blank", "token1");
         installation.Follow("#fplbot", new ClassicLeagueId(123));
@@ -95,8 +99,8 @@ public class AdminSlackEndpointsTests
             Gameweeks = [new Gameweek { Id = 4, IsCurrent = true }]
         }));
 
-        var result = await AdminSlackEndpoints.PublishTeamEvent(
-            "t1", new PublishEventRequest([EventSubscription.Standings]), repo, sendEndpointProvider, gameweekClient);
+        var result = await AdminSlackEndpoints.PublishStandings(
+            "t1", "#fplbot", repo, sendEndpointProvider, gameweekClient);
 
         dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;
         Assert.True((bool)value.published);
