@@ -138,12 +138,12 @@ public class AppFixture : IAsyncLifetime
     public IBus Bus => _app.Services.GetRequiredService<IBus>();
     public IServiceProvider Services => _app.Services;
 
-    public async Task AskSlackbot(SlackTeam team, string input)
+    public async Task AskSlackbot(string teamId, string channelId, string input)
     {
         var payload = new
         {
             token = "test",
-            team_id = team.TeamId,
+            team_id = teamId,
             api_app_id = "test",
             type = "event_callback",
             event_id = Guid.NewGuid().ToString(),
@@ -154,7 +154,7 @@ public class AppFixture : IAsyncLifetime
                 type = "app_mention",
                 text = input,
                 user = "U12345",
-                channel = team.FplBotSlackChannel,
+                channel = channelId,
                 ts = "1234567890.123456",
                 event_ts = "1234567890.123456"
             }
@@ -163,6 +163,9 @@ public class AppFixture : IAsyncLifetime
         var response = await _client.PostAsJsonAsync("/events", payload);
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task AskSlackbot(SlackInstallation installation, string input) =>
+        await AskSlackbot(installation.TeamId, installation.ChannelSubscriptions.First().ChannelId, input);
 
     public async Task AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
 
@@ -194,24 +197,21 @@ public class AppFixture : IAsyncLifetime
         return await response.Content.ReadAsStringAsync();
     }
 
-    public async Task<SlackTeam> SeedTeam(Action<SlackTeam>? configure = null)
+    public async Task<SlackInstallation> SeedTeam(Action<SlackInstallation>? configure = null)
     {
-        var team = SlackTeamV1Faker.Generate();
-        configure?.Invoke(team);
+        var teamId = "T" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
+        var channelId = "#" + Guid.NewGuid().ToString("N")[..8];
+        var token = "xoxb-" + Guid.NewGuid().ToString("N");
 
-        var channels = string.IsNullOrEmpty(team.FplBotSlackChannel)
-            ? Array.Empty<SlackChannelSubscription>()
-            : new[]
-            {
-                SlackChannelSubscription.Load(
-                    team.FplBotSlackChannel,
-                    team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null,
-                    team.Subscriptions.Select(s => Enum.Parse<FplEvent>(s.ToString())))
-            };
+        // A real, currently-valid FPL league — some handlers (e.g. captains) call the live
+        // FPL API with this id, so it can't be random garbage that 404s.
+        var channels = new[] { SlackChannelSubscription.Load(channelId, new ClassicLeagueId(15263), []) };
+        var installation = SlackInstallation.Load(teamId, "Test Team " + teamId, token, channels);
 
-        var installation = SlackInstallation.Load(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty, channels, team.PendingRemoval ?? false);
+        configure?.Invoke(installation);
+
         await Services.GetRequiredService<ISlackTeamRepository>().Save(installation);
-        return team;
+        return installation;
     }
 
     public async Task<GuildFplSubscription> SeedGuildSubscription(int? leagueId = null, IEnumerable<EventSubscription>? subscriptions = null)
