@@ -18,7 +18,7 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedInstallation();
         var channelId = ChannelOf(seeded);
 
-        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Standings,Deadlines");
+        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Standings,Deadlines",channelId);
         var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Contains("Updated subscriptions", response.Text, StringComparison.InvariantCultureIgnoreCase);
 
@@ -35,10 +35,10 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedInstallation();
         var channelId = ChannelOf(seeded);
 
-        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Standings");
+        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Standings",channelId);
         await fixture.SlackCapture.WaitForMessageAsync();
 
-        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Deadlines");
+        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Deadlines",channelId);
         await fixture.SlackCapture.WaitForMessageAsync();
 
         var installation = await Repo.GetInstallation(seeded.TeamId);
@@ -77,10 +77,10 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedInstallation();
         var channelId = ChannelOf(seeded);
 
-        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Standings,Deadlines");
+        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Standings,Deadlines",channelId);
         await fixture.SlackCapture.WaitForMessageAsync();
 
-        await fixture.AskSlackbot(seeded, "<@UREFQD887> unsubscribe Standings");
+        await fixture.AskSlackbot(seeded, "<@UREFQD887> unsubscribe Standings",channelId);
         await fixture.SlackCapture.WaitForMessageAsync();
 
         var installation = await Repo.GetInstallation(seeded.TeamId);
@@ -94,7 +94,7 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedInstallation();
 
-        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe");
+        await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe",ChannelOf(seeded));
         var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Contains("You need to pass some arguments", response.Text, StringComparison.InvariantCultureIgnoreCase);
     }

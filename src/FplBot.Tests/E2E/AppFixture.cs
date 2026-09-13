@@ -169,10 +169,15 @@ public class AppFixture : IAsyncLifetime
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task AskSlackbot(SlackInstallation installation, string input) =>
-        await AskSlackbot(installation.TeamId, installation.ChannelSubscriptions.First().ChannelId, input);
+    public async Task AskSlackbot(SlackInstallation installation, string input, string channelId) =>
+        await AskSlackbot(installation.TeamId, channelId, input);
 
-    public async Task AskSlackbot(string input) => await AskSlackbot(await SeedInstallation(), input);
+    public async Task AskSlackbot(string input)
+    {
+        var slackInstallation = await SeedInstallation();
+        var channelId = slackInstallation.ChannelSubscriptions.First().ChannelId;
+        await AskSlackbot(slackInstallation, input, channelId);
+    }
 
     /// <summary>
     /// Installs a workspace through the real WorkspaceInstallationHandler.Install flow (as opposed to
