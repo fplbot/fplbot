@@ -140,4 +140,20 @@ public class SlackInstallationRepositoryTests(AppFixture fixture) : IAsyncLifeti
         Assert.Equal(new ClassicLeagueId(1), Assert.Single(teamA).FollowedLeagueId);
         Assert.Equal(new ClassicLeagueId(2), Assert.Single(teamB).FollowedLeagueId);
     }
+
+    [Fact]
+    public async Task SaveChannelSubscription_TeamIdIsPrefixOfAnotherTeamId_DoesNotLeakTheOtherTeamsChannels()
+    {
+        // Regression test: a team whose id is a string-prefix of another team's id (e.g.
+        // "DEV-SLACK" vs "DEV-SLACK-2") must not see the other team's channels.
+        await Repo.SaveChannelSubscription("PFX", SlackChannelSubscription.FromStorage("#fpl", new ClassicLeagueId(1), [FplEvent.Standings]));
+        await Repo.SaveChannelSubscription("PFX-2", SlackChannelSubscription.FromStorage("#other", new ClassicLeagueId(2), [FplEvent.Deadlines]));
+        await Repo.SaveChannelSubscription("PFX-BARE", SlackChannelSubscription.FromStorage("#bare", new ClassicLeagueId(3), [FplEvent.Captains]));
+
+        var fetched = await Repo.GetChannelSubscriptions("PFX");
+
+        var single = Assert.Single(fetched);
+        Assert.Equal("#fpl", single.ChannelId);
+        Assert.Equal(new ClassicLeagueId(1), single.FollowedLeagueId);
+    }
 }

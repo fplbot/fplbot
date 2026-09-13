@@ -298,17 +298,22 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
 
         await _db.HashSetAsync(key, hashEntries.ToArray());
+        await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
     }
 
+    // Reads the exact set of channel ids this team has saved, then fetches each channel's hash by
+    // its exact key. Deliberately avoids a KEYS pattern scan on "SlackChannelSub-{teamId}-*": that
+    // glob also matches OTHER teams whose id happens to start with this team's id plus a dash
+    // (e.g. scanning for "DEV-SLACK" would also match "DEV-SLACK-2", "DEV-SLACK-BARE", ...).
     public async Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId)
     {
-        var keys = _redis.GetServer(_server).Keys(pattern: ToChannelSubKeyPattern(teamId));
+        var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
         var result = new List<SlackChannelSubscription>();
 
-        foreach (var key in keys)
+        foreach (var channelIdValue in channelIds)
         {
-            var fetched = await _db.HashGetAsync(key, [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
-            var channelId = fetched[0].ToString();
+            var channelId = channelIdValue.ToString();
+            var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
             int? leagueId = fetched[1].HasValue ? int.Parse((string)fetched[1]!) : null;
             var subs = GetSubscriptions(teamId, fetched[2]);
             result.Add(ToDomain(new SlackChannelSubscriptionRecord(teamId, channelId, leagueId, subs)));
@@ -320,8 +325,8 @@ public class SlackTeamRepository : ISlackTeamRepository
     private static string FromTeamAndChannelToChannelSubKey(string teamId, string channelId) =>
         $"SlackChannelSub-{teamId}-{channelId}";
 
-    private static string ToChannelSubKeyPattern(string teamId) =>
-        $"SlackChannelSub-{teamId}-*";
+    private static string ToChannelSubIndexKey(string teamId) =>
+        $"SlackChannelSubIndex-{teamId}";
 
     private static SlackChannelSubscriptionRecord ToRecord(string teamId, SlackChannelSubscription channel) =>
         new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, channel.Events.Current.Select(ToStorageEvent));
