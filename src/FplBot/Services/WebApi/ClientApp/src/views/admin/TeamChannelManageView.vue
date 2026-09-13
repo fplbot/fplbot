@@ -1,0 +1,249 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { getTeam, updateChannelSubscriptions, moveChannel, deleteChannelSubscription, publishStandings, ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
+import type { TeamDetails, TeamDetailsChannel, EventSubscription } from "../../api/types";
+import { describeAdminError } from "../../composables/useAdminAuth";
+
+const props = defineProps<{ teamId: string; channelId: string }>();
+const router = useRouter();
+
+const team = ref<TeamDetails | null>(null);
+const channel = ref<TeamDetailsChannel | null>(null);
+const loading = ref(true);
+const loadError = ref("");
+
+const selectedSubscriptions = ref<Set<EventSubscription>>(new Set());
+const savingSubscriptions = ref(false);
+const subscriptionsFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
+const newChannelId = ref("");
+const movingChannel = ref(false);
+const moveFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
+const deleting = ref(false);
+
+const publishing = ref(false);
+const publishFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
+async function load() {
+  loading.value = true;
+  loadError.value = "";
+  try {
+    const data = await getTeam(props.teamId);
+    if (data == null) {
+      router.replace("/admin/slack");
+      return;
+    }
+    team.value = data;
+    const found = data.channels.find((c) => c.channel === props.channelId);
+    if (!found) {
+      router.replace(`/admin/teams/${props.teamId}`);
+      return;
+    }
+    channel.value = found;
+    selectedSubscriptions.value = new Set(found.subscriptions);
+    newChannelId.value = found.channel;
+  } catch (e) {
+    loadError.value = describeAdminError(e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(load);
+
+const allSubscriptions = computed(() => ALL_EVENT_SUBSCRIPTIONS);
+
+function toggleSubscription(sub: EventSubscription) {
+  if (selectedSubscriptions.value.has(sub)) {
+    selectedSubscriptions.value.delete(sub);
+  } else if (sub === "All") {
+    // "All" is a special catch-all value in the domain — mixing it with specific events in the
+    // same save causes the specific ones to be silently discarded, so keep the checkbox exclusive.
+    selectedSubscriptions.value = new Set(["All"]);
+    return;
+  } else {
+    selectedSubscriptions.value.delete("All");
+    selectedSubscriptions.value.add(sub);
+  }
+  // Force reactivity — Set mutations don't trigger Vue's ref tracking on their own.
+  selectedSubscriptions.value = new Set(selectedSubscriptions.value);
+}
+
+function checkAll() {
+  selectedSubscriptions.value = new Set(ALL_EVENT_SUBSCRIPTIONS.filter((s) => s !== "All"));
+}
+
+async function saveSubscriptions() {
+  savingSubscriptions.value = true;
+  subscriptionsFeedback.value = null;
+  try {
+    const res = await updateChannelSubscriptions(props.teamId, props.channelId, [...selectedSubscriptions.value]);
+    subscriptionsFeedback.value = { type: "success", text: res.message };
+    await load();
+  } catch (e) {
+    subscriptionsFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    savingSubscriptions.value = false;
+  }
+}
+
+async function submitMoveChannel() {
+  if (!newChannelId.value || newChannelId.value === props.channelId) return;
+  if (!confirm(`Move this subscription from ${props.channelId} to ${newChannelId.value}?`)) return;
+  movingChannel.value = true;
+  moveFeedback.value = null;
+  try {
+    const res = await moveChannel(props.teamId, props.channelId, newChannelId.value);
+    moveFeedback.value = { type: "success", text: res.message };
+    router.replace(`/admin/teams/${props.teamId}/channels/${encodeURIComponent(newChannelId.value)}`);
+  } catch (e) {
+    moveFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    movingChannel.value = false;
+  }
+}
+
+async function submitPublish() {
+  publishing.value = true;
+  publishFeedback.value = null;
+  try {
+    const res = await publishStandings(props.teamId, props.channelId);
+    publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
+  } catch (e) {
+    publishFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    publishing.value = false;
+  }
+}
+
+async function submitDelete() {
+  if (!confirm(`Delete the subscription for channel ${props.channelId}? This cannot be undone.`)) return;
+  deleting.value = true;
+  try {
+    await deleteChannelSubscription(props.teamId, props.channelId);
+    router.push(`/admin/teams/${props.teamId}`);
+  } catch (e) {
+    loadError.value = describeAdminError(e);
+  } finally {
+    deleting.value = false;
+  }
+}
+</script>
+
+<template>
+  <div>
+    <router-link :to="`/admin/teams/${teamId}`" class="back-link">&larr; Back to {{ team?.teamName || "team" }}</router-link>
+
+    <div v-if="loading" class="spinner"></div>
+    <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>
+
+    <template v-else-if="channel">
+      <h1>Manage channel</h1>
+      <p class="channel-id">{{ channel.channel }}</p>
+
+      <div class="card">
+        <h2>Subscribed events</h2>
+        <p v-if="subscriptionsFeedback" :class="['alert', subscriptionsFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
+          {{ subscriptionsFeedback.text }}
+        </p>
+        <div class="subscription-grid">
+          <label v-for="sub in allSubscriptions" :key="sub" class="subscription-option">
+            <input
+              type="checkbox"
+              :checked="selectedSubscriptions.has(sub)"
+              @change="toggleSubscription(sub)"
+            />
+            {{ sub }}
+          </label>
+        </div>
+        <div class="subscription-actions">
+          <button class="btn small" :disabled="savingSubscriptions" @click="checkAll">Check all</button>
+          <button class="btn small" :disabled="savingSubscriptions" @click="saveSubscriptions">
+            {{ savingSubscriptions ? "Saving..." : "Save subscriptions" }}
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Change channel</h2>
+        <p v-if="moveFeedback" :class="['alert', moveFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
+          {{ moveFeedback.text }}
+        </p>
+        <div class="field">
+          <label for="new-channel-id">Channel</label>
+          <input id="new-channel-id" v-model="newChannelId" type="text" />
+        </div>
+        <button class="btn small" :disabled="movingChannel || newChannelId === channel.channel" @click="submitMoveChannel">
+          {{ movingChannel ? "Moving..." : "Move subscription" }}
+        </button>
+      </div>
+
+      <div v-if="channel.leagueId" class="card">
+        <h2>Publish standings</h2>
+        <p v-if="publishFeedback" :class="['alert', publishFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
+          {{ publishFeedback.text }}
+        </p>
+        <button class="btn small" :disabled="publishing" @click="submitPublish">
+          {{ publishing ? "Publishing..." : "Publish standings" }}
+        </button>
+      </div>
+
+      <div class="card danger-zone">
+        <h2>Danger zone</h2>
+        <button class="btn danger" :disabled="deleting" @click="submitDelete">
+          {{ deleting ? "Deleting..." : "Delete channel subscription" }}
+        </button>
+      </div>
+    </template>
+  </div>
+</template>
+
+<style scoped>
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: var(--fpl-purple);
+}
+
+.channel-id {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  margin-bottom: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.subscription-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.subscription-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.subscription-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.danger-zone {
+  border-color: #fecaca;
+}
+</style>

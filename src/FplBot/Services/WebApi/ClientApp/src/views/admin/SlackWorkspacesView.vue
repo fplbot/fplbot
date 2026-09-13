@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { getTeams } from "../../api/api";
+import { getTeams, uninstallTeam } from "../../api/api";
 import type { TeamSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
@@ -11,6 +11,7 @@ const teams = ref<TeamSummary[]>([]);
 const totalCount = ref(0);
 const loading = ref(true);
 const error = ref("");
+const uninstalling = ref<string | null>(null);
 
 async function load() {
   loading.value = true;
@@ -34,6 +35,20 @@ watch(query, () => {
 watch(page, load);
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
+
+async function submitUninstall(team: TeamSummary) {
+  if (!confirm(`Uninstall fplbot from ${team.teamName}? This cannot be undone.`)) return;
+  uninstalling.value = team.teamId;
+  error.value = "";
+  try {
+    await uninstallTeam(team.teamId);
+    await load();
+  } catch (e) {
+    error.value = describeAdminError(e);
+  } finally {
+    uninstalling.value = null;
+  }
+}
 </script>
 
 <template>
@@ -57,6 +72,13 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
             <div class="team-actions">
               <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
               <router-link :to="`/admin/teams/${t.teamId}`" class="btn small">Details</router-link>
+              <button
+                class="btn small danger"
+                :disabled="t.pendingRemoval || uninstalling === t.teamId"
+                @click="submitUninstall(t)"
+              >
+                {{ uninstalling === t.teamId ? "Uninstalling..." : "Uninstall" }}
+              </button>
             </div>
           </div>
           <table v-if="t.subscriptions.length > 0" class="admin-table">

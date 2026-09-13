@@ -1,6 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using SlackInstallation = FplBot.Domain.SlackInstallation;
@@ -98,5 +99,75 @@ public class AdminSlackEndpointsTests
         Assert.True((bool)value.published);
         A.CallTo(() => sendEndpointProvider.GetSendEndpoint(
             A<Uri>.That.Matches(u => u.ToString().Contains("SlackGameweekFinishedHandler")))).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task UpdateChannelSubscriptions_AddsAndRemovesToMatchRequestedSet()
+    {
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        installation.Subscribe("#fplbot", [FplBot.Domain.FplEvent.Standings, FplBot.Domain.FplEvent.Captains]);
+        var repo = A.Fake<ISlackTeamRepository>();
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
+
+        var request = new UpdateChannelSubscriptionsRequest([EventSubscription.Captains, EventSubscription.Deadlines]);
+        var result = await AdminSlackEndpoints.UpdateChannelSubscriptions("t1", "#fplbot", request, repo);
+
+        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        var channel = installation.GetChannel("#fplbot")!;
+        Assert.Equal(
+            new[] { FplBot.Domain.FplEvent.Captains, FplBot.Domain.FplEvent.Deadlines }.OrderBy(e => e),
+            channel.Events.Current.OrderBy(e => e));
+        A.CallTo(() => repo.Save(installation)).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task UpdateChannelSubscriptions_TeamNotFound_ReturnsNotFound()
+    {
+        var repo = A.Fake<ISlackTeamRepository>();
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(null));
+
+        var result = await AdminSlackEndpoints.UpdateChannelSubscriptions("t1", "#fplbot", new UpdateChannelSubscriptionsRequest([]), repo);
+
+        Assert.IsType<NotFound>(result);
+    }
+
+    [Fact]
+    public async Task MoveChannel_MovesSubscriptionAndDeletesOldStorageKey()
+    {
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        installation.Follow("#old-channel", new ClassicLeagueId(123));
+        var repo = A.Fake<ISlackTeamRepository>();
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
+
+        var result = await AdminSlackEndpoints.MoveChannel("t1", "#old-channel", new MoveChannelRequest("#new-channel"), repo);
+
+        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        Assert.Null(installation.GetChannel("#old-channel"));
+        Assert.Equal(123, (int)installation.GetChannel("#new-channel")!.FollowedLeagueId!.Value);
+        A.CallTo(() => repo.DeleteChannelSubscription("T1", "#old-channel")).MustHaveHappenedOnceExactly();
+        A.CallTo(() => repo.Save(installation)).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task MoveChannel_ChannelNotFound_ReturnsNotFound()
+    {
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        var repo = A.Fake<ISlackTeamRepository>();
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
+
+        var result = await AdminSlackEndpoints.MoveChannel("t1", "#missing", new MoveChannelRequest("#new-channel"), repo);
+
+        Assert.IsType<NotFound>(result);
+    }
+
+    [Fact]
+    public async Task DeleteChannelSubscription_DelegatesToRepository()
+    {
+        var repo = A.Fake<ISlackTeamRepository>();
+
+        var result = await AdminSlackEndpoints.DeleteChannelSubscription("t1", "#fplbot", repo);
+
+        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        A.CallTo(() => repo.DeleteChannelSubscription("T1", "#fplbot")).MustHaveHappenedOnceExactly();
     }
 }

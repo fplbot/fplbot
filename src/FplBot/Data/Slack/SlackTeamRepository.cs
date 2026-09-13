@@ -199,6 +199,12 @@ public class SlackTeamRepository : ISlackTeamRepository
         return result;
     }
 
+    public async Task DeleteChannelSubscription(string teamId, string channelId)
+    {
+        await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId));
+        await _db.SetRemoveAsync(ToChannelSubIndexKey(teamId), channelId);
+    }
+
     private static string FromTeamAndChannelToChannelSubKey(string teamId, string channelId) =>
         $"SlackChannelSub-{teamId}-{channelId}";
 

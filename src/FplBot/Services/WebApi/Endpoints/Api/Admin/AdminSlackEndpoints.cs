@@ -16,6 +16,10 @@ public record TeamSummaryDto(string TeamId, string TeamName, IEnumerable<Channel
 
 public record BroadcastRequest(string Message);
 
+public record UpdateChannelSubscriptionsRequest(IEnumerable<EventSubscription> Subscriptions);
+
+public record MoveChannelRequest(string NewChannelId);
+
 public static class AdminSlackEndpoints
 {
     public static void Map(RouteGroupBuilder group)
@@ -24,6 +28,9 @@ public static class AdminSlackEndpoints
         group.MapGet("/teams/{teamId}", GetTeam);
         group.MapPost("/teams/{teamId}/uninstall", Uninstall);
         group.MapPost("/teams/{teamId}/channels/{channelId}/publish-standings", PublishStandings);
+        group.MapPut("/teams/{teamId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
+        group.MapPut("/teams/{teamId}/channels/{channelId}/channel", MoveChannel);
+        group.MapDelete("/teams/{teamId}/channels/{channelId}", DeleteChannelSubscription);
         group.MapPost("/slack/broadcast", BroadcastToSlack);
     }
 
@@ -171,4 +178,54 @@ public static class AdminSlackEndpoints
 
         return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
     }
+
+    internal static async Task<IResult> UpdateChannelSubscriptions(
+        string teamId,
+        string channelId,
+        UpdateChannelSubscriptionsRequest request,
+        ISlackTeamRepository teamRepo)
+    {
+        var teamIdToUpper = teamId.ToUpper();
+        var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
+        if (installation == null) return TypedResults.NotFound();
+
+        var wanted = request.Subscriptions.Select(ToFplEvent).ToHashSet();
+        var current = installation.GetChannel(channelId)?.Events.Current.ToHashSet() ?? [];
+
+        installation.Unsubscribe(channelId, current.Except(wanted).ToArray());
+        installation.Subscribe(channelId, wanted.Except(current).ToArray());
+
+        await teamRepo.Save(installation);
+        return TypedResults.Ok(new { message = $"Updated subscriptions for {channelId}" });
+    }
+
+    internal static async Task<IResult> MoveChannel(
+        string teamId,
+        string channelId,
+        MoveChannelRequest request,
+        ISlackTeamRepository teamRepo)
+    {
+        var teamIdToUpper = teamId.ToUpper();
+        var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
+        if (installation == null) return TypedResults.NotFound();
+
+        if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
+
+        installation.MoveChannel(channelId, request.NewChannelId);
+        await teamRepo.DeleteChannelSubscription(teamIdToUpper, channelId);
+        await teamRepo.Save(installation);
+
+        return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
+    }
+
+    internal static async Task<IResult> DeleteChannelSubscription(
+        string teamId,
+        string channelId,
+        ISlackTeamRepository teamRepo)
+    {
+        await teamRepo.DeleteChannelSubscription(teamId.ToUpper(), channelId);
+        return TypedResults.Ok(new { message = $"Deleted subscription for {channelId}" });
+    }
+
+    private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
 }

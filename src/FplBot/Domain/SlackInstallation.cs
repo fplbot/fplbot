@@ -77,6 +77,15 @@ public class SlackInstallation
 
     public SlackChannelSubscription? GetChannel(string channelId) => FindChannel(channelId);
 
+    public void MoveChannel(string oldChannelId, string newChannelId)
+    {
+        var existing = FindChannel(oldChannelId);
+        if (existing is null) return;
+
+        _channelSubscriptions.Remove(existing);
+        _channelSubscriptions.Add(SlackChannelSubscription.Load(newChannelId, existing.FollowedLeagueId, existing.Events.Current));
+    }
+
     private SlackChannelSubscription? FindChannel(string channelId) =>
         _channelSubscriptions.FirstOrDefault(c => c.ChannelId == channelId);
 
