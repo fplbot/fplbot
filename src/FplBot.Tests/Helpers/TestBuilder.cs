@@ -2,7 +2,6 @@ using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.PulseLive;
 using FplBot.Data;
-using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Tests.Helpers;
@@ -308,16 +307,6 @@ public static class TestBuilder
             Code = AwayTeamId,
             Name = "AwAyTeam",
             ShortName = "AWA"
-        };
-    }
-
-    public static SlackTeam SlackTeam()
-    {
-        return new SlackTeam
-        {
-            TeamId = SlackTeamId,
-            FplbotLeagueId = LeagueId,
-            Subscriptions = [EventSubscription.All]
         };
     }
 

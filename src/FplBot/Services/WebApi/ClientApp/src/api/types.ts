@@ -70,20 +70,6 @@ export interface TeamDetailsChannel {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
-  // Whether this channel's data came from the V2 (SlackChannelSubscriptionRecord) store
-  // or fell back to the V1 SlackTeam fields.
-  source: "v1" | "v2";
-}
-
-// Raw V1 SlackTeam fields, present only when the team still has legacy (pre-V2) data —
-// i.e. it hasn't been migrated yet. Lets the admin see exactly what's still sitting in V1.
-export interface TeamDetailsLegacy {
-  scope: string | null;
-  accessToken: string | null;
-  channel: string | null;
-  leagueId: number | null;
-  subscriptions: EventSubscription[];
-  pendingRemoval: boolean | null;
 }
 
 export interface TeamDetails {
@@ -92,7 +78,6 @@ export interface TeamDetails {
   token: string | null;
   pendingRemoval: boolean;
   channels: TeamDetailsChannel[];
-  legacy: TeamDetailsLegacy | null;
 }
 
 // ---- Admin: broadcast ----

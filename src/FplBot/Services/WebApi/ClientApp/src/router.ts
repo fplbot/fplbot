@@ -47,11 +47,6 @@ const router = createRouter({
               component: () => import("./views/admin/SlackWorkspacesView.vue"),
             },
             {
-              path: "legacy",
-              name: "admin-slack-legacy",
-              component: () => import("./views/admin/LegacySlackWorkspacesView.vue"),
-            },
-            {
               path: "broadcast",
               name: "admin-slack-broadcast",
               component: () => import("./views/admin/SlackBroadcastView.vue"),
