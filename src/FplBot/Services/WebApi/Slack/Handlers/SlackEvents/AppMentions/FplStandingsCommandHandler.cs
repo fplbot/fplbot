@@ -1,6 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data.Slack;
+using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -25,12 +26,13 @@ internal class FplStandingsCommandHandler : HandleAppMentionBase
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {
-        var team = await _teamRepo.GetTeam(eventMetadata.Team_Id);
+        var installation = await _teamRepo.GetInstallation(eventMetadata.Team_Id);
         var settings =  await _globalSettingsClient.GetGlobalSettings();
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
-        if (team.HasChannelAndLeagueSetup())
+        if (installation.HasChannelAndLeagueSetup())
         {
-            await _publishEndpoint.Publish(new PublishStandingsToSlackWorkspace(team.TeamId ?? "", appMentioned.Channel, team.FplbotLeagueId!.Value, gameweek!.Id));
+            var leagueId = (int)installation.PrimaryChannel()!.FollowedLeagueId!.Value;
+            await _publishEndpoint.Publish(new PublishStandingsToSlackWorkspace(installation.TeamId, appMentioned.Channel, leagueId, gameweek!.Id));
         }
 
         return new EventHandledResponse("OK");

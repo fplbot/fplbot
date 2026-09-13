@@ -1,4 +1,5 @@
 ﻿using FplBot.Data.Slack;
+using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting.Helpers;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using FplBot.Services.WebApi.Slack.Helpers;
@@ -33,12 +34,13 @@ internal class FplCaptainCommandHandler(
             return new EventHandledResponse("Invalid gameweek");
         }
 
-        var setup = await slackTeamsRepo.GetTeam(eventMetadata.Team_Id);
+        var installation = await slackTeamsRepo.GetInstallation(eventMetadata.Team_Id);
+        var leagueId = installation.PrimaryChannel()?.FollowedLeagueId?.Value;
 
         string outgoingMessage;
-        if (setup.FplbotLeagueId.HasValue)
+        if (leagueId.HasValue)
         {
-            var captainPicks = await captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, setup.FplbotLeagueId.Value);
+            var captainPicks = await captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, (int)leagueId.Value);
             outgoingMessage = isChartRequest
                 ? captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, captainPicks)
                 : captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, captainPicks);

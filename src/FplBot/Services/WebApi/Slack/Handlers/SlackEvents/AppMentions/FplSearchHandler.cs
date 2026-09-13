@@ -4,6 +4,8 @@ using Fpl.Client.Models;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Data.Slack;
+using FplBot.Domain;
+using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
@@ -27,19 +29,21 @@ public class FplSearchHandler(
     {
         var term = ParseArguments(message);
 
-        SlackTeam? slackTeam = null;
+        SlackInstallation? installation = null;
         try
         {
-            slackTeam = await slackTeamRepo.GetTeam(eventMetadata.Team_Id);
+            installation = await slackTeamRepo.GetInstallation(eventMetadata.Team_Id);
         }
         catch (Exception e)
         {
             logger.LogError(e, "Unable to get team {teamId} during search.", eventMetadata.Team_Id);
         }
 
-        string? countryToBoost = await GetCountryToBoost(slackTeam);
+        var leagueId = installation?.PrimaryChannel()?.FollowedLeagueId?.Value;
 
-        var searchMetaData = GetSearchMetaData(slackTeam, message);
+        string? countryToBoost = await GetCountryToBoost(leagueId);
+
+        var searchMetaData = GetSearchMetaData(installation, leagueId, message);
 
         var entriesTask = searchService.SearchForEntry(term ?? "", 0, 10, searchMetaData);
         var leaguesTask = searchService.SearchForLeague(term ?? "", 0, 10, searchMetaData, countryToBoost);
@@ -98,22 +102,22 @@ public class FplSearchHandler(
         return new EventHandledResponse(sb.ToString());
     }
 
-    private static SearchMetaData GetSearchMetaData(SlackTeam? slackTeam, AppMentionEvent message)
+    private static SearchMetaData GetSearchMetaData(SlackInstallation? installation, long? leagueId, AppMentionEvent message)
     {
         var metaData = new SearchMetaData
         {
-            Team = slackTeam?.TeamId, FollowingFplLeagueId = slackTeam?.FplbotLeagueId.ToString(), Actor = message.User,
+            Team = installation?.TeamId, FollowingFplLeagueId = leagueId?.ToString(), Actor = message.User,
             Client = QueryClient.Slack
         };
         return metaData;
     }
 
-    private async Task<string?> GetCountryToBoost(SlackTeam? slackTeam)
+    private async Task<string?> GetCountryToBoost(long? leagueId)
     {
         string? countryToBoost = null;
-        if (slackTeam?.FplbotLeagueId != null)
+        if (leagueId != null)
         {
-            var league = await leagueClient.GetClassicLeague(slackTeam.FplbotLeagueId.Value);
+            var league = await leagueClient.GetClassicLeague((int)leagueId.Value);
             var adminEntry = league?.Properties?.AdminEntry;
 
             if (adminEntry != null)

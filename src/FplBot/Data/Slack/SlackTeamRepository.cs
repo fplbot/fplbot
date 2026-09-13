@@ -259,6 +259,12 @@ public class SlackTeamRepository : ISlackTeamRepository
         return teams;
     }
 
+    public async Task<IEnumerable<SlackInstallation>> GetAllInstallations()
+    {
+        var teams = await GetAllTeams();
+        return teams.Select(ToDomain);
+    }
+
     public async Task UpdateSubscriptions(string teamId, IEnumerable<EventSubscription> subscriptions)
     {
         if(string.IsNullOrEmpty(teamId))

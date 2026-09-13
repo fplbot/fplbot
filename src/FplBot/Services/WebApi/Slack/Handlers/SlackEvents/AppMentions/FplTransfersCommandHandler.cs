@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using static FplBot.EventHandlers.Slack.Helpers.SlackInstallationExtensions;
 using FplBot.Formatting;
 using FplBot.Services.WebApi.Slack.Abstractions;
 using FplBot.Services.WebApi.Slack.Helpers;
@@ -21,14 +22,15 @@ internal class FplTransfersCommandHandler(
         var gameweek = await gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, $"{CommandsFormatted} {{gw}}");
 
 
-        var team = await slackTeamRepo.GetTeam(eventMetadata.Team_Id);
+        var installation = await slackTeamRepo.GetInstallation(eventMetadata.Team_Id);
+        var leagueId = installation.PrimaryChannel()?.FollowedLeagueId?.Value;
         var messageToSend = "You don't follow any league yet. Use the `@fplbot follow` command first.";
-        if (team.FplbotLeagueId.HasValue)
+        if (leagueId.HasValue)
         {
             try
             {
                 messageToSend =
-                    await transfersByGameweek.GetTransfersByGameweekTexts(gameweek ?? 1, team.FplbotLeagueId.Value);
+                    await transfersByGameweek.GetTransfersByGameweekTexts(gameweek ?? 1, (int)leagueId.Value);
             }
             catch (HttpRequestException e) when (e.Message.Contains("429"))
             {

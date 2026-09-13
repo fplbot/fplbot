@@ -25,7 +25,8 @@ public class AdminSlackEndpointsTests
     private static ISlackTeamRepository RepoWithTeams(params SlackTeam[] teams)
     {
         var repo = A.Fake<ISlackTeamRepository>();
-        A.CallTo(() => repo.GetAllTeams()).Returns(Task.FromResult<IEnumerable<SlackTeam>>(teams));
+        var installations = teams.Select(SlackTeamRepository.ToDomain);
+        A.CallTo(() => repo.GetAllInstallations()).Returns(Task.FromResult(installations));
         return repo;
     }
 

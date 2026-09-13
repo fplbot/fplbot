@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -16,14 +17,15 @@ public class SlackFixtureRemovedHandler(
         var message = context.Message;
         logger.LogInformation("Fixture removed from gameweek {Message}", message);
 
-        var teams = await teamRepo.GetAllTeams();
-        foreach (var team in teams)
+        var installations = await teamRepo.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            if (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureAssists))
+            var channel = installation.PrimaryChannel();
+            if (channel is not null && channel.IsSubscribedTo(FplEvent.FixtureAssists))
             {
                 var fixture = $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}";
                 var msg = $"❌ *Fixture off!*\n {fixture} has been removed from gameweek {message.Gameweek}!";
-                await context.Publish(new PublishToSlack(team.TeamId!, team.FplBotSlackChannel!, msg));
+                await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, msg));
             }
         }
     }

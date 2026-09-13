@@ -20,12 +20,13 @@ internal class SlackGameweekFinishedHandler(
     public async Task Consume(ConsumeContext<GameweekFinished> context)
     {
         var notification = context.Message;
-        var teams = await teamsRepo.GetAllTeams();
-        foreach (var team in teams)
+        var installations = await teamsRepo.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            if (team.HasRegisteredFor(EventSubscription.Standings))
+            if (installation.HasRegisteredFor(FplBot.Domain.FplEvent.Standings))
             {
-                await context.Publish(new PublishStandingsToSlackWorkspace(team.TeamId!, team.FplBotSlackChannel!, team.FplbotLeagueId!.Value, notification.FinishedGameweek.Id));
+                var channel = installation.PrimaryChannel()!;
+                await context.Publish(new PublishStandingsToSlackWorkspace(installation.TeamId, channel.ChannelId, (int)channel.FollowedLeagueId!.Value, notification.FinishedGameweek.Id));
             }
         }
     }

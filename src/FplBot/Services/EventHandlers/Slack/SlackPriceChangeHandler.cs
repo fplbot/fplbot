@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -17,12 +18,12 @@ public class SlackPriceChangeHandler(
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
-        var slackTeams = await slackTeamRepo.GetAllTeams();
-        foreach (var slackTeam in slackTeams)
+        var installations = await slackTeamRepo.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
+            if (installation.HasRegisteredFor(FplEvent.PriceChanges))
             {
-                await context.Publish(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId!, notification.PlayersWithPriceChanges.ToList()));
+                await context.Publish(new PublishPriceChangesToSlackWorkspace(installation.TeamId, notification.PlayersWithPriceChanges.ToList()));
             }
         }
     }
@@ -34,9 +35,9 @@ public class SlackPriceChangeHandler(
         var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
-            var slackTeam = await slackTeamRepo.GetTeam(message.WorkspaceId);
+            var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
             var formatted = Formatter.FormatPriceChanged(filtered);
-            await publisher.PublishToWorkspace(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted);
+            await publisher.PublishToWorkspace(installation.TeamId, installation.PrimaryChannel()!.ChannelId, formatted);
         }
         else
         {

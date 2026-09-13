@@ -13,10 +13,14 @@ public class SlackWorkSpacePublisher(
 {
     public async Task PublishToAllWorkspaceChannels(string msg)
     {
-        var teams = await repository.GetAllTeams();
-        foreach (var team in teams)
+        var installations = await repository.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            await PublishToWorkspace(team.TeamId!, team.FplBotSlackChannel!, msg);
+            var channelId = installation.PrimaryChannel()?.ChannelId;
+            if (channelId is not null)
+            {
+                await PublishToWorkspace(installation.TeamId, channelId, msg);
+            }
         }
     }
 
@@ -34,10 +38,10 @@ public class SlackWorkSpacePublisher(
 
     public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
     {
-        var team = await repository.GetTeam(teamId);
-        if (team.AccessToken is not null)
+        var installation = await repository.GetInstallation(teamId);
+        if (installation.Token is not null)
         {
-            await PublishUsingToken(team.AccessToken,messages);
+            await PublishUsingToken(installation.Token,messages);
         }
         else
         {

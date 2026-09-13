@@ -49,7 +49,7 @@ public static class AdminSlackEndpoints
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
 
-        var teams = (await teamRepo.GetAllTeams()).ToList();
+        var teams = (await teamRepo.GetAllInstallations()).Select(SlackInstallationMapper.ToStorage).ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? teams

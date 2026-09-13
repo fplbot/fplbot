@@ -125,7 +125,7 @@ public class SlackEventHandlerE2ETests(AppFixture fixture, ITestOutputHelper out
 
     private async Task SeedTeam(string teamId, string channel, params EventSubscription[] subscriptions)
     {
-        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(new SlackTeam
+        var team = new SlackTeam
         {
             TeamId = teamId,
             TeamName = "Test Team",
@@ -133,6 +133,7 @@ public class SlackEventHandlerE2ETests(AppFixture fixture, ITestOutputHelper out
             FplBotSlackChannel = channel,
             FplbotLeagueId = 123,
             Subscriptions = subscriptions.ToList()
-        });
+        };
+        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(SlackTeamRepository.ToDomain(team));
     }
 }

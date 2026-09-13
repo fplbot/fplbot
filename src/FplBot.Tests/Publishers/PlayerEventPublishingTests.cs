@@ -23,7 +23,7 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
         var team = SlackTeamFaker.Generate();
         team.FplBotSlackChannel = Channel;
         team.Subscriptions = [EventSubscription.PriceChanges, EventSubscription.InjuryUpdates, EventSubscription.NewPlayers];
-        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(team);
+        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(SlackTeamRepository.ToDomain(team));
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
