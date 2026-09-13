@@ -141,6 +141,7 @@ public class AppFixture : IAsyncLifetime
     public IBus Bus => _app.Services.GetRequiredService<IBus>();
     public IServiceProvider Services => _app.Services;
     public ISendEndpointProvider Publisher => _managerScope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
+    public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
 
     public async Task AskSlackbot(string teamId, string channelId, string input)
     {
@@ -302,6 +303,14 @@ public class AppFixture : IAsyncLifetime
             .Returns(Task.FromResult(new UsersListResponse { Ok = true, Members = [] }));
 
         return fakeSlackClient;
+    }
+
+    public async Task Subscribe(string team, string channel, params FplEvent[] events)
+    {
+        var repo = Services.GetRequiredService<ISlackTeamRepository>();
+        var installation = await repo.GetInstallation(team);
+        installation.Subscribe(channel, events);
+        await repo.Save(installation);
     }
 }
 
