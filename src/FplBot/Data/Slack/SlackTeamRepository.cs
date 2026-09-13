@@ -149,7 +149,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             hashEntries.Add(new HashEntry(_leagueField, team.FplbotLeagueId));
         }
 
-        if (team.Subscriptions != null)
+        if (team.Subscriptions.Any())
         {
             hashEntries.Add(new HashEntry(_subscriptionsField, string.Join(" ", team.Subscriptions)));
         }
