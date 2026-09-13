@@ -181,8 +181,6 @@ public static class WebApplicationBuilderExtensions
             };
         });
 
-        services.AddMemoryCache();
-
         services.Configure<RouteOptions>(o =>
         {
             o.LowercaseQueryStrings = true;

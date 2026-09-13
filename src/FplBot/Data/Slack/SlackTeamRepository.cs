@@ -60,6 +60,11 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task<SlackInstallation> GetInstallation(string teamId)
     {
+        if (!await _db.KeyExistsAsync(FromTeamIdToTeamKey(teamId)))
+        {
+            throw new KeyNotFoundException($"No Slack installation found for team id '{teamId}'");
+        }
+
         var team = await GetTeam(teamId);
         return ToDomain(team);
     }

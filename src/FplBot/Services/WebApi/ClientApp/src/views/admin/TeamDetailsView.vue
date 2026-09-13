@@ -10,7 +10,6 @@ const router = useRouter();
 
 const team = ref<TeamDetails | null>(null);
 const loading = ref(true);
-const notFound = ref(false);
 const loadError = ref("");
 
 const leagueId = ref(0);
@@ -28,12 +27,11 @@ const uninstallFeedback = ref<{ type: "success" | "error"; text: string } | null
 
 async function load() {
   loading.value = true;
-  notFound.value = false;
   loadError.value = "";
   try {
     const data = await getTeam(props.teamId);
     if (data == null) {
-      notFound.value = true;
+      router.replace("/admin/slack");
       return;
     }
     team.value = data;
@@ -105,7 +103,6 @@ async function submitUninstall() {
     <router-link to="/admin/slack" class="back-link">&larr; Back to workspaces</router-link>
 
     <div v-if="loading" class="spinner"></div>
-    <p v-else-if="notFound" class="alert alert-error">Team not found.</p>
     <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>
 
     <template v-else-if="team">

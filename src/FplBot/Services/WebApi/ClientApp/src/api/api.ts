@@ -42,10 +42,11 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
     }
     throw new AdminApiError(`Request to ${input} failed with status ${res.status}`, res.status, detail);
   }
-  if (res.status === 204) {
+  const text = await res.text();
+  if (!text) {
     return undefined as T;
   }
-  return res.json();
+  return JSON.parse(text);
 }
 
 function postJson<T>(url: string, body?: unknown, method: string = "POST"): Promise<T> {

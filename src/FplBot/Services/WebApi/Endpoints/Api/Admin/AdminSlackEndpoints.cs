@@ -5,7 +5,6 @@ using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
-using Microsoft.Extensions.Caching.Memory;
 using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
@@ -20,9 +19,6 @@ public record BroadcastRequest(string Message);
 
 public static class AdminSlackEndpoints
 {
-    private const string TeamsCacheKey = "admin:teams";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
-
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/teams", GetTeams);
@@ -48,16 +44,12 @@ public static class AdminSlackEndpoints
         }
     }
 
-    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo, IMemoryCache cache)
+    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
 
-        var teams = (await cache.GetOrCreateAsync(TeamsCacheKey, async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return (await teamRepo.GetAllTeams()).ToList();
-        }))!;
+        var teams = (await teamRepo.GetAllTeams()).ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? teams
@@ -84,8 +76,10 @@ public static class AdminSlackEndpoints
         ISlackClientBuilder slackClientBuilder,
         ILogger<Program> logger)
     {
-        var team = await teamRepo.GetTeam(teamId.ToUpper());
-        if (team == null) return TypedResults.NotFound();
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+
+        var team = SlackInstallationMapper.ToStorage(installation);
 
         string? leagueName = null;
         if (team.FplbotLeagueId.HasValue)
@@ -128,7 +122,7 @@ public static class AdminSlackEndpoints
         logger.LogInformation("Marking {TeamId} for removal", teamIdToUpper);
 
         await adminUninstallSlackWorkspace.Execute(teamIdToUpper);
-        return TypedResults.Accepted("/");
+        return TypedResults.Accepted("/", new { message = $"Marked {teamIdToUpper} for removal." });
     }
 
     private static async Task<IResult> UpdateTeam(
@@ -140,9 +134,10 @@ public static class AdminSlackEndpoints
         ILogger<Program> logger)
     {
         var teamIdToUpper = teamId.ToUpper();
-        var team = await teamRepo.GetTeam(teamIdToUpper);
-        if (team == null) return TypedResults.NotFound();
+        var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
+        if (installation == null) return TypedResults.NotFound();
 
+        var team = SlackInstallationMapper.ToStorage(installation);
         var warnings = new List<string>();
 
         var league = await leagueClient.GetClassicLeague(request.LeagueId, tolerate404: true);
@@ -191,8 +186,10 @@ public static class AdminSlackEndpoints
         }
 
         var teamIdToUpper = teamId.ToUpper();
-        var team = await teamRepo.GetTeam(teamIdToUpper);
-        if (team == null) return TypedResults.NotFound();
+        var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
+        if (installation == null) return TypedResults.NotFound();
+
+        var team = SlackInstallationMapper.ToStorage(installation);
 
         if (!request.Subscriptions.Contains(EventSubscription.Standings))
         {

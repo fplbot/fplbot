@@ -1,5 +1,6 @@
 using FakeItEasy;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -29,10 +30,17 @@ public class TeamMarkedForRemovalHandlerTests
             NullLogger<TeamMarkedForRemovalHandler>.Instance);
     }
 
+    private static SlackInstallation PendingRemovalInstallation()
+    {
+        var installation = SlackInstallation.Install("T1", "Team One", "token1");
+        installation.MarkForRemoval();
+        return installation;
+    }
+
     [Fact]
     public async Task TeamNotFound_DoesNotCrashAndDoesNotCallSlack()
     {
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns((SlackTeam)null!);
+        A.CallTo(() => _repository.FindInstallationByTeamId("T1")).Returns((SlackInstallation)null!);
 
         await _sut.Consume(BuildContext("T1"));
 
@@ -43,8 +51,7 @@ public class TeamMarkedForRemovalHandlerTests
     [Fact]
     public async Task SlackAcceptsUninstall_DeletesLocally()
     {
-        var team = new SlackTeam { TeamId = "T1", TeamName = "Team One", AccessToken = "token1", PendingRemoval = true };
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
+        A.CallTo(() => _repository.FindInstallationByTeamId("T1")).Returns(PendingRemovalInstallation());
         A.CallTo(() => _slackClient.AppsUninstall("id", "secret")).Returns(new SlackResponse { Ok = true });
 
         await _sut.Consume(BuildContext("T1"));
@@ -55,8 +62,7 @@ public class TeamMarkedForRemovalHandlerTests
     [Fact]
     public async Task SlackRejectsUninstall_StillDeletesLocally()
     {
-        var team = new SlackTeam { TeamId = "T1", TeamName = "Team One", AccessToken = "token1", PendingRemoval = true };
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
+        A.CallTo(() => _repository.FindInstallationByTeamId("T1")).Returns(PendingRemovalInstallation());
         A.CallTo(() => _slackClient.AppsUninstall("id", "secret")).Returns(new SlackResponse { Ok = false, Error = "something_broke" });
 
         await _sut.Consume(BuildContext("T1"));
@@ -67,8 +73,7 @@ public class TeamMarkedForRemovalHandlerTests
     [Fact]
     public async Task SlackThrows_StillDeletesLocallyAndDoesNotRethrow()
     {
-        var team = new SlackTeam { TeamId = "T1", TeamName = "Team One", AccessToken = "token1", PendingRemoval = true };
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
+        A.CallTo(() => _repository.FindInstallationByTeamId("T1")).Returns(PendingRemovalInstallation());
         A.CallTo(() => _slackClient.AppsUninstall("id", "secret"))
             .Throws(new WellKnownSlackApiException(error: "account_inactive", responseContent: "{}"));
 

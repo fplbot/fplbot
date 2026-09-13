@@ -19,42 +19,41 @@ public class TeamMarkedForRemovalHandler(
 {
     public async Task Consume(ConsumeContext<TeamMarkedForRemoval> context)
     {
-        var teamId = context.Message.TeamId;
-        var team = await repository.FindByTeamId(teamId);
+        var installation = await repository.FindInstallationByTeamId(context.Message.TeamId);
 
-        if (team is null)
+        if (installation is null)
         {
-            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but no such team found", teamId);
+            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but no such team found", context.Message.TeamId);
             return;
         }
 
-        if (team.PendingRemoval != true)
+        if (installation.PendingRemoval != true)
         {
-            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team not marked for removal", teamId);
+            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team not marked for removal", context.Message.TeamId);
             return;
         }
 
-        if(team.AccessToken is not { Length: > 0 })
+        if(installation.Token is not { Length: > 0 })
         {
-            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team has no access token. Just deleting without telling Slack.", teamId);
-            await repository.DeleteByTeamId(teamId);
+            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team has no access token. Just deleting without telling Slack.", context.Message.TeamId);
+            await repository.DeleteByTeamId(context.Message.TeamId);
             return;
         }
 
-        var slackClient = slackClientBuilder.Build(token: team.AccessToken);
+        var slackClient = slackClientBuilder.Build(token: installation.Token);
         try
         {
             var response = await slackClient.AppsUninstall(slackAppOptions.Value.CLIENT_ID, slackAppOptions.Value.CLIENT_SECRET);
             if (!response.Ok)
             {
-                logger.LogWarning("Slack apps.uninstall for {TeamId} returned {Error}", teamId, response.Error);
+                logger.LogWarning("Slack apps.uninstall for {TeamId} returned {Error}", context.Message.TeamId, response.Error);
             }
         }
         catch (WellKnownSlackApiException e)
         {
-            logger.LogInformation("Slack apps.uninstall for {TeamId} failed (likely already revoked): {Message}. Deleting.", teamId, e.Message);
+            logger.LogInformation("Slack apps.uninstall for {TeamId} failed (likely already revoked): {Message}. Deleting.", context.Message.TeamId, e.Message);
         }
 
-        await repository.DeleteByTeamId(teamId);
+        await repository.DeleteByTeamId(context.Message.TeamId);
     }
 }

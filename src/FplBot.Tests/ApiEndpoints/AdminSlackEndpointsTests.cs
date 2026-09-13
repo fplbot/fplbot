@@ -4,9 +4,10 @@ using Fpl.Client.Models;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.WebApi.Endpoints.Api.Admin;
+using SlackInstallation = FplBot.Domain.SlackInstallation;
+using ClassicLeagueId = FplBot.Domain.ClassicLeagueId;
 using MassTransit;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace FplBot.Tests.ApiEndpoints;
 
@@ -36,7 +37,7 @@ public class AdminSlackEndpointsTests
             Team("T2", "Other Workspace"),
             Team("T3", "Another blank one"));
 
-        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, repo, new MemoryCache(new MemoryCacheOptions()));
+        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, repo);
 
         var ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(result);
         Assert.Equal(2, ok.Value!.TotalCount);
@@ -49,8 +50,8 @@ public class AdminSlackEndpointsTests
         var teams = Enumerable.Range(1, 5).Select(i => Team($"T{i}", $"Team {i}")).ToArray();
         var repo = RepoWithTeams(teams);
 
-        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, repo, new MemoryCache(new MemoryCacheOptions()));
-        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, repo, new MemoryCache(new MemoryCacheOptions()));
+        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, repo);
+        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, repo);
 
         var page1Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page1);
         var page2Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page2);
@@ -78,9 +79,10 @@ public class AdminSlackEndpointsTests
     [Fact]
     public async Task PublishTeamEvent_StandingsSelected_PublishesToCorrectQueue()
     {
-        var team = Team("T1", "Blank");
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        installation.Follow("#fplbot", new ClassicLeagueId(123));
         var repo = A.Fake<ISlackTeamRepository>();
-        A.CallTo(() => repo.GetTeam("T1")).Returns(Task.FromResult(team));
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
 
         var sendEndpoint = A.Fake<ISendEndpoint>();
         var sendEndpointProvider = A.Fake<ISendEndpointProvider>();
