@@ -140,7 +140,7 @@ public static class AdminSlackEndpoints
         });
     }
 
-    private static async Task<IResult> Uninstall(
+    internal static async Task<IResult> Uninstall(
         string teamId,
         AdminUninstallSlackWorkspace adminUninstallSlackWorkspace,
         ILogger<Program> logger)
