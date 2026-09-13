@@ -94,15 +94,6 @@ export function uninstallTeam(teamId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/teams/${teamId}/uninstall`);
 }
 
-export function getLegacyTeams(query: string, page: number, pageSize: number): Promise<PagedResult<TeamSummary>> {
-  const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
-  return request(`/api/admin/teams/legacy?${params.toString()}`);
-}
-
-export function migrateTeamToV2(teamId: string): Promise<{ migrated: boolean; message: string }> {
-  return postJson(`/api/admin/teams/${teamId}/migrate-to-v2`);
-}
-
 export function publishStandings(teamId: string, channelId: string): Promise<{ published: boolean; message: string }> {
   return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/publish-standings`);
 }

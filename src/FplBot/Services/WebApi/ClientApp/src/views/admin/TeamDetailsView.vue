@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getTeam, uninstallTeam, publishStandings, migrateTeamToV2 } from "../../api/api";
+import { getTeam, uninstallTeam, publishStandings } from "../../api/api";
 import type { TeamDetails } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
@@ -17,9 +17,6 @@ const publishFeedback = ref<{ channel: string; type: "success" | "error"; text: 
 
 const uninstalling = ref(false);
 const uninstallFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
-
-const migrating = ref(false);
-const migrateFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
 async function load() {
   loading.value = true;
@@ -50,20 +47,6 @@ async function submitPublish(channel: string) {
     publishFeedback.value = { channel, type: "error", text: describeAdminError(e) };
   } finally {
     publishing.value = null;
-  }
-}
-
-async function submitMigrate() {
-  migrating.value = true;
-  migrateFeedback.value = null;
-  try {
-    const res = await migrateTeamToV2(props.teamId);
-    migrateFeedback.value = { type: res.migrated ? "success" : "error", text: res.message };
-    await load();
-  } catch (e) {
-    migrateFeedback.value = { type: "error", text: describeAdminError(e) };
-  } finally {
-    migrating.value = false;
   }
 }
 
@@ -104,34 +87,6 @@ async function submitUninstall() {
         </dl>
       </div>
 
-      <div class="card legacy">
-        <h2>Legacy data:</h2>
-        <template v-if="team.legacy">
-          <p class="lead">This team still has data in the old, single-channel storage model.</p>
-          <p v-if="migrateFeedback" :class="['alert', migrateFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
-            {{ migrateFeedback.text }}
-          </p>
-          <dl class="summary">
-            <dt>Scope</dt>
-            <dd>{{ team.legacy.scope || "not set" }}</dd>
-            <dt>Access token</dt>
-            <dd>{{ team.legacy.accessToken || "not set" }}</dd>
-            <dt>Channel</dt>
-            <dd>{{ team.legacy.channel || "not set" }}</dd>
-            <dt>League</dt>
-            <dd>{{ team.legacy.leagueId || "not set" }}</dd>
-            <dt>Subscriptions</dt>
-            <dd>{{ team.legacy.subscriptions.join(", ") || "none" }}</dd>
-            <dt>Pending removal</dt>
-            <dd>{{ team.legacy.pendingRemoval ? "Yes" : "No" }}</dd>
-          </dl>
-          <button class="btn small" :disabled="migrating" @click="submitMigrate">
-            {{ migrating ? "Migrating..." : "Migrate to V2" }}
-          </button>
-        </template>
-        <p v-else class="no-subs">No legacy data attached.</p>
-      </div>
-
       <div class="card">
         <h2>Channels</h2>
         <p v-if="team.pendingRemoval" class="status bad">Pending removal</p>
@@ -144,7 +99,6 @@ async function submitUninstall() {
               <th>Channel</th>
               <th>League</th>
               <th>Subscriptions</th>
-              <th>Source</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -154,7 +108,6 @@ async function submitUninstall() {
               <td>{{ c.channel }}</td>
               <td>{{ c.leagueName || "Unknown" }} ({{ c.leagueId || "not set" }})</td>
               <td>{{ c.subscriptions.join(", ") || "none" }}</td>
-              <td><span :class="['source', c.source]">{{ c.source.toUpperCase() }}</span></td>
               <td>
                 <span v-if="c.channelStatus === true" class="status ok">&#10003; found</span>
                 <span v-else-if="c.channelStatus === false" class="status bad">&#10007; not found via Slack API</span>
@@ -217,12 +170,6 @@ async function submitUninstall() {
   font-size: 0.9rem;
 }
 
-.lead {
-  color: #6b7280;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-}
-
 .summary {
   display: grid;
   grid-template-columns: 10rem 1fr;
@@ -236,28 +183,6 @@ async function submitUninstall() {
 .summary dd {
   margin: 0;
   word-break: break-all;
-}
-
-.legacy {
-  border-color: #fde68a;
-}
-
-.source {
-  display: inline-block;
-  padding: 0.1rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-
-.source.v2 {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.source.v1 {
-  background: #fef3c7;
-  color: #b45309;
 }
 
 .status {

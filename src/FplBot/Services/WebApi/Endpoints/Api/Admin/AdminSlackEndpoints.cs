@@ -21,10 +21,8 @@ public static class AdminSlackEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/teams", GetTeams);
-        group.MapGet("/teams/legacy", GetLegacyTeams);
         group.MapGet("/teams/{teamId}", GetTeam);
         group.MapPost("/teams/{teamId}/uninstall", Uninstall);
-        group.MapPost("/teams/{teamId}/migrate-to-v2", MigrateToV2);
         group.MapPost("/teams/{teamId}/channels/{channelId}/publish-standings", PublishStandings);
         group.MapPost("/slack/broadcast", BroadcastToSlack);
     }
@@ -67,81 +65,9 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, page, pageSize, filtered.Count));
     }
 
-    // A team not yet migrated to V2 (no SlackChannelSubscriptionRecords yet) but with V1
-    // subscriptions still in place — these are the ones the "Migrate to V2" button targets.
-    // Goes straight at the raw SlackTeam storage rather than the SlackInstallation domain
-    // object: the domain only ever surfaces a channel when FplBotSlackChannel is set, which
-    // isn't the same question as "does this team have V1 subscriptions".
-    internal static async Task<IResult> GetLegacyTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo)
-    {
-        page = page <= 0 ? 1 : page;
-        pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
-
-        var teams = (await teamRepo.GetAllTeamsLegacyDoNotUse()).ToList();
-
-        var legacy = new List<SlackTeam>();
-        foreach (var team in teams)
-        {
-            if (!team.Subscriptions.Any())
-            {
-                continue;
-            }
-
-            var v2Channels = await teamRepo.GetChannelSubscriptions(team.TeamId!);
-            if (!v2Channels.Any())
-            {
-                legacy.Add(team);
-            }
-        }
-
-        var filtered = string.IsNullOrWhiteSpace(query)
-            ? legacy
-            : legacy.Where(t =>
-                t.TeamName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                (t.TeamId?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
-
-        var items = filtered
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(ToLegacyDto)
-            .ToList();
-
-        return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, page, pageSize, filtered.Count));
-    }
-
-    private static TeamSummaryDto ToLegacyDto(SlackTeam team)
-    {
-        var channels = string.IsNullOrEmpty(team.FplBotSlackChannel)
-            ? Enumerable.Empty<ChannelSubscriptionDto>()
-            : [new ChannelSubscriptionDto(team.TeamId!, team.FplBotSlackChannel, team.FplbotLeagueId, team.Subscriptions)];
-        return new(team.TeamId!, team.TeamName, channels, team.PendingRemoval ?? false);
-    }
-
-    internal static async Task<IResult> MigrateToV2(string teamId, ISlackTeamRepository teamRepo)
-    {
-        var teamIdToUpper = teamId.ToUpper();
-        var legacyTeam = await teamRepo.FindTeamLegacyDoNotUse(teamIdToUpper);
-        if (legacyTeam == null) return TypedResults.NotFound();
-
-        await teamRepo.Save(SlackTeamRepository.ToDomainV1(legacyTeam));
-
-        return TypedResults.Ok(new { migrated = true, message = $"Migrated {teamIdToUpper} to V2." });
-    }
-
-    // Renders from V2 (already loaded onto the installation) once a team has been migrated;
-    // falls back to V1 channel subscriptions for teams that haven't been migrated yet.
     private static async Task<TeamSummaryDto> ToDto(SlackInstallation installation, ISlackTeamRepository teamRepo)
     {
         var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.TeamId, c)).ToList();
-        if (channels.Count == 0)
-        {
-            var legacyTeam = await teamRepo.FindTeamLegacyDoNotUse(installation.TeamId);
-            if (legacyTeam is not null)
-            {
-                channels = ToLegacyDto(legacyTeam).Subscriptions.ToList();
-            }
-        }
-
         return new(installation.TeamId, installation.TeamName, channels, installation.PendingRemoval);
     }
 
@@ -150,14 +76,6 @@ public static class AdminSlackEndpoints
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(SlackChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
-
-    private static IEnumerable<SlackChannelSubscription> ToLegacyChannels(SlackTeam team) =>
-        string.IsNullOrEmpty(team.FplBotSlackChannel)
-            ? []
-            : [SlackChannelSubscription.Load(
-                team.FplBotSlackChannel,
-                team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null,
-                team.Subscriptions.Select(s => Enum.Parse<FplEvent>(s.ToString())))];
 
     private static async Task<IResult> GetTeam(
         string teamId,
@@ -181,16 +99,8 @@ public static class AdminSlackEndpoints
             logger.LogError(e, e.Message);
         }
 
-        var legacyTeam = await teamRepo.FindTeamLegacyDoNotUse(installation.TeamId);
-
-        var isV2 = installation.ChannelSubscriptions.Count > 0;
-        var channelSubscriptions = isV2
-            ? installation.ChannelSubscriptions
-            : legacyTeam is null ? [] : ToLegacyChannels(legacyTeam);
-        var source = isV2 ? "v2" : "v1";
-
         var channels = new List<object>();
-        foreach (var channel in channelSubscriptions)
+        foreach (var channel in installation.ChannelSubscriptions)
         {
             var leagueId = channel.FollowedLeagueId?.Value;
 
@@ -209,24 +119,8 @@ public static class AdminSlackEndpoints
                 leagueId,
                 leagueName,
                 subscriptions = ToEventSubscriptions(channel),
-                channelStatus,
-                source
+                channelStatus
             });
-        }
-
-        object? legacy = null;
-        if (legacyTeam is not null &&
-            (!string.IsNullOrEmpty(legacyTeam.FplBotSlackChannel) || legacyTeam.FplbotLeagueId.HasValue || legacyTeam.Subscriptions.Any()))
-        {
-            legacy = new
-            {
-                scope = legacyTeam.Scope,
-                accessToken = legacyTeam.AccessToken,
-                channel = legacyTeam.FplBotSlackChannel,
-                leagueId = legacyTeam.FplbotLeagueId,
-                subscriptions = legacyTeam.Subscriptions,
-                pendingRemoval = legacyTeam.PendingRemoval
-            };
         }
 
         return TypedResults.Ok(new
@@ -235,8 +129,7 @@ public static class AdminSlackEndpoints
             teamName = installation.TeamName,
             token = installation.Token,
             pendingRemoval = installation.PendingRemoval,
-            channels,
-            legacy
+            channels
         });
     }
 
@@ -264,15 +157,6 @@ public static class AdminSlackEndpoints
         if (installation == null) return TypedResults.NotFound();
 
         var channels = installation.ChannelSubscriptions;
-        if (channels.Count == 0)
-        {
-            var legacyTeam = await teamRepo.FindTeamLegacyDoNotUse(installation.TeamId);
-            if (legacyTeam is not null)
-            {
-                channels = ToLegacyChannels(legacyTeam).ToList();
-            }
-        }
-
         var channel = channels.FirstOrDefault(c => c.ChannelId == channelId);
         if (channel?.FollowedLeagueId is null)
         {
