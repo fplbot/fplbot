@@ -20,10 +20,24 @@ public class TeamMarkedForRemovalHandler(
     public async Task Consume(ConsumeContext<TeamMarkedForRemoval> context)
     {
         var teamId = context.Message.TeamId;
-        var team = await repository.GetTeam(teamId);
+        var team = await repository.FindByTeamId(teamId);
+
         if (team is null)
         {
             logger.LogWarning("TeamMarkedForRemoval for {TeamId} but no such team found", teamId);
+            return;
+        }
+
+        if (team.PendingRemoval != true)
+        {
+            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team not marked for removal", teamId);
+            return;
+        }
+
+        if(team.AccessToken is not { Length: > 0 })
+        {
+            logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team has no access token. Just deleting without telling Slack.", teamId);
+            await repository.DeleteByTeamId(teamId);
             return;
         }
 
@@ -38,7 +52,7 @@ public class TeamMarkedForRemovalHandler(
         }
         catch (WellKnownSlackApiException e)
         {
-            logger.LogInformation("Slack apps.uninstall for {TeamId} failed (likely already revoked): {Message}", teamId, e.Message);
+            logger.LogInformation("Slack apps.uninstall for {TeamId} failed (likely already revoked): {Message}. Deleting.", teamId, e.Message);
         }
 
         await repository.DeleteByTeamId(teamId);

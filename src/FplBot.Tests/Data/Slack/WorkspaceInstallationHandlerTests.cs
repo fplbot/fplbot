@@ -16,8 +16,7 @@ public class WorkspaceInstallationHandlerTests
 
     public WorkspaceInstallationHandlerTests()
     {
-        var scopeFactory = new TestScopeFactory(_publishEndpoint);
-        _sut = new WorkspaceInstallationHandler(_repository, scopeFactory, new UninstallSlackWorkspace(_repository, scopeFactory));
+        _sut = new WorkspaceInstallationHandler(_repository, _publishEndpoint, new WorkspaceOwnerUninstallSlackWorkspace(_repository, _publishEndpoint));
     }
 
     [Fact]
@@ -43,10 +42,8 @@ public class WorkspaceInstallationHandlerTests
         var team = new SlackTeam { TeamId = "T1", TeamName = "Team One", AccessToken = "token1" };
         A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
 
-        var result = await _sut.Uninstall("T1");
+        await _sut.Uninstall("T1");
 
-        Assert.NotNull(result);
-        Assert.Equal("T1", result.TeamId);
         A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
         Assert.Single(_publishEndpoint.PublishedMessages.Containing<AppUninstalled>());
     }

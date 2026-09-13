@@ -1,7 +1,6 @@
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Slackbot.Net.Abstractions.Hosting;
 
 namespace FplBot.ApplicationServices.Slack;
 
@@ -9,24 +8,14 @@ namespace FplBot.ApplicationServices.Slack;
 // would mean publishing an event carrying the raw access token, since there'd be nothing left
 // to look up afterward; AdminRequestedWorkspaceRemovalHandler re-fetches the (still-token-bearing)
 // team, best-effort tells Slack, and only then does the actual delete.
-public class AdminUninstallSlackWorkspace(ISlackTeamRepository repository, IServiceScopeFactory scopeFactory)
+public class AdminUninstallSlackWorkspace(ISlackTeamRepository repository, IPublishEndpoint publisher)
 {
-    public async Task<Workspace?> Execute(string teamId)
+    public async Task Execute(string teamId)
     {
-        var team = await repository.GetTeam(teamId);
-        if (team is null)
-        {
-            return null;
-        }
-
-        var installation = SlackInstallationMapper.ToDomain(team);
+        var installation = await repository.GetInstallation(teamId);
         installation.MarkForRemoval();
-        await repository.Save(SlackInstallationMapper.ToStorage(installation, team.TeamName));
-
-        using var scope = scopeFactory.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
-            .Publish(new TeamMarkedForRemoval(team.TeamId!, team.TeamName));
-
-        return new Workspace(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty);
+        await repository.Save(SlackInstallationMapper.ToStorage(installation));
+        await publisher.Publish(new TeamMarkedForRemoval(installation.TeamId));
     }
 }
+

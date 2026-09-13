@@ -75,7 +75,7 @@ public static class AdminSlackEndpoints
     }
 
     private static TeamSummaryDto ToDto(SlackTeam t) =>
-        new(t.TeamId ?? "", t.TeamName, t.FplBotSlackChannel, t.FplbotLeagueId, t.Subscriptions, t.PendingRemoval);
+        new(t.TeamId ?? "", t.TeamName, t.FplBotSlackChannel, t.FplbotLeagueId, t.Subscriptions, t.PendingRemoval ?? false);
 
     private static async Task<IResult> GetTeam(
         string teamId,
@@ -127,11 +127,8 @@ public static class AdminSlackEndpoints
         var teamIdToUpper = teamId.ToUpper();
         logger.LogInformation("Marking {TeamId} for removal", teamIdToUpper);
 
-        var result = await adminUninstallSlackWorkspace.Execute(teamIdToUpper);
-
-        return result is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(new { message = "Workspace marked for removal." });
+        await adminUninstallSlackWorkspace.Execute(teamIdToUpper);
+        return TypedResults.Accepted("/");
     }
 
     private static async Task<IResult> UpdateTeam(

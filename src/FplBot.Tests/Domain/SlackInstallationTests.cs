@@ -7,16 +7,17 @@ public class SlackInstallationTests
     [Fact]
     public void Install_IsActiveWithEmptySubs()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         Assert.True(installation.IsActive);
         Assert.Equal("T1", installation.TeamId);
+        Assert.Equal("Team One", installation.TeamName);
         Assert.Empty(installation.ChannelSubscriptions);
     }
 
     [Fact]
     public void Uninstall_IsNoLongerActive()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Uninstall();
         Assert.False(installation.IsActive);
     }
@@ -24,7 +25,7 @@ public class SlackInstallationTests
     [Fact]
     public void Uninstall_RemovesSubs()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C1", [FplEvent.Standings]);
         installation.Uninstall();
         Assert.Empty(installation.ChannelSubscriptions);
@@ -33,7 +34,7 @@ public class SlackInstallationTests
     [Fact]
     public void MarkForRemoval_IsNoLongerActive()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.MarkForRemoval();
         Assert.False(installation.IsActive);
     }
@@ -41,7 +42,7 @@ public class SlackInstallationTests
     [Fact]
     public void MarkForRemoval_LeavesTokenAndSubsUntouched()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C1", [FplEvent.Standings]);
         installation.MarkForRemoval();
 
@@ -53,7 +54,7 @@ public class SlackInstallationTests
     [Fact]
     public void Follow_OnNewChannel_CreatesAChannelSubscription()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         var leagueId = new ClassicLeagueId(42);
 
         installation.Follow("C1", leagueId);
@@ -66,7 +67,7 @@ public class SlackInstallationTests
     [Fact]
     public void Follow_OnAlreadyKnownChannel_UpdatesItInsteadOfDuplicating()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Follow("C1", new ClassicLeagueId(1));
         installation.Follow("C1", new ClassicLeagueId(2));
 
@@ -77,7 +78,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_OnNewChannel_CreatesAChannelSubscription()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
 
         installation.Subscribe("C1", [FplEvent.Standings]);
 
@@ -88,7 +89,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_OnAlreadyKnownChannel_AddsToExistingRatherThanDuplicating()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Follow("C1", new ClassicLeagueId(1));
         installation.Subscribe("C1", [FplEvent.Standings]);
 
@@ -100,7 +101,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_DifferentChannels_TrackedSeparately()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C1", [FplEvent.Standings]);
         installation.Subscribe("C2", [FplEvent.Deadlines]);
 
@@ -110,7 +111,7 @@ public class SlackInstallationTests
     [Fact]
     public void Unsubscribe_OnUnknownChannel_DoesNotCreateOne()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Unsubscribe("C1", [FplEvent.Standings]);
         Assert.Empty(installation.ChannelSubscriptions);
     }
@@ -118,7 +119,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_Many_CreatesSubscriptionWithAllOfThem()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
 
         installation.Subscribe("C123", [FplEvent.Standings, FplEvent.Deadlines]);
 
@@ -130,7 +131,7 @@ public class SlackInstallationTests
     [Fact]
     public void Follow_CalledAgain_ChangesTheFollowedLeague()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Follow("C123", new ClassicLeagueId(1));
         installation.Follow("C123", new ClassicLeagueId(2));
 
@@ -141,7 +142,7 @@ public class SlackInstallationTests
     [Fact]
     public void Unsubscribe_RemovesTheEvent()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C123", [FplEvent.Standings]);
         installation.Unsubscribe("C123", FplEvent.Standings);
 
@@ -152,7 +153,7 @@ public class SlackInstallationTests
     [Fact]
     public void IsSubscribedTo_WhenSubscribedToAll_IsTrueForEverything()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C123", [FplEvent.All]);
 
         var subscription = Assert.Single(installation.ChannelSubscriptions);
@@ -163,7 +164,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_CalledAgainOnSameChannel_AppendsToExistingEvents()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C1", [FplEvent.Standings]);
         installation.Subscribe("C1", [FplEvent.Deadlines]);
 
@@ -175,7 +176,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_ToAll_AfterASpecificEvent_CollapsesToJustAll()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C1", [FplEvent.Standings]);
         installation.Subscribe("C1", [FplEvent.All]);
 
@@ -186,7 +187,7 @@ public class SlackInstallationTests
     [Fact]
     public void Subscribe_ToAll_ThenRemoveOne_SubscribesToKnownButTheRemovedOne()
     {
-        var installation = SlackInstallation.Install("T1", "token");
+        var installation = SlackInstallation.Install("T1", "Team One", "token");
         installation.Subscribe("C1", [FplEvent.All]);
         installation.Unsubscribe("C1", [FplEvent.Captains]);
 

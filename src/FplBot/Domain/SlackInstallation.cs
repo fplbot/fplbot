@@ -3,6 +3,7 @@ namespace FplBot.Domain;
 public class SlackInstallation
 {
     public string TeamId { get; }
+    public string TeamName { get; }
     public string? Token { get; private set; }
     public bool PendingRemoval { get; private set; }
 
@@ -11,17 +12,18 @@ public class SlackInstallation
 
     public bool IsActive => Token is not null && !PendingRemoval;
 
-    private SlackInstallation(string teamId, string token)
+    private SlackInstallation(string teamId, string teamName, string token)
     {
         TeamId = teamId;
+        TeamName = teamName;
         Token = token;
     }
 
-    public static SlackInstallation Install(string teamId, string token) => new(teamId, token);
+    public static SlackInstallation Install(string teamId, string teamName, string token) => new(teamId, teamName, token);
 
-    public static SlackInstallation FromStorage(string teamId, string token, IEnumerable<SlackChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
+    public static SlackInstallation FromStorage(string teamId, string teamName, string token, IEnumerable<SlackChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
     {
-        var installation = new SlackInstallation(teamId, token) { PendingRemoval = pendingRemoval };
+        var installation = new SlackInstallation(teamId, teamName, token) { PendingRemoval = pendingRemoval };
         installation._channelSubscriptions.AddRange(channelSubscriptions);
         return installation;
     }

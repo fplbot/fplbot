@@ -1,3 +1,4 @@
+using FplBot.Domain;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
@@ -35,7 +36,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         var team = new SlackTeam
         {
             AccessToken = fetchedTeamData[0],
-            TeamName = fetchedTeamData[3],
+            TeamName = fetchedTeamData[3]!,
             TeamId = teamId
         };
 
@@ -55,6 +56,12 @@ public class SlackTeamRepository : ISlackTeamRepository
         team.PendingRemoval = fetchedTeamData[5].HasValue && (bool)fetchedTeamData[5];
 
         return team;
+    }
+
+    public async Task<SlackInstallation> GetInstallation(string teamId)
+    {
+        var team = await GetTeam(teamId);
+        return SlackInstallationMapper.ToDomain(team);
     }
 
     private List<EventSubscription> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
@@ -117,7 +124,10 @@ public class SlackTeamRepository : ISlackTeamRepository
             hashEntries.Add(new HashEntry(_subscriptionsField, string.Join(" ", team.Subscriptions)));
         }
 
-        hashEntries.Add(new HashEntry(_pendingRemovalField, team.PendingRemoval));
+        if (team.PendingRemoval.HasValue)
+        {
+            hashEntries.Add(new HashEntry(_pendingRemovalField, team.PendingRemoval.Value));
+        }
 
         await _db.HashSetAsync(FromTeamIdToTeamKey(team.TeamId ?? string.Empty), hashEntries.ToArray());
     }
@@ -192,7 +202,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             var slackTeam = new SlackTeam
             {
                 AccessToken = fetchedTeamData[0],
-                TeamName = fetchedTeamData[3],
+                TeamName = fetchedTeamData[3]!,
                 TeamId = teamId
             };
 

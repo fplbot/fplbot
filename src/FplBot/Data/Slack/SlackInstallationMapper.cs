@@ -15,17 +15,17 @@ public static class SlackInstallationMapper
             channels.Add(SlackChannelSubscription.FromStorage(team.FplBotSlackChannel, leagueId, events));
         }
 
-        return SlackInstallation.FromStorage(team.TeamId!, team.AccessToken ?? string.Empty, channels, team.PendingRemoval);
+        return SlackInstallation.FromStorage(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty, channels, team.PendingRemoval ?? false);
     }
 
-    public static SlackTeam ToStorage(SlackInstallation installation, string? teamName)
+    public static SlackTeam ToStorage(SlackInstallation installation)
     {
         var channel = installation.ChannelSubscriptions.FirstOrDefault();
 
         return new SlackTeam
         {
             TeamId = installation.TeamId,
-            TeamName = teamName,
+            TeamName = installation.TeamName,
             AccessToken = installation.Token,
             FplBotSlackChannel = channel?.ChannelId,
             FplbotLeagueId = channel?.FollowedLeagueId is { } id ? (int)id.Value : null,

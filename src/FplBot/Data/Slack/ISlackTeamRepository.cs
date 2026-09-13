@@ -1,8 +1,11 @@
+using FplBot.Domain;
+
 namespace FplBot.Data.Slack;
 
 public interface ISlackTeamRepository
 {
     Task<SlackTeam> GetTeam(string teamId);
+    Task<SlackInstallation> GetInstallation(string teamId);
     Task<SlackTeam?> FindByTeamId(string teamId);
     Task Save(SlackTeam team);
     Task UpdateLeagueId(string teamId, long newLeagueId);

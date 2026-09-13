@@ -64,9 +64,9 @@ public class SlackInstallationMapperTests
     [Fact]
     public void ToStorage_NoChannelFollowed_ProducesTeamWithNoChannelOrSubscriptions()
     {
-        var installation = SlackInstallation.Install("T1", "token1");
+        var installation = SlackInstallation.Install("T1", "Team One", "token1");
 
-        var team = SlackInstallationMapper.ToStorage(installation, "Team One");
+        var team = SlackInstallationMapper.ToStorage(installation);
 
         Assert.Equal("T1", team.TeamId);
         Assert.Equal("Team One", team.TeamName);
@@ -79,11 +79,11 @@ public class SlackInstallationMapperTests
     [Fact]
     public void ToStorage_ChannelFollowedAndSubscribed_ProducesMatchingTeam()
     {
-        var installation = SlackInstallation.Install("T1", "token1");
+        var installation = SlackInstallation.Install("T1", "Team One", "token1");
         installation.Follow("#fpl", new ClassicLeagueId(42));
         installation.Subscribe("#fpl", [FplEvent.Standings, FplEvent.Deadlines]);
 
-        var team = SlackInstallationMapper.ToStorage(installation, "Team One");
+        var team = SlackInstallationMapper.ToStorage(installation);
 
         Assert.Equal("#fpl", team.FplBotSlackChannel);
         Assert.Equal(42, team.FplbotLeagueId);
@@ -104,7 +104,7 @@ public class SlackInstallationMapperTests
             Subscriptions = new List<EventSubscription> { EventSubscription.Standings, EventSubscription.Deadlines }
         };
 
-        var roundTripped = SlackInstallationMapper.ToStorage(SlackInstallationMapper.ToDomain(team), team.TeamName);
+        var roundTripped = SlackInstallationMapper.ToStorage(SlackInstallationMapper.ToDomain(team));
 
         Assert.Equal(team.TeamId, roundTripped.TeamId);
         Assert.Equal(team.TeamName, roundTripped.TeamName);
@@ -128,10 +128,10 @@ public class SlackInstallationMapperTests
     [Fact]
     public void ToStorage_MarkedForRemoval_ProducesTeamWithPendingRemovalSet()
     {
-        var installation = SlackInstallation.Install("T1", "token1");
+        var installation = SlackInstallation.Install("T1", "Team One", "token1");
         installation.MarkForRemoval();
 
-        var team = SlackInstallationMapper.ToStorage(installation, "Team One");
+        var team = SlackInstallationMapper.ToStorage(installation);
 
         Assert.True(team.PendingRemoval);
     }

@@ -7,31 +7,30 @@ using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.ApplicationServices.Slack;
 
-public class UninstallSlackWorkspaceTests
+public class WorkspaceOwnerUninstallSlackWorkspaceTests
 {
     private readonly ISlackTeamRepository _repository = A.Fake<ISlackTeamRepository>();
     private readonly TestPublishEndpoint _publishEndpoint = new();
-    private readonly UninstallSlackWorkspace _sut;
+    private readonly WorkspaceOwnerUninstallSlackWorkspace _sut;
 
-    public UninstallSlackWorkspaceTests()
+    public WorkspaceOwnerUninstallSlackWorkspaceTests()
     {
-        _sut = new UninstallSlackWorkspace(_repository, new TestScopeFactory(_publishEndpoint));
+        _sut = new WorkspaceOwnerUninstallSlackWorkspace(_repository, _publishEndpoint);
     }
 
     [Fact]
-    public async Task Execute_UnknownTeam_ReturnsNullAndDoesNotDelete()
+    public async Task Execute_UnknownTeam_DoesNotDelete()
     {
         A.CallTo(() => _repository.FindByTeamId("T1")).Returns((SlackTeam?)null);
 
-        var result = await _sut.Execute("T1");
+        await _sut.Execute("T1");
 
-        Assert.Null(result);
         A.CallTo(() => _repository.DeleteByTeamId(A<string>._)).MustNotHaveHappened();
         Assert.Empty(_publishEndpoint.PublishedMessages);
     }
 
     [Fact]
-    public async Task Execute_KnownTeam_DeletesReturnsWorkspaceAndPublishesAppUninstalled()
+    public async Task Execute_KnownTeam_DeletesAndPublishesAppUninstalled()
     {
         var team = new SlackTeam
         {
@@ -44,12 +43,8 @@ public class UninstallSlackWorkspaceTests
         };
         A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
 
-        var result = await _sut.Execute("T1");
+        await _sut.Execute("T1");
 
-        Assert.NotNull(result);
-        Assert.Equal("T1", result.TeamId);
-        Assert.Equal("Team One", result.TeamName);
-        Assert.Equal("token1", result.Token);
         A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
 
         var published = Assert.Single(_publishEndpoint.PublishedMessages.Containing<AppUninstalled>());

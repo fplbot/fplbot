@@ -49,6 +49,7 @@ public class AppFixture : IAsyncLifetime
         .WithLabel("reuse-id", "app-fixture")
         .Build();
     private WebApplication _app = null!;
+    private IServiceScope _managerScope = null!;
     private ConnectionMultiplexer _multiplexer = null!;
     private HttpClient _client = null!;
 
@@ -123,10 +124,11 @@ public class AppFixture : IAsyncLifetime
         foreach (var svc in active)
             svc.ConfigureApp(_app);
 
+        _managerScope = _app.Services.CreateScope();
         Manager = new WorkspaceInstallationHandler(
-            _app.Services.GetRequiredService<ISlackTeamRepository>(),
-            _app.Services.GetRequiredService<IServiceScopeFactory>(),
-            _app.Services.GetRequiredService<UninstallSlackWorkspace>());
+            _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>(),
+            _managerScope.ServiceProvider.GetRequiredService<IPublishEndpoint>(),
+            _managerScope.ServiceProvider.GetRequiredService<WorkspaceOwnerUninstallSlackWorkspace>());
 
         await _app.StartAsync();
         _client = _app.GetTestClient();
@@ -241,6 +243,7 @@ public class AppFixture : IAsyncLifetime
 
     public virtual async ValueTask DisposeAsync()
     {
+        _managerScope?.Dispose();
         await _app.StopAsync();
         await _app.DisposeAsync();
         _multiplexer?.Dispose();
