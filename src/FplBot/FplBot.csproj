@@ -34,7 +34,7 @@
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
 
     <!-- Slack -->
-    <PackageReference Include="Slackbot.Net.Endpoints" Version="8.1.4" />
+    <PackageReference Include="Slackbot.Net.Endpoints" Version="9.0.1" />
     <PackageReference Include="Slackbot.Net.SlackClients.Http" Version="8.1.4" />
 
     <!-- Logging -->
