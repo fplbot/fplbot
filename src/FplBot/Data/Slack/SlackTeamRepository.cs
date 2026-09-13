@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using FplBot.Domain;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -13,10 +12,6 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly IDatabase _db;
     private readonly string _server;
 
-    // V2 storage stub: in-memory only, lost on restart. Stands in for a real Redis-backed
-    // SlackChannelSubscriptionRecord schema until that's built out.
-    private readonly ConcurrentDictionary<string, List<SlackChannelSubscriptionRecord>> _v2ChannelSubscriptions = new(StringComparer.OrdinalIgnoreCase);
-
     private readonly string _accessTokenField = "accessToken";
     private readonly string _channelField = "fplchannel";
     private readonly string _leagueField = "fplleagueId";
@@ -24,6 +19,12 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly string _teamIdField = "teamId";
     private readonly string _subscriptionsField = "subscriptions";
     private readonly string _pendingRemovalField = "pendingRemoval";
+
+    // Channel subscriptions: one hash per channel, keyed as SlackChannelSub-{teamId}-{channelId} —
+    // replaces the single scalar Channel/LeagueId/Subscriptions fields legacy SlackTeam stores per team.
+    private readonly string _channelSubChannelIdField = "channelId";
+    private readonly string _channelSubLeagueIdField = "leagueId";
+    private readonly string _channelSubSubscriptionsField = "subscriptions";
 
     public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
     {
@@ -279,34 +280,48 @@ public class SlackTeamRepository : ISlackTeamRepository
         ]);
     }
 
-    public Task SaveChannelSubscription(string teamId, SlackChannelSubscription channel)
+    public async Task SaveChannelSubscription(string teamId, SlackChannelSubscription channel)
     {
         var record = ToRecord(teamId, channel);
-        var records = _v2ChannelSubscriptions.GetOrAdd(teamId, _ => new List<SlackChannelSubscriptionRecord>());
-        lock (records)
+        var key = FromTeamAndChannelToChannelSubKey(teamId, channel.ChannelId);
+
+        var hashEntries = new List<HashEntry>
         {
-            records.RemoveAll(r => r.ChannelId == record.ChannelId);
-            records.Add(record);
+            new HashEntry(_teamIdField, teamId),
+            new HashEntry(_channelSubChannelIdField, record.ChannelId),
+            new HashEntry(_channelSubSubscriptionsField, string.Join(" ", record.Subscriptions))
+        };
+
+        if (record.LeagueId.HasValue)
+        {
+            hashEntries.Add(new HashEntry(_channelSubLeagueIdField, record.LeagueId.Value));
         }
 
-        return Task.CompletedTask;
+        await _db.HashSetAsync(key, hashEntries.ToArray());
     }
 
-    public Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId)
+    public async Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId)
     {
-        if (!_v2ChannelSubscriptions.TryGetValue(teamId, out var records))
+        var keys = _redis.GetServer(_server).Keys(pattern: ToChannelSubKeyPattern(teamId));
+        var result = new List<SlackChannelSubscription>();
+
+        foreach (var key in keys)
         {
-            return Task.FromResult(Enumerable.Empty<SlackChannelSubscription>());
+            var fetched = await _db.HashGetAsync(key, [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
+            var channelId = fetched[0].ToString();
+            int? leagueId = fetched[1].HasValue ? int.Parse((string)fetched[1]!) : null;
+            var subs = GetSubscriptions(teamId, fetched[2]);
+            result.Add(ToDomain(new SlackChannelSubscriptionRecord(teamId, channelId, leagueId, subs)));
         }
 
-        List<SlackChannelSubscription> result;
-        lock (records)
-        {
-            result = records.Select(ToDomain).ToList();
-        }
-
-        return Task.FromResult<IEnumerable<SlackChannelSubscription>>(result);
+        return result;
     }
+
+    private static string FromTeamAndChannelToChannelSubKey(string teamId, string channelId) =>
+        $"SlackChannelSub-{teamId}-{channelId}";
+
+    private static string ToChannelSubKeyPattern(string teamId) =>
+        $"SlackChannelSub-{teamId}-*";
 
     private static SlackChannelSubscriptionRecord ToRecord(string teamId, SlackChannelSubscription channel) =>
         new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, channel.Events.Current.Select(ToStorageEvent));
