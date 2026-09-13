@@ -20,8 +20,7 @@ public class PlayerEventPublishingTests(AppFixture fixture) : IAsyncLifetime
     {
         fixture.SlackCapture.Reset();
         await fixture.FlushRedisAsync();
-        var team = SlackTeamV1Faker.Generate();
-        var installation = SlackInstallation.Install(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty);
+        var installation = SlackInstallationFaker.Generate();
         installation.Subscribe(Channel, [FplEvent.PriceChanges, FplEvent.InjuryUpdates, FplEvent.NewPlayers]);
         await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(installation);
     }

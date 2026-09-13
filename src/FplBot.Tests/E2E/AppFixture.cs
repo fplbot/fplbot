@@ -167,7 +167,7 @@ public class AppFixture : IAsyncLifetime
     public async Task AskSlackbot(SlackInstallation installation, string input) =>
         await AskSlackbot(installation.TeamId, installation.ChannelSubscriptions.First().ChannelId, input);
 
-    public async Task AskSlackbot(string input) => await AskSlackbot(await SeedTeam(), input);
+    public async Task AskSlackbot(string input) => await AskSlackbot(await SeedInstallation(), input);
 
     public async Task<string> AskDiscord(string commandName, string? optionValue = null, string? subCommandName = null, string? guildId = null, string? channelId = null)
     {
@@ -197,7 +197,7 @@ public class AppFixture : IAsyncLifetime
         return await response.Content.ReadAsStringAsync();
     }
 
-    public async Task<SlackInstallation> SeedTeam(Action<SlackInstallation>? configure = null)
+    public async Task<SlackInstallation> SeedInstallation(Action<SlackInstallation>? configure = null)
     {
         var teamId = "T" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
         var channelId = "#" + Guid.NewGuid().ToString("N")[..8];
