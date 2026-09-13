@@ -1,5 +1,6 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
@@ -24,7 +25,7 @@ public class SlackFixtureFulltimeHandler(
     {
         var message = context.Message;
         logger.LogInformation("Handling fixture full time");
-        var teams = await slackTeamRepo.GetAllTeams();
+        var installations = await slackTeamRepo.GetAllInstallations();
         var settings = await settingsClient.GetGlobalSettings();
         var fixtures = await fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
@@ -40,11 +41,11 @@ public class SlackFixtureFulltimeHandler(
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
 
-        foreach (var slackTeam in teams)
+        foreach (var installation in installations)
         {
-            if (slackTeam.HasRegisteredFor(EventSubscription.FixtureFullTime))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureFullTime))
             {
-                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(slackTeam.TeamId!, title, threadMessage));
+                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(installation.TeamId, channel.ChannelId, title, threadMessage));
             }
         }
     }
@@ -52,16 +53,17 @@ public class SlackFixtureFulltimeHandler(
     public async Task Consume(ConsumeContext<PublishFulltimeMessageToSlackWorkspace> context)
     {
         var message = context.Message;
-        var team = await slackTeamRepo.GetTeam(message.WorkspaceId);
-        if (team.AccessToken is not null)
+        var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
+        if (installation.Token is not null)
         {
-            var slackClient = builder.Build(team.AccessToken);
-            var res = await slackClient.ChatPostMessage(team.FplBotSlackChannel, message.Title);
+            var channelId = message.ChannelId;
+            var slackClient = builder.Build(installation.Token);
+            var res = await slackClient.ChatPostMessage(channelId, message.Title);
             if(!string.IsNullOrEmpty(message.ThreadMessage) && res.Ok)
             {
                 await slackClient.ChatPostMessage(new ChatPostMessageRequest
                 {
-                    Channel = team.FplBotSlackChannel, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
+                    Channel = channelId, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
                 });
             }
         }

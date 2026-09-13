@@ -74,6 +74,11 @@ internal static class DevSeeder
         }
     }
 
+    // All of these seed V1-style data only (single scalar channel/league/subscriptions
+    // fields per team) — there's no way to seed the V2 store (SlackChannelSubscriptionRecord)
+    // from here, since it's an in-memory dictionary living inside the running WebApi
+    // process, not reachable from this separate Aspire seeder process. Use the admin UI's
+    // "Migrate to V2" button once the app is up if you want a V2 example to look at.
     private static async Task SeedSlack(IDatabase db)
     {
         await db.HashSetAsync("TeamId-DEV-SLACK", [
@@ -84,6 +89,32 @@ internal static class DevSeeder
             new HashEntry("subscriptions", AllSubs)
         ]);
         Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK (league 12345, channel C0DEV000001).");
+
+        await db.HashSetAsync("TeamId-DEV-SLACK-2", [
+            new HashEntry("accessToken", "xoxb-dev-fake-token-2"),
+            new HashEntry("fplchannel", "C0DEV000002"),
+            new HashEntry("fplleagueId", "23456"),
+            new HashEntry("teamName", "Dev Slack Workspace 2"),
+            new HashEntry("subscriptions", "Standings Captains Transfers")
+        ]);
+        Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK-2 (league 23456, channel C0DEV000002).");
+
+        await db.HashSetAsync("TeamId-DEV-SLACK-3", [
+            new HashEntry("accessToken", "xoxb-dev-fake-token-3"),
+            new HashEntry("fplchannel", "C0DEV000003"),
+            new HashEntry("fplleagueId", "34567"),
+            new HashEntry("teamName", "Dev Slack Workspace 3"),
+            new HashEntry("subscriptions", "PriceChanges InjuryUpdates Deadlines")
+        ]);
+        Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK-3 (league 34567, channel C0DEV000003).");
+
+        // No channel/league/subscriptions at all — a bare install with nothing to migrate,
+        // to exercise the "0 legacy data" path in the admin UI.
+        await db.HashSetAsync("TeamId-DEV-SLACK-BARE", [
+            new HashEntry("accessToken", "xoxb-dev-fake-token-bare"),
+            new HashEntry("teamName", "Dev Slack Workspace (bare install)")
+        ]);
+        Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK-BARE (no channel/league/subscriptions).");
     }
 
     private static async Task SeedDiscord(IDatabase db)

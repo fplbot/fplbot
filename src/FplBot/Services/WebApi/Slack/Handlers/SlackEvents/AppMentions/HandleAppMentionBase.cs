@@ -1,9 +1,9 @@
-﻿using FplBot.WebApi.Slack.Extensions;
-using FplBot.WebApi.Slack.Helpers;
+﻿using FplBot.Services.WebApi.Slack.Extensions;
+using FplBot.Services.WebApi.Slack.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public abstract class HandleAppMentionBase : IHandleAppMentions
 {

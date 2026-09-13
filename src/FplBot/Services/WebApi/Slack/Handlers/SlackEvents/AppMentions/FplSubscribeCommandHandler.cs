@@ -1,12 +1,13 @@
 using System.Text;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Formatting;
-using FplBot.WebApi.Slack.Abstractions;
-using FplBot.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 internal class FplSubscribeCommandHandler(
     ISlackWorkSpacePublisher workspacePublisher,
@@ -27,8 +28,8 @@ internal class FplSubscribeCommandHandler(
     {
         try
         {
-            var team = await teamRepo.GetTeam(teamId);
-            var currentSubscriptions = team.Subscriptions;
+            var installation = await teamRepo.GetInstallation(teamId);
+            var currentSubscriptions = ToEventSubscriptions(installation.GetChannel(appMentioned.Channel)?.Events.Current ?? []);
             (var inputSubscriptions, var unableToParse) = ParseSubscriptionsFromInput(appMentioned);
 
             if (inputSubscriptions.Count() < 1 && unableToParse.Count() < 1)
@@ -88,6 +89,9 @@ internal class FplSubscribeCommandHandler(
 
         return currentSubscriptions.Union(inputSubscriptions);
     }
+
+    private static IEnumerable<EventSubscription> ToEventSubscriptions(IEnumerable<FplEvent> events) =>
+        events.Select(e => Enum.Parse<EventSubscription>(e.ToString()));
 
     private static (IEnumerable<EventSubscription> events, string[] unableToParse) ParseSubscriptionsFromInput(AppMentionEvent appMentioned)
     {

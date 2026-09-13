@@ -4,9 +4,10 @@ using Fpl.Client.Models;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.WebApi.Endpoints.Api.Admin;
+using SlackInstallation = FplBot.Domain.SlackInstallation;
+using ClassicLeagueId = FplBot.Domain.ClassicLeagueId;
 using MassTransit;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace FplBot.Tests.ApiEndpoints;
 
@@ -24,7 +25,8 @@ public class AdminSlackEndpointsTests
     private static ISlackTeamRepository RepoWithTeams(params SlackTeam[] teams)
     {
         var repo = A.Fake<ISlackTeamRepository>();
-        A.CallTo(() => repo.GetAllTeams()).Returns(Task.FromResult<IEnumerable<SlackTeam>>(teams));
+        var installations = teams.Select(SlackTeamRepository.ToDomain);
+        A.CallTo(() => repo.GetAllInstallations()).Returns(Task.FromResult(installations));
         return repo;
     }
 
@@ -36,7 +38,7 @@ public class AdminSlackEndpointsTests
             Team("T2", "Other Workspace"),
             Team("T3", "Another blank one"));
 
-        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, repo, new MemoryCache(new MemoryCacheOptions()));
+        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, repo);
 
         var ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(result);
         Assert.Equal(2, ok.Value!.TotalCount);
@@ -49,8 +51,8 @@ public class AdminSlackEndpointsTests
         var teams = Enumerable.Range(1, 5).Select(i => Team($"T{i}", $"Team {i}")).ToArray();
         var repo = RepoWithTeams(teams);
 
-        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, repo, new MemoryCache(new MemoryCacheOptions()));
-        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, repo, new MemoryCache(new MemoryCacheOptions()));
+        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, repo);
+        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, repo);
 
         var page1Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page1);
         var page2Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page2);
@@ -61,14 +63,18 @@ public class AdminSlackEndpointsTests
     }
 
     [Fact]
-    public async Task PublishTeamEvent_NoSubscriptionsSelected_DoesNotPublish()
+    public async Task PublishStandings_ChannelNotFollowingLeague_DoesNotPublish()
     {
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        installation.Subscribe("#fplbot", [FplBot.Domain.FplEvent.Standings]);
         var repo = A.Fake<ISlackTeamRepository>();
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
+
         var sendEndpointProvider = A.Fake<ISendEndpointProvider>();
         var gameweekClient = A.Fake<IGlobalSettingsClient>();
 
-        var result = await AdminSlackEndpoints.PublishTeamEvent(
-            "T1", new PublishEventRequest([]), repo, sendEndpointProvider, gameweekClient);
+        var result = await AdminSlackEndpoints.PublishStandings(
+            "T1", "#fplbot", repo, sendEndpointProvider, gameweekClient);
 
         dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;
         Assert.False((bool)value.published);
@@ -76,11 +82,12 @@ public class AdminSlackEndpointsTests
     }
 
     [Fact]
-    public async Task PublishTeamEvent_StandingsSelected_PublishesToCorrectQueue()
+    public async Task PublishStandings_ChannelFollowingLeague_PublishesToCorrectQueue()
     {
-        var team = Team("T1", "Blank");
+        var installation = SlackInstallation.Install("T1", "Blank", "token1");
+        installation.Follow("#fplbot", new ClassicLeagueId(123));
         var repo = A.Fake<ISlackTeamRepository>();
-        A.CallTo(() => repo.GetTeam("T1")).Returns(Task.FromResult(team));
+        A.CallTo(() => repo.FindInstallationByTeamId("T1")).Returns(Task.FromResult<SlackInstallation?>(installation));
 
         var sendEndpoint = A.Fake<ISendEndpoint>();
         var sendEndpointProvider = A.Fake<ISendEndpointProvider>();
@@ -92,8 +99,8 @@ public class AdminSlackEndpointsTests
             Gameweeks = [new Gameweek { Id = 4, IsCurrent = true }]
         }));
 
-        var result = await AdminSlackEndpoints.PublishTeamEvent(
-            "t1", new PublishEventRequest([EventSubscription.Standings]), repo, sendEndpointProvider, gameweekClient);
+        var result = await AdminSlackEndpoints.PublishStandings(
+            "t1", "#fplbot", repo, sendEndpointProvider, gameweekClient);
 
         dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;
         Assert.True((bool)value.published);

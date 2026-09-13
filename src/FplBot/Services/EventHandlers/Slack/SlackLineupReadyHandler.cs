@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -18,13 +19,13 @@ public class SlackLineupReadyHandler(
     {
         var message = context.Message;
         logger.LogInformation("Handling new lineups");
-        var slackTeams = await slackTeamRepo.GetAllTeams();
+        var installations = await slackTeamRepo.GetAllInstallations();
 
-        foreach (var slackTeam in slackTeams)
+        foreach (var installation in installations)
         {
-            if (slackTeam.HasRegisteredFor(EventSubscription.Lineups))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Lineups))
             {
-                await context.Publish(new PublishLineupsToSlackWorkspace(slackTeam.TeamId!, message.Lineup));
+                await context.Publish(new PublishLineupsToSlackWorkspace(installation.TeamId, channel.ChannelId, message.Lineup));
             }
         }
     }
@@ -32,19 +33,20 @@ public class SlackLineupReadyHandler(
     public async Task Consume(ConsumeContext<PublishLineupsToSlackWorkspace> context)
     {
         var message = context.Message;
-        var team = await slackTeamRepo.GetTeam(message.WorkspaceId);
-        var slackClient = builder.Build(team.AccessToken);
+        var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
+        var channelId = message.ChannelId;
+        var slackClient = builder.Build(installation.Token);
         var lineups = message.Lineups;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* 👇";
 
-        var res = await slackClient.ChatPostMessage(team.FplBotSlackChannel, firstMessage);
+        var res = await slackClient.ChatPostMessage(channelId, firstMessage);
         if (res.Ok)
         {
             var formattedLineup = Formatter.FormatLineup(lineups);
             await context.Publish(new PublishSlackThreadMessage
             (
                 message.WorkspaceId,
-                team.FplBotSlackChannel!,
+                channelId,
                 res.ts,
                 formattedLineup
             ));

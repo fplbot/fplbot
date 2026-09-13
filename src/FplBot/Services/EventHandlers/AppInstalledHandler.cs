@@ -18,7 +18,7 @@ public class AppInstalledHandler(IGuildRepository guildRepo,
         var count = context.Message.Platform switch
         {
             ChatPlatform.Discord => (await guildRepo.GetAllGuilds()).Count(),
-            ChatPlatform.Slack => (await slackRepo.GetAllTeams()).Count(),
+            ChatPlatform.Slack => (await slackRepo.GetAllInstallations()).Count(),
             _ => -1
         };
 

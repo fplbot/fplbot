@@ -3,7 +3,6 @@ using FplBot.Discord;
 using FplBot.EventHandlers.Discord;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
@@ -16,10 +15,6 @@ public static class AdminDiscordEndpoints
     // Slash commands are only ever managed for this one hardcoded test guild today —
     // carried over unchanged from Pages/Admin/Discord/Slashcommands.cshtml.cs.
     private const string TestGuildId = "893932860162064414";
-
-    private const string GuildsCacheKey = "admin:discord:guilds";
-    private const string GuildSubsCacheKey = "admin:discord:guild-subs";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
 
     public static void Map(RouteGroupBuilder group)
     {
@@ -103,22 +98,13 @@ public static class AdminDiscordEndpoints
         }
     }
 
-    private static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo, IMemoryCache cache)
+    private static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
 
-        var guilds = (await cache.GetOrCreateAsync(GuildsCacheKey, async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return (await repo.GetAllGuilds()).ToList();
-        }))!;
-
-        var allSubs = (await cache.GetOrCreateAsync(GuildSubsCacheKey, async entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return (await repo.GetAllGuildSubscriptions()).ToList();
-        }))!;
+        var guilds = (await repo.GetAllGuilds()).ToList();
+        var allSubs = (await repo.GetAllGuildSubscriptions()).ToList();
 
         var guildsWithSubs = guilds
             .Select(g => new GuildWithSubsDto(g.Id, g.Name, allSubs.Where(s => s.GuildId == g.Id)))
@@ -138,17 +124,15 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, page, pageSize, filtered.Count));
     }
 
-    private static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo, IMemoryCache cache)
+    private static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
     {
         await repo.DeleteGuildSubscription(guildId, channelId);
-        InvalidateGuildCaches(cache);
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
     }
 
-    private static async Task<IResult> DeleteAllSubscriptionsForGuild(string guildId, IGuildRepository repo, IMemoryCache cache)
+    private static async Task<IResult> DeleteAllSubscriptionsForGuild(string guildId, IGuildRepository repo)
     {
         var count = await DeleteSubscriptionsForGuild(guildId, repo);
-        InvalidateGuildCaches(cache);
         return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
     }
 
@@ -157,11 +141,10 @@ public static class AdminDiscordEndpoints
     // triggered manually from the admin UI instead of automatically. This only forgets our
     // own tracked data; it doesn't call Discord to remove the bot from the server (there's no
     // "leave guild" support in DiscordClient today).
-    private static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo, IMemoryCache cache)
+    private static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo)
     {
         await DeleteSubscriptionsForGuild(guildId, repo);
         await repo.DeleteGuild(guildId);
-        InvalidateGuildCaches(cache);
         return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
     }
 
@@ -173,11 +156,5 @@ public static class AdminDiscordEndpoints
             await repo.DeleteGuildSubscription(sub.GuildId, sub.ChannelId);
         }
         return subs.Count;
-    }
-
-    private static void InvalidateGuildCaches(IMemoryCache cache)
-    {
-        cache.Remove(GuildsCacheKey);
-        cache.Remove(GuildSubsCacheKey);
     }
 }

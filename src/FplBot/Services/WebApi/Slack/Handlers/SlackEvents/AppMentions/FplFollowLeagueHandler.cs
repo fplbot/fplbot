@@ -1,11 +1,11 @@
 ﻿using System.Text.RegularExpressions;
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public class FplFollowLeagueHandler(
     ISlackTeamRepository slackTeamRepository,
@@ -49,10 +49,10 @@ public class FplFollowLeagueHandler(
 
             if (league?.Properties != null)
             {
-                var team = await slackTeamRepository.GetTeam(eventMetadata.Team_Id);
+                var installation = await slackTeamRepository.GetInstallation(eventMetadata.Team_Id);
                 await slackTeamRepository.UpdateLeagueId(eventMetadata.Team_Id, theLeagueId);
                 await slackTeamRepository.UpdateChannel(eventMetadata.Team_Id, message.Channel);
-                if (!team.Subscriptions.Any())
+                if (installation.GetChannel(message.Channel)?.Events.Current.Any() != true)
                 {
                     await slackTeamRepository.UpdateSubscriptions(eventMetadata.Team_Id, [EventSubscription.All]);
                 }

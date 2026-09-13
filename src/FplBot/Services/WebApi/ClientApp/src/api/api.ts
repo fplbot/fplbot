@@ -3,7 +3,6 @@ import type {
   Bookmarks,
   ChannelFilter,
   DiscordSlashCommand,
-  EventSubscription,
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
@@ -16,7 +15,6 @@ import type {
   SlashCommandDefinition,
   TeamDetails,
   TeamSummary,
-  UpdateTeamRequest,
 } from "./types";
 
 export class AdminApiError extends Error {
@@ -42,10 +40,11 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
     }
     throw new AdminApiError(`Request to ${input} failed with status ${res.status}`, res.status, detail);
   }
-  if (res.status === 204) {
+  const text = await res.text();
+  if (!text) {
     return undefined as T;
   }
-  return res.json();
+  return JSON.parse(text);
 }
 
 function postJson<T>(url: string, body?: unknown, method: string = "POST"): Promise<T> {
@@ -57,12 +56,6 @@ function postJson<T>(url: string, body?: unknown, method: string = "POST"): Prom
 }
 
 // ---- Admin: auth ----
-
-export const ALL_EVENT_SUBSCRIPTIONS: EventSubscription[] = [
-  "All", "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
-  "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates",
-  "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek",
-];
 
 export const ALL_CHANNEL_FILTERS: ChannelFilter[] = [
   "AllChannels", "AllChannelsDevServer", "OnlyChannelsFollowingALeagueDevServer", "OnlyChannelsFollowingALeague",
@@ -101,12 +94,17 @@ export function uninstallTeam(teamId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/teams/${teamId}/uninstall`);
 }
 
-export function updateTeam(teamId: string, body: UpdateTeamRequest): Promise<{ updated: boolean; warnings: string[] }> {
-  return postJson(`/api/admin/teams/${teamId}`, body, "PUT");
+export function getLegacyTeams(query: string, page: number, pageSize: number): Promise<PagedResult<TeamSummary>> {
+  const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
+  return request(`/api/admin/teams/legacy?${params.toString()}`);
 }
 
-export function publishTeamEvent(teamId: string, subscriptions: EventSubscription[]): Promise<{ published: boolean; message: string }> {
-  return postJson(`/api/admin/teams/${teamId}/publish-event`, { subscriptions });
+export function migrateTeamToV2(teamId: string): Promise<{ migrated: boolean; message: string }> {
+  return postJson(`/api/admin/teams/${teamId}/migrate-to-v2`);
+}
+
+export function publishStandings(teamId: string, channelId: string): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/publish-standings`);
 }
 
 export function broadcastToSlack(message: string): Promise<MessageResponse> {

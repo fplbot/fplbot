@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace FplBot.WebApi.Slack;
+namespace FplBot.Services.WebApi.Slack;
 
 public record DebugInfo(string MajorMinorPatch, string Informational, string Sha);
 public static class MetaService

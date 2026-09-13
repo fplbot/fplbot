@@ -2,7 +2,7 @@ using Fpl.Client.Models;
 using FplBot.Formatting;
 using Slackbot.Net.Models.BlockKit;
 
-namespace FplBot.WebApi.Slack.Helpers.Formatting;
+namespace FplBot.Services.WebApi.Slack.Helpers.Formatting;
 
 public static class SlackFormatter
 {

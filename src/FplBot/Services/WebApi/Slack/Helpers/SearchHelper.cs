@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace FplBot.WebApi.Slack.Helpers;
+namespace FplBot.Services.WebApi.Slack.Helpers;
 
 internal static class SearchHelper
 {

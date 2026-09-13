@@ -1,12 +1,12 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public class FplNextGameweekCommandHandler(
     ISlackWorkSpacePublisher workspacePublisher,
@@ -20,8 +20,8 @@ public class FplNextGameweekCommandHandler(
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
     {
-        var team = await tokenStore.GetTeam(eventMetadata.Team_Id);
-        var slackClient = slackClientService.Build(team.AccessToken);
+        var installation = await tokenStore.GetInstallation(eventMetadata.Team_Id);
+        var slackClient = slackClientService.Build(installation.Token);
         var usersTask = slackClient.UsersList();
         var settings = await globalSettingsClient.GetGlobalSettings();
 

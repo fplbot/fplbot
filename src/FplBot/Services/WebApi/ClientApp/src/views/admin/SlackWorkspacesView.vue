@@ -39,6 +39,7 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 <template>
   <div>
     <h1>Slack workspaces</h1>
+    <p class="lead">{{ totalCount }} workspace(s) with fplbot installed.</p>
 
     <div class="card">
       <div class="field">
@@ -49,29 +50,35 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
       <p v-if="error" class="alert alert-error">{{ error }}</p>
       <div v-if="loading" class="spinner"></div>
 
-      <table v-else class="admin-table">
-        <thead>
-          <tr>
-            <th>Team</th>
-            <th>Team ID</th>
-            <th>Channel</th>
-            <th>League</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="t in teams" :key="t.teamId">
-            <td>{{ t.teamName }}</td>
-            <td>{{ t.teamId }}</td>
-            <td>{{ t.channel || "—" }}</td>
-            <td>{{ t.leagueId || "—" }}</td>
-            <td><router-link :to="`/admin/teams/${t.teamId}`" class="btn small">Details</router-link></td>
-          </tr>
-          <tr v-if="teams.length === 0">
-            <td colspan="5">No workspaces found.</td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="team-list">
+        <div v-for="t in teams" :key="t.teamId" class="team">
+          <div class="team-header">
+            <h3>{{ t.teamName }} <span class="team-id">({{ t.teamId }})</span></h3>
+            <div class="team-actions">
+              <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
+              <router-link :to="`/admin/teams/${t.teamId}`" class="btn small">Details</router-link>
+            </div>
+          </div>
+          <table v-if="t.subscriptions.length > 0" class="admin-table">
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th>League</th>
+                <th>Subscriptions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in t.subscriptions" :key="s.channelId">
+                <td>{{ s.channelId }}</td>
+                <td>{{ s.leagueId || "—" }}</td>
+                <td>{{ s.subscriptions.join(", ") || "—" }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="no-subs">No channel subscriptions.</p>
+        </div>
+        <p v-if="teams.length === 0">No workspaces found.</p>
+      </div>
 
       <div class="pager">
         <button class="btn small" :disabled="page <= 1" @click="page--">&larr; Prev</button>
@@ -81,3 +88,53 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
     </div>
   </div>
 </template>
+
+<style scoped>
+.lead {
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.status.bad {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.team-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.team h3 {
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.team-id {
+  font-weight: normal;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.no-subs {
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+</style>

@@ -7,7 +7,7 @@ using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public class UnknownAppMentionCommandHandler(
     IPublishEndpoint publishEndpoint,
@@ -19,8 +19,8 @@ public class UnknownAppMentionCommandHandler(
     {
         var mentionTextStripped = Regex.Replace(slackEvent.Text, "<@(\\w+)>", "$1");
         await publishEndpoint.Publish(new UnknownAppMentionReceived(eventMetadata.Team_Id, slackEvent.User, mentionTextStripped));
-        var team = await teamRepository.GetTeam(eventMetadata.Team_Id);
-        var slackClient = builder.Build(team.AccessToken);
+        var installation = await teamRepository.GetInstallation(eventMetadata.Team_Id);
+        var slackClient = builder.Build(installation.Token);
         await slackClient.ChatPostMessage(
             new ChatPostMessageRequest
             {

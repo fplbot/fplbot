@@ -1,11 +1,11 @@
 using System.Text;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 internal class FplSubscriptionsCommandHandler(
     ISlackWorkSpacePublisher workspacePublisher,
@@ -26,8 +26,8 @@ internal class FplSubscriptionsCommandHandler(
     {
         try
         {
-            var team = await teamRepo.GetTeam(teamId);
-            var currentSubscriptions = team.Subscriptions;
+            var installation = await teamRepo.GetInstallation(teamId);
+            var currentSubscriptions = installation.GetChannel(appMentioned.Channel)?.Events.Current ?? [];
 
             if (currentSubscriptions.Count() < 1)
             {
@@ -38,7 +38,7 @@ internal class FplSubscriptionsCommandHandler(
 
             sb.Append("This channel will receive notifications for: \n");
 
-            sb.Append($"{Formatter.BulletPoints(team.Subscriptions)}");
+            sb.Append($"{Formatter.BulletPoints(currentSubscriptions)}");
 
             return sb.ToString();
         }

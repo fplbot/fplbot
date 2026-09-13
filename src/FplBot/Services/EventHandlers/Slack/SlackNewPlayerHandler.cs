@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -14,17 +15,17 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
-        var slackTeams = await slackTeamRepo.GetAllTeams();
+        var installations = await slackTeamRepo.GetAllInstallations();
         var filtered = notification.NewPlayers.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
             var formatted = Formatter.FormatNewPlayers(filtered);
 
-            foreach (var slackTeam in slackTeams)
+            foreach (var installation in installations)
             {
-                if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
                 {
-                    await context.Publish(new PublishToSlack(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted));
+                    await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
                 }
             }
         }
@@ -38,13 +39,13 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.Transfers.Count()} new transfers");
-        var slackTeams = await slackTeamRepo.GetAllTeams();
+        var installations = await slackTeamRepo.GetAllInstallations();
         var formatted = Formatter.FormatTransferredPlayers(notification.Transfers);
-        foreach (var slackTeam in slackTeams)
+        foreach (var installation in installations)
         {
-            if (slackTeam.HasRegisteredFor(EventSubscription.NewPlayers))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
             {
-                await context.Publish(new PublishToSlack(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted));
+                await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
             }
         }
     }

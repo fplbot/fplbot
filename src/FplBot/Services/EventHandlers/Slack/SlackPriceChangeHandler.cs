@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -16,13 +17,14 @@ public class SlackPriceChangeHandler(
     public async Task Consume(ConsumeContext<PlayersPriceChanged> context)
     {
         var notification = context.Message;
-        logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
-        var slackTeams = await slackTeamRepo.GetAllTeams();
-        foreach (var slackTeam in slackTeams)
+        logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count} price updates");
+        var installations = await slackTeamRepo.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            if (slackTeam.HasRegisteredFor(EventSubscription.PriceChanges))
+            var subs = installation.GetSubscriptionsTo(FplEvent.PriceChanges);
+            foreach (var sub in subs)
             {
-                await context.Publish(new PublishPriceChangesToSlackWorkspace(slackTeam.TeamId!, notification.PlayersWithPriceChanges.ToList()));
+                await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId:installation.TeamId, ChannelId :sub.ChannelId, notification.PlayersWithPriceChanges.ToList()));
             }
         }
     }
@@ -31,12 +33,11 @@ public class SlackPriceChangeHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Publish price changes to {message.WorkspaceId}");
-        var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant());
-        if (filtered.Any())
+        var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant()).ToList();
+        if (filtered.Count != 0)
         {
-            var slackTeam = await slackTeamRepo.GetTeam(message.WorkspaceId);
             var formatted = Formatter.FormatPriceChanged(filtered);
-            await publisher.PublishToWorkspace(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted);
+            await publisher.PublishToWorkspace(message.WorkspaceId, message.ChannelId, formatted);
         }
         else
         {

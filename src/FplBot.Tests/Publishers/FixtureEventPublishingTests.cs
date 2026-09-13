@@ -202,12 +202,6 @@ public class FixtureEventPublishingTests
 
     private static FixtureState CreateBaseScenario(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient)
     {
-        var slackTeamRepository = A.Fake<ISlackTeamRepository>();
-        A.CallTo(() => slackTeamRepository.GetAllTeams()).Returns(new List<SlackTeam>
-        {
-            TestBuilder.SlackTeam()
-        });
-
         _messageSession = new TestPublishEndpoint();
         return new FixtureState(fixtureClient, settingsClient, new TestScopeFactory(_messageSession), A.Fake<ILogger<FixtureState>>());
     }

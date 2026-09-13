@@ -1,6 +1,7 @@
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Messaging.Contracts.Events.v1;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.E2E;
 
@@ -122,8 +123,9 @@ public class SlackEventHandlerE2ETests(AppFixture fixture, ITestOutputHelper out
             fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
     }
 
-    private Task SeedTeam(string teamId, string channel, params EventSubscription[] subscriptions)
-        => fixture.Store.Insert(new SlackTeam
+    private async Task SeedTeam(string teamId, string channel, params EventSubscription[] subscriptions)
+    {
+        var team = new SlackTeam
         {
             TeamId = teamId,
             TeamName = "Test Team",
@@ -131,5 +133,7 @@ public class SlackEventHandlerE2ETests(AppFixture fixture, ITestOutputHelper out
             FplBotSlackChannel = channel,
             FplbotLeagueId = 123,
             Subscriptions = subscriptions.ToList()
-        });
+        };
+        await fixture.Services.GetRequiredService<ISlackTeamRepository>().Save(SlackTeamRepository.ToDomain(team));
+    }
 }

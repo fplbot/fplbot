@@ -2,4 +2,4 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Messaging.Contracts.Commands.v1;
 
-public record PublishPriceChangesToSlackWorkspace(string WorkspaceId, List<PlayerWithPriceChange> PlayersWithPriceChanges);
+public record PublishPriceChangesToSlackWorkspace(string WorkspaceId, string ChannelId, List<PlayerWithPriceChange> PlayersWithPriceChanges);

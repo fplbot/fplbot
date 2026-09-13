@@ -1,6 +1,6 @@
 ﻿using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 
-namespace FplBot.WebApi.Slack.Helpers;
+namespace FplBot.Services.WebApi.Slack.Helpers;
 
 public static class SlackHandleHelper
 {

@@ -1,10 +1,10 @@
 using FplBot.Data.Slack;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.WebApi.Slack.Helpers;
+namespace FplBot.Services.WebApi.Slack.Helpers;
 
 internal class SlackWorkSpacePublisher(
     ISlackTeamRepository repository,
@@ -14,10 +14,13 @@ internal class SlackWorkSpacePublisher(
 {
     public async Task PublishToAllWorkspaceChannels(string msg)
     {
-        var teams = await repository.GetAllTeams();
-        foreach (var team in teams)
+        var installations = await repository.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            await PublishToWorkspace(team.TeamId ?? "", team.FplBotSlackChannel ?? "", msg);
+            foreach (var channel in installation.ChannelSubscriptions)
+            {
+                await PublishToWorkspace(installation.TeamId, channel.ChannelId, msg);
+            }
         }
     }
 
@@ -37,8 +40,8 @@ internal class SlackWorkSpacePublisher(
 
     public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
     {
-        var team = await repository.GetTeam(teamId);
-        await PublishUsingToken(team.AccessToken ?? "",messages);
+        var installation = await repository.GetInstallation(teamId);
+        await PublishUsingToken(installation.Token ?? "",messages);
     }
 
     private async Task PublishUsingToken(string token, params ChatPostMessageRequest[] messages)

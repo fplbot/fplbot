@@ -7,7 +7,7 @@ using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public class HelpEventHandler(
     IEnumerable<IHandleAppMentions> allHandlers,
@@ -21,24 +21,26 @@ public class HelpEventHandler(
 
     public async Task Handle(EventMetaData eventMetadata, AppMentionEvent @event)
     {
-        var team = await tokenStore.GetTeam(eventMetadata.Team_Id);
-        var slackClient = slackClientService.Build(team.AccessToken);
+        var installation = await tokenStore.GetInstallation(eventMetadata.Team_Id);
+        var channel = installation.GetChannel(@event.Channel);
+        var slackClient = slackClientService.Build(installation.Token);
         var text = $"*HELP:*\n";
-        if (team.HasChannelAndLeagueSetup())
+        if (channel?.FollowedLeagueId is not null)
         {
+            var leagueId = channel!.FollowedLeagueId!.Value;
             try
             {
-                var league = await leagueClient.GetClassicLeague(team.FplbotLeagueId!.Value);
+                var league = await leagueClient.GetClassicLeague((int)leagueId);
                 text += $"Currently following {league?.Properties?.Name} in {ChannelName()}\n";
             }
             catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
-                text += $"Currently following {team.FplbotLeagueId} in {ChannelName()}\n";
+                text += $"Currently following {leagueId} in {ChannelName()}\n";
             }
 
             string ChannelName()
             {
-                return team.FplBotSlackChannel?.StartsWith("#") == true ? team.FplBotSlackChannel : $"<#{team.FplBotSlackChannel}>";
+                return channel.ChannelId.StartsWith("#") ? channel.ChannelId : $"<#{channel.ChannelId}>";
             }
         }
         else
@@ -46,8 +48,8 @@ public class HelpEventHandler(
             text += "Currently not following any leagues\n";
         }
 
-        if(team.Subscriptions.Any())
-            text += $"Active subscriptions:\n{Formatter.BulletPoints(team.Subscriptions)}\n";
+        if(channel is not null && channel.Events.Current.Any())
+            text += $"Active subscriptions:\n{Formatter.BulletPoints(channel.Events.Current)}\n";
 
         await slackClient.ChatPostMessage(@event.Channel, text);
         var handlerHelp = allHandlers.Select(handler => handler.GetHelpDescription())

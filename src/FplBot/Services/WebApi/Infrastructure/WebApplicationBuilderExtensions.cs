@@ -57,11 +57,6 @@ public static class WebApplicationBuilderExtensions
             c.CLIENT_ID = configuration["CLIENT_ID"];
             c.CLIENT_SECRET = configuration["CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=slack";
-            c.OnSuccess = async (teamId, teamName, s) =>
-            {
-                var msg = s.GetRequiredService<IPublishEndpoint>();
-                await msg.Publish(new AppInstalled(teamId, teamName, ChatPlatform.Slack));
-            };
         });
 
         services.AddDiscordBotDistribution(c =>
@@ -185,8 +180,6 @@ public static class WebApplicationBuilderExtensions
                 }
             };
         });
-
-        services.AddMemoryCache();
 
         services.Configure<RouteOptions>(o =>
         {

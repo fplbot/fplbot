@@ -1,4 +1,5 @@
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -18,12 +19,12 @@ public class SlackInjuryUpdateHandler(ISlackTeamRepository slackTeamRepo, ILogge
         if (filtered.Any())
         {
             var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-            var slackTeams = await slackTeamRepo.GetAllTeams();
-            foreach (var slackTeam in slackTeams)
+            var installations = await slackTeamRepo.GetAllInstallations();
+            foreach (var installation in installations)
             {
-                if (slackTeam.HasRegisteredFor(EventSubscription.InjuryUpdates))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.InjuryUpdates))
                 {
-                    await context.Publish(new PublishToSlack(slackTeam.TeamId!, slackTeam.FplBotSlackChannel!, formatted));
+                    await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
                 }
             }
         }

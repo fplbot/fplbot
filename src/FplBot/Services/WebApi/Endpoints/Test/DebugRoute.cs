@@ -1,10 +1,10 @@
+using FplBot.Services.WebApi.Slack;
 using FplBot.WebApi.Endpoints.Test.FixtureFinished;
 using FplBot.WebApi.Endpoints.Test.GameweekEnd;
 using FplBot.WebApi.Endpoints.Test.Gameweekstart;
 using FplBot.WebApi.Endpoints.Test.Goal;
 using FplBot.WebApi.Endpoints.Test.RemovedFixtures;
 using FplBot.WebApi.Endpoints.Test.Transfer;
-using FplBot.WebApi.Slack;
 
 namespace FplBot.WebApi.Endpoints.Test;
 

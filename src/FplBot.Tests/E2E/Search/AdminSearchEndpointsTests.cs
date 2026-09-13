@@ -26,20 +26,20 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
             IndexUri = "unused", Username = "unused", Password = "unused", IndexingCron = "* * * * *",
             EntriesIndex = "unused", LeaguesIndex = "unused", AnalyticsIndex = analyticsIndex
         });
-        return (new SearchAnalyticsService(elastic.Client, options), analyticsIndex);
+        return (new SearchAnalyticsService(elastic.ElasticClient, options), analyticsIndex);
     }
 
     [Fact]
     public async Task GetSearchAnalytics_AggregatesTopQueriesAcrossAllClients()
     {
         var (service, index) = NewAnalyticsService();
-        await elastic.Client.IndexManyAsync([
+        await elastic.ElasticClient.IndexManyAsync([
             Query("messi", "203.0.113.5", "Web"),
             Query("messi", "203.0.113.9", "Web"),
             Query("messi", "U999", "Slack"),
             Query("ronaldo", "203.0.113.9", "Web"),
         ], index, TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 
@@ -53,12 +53,12 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetSearchAnalytics_TopIpAddresses_OnlyCountsWebClientSearches()
     {
         var (service, index) = NewAnalyticsService();
-        await elastic.Client.IndexManyAsync([
+        await elastic.ElasticClient.IndexManyAsync([
             Query("messi", "203.0.113.5", "Web"),
             Query("ronaldo", "203.0.113.5", "Web"),
             Query("messi", "U999", "Slack"), // actor is a Slack user id, not an IP — must be excluded
         ], index, TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 
@@ -71,13 +71,13 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetSearchAnalytics_TopSlackSearchers_OnlyCountsSlackClientSearches_AndIsNotBlendedWithIps()
     {
         var (service, index) = NewAnalyticsService();
-        await elastic.Client.IndexManyAsync([
+        await elastic.ElasticClient.IndexManyAsync([
             Query("messi", "U111", "Slack"),
             Query("ronaldo", "U111", "Slack"),
             Query("messi", "U222", "Slack"),
             Query("messi", "203.0.113.5", "Web"), // actor is an IP, not a Slack user id — must be excluded
         ], index, TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 
@@ -93,11 +93,11 @@ public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
     public async Task GetSearchAnalytics_ExcludesQueriesOutsideTheDayWindow()
     {
         var (service, index) = NewAnalyticsService();
-        await elastic.Client.IndexManyAsync([
+        await elastic.ElasticClient.IndexManyAsync([
             Query("recent", "203.0.113.5", "Web", DateTime.UtcNow.AddDays(-1)),
             Query("ancient", "203.0.113.5", "Web", DateTime.UtcNow.AddDays(-100)),
         ], index, TestContext.Current.CancellationToken);
-        await elastic.Client.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(index, ct: TestContext.Current.CancellationToken);
 
         var result = await AdminSearchEndpoints.GetSearchAnalytics(7, 20, service);
 

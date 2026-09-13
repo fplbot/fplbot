@@ -1,5 +1,6 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -25,13 +26,13 @@ public class SlackNearDeadlineHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var allSlackTeams = await teamRepo.GetAllTeams();
-        foreach (var team in allSlackTeams)
+        var allInstallations = await teamRepo.GetAllInstallations();
+        foreach (var installation in allInstallations)
         {
-            if (team.HasRegisteredFor(EventSubscription.Deadlines))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
                 var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
-                var command = new PublishToSlack(team.TeamId!, team.FplBotSlackChannel!, text);
+                var command = new PublishToSlack(installation.TeamId, channel.ChannelId, text);
                 await context.Publish(command);
             }
         }
@@ -42,12 +43,12 @@ public class SlackNearDeadlineHandler(
         var message = context.Message;
         logger.LogInformation($"Notifying about 24h to (gw{message.GameweekNearingDeadline.Id}) deadline");
 
-        var allSlackTeams = await teamRepo.GetAllTeams();
-        foreach (var team in allSlackTeams)
+        var allInstallations = await teamRepo.GetAllInstallations();
+        foreach (var installation in allInstallations)
         {
-            if (team.HasRegisteredFor(EventSubscription.Deadlines))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
-                var command = new PublishDeadlineNotificationToSlackWorkspace(team.TeamId!, message.GameweekNearingDeadline);
+                var command = new PublishDeadlineNotificationToSlackWorkspace(installation.TeamId, channel.ChannelId, message.GameweekNearingDeadline);
                 await context.Publish(command);
             }
         }
@@ -58,8 +59,9 @@ public class SlackNearDeadlineHandler(
         var message = context.Message;
         string notification = $"⏳ Gameweek {message.Gameweek.Id} deadline in 24 hours!";
 
-        var team = await teamRepo.GetTeam(message.WorkspaceId);
-        if (team.AccessToken is not null)
+        var installation = await teamRepo.GetInstallation(message.WorkspaceId);
+        var channelId = message.ChannelId;
+        if (installation.Token is not null)
         {
             await PublishToTeam();
         }
@@ -71,8 +73,8 @@ public class SlackNearDeadlineHandler(
 
         async Task PublishToTeam()
         {
-            var slackClient = builder.Build(team.AccessToken);
-            var res = await slackClient.ChatPostMessage(team.FplBotSlackChannel, notification);
+            var slackClient = builder.Build(installation.Token);
+            var res = await slackClient.ChatPostMessage(channelId, notification);
             if (res.Ok)
             {
                 await PublishFixtures(slackClient, res.ts);
@@ -94,7 +96,7 @@ public class SlackNearDeadlineHandler(
 
             await slackClient.ChatPostMessage(new ChatPostMessageRequest
             {
-                Channel = team.FplBotSlackChannel,
+                Channel = channelId,
                 thread_ts = ts,
                 Text = fixturesList,
                 unfurl_links = "false"

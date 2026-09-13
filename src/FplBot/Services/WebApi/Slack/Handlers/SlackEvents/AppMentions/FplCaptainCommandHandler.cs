@@ -1,11 +1,11 @@
 ﻿using FplBot.Data.Slack;
 using FplBot.Formatting.Helpers;
-using FplBot.WebApi.Slack.Abstractions;
-using FplBot.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Helpers;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 internal class FplCaptainCommandHandler(
     ICaptainsByGameWeek captainsByGameWeek,
@@ -33,12 +33,13 @@ internal class FplCaptainCommandHandler(
             return new EventHandledResponse("Invalid gameweek");
         }
 
-        var setup = await slackTeamsRepo.GetTeam(eventMetadata.Team_Id);
+        var installation = await slackTeamsRepo.GetInstallation(eventMetadata.Team_Id);
+        var leagueId = installation.GetChannel(incomingMessage.Channel)?.FollowedLeagueId?.Value;
 
         string outgoingMessage;
-        if (setup.FplbotLeagueId.HasValue)
+        if (leagueId.HasValue)
         {
-            var captainPicks = await captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, setup.FplbotLeagueId.Value);
+            var captainPicks = await captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, (int)leagueId.Value);
             outgoingMessage = isChartRequest
                 ? captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, captainPicks)
                 : captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, captainPicks);
