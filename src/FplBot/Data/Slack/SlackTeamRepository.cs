@@ -30,19 +30,6 @@ public class SlackTeamRepository : ISlackTeamRepository
         _logger = logger;
     }
 
-    private record SlackTeamAccount(string TeamId, string TeamName, string? AccessToken, bool? PendingRemoval);
-
-    private async Task<SlackTeamAccount> GetAccount(string teamId)
-    {
-        var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField]);
-
-        return new SlackTeamAccount(
-            teamId,
-            fetched[1]!,
-            fetched[0],
-            fetched[2].HasValue && (bool)fetched[2]);
-    }
-
     public async Task<SlackInstallation> GetInstallation(string teamId)
     {
         if (!await _db.KeyExistsAsync(FromTeamIdToTeamKey(teamId)))
@@ -50,14 +37,15 @@ public class SlackTeamRepository : ISlackTeamRepository
             throw new KeyNotFoundException($"No Slack installation found for team id '{teamId}'");
         }
 
-        var account = await GetAccount(teamId);
-        return await LoadInstallation(account);
+        return await LoadInstallation(teamId);
     }
 
-    private async Task<SlackInstallation> LoadInstallation(SlackTeamAccount account)
+    private async Task<SlackInstallation> LoadInstallation(string teamId)
     {
-        var channels = await GetChannelSubscriptions(account.TeamId);
-        return SlackInstallation.Load(account.TeamId, account.TeamName, account.AccessToken ?? string.Empty, channels, account.PendingRemoval ?? false);
+        var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField]);
+        var pendingRemoval = fetched[2].HasValue && (bool)fetched[2];
+        var channels = await GetChannelSubscriptions(teamId);
+        return SlackInstallation.Load(teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
     }
 
     private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
@@ -81,30 +69,20 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task Save(SlackInstallation installation)
     {
-        var account = new SlackTeamAccount(installation.TeamId, installation.TeamName, installation.Token, installation.PendingRemoval);
-        await SaveAccount(account);
+        var hashEntries = new HashEntry[]
+        {
+            new(_accessTokenField, installation.Token),
+            new(_teamNameField, installation.TeamName),
+            new(_teamIdField, installation.TeamId),
+            new(_pendingRemovalField, installation.PendingRemoval)
+        };
+
+        await _db.HashSetAsync(FromTeamIdToTeamKey(installation.TeamId), hashEntries);
 
         foreach (var channel in installation.ChannelSubscriptions)
         {
             await SaveChannelSubscription(installation.TeamId, channel);
         }
-    }
-
-    private async Task SaveAccount(SlackTeamAccount account)
-    {
-        var hashEntries = new List<HashEntry>
-        {
-            new HashEntry(_accessTokenField, account.AccessToken),
-            new HashEntry(_teamNameField, account.TeamName),
-            new HashEntry(_teamIdField, account.TeamId)
-        };
-
-        if (account.PendingRemoval.HasValue)
-        {
-            hashEntries.Add(new HashEntry(_pendingRemovalField, account.PendingRemoval.Value));
-        }
-
-        await _db.HashSetAsync(FromTeamIdToTeamKey(account.TeamId), hashEntries.ToArray());
     }
 
     public async Task<SlackInstallation?> FindInstallationByTeamId(string teamId)
@@ -119,8 +97,7 @@ public class SlackTeamRepository : ISlackTeamRepository
                 continue;
             }
 
-            var account = await GetAccount(storedTeamId);
-            return await LoadInstallation(account);
+            return await LoadInstallation(storedTeamId);
         }
 
         return null;
@@ -173,8 +150,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         foreach (var key in allTeamKeys)
         {
             var teamId = FromKeyToTeamId(key.ToString());
-            var account = await GetAccount(teamId);
-            installations.Add(await LoadInstallation(account));
+            installations.Add(await LoadInstallation(teamId));
         }
 
         return installations;
