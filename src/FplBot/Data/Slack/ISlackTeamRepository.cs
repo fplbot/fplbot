@@ -9,7 +9,6 @@ public interface ISlackTeamRepository
     Task<SlackInstallation?> FindInstallationByTeamId(string teamId);
 
     Task<SlackTeam> GetTeam(string teamId);
-
     Task<SlackTeam?> FindByTeamId(string teamId);
     Task Save(SlackTeam team);
 
