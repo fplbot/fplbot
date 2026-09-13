@@ -1,10 +1,10 @@
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Helpers;
 using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public class DebugHandler(IPublishEndpoint publishEndpoint) : IHandleAppMentions
 {

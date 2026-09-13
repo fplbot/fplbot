@@ -1,10 +1,10 @@
 using FplBot.Data.Slack;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.WebApi.Slack.Helpers;
+namespace FplBot.Services.WebApi.Slack.Helpers;
 
 internal class SlackWorkSpacePublisher(
     ISlackTeamRepository repository,

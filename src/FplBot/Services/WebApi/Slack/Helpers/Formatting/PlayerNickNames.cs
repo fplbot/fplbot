@@ -1,4 +1,4 @@
-﻿namespace FplBot.WebApi.Slack.Helpers.Formatting;
+﻿namespace FplBot.Services.WebApi.Slack.Helpers.Formatting;
 
 internal static class PlayerNickNames
 {

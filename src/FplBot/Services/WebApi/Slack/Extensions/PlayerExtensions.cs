@@ -1,6 +1,6 @@
 using Fpl.Client.Models;
 
-namespace FplBot.WebApi.Slack.Extensions;
+namespace FplBot.Services.WebApi.Slack.Extensions;
 
 public static class PlayerExtensions
 {

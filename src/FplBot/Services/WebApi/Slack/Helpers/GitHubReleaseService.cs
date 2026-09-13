@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-namespace FplBot.WebApi.Slack.Helpers;
+namespace FplBot.Services.WebApi.Slack.Helpers;
 
 public static class GitHubReleaseService
 {

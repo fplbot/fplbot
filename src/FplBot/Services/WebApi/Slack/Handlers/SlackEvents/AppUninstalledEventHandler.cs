@@ -2,9 +2,9 @@ using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents;
 
-public class AppUninstaller(IPublishEndpoint publisher) : IUninstall
+public class AppUninstalledEventHandler(IPublishEndpoint publisher) : IUninstall
 {
     public async Task OnUninstalled(string teamId, string teamName)
     {

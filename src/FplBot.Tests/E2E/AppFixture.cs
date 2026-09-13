@@ -12,7 +12,6 @@ using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.WebApi;
 using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -35,6 +34,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using FplBot.Services.WebApi.Slack.Handlers.Reactors;
 using Testcontainers.Redis;
 
 namespace FplBot.Tests.E2E;
@@ -53,7 +53,7 @@ public class AppFixture : IAsyncLifetime
     private HttpClient _client = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
-    public TokenStore Store { get; private set; } = null!;
+    public TokenManager Manager { get; private set; } = null!;
 
     public virtual async ValueTask InitializeAsync()
     {
@@ -64,7 +64,8 @@ public class AppFixture : IAsyncLifetime
         var redisUrl = $"redis://user:pass@{redisConnStr}";
         var redisOpts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = redisUrl });
 
-        Store = new TokenStore(_multiplexer, redisOpts, NullLogger<TokenStore>.Instance);
+        var slackTeamRepository = new SlackTeamRepository(_multiplexer, redisOpts, NullLogger<SlackTeamRepository>.Instance);
+        Manager = new TokenManager(slackTeamRepository);
 
         var fakeSlackClient = BuildCapturingSlackClient();
         var fakeSlackClientBuilder = A.Fake<ISlackClientBuilder>();
@@ -193,7 +194,7 @@ public class AppFixture : IAsyncLifetime
     {
         var team = SlackTeamFaker.Generate();
         configure?.Invoke(team);
-        await Store.Insert(team);
+        await Manager.Insert(team);
         return team;
     }
 

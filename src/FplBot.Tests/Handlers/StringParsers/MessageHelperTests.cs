@@ -1,4 +1,4 @@
-using FplBot.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Helpers;
 
 namespace FplBot.Tests.Handlers.StringParsers;
 

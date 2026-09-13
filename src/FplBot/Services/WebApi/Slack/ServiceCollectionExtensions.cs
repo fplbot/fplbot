@@ -2,9 +2,11 @@ using Fpl.Search;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
-using FplBot.WebApi.Slack.Abstractions;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
-using FplBot.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Handlers.Reactors;
+using FplBot.Services.WebApi.Slack.Handlers.SlackEvents;
+using FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
+using FplBot.Services.WebApi.Slack.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
@@ -30,8 +32,8 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
-        services.AddScoped<IUninstall, AppUninstaller>();
-        services.AddSlackBotEvents<TokenStore>()
+        services.AddScoped<IUninstall, AppUninstalledEventHandler>();
+        services.AddSlackBotEvents<TokenManager>()
             .AddShortcut<HelpEventHandler>()
             .AddAppMentionHandler<FplPlayerCommandHandler>()
             .AddAppMentionHandler<FplStandingsCommandHandler>()
@@ -46,8 +48,6 @@ public static class ServiceCollectionFplBotSlackWebExtensions
             .AddAppMentionHandler<DebugHandler>()
             .AddAppMentionHandler<FplSearchHandler>()
             .AddMemberJoinedChannelHandler<FplBotJoinedChannelHandler>()
-            .AddInteractiveBlockActionsHandler<InteractiveBlocksActionHandler>()
-            .AddAppHomeOpenedHandler<AppHomeOpenedEventHandler>()
             .AddNoOpAppMentionHandler<UnknownAppMentionCommandHandler>();
 
         return services;

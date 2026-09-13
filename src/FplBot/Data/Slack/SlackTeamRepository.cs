@@ -15,6 +15,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly string _channelField = "fplchannel";
     private readonly string _leagueField = "fplleagueId";
     private readonly string _teamNameField = "teamName";
+    private readonly string _teamIdField = "teamId";
     private readonly string _subscriptionsField = "subscriptions";
 
     public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
@@ -70,6 +71,51 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
 
         return subs.ToList<EventSubscription>();
+    }
+
+    public async Task<SlackTeam?> FindByTeamId(string teamId)
+    {
+        var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
+
+        foreach (var key in allTeamKeys)
+        {
+            var storedTeamId = FromKeyToTeamId(key.ToString());
+            if (string.Compare(storedTeamId, teamId, StringComparison.InvariantCultureIgnoreCase) != 0)
+            {
+                continue;
+            }
+
+            return await GetTeam(storedTeamId);
+        }
+
+        return null;
+    }
+
+    public async Task Save(SlackTeam team)
+    {
+        var hashEntries = new List<HashEntry>
+        {
+            new HashEntry(_accessTokenField, team.AccessToken),
+            new HashEntry(_teamNameField, team.TeamName),
+            new HashEntry(_teamIdField, team.TeamId)
+        };
+
+        if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
+        {
+            hashEntries.Add(new HashEntry(_channelField, team.FplBotSlackChannel));
+        }
+
+        if (team.FplbotLeagueId > 0)
+        {
+            hashEntries.Add(new HashEntry(_leagueField, team.FplbotLeagueId));
+        }
+
+        if (team.Subscriptions != null)
+        {
+            hashEntries.Add(new HashEntry(_subscriptionsField, string.Join(" ", team.Subscriptions)));
+        }
+
+        await _db.HashSetAsync(FromTeamIdToTeamKey(team.TeamId ?? string.Empty), hashEntries.ToArray());
     }
 
     public async Task UpdateLeagueId(string teamId, long newLeagueId)

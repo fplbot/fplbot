@@ -1,6 +1,6 @@
 ﻿using Fpl.Client.Abstractions;
 
-namespace FplBot.WebApi.Slack.Helpers;
+namespace FplBot.Services.WebApi.Slack.Helpers;
 
 internal class GameweekHelper(IGlobalSettingsClient gameweekClient) : IGameweekHelper
 {

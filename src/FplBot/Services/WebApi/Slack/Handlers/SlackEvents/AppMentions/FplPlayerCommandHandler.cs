@@ -1,14 +1,14 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using FplBot.WebApi.Slack.Abstractions;
-using FplBot.WebApi.Slack.Extensions;
-using FplBot.WebApi.Slack.Helpers;
-using FplBot.WebApi.Slack.Helpers.Formatting;
+using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Extensions;
+using FplBot.Services.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Helpers.Formatting;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 internal class FplPlayerCommandHandler(
     ISlackWorkSpacePublisher workSpacePublisher,

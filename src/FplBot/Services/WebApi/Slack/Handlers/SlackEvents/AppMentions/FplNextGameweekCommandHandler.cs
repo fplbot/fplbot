@@ -1,12 +1,12 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 public class FplNextGameweekCommandHandler(
     ISlackWorkSpacePublisher workspacePublisher,

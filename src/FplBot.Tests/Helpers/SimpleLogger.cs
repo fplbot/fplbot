@@ -2,13 +2,12 @@ using Fpl.Search.Data.Repositories;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Discord.Data;
-using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests.Helpers;
 
 public class SimpleLogger(ITestOutputHelper helper) : ILogger<SlackTeamRepository>,
-    ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<DiscordGuildStore>, ILogger<TokenStore>,
+    ILogger<LeagueIndexRedisBookmarkProvider>, ILogger<DiscordGuildStore>,
     ILogger<DiscordGuildRepository>
 {
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull

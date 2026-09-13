@@ -123,7 +123,7 @@ public class SlackEventHandlerE2ETests(AppFixture fixture, ITestOutputHelper out
     }
 
     private Task SeedTeam(string teamId, string channel, params EventSubscription[] subscriptions)
-        => fixture.Store.Insert(new SlackTeam
+        => fixture.Manager.Insert(new SlackTeam
         {
             TeamId = teamId,
             TeamName = "Test Team",

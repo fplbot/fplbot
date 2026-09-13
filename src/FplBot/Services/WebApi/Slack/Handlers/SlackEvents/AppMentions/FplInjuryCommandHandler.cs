@@ -1,11 +1,11 @@
 ﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Formatting;
-using FplBot.WebApi.Slack.Abstractions;
+using FplBot.Services.WebApi.Slack.Abstractions;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
 internal class FplInjuryCommandHandler(
     ISlackWorkSpacePublisher workspacePublisher,
