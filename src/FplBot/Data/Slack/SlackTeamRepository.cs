@@ -17,6 +17,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly string _teamNameField = "teamName";
     private readonly string _teamIdField = "teamId";
     private readonly string _subscriptionsField = "subscriptions";
+    private readonly string _pendingRemovalField = "pendingRemoval";
 
     public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
     {
@@ -28,7 +29,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task<SlackTeam> GetTeam(string teamId)
     {
-        var fetchedTeamData = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField
+        var fetchedTeamData = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField, _pendingRemovalField
         ]);
 
         var team = new SlackTeam
@@ -51,6 +52,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
 
         team.Subscriptions = subs;
+        team.PendingRemoval = fetchedTeamData[5].HasValue && (bool)fetchedTeamData[5];
 
         return team;
     }
@@ -114,6 +116,8 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             hashEntries.Add(new HashEntry(_subscriptionsField, string.Join(" ", team.Subscriptions)));
         }
+
+        hashEntries.Add(new HashEntry(_pendingRemovalField, team.PendingRemoval));
 
         await _db.HashSetAsync(FromTeamIdToTeamKey(team.TeamId ?? string.Empty), hashEntries.ToArray());
     }
@@ -182,7 +186,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             var teamId = FromKeyToTeamId(key.ToString());
 
-            var fetchedTeamData = await _db.HashGetAsync(key, [_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField
+            var fetchedTeamData = await _db.HashGetAsync(key, [_accessTokenField, _channelField, _leagueField, _teamNameField, _subscriptionsField, _pendingRemovalField
             ]);
 
             var slackTeam = new SlackTeam
@@ -205,6 +209,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             var subs = GetSubscriptions(teamId, fetchedTeamData[4]);
 
             slackTeam.Subscriptions = subs;
+            slackTeam.PendingRemoval = fetchedTeamData[5].HasValue && (bool)fetchedTeamData[5];
             teams.Add(slackTeam);
         }
 

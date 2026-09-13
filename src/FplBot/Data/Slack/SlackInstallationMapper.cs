@@ -15,7 +15,7 @@ public static class SlackInstallationMapper
             channels.Add(SlackChannelSubscription.FromStorage(team.FplBotSlackChannel, leagueId, events));
         }
 
-        return SlackInstallation.FromStorage(team.TeamId!, team.AccessToken ?? string.Empty, channels);
+        return SlackInstallation.FromStorage(team.TeamId!, team.AccessToken ?? string.Empty, channels, team.PendingRemoval);
     }
 
     public static SlackTeam ToStorage(SlackInstallation installation, string? teamName)
@@ -31,7 +31,8 @@ public static class SlackInstallationMapper
             FplbotLeagueId = channel?.FollowedLeagueId is { } id ? (int)id.Value : null,
             Subscriptions = channel is null
                 ? new List<EventSubscription>()
-                : channel.Events.Current.Select(ToStorageEvent).ToList()
+                : channel.Events.Current.Select(ToStorageEvent).ToList(),
+            PendingRemoval = installation.PendingRemoval
         };
     }
 

@@ -54,6 +54,7 @@ export interface TeamSummary {
   channel: string | null;
   leagueId: number | null;
   subscriptions: EventSubscription[];
+  pendingRemoval: boolean;
 }
 
 export interface TeamDetails {
@@ -64,6 +65,7 @@ export interface TeamDetails {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
+  pendingRemoval: boolean;
 }
 
 export interface UpdateTeamRequest {

@@ -6,14 +6,11 @@ using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
-using Slackbot.Net.SlackClients.Http.Exceptions;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record TeamSummaryDto(string TeamId, string? TeamName, string? Channel, int? LeagueId, IEnumerable<EventSubscription> Subscriptions);
+public record TeamSummaryDto(string TeamId, string? TeamName, string? Channel, int? LeagueId, IEnumerable<EventSubscription> Subscriptions, bool PendingRemoval);
 
 public record UpdateTeamRequest(int LeagueId, string Channel, EventSubscription[] Subscriptions);
 
@@ -78,7 +75,7 @@ public static class AdminSlackEndpoints
     }
 
     private static TeamSummaryDto ToDto(SlackTeam t) =>
-        new(t.TeamId ?? "", t.TeamName, t.FplBotSlackChannel, t.FplbotLeagueId, t.Subscriptions);
+        new(t.TeamId ?? "", t.TeamName, t.FplBotSlackChannel, t.FplbotLeagueId, t.Subscriptions, t.PendingRemoval);
 
     private static async Task<IResult> GetTeam(
         string teamId,
@@ -117,37 +114,24 @@ public static class AdminSlackEndpoints
             leagueId = team.FplbotLeagueId,
             leagueName,
             subscriptions = team.Subscriptions,
-            channelStatus
+            channelStatus,
+            pendingRemoval = team.PendingRemoval
         });
     }
 
     private static async Task<IResult> Uninstall(
         string teamId,
-        ISlackTeamRepository teamRepo,
         AdminUninstallSlackWorkspace adminUninstallSlackWorkspace,
-        ISlackClientBuilder slackClientBuilder,
-        IOptions<OAuthOptions> slackAppOptions,
         ILogger<Program> logger)
     {
         var teamIdToUpper = teamId.ToUpper();
-        logger.LogInformation("Deleting {TeamId}", teamIdToUpper);
+        logger.LogInformation("Marking {TeamId} for removal", teamIdToUpper);
 
-        var team = await teamRepo.GetTeam(teamIdToUpper);
-        if (team == null) return TypedResults.NotFound();
+        var result = await adminUninstallSlackWorkspace.Execute(teamIdToUpper);
 
-        var slackClient = slackClientBuilder.Build(token: team.AccessToken);
-        try
-        {
-            var res = await slackClient.AppsUninstall(slackAppOptions.Value.CLIENT_ID, slackAppOptions.Value.CLIENT_SECRET);
-            return res.Ok
-                ? TypedResults.Ok(new { message = "Uninstall queued, and will be handled at some point" })
-                : TypedResults.Ok(new { message = $"Uninstall failed '{res.Error}'" });
-        }
-        catch (WellKnownSlackApiException e) when (e.Message is "account_inactive" or "not_authed")
-        {
-            await adminUninstallSlackWorkspace.Execute(teamIdToUpper);
-            return TypedResults.Ok(new { message = "Token no longer valid. Team deleted." });
-        }
+        return result is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(new { message = "Workspace marked for removal." });
     }
 
     private static async Task<IResult> UpdateTeam(

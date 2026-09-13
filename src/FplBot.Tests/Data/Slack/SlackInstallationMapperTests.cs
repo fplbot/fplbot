@@ -113,4 +113,26 @@ public class SlackInstallationMapperTests
         Assert.Equal(team.FplbotLeagueId, roundTripped.FplbotLeagueId);
         Assert.Equal(team.Subscriptions.OrderBy(e => e), roundTripped.Subscriptions.OrderBy(e => e));
     }
+
+    [Fact]
+    public void ToDomain_PendingRemovalSet_ProducesInactiveInstallation()
+    {
+        var team = new SlackTeam { TeamId = "T1", AccessToken = "token1", PendingRemoval = true };
+
+        var installation = SlackInstallationMapper.ToDomain(team);
+
+        Assert.True(installation.PendingRemoval);
+        Assert.False(installation.IsActive);
+    }
+
+    [Fact]
+    public void ToStorage_MarkedForRemoval_ProducesTeamWithPendingRemovalSet()
+    {
+        var installation = SlackInstallation.Install("T1", "token1");
+        installation.MarkForRemoval();
+
+        var team = SlackInstallationMapper.ToStorage(installation, "Team One");
+
+        Assert.True(team.PendingRemoval);
+    }
 }

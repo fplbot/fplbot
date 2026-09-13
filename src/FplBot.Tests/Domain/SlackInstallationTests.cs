@@ -31,6 +31,26 @@ public class SlackInstallationTests
     }
 
     [Fact]
+    public void MarkForRemoval_IsNoLongerActive()
+    {
+        var installation = SlackInstallation.Install("T1", "token");
+        installation.MarkForRemoval();
+        Assert.False(installation.IsActive);
+    }
+
+    [Fact]
+    public void MarkForRemoval_LeavesTokenAndSubsUntouched()
+    {
+        var installation = SlackInstallation.Install("T1", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+        installation.MarkForRemoval();
+
+        Assert.Equal("token", installation.Token);
+        var channel = Assert.Single(installation.ChannelSubscriptions);
+        Assert.True(channel.IsSubscribedTo(FplEvent.Standings));
+    }
+
+    [Fact]
     public void Follow_OnNewChannel_CreatesAChannelSubscription()
     {
         var installation = SlackInstallation.Install("T1", "token");

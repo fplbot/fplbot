@@ -4,11 +4,12 @@ public class SlackInstallation
 {
     public string TeamId { get; }
     public string? Token { get; private set; }
+    public bool PendingRemoval { get; private set; }
 
     private readonly List<SlackChannelSubscription> _channelSubscriptions = new();
     public IReadOnlyCollection<SlackChannelSubscription> ChannelSubscriptions => _channelSubscriptions;
 
-    public bool IsActive => Token is not null;
+    public bool IsActive => Token is not null && !PendingRemoval;
 
     private SlackInstallation(string teamId, string token)
     {
@@ -18,9 +19,9 @@ public class SlackInstallation
 
     public static SlackInstallation Install(string teamId, string token) => new(teamId, token);
 
-    public static SlackInstallation FromStorage(string teamId, string token, IEnumerable<SlackChannelSubscription> channelSubscriptions)
+    public static SlackInstallation FromStorage(string teamId, string token, IEnumerable<SlackChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
     {
-        var installation = new SlackInstallation(teamId, token);
+        var installation = new SlackInstallation(teamId, token) { PendingRemoval = pendingRemoval };
         installation._channelSubscriptions.AddRange(channelSubscriptions);
         return installation;
     }
@@ -29,6 +30,11 @@ public class SlackInstallation
     {
         Token = null;
         _channelSubscriptions.Clear();
+    }
+
+    public void MarkForRemoval()
+    {
+        PendingRemoval = true;
     }
 
     public void Follow(string channelId, ClassicLeagueId leagueId)

@@ -125,6 +125,10 @@ async function submitUninstall() {
           </dd>
           <dt>Subscriptions</dt>
           <dd>{{ team.subscriptions.join(", ") || "none" }}</dd>
+          <template v-if="team.pendingRemoval">
+            <dt>Status</dt>
+            <dd><span class="status bad">Pending removal</span></dd>
+          </template>
         </dl>
       </div>
 
@@ -179,8 +183,8 @@ async function submitUninstall() {
         <p v-if="uninstallFeedback" :class="['alert', uninstallFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ uninstallFeedback.text }}
         </p>
-        <button class="btn danger" :disabled="uninstalling" @click="submitUninstall">
-          {{ uninstalling ? "Uninstalling..." : "Uninstall from Slack" }}
+        <button class="btn danger" :disabled="uninstalling || team.pendingRemoval" @click="submitUninstall">
+          {{ team.pendingRemoval ? "Removal pending..." : uninstalling ? "Uninstalling..." : "Uninstall from Slack" }}
         </button>
       </div>
     </template>

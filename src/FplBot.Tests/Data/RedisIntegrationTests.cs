@@ -152,6 +152,16 @@ public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PendingRemoval_RoundTripsThroughRedis()
+    {
+        await Repo.Save(new SlackTeam { TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", PendingRemoval = true });
+
+        var team = await Repo.GetTeam("teamId1");
+
+        Assert.True(team.PendingRemoval);
+    }
+
+    [Fact]
     public async Task Insert_Works()
     {
         await GuildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, [EventSubscription.All

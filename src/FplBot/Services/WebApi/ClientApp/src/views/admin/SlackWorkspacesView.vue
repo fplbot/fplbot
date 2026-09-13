@@ -56,6 +56,7 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
             <th>Team ID</th>
             <th>Channel</th>
             <th>League</th>
+            <th>Status</th>
             <th></th>
           </tr>
         </thead>
@@ -65,10 +66,11 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
             <td>{{ t.teamId }}</td>
             <td>{{ t.channel || "—" }}</td>
             <td>{{ t.leagueId || "—" }}</td>
+            <td><span v-if="t.pendingRemoval" class="status bad">Pending removal</span></td>
             <td><router-link :to="`/admin/teams/${t.teamId}`" class="btn small">Details</router-link></td>
           </tr>
           <tr v-if="teams.length === 0">
-            <td colspan="5">No workspaces found.</td>
+            <td colspan="6">No workspaces found.</td>
           </tr>
         </tbody>
       </table>
@@ -81,3 +83,10 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
     </div>
   </div>
 </template>
+
+<style scoped>
+.status.bad {
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+</style>

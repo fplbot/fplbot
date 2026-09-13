@@ -9,18 +9,15 @@ namespace FplBot.Services.WebApi.Slack.Handlers.Reactors;
 
 public class WorkspaceInstallationHandler(
     ISlackTeamRepository repository,
-    IServiceScopeFactory scopeFactory,
+    IPublishEndpoint publisher,
     UninstallSlackWorkspace uninstallSlackWorkspace) : IWorkspaceInstallationHandler
 {
     public async Task Install(Workspace workspace)
     {
         var installation = SlackInstallation.Install(workspace.TeamId, workspace.Token);
         await repository.Save(SlackInstallationMapper.ToStorage(installation, workspace.TeamName));
-
-        using var scope = scopeFactory.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
-            .Publish(new AppInstalled(workspace.TeamId, workspace.TeamName, ChatPlatform.Slack));
+        await publisher.Publish(new AppInstalled(workspace.TeamId, workspace.TeamName, ChatPlatform.Slack));
     }
 
-    public async Task<Workspace> Uninstall(string teamId) => await uninstallSlackWorkspace.Execute(teamId);
+    public async Task<Workspace?> Uninstall(string teamId) => await uninstallSlackWorkspace.Execute(teamId);
 }

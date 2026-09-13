@@ -8,6 +8,7 @@ public class SlackTeam
     public string? AccessToken { get; set; }
     public string? FplBotSlackChannel { get; set; }
     public int? FplbotLeagueId { get; set; }
+    public bool PendingRemoval { get; set; }
 
     public bool HasChannelAndLeagueSetup()
     {
