@@ -15,13 +15,9 @@ public class WorkspaceInstallationHandler(
     public async Task Install(Workspace workspace)
     {
         var installation = SlackInstallation.Install(workspace.TeamId, workspace.TeamName, workspace.Token);
-        await repository.Save(SlackInstallationMapper.ToStorage(installation));
+        await repository.Save(installation);
         await publisher.Publish(new AppInstalled(workspace.TeamId, workspace.TeamName, ChatPlatform.Slack));
     }
 
-    public async Task<Workspace?> Uninstall(string teamId)
-    {
-        await workspaceOwnerUninstallSlackWorkspace.Execute(teamId);
-        return null;
-    }
+    public Task Uninstall(string teamId) => workspaceOwnerUninstallSlackWorkspace.Execute(teamId);
 }

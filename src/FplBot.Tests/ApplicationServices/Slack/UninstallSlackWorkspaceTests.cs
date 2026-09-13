@@ -1,51 +1,35 @@
-using FakeItEasy;
 using FplBot.ApplicationServices.Slack;
-using FplBot.Data;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.ApplicationServices.Slack;
 
-public class WorkspaceOwnerUninstallSlackWorkspaceTests
+[Collection("App")]
+public class WorkspaceOwnerUninstallSlackWorkspaceTests(AppFixture fixture) : IAsyncLifetime
 {
-    private readonly ISlackTeamRepository _repository = A.Fake<ISlackTeamRepository>();
+    private ISlackTeamRepository Repo => fixture.Services.GetRequiredService<ISlackTeamRepository>();
     private readonly TestPublishEndpoint _publishEndpoint = new();
-    private readonly WorkspaceOwnerUninstallSlackWorkspace _sut;
 
-    public WorkspaceOwnerUninstallSlackWorkspaceTests()
-    {
-        _sut = new WorkspaceOwnerUninstallSlackWorkspace(_repository, _publishEndpoint);
-    }
+    public async ValueTask InitializeAsync() => await fixture.FlushRedisAsync();
 
-    [Fact]
-    public async Task Execute_UnknownTeam_DoesNotDelete()
-    {
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns((SlackTeam?)null);
-
-        await _sut.Execute("T1");
-
-        A.CallTo(() => _repository.DeleteByTeamId(A<string>._)).MustNotHaveHappened();
-        Assert.Empty(_publishEndpoint.PublishedMessages);
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task Execute_KnownTeam_DeletesAndPublishesAppUninstalled()
     {
-        var team = new SlackTeam
-        {
-            TeamId = "T1",
-            TeamName = "Team One",
-            AccessToken = "token1",
-            FplBotSlackChannel = "#fpl",
-            FplbotLeagueId = 42,
-            Subscriptions = new List<EventSubscription> { EventSubscription.Standings }
-        };
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
+        var installation = SlackInstallation.Install("T1", "Team One", "token1");
+        installation.Follow("#fpl", new ClassicLeagueId(42));
+        installation.Subscribe("#fpl", [FplEvent.Standings]);
+        await Repo.Save(installation);
 
-        await _sut.Execute("T1");
+        var sut = new WorkspaceOwnerUninstallSlackWorkspace(Repo, _publishEndpoint);
+        await sut.Execute("T1");
 
-        A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
+        Assert.Null(await Repo.FindInstallationByTeamId("T1"));
 
         var published = Assert.Single(_publishEndpoint.PublishedMessages.Containing<AppUninstalled>());
         var appUninstalled = Assert.IsType<AppUninstalled>(published.Message);

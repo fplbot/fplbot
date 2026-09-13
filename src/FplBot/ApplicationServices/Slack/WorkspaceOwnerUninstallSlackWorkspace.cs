@@ -8,15 +8,9 @@ public class WorkspaceOwnerUninstallSlackWorkspace(ISlackTeamRepository reposito
 {
     public async Task Execute(string teamId)
     {
-        var team = await repository.FindByTeamId(teamId);
-        if (team is null)
-        {
-            return;
-        }
-
-        var installation = SlackInstallationMapper.ToDomain(team);
+        var installation = await repository.GetInstallation(teamId);
         installation.Uninstall();
-        await repository.DeleteByTeamId(team.TeamId!);
-        await publisher.Publish(new AppUninstalled(team.TeamId!.ToUpper(), team.TeamName!));
+        await repository.DeleteByTeamId(installation.TeamId);
+        await publisher.Publish(new AppUninstalled(installation.TeamId, installation.TeamName));
     }
 }

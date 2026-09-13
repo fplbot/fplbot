@@ -61,8 +61,25 @@ public class SlackTeamRepository : ISlackTeamRepository
     public async Task<SlackInstallation> GetInstallation(string teamId)
     {
         var team = await GetTeam(teamId);
-        return SlackInstallationMapper.ToDomain(team);
+        return ToDomain(team);
     }
+
+    public static SlackInstallation ToDomain(SlackTeam team)
+    {
+        var channels = new List<SlackChannelSubscription>();
+
+        if (!string.IsNullOrEmpty(team.FplBotSlackChannel))
+        {
+            var leagueId = team.FplbotLeagueId is { } id ? new ClassicLeagueId(id) : null;
+            var events = team.Subscriptions.Select(ToDomainEvent);
+            channels.Add(SlackChannelSubscription.FromStorage(team.FplBotSlackChannel, leagueId, events));
+        }
+
+        return SlackInstallation.Load(team.TeamId!, team.TeamName, team.AccessToken ?? string.Empty, channels, team.PendingRemoval ?? false);
+    }
+
+    private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
+
 
     private List<EventSubscription> GetSubscriptions(string teamId, RedisValue fetchedTeamData)
     {
@@ -130,6 +147,17 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
 
         await _db.HashSetAsync(FromTeamIdToTeamKey(team.TeamId ?? string.Empty), hashEntries.ToArray());
+    }
+
+    public async Task Save(SlackInstallation installation)
+    {
+        await Save(SlackInstallationMapper.ToStorage(installation));
+    }
+
+    public async Task<SlackInstallation?> FindInstallationByTeamId(string teamId)
+    {
+        var team = await FindByTeamId(teamId);
+        return team is null ? null : ToDomain(team);
     }
 
     public async Task UpdateLeagueId(string teamId, long newLeagueId)

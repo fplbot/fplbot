@@ -1,34 +1,34 @@
-using FakeItEasy;
 using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.ApplicationServices.Slack;
 
-public class AdminUninstallSlackWorkspaceTests
+[Collection("App")]
+public class AdminUninstallSlackWorkspaceTests(AppFixture fixture) : IAsyncLifetime
 {
-    private readonly ISlackTeamRepository _repository = A.Fake<ISlackTeamRepository>();
+    private ISlackTeamRepository Repo => fixture.Services.GetRequiredService<ISlackTeamRepository>();
     private readonly TestPublishEndpoint _publishEndpoint = new();
-    private readonly AdminUninstallSlackWorkspace _sut;
 
-    public AdminUninstallSlackWorkspaceTests()
-    {
-        _sut = new AdminUninstallSlackWorkspace(_repository, _publishEndpoint);
-    }
+    public async ValueTask InitializeAsync() => await fixture.FlushRedisAsync();
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task Execute_KnownTeam_MarksForRemovalSavesAndPublishes()
     {
-        var installation = SlackInstallation.Install("T1", "Team One", "token1");
-        A.CallTo(() => _repository.GetInstallation("T1")).Returns(installation);
+        await Repo.Save(SlackInstallation.Install("T1", "Team One", "token1"));
 
-        await _sut.Execute("T1");
+        var sut = new AdminUninstallSlackWorkspace(Repo, _publishEndpoint);
+        await sut.Execute("T1");
 
-        A.CallTo(() => _repository.Save(A<SlackTeam>.That.Matches(t => t.TeamId == "T1" && t.PendingRemoval == true)))
-            .MustHaveHappenedOnceExactly();
-        A.CallTo(() => _repository.DeleteByTeamId(A<string>._)).MustNotHaveHappened();
+        var stored = await Repo.GetInstallation("T1");
+        Assert.True(stored.PendingRemoval);
+        Assert.False(stored.IsActive);
 
         var published = Assert.Single(_publishEndpoint.PublishedMessages.Containing<TeamMarkedForRemoval>());
         var evt = Assert.IsType<TeamMarkedForRemoval>(published.Message);

@@ -1,33 +1,39 @@
-using FakeItEasy;
 using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Services.WebApi.Slack.Handlers.Reactors;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using Slackbot.Net.Abstractions.Hosting;
 
 namespace FplBot.Tests.Data.Slack;
 
-public class WorkspaceInstallationHandlerTests
+[Collection("App")]
+public class WorkspaceInstallationHandlerTests(AppFixture fixture) : IAsyncLifetime
 {
-    private readonly ISlackTeamRepository _repository = A.Fake<ISlackTeamRepository>();
+    private ISlackTeamRepository Repo => fixture.Services.GetRequiredService<ISlackTeamRepository>();
     private readonly TestPublishEndpoint _publishEndpoint = new();
-    private readonly WorkspaceInstallationHandler _sut;
+    private WorkspaceInstallationHandler _sut = null!;
 
-    public WorkspaceInstallationHandlerTests()
+    public async ValueTask InitializeAsync()
     {
-        _sut = new WorkspaceInstallationHandler(_repository, _publishEndpoint, new WorkspaceOwnerUninstallSlackWorkspace(_repository, _publishEndpoint));
+        await fixture.FlushRedisAsync();
+        _sut = new WorkspaceInstallationHandler(Repo, _publishEndpoint, new WorkspaceOwnerUninstallSlackWorkspace(Repo, _publishEndpoint));
     }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task Install_SavesBareInstallationAndPublishesAppInstalled()
     {
         await _sut.Install(new Workspace("T1", "Team One", "token1"));
 
-        A.CallTo(() => _repository.Save(A<SlackTeam>.That.Matches(t =>
-            t.TeamId == "T1" && t.TeamName == "Team One" && t.AccessToken == "token1" &&
-            t.FplBotSlackChannel == null && t.FplbotLeagueId == null)))
-            .MustHaveHappenedOnceExactly();
+        var stored = await Repo.GetInstallation("T1");
+        Assert.Equal("Team One", stored.TeamName);
+        Assert.Equal("token1", stored.Token);
+        Assert.Empty(stored.ChannelSubscriptions);
 
         var published = Assert.Single(_publishEndpoint.PublishedMessages.Containing<AppInstalled>());
         var appInstalled = Assert.IsType<AppInstalled>(published.Message);
@@ -39,12 +45,11 @@ public class WorkspaceInstallationHandlerTests
     [Fact]
     public async Task Uninstall_DelegatesToUninstallSlackWorkspace()
     {
-        var team = new SlackTeam { TeamId = "T1", TeamName = "Team One", AccessToken = "token1" };
-        A.CallTo(() => _repository.FindByTeamId("T1")).Returns(team);
+        await Repo.Save(SlackInstallation.Install("T1", "Team One", "token1"));
 
         await _sut.Uninstall("T1");
 
-        A.CallTo(() => _repository.DeleteByTeamId("T1")).MustHaveHappenedOnceExactly();
+        Assert.Null(await Repo.FindInstallationByTeamId("T1"));
         Assert.Single(_publishEndpoint.PublishedMessages.Containing<AppUninstalled>());
     }
 }
