@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Nest;
 using Serilog;
+using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
@@ -56,6 +57,7 @@ public class AppFixture : IAsyncLifetime
 
     public SlackMessageCapture SlackCapture { get; } = new();
     public WorkspaceInstallationHandler Manager { get; private set; } = null!;
+    public ISlackClient SlackClient { get; private set; } = null!;
 
     public virtual async ValueTask InitializeAsync()
     {
@@ -65,7 +67,8 @@ public class AppFixture : IAsyncLifetime
         _multiplexer = await ConnectionMultiplexer.ConnectAsync(redisConnStr + ",allowAdmin=true");
         var redisUrl = $"redis://user:pass@{redisConnStr}";
 
-        var fakeSlackClient = BuildCapturingSlackClient();
+        SlackClient = BuildCapturingSlackClient();
+        var fakeSlackClient = SlackClient;
         var fakeSlackClientBuilder = A.Fake<ISlackClientBuilder>();
         A.CallTo(() => fakeSlackClientBuilder.Build(A<string>._)).Returns(fakeSlackClient);
 
@@ -137,6 +140,7 @@ public class AppFixture : IAsyncLifetime
 
     public IBus Bus => _app.Services.GetRequiredService<IBus>();
     public IServiceProvider Services => _app.Services;
+    public ISendEndpointProvider Publisher => _managerScope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
 
     public async Task AskSlackbot(string teamId, string channelId, string input)
     {
@@ -168,6 +172,22 @@ public class AppFixture : IAsyncLifetime
         await AskSlackbot(installation.TeamId, installation.ChannelSubscriptions.First().ChannelId, input);
 
     public async Task AskSlackbot(string input) => await AskSlackbot(await SeedInstallation(), input);
+
+    /// <summary>
+    /// Installs a workspace through the real WorkspaceInstallationHandler.Install flow (as opposed to
+    /// SeedInstallation, which writes the domain object straight to the repository) — use this when a
+    /// test wants the real install side effects (AppInstalled published, bare/no-subscriptions state).
+    /// </summary>
+    public async Task<string> InstallSlackbot(string? teamId = null, string? teamName = null)
+    {
+        teamId ??= "T" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
+        teamName ??= "Test Team " + teamId;
+        var token = "xoxb-" + Guid.NewGuid().ToString("N");
+
+        await Manager.Install(new Workspace(teamId, teamName, token));
+
+        return teamId;
+    }
 
     public async Task<string> AskDiscord(string commandName, string? optionValue = null, string? subCommandName = null, string? guildId = null, string? channelId = null)
     {
@@ -234,13 +254,6 @@ public class AppFixture : IAsyncLifetime
         await client.Indices.RefreshAsync(options.EntriesIndex);
     }
 
-    public async Task SeedSearchLeague(LeagueItem league)
-    {
-        var options = Services.GetRequiredService<IOptions<SearchOptions>>().Value;
-        var client = Services.GetRequiredService<IElasticClient>();
-        await client.IndexAsync(league, i => i.Index(options.LeaguesIndex).Id(league.Id));
-        await client.Indices.RefreshAsync(options.LeaguesIndex);
-    }
 
     // No-op here: only the search-focused subclass (SearchAppFixture) needs a real
     // Elasticsearch-backed IElasticClient; every other AppFixture consumer doesn't touch search.
