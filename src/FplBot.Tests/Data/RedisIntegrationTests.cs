@@ -1,43 +1,29 @@
-using Fpl.Search.Data.Repositories;
+using Fpl.Search.Data.Abstractions;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
-using FplBot.Discord.Data;
-using FplBot.Services.WebApi.Slack.Handlers.Reactors;
-using FplBot.Tests.Helpers;
-using Microsoft.Extensions.Options;
-using Slackbot.Net.Abstractions.Hosting;
-using StackExchange.Redis;
+using FplBot.Tests.E2E;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.Data;
 
-public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputHelper helper)
-    : IClassFixture<RedisIntegrationFixture>, IAsyncLifetime
+[Collection("App")]
+public class RedisIntegrationTests(AppFixture fixture) : IAsyncLifetime
 {
-    private static OptionsWrapper<RedisOptions> FakeOptions(RedisIntegrationFixture f) =>
-        new(new RedisOptions { REDIS_URL = $"redis://user:pass@{f.ConnectionString}" });
+    private ISlackTeamRepository Repo => fixture.Services.GetRequiredService<ISlackTeamRepository>();
+    private IGuildRepository GuildRepo => fixture.Services.GetRequiredService<IGuildRepository>();
+    private ILeagueIndexBookmarkProvider BookmarkProvider => fixture.Services.GetRequiredService<ILeagueIndexBookmarkProvider>();
 
-    private readonly IServer _server = fixture.Server;
-    private readonly SlackTeamRepository _repo = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
-    private readonly TokenManager _manager = new(new SlackTeamRepository(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper)));
-    private readonly LeagueIndexRedisBookmarkProvider _bookmarkProvider = new(fixture.Multiplexer, new SimpleLogger(helper));
-    private readonly DiscordGuildRepository _guildRepo = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
-    private readonly DiscordGuildStore _guildStore = new(fixture.Multiplexer, FakeOptions(fixture), new SimpleLogger(helper));
-
-    public async ValueTask InitializeAsync() => await _server.FlushDatabaseAsync();
+    public async ValueTask InitializeAsync() => await fixture.FlushRedisAsync();
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task TestInsertAndFetchOne()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription>{ EventSubscription.FixtureGoals, EventSubscription.Captains}});
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription>{ EventSubscription.FixtureGoals, EventSubscription.Captains}});
 
-        var tokenFromRedis = await _repo.GetTokenByTeamId("teamId1");
-
-        Assert.Equal("accessToken1", tokenFromRedis);
-
-        var team = await _repo.GetTeam("teamId1");
+        var team = await Repo.GetTeam("teamId1");
 
         Assert.Equal("teamId1", team.TeamId);
         Assert.Equal("teamName1", team.TeamName);
@@ -50,45 +36,47 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
     [Fact]
     public async Task TestInsertAndFetchAll()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName1", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { } });
-        await _manager.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName2", AccessToken = "accessToken3", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { } });
+        await Repo.Save(new SlackTeam {TeamId = "teamId2", TeamName = "teamName1", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { } });
+        await Repo.Save(new SlackTeam {TeamId = "teamId3", TeamName = "teamName2", AccessToken = "accessToken3", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { } });
 
-        var tokensFromRedis = await _repo.GetTokens();
+        var teams = await Repo.GetAllTeams();
 
-        Assert.Equal(2, tokensFromRedis.Count());
+        Assert.Equal(2, teams.Count());
     }
 
     [Fact]
     public async Task TestInsertAndDelete()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
-        await _manager.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
+        await Repo.Save(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
+        await Repo.Save(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
 
-        await _manager.Delete("teamId2");
+        await Repo.DeleteByTeamId("teamId2");
 
-        var tokensAfterDelete = await _repo.GetTokens();
-        Assert.Single(tokensAfterDelete);
+        var teamsAfterDelete = await Repo.GetAllTeams();
+        Assert.Single(teamsAfterDelete);
     }
 
     [Fact]
-    public async Task TestInsertAndDeleteCaseInvariant()
+    public async Task FindByTeamId_IsCaseInvariant()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
-        await _manager.Insert(new SlackTeam {TeamId = "teamId3", TeamName = "teamName3", AccessToken = "accessToken3", FplbotLeagueId = 234, FplBotSlackChannel = "#234", Subscriptions = new List<EventSubscription> { } });
+        await Repo.Save(new SlackTeam {TeamId = "teamId2", TeamName = "teamName2", AccessToken = "accessToken2", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
 
-        var team = await _manager.Delete("TEAMID2");
+        var found = await Repo.FindByTeamId("TEAMID2");
 
-        var tokensAfterDelete = await _repo.GetTokens();
-        Assert.Single(tokensAfterDelete);
-        Assert.NotNull(team);
+        Assert.NotNull(found);
+        Assert.Equal("teamId2", found.TeamId);
+
+        await Repo.DeleteByTeamId(found.TeamId!);
+        var teamsAfterDelete = await Repo.GetAllTeams();
+        Assert.Empty(teamsAfterDelete);
     }
 
     [Fact]
     public async Task UpdatesLeagueId()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { }});
-        await _repo.UpdateLeagueId("teamId1", 456);
-        var updated = await _repo.GetTeam("teamId1");
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { }});
+        await Repo.UpdateLeagueId("teamId1", 456);
+        var updated = await Repo.GetTeam("teamId1");
 
         Assert.Equal(456,updated.FplbotLeagueId);
     }
@@ -96,9 +84,9 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
     [Fact]
     public async Task Unsubscribe()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards }});
-        await _repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureCards });
-        var updated = await _repo.GetTeam("teamId1");
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards }});
+        await Repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureCards });
+        var updated = await Repo.GetTeam("teamId1");
 
         Assert.Single(updated.Subscriptions);
         Assert.DoesNotContain(EventSubscription.FixtureAssists,updated.Subscriptions);
@@ -107,9 +95,9 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
     [Fact]
     public async Task Subscribe()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards } });
-        await _repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards, EventSubscription.FixturePenaltyMisses });
-        var updated = await _repo.GetTeam("teamId1");
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards } });
+        await Repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { EventSubscription.FixtureAssists, EventSubscription.FixtureCards, EventSubscription.FixturePenaltyMisses });
+        var updated = await Repo.GetTeam("teamId1");
         Assert.Equal(3,updated.Subscriptions.Count());
         Assert.Contains(EventSubscription.FixturePenaltyMisses, updated.Subscriptions);
     }
@@ -117,47 +105,43 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
     [Fact]
     public async Task GetTeamWithNullSubs_ReturnsEmptySubsList()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null!});
-        var team = await _repo.GetTeam("teamId1");
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null!});
+        var team = await Repo.GetTeam("teamId1");
         Assert.Empty(team.Subscriptions);
     }
 
     [Fact]
     public async Task GetTeamWithNullSubs_UpdateToEmptyList_ReturnsEmptySubsList()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null!});
-        await _repo.GetTeam("teamId1");
-        await _repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { });
-        var updated = await _repo.GetTeam("teamId1");
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = null!});
+        await Repo.GetTeam("teamId1");
+        await Repo.UpdateSubscriptions("teamId1", new List<EventSubscription> { });
+        var updated = await Repo.GetTeam("teamId1");
         Assert.Empty(updated.Subscriptions);
     }
 
     [Fact]
     public async Task GetTeamWithEmptySubs_ReturnsEmptySubsList()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
-        var updated = await _repo.GetTeam("teamId1");
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#123", Subscriptions = new List<EventSubscription> { } });
+        var updated = await Repo.GetTeam("teamId1");
         Assert.Empty(updated.Subscriptions);
     }
 
     [Fact]
     public async Task GetBookmarkTest()
     {
-        await _bookmarkProvider.SetBookmark(1337);
-        var bookmark = await _bookmarkProvider.GetBookmark();
+        await BookmarkProvider.SetBookmark(1337);
+        var bookmark = await BookmarkProvider.GetBookmark();
         Assert.Equal(1337, bookmark);
     }
 
     [Fact]
     public async Task TestInsertWithOutFplData()
     {
-        await _manager.Insert(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1"});
+        await Repo.Save(new SlackTeam {TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1"});
 
-        var tokenFromRedis = await _repo.GetTokenByTeamId("teamId1");
-
-        Assert.Equal("accessToken1", tokenFromRedis);
-
-        var team = await _repo.GetTeam("teamId1");
+        var team = await Repo.GetTeam("teamId1");
 
         Assert.Equal("teamId1", team.TeamId);
         Assert.Equal("teamName1", team.TeamName);
@@ -168,43 +152,12 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
     }
 
     [Fact]
-    public async Task InsertWorkspace_RoutesThroughDomain_PersistsBareInstallation()
-    {
-        await _manager.Insert(new Workspace("teamIdWs", "teamNameWs", "tokenWs"));
-
-        var team = await _repo.GetTeam("teamIdWs");
-
-        Assert.Equal("teamIdWs", team.TeamId);
-        Assert.Equal("teamNameWs", team.TeamName);
-        Assert.Equal("tokenWs", team.AccessToken);
-        Assert.Null(team.FplBotSlackChannel);
-        Assert.Null(team.FplbotLeagueId);
-        Assert.Empty(team.Subscriptions);
-    }
-
-    [Fact]
-    public async Task Delete_RoutesThroughDomainUninstall_WipesInstallationAndReturnsOriginalWorkspace()
-    {
-        await _manager.Insert(new SlackTeam { TeamId = "teamId1", TeamName = "teamName1", AccessToken = "accessToken1", FplbotLeagueId = 123, FplBotSlackChannel = "#test", Subscriptions = new List<EventSubscription> { EventSubscription.FixtureGoals, EventSubscription.Captains } });
-
-        var deleted = await _manager.Delete("teamId1");
-
-        Assert.NotNull(deleted);
-        Assert.Equal("teamId1", deleted.TeamId);
-        Assert.Equal("teamName1", deleted.TeamName);
-        Assert.Equal("accessToken1", deleted.Token);
-
-        var tokensAfterDelete = await _repo.GetTokens();
-        Assert.Empty(tokensAfterDelete);
-    }
-
-    [Fact]
     public async Task Insert_Works()
     {
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, [EventSubscription.All
+        await GuildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild1", "Channel1", null, [EventSubscription.All
         ]));
 
-        var guildSub = await _guildRepo.GetGuildSubscription("Guild1", "Channel1");
+        var guildSub = await GuildRepo.GetGuildSubscription("Guild1", "Channel1");
         Assert.NotNull(guildSub);
         Assert.NotEmpty(guildSub.Subscriptions);
     }
@@ -212,48 +165,40 @@ public class RedisIntegrationTests(RedisIntegrationFixture fixture, ITestOutputH
     [Fact]
     public async Task GetMany_Works()
     {
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, [EventSubscription.All
+        await GuildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, [EventSubscription.All
         ]));
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, [EventSubscription.Standings
+        await GuildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, [EventSubscription.Standings
         ]));
 
-        foreach(var key in _server.Keys(pattern: "GuildSubs-Guild2-Channel-*")) {
-            helper.WriteLine(key.ToString() ?? string.Empty);
-        }
-
-        var subs = await _guildRepo.GetAllGuildSubscriptions();
+        var subs = await GuildRepo.GetAllGuildSubscriptions();
 
         Assert.Equal(2, subs.Count());
 
-        var sub1 = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
-        var sub2 = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
+        var sub1 = await GuildRepo.GetGuildSubscription("Guild2", "Channel1");
+        var sub2 = await GuildRepo.GetGuildSubscription("Guild2", "Channel2");
 
         Assert.Equal(EventSubscription.All, sub1.Subscriptions.First());
         Assert.Equal(EventSubscription.Standings, sub2.Subscriptions.First());
-
-        var all = await _guildRepo.GetAllGuildSubscriptions();
-        Assert.Equal(2, all.Count());
     }
 
     [Fact]
     public async Task Update_Works()
     {
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, [EventSubscription.All
+        await GuildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel1", null, [EventSubscription.All
         ]));
-        await _guildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, [EventSubscription.Standings
+        await GuildRepo.InsertGuildSubscription(new GuildFplSubscription("Guild2", "Channel2", null, [EventSubscription.Standings
         ]));
 
-        var sub2 = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
+        var sub2 = await GuildRepo.GetGuildSubscription("Guild2", "Channel2");
         var update = sub2 with { Subscriptions = [EventSubscription.Lineups] };
-        await _guildRepo.UpdateGuildSubscription(update);
+        await GuildRepo.UpdateGuildSubscription(update);
 
-        var sub2Updated = await _guildRepo.GetGuildSubscription("Guild2", "Channel2");
+        var sub2Updated = await GuildRepo.GetGuildSubscription("Guild2", "Channel2");
         Assert.Single(sub2Updated.Subscriptions);
         Assert.Equal(EventSubscription.Lineups, sub2Updated.Subscriptions.First());
 
-        var sub1NotUpdated = await _guildRepo.GetGuildSubscription("Guild2", "Channel1");
+        var sub1NotUpdated = await GuildRepo.GetGuildSubscription("Guild2", "Channel1");
         Assert.Single(sub1NotUpdated.Subscriptions);
         Assert.Equal(EventSubscription.All, sub1NotUpdated.Subscriptions.First());
     }
-
 }

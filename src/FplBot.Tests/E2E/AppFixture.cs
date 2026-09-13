@@ -19,7 +19,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Nest;
 using Serilog;
@@ -62,10 +61,6 @@ public class AppFixture : IAsyncLifetime
         var redisConnStr = _redis.GetConnectionString();
         _multiplexer = await ConnectionMultiplexer.ConnectAsync(redisConnStr + ",allowAdmin=true");
         var redisUrl = $"redis://user:pass@{redisConnStr}";
-        var redisOpts = new OptionsWrapper<RedisOptions>(new RedisOptions { REDIS_URL = redisUrl });
-
-        var slackTeamRepository = new SlackTeamRepository(_multiplexer, redisOpts, NullLogger<SlackTeamRepository>.Instance);
-        Manager = new TokenManager(slackTeamRepository);
 
         var fakeSlackClient = BuildCapturingSlackClient();
         var fakeSlackClientBuilder = A.Fake<ISlackClientBuilder>();
@@ -126,6 +121,10 @@ public class AppFixture : IAsyncLifetime
         _app = builder.Build();
         foreach (var svc in active)
             svc.ConfigureApp(_app);
+
+        Manager = new TokenManager(
+            _app.Services.GetRequiredService<ISlackTeamRepository>(),
+            _app.Services.GetRequiredService<IServiceScopeFactory>());
 
         await _app.StartAsync();
         _client = _app.GetTestClient();

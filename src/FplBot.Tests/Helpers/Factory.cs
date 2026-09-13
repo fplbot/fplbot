@@ -6,8 +6,6 @@ using Fpl.Client.Models;
 using FplBot.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
@@ -87,9 +85,8 @@ public static class Factory
         // Seed a uniquely-identified team per call so concurrently-running tests never collide
         // on the same Redis key, even though they all share one real container.
         team = SlackTeamFaker.Generate();
-        var slackTeamRepository = new SlackTeamRepository(RedisConnection.Value, Options.Create(new RedisOptions { REDIS_URL = RedisUrl.Value }), NullLogger<SlackTeamRepository>.Instance);
-        new TokenManager(slackTeamRepository)
-            .Insert(team).GetAwaiter().GetResult();
+        var tokenManager = new TokenManager(provider.GetRequiredService<ISlackTeamRepository>(), new TestScopeFactory(PublishEndpoint));
+        tokenManager.Insert(team).GetAwaiter().GetResult();
 
         return provider;
     }
