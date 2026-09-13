@@ -12,7 +12,7 @@ using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.WebApi;
 using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Data;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

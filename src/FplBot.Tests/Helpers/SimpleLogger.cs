@@ -2,7 +2,7 @@ using Fpl.Search.Data.Repositories;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Discord.Data;
-using FplBot.WebApi.Slack.Data;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests.Helpers;

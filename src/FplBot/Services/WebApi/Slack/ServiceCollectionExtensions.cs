@@ -3,7 +3,6 @@ using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.WebApi.Slack.Abstractions;
-using FplBot.WebApi.Slack.Data;
 using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using FplBot.WebApi.Slack.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;

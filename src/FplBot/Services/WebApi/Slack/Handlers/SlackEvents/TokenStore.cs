@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;
 
-namespace FplBot.WebApi.Slack.Data;
+namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
 
 public class TokenStore : ITokenStore
 {

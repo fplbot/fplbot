@@ -4,7 +4,7 @@ using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Discord.Data;
 using FplBot.Tests.Helpers;
-using FplBot.WebApi.Slack.Data;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using Microsoft.Extensions.Options;
 using Slackbot.Net.Abstractions.Hosting;
 using StackExchange.Redis;

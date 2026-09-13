@@ -12,7 +12,7 @@ using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 using Slackbot.Net.SlackClients.Http;
 using FplBot.Data.Slack;
-using FplBot.WebApi.Slack.Data;
+using FplBot.WebApi.Slack.Handlers.SlackEvents;
 using MassTransit;
 using StackExchange.Redis;
 using Testcontainers.Redis;
