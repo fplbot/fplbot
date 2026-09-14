@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Fastenshtein;
 
 namespace FplBot.Services.WebApi.Slack.Helpers;
 
@@ -39,7 +40,7 @@ internal static class SearchHelper
     {
         var normalizedInput = input.ToLower();
 
-        var lev = new Fastenshtein.Levenshtein(normalizedInput);
+        var lev = new Levenshtein(normalizedInput);
 
         var lowestDistance = int.MaxValue;
         T? currentWinner = default;

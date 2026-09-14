@@ -1,7 +1,6 @@
-﻿using Fpl.Client.Abstractions;
+﻿using System.Net;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-
-using System.Net;
 
 namespace Fpl.Client;
 

@@ -67,7 +67,7 @@ public class SlackWorkSpacePublisher(
             {
                 if (sae.Error == "account_inactive")
                 {
-                    logger.LogWarning(sae, $"Inactive token!");
+                    logger.LogWarning(sae, "Inactive token!");
                 }
                 else
                 {

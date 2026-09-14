@@ -23,7 +23,7 @@ public class FplFollowLeagueHandler(
 
         if (string.IsNullOrEmpty(newLeagueId))
         {
-            var help = $"No leagueId provided. Usage: `@fplbot follow 123`";
+            var help = "No leagueId provided. Usage: `@fplbot follow 123`";
             await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, help);
             return new EventHandledResponse(help);
         }

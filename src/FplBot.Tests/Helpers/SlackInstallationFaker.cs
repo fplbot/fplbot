@@ -6,10 +6,7 @@ namespace FplBot.Tests.Helpers;
 public static class SlackInstallationFaker
 {
     private static readonly Faker<SlackInstallation> Faker = new Faker<SlackInstallation>()
-        .CustomInstantiator(f => SlackInstallation.Install(
-            "T" + f.Random.Replace("##########"),
-            f.Company.CompanyName(),
-            "xoxb-" + f.Random.AlphaNumeric(24)));
+        .CustomInstantiator(f => SlackInstallation.Load("T" + f.Random.Replace("##########"), f.Company.CompanyName(), "xoxb-" + f.Random.AlphaNumeric(24),[]));
 
     /// <summary>
     /// A fresh, uniquely-identified SlackInstallation per call, so tests sharing a real backing

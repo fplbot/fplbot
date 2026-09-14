@@ -24,7 +24,7 @@ public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient clien
             }
             else
             {
-                content += $"\n ⚠️ Not following any FPL leagues";
+                content += "\n ⚠️ Not following any FPL leagues";
             }
 
             var allTypes = EventSubscriptionHelper.GetAllSubscriptionTypes();
@@ -54,6 +54,6 @@ public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient clien
 
     private static ChannelMessageWithSourceEmbedResponse Respond(string content)
     {
-        return new ChannelMessageWithSourceEmbedResponse() { Embeds = [new RichEmbed("ℹ️ HELP", content)] };
+        return new ChannelMessageWithSourceEmbedResponse { Embeds = [new RichEmbed("ℹ️ HELP", content)] };
     }
 }

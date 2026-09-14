@@ -1,8 +1,8 @@
 using Fpl.Client;
 using Fpl.Client.Abstractions;
+using Fpl.Search.Data.Abstractions;
 using Fpl.Search.Models;
 using Microsoft.Extensions.Options;
-using Fpl.Search.Data.Abstractions;
 
 namespace Fpl.Search.Indexing;
 

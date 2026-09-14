@@ -40,7 +40,7 @@ public static class AdminSlackEndpoints
         try
         {
             var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(BroadcastToSlackHandler)}"));
-            await endpoint.Send(new FplBot.Messaging.Contracts.Commands.v1.BroadcastToSlack(request.Message));
+            await endpoint.Send(new BroadcastToSlack(request.Message));
             return TypedResults.Ok(new { message = "Slack Broadcast enqueued!" });
         }
         catch (Exception e)

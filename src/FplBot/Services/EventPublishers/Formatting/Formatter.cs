@@ -13,7 +13,7 @@ public static class Formatter
     {
         var sb = new StringBuilder();
 
-        var sortedByRank = (league.Standings?.Entries ?? new List<ClassicLeagueEntry>()).OrderBy(x => x.Rank);
+        var sortedByRank = (league.Standings?.Entries ?? []).OrderBy(x => x.Rank);
 
         var numPlayers = league.Standings?.Entries.Count ?? 0;
 
@@ -37,7 +37,7 @@ public static class Formatter
 
     public static string? GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
-        var topThree = (league.Standings?.Entries ?? new List<ClassicLeagueEntry>())
+        var topThree = (league.Standings?.Entries ?? [])
             .GroupBy(e => e.EventTotal)
             .OrderByDescending(g => g.Key)
             .Take(3)
@@ -58,7 +58,7 @@ public static class Formatter
             foreach (var entry in group)
             {
                 string entryOrEntryLink = includeExternalLinks ? entry.GetEntryLink(gameweek.Id) : entry.EntryName ?? "";
-                sb.Append($"{Formatter.RankEmoji(i)} {entryOrEntryLink} - {entry.EventTotal}\n");
+                sb.Append($"{RankEmoji(i)} {entryOrEntryLink} - {entry.EventTotal}\n");
             }
         }
 
@@ -67,7 +67,7 @@ public static class Formatter
 
     public static string? GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
-        var worst = (league.Standings?.Entries ?? new List<ClassicLeagueEntry>()).MinBy(e => e.EventTotal);
+        var worst = (league.Standings?.Entries ?? []).MinBy(e => e.EventTotal);
         string? entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
         return worst == null ? null : $"💩 {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
     }
@@ -111,7 +111,7 @@ public static class Formatter
 
         var sb = new StringBuilder();
 
-        sb.Append($"⛑ *Injured players*\n");
+        sb.Append("⛑ *Injured players*\n");
 
         foreach (var player in players)
         {
@@ -130,7 +130,7 @@ public static class Formatter
 
     public static string FormatNewPlayers(IEnumerable<NewPlayer> newPlayers)
     {
-        var header = $"🆕 New player!";
+        var header = "🆕 New player!";
         if (newPlayers.Count() > 1)
         {
             header = "🆕 New players!";
@@ -149,7 +149,7 @@ public static class Formatter
         var header = "";
         if (includeheader)
         {
-            header = $"🔄 Transfer!";
+            header = "🔄 Transfer!";
             if (transfers.Count() > 1)
             {
                 header = "🔄 Transfers!";
@@ -175,11 +175,11 @@ public static class Formatter
         foreach (var group in grouped)
         {
             var priceChange = $"{FormatCurrency(group.Key)}";
-            var header = @group.Key switch
+            var header = group.Key switch
             {
                 > 0 => $"*Price up {priceChange} 📈*",
                 < 0 => $"*Price down {priceChange} 📉*",
-                0 => $"*Back to status quo… 🙃*"
+                0 => "*Back to status quo… 🙃*"
             };
             messageToSend += $"\n\n{header}";
             foreach (var p in group)
@@ -209,7 +209,7 @@ public static class Formatter
                 var chanceOfPlayingChange = ChanceOfPlayingChange(gUpdate);
                 if (chanceOfPlayingChange.HasValue && chanceOfPlayingChange != 0)
                 {
-                    chance += chanceOfPlayingChange > 0 ? $"[+" : "[";
+                    chance += chanceOfPlayingChange > 0 ? "[+" : "[";
                     chance += $"{chanceOfPlayingChange}%]";
                 }
 
@@ -290,7 +290,7 @@ public static class Formatter
 
             if (reverse)
             {
-                playersInSegment = Enumerable.Reverse(playersInSegment);
+                playersInSegment = playersInSegment.Reverse();
             }
             formattedOutput += $"{string.Join("  ", playersInSegment)}\n";
         }
@@ -333,7 +333,7 @@ public static class Formatter
         if (fixture.BonusPoints.Any())
         {
             var bonusPointsOutput = CreateBonusPointsOutput(fixture);
-            fullTimeReport += $"\nBonus points:\n";
+            fullTimeReport += "\nBonus points:\n";
             fullTimeReport += BulletPoints(bonusPointsOutput);
         }
 
@@ -344,7 +344,7 @@ public static class Formatter
             {
                 fullTimeReport += "\n"; // blank line between the bonus points and the defensive contributions
             }
-            fullTimeReport += $"\nDefensive contributions:\n";
+            fullTimeReport += "\nDefensive contributions:\n";
             fullTimeReport += BulletPoints(defensiveContributionsOutput);
         }
 
@@ -355,7 +355,7 @@ public static class Formatter
             {
                 fullTimeReport += "\n"; // blank line between the previous section and the top performers
             }
-            fullTimeReport += $"\nTop performers:\n";
+            fullTimeReport += "\nTop performers:\n";
             fullTimeReport += BulletPoints(topPerformersOutput);
         }
         return fullTimeReport;
@@ -446,12 +446,12 @@ public static class Formatter
     public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)
     {
         var introText = $"{gw.Name} is finished.";
-        var globalAverage = (int)Math.Round((double)gw.AverageScore);
+        var globalAverage = (int)Math.Round(gw.AverageScore);
 
         var leagueAvgTxt = "";
         if (league.Standings?.Entries.Any() == true)
         {
-            var leagueAverage = (int)Math.Round((double)league.Standings!.Entries.Average(entry => entry.EventTotal));
+            var leagueAverage = (int)Math.Round(league.Standings!.Entries.Average(entry => entry.EventTotal));
             leagueAvgTxt = $" Your league's average was *{leagueAverage}* points.";
         }
 

@@ -75,7 +75,7 @@ public static class SlackFormatter
             fields = fields
         });
 
-        playerCard.Add(new DividerBlock { });
+        playerCard.Add(new DividerBlock());
 
         var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
         if (chanceOfPlaying != null)

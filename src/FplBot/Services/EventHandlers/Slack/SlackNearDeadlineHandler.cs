@@ -1,7 +1,6 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.Domain;
-using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -83,8 +82,8 @@ public class SlackNearDeadlineHandler(
 
         async Task PublishFixtures(ISlackClient slackClient, string ts)
         {
-            var fixtures1 = await fixtures.GetFixturesByGameweek(message.Gameweek.Id) ?? new List<Fpl.Client.Models.Fixture>();
-            var teams = (await globalSettingsClient.GetGlobalSettings())?.Teams ?? new List<Fpl.Client.Models.Team>();
+            var fixtures1 = await fixtures.GetFixturesByGameweek(message.Gameweek.Id) ?? [];
+            var teams = (await globalSettingsClient.GetGlobalSettings())?.Teams ?? [];
             var users = await slackClient.UsersList();
             var user = users.Members?.FirstOrDefault(u =>
                 u.Is_Admin); // could have selected app_install user here, if we had this stored

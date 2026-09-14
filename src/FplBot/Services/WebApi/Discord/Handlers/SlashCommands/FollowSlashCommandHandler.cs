@@ -34,8 +34,8 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
 
     private static SlashCommandResponse Respond(string content, bool success = true)
     {
-        return new ChannelMessageWithSourceEmbedResponse()
-        {
+        return new ChannelMessageWithSourceEmbedResponse
+               {
             Embeds = [success ? new("✅ Success", content) : new("⚠️ Error", content)]
         };
     }

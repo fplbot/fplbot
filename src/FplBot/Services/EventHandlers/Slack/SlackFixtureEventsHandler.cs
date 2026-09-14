@@ -67,8 +67,8 @@ public class SlackFixtureEventsHandler(
             var gws = await globalSettingsClient.GetGlobalSettings();
             var currentGw = gws?.Gameweeks.GetCurrentGameweek();
             var slackUsers = await GetSlackUsers(token);
-            IEnumerable<GameweekEntry> entries = new List<GameweekEntry>();
-            IEnumerable<TransfersByGameWeek.Transfer> transfers = new List<TransfersByGameWeek.Transfer>();
+            IEnumerable<GameweekEntry> entries = [];
+            IEnumerable<TransfersByGameWeek.Transfer> transfers = [];
             if (currentGw != null)
             {
                 entries = await leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, (int)leagueId.Value);

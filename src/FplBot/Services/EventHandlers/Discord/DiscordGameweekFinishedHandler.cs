@@ -35,7 +35,7 @@ public class DiscordGameweekFinishedHandler(
         if (sub != null && message.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
         {
             var settings = await settingsClient.GetGlobalSettings();
-            var gameweeks = settings?.Gameweeks ?? new List<Fpl.Client.Models.Gameweek>();
+            var gameweeks = settings?.Gameweeks ?? [];
             var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
             var league = await leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
             if (league != null && gw != null)

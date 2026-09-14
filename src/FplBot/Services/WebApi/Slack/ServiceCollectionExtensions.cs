@@ -9,7 +9,6 @@ using FplBot.Services.WebApi.Slack.Handlers.SlackEvents;
 using FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 using FplBot.Services.WebApi.Slack.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using StackExchange.Redis;

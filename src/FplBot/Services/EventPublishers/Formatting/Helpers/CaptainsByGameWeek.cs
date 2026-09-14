@@ -92,7 +92,7 @@ public class CaptainsByGameWeek(
 
         var sb = new StringBuilder();
         if(includeHeader)
-            sb.Append($"📊 *Captain stats*\n");
+            sb.Append("📊 *Captain stats*\n");
         foreach (var captainGroup in captainGroups)
         {
             sb.Append($"{captainGroup.Emoji} = {captainGroup.Captain.FirstName} {captainGroup.Captain.SecondName} ({captainGroup.Count})\n");
@@ -129,7 +129,7 @@ public class CaptainsByGameWeek(
             }).ToList();
         }
 
-        var allPlayers = players?.Players ?? new List<Player>();
+        var allPlayers = players?.Players ?? [];
         var entryCaptainPicks = await Task.WhenAll(entries.Select(entry => GetEntryCaptainPick(entry, gameweek, allPlayers)));
 
         return entryCaptainPicks.Where(x => x != null).Select(x => x!);

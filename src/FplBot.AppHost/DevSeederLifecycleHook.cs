@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Text;
 using System.Text.Json;
@@ -134,7 +135,7 @@ internal static class DevSeeder
         {
             Console.WriteLine("[DevSeeder] Starting Elasticsearch seed...");
             using var http = new HttpClient { BaseAddress = new Uri("http://localhost:9200") };
-            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                 "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes("elastic:dev")));
 
             var healthy = false;

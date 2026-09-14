@@ -1,5 +1,4 @@
 using Fpl.Client.Models;
-using Fpl.EventPublishers.Models.Mappers;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace Fpl.EventPublishers.Models.Comparers;

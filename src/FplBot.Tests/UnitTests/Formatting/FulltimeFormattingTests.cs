@@ -9,92 +9,43 @@ public class FulltimeFormattingTests(ITestOutputHelper helper)
     [Fact]
     public void Distributed()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 10),
-            BonusPointsPlayer("player-D", 20),
-            BonusPointsPlayer("player-C", 30),
-            BonusPointsPlayer("player-B", 40),
-            BonusPointsPlayer("player-A", 50)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 10), BonusPointsPlayer("player-D", 20), BonusPointsPlayer("player-C", 30), BonusPointsPlayer("player-B", 40), BonusPointsPlayer("player-A", 50))));
     }
 
     [Fact]
     public void SharedFirstPlace()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 10),
-            BonusPointsPlayer("player-D", 20),
-            BonusPointsPlayer("player-C", 30),
-            BonusPointsPlayer("player-B", 40),
-            BonusPointsPlayer("player-A", 40)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 10), BonusPointsPlayer("player-D", 20), BonusPointsPlayer("player-C", 30), BonusPointsPlayer("player-B", 40), BonusPointsPlayer("player-A", 40))));
     }
 
     [Fact]
     public void AllSharedFirstPlace()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 10),
-            BonusPointsPlayer("player-D", 20),
-            BonusPointsPlayer("player-C", 40),
-            BonusPointsPlayer("player-B", 40),
-            BonusPointsPlayer("player-A", 40)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 10), BonusPointsPlayer("player-D", 20), BonusPointsPlayer("player-C", 40), BonusPointsPlayer("player-B", 40), BonusPointsPlayer("player-A", 40))));
     }
 
     [Fact]
     public void TiedSecondPlace()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 10),
-            BonusPointsPlayer("player-D", 20),
-            BonusPointsPlayer("player-C", 30),
-            BonusPointsPlayer("player-B", 30),
-            BonusPointsPlayer("player-A", 40)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 10), BonusPointsPlayer("player-D", 20), BonusPointsPlayer("player-C", 30), BonusPointsPlayer("player-B", 30), BonusPointsPlayer("player-A", 40))));
     }
 
     [Fact]
     public void TiedSecondPlaceForThreePlayers()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 10),
-            BonusPointsPlayer("player-D", 30),
-            BonusPointsPlayer("player-C", 30),
-            BonusPointsPlayer("player-B", 30),
-            BonusPointsPlayer("player-A", 40)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 10), BonusPointsPlayer("player-D", 30), BonusPointsPlayer("player-C", 30), BonusPointsPlayer("player-B", 30), BonusPointsPlayer("player-A", 40))));
     }
 
     [Fact]
     public void TiedThirdPlace()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 10),
-            BonusPointsPlayer("player-D", 20),
-            BonusPointsPlayer("player-C", 20),
-            BonusPointsPlayer("player-B", 30),
-            BonusPointsPlayer("player-A", 40)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 10), BonusPointsPlayer("player-D", 20), BonusPointsPlayer("player-C", 20), BonusPointsPlayer("player-B", 30), BonusPointsPlayer("player-A", 40))));
     }
 
     [Fact]
     public void TiedThirdPlaceForMultiplePlayers()
     {
-        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(new[]
-        {
-            BonusPointsPlayer("player-E", 20),
-            BonusPointsPlayer("player-D", 20),
-            BonusPointsPlayer("player-C", 20),
-            BonusPointsPlayer("player-B", 30),
-            BonusPointsPlayer("player-A", 40)
-        })));
+        helper.WriteLine(Formatter.FormatProvisionalFinished(GetProvisionalFinishedFixture(BonusPointsPlayer("player-E", 20), BonusPointsPlayer("player-D", 20), BonusPointsPlayer("player-C", 20), BonusPointsPlayer("player-B", 30), BonusPointsPlayer("player-A", 40))));
     }
 
     [Fact]

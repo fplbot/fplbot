@@ -5,6 +5,7 @@ using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.WebApi.Endpoints.Api.Admin;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -31,7 +32,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var result = await ExecuteUninstall(teamId);
 
-        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
         Assert.Null(await WaitForInstallationToBeGone(teamId));
     }
 
@@ -58,7 +59,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         Assert.Null(await WaitForInstallationToBeGone(teamId));
     }
 
-    private async Task<Microsoft.AspNetCore.Http.IResult> ExecuteUninstall(string teamId)
+    private async Task<IResult> ExecuteUninstall(string teamId)
     {
         using var scope = fixture.Services.CreateScope();
         return await AdminSlackEndpoints.Uninstall(teamId, scope.ServiceProvider.GetRequiredService<AdminUninstallSlackWorkspace>(), NullLogger<Program>.Instance);
@@ -134,7 +135,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var result = await AdminSlackEndpoints.PublishStandings(
             "T1", "#fplbot", fixture.SlackRepo, fixture.Publisher, A.Fake<IGlobalSettingsClient>());
 
-        dynamic value = Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result).Value!;
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
         Assert.False((bool)value.published);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
@@ -151,7 +152,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var request = new UpdateChannelSubscriptionsRequest([EventSubscription.Captains, EventSubscription.Deadlines]);
         var result = await AdminSlackEndpoints.UpdateChannelSubscriptions(teamId, "#fplbot", request, fixture.SlackRepo);
 
-        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
         var updated = await fixture.SlackRepo.GetInstallation(teamId);
         var channel = updated.GetChannel("#fplbot")!;
         Assert.Equal(
@@ -180,7 +181,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var result = await AdminSlackEndpoints.MoveChannel(teamId, "#old-channel", new MoveChannelRequest("#new-channel"), repo);
 
-        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
         var updated = await repo.GetInstallation(teamId);
         Assert.Null(updated.GetChannel("#old-channel"));
         Assert.Equal(123, (int)updated.GetChannel("#new-channel")!.FollowedLeagueId!.Value);
@@ -205,7 +206,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var result = await AdminSlackEndpoints.DeleteChannelSubscription(teamId, "#fplbot", fixture.SlackRepo);
 
-        Assert.IsAssignableFrom<Microsoft.AspNetCore.Http.IValueHttpResult>(result);
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
         var remaining = await fixture.SlackRepo.GetChannelSubscriptions(teamId);
         Assert.DoesNotContain(remaining, c => c.ChannelId == "#fplbot");
     }

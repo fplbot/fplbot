@@ -1,13 +1,12 @@
 using System.Net;
 using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
-using FplEvent = FplBot.Domain.FplEvent;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
+using FplEvent = FplBot.Domain.FplEvent;
 
 namespace FplBot.EventHandlers.Slack;
 
@@ -36,7 +35,7 @@ internal class SlackGameweekFinishedHandler(
     {
         var message = context.Message;
         var settings = await settingsClient.GetGlobalSettings();
-        var gameweeks = settings?.Gameweeks ?? new List<Gameweek>();
+        var gameweeks = settings?.Gameweeks ?? [];
         var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
         try
         {

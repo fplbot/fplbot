@@ -1,8 +1,8 @@
 using CronBackgroundServices;
 using Fpl.EventPublishers.Helpers;
-using Fpl.PulseLive;
 using Fpl.EventPublishers.RecurringActions;
 using Fpl.EventPublishers.States;
+using Fpl.PulseLive;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;

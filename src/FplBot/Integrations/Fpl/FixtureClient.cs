@@ -1,7 +1,6 @@
 ﻿using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 
-
 namespace Fpl.Client;
 
 public class FixtureClient(HttpClient client) : IFixtureClient

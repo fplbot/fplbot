@@ -1,7 +1,6 @@
 using Fpl.Search;
 using Fpl.Search.Analytics;
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Tests.E2E;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;

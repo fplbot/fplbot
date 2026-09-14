@@ -23,7 +23,7 @@ public class EntryIndexProvider(
         var batch = await GetBatchOfLeagues(i, batchSize, (client, x) => client.GetClassicLeague(Constants.GlobalOverallLeagueId, x));
         var validBatch = batch.Where(x => x != null).Select(x => x!).ToArray();
         var items = validBatch.SelectMany(x =>
-            (x.Standings?.Entries ?? Enumerable.Empty<Fpl.Client.Models.ClassicLeagueEntry>())
+            (x.Standings?.Entries ?? [])
                 .Select(y => new EntryItem { Id = y.Entry, TeamName = y.EntryName, RealName = y.PlayerName })).ToArray();
         var couldBeMore = validBatch.All(x => x.Standings?.HasNext == true);
 

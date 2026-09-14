@@ -1,9 +1,9 @@
-using Fpl.Search.Models;
-using Microsoft.Extensions.Options;
-using Nest;
 using System.Text.RegularExpressions;
+using Fpl.Search.Models;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
+using Microsoft.Extensions.Options;
+using Nest;
 
 namespace Fpl.Search.Searching;
 

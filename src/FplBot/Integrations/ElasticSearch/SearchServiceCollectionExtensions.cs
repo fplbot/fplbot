@@ -1,13 +1,13 @@
 using Fpl.Search.Analytics;
+using Fpl.Search.Data.Abstractions;
+using Fpl.Search.Data.Repositories;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Config;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Nest;
-using Fpl.Search.Data.Abstractions;
-using Fpl.Search.Data.Repositories;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
 namespace Fpl.Search;

@@ -1,7 +1,6 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.Domain;
-using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -27,7 +26,7 @@ public class SlackFixtureFulltimeHandler(
         logger.LogInformation("Handling fixture full time");
         var installations = await slackTeamRepo.GetAllInstallations();
         var settings = await settingsClient.GetGlobalSettings();
-        var fixtures = await fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
+        var fixtures = await fixtureClient.GetFixtures() ?? [];
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
         if (fplfixture == null)
         {
@@ -37,7 +36,7 @@ public class SlackFixtureFulltimeHandler(
         var liveItems = fplfixture.Event.HasValue
             ? await liveClient.GetLiveItems(fplfixture.Event.Value, isOngoingGameweek: true)
             : null;
-        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture, liveItems);
+        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? [], settings?.Players ?? [], fplfixture, liveItems);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
 

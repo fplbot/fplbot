@@ -8,7 +8,7 @@ public class FinishedFixture
     public Team HomeTeam { get; set; } = null!;
     public Team AwayTeam { get; set; } = null!;
 
-    public IEnumerable<BonusPointsPlayer> BonusPoints { get; set; } = new List<BonusPointsPlayer>();
-    public IEnumerable<DefensiveContributionPlayer> DefensiveContributions { get; set; } = new List<DefensiveContributionPlayer>();
-    public IEnumerable<TopPerformer> TopPerformers { get; set; } = new List<TopPerformer>();
+    public IEnumerable<BonusPointsPlayer> BonusPoints { get; set; } = [];
+    public IEnumerable<DefensiveContributionPlayer> DefensiveContributions { get; set; } = [];
+    public IEnumerable<TopPerformer> TopPerformers { get; set; } = [];
 }
