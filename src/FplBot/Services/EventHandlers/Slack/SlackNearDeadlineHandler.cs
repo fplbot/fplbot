@@ -31,7 +31,7 @@ public class SlackNearDeadlineHandler(
             foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
                 var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
-                var command = new PublishToSlack(installation.TeamId, channel.ChannelId, text);
+                var command = new PublishToSlack(installation.Id, channel.ChannelId, text);
                 await context.Publish(command);
             }
         }
@@ -47,7 +47,7 @@ public class SlackNearDeadlineHandler(
         {
             foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
-                var command = new PublishDeadlineNotificationToSlackWorkspace(installation.TeamId, channel.ChannelId, message.GameweekNearingDeadline);
+                var command = new PublishDeadlineNotificationToSlackWorkspace(installation.Id, channel.ChannelId, message.GameweekNearingDeadline);
                 await context.Publish(command);
             }
         }

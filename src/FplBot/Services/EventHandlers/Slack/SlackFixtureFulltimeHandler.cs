@@ -44,7 +44,7 @@ public class SlackFixtureFulltimeHandler(
         {
             foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureFullTime))
             {
-                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(installation.TeamId, channel.ChannelId, title, threadMessage));
+                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(installation.Id, channel.ChannelId, title, threadMessage));
             }
         }
     }

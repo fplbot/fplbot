@@ -24,7 +24,7 @@ public class SlackLineupReadyHandler(
         {
             foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Lineups))
             {
-                await context.Publish(new PublishLineupsToSlackWorkspace(installation.TeamId, channel.ChannelId, message.Lineup));
+                await context.Publish(new PublishLineupsToSlackWorkspace(installation.Id, channel.ChannelId, message.Lineup));
             }
         }
     }

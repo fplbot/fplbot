@@ -30,7 +30,7 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
         await _sut.Install(new Workspace("T1", "Team One", "token1"));
 
         var stored = await Repo.GetInstallation("T1");
-        Assert.Equal("Team One", stored.TeamName);
+        Assert.Equal("Team One", stored.Name);
         Assert.Equal("token1", stored.Token);
         Assert.Empty(stored.ChannelSubscriptions);
 

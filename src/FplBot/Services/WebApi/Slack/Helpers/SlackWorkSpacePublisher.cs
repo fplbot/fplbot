@@ -19,7 +19,7 @@ internal class SlackWorkSpacePublisher(
         {
             foreach (var channel in installation.ChannelSubscriptions)
             {
-                await PublishToWorkspace(installation.TeamId, channel.ChannelId, msg);
+                await PublishToWorkspace(installation.Id, channel.ChannelId, msg);
             }
         }
     }

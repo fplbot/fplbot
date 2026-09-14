@@ -23,7 +23,7 @@ public class SlackFixtureRemovedHandler(
             {
                 var fixture = $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}";
                 var msg = $"❌ *Fixture off!*\n {fixture} has been removed from gameweek {message.Gameweek}!";
-                await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, msg));
+                await context.Publish(new PublishToSlack(installation.Id, channel.ChannelId, msg));
             }
         }
     }

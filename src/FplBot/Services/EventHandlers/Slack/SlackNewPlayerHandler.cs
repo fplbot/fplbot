@@ -25,7 +25,7 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
             {
                 foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
                 {
-                    await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
+                    await context.Publish(new PublishToSlack(installation.Id, channel.ChannelId, formatted));
                 }
             }
         }
@@ -45,7 +45,7 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
         {
             foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
             {
-                await context.Publish(new PublishToSlack(installation.TeamId, channel.ChannelId, formatted));
+                await context.Publish(new PublishToSlack(installation.Id, channel.ChannelId, formatted));
             }
         }
     }

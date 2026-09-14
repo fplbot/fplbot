@@ -26,7 +26,7 @@ internal class SlackGameweekFinishedHandler(
             var channelsWithLeague = installation.GetSubscriptionsTo(FplEvent.Standings).Where(c => c.FollowedLeagueId is not null);
             foreach (var channel in channelsWithLeague)
             {
-                await context.Publish(new PublishStandingsToSlackWorkspace(installation.TeamId, channel.ChannelId, (int)channel.FollowedLeagueId!.Value, notification.FinishedGameweek.Id));
+                await context.Publish(new PublishStandingsToSlackWorkspace(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId!.Value, notification.FinishedGameweek.Id));
             }
         }
     }

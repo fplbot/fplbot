@@ -30,7 +30,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         _logger = logger;
     }
 
-    public async Task<SlackInstallation> GetInstallation(string teamId)
+    public async Task<Installation> GetInstallation(string teamId)
     {
         if (!await _db.KeyExistsAsync(FromTeamIdToTeamKey(teamId)))
         {
@@ -40,12 +40,12 @@ public class SlackTeamRepository : ISlackTeamRepository
         return await LoadInstallation(teamId);
     }
 
-    private async Task<SlackInstallation> LoadInstallation(string teamId)
+    private async Task<Installation> LoadInstallation(string teamId)
     {
         var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField]);
         var pendingRemoval = fetched[2].HasValue && (bool)fetched[2];
         var channels = await GetChannelSubscriptions(teamId);
-        return SlackInstallation.Load(teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
+        return Installation.Load(teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
     }
 
     private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
@@ -67,25 +67,25 @@ public class SlackTeamRepository : ISlackTeamRepository
         return subs.ToList();
     }
 
-    public async Task Save(SlackInstallation installation)
+    public async Task Save(Installation installation)
     {
         var hashEntries = new HashEntry[]
         {
             new(_accessTokenField, installation.Token),
-            new(_teamNameField, installation.TeamName),
-            new(_teamIdField, installation.TeamId),
+            new(_teamNameField, installation.Name),
+            new(_teamIdField, installation.Id),
             new(_pendingRemovalField, installation.PendingRemoval)
         };
 
-        await _db.HashSetAsync(FromTeamIdToTeamKey(installation.TeamId), hashEntries);
+        await _db.HashSetAsync(FromTeamIdToTeamKey(installation.Id), hashEntries);
 
         foreach (var channel in installation.ChannelSubscriptions)
         {
-            await SaveChannelSubscription(installation.TeamId, channel);
+            await SaveChannelSubscription(installation.Id, channel);
         }
     }
 
-    public async Task<SlackInstallation?> FindInstallationByTeamId(string teamId)
+    public async Task<Installation?> FindInstallationByTeamId(string teamId)
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
 
@@ -103,9 +103,9 @@ public class SlackTeamRepository : ISlackTeamRepository
         return null;
     }
 
-    public async Task Delete(SlackInstallation installation)
+    public async Task Delete(Installation installation)
     {
-        var teamId = installation.TeamId;
+        var teamId = installation.Id;
 
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
         foreach (var channelId in channelIds)
@@ -143,10 +143,10 @@ public class SlackTeamRepository : ISlackTeamRepository
         return key.Substring(key.IndexOf('-') + 1);
     }
 
-    public async Task<IEnumerable<SlackInstallation>> GetAllInstallations()
+    public async Task<IEnumerable<Installation>> GetAllInstallations()
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromTeamIdToTeamKey("*"));
-        var installations = new List<SlackInstallation>();
+        var installations = new List<Installation>();
         foreach (var key in allTeamKeys)
         {
             var teamId = FromKeyToTeamId(key.ToString());
@@ -156,7 +156,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         return installations;
     }
 
-    private async Task SaveChannelSubscription(string teamId, SlackChannelSubscription channel)
+    private async Task SaveChannelSubscription(string teamId, ChannelSubscription channel)
     {
         var key = FromTeamAndChannelToChannelSubKey(teamId, channel.ChannelId);
         var subscriptions = channel.Events.Current.Select(ToStorageEvent);
@@ -181,10 +181,10 @@ public class SlackTeamRepository : ISlackTeamRepository
     // its exact key. Deliberately avoids a KEYS pattern scan on "SlackChannelSub-{teamId}-*": that
     // glob also matches OTHER teams whose id happens to start with this team's id plus a dash
     // (e.g. scanning for "DEV-SLACK" would also match "DEV-SLACK-2", "DEV-SLACK-BARE", ...).
-    public async Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId)
+    public async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId)
     {
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
-        var result = new List<SlackChannelSubscription>();
+        var result = new List<ChannelSubscription>();
 
         foreach (var channelIdValue in channelIds)
         {
@@ -193,7 +193,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             int? leagueId = fetched[1].HasValue ? int.Parse(fetched[1]!) : null;
             var subs = GetSubscriptions(teamId, fetched[2]);
             var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
-            result.Add(SlackChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent)));
+            result.Add(ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent)));
         }
 
         return result;

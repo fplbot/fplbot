@@ -1,29 +1,29 @@
 namespace FplBot.Domain;
 
-public class SlackInstallation
+public class Installation
 {
-    public string TeamId { get; }
-    public string TeamName { get; }
+    public string Id { get; }
+    public string Name { get; }
     public string? Token { get; private set; }
     public bool PendingRemoval { get; private set; }
 
-    private readonly List<SlackChannelSubscription> _channelSubscriptions = new();
-    public IReadOnlyCollection<SlackChannelSubscription> ChannelSubscriptions => _channelSubscriptions;
+    private readonly List<ChannelSubscription> _channelSubscriptions = new();
+    public IReadOnlyCollection<ChannelSubscription> ChannelSubscriptions => _channelSubscriptions;
 
-    public bool IsActive => Token is not null && !PendingRemoval;
-
-    private SlackInstallation(string teamId, string teamName, string? token)
+    private Installation(string id, string name, string? token)
     {
-        TeamId = teamId;
-        TeamName = teamName;
+        Id = id;
+        Name = name;
         Token = token;
     }
 
-    public static SlackInstallation Install(string teamId, string teamName, string token) => new(teamId, teamName, token);
+    public static Installation Install(string id, string name, string token) => new(id, name, token);
 
-    public static SlackInstallation Load(string teamId, string teamName, string? token, IEnumerable<SlackChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
+    public static Installation Install(string id, string name) => new(id, name, token: null);
+
+    public static Installation Load(string id, string name, string? token, IEnumerable<ChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
     {
-        var installation = new SlackInstallation(teamId, teamName, token) { PendingRemoval = pendingRemoval };
+        var installation = new Installation(id, name, token) { PendingRemoval = pendingRemoval };
         installation._channelSubscriptions.AddRange(channelSubscriptions);
         return installation;
     }
@@ -48,7 +48,7 @@ public class SlackInstallation
             return;
         }
 
-        _channelSubscriptions.Add(SlackChannelSubscription.Follow(channelId, leagueId));
+        _channelSubscriptions.Add(ChannelSubscription.Follow(channelId, leagueId));
     }
 
     public void Subscribe(string channelId, FplEvent[] fplEvents)
@@ -60,7 +60,7 @@ public class SlackInstallation
             return;
         }
 
-        _channelSubscriptions.Add(SlackChannelSubscription.Subscribe(channelId, fplEvents));
+        _channelSubscriptions.Add(ChannelSubscription.Subscribe(channelId, fplEvents));
     }
 
     public void Unsubscribe(string channelId, FplEvent fplEvent)
@@ -73,7 +73,7 @@ public class SlackInstallation
         FindChannel(channelId)?.Unsubscribe(fplEvent);
     }
 
-    public SlackChannelSubscription? GetChannel(string channelId) => FindChannel(channelId);
+    public ChannelSubscription? GetChannel(string channelId) => FindChannel(channelId);
 
     public void MoveChannel(string oldChannelId, string newChannelId)
     {
@@ -81,13 +81,13 @@ public class SlackInstallation
         if (existing is null) return;
 
         _channelSubscriptions.Remove(existing);
-        _channelSubscriptions.Add(SlackChannelSubscription.Load(newChannelId, existing.FollowedLeagueId, existing.Events.Current));
+        _channelSubscriptions.Add(ChannelSubscription.Load(newChannelId, existing.FollowedLeagueId, existing.Events.Current));
     }
 
-    private SlackChannelSubscription? FindChannel(string channelId) =>
+    private ChannelSubscription? FindChannel(string channelId) =>
         _channelSubscriptions.FirstOrDefault(c => c.ChannelId == channelId);
 
-    public IEnumerable<SlackChannelSubscription> GetSubscriptionsTo(FplEvent fplEvent)
+    public IEnumerable<ChannelSubscription> GetSubscriptionsTo(FplEvent fplEvent)
     {
         return _channelSubscriptions.Where(c => c.IsSubscribedTo(fplEvent));
     }

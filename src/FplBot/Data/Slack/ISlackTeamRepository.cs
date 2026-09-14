@@ -4,14 +4,14 @@ namespace FplBot.Data.Slack;
 
 public interface ISlackTeamRepository
 {
-    Task<SlackInstallation> GetInstallation(string teamId);
-    Task Save(SlackInstallation installation);
-    Task<SlackInstallation?> FindInstallationByTeamId(string teamId);
-    Task<IEnumerable<SlackInstallation>> GetAllInstallations();
+    Task<Installation> GetInstallation(string teamId);
+    Task Save(Installation installation);
+    Task<Installation?> FindInstallationByTeamId(string teamId);
+    Task<IEnumerable<Installation>> GetAllInstallations();
 
-    Task Delete(SlackInstallation installation);
+    Task Delete(Installation installation);
 
-    Task<IEnumerable<SlackChannelSubscription>> GetChannelSubscriptions(string teamId);
+    Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId);
 
     Task DeleteChannelSubscription(string teamId, string channelId);
 }

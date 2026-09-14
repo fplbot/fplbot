@@ -1,6 +1,6 @@
 namespace FplBot.Domain;
 
-public class SlackChannelSubscription
+public class ChannelSubscription
 {
     public string ChannelId { get; }
 
@@ -8,28 +8,28 @@ public class SlackChannelSubscription
 
     public EventCollection Events { get; } = EventCollection.Empty();
 
-    private SlackChannelSubscription(string channelId)
+    private ChannelSubscription(string channelId)
     {
         ChannelId = channelId;
     }
 
-    public static SlackChannelSubscription Follow(string channelId, ClassicLeagueId leagueId)
+    public static ChannelSubscription Follow(string channelId, ClassicLeagueId leagueId)
     {
-        var subscription = new SlackChannelSubscription(channelId);
+        var subscription = new ChannelSubscription(channelId);
         subscription.Follow(leagueId);
         return subscription;
     }
 
-    public static SlackChannelSubscription Subscribe(string channelId, FplEvent[] fplEvents)
+    public static ChannelSubscription Subscribe(string channelId, FplEvent[] fplEvents)
     {
-        var subscription = new SlackChannelSubscription(channelId);
+        var subscription = new ChannelSubscription(channelId);
         subscription.Subscribe(fplEvents);
         return subscription;
     }
 
-    public static SlackChannelSubscription Load(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
+    public static ChannelSubscription Load(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
     {
-        var subscription = new SlackChannelSubscription(channelId) { FollowedLeagueId = followedLeagueId };
+        var subscription = new ChannelSubscription(channelId) { FollowedLeagueId = followedLeagueId };
         subscription.Events.Add(events);
         return subscription;
     }
