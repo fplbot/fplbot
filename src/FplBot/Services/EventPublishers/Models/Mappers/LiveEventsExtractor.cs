@@ -23,7 +23,7 @@ public class LiveEventsExtractor
             var oldFixture = current.FirstOrDefault(f => f.Code == fixture.Code);
             if (oldFixture != null)
             {
-                var newFixtureStats = FixtureDiffer.DiffFixtureStats(fixture, oldFixture, players);
+                var newFixtureStats = Comparers.FixtureDiffer.DiffFixtureStats(fixture, oldFixture, players);
 
                 if (newFixtureStats.Values.Any())
                 {

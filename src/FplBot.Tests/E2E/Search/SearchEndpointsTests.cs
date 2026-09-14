@@ -2,6 +2,7 @@ using System.Net;
 using Fpl.Search;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
+using FplBot.Tests.E2E;
 using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Search;
 using Microsoft.AspNetCore.Http;
@@ -10,13 +11,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Nest;
 
-namespace FplBot.Tests.E2E;
+namespace FplBot.Tests.E2E.Search;
 
 // Exercises the real SearchService against a real (Testcontainers) Elasticsearch instance —
 // data is seeded straight into the index, then the endpoint handler is called and asked to
 // find it, instead of faking ISearchService's results.
-[Collection("Elasticsearch")]
-public class SearchEndpointsTests(ElasticsearchFixture elastic)
+[Collection("AppSearch")]
+public class SearchEndpointsTests(SearchAppFixture elastic)
 {
     private (ISearchService Service, SearchOptions Options, TestPublishEndpoint PublishEndpoint) NewSearchService()
     {

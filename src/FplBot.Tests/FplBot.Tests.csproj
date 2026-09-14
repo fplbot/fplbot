@@ -53,7 +53,7 @@
 
   <ItemGroup>
     <Folder Include="E2E\Search\" />
-    <Folder Include="Handlers\" />
+    <Folder Include="UnitTests\" />
   </ItemGroup>
 
 </Project>

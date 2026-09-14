@@ -1,19 +1,19 @@
 using Fpl.Search;
 using Fpl.Search.Analytics;
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Tests.Helpers;
+using FplBot.Tests.E2E;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using Nest;
 
-namespace FplBot.Tests.E2E;
+namespace FplBot.Tests.E2E.Search;
 
 // Exercises the real SearchAnalyticsService against a real (Testcontainers) Elasticsearch instance —
 // query events are seeded straight into the analytics index, then the admin endpoint is called
 // and asked to aggregate them, instead of faking ISearchAnalyticsService's results.
-[Collection("Elasticsearch")]
-public class AdminSearchEndpointsTests(ElasticsearchFixture elastic)
+[Collection("AppSearch")]
+public class AdminSearchEndpointsTests(SearchAppFixture elastic)
 {
     private static IndexQuery Query(string query, string? actor, string client, DateTime? timeStamp = null) =>
         new(timeStamp ?? DateTime.UtcNow, query, 0, "entries-index", null, 1, 5, client, null, null, actor);

@@ -15,7 +15,7 @@ public static class FixtureDiffer
 
         foreach (var stat in newFixture.Stats)
         {
-            var type = StatHelper.FromStatString(stat.Identifier ?? string.Empty);
+            var type = Mappers.FixtureDiffer.FromStatString(stat.Identifier ?? string.Empty);
             if (type is StatType.Unknown or StatType.YellowCards or StatType.Saves or StatType.Bonus)
             {
                 continue;

@@ -5,7 +5,7 @@ namespace FplBot.Tests.Integrations;
 
 public class PulseLiveClientTests
 {
-    [Fact]
+    [Fact(Skip = "Integration test. Change to fixture with lineups (already played)")]
     public async Task GetMatchWithLineups_GetsLineups()
     {
         var client = CreateClient();
