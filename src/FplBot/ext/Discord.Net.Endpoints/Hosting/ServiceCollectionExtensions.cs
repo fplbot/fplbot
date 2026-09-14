@@ -2,9 +2,9 @@ namespace Discord.Net.Endpoints.Hosting;
 
 public static class ServiceCollectionExtensions
 {
-    public static IDiscordbotEventsBuilder AddDiscordBotEvents<T>(this IServiceCollection services) where T: class, IGuildStore
+    public static IDiscordbotEventsBuilder AddDiscordBotEvents<T>(this IServiceCollection services) where T: class, IGuildInstallationHandler
     {
-        services.AddSingleton<IGuildStore,T>();
+        services.AddSingleton<IGuildInstallationHandler,T>();
         return new DiscordbotEventsBuilder(services);
     }
 
