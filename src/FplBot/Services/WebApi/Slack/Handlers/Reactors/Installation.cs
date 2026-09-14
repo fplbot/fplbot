@@ -8,7 +8,9 @@ namespace FplBot.Services.WebApi.Slack.Handlers.Reactors;
 
 public class SlackbotNetInstallationBridge(
     ISlackTeamRepository repository,
-    IPublishEndpoint publisher) : IWorkspaceInstallationHandler
+    IPublishEndpoint publisher,
+    ILogger<SlackbotNetInstallationBridge> logger
+) : IWorkspaceInstallationHandler
 {
     public async Task Install(Workspace workspace)
     {
@@ -19,7 +21,15 @@ public class SlackbotNetInstallationBridge(
 
     public async Task Uninstall(string teamId)
     {
-        var installation = await repository.GetInstallation(teamId);
+        var installation = await repository.FindInstallationByTeamId(teamId);
+        if (installation is null)
+        {
+            logger.LogWarning(
+                "Uninstall called for teamId {teamId} but no installation found. Bot was already deleted by an admin",
+                teamId);
+            return;
+        }
+
         installation.Uninstall();
         await repository.Delete(installation);
         await publisher.Publish(new AppUninstalled(installation.TeamId, installation.TeamName));

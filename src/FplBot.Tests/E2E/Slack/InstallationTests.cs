@@ -1,3 +1,4 @@
+using FakeItEasy;
 using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.Domain;
@@ -5,6 +6,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Services.WebApi.Slack.Handlers.Reactors;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
 
 namespace FplBot.Tests.E2E.Slack;
@@ -19,7 +21,7 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
     public async ValueTask InitializeAsync()
     {
         await fixture.FlushRedisAsync();
-        _sut = new SlackbotNetInstallationBridge(Repo, _publishEndpoint);
+        _sut = new SlackbotNetInstallationBridge(Repo, _publishEndpoint, A.Fake<ILogger<SlackbotNetInstallationBridge>>());
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -50,5 +52,13 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
 
         Assert.Null(await Repo.FindInstallationByTeamId("T1"));
         Assert.Single(_publishEndpoint.PublishedMessages.Containing<AppUninstalled>());
+    }
+
+    [Fact]
+    public async Task Uninstall_WhenAlreadyRemoved_DoesNotThrowOrPublish()
+    {
+        await _sut.Uninstall("T1");
+
+        Assert.Empty(_publishEndpoint.PublishedMessages);
     }
 }
