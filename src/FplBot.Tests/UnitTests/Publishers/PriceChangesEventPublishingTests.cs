@@ -4,7 +4,7 @@ using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.UnitTests.Publishers;
 
-public class PriceChangesEventPublishingTests(ITestOutputHelper helper)
+public class PlayerChangesEventsExtractorTests(ITestOutputHelper helper)
 {
     private readonly ITestOutputHelper _helper = helper;
 

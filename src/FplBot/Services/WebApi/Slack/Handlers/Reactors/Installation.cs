@@ -1,4 +1,3 @@
-using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -7,10 +6,9 @@ using Slackbot.Net.Abstractions.Hosting;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.Reactors;
 
-public class Installation(
+public class SlackbotNetInstallationBridge(
     ISlackTeamRepository repository,
-    IPublishEndpoint publisher,
-    WorkspaceOwnerUninstallSlackWorkspace workspaceOwnerUninstallSlackWorkspace) : IWorkspaceInstallationHandler
+    IPublishEndpoint publisher) : IWorkspaceInstallationHandler
 {
     public async Task Install(Workspace workspace)
     {
@@ -19,5 +17,11 @@ public class Installation(
         await publisher.Publish(new AppInstalled(workspace.TeamId, workspace.TeamName, ChatPlatform.Slack));
     }
 
-    public Task Uninstall(string teamId) => workspaceOwnerUninstallSlackWorkspace.Execute(teamId);
+    public async Task Uninstall(string teamId)
+    {
+        var installation = await repository.GetInstallation(teamId);
+        installation.Uninstall();
+        await repository.Delete(installation);
+        await publisher.Publish(new AppUninstalled(installation.TeamId, installation.TeamName));
+    }
 }

@@ -1,4 +1,4 @@
-using FplBot.Tests.E2E.Search;
+using FplBot.Tests.E2E;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -10,10 +10,10 @@ namespace FplBot.Tests.E2E.ApiEndpoints;
 
 // Exercises AdminHealthEndpoints against real Redis/Elasticsearch — including actually
 // stopping a container mid-test to simulate an outage — rather than faking either client.
-// Deliberately its own lightweight Redis connection rather than AppFixture: this class isn't
-// in the "App" collection, and a reachability check has no need for a whole running app.
-[Collection("Elasticsearch")]
-public class AdminHealthEndpointsTests(ElasticsearchFixture appFixture)
+// Uses its own throwaway Redis connections (not AppFixture.SlackRepo's) so stopping one
+// mid-test doesn't affect the shared fixture other AppSearch tests rely on.
+[Collection("AppSearch")]
+public class AdminHealthEndpointsTests(SearchAppFixture appFixture)
 {
     private static readonly Lazy<RedisContainer> RedisContainerInstance = new(() =>
     {

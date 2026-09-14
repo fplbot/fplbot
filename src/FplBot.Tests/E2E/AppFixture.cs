@@ -1,11 +1,9 @@
-using Discord.Net.Endpoints.Hosting;
 using Discord.Net.HttpClients;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search;
 using Fpl.Search.Models;
-using FplBot.ApplicationServices.Slack;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
@@ -16,7 +14,6 @@ using FplBot.Services.WebApi;
 using FplBot.Tests.Helpers;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,18 +22,15 @@ using Microsoft.Extensions.Options;
 using Nest;
 using Serilog;
 using Slackbot.Net.Abstractions.Hosting;
-using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using StackExchange.Redis;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using FplBot.Services.WebApi.Slack.Handlers.Reactors;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using Testcontainers.Redis;
 
@@ -44,11 +38,8 @@ namespace FplBot.Tests.E2E;
 
 public class AppFixture : IAsyncLifetime
 {
-    private static readonly bool ReuseContainers =
-        Environment.GetEnvironmentVariable("REUSE_TEST_CONTAINERS") == "true";
-
     private readonly RedisContainer _redis = new RedisBuilder("redis:latest")
-        .WithReuse(ReuseContainers)
+        .WithReuse(true)
         .WithLabel("reuse-id", "app-fixture")
         .Build();
     private WebApplication _app = null!;
@@ -57,7 +48,7 @@ public class AppFixture : IAsyncLifetime
     private HttpClient _client = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
-    public Installation Manager { get; private set; } = null!;
+
     public ISlackClient SlackClient { get; private set; } = null!;
 
     public virtual async ValueTask InitializeAsync()
@@ -130,17 +121,14 @@ public class AppFixture : IAsyncLifetime
             svc.ConfigureApp(_app);
 
         _managerScope = _app.Services.CreateScope();
-        Manager = new Installation(
-            _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>(),
-            _managerScope.ServiceProvider.GetRequiredService<IPublishEndpoint>(),
-            _managerScope.ServiceProvider.GetRequiredService<WorkspaceOwnerUninstallSlackWorkspace>());
-
         await _app.StartAsync();
         _client = _app.GetTestClient();
     }
 
     public IBus Bus => _app.Services.GetRequiredService<IBus>();
-    public IServiceProvider Services => _app.Services;
+    // Always scoped, never the root provider — resolving a Scoped service straight from root
+    // throws, and there's no way for a caller here to know a service's registered lifetime.
+    public IServiceProvider Services => _managerScope.ServiceProvider;
     public ISendEndpointProvider Publisher => _managerScope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
     public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
 
@@ -191,7 +179,7 @@ public class AppFixture : IAsyncLifetime
         teamName ??= "Test Team " + teamId;
         var token = "xoxb-" + Guid.NewGuid().ToString("N");
 
-        await Manager.Install(new Workspace(teamId, teamName, token));
+        await Services.GetRequiredService<IWorkspaceInstallationHandler>().Install(new Workspace(teamId, teamName, token));
 
         return teamId;
     }
@@ -280,7 +268,6 @@ public class AppFixture : IAsyncLifetime
         await _app.StopAsync();
         await _app.DisposeAsync();
         _multiplexer?.Dispose();
-        if (!ReuseContainers) await _redis.DisposeAsync();
     }
 
     private ISlackClient BuildCapturingSlackClient()

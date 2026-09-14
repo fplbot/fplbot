@@ -33,9 +33,8 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
-        services.AddScoped<WorkspaceOwnerUninstallSlackWorkspace>();
         services.AddScoped<AdminUninstallSlackWorkspace>();
-        services.AddSlackBotEvents<Installation>()
+        services.AddSlackBotEvents<SlackbotNetInstallationBridge>()
             .AddShortcut<HelpEventHandler>()
             .AddAppMentionHandler<FplPlayerCommandHandler>()
             .AddAppMentionHandler<FplStandingsCommandHandler>()

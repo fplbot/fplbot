@@ -5,7 +5,7 @@ using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.UnitTests.Helpers;
 
-public class StatHelperTests
+public class FixtureDifferTests
 {
     [Fact]
     public void NullFixtures_NoEvents()

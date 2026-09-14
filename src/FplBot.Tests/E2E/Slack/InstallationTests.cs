@@ -10,16 +10,16 @@ using Slackbot.Net.Abstractions.Hosting;
 namespace FplBot.Tests.E2E.Slack;
 
 [Collection("App")]
-public class InstallationTests(AppFixture fixture) : IAsyncLifetime
+public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLifetime
 {
     private ISlackTeamRepository Repo => fixture.Services.GetRequiredService<ISlackTeamRepository>();
     private readonly TestPublishEndpoint _publishEndpoint = new();
-    private Installation _sut = null!;
+    private SlackbotNetInstallationBridge _sut = null!;
 
     public async ValueTask InitializeAsync()
     {
         await fixture.FlushRedisAsync();
-        _sut = new Installation(Repo, _publishEndpoint, new WorkspaceOwnerUninstallSlackWorkspace(Repo, _publishEndpoint));
+        _sut = new SlackbotNetInstallationBridge(Repo, _publishEndpoint);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -44,7 +44,7 @@ public class InstallationTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task Uninstall_DelegatesToUninstallSlackWorkspace()
     {
-        await Repo.Save(SlackInstallation.Install("T1", "Team One", "token1"));
+        await _sut.Install(new Workspace("T1", "Team One", "token1"));
 
         await _sut.Uninstall("T1");
 

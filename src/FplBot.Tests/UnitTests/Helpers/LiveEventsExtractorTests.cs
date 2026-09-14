@@ -5,7 +5,7 @@ using FplBot.Tests.Helpers;
 
 namespace FplBot.Tests.UnitTests.Helpers;
 
-public class GetUpdatedFixtureEventsTests
+public class LiveEventsExtractorTests
 {
     [Fact]
     public static void When_NoEntries_ReturnsEmptyList()

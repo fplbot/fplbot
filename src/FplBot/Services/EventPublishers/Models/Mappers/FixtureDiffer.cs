@@ -2,7 +2,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace Fpl.EventPublishers.Models.Mappers;
 
-public static class StatHelper
+public static class FixtureDiffer
 {
     public static StatType FromStatString(string identifier)
     {
