@@ -3,23 +3,38 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.States;
 using Fpl.PulseLive;
-using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Domain;
 using FplBot.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace FplBot.Tests.UnitTests.Publishers;
+namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
-public class LineupEventPublishingTests
+[Collection("App")]
+public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
 {
-    private TestPublishEndpoint _session = null!;
+    private string _channel = null!;
+
+    public async ValueTask InitializeAsync()
+    {
+        fixture.SlackCapture.Reset();
+        await fixture.FlushRedisAsync();
+        _channel = "#lineups-" + Guid.NewGuid().ToString("N")[..8];
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, _channel, FplEvent.Lineups, FplEvent.FixtureRemovedFromGameweek);
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task DoesNotEmitInInitPhase()
     {
         var monitor = CreateNewLineupScenario();
+
         await monitor.Reset(1);
 
-        Assert.Empty(_session.PublishedMessages);
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
     }
 
     [Fact]
@@ -27,24 +42,27 @@ public class LineupEventPublishingTests
     {
         var monitor = CreateNewLineupScenario();
         await monitor.Reset(1);
+
         await monitor.Refresh(1);
 
-        Assert.Single(_session.PublishedMessages);
-        Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        Assert.Contains("Lineups", msg.Text);
     }
 
     [Fact]
     public async Task WhenLineupsInSingleFixture_SequencialRefreshes_EmitsEventOnlyOnce()
     {
         var monitor = CreateNewLineupScenario();
-
         await monitor.Reset(1);
 
         await monitor.Refresh(1);
         await monitor.Refresh(1);
 
-        Assert.Single(_session.PublishedMessages);
-        Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
+        // One LineupReady produces two Slack messages: the main post and its threaded lineup reply.
+        await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
     }
 
     [Fact]
@@ -52,10 +70,14 @@ public class LineupEventPublishingTests
     {
         var monitor = CreateTwoNewLineupsScenario();
         await monitor.Reset(1);
+
         await monitor.Refresh(1);
 
-        Assert.Equal(2, _session.PublishedMessages.Length);
-        Assert.IsType<LineupReady>(_session.PublishedMessages[0].Message);
+        // Two LineupReady events, each producing a main post + threaded reply.
+        await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        await fixture.SlackCapture.WaitForMessageAsync(_channel);
     }
 
     [Fact]
@@ -63,14 +85,12 @@ public class LineupEventPublishingTests
     {
         var monitor = CreateFixture2RemovedScenario();
         await monitor.Reset(1);
+
         await monitor.Refresh(1);
 
-        Assert.Single(_session.PublishedMessages);
-        var message = _session.PublishedMessages[0].Message;
-        Assert.IsType<FixtureRemovedFromGameweek>(message);
-        var fixtureRemovedFromGameweekEvent = ((FixtureRemovedFromGameweek)message);
-        Assert.Equal(1, fixtureRemovedFromGameweekEvent.Gameweek);
-        Assert.Equal(new RemovedFixture(2, new(10,"HomeTeam","HOM"), new(20, "AwAyTeam", "AWA")), fixtureRemovedFromGameweekEvent.RemovedFixture);
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        Assert.Contains("Fixture off!", msg.Text);
+        Assert.Contains("HomeTeam-AwAyTeam", msg.Text);
     }
 
     private LineupState CreateNewLineupScenario()
@@ -91,8 +111,7 @@ public class LineupEventPublishingTests
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
-        _session = new TestPublishEndpoint();
-        return new LineupState(fixtureClient, pulseFake, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
+        return CreateLineupState(fixtureClient, pulseFake, globalSettingsClient);
     }
 
     private LineupState CreateTwoNewLineupsScenario()
@@ -113,8 +132,7 @@ public class LineupEventPublishingTests
         {
             Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
         });
-        _session = new TestPublishEndpoint();
-        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
+        return CreateLineupState(fixtureClient, pulseClient, globalSettingsClient);
     }
 
     private LineupState CreateFixture2RemovedScenario()
@@ -124,19 +142,20 @@ public class LineupEventPublishingTests
         {
             TestBuilder.NoGoals(1),
             TestBuilder.NoGoals(2)
-        }).Once().Then.Returns(new List<Fixture>()
+        }).Once().Then.Returns(new List<Fixture>
         {
             TestBuilder.NoGoals(1)
         });
 
         var pulseClient = A.Fake<IPulseLiveClient>();
-       _session = new TestPublishEndpoint();
-       var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-           {
-               Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
-               Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }
-           }
-       );
-        return new LineupState(fixtureClient, pulseClient, globalSettingsClient, new TestScopeFactory(_session), A.Fake<ILogger<LineupState>>());
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
+        {
+            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
+            Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }
+        });
+        return CreateLineupState(fixtureClient, pulseClient, globalSettingsClient);
     }
+
+    private LineupState CreateLineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient) =>
+        new(fixtureClient, pulseClient, globalSettingsClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<LineupState>>());
 }

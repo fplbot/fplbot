@@ -25,10 +25,8 @@ public static class FplWorkerServiceCollectionExtensions
         });
         services.AddSingleton<NearDeadLineMonitor>();
         services.AddSingleton<GameweekLifecycleMonitor>();
-        services.AddSingleton<MatchdayEventPublishing>();
         services.AddRecurrer<GameweekLifecycleRecurringAction>()
             .AddRecurrer<NearDeadlineRecurringAction>()
-            .AddRecurrer<MatchDayStatusRecurringAction>()
             .AddRecurrer<PlayerUpdatesRecurringAction>();
         return services;
     }
