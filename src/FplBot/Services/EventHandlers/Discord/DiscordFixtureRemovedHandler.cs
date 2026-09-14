@@ -23,7 +23,7 @@ public class DiscordFixtureRemovedHandler(
             {
                 var formattedMsg = new PublishRichToGuildChannel(sub.GuildId,
                     sub.ChannelId,
-                    $"❌ Fixture off!",
+                    "❌ Fixture off!",
                     $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}" +
                     $" has been removed from gameweek {message.Gameweek}!");
                 await context.Publish(formattedMsg);

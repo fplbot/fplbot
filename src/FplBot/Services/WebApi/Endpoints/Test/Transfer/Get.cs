@@ -11,7 +11,7 @@ public static class TestTransfer
             return TypedResults.Unauthorized();
 
         var transfer = new InternalPremiershipTransfer("Dorkiolo", "AVL", "CHE");
-        var transfers = new List<InternalPremiershipTransfer>() { transfer };
+        var transfers = new List<InternalPremiershipTransfer> { transfer };
         var transferredEvent = new PremiershipPlayerTransferred(transfers);
         await publishEndpoint.Publish(transferredEvent);
         return TypedResults.Accepted("", transfer);

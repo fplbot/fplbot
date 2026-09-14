@@ -10,10 +10,10 @@ public static class PlayerChangesEventsExtractor
     public static IEnumerable<PlayerWithPriceChange> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
     {
         if(players == null)
-            return new List<PlayerWithPriceChange>();
+            return [];
 
         if (after == null)
-            return new List<PlayerWithPriceChange>();
+            return [];
 
         var compared = ComparePlayers(after, players, teams, new PlayerPriceComparer());
 
@@ -32,10 +32,10 @@ public static class PlayerChangesEventsExtractor
     public static IEnumerable<InjuredPlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
     {
         if(players == null)
-            return new List<InjuredPlayerUpdate>();
+            return [];
 
         if (after == null)
-            return new List<InjuredPlayerUpdate>();
+            return [];
 
         return CompareInjuredPlayers(after, players, teams, new StatusComparer());
     }
@@ -43,14 +43,14 @@ public static class PlayerChangesEventsExtractor
     public static IEnumerable<NewPlayer> GetNewPlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
     {
         if (players == null)
-            return new List<NewPlayer>();
+            return [];
         if (after == null)
-            return new List<NewPlayer>();
+            return [];
 
         var diff = after.Except(players, new PlayerIdComparer());
 
         if (!diff.Any())
-            return new List<NewPlayer>();
+            return [];
 
         var updates = diff.Select(newPlayer => new NewPlayer
         (
@@ -67,14 +67,14 @@ public static class PlayerChangesEventsExtractor
         ICollection<Player> players, ICollection<Team> teams)
     {
         if (players == null)
-            return new List<InternalPremiershipTransfer>();
+            return [];
         if (after == null)
-            return new List<InternalPremiershipTransfer>();
+            return [];
 
         var diff = after.Except(players, new PlayersTeamChangeComparer());
 
         if (!diff.Any())
-            return new List<InternalPremiershipTransfer>();
+            return [];
 
         var updates = new List<InternalPremiershipTransfer>();
         foreach (var player in diff)

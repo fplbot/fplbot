@@ -13,7 +13,7 @@ public static class MessageHelper
     public static int? ExtractGameweek(string messageText, string pattern)
     {
         var gameweek = FindMatch(messageText, $"{pattern.Replace("{gw}", "(\\d+?)(?:\\s|$)")}");
-        return gameweek == null ? (int?) null : int.Parse(gameweek);
+        return gameweek == null ? null : int.Parse(gameweek);
     }
 
     /// <summary>

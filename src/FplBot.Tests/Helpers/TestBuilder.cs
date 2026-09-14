@@ -1,7 +1,6 @@
 using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.PulseLive;
-using FplBot.Data;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Tests.Helpers;
@@ -34,24 +33,14 @@ public static class TestBuilder
                 new FixtureStat
                 {
                     Identifier = "goals_scored",
-                    HomeStats = new List<FixtureStatValue>
-                    {
-
-                    },
-                    AwayStats = new List<FixtureStatValue>
-                    {
-                    }
+                    HomeStats = new List<FixtureStatValue>(),
+                    AwayStats = new List<FixtureStatValue>()
                 },
                 new FixtureStat
                 {
                     Identifier = "own_goals",
-                    HomeStats = new List<FixtureStatValue>
-                    {
-
-                    },
-                    AwayStats = new List<FixtureStatValue>
-                    {
-                    }
+                    HomeStats = new List<FixtureStatValue>(),
+                    AwayStats = new List<FixtureStatValue>()
                 }
             ],
             PulseId = fixtureCode
@@ -236,7 +225,7 @@ public static class TestBuilder
             {
                 new FixtureStatValue {Element = playerId, Value = bps}
             },
-            AwayStats = new List<FixtureStatValue> { }
+            AwayStats = new List<FixtureStatValue>()
         };
     }
 
@@ -264,7 +253,7 @@ public static class TestBuilder
             {
                 new FixtureStatValue { Element = playerId, Value = 1 }
             },
-            AwayStats = new List<FixtureStatValue> { }
+            AwayStats = new List<FixtureStatValue>()
         };
     }
 
@@ -273,10 +262,7 @@ public static class TestBuilder
         return new FixtureStat
         {
             Identifier = "goals_scored",
-            HomeStats = new List<FixtureStatValue>
-            {
-
-            },
+            HomeStats = new List<FixtureStatValue>(),
             AwayStats = new List<FixtureStatValue>
             {
                 new FixtureStatValue

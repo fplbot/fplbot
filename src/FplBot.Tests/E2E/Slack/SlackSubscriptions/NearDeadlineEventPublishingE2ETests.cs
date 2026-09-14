@@ -1,4 +1,5 @@
 using FakeItEasy;
+using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.States;
@@ -61,6 +62,6 @@ public class NearDeadlineEventPublishingE2ETests(AppFixture fixture) : IAsyncLif
         Assert.Contains("deadline in 24 hours", msg.Text);
     }
 
-    private NearDeadLineMonitor CreateMonitor(Fpl.Client.Abstractions.IGlobalSettingsClient settingsClient, DateTimeUtils dateTimeUtils) =>
+    private NearDeadLineMonitor CreateMonitor(IGlobalSettingsClient settingsClient, DateTimeUtils dateTimeUtils) =>
         new(settingsClient, dateTimeUtils, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<NearDeadLineMonitor>>());
 }

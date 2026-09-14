@@ -5,7 +5,7 @@ namespace Fpl.Client.Models;
 public record EventStatusResponse
 {
     [JsonPropertyName("status")]
-    public ICollection<EventStatus> Status { get; set; } = new List<EventStatus>();
+    public ICollection<EventStatus> Status { get; set; } = [];
 
     [JsonPropertyName("leagues")]
     public string? Leagues { get; set; }

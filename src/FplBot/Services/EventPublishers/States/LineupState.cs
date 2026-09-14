@@ -3,9 +3,9 @@ using System.Text;
 using System.Text.Json;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.PulseLive;
 using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Models.Mappers;
+using Fpl.PulseLive;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
@@ -20,7 +20,7 @@ internal class LineupState(
     : ILineupState
 {
     private readonly Dictionary<int, MatchDetails> _matchDetails = new();
-    private ICollection<Fixture> _currentFixtures = new List<Fixture>();
+    private ICollection<Fixture> _currentFixtures = [];
     private Dictionary<int, string?> _teamShortNames = new();
 
     public async Task Reset(int gw)
@@ -28,9 +28,9 @@ internal class LineupState(
         _matchDetails.Clear();
         try
         {
-            _currentFixtures = await fixtureClient.GetFixturesByGameweek(gw) ?? new List<Fixture>();
+            _currentFixtures = await fixtureClient.GetFixturesByGameweek(gw) ?? [];
             var settings = await globalSettingsClient.GetGlobalSettings();
-            _teamShortNames = settings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? new Dictionary<int, string?>();
+            _teamShortNames = settings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? [];
         }
         catch (Exception e) when (LogError(e))
         {
@@ -95,7 +95,7 @@ internal class LineupState(
                 if (isFixtureRemoved)
                 {
                     var settings = await globalSettingsClient.GetGlobalSettings();
-                    var teams = settings?.Teams ?? new List<Team>();
+                    var teams = settings?.Teams ?? [];
                     var homeTeam = teams.First(t => t.Id == currentFixture.HomeTeamId);
                     var awayTeam = teams.First(t => t.Id == currentFixture.AwayTeamId);
                     var removedFixture = new RemovedFixture(currentFixture.Id,
@@ -143,7 +143,7 @@ internal class LineupState(
                             {
                                 WriteIndented = true
                             };
-                            logger.LogWarning(System.Text.Json.JsonSerializer.Serialize(updatedMatchDetails, options));
+                            logger.LogWarning(JsonSerializer.Serialize(updatedMatchDetails, options));
                         }
                     }
                 }

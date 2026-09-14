@@ -1,6 +1,5 @@
 ﻿using System.Text.Json.Serialization;
 
-
 namespace Fpl.Client.Models;
 
 public class EntryHistory

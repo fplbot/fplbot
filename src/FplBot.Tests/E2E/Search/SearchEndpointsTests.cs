@@ -2,7 +2,7 @@ using System.Net;
 using Fpl.Search;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
-using FplBot.Tests.E2E;
+using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Search;
 using Microsoft.AspNetCore.Http;
@@ -116,10 +116,10 @@ public class SearchEndpointsTests(SearchAppFixture elastic)
         var (service, options, publishEndpoint) = NewSearchService();
         await SeedEntries(options.EntriesIndex, new EntryItem { Id = 1, RealName = "Messi" });
 
-        await SearchEndpoints.GetEntries("messi", 0, HttpContextWithRemoteIp("203.0.113.5"), service);
+        await SearchEndpoints.GetEntries("messi", 0, HttpContextWithRemoteIp(), service);
 
-        var indexed = publishEndpoint.PublishedMessages.Containing<FplBot.Messaging.Contracts.Commands.v1.IndexQuery>().Single();
-        var query = (FplBot.Messaging.Contracts.Commands.v1.IndexQuery)indexed.Message;
+        var indexed = publishEndpoint.PublishedMessages.Containing<IndexQuery>().Single();
+        var query = (IndexQuery)indexed.Message;
         Assert.Equal("203.0.113.5", query.Actor);
         Assert.Equal(nameof(QueryClient.Web), query.Client);
     }

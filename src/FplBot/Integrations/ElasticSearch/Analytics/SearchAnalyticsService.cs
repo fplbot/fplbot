@@ -26,7 +26,7 @@ public class SearchAnalyticsService(IElasticClient elasticClient, IOptions<Searc
         var response = await elasticClient.SearchAsync<IndexQuery>(s => s
             .Index(_options.AnalyticsIndex)
             .Size(0)
-            .TrackTotalHits(true)
+            .TrackTotalHits()
             .Query(q => q.DateRange(d => d.Field("timeStamp").GreaterThanOrEquals(from)))
             .Aggregations(a => a
                 .Terms("top_queries", t => t

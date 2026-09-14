@@ -48,7 +48,7 @@ public class TeamLineup
     public int TeamId { get; set; }
 
     [JsonPropertyName("players")]
-    public IEnumerable<PulsePlayer> Players { get; set; } = new List<PulsePlayer>();
+    public IEnumerable<PulsePlayer> Players { get; set; } = [];
 
     [JsonPropertyName("formation")]
     public PulseFormation? Formation { get; set; }

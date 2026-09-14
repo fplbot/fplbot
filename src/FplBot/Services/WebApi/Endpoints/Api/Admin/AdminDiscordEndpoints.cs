@@ -38,7 +38,7 @@ public static class AdminDiscordEndpoints
         try
         {
             var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(BroadcastHandler)}"));
-            await endpoint.Send(new FplBot.Messaging.Contracts.Commands.v1.BroadcastToDiscord(request.Message, request.Filter));
+            await endpoint.Send(new BroadcastToDiscord(request.Message, request.Filter));
             return TypedResults.Ok(new { message = $"Discord Broadcast enqueued using {request.Filter}!" });
         }
         catch (Exception e)

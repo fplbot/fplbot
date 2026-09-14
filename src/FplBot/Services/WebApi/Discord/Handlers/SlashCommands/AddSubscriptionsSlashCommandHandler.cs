@@ -47,6 +47,6 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashC
 
     private static ChannelMessageWithSourceEmbedResponse Respond(string title, string description)
     {
-        return new ChannelMessageWithSourceEmbedResponse() { Embeds = [new RichEmbed(title, description)] };
+        return new ChannelMessageWithSourceEmbedResponse { Embeds = [new RichEmbed(title, description)] };
     }
 }

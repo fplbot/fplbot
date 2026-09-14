@@ -13,18 +13,15 @@ public class HelpEventHandler(
     IEnumerable<IHandleAppMentions> allHandlers,
     ISlackClientBuilder slackClientService,
     ISlackTeamRepository tokenStore,
-    ILogger<HelpEventHandler> logger,
     ILeagueClient leagueClient)
     : IShortcutAppMentions
 {
-    private readonly ILogger<HelpEventHandler> _logger = logger;
-
     public async Task Handle(EventMetaData eventMetadata, AppMentionEvent @event)
     {
         var installation = await tokenStore.GetInstallation(eventMetadata.Team_Id);
         var channel = installation.GetChannel(@event.Channel);
         var slackClient = slackClientService.Build(installation.Token);
-        var text = $"*HELP:*\n";
+        var text = "*HELP:*\n";
         if (channel?.FollowedLeagueId is not null)
         {
             var leagueId = channel!.FollowedLeagueId!.Value;
@@ -54,7 +51,7 @@ public class HelpEventHandler(
         await slackClient.ChatPostMessage(@event.Channel, text);
         var handlerHelp = allHandlers.Select(handler => handler.GetHelpDescription())
             .Where(desc => !string.IsNullOrEmpty(desc.HandlerTrigger))
-            .Aggregate($"\n*Available commands:*", (current, tuple) => current + $"\n• `@fplbot {tuple.HandlerTrigger}` : _{tuple.Description}_");
+            .Aggregate("\n*Available commands:*", (current, tuple) => current + $"\n• `@fplbot {tuple.HandlerTrigger}` : _{tuple.Description}_");
 
 
 

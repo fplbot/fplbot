@@ -16,7 +16,7 @@ public class PlayerUpdatesRecurringAction(
     ILogger<PlayerUpdatesRecurringAction> logger)
     : IRecurringAction
 {
-    private ICollection<Player> _players = new List<Player>();
+    private ICollection<Player> _players = [];
 
     public async Task Process(CancellationToken stoppingToken)
     {
@@ -35,19 +35,19 @@ public class PlayerUpdatesRecurringAction(
         var settings = await settingsClient.GetGlobalSettings();
         if (_players == null || !_players.Any())
         {
-            logger.LogInformation($"Init state");
-            _players = settings?.Players ?? new List<Fpl.Client.Models.Player>();
+            logger.LogInformation("Init state");
+            _players = settings?.Players ?? [];
             return;
         }
 
-        logger.LogInformation($"Refreshing");
+        logger.LogInformation("Refreshing");
 
         var globalSettings = await settingsClient.GetGlobalSettings();
-        var after = globalSettings?.Players ?? new List<Fpl.Client.Models.Player>();
-        var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
-        var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
-        var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
-        var transfers = PlayerChangesEventsExtractor.GetInternalPLTransfers(after, _players, globalSettings?.Teams ?? new List<Fpl.Client.Models.Team>());
+        var after = globalSettings?.Players ?? [];
+        var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after, _players, globalSettings?.Teams ?? []);
+        var injuryUpdates = PlayerChangesEventsExtractor.GetInjuryUpdates(after, _players, globalSettings?.Teams ?? []);
+        var newPlayers = PlayerChangesEventsExtractor.GetNewPlayers(after, _players, globalSettings?.Teams ?? []);
+        var transfers = PlayerChangesEventsExtractor.GetInternalPLTransfers(after, _players, globalSettings?.Teams ?? []);
 
         _players = after;
 

@@ -1,6 +1,5 @@
 using FplBot.Data.Slack;
 using FplBot.Domain;
-using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;

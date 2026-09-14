@@ -64,7 +64,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             _logger.LogError("Unable to parse events for team {team}: {unableToParse}", teamId, string.Join(", ", unableToParse));
         }
 
-        return subs.ToList<EventSubscription>();
+        return subs.ToList();
     }
 
     public async Task Save(SlackInstallation installation)
@@ -190,7 +190,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             var channelId = channelIdValue.ToString();
             var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
-            int? leagueId = fetched[1].HasValue ? int.Parse((string)fetched[1]!) : null;
+            int? leagueId = fetched[1].HasValue ? int.Parse(fetched[1]!) : null;
             var subs = GetSubscriptions(teamId, fetched[2]);
             var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
             result.Add(SlackChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent)));

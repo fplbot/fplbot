@@ -1,6 +1,5 @@
 ﻿using System.Text.Json.Serialization;
 
-
 namespace Fpl.Client.Models;
 
 public class ClassicLeagueStandings
@@ -12,5 +11,5 @@ public class ClassicLeagueStandings
     public int Number { get; set; }
 
     [JsonPropertyName("results")]
-    public ICollection<ClassicLeagueEntry> Entries { get; set; } = new List<ClassicLeagueEntry>();
+    public ICollection<ClassicLeagueEntry> Entries { get; set; } = [];
 }

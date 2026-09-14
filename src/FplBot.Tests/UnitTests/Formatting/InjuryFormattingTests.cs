@@ -127,7 +127,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     public void MultipleTests()
     {
         var formatted = Formatter.FormatInjuryStatusUpdates([
-            Doubtful(25, 50),
+            Doubtful(),
             Doubtful(75,25),
             Available()
         ]);
@@ -148,8 +148,8 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     {
         return new InjuredPlayerUpdate
         (
-            new InjuredPlayer(2, $"Able Availbleu",13, new TeamDescription(1,"TEA", "TEAM UTD")),
-            new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - 1337% chance of playing"),
+            new InjuredPlayer(2, "Able Availbleu",13, new TeamDescription(1,"TEA", "TEAM UTD")),
+            new InjuryStatus(PlayerStatuses.Doubtful,"Knock - 1337% chance of playing"),
             new InjuryStatus(PlayerStatuses.Available,"")
         );
     }

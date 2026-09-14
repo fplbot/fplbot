@@ -44,7 +44,7 @@ internal class NearDeadLineMonitor(
         }
         else
         {
-            logger.LogInformation($"No next gameweek");
+            logger.LogInformation("No next gameweek");
         }
     }
 

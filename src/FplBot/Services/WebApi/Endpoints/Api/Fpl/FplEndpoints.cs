@@ -47,7 +47,7 @@ public static class FplEndpoints
 
             var settings = await globalSettingsClient.GetGlobalSettings();
             var currentGw = settings?.Gameweeks.GetCurrentGameweek();
-            var playersById = settings?.Players.ToDictionary(p => p.Id) ?? new Dictionary<int, Player>();
+            var playersById = settings?.Players.ToDictionary(p => p.Id) ?? [];
 
             var summaries = new List<object>();
             if (currentGw != null)

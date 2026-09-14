@@ -12,7 +12,7 @@ public static class GitHubReleaseService
     public static async Task<string> GetReleaseNotes(string majorMinorPatch)
     {
         var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue($"fplbot", $"{majorMinorPatch}"));
+        httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("fplbot", $"{majorMinorPatch}"));
         try
         {
             string requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
@@ -26,10 +26,10 @@ public static class GitHubReleaseService
                 if (s.Contains("Merge branch"))
                     return null;
                 var shaRemoved = string.Join(" ", s.Split(" ")[1..]);
-                var replaced = Regex.Replace(shaRemoved, "#(\\d+)", replacement: $"<https://github.com/fplbot/fplbot/pull/$1|$1>");
+                var replaced = Regex.Replace(shaRemoved, "#(\\d+)", replacement: "<https://github.com/fplbot/fplbot/pull/$1|$1>");
                 return $"{GetEmoji(replaced)} {replaced}";
             }).Where(s => s != null);
-            var joined = $"      {string.Join("\n      ", listed ?? new List<string>())}";
+            var joined = $"      {string.Join("\n      ", listed ?? [])}";
             var releaseLinks = $"▪️ <https://github.com/fplbot/fplbot/releases/tag/{majorMinorPatch}|Release notes for {majorMinorPatch}>\n" + joined;
             return releaseLinks;
         }
@@ -63,7 +63,7 @@ public static class GitHubReleaseService
     private static string GetRandomEmoji()
     {
         var random = new Random();
-        int next = random.Next(0, Enumerable.Count<string>(_randomPool));
-        return Enumerable.ToArray<string>(_randomPool)[next];
+        int next = random.Next(0, _randomPool.Count<string>());
+        return _randomPool.ToArray()[next];
     }
 }

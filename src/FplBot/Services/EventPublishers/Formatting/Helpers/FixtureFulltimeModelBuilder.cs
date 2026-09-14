@@ -30,7 +30,7 @@ public static class FixtureFulltimeModelBuilder
         try
         {
             if (liveItems == null || liveItems.Count == 0)
-                return new List<TopPerformer>();
+                return [];
 
             var ranked = liveItems
                 .Select(ToTopPerformer)
@@ -68,7 +68,7 @@ public static class FixtureFulltimeModelBuilder
         }
         catch
         {
-            return new List<TopPerformer>();
+            return [];
         }
     }
 
@@ -79,8 +79,8 @@ public static class FixtureFulltimeModelBuilder
             var bonusPointsHome = fixture.Stats.FirstOrDefault(s => s.Identifier == FplConstants.StatIdentifiers.Bps)?.HomeStats;
             var bonusPointsAway = fixture.Stats.FirstOrDefault(s => s.Identifier == FplConstants.StatIdentifiers.Bps)?.AwayStats;
 
-            var home = (bonusPointsHome ?? Enumerable.Empty<FixtureStatValue>()).Select(BpsFilter).ToList();
-            var away = (bonusPointsAway ?? Enumerable.Empty<FixtureStatValue>()).Select(BpsFilter).ToList();
+            var home = (bonusPointsHome ?? []).Select(BpsFilter).ToList();
+            var away = (bonusPointsAway ?? []).Select(BpsFilter).ToList();
             var aggregated = home.Concat(away).OrderByDescending(bpp => bpp.BonusPoints);
             return aggregated;
 
@@ -95,7 +95,7 @@ public static class FixtureFulltimeModelBuilder
         }
         catch
         {
-            return new List<BonusPointsPlayer>();
+            return [];
         }
     }
 
@@ -108,10 +108,10 @@ public static class FixtureFulltimeModelBuilder
         {
             var stat = fixture.Stats.FirstOrDefault(s => s.Identifier == FplConstants.StatIdentifiers.DefensiveContribution);
             if (stat == null)
-                return new List<DefensiveContributionPlayer>();
+                return [];
 
-            var home = stat.HomeStats ?? new List<FixtureStatValue>();
-            var away = stat.AwayStats ?? new List<FixtureStatValue>();
+            var home = stat.HomeStats ?? [];
+            var away = stat.AwayStats ?? [];
 
             return home.Concat(away)
                 .Select(ToDefensiveContributionPlayer)
@@ -136,7 +136,7 @@ public static class FixtureFulltimeModelBuilder
         }
         catch
         {
-            return new List<DefensiveContributionPlayer>();
+            return [];
         }
     }
 

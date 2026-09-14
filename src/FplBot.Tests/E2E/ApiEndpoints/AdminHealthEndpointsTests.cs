@@ -1,4 +1,3 @@
-using FplBot.Tests.E2E;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;

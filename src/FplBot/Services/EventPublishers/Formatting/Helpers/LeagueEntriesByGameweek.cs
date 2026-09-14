@@ -17,7 +17,7 @@ public class LeagueEntriesByGameweek(
         {
             var league = await leagueClient.GetClassicLeague(leagueId);
 
-            var entries = league?.Standings?.Entries ?? new List<ClassicLeagueEntry>();
+            var entries = league?.Standings?.Entries ?? [];
 
             var entryDictionary = new ConcurrentBag<GameweekEntry>();
 

@@ -27,11 +27,11 @@ public class TransfersByGameWeek(
             var league = await leagueClient.GetClassicLeague(leagueId);
 
             var playerTransfers = new ConcurrentBag<Transfer>();
-            var entries = league?.Standings?.Entries ?? new List<ClassicLeagueEntry>();
+            var entries = league?.Standings?.Entries ?? [];
 
             await Task.WhenAll(entries.Select(async entry =>
             {
-                var transfers = (await transfersClient.GetTransfers(entry.Entry) ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gw).Select(x =>
+                var transfers = (await transfersClient.GetTransfers(entry.Entry) ?? []).Where(x => x.Event == gw).Select(x =>
                 {
                     var e = entries.Single(e => e.Entry == x.Entry);
                     return new Transfer
@@ -77,7 +77,7 @@ public class TransfersByGameWeek(
         {
             return Messages.Sum(c => c.Message.Length);
         }
-    };
+    }
 
     public async Task<TransfersPayload> GetTransferMessages(int gw, int leagueId, bool includeExternalLinks = true)
     {
@@ -99,9 +99,9 @@ public class TransfersByGameWeek(
 
         var didNoTransfers = new ConcurrentBag<ClassicLeagueEntry>();
 
-        await Task.WhenAll((league?.Standings?.Entries ?? new List<ClassicLeagueEntry>())
+        await Task.WhenAll((league?.Standings?.Entries ?? [])
             .OrderBy(x => x.Rank)
-            .Select(entry => GetTransfersTextForEntry(entry, gw, settings?.Players ?? new List<Player>(), includeExternalLinks))
+            .Select(entry => GetTransfersTextForEntry(entry, gw, settings?.Players ?? [], includeExternalLinks))
             .ToArray()
             .ForEach(async entryTransfersTask =>
             {
@@ -128,11 +128,11 @@ public class TransfersByGameWeek(
         }
         else if (didNoTransfers.Count > 0)
         {
-            string @join = didNoTransfers.Select(x => {
+            string join = didNoTransfers.Select(x => {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
                 return namedWho ?? "";
             }).Join();
-            sb.Add(new($"\n{@join} saved their transfer 😴"));
+            sb.Add(new($"\n{join} saved their transfer 😴"));
         }
 
         return new TransfersPayload(sb);
@@ -156,9 +156,9 @@ public class TransfersByGameWeek(
 
         var didNoTransfers = new ConcurrentBag<ClassicLeagueEntry>();
 
-        await Task.WhenAll((league?.Standings?.Entries ?? new List<ClassicLeagueEntry>())
+        await Task.WhenAll((league?.Standings?.Entries ?? [])
             .OrderBy(x => x.Rank)
-            .Select(entry => GetTransfersTextForEntry(entry, gw, settings?.Players ?? new List<Player>(), includeExternalLinks))
+            .Select(entry => GetTransfersTextForEntry(entry, gw, settings?.Players ?? [], includeExternalLinks))
             .ToArray()
             .ForEach(async entryTransfersTask =>
             {
@@ -185,11 +185,11 @@ public class TransfersByGameWeek(
         }
         else if (didNoTransfers.Count > 0)
         {
-            string @join = didNoTransfers.Select(x => {
+            string join = didNoTransfers.Select(x => {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
                 return namedWho ?? "";
             }).Join();
-            sb.Append($"\n{@join} saved their transfer 😴");
+            sb.Append($"\n{join} saved their transfer 😴");
         }
 
         return sb.ToString();
@@ -201,7 +201,7 @@ public class TransfersByGameWeek(
         var transfersTask = transfersClient.GetTransfers(entry.Entry);
         var picksTask = entryClient.GetPicks(entry.Entry, gameweek);
 
-        var transfers = (await transfersTask ?? Enumerable.Empty<Fpl.Client.Models.Transfer>()).Where(x => x.Event == gameweek).Select(x => new
+        var transfers = (await transfersTask ?? []).Where(x => x.Event == gameweek).Select(x => new
         {
             EntryId = x.Entry,
             PlayerTransferredOut = GetPlayerName(players, x.ElementOut),

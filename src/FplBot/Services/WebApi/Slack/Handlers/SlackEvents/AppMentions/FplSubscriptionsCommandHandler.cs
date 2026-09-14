@@ -45,7 +45,7 @@ internal class FplSubscriptionsCommandHandler(
         catch (Exception e)
         {
             logger.LogError(e.Message, e);
-            return $"Oops, could not get subscriptions.";
+            return "Oops, could not get subscriptions.";
         }
     }
 

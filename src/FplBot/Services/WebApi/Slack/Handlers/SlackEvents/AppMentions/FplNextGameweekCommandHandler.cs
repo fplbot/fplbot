@@ -26,11 +26,11 @@ public class FplNextGameweekCommandHandler(
         var settings = await globalSettingsClient.GetGlobalSettings();
 
         var users = await usersTask;
-        var gameweeks = settings?.Gameweeks ?? new List<Fpl.Client.Models.Gameweek>();
-        var teams = settings?.Teams ?? new List<Fpl.Client.Models.Team>();
+        var gameweeks = settings?.Gameweeks ?? [];
+        var teams = settings?.Teams ?? [];
 
         var nextGw = gameweeks.First(gw => gw.IsNext);
-        var fixtures = await fixtureClient.GetFixturesByGameweek(nextGw.Id) ?? new List<Fpl.Client.Models.Fixture>();
+        var fixtures = await fixtureClient.GetFixturesByGameweek(nextGw.Id) ?? [];
 
         var user = users.Members.FirstOrDefault(x => x.Id == slackEvent.User);
         var userTzOffset = user?.Tz_Offset ?? 0;

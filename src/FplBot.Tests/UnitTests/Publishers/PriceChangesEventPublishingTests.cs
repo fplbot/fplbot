@@ -11,8 +11,8 @@ public class PlayerChangesEventsExtractorTests(ITestOutputHelper helper)
     [Fact]
     public void GetChangedPlayers_WhenNoPlayers_ReturnsNoChanges()
     {
-        var before = new List<Player>{ };
-        var after = new List<Player>{ };
+        var before = new List<Player>();
+        var after = new List<Player>();
 
         var priceChanges = PlayerChangesEventsExtractor.GetPriceChanges(after,before, new List<Team>());
 

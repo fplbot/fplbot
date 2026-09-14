@@ -1,3 +1,5 @@
+using FplBot.EventHandlers.Discord;
+using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 
@@ -10,11 +12,11 @@ public static class TestGwStart
         if (env.IsProduction())
             return TypedResults.Unauthorized();
 
-        var discordEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(FplBot.EventHandlers.Discord.DiscordGameweekStartedHandler)}"));
+        var discordEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordGameweekStartedHandler)}"));
         var cmd = new ProcessGameweekStartedForGuildChannel("893932860162064414", "897565955587186838", 4);
         await discordEndpoint.Send(cmd);
 
-        var slackEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(FplBot.EventHandlers.Slack.SlackGameweekStartedHandler)}"));
+        var slackEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekStartedHandler)}"));
         var cmdSlack = new ProcessGameweekStartedForSlackWorkspace("t016b9n3u7p".ToUpper(), 4);
         await slackEndpoint.Send(cmdSlack);
 

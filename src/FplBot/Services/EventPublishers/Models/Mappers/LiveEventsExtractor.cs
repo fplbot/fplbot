@@ -1,7 +1,6 @@
 using Fpl.Client;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Extensions;
-using Fpl.EventPublishers.Models.Comparers;
 using FplBot.Messaging.Contracts.Events.v1;
 
 namespace Fpl.EventPublishers.Models.Mappers;
@@ -11,10 +10,10 @@ public class LiveEventsExtractor
     public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Player> players, ICollection<Team> teams)
     {
         if(latestFixtures == null)
-            return new List<FixtureEvents>();
+            return [];
 
         if (current == null)
-            return new List<FixtureEvents>();
+            return [];
 
         return latestFixtures.Where(f => f.Stats.Any()).Select(fixture =>
         {
@@ -61,17 +60,17 @@ public class LiveEventsExtractor
     public static IEnumerable<int> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams, ICollection<Player> players)
     {
         if(latestFixtures == null)
-            return new List<int>();
+            return [];
 
         if (current == null)
-            return new List<int>();
+            return [];
 
         var latestFinished = latestFixtures.Where(f => f.FinishedProvisional);
         var currentFinished = current.Where(f => f.FinishedProvisional);
         var newFinished = latestFinished.Except(currentFinished, new FixtureComparer());
         if (newFinished.Any())
             return newFinished.Select(n => n.Id);
-        return new List<int>();
+        return [];
     }
 }
 

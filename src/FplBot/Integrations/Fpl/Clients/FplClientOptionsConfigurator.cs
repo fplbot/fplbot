@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Authentication;
 using Fpl.Client.Abstractions;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,7 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
                 b.PrimaryHandler = new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip,
-                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                    SslProtocols = SslProtocols.Tls12
                 });
         }
     }
@@ -40,7 +41,7 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
 
     public static void SetupFplClient(HttpClient client)
     {
-        client.BaseAddress = new Uri($"https://fantasy.premierleague.com");
+        client.BaseAddress = new Uri("https://fantasy.premierleague.com");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
     }

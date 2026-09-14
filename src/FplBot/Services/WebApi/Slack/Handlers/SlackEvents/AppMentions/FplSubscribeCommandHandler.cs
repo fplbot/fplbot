@@ -61,7 +61,7 @@ internal class FplSubscribeCommandHandler(
         catch (Exception e)
         {
             logger.LogError(e.Message, e);
-            return $"Oops, could not update subscriptions.";
+            return "Oops, could not update subscriptions.";
         }
     }
 
@@ -83,7 +83,7 @@ internal class FplSubscribeCommandHandler(
 
         sb.Append("Updated subscriptions :sparkles:\n");
 
-        if (eventSubscriptions.Count() < 1) sb.Append($"You are not subscribing to any fplbot updates.");
+        if (eventSubscriptions.Count() < 1) sb.Append("You are not subscribing to any fplbot updates.");
         else sb.Append($"You will now receive updates for:\n{Formatter.BulletPoints(eventSubscriptions)}");
 
         if (unableToParse.Any())

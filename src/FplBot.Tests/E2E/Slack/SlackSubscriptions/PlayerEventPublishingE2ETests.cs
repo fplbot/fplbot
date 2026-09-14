@@ -4,6 +4,7 @@ using Fpl.Client.Models;
 using Fpl.EventPublishers.RecurringActions;
 using FplBot.Data.Slack;
 using FplBot.Domain;
+using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -83,7 +84,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
 
         Assert.Single(messageSession.PublishedMessages);
-        Assert.IsType<Messaging.Contracts.Events.v1.PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
+        Assert.IsType<PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
     }
 
     private static PlayerUpdatesRecurringAction CreateTeamChangeScenario(TestPublishEndpoint messageSession)

@@ -1,5 +1,3 @@
-using System.Collections;
-
 namespace FplBot.Domain;
 
 public class SlackInstallation

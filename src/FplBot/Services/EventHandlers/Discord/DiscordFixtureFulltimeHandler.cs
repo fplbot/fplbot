@@ -24,7 +24,7 @@ public class DiscordFixtureFulltimeHandler(
         var message = context.Message;
         var subs = await teamRepo.GetAllGuildSubscriptions();
         var settings = await settingsClient.GetGlobalSettings();
-        var fixtures = await fixtureClient.GetFixtures() ?? new List<Fpl.Client.Models.Fixture>();
+        var fixtures = await fixtureClient.GetFixtures() ?? [];
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
         if (fplfixture == null)
         {
@@ -34,7 +34,7 @@ public class DiscordFixtureFulltimeHandler(
         var liveItems = fplfixture.Event.HasValue
             ? await liveClient.GetLiveItems(fplfixture.Event.Value, isOngoingGameweek: true)
             : null;
-        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? new List<Fpl.Client.Models.Team>(), settings?.Players ?? new List<Fpl.Client.Models.Player>(), fplfixture, liveItems);
+        var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? [], settings?.Players ?? [], fplfixture, liveItems);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
         foreach (var sub in subs)
