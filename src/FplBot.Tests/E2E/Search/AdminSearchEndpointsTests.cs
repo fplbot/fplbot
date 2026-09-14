@@ -1,13 +1,12 @@
 using Fpl.Search;
 using Fpl.Search.Analytics;
 using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using Nest;
 
-namespace FplBot.Tests.E2E;
+namespace FplBot.Tests.E2E.Search;
 
 // Exercises the real SearchAnalyticsService against a real (Testcontainers) Elasticsearch instance —
 // query events are seeded straight into the analytics index, then the admin endpoint is called

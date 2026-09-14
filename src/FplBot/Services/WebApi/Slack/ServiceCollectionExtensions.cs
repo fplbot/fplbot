@@ -35,7 +35,7 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
         services.AddScoped<WorkspaceOwnerUninstallSlackWorkspace>();
         services.AddScoped<AdminUninstallSlackWorkspace>();
-        services.AddSlackBotEvents<WorkspaceInstallationHandler>()
+        services.AddSlackBotEvents<Installation>()
             .AddShortcut<HelpEventHandler>()
             .AddAppMentionHandler<FplPlayerCommandHandler>()
             .AddAppMentionHandler<FplStandingsCommandHandler>()

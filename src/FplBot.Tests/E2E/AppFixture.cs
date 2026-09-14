@@ -37,6 +37,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using FplBot.Services.WebApi.Slack.Handlers.Reactors;
+using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using Testcontainers.Redis;
 
 namespace FplBot.Tests.E2E;
@@ -56,7 +57,7 @@ public class AppFixture : IAsyncLifetime
     private HttpClient _client = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
-    public WorkspaceInstallationHandler Manager { get; private set; } = null!;
+    public Installation Manager { get; private set; } = null!;
     public ISlackClient SlackClient { get; private set; } = null!;
 
     public virtual async ValueTask InitializeAsync()
@@ -129,7 +130,7 @@ public class AppFixture : IAsyncLifetime
             svc.ConfigureApp(_app);
 
         _managerScope = _app.Services.CreateScope();
-        Manager = new WorkspaceInstallationHandler(
+        Manager = new Installation(
             _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>(),
             _managerScope.ServiceProvider.GetRequiredService<IPublishEndpoint>(),
             _managerScope.ServiceProvider.GetRequiredService<WorkspaceOwnerUninstallSlackWorkspace>());

@@ -2,7 +2,7 @@ using Elasticsearch.Net;
 using Nest;
 using Testcontainers.Elasticsearch;
 
-namespace FplBot.Tests.E2E;
+namespace FplBot.Tests.E2E.Search;
 
 // One real Elasticsearch container, shared across every test class in the "Elasticsearch" collection
 // (mirrors Factory's shared Redis container pattern). Each test seeds its own uniquely-named

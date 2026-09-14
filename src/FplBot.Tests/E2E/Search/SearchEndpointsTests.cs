@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Nest;
 
-namespace FplBot.Tests.E2E;
+namespace FplBot.Tests.E2E.Search;
 
 // Exercises the real SearchService against a real (Testcontainers) Elasticsearch instance —
 // data is seeded straight into the index, then the endpoint handler is called and asked to
