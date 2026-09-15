@@ -10,4 +10,5 @@ public interface IDomainRepository
     Task<IEnumerable<Installation>> GetAllInstallations();
     Task Delete(Installation installation);
     Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents);
+    Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId);
 }

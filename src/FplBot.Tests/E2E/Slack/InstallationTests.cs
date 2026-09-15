@@ -75,4 +75,26 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
 
         Assert.Empty(_publishEndpoint.PublishedMessages);
     }
+
+    [Fact]
+    public async Task GetChannelSubscription_ReturnsFollowedLeagueId_ForExistingChannel()
+    {
+        var installation = await fixture.SeedInstallation();
+        var channel = installation.ChannelSubscriptions.Single();
+
+        var result = await Repo.GetChannelSubscription(installation.Id, channel.ChannelId);
+
+        Assert.NotNull(result);
+        Assert.Equal(channel.FollowedLeagueId, result!.FollowedLeagueId);
+    }
+
+    [Fact]
+    public async Task GetChannelSubscription_ReturnsNull_ForNonexistentChannel()
+    {
+        var installation = await fixture.SeedInstallation();
+
+        var result = await Repo.GetChannelSubscription(installation.Id, "#does-not-exist");
+
+        Assert.Null(result);
+    }
 }
