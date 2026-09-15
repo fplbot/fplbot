@@ -15,18 +15,15 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.NewPlayers.Count()} new players");
-        var installations = await slackTeamRepo.GetAllInstallations();
         var filtered = notification.NewPlayers.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
             var formatted = Formatter.FormatNewPlayers(filtered);
+            var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
 
-            foreach (var installation in installations)
+            foreach (var (teamId, channelId) in subscribedChannels)
             {
-                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
-                {
-                    await context.Publish(new PublishToSlack(installation.Id, channel.ChannelId, formatted));
-                }
+                await context.Publish(new PublishToSlack(teamId, channelId, formatted));
             }
         }
         else
@@ -39,14 +36,11 @@ public class SlackNewPlayerHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.Transfers.Count()} new transfers");
-        var installations = await slackTeamRepo.GetAllInstallations();
         var formatted = Formatter.FormatTransferredPlayers(notification.Transfers);
-        foreach (var installation in installations)
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
-            {
-                await context.Publish(new PublishToSlack(installation.Id, channel.ChannelId, formatted));
-            }
+            await context.Publish(new PublishToSlack(teamId, channelId, formatted));
         }
     }
 }
