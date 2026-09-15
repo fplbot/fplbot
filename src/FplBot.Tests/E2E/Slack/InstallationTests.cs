@@ -1,5 +1,6 @@
 using FakeItEasy;
 using FplBot.Data.Slack;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Services.WebApi.Slack.Handlers.Reactors;
 using FplBot.Tests.Helpers;
@@ -39,6 +40,21 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
         Assert.Equal("T1", appInstalled.TeamId);
         Assert.Equal("Team One", appInstalled.TeamName);
         Assert.Equal(ChatPlatform.Slack, appInstalled.Platform);
+    }
+
+    [Fact]
+    public async Task Install_OnAlreadyInstalledTeam_PreservesExistingChannelSubscriptions()
+    {
+        await _sut.Install(new Workspace("T1", "Team One", "token1"));
+        await fixture.Subscribe("T1", "#fplbot", FplEvent.Standings);
+
+        await _sut.Install(new Workspace("T1", "Team One", "token2"));
+
+        var stored = await Repo.GetInstallation("T1");
+        Assert.Equal("token2", stored.Token);
+        var channel = Assert.Single(stored.ChannelSubscriptions);
+        Assert.Equal("#fplbot", channel.ChannelId);
+        Assert.True(channel.IsSubscribedTo(FplEvent.Standings));
     }
 
     [Fact]

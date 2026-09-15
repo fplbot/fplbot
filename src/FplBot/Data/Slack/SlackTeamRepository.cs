@@ -192,7 +192,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     // its exact key. Deliberately avoids a KEYS pattern scan on "SlackChannelSub-{teamId}-*": that
     // glob also matches OTHER teams whose id happens to start with this team's id plus a dash
     // (e.g. scanning for "DEV-SLACK" would also match "DEV-SLACK-2", "DEV-SLACK-BARE", ...).
-    public async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId)
+    private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId)
     {
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
         var result = new List<ChannelSubscription>();

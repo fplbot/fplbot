@@ -207,7 +207,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var result = await AdminSlackEndpoints.DeleteChannelSubscription(teamId, "#fplbot", fixture.SlackRepo);
 
         Assert.IsAssignableFrom<IValueHttpResult>(result);
-        var remaining = await fixture.SlackRepo.GetChannelSubscriptions(teamId);
-        Assert.DoesNotContain(remaining, c => c.ChannelId == "#fplbot");
+        var remaining = await fixture.SlackRepo.GetInstallation(teamId);
+        Assert.DoesNotContain(remaining.ChannelSubscriptions, c => c.ChannelId == "#fplbot");
     }
 }
