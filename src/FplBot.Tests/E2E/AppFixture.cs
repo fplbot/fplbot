@@ -101,7 +101,7 @@ public class AppFixture : IAsyncLifetime
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", true)
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["REDIS_URL"] = redisUrl })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["REDIS_URL"] = redisUrl, ["OTEL_ENABLED"] = "false" })
             .Build();
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });

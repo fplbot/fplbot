@@ -91,7 +91,7 @@ public static class FplBotApplication
             configureBus(x);
         });
 
-        if (env.IsDevelopment())
+        if (env.IsDevelopment() && config.GetValue("OTEL_ENABLED", true))
             ConfigureOpenTelemetry(services, config, active);
 
         foreach (var svc in active)
@@ -128,13 +128,24 @@ public static class FplBotApplication
         }
     }
 
+    // Matches FplBot.AppHost/Program.cs's builder.AddServiceBusEmulator(..., port: 6000). The
+    // emulator's own admin REST calls (create queue/topic/subscription) show up as unnamed
+    // GET/PUT spans with no useful attributes — MassTransit's "Configure Topology" activity
+    // already reports the same setup with a readable name, so the raw HTTP calls are just noise.
+    private const int LocalServiceBusEmulatorPort = 6000;
+
     private static void ConfigureOpenTelemetry(IServiceCollection services, IConfiguration config, List<IFplBotService> active)
     {
         services.AddOpenTelemetry()
             .ConfigureResource(r => r.AddService(GetOtelServiceName(active)))
             .WithTracing(tracing => tracing
+                // MassTransit's own "Configure Topology" spans are per-queue startup wiring, not
+                // application behavior — they flood the dashboard with dozens of near-identical,
+                // attribute-less traces on every dev restart.
+                .SetSampler(new DropByNameSampler("Configure Topology"))
                 .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
+                .AddHttpClientInstrumentation(o => o.FilterHttpRequestMessage =
+                    req => req.RequestUri?.Port != LocalServiceBusEmulatorPort)
                 .AddSource(DiagnosticHeaders.DefaultListenerName)
                 .AddSource(FplBotDiagnostics.ActivitySourceName)
                 .AddOtlpExporter(o =>
@@ -142,6 +153,14 @@ public static class FplBotApplication
                     o.Endpoint = new Uri(config["OTLP_DASHBOARD_ENDPOINT"]!);
                     o.Protocol = OtlpExportProtocol.Grpc;
                 }));
+    }
+
+    private sealed class DropByNameSampler(params string[] excludedNames) : Sampler
+    {
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters) =>
+            excludedNames.Contains(samplingParameters.Name)
+                ? new SamplingResult(SamplingDecision.Drop)
+                : new SamplingResult(SamplingDecision.RecordAndSample);
     }
 
     private static void ConfigureCommon(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redisConn)
