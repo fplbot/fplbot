@@ -52,14 +52,6 @@ targets.Add("backup-discord-index-prod",
     "Dump Discord guild/channel Redis data from prod to a local JSON file (read-only)",
     async () => await BackupDiscordIndex(ProdApp));
 
-targets.Add("backfill-discord-index-test",
-    "Backfill GuildIndex/GuildChannelSubIndex-* Redis sets on the test app from existing data (idempotent)",
-    async () => await BackfillDiscordIndex(TestApp));
-
-targets.Add("backfill-discord-index-prod",
-    "Backfill GuildIndex/GuildChannelSubIndex-* Redis sets on prod from existing data (idempotent)",
-    async () => await BackfillDiscordIndex(ProdApp));
-
 await targets.RunAndExitAsync(args);
 
 async Task BuildImage()
@@ -119,16 +111,6 @@ async Task BackupDiscordIndex(string app)
 
     await Command.RunAsync("dotnet",
         $"run --project src/FplBot -- --backup-discord-channel-index {outputPath}",
-        configureEnvironment: env => env["REDIS_URL"] = redisUrl,
-        secrets: [redisUrl]);
-}
-
-async Task BackfillDiscordIndex(string app)
-{
-    var redisUrl = await GetRedisUrl(app);
-
-    await Command.RunAsync("dotnet",
-        "run --project src/FplBot -- --backfill-discord-channel-index",
         configureEnvironment: env => env["REDIS_URL"] = redisUrl,
         secrets: [redisUrl]);
 }

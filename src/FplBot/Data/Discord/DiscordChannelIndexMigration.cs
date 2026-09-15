@@ -29,34 +29,4 @@ public static class DiscordChannelIndexMigration
 
         Console.WriteLine($"Backed up {guildKeys.Count} guild(s) and {channelKeys.Count} channel subscription(s) to {outputPath}");
     }
-
-    public static async Task Backfill(string redisUrl)
-    {
-        var redis = FplBotApplication.ConnectToRedis(redisUrl);
-        var db = redis.GetDatabase();
-        var server = redis.GetServers().Single();
-
-        var guildKeys = server.Keys(pattern: "Guild-*").ToList();
-        var channelKeys = server.Keys(pattern: "GuildSubs-*-Channel-*").ToList();
-
-        var guildsIndexed = 0;
-        await Parallel.ForEachAsync(guildKeys, new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrentFetches }, async (key, _) =>
-        {
-            var guildId = await db.HashGetAsync(key, "guildid");
-            if (!guildId.HasValue) return;
-            await db.SetAddAsync("GuildIndex", guildId);
-            Interlocked.Increment(ref guildsIndexed);
-        });
-
-        var channelsIndexed = 0;
-        await Parallel.ForEachAsync(channelKeys, new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrentFetches }, async (key, _) =>
-        {
-            var fields = await db.HashGetAsync(key, ["guildid", "channelid"]);
-            if (!fields[0].HasValue || !fields[1].HasValue) return;
-            await db.SetAddAsync($"GuildChannelSubIndex-{fields[0]}", fields[1]);
-            Interlocked.Increment(ref channelsIndexed);
-        });
-
-        Console.WriteLine($"Backfilled GuildIndex ({guildsIndexed} guild(s)) and GuildChannelSubIndex-* ({channelsIndexed} channel subscription(s))");
-    }
 }
