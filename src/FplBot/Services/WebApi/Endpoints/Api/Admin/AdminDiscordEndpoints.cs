@@ -1,3 +1,6 @@
+using Discord.Net.HttpClients;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord;
@@ -11,6 +14,10 @@ namespace FplBot.WebApi.Endpoints.Api.Admin;
 public record GuildWithSubsDto(string GuildId, string GuildName, IEnumerable<ChannelSubscriptionDto> Subscriptions);
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
+
+public record UpdateGuildChannelSubscriptionsRequest(IEnumerable<EventSubscription> Subscriptions);
+
+public record MoveGuildChannelRequest(string NewChannelId);
 
 public static class AdminDiscordEndpoints
 {
@@ -26,10 +33,15 @@ public static class AdminDiscordEndpoints
         group.MapPost("/discord/slashcommands/install-global", InstallGlobalSlashCommands);
         group.MapPost("/discord/slashcommands/uninstall", UninstallSlashCommands);
 
-        group.MapGet("/discord/subscriptions", GetSubscriptions);
-        group.MapDelete("/discord/subscriptions/{guildId}/{channelId}", DeleteSubscription);
+        group.MapGet("/discord/servers", GetSubscriptions);
+        group.MapDelete("/discord/servers/{guildId}/{channelId}", DeleteSubscription);
         group.MapDelete("/discord/guilds/{guildId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{guildId}", DeleteGuild);
+
+        group.MapGet("/discord/guilds/{guildId}", GetGuild);
+        group.MapPost("/discord/guilds/{guildId}/channels/{channelId}/publish-standings", PublishStandings);
+        group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
+        group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/channel", MoveChannel);
 
         group.MapPost("/discord/broadcast", BroadcastToDiscord);
     }
@@ -127,7 +139,126 @@ public static class AdminDiscordEndpoints
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
         new(guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
-            channel.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())));
+            ToEventSubscriptions(channel));
+
+    private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
+        channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
+
+    private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
+
+    internal static async Task<IResult> GetGuild(
+        string guildId,
+        IGuildRepository repo,
+        ILeagueClient leagueClient,
+        IDiscordClient discordClient,
+        ILogger<Program> logger)
+    {
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        if (installation == null) return TypedResults.NotFound();
+
+        IEnumerable<long>? guildChannelIds = null;
+        try
+        {
+            var guildChannels = await discordClient.GuildChannelsGet(guildId);
+            guildChannelIds = guildChannels.Select(c => c.Id);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+        }
+
+        var channels = new List<object>();
+        foreach (var channel in installation.ChannelSubscriptions)
+        {
+            var leagueId = channel.FollowedLeagueId?.Value;
+
+            string? leagueName = null;
+            if (leagueId.HasValue)
+            {
+                var league = await leagueClient.GetClassicLeague((int)leagueId.Value, tolerate404: true);
+                leagueName = league?.Properties?.Name;
+            }
+
+            var channelStatus = guildChannelIds?.Any(id => id.ToString() == channel.ChannelId);
+
+            channels.Add(new
+            {
+                channel = channel.ChannelId,
+                leagueId,
+                leagueName,
+                subscriptions = ToEventSubscriptions(channel),
+                channelStatus
+            });
+        }
+
+        return TypedResults.Ok(new
+        {
+            guildId = installation.Id,
+            guildName = installation.Name,
+            channels
+        });
+    }
+
+    internal static async Task<IResult> PublishStandings(
+        string guildId,
+        string channelId,
+        IGuildRepository repo,
+        ISendEndpointProvider sendEndpointProvider,
+        IGlobalSettingsClient gameweekClient)
+    {
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        if (installation == null) return TypedResults.NotFound();
+
+        var channel = installation.GetChannel(channelId);
+        if (channel?.FollowedLeagueId is null)
+        {
+            return TypedResults.Ok(new { published = false, message = $"Did not publish. Channel {channelId} is not following a league." });
+        }
+
+        var settings = await gameweekClient.GetGlobalSettings();
+        var gameweek = settings!.Gameweeks.GetCurrentGameweek();
+
+        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordGameweekFinishedHandler)}"));
+        await endpoint.Send(new PublishStandingsToDiscordGuild(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+
+        return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
+    }
+
+    internal static async Task<IResult> UpdateChannelSubscriptions(
+        string guildId,
+        string channelId,
+        UpdateGuildChannelSubscriptionsRequest request,
+        IGuildRepository repo)
+    {
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        if (installation == null) return TypedResults.NotFound();
+
+        var wanted = request.Subscriptions.Select(ToFplEvent).ToHashSet();
+        var current = installation.GetChannel(channelId)?.Events.Current.ToHashSet() ?? [];
+
+        installation.Unsubscribe(channelId, current.Except(wanted).ToArray());
+        installation.Subscribe(channelId, wanted.Except(current).ToArray());
+
+        await repo.Save(installation);
+        return TypedResults.Ok(new { message = $"Updated subscriptions for {channelId}" });
+    }
+
+    internal static async Task<IResult> MoveChannel(
+        string guildId,
+        string channelId,
+        MoveGuildChannelRequest request,
+        IGuildRepository repo)
+    {
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        if (installation == null) return TypedResults.NotFound();
+
+        if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
+
+        installation.MoveChannel(channelId, request.NewChannelId);
+        await repo.Save(installation);
+
+        return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
+    }
 
     internal static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
     {

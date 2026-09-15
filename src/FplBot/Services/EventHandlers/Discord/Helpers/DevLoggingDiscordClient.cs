@@ -40,4 +40,11 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
             .Select((c, i) => new DiscordClient.ApplicationsCommand((i + 1).ToString(), c.Name, c.Description));
         return Task.FromResult(fake);
     }
+
+    public Task<IEnumerable<DiscordClient.Channel>> GuildChannelsGet(string guildId)
+    {
+        if (!env.IsDevelopment()) return inner.GuildChannelsGet(guildId);
+        logger.LogInformation("[DEV] Discord guilds.channels.get → guild:{GuildId} (not calling real API)", guildId);
+        return Task.FromResult(Enumerable.Empty<DiscordClient.Channel>());
+    }
 }

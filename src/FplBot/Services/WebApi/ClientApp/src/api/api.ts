@@ -4,6 +4,7 @@ import type {
   ChannelFilter,
   DiscordSlashCommand,
   EventSubscription,
+  GuildDetails,
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
@@ -170,13 +171,13 @@ export function uninstallSlashCommands(): Promise<MessageResponse> {
   return postJson("/api/admin/discord/slashcommands/uninstall");
 }
 
-export function getDiscordSubscriptions(query: string, page: number, pageSize: number): Promise<PagedResult<GuildWithSubs>> {
+export function getDiscordServers(query: string, page: number, pageSize: number): Promise<PagedResult<GuildWithSubs>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
-  return request(`/api/admin/discord/subscriptions?${params.toString()}`);
+  return request(`/api/admin/discord/servers?${params.toString()}`);
 }
 
 export function deleteDiscordSubscription(guildId: string, channelId: string): Promise<MessageResponse> {
-  return request(`/api/admin/discord/subscriptions/${guildId}/${channelId}`, { method: "DELETE" });
+  return request(`/api/admin/discord/servers/${guildId}/${channelId}`, { method: "DELETE" });
 }
 
 export function deleteAllDiscordSubscriptionsForGuild(guildId: string): Promise<MessageResponse> {
@@ -185,6 +186,29 @@ export function deleteAllDiscordSubscriptionsForGuild(guildId: string): Promise<
 
 export function deleteDiscordGuild(guildId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/guilds/${guildId}`, { method: "DELETE" });
+}
+
+export async function getGuild(guildId: string): Promise<GuildDetails | null> {
+  const res = await fetch(`/api/admin/discord/guilds/${guildId}`, { credentials: "include" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new AdminApiError(`getGuild() failed with status ${res.status}`, res.status);
+  return res.json();
+}
+
+export function publishStandingsToGuild(guildId: string, channelId: string): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/publish-standings`);
+}
+
+export function updateGuildChannelSubscriptions(
+  guildId: string,
+  channelId: string,
+  subscriptions: EventSubscription[]
+): Promise<MessageResponse> {
+  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/subscriptions`, { subscriptions }, "PUT");
+}
+
+export function moveGuildChannel(guildId: string, channelId: string, newChannelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/channel`, { newChannelId }, "PUT");
 }
 
 // ---- OAuth (public site install buttons) ----

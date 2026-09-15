@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
-import { getTeams, uninstallTeam } from "../../api/api";
+import { ref } from "vue";
+import { getTeams, uninstallTeam, deleteChannelSubscription } from "../../api/api";
 import type { TeamSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import { useAdminListQuery } from "../../composables/useAdminListQuery";
+import AdminPager from "../../components/AdminPager.vue";
 
-const query = ref("");
-const page = ref(1);
 const pageSize = 25;
 const teams = ref<TeamSummary[]>([]);
 const totalCount = ref(0);
 const loading = ref(true);
 const error = ref("");
 const uninstalling = ref<string | null>(null);
+const deleting = ref<string | null>(null);
 
 async function load() {
   loading.value = true;
@@ -27,12 +28,7 @@ async function load() {
   }
 }
 
-onMounted(load);
-watch(query, () => {
-  page.value = 1;
-  load();
-});
-watch(page, load);
+const { query, page, goToPage } = useAdminListQuery(load);
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
@@ -47,6 +43,20 @@ async function submitUninstall(team: TeamSummary) {
     error.value = describeAdminError(e);
   } finally {
     uninstalling.value = null;
+  }
+}
+
+async function removeSub(teamId: string, channelId: string) {
+  const key = `${teamId}-${channelId}`;
+  deleting.value = key;
+  error.value = "";
+  try {
+    await deleteChannelSubscription(teamId, channelId);
+    await load();
+  } catch (e) {
+    error.value = describeAdminError(e);
+  } finally {
+    deleting.value = null;
   }
 }
 </script>
@@ -65,13 +75,16 @@ async function submitUninstall(team: TeamSummary) {
       <p v-if="error" class="alert alert-error">{{ error }}</p>
       <div v-if="loading" class="spinner"></div>
 
-      <div v-else class="team-list">
+      <template v-else>
+        <AdminPager v-if="teams.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
+
+        <div class="team-list">
         <div v-for="t in teams" :key="t.teamId" class="team">
           <div class="team-header">
             <h3>{{ t.teamName }} <span class="team-id">({{ t.teamId }})</span></h3>
             <div class="team-actions">
               <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
-              <router-link :to="`/admin/teams/${t.teamId}`" class="btn small">Details</router-link>
+              <router-link :to="`/admin/teams/${t.teamId}`" class="btn small btn-secondary">Edit</router-link>
               <button
                 class="btn small danger"
                 :disabled="t.pendingRemoval || uninstalling === t.teamId"
@@ -87,6 +100,7 @@ async function submitUninstall(team: TeamSummary) {
                 <th>Channel</th>
                 <th>League</th>
                 <th>Subscriptions</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -94,19 +108,35 @@ async function submitUninstall(team: TeamSummary) {
                 <td>{{ s.channelId }}</td>
                 <td>{{ s.leagueId || "—" }}</td>
                 <td>{{ s.subscriptions.join(", ") || "—" }}</td>
+                <td class="row-actions">
+                  <router-link
+                    class="btn small icon-btn"
+                    title="Manage channel"
+                    aria-label="Manage channel"
+                    :to="{ name: 'admin-team-channel-manage', params: { entityId: t.teamId, channelId: s.channelId } }"
+                  >
+                    ✏️
+                  </router-link>
+                  <button
+                    class="btn small danger icon-btn"
+                    title="Delete channel subscription"
+                    aria-label="Delete channel subscription"
+                    :disabled="deleting === `${t.teamId}-${s.channelId}`"
+                    @click="removeSub(t.teamId, s.channelId)"
+                  >
+                    ❌
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
           <p v-else class="no-subs">No channel subscriptions.</p>
         </div>
         <p v-if="teams.length === 0">No workspaces found.</p>
-      </div>
+        </div>
 
-      <div class="pager">
-        <button class="btn small" :disabled="page <= 1" @click="page--">&larr; Prev</button>
-        <span>Page {{ page }} of {{ totalPages() }} ({{ totalCount }} total)</span>
-        <button class="btn small" :disabled="page >= totalPages()" @click="page++">Next &rarr;</button>
-      </div>
+        <AdminPager v-if="teams.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
+      </template>
     </div>
   </div>
 </template>
@@ -128,12 +158,19 @@ async function submitUninstall(team: TeamSummary) {
   gap: 1.5rem;
 }
 
+.team {
+  background: #e9ebef;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
 .team-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .team-actions {
@@ -144,7 +181,7 @@ async function submitUninstall(team: TeamSummary) {
 }
 
 .team h3 {
-  margin-bottom: 0;
+  margin: 0;
   font-size: 1rem;
 }
 
@@ -158,5 +195,39 @@ async function submitUninstall(team: TeamSummary) {
   color: #6b7280;
   font-style: italic;
   font-size: 0.9rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.icon-btn {
+  padding: 0.3rem 0.5rem;
+  line-height: 1;
+}
+
+.icon-btn:not(.danger) {
+  background: #f3f4f6;
+  color: inherit;
+  border: 1px solid #d1d5db;
+}
+
+.icon-btn:not(.danger):hover {
+  background: #e5e7eb;
+  color: inherit;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: inherit;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+  color: inherit;
 }
 </style>

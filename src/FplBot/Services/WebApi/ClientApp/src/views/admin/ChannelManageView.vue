@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getTeam, updateChannelSubscriptions, moveChannel, deleteChannelSubscription, publishStandings, ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
-import type { TeamDetails, TeamDetailsChannel, EventSubscription } from "../../api/types";
+import { ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
+import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
+import type { EventSubscription } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
-const props = defineProps<{ teamId: string; channelId: string }>();
+const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
 
-const team = ref<TeamDetails | null>(null);
-const channel = ref<TeamDetailsChannel | null>(null);
+const details = ref<EntityDetails | null>(null);
+const channel = ref<EntityChannel | null>(null);
 const loading = ref(true);
 const loadError = ref("");
 
@@ -30,15 +31,15 @@ async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    const data = await getTeam(props.teamId);
+    const data = await props.adapter.getDetails(props.entityId);
     if (data == null) {
-      router.replace("/admin/slack");
+      router.replace(props.adapter.listRoute);
       return;
     }
-    team.value = data;
+    details.value = data;
     const found = data.channels.find((c) => c.channel === props.channelId);
     if (!found) {
-      router.replace(`/admin/teams/${props.teamId}`);
+      router.replace({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
       return;
     }
     channel.value = found;
@@ -79,7 +80,7 @@ async function saveSubscriptions() {
   savingSubscriptions.value = true;
   subscriptionsFeedback.value = null;
   try {
-    const res = await updateChannelSubscriptions(props.teamId, props.channelId, [...selectedSubscriptions.value]);
+    const res = await props.adapter.updateChannelSubscriptions(props.entityId, props.channelId, [...selectedSubscriptions.value]);
     subscriptionsFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -95,9 +96,9 @@ async function submitMoveChannel() {
   movingChannel.value = true;
   moveFeedback.value = null;
   try {
-    const res = await moveChannel(props.teamId, props.channelId, newChannelId.value);
+    const res = await props.adapter.moveChannel(props.entityId, props.channelId, newChannelId.value);
     moveFeedback.value = { type: "success", text: res.message };
-    router.replace(`/admin/teams/${props.teamId}/channels/${encodeURIComponent(newChannelId.value)}`);
+    router.replace({ name: props.adapter.manageRouteName, params: { entityId: props.entityId, channelId: newChannelId.value } });
   } catch (e) {
     moveFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
@@ -109,7 +110,7 @@ async function submitPublish() {
   publishing.value = true;
   publishFeedback.value = null;
   try {
-    const res = await publishStandings(props.teamId, props.channelId);
+    const res = await props.adapter.publishStandings(props.entityId, props.channelId);
     publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
   } catch (e) {
     publishFeedback.value = { type: "error", text: describeAdminError(e) };
@@ -122,8 +123,8 @@ async function submitDelete() {
   if (!confirm(`Delete the subscription for channel ${props.channelId}? This cannot be undone.`)) return;
   deleting.value = true;
   try {
-    await deleteChannelSubscription(props.teamId, props.channelId);
-    router.push(`/admin/teams/${props.teamId}`);
+    await props.adapter.deleteChannelSubscription(props.entityId, props.channelId);
+    router.push({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
   } catch (e) {
     loadError.value = describeAdminError(e);
   } finally {
@@ -134,7 +135,9 @@ async function submitDelete() {
 
 <template>
   <div>
-    <router-link :to="`/admin/teams/${teamId}`" class="back-link">&larr; Back to {{ team?.teamName || "team" }}</router-link>
+    <router-link :to="{ name: adapter.detailsRouteName, params: { entityId } }" class="back-link">
+      &larr; Back to {{ details?.name || "details" }}
+    </router-link>
 
     <div v-if="loading" class="spinner"></div>
     <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>

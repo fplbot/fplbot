@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref } from "vue";
 import {
-  getDiscordSubscriptions,
+  getDiscordServers,
   deleteDiscordSubscription,
   deleteAllDiscordSubscriptionsForGuild,
   deleteDiscordGuild,
 } from "../../api/api";
 import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import { useAdminListQuery } from "../../composables/useAdminListQuery";
+import AdminPager from "../../components/AdminPager.vue";
 
-const query = ref("");
-const page = ref(1);
 const pageSize = 25;
 const guilds = ref<GuildWithSubs[]>([]);
 const totalCount = ref(0);
@@ -22,7 +22,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await getDiscordSubscriptions(query.value, page.value, pageSize);
+    const result = await getDiscordServers(query.value, page.value, pageSize);
     guilds.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
@@ -32,12 +32,7 @@ async function load() {
   }
 }
 
-onMounted(load);
-watch(query, () => {
-  page.value = 1;
-  load();
-});
-watch(page, load);
+const { query, page, goToPage } = useAdminListQuery(load);
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
@@ -88,38 +83,46 @@ async function removeGuild(guildId: string, guildName: string) {
 
 <template>
   <div>
-    <h1>Discord subscriptions</h1>
-    <p class="lead">{{ totalCount }} guild(s) with fplbot installed.</p>
+    <h1>Discord servers</h1>
+    <p class="lead">{{ totalCount }} server(s) with fplbot installed.</p>
 
     <div class="card">
       <div class="field">
-        <label for="guild-search">Search by guild name or id</label>
+        <label for="guild-search">Search by server name or id</label>
         <input id="guild-search" v-model="query" type="text" placeholder="e.g. my server" />
       </div>
 
       <p v-if="error" class="alert alert-error">{{ error }}</p>
       <div v-if="loading" class="spinner"></div>
 
-      <div v-else class="guild-list">
+      <template v-else>
+        <AdminPager v-if="guilds.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
+
+        <div class="guild-list">
         <div v-for="g in guilds" :key="g.guildId" class="guild">
           <div class="guild-header">
             <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
             <div class="guild-actions">
-              <button
-                v-if="g.subscriptions.length > 0"
-                class="btn small danger"
-                :disabled="deleting === `guild-subs-${g.guildId}`"
-                @click="removeAllSubs(g.guildId, g.guildName)"
-              >
-                Delete all subs
-              </button>
-              <button
-                class="btn small danger"
-                :disabled="deleting === `guild-${g.guildId}`"
-                @click="removeGuild(g.guildId, g.guildName)"
-              >
-                Delete guild
-              </button>
+              <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.guildId } }">
+                Edit
+              </router-link>
+              <div class="guild-actions-danger">
+                <button
+                  v-if="g.subscriptions.length > 0"
+                  class="btn small danger"
+                  :disabled="deleting === `guild-subs-${g.guildId}`"
+                  @click="removeAllSubs(g.guildId, g.guildName)"
+                >
+                  Delete all subs
+                </button>
+                <button
+                  class="btn small danger"
+                  :disabled="deleting === `guild-${g.guildId}`"
+                  @click="removeGuild(g.guildId, g.guildName)"
+                >
+                  Delete guild
+                </button>
+              </div>
             </div>
           </div>
           <table v-if="g.subscriptions.length > 0" class="admin-table">
@@ -136,13 +139,23 @@ async function removeGuild(guildId: string, guildName: string) {
                 <td>{{ s.channelId }}</td>
                 <td>{{ s.leagueId || "—" }}</td>
                 <td>{{ s.subscriptions.join(", ") || "—" }}</td>
-                <td>
+                <td class="row-actions">
+                  <router-link
+                    class="btn small icon-btn"
+                    title="Manage channel"
+                    aria-label="Manage channel"
+                    :to="{ name: 'admin-guild-channel-manage', params: { entityId: g.guildId, channelId: s.channelId } }"
+                  >
+                    ✏️
+                  </router-link>
                   <button
-                    class="btn small danger"
+                    class="btn small danger icon-btn"
+                    title="Delete channel subscription"
+                    aria-label="Delete channel subscription"
                     :disabled="deleting === `${g.guildId}-${s.channelId}`"
                     @click="removeSub(g.guildId, s.channelId)"
                   >
-                    Delete
+                    ❌
                   </button>
                 </td>
               </tr>
@@ -151,13 +164,10 @@ async function removeGuild(guildId: string, guildName: string) {
           <p v-else class="no-subs">No channel subscriptions.</p>
         </div>
         <p v-if="guilds.length === 0">No guilds found.</p>
-      </div>
+        </div>
 
-      <div class="pager">
-        <button class="btn small" :disabled="page <= 1" @click="page--">&larr; Prev</button>
-        <span>Page {{ page }} of {{ totalPages() }} ({{ totalCount }} total)</span>
-        <button class="btn small" :disabled="page >= totalPages()" @click="page++">Next &rarr;</button>
-      </div>
+        <AdminPager v-if="guilds.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
+      </template>
     </div>
   </div>
 </template>
@@ -174,22 +184,39 @@ async function removeGuild(guildId: string, guildName: string) {
   gap: 1.5rem;
 }
 
+.guild {
+  background: #e9ebef;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
 .guild-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .guild-actions {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
+.guild-actions-danger {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid #fecaca;
+}
+
 .guild h3 {
-  margin-bottom: 0;
+  margin: 0;
   font-size: 1rem;
 }
 
@@ -203,5 +230,39 @@ async function removeGuild(guildId: string, guildName: string) {
   color: #6b7280;
   font-style: italic;
   font-size: 0.9rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.icon-btn {
+  padding: 0.3rem 0.5rem;
+  line-height: 1;
+}
+
+.icon-btn:not(.danger) {
+  background: #f3f4f6;
+  color: inherit;
+  border: 1px solid #d1d5db;
+}
+
+.icon-btn:not(.danger):hover {
+  background: #e5e7eb;
+  color: inherit;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: inherit;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+  color: inherit;
 }
 </style>
