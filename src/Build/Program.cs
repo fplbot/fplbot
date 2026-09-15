@@ -67,6 +67,14 @@ targets.Add("backfill-slack-index-prod",
     "Backfill the TeamIndex Redis set on prod from existing TeamId-* keys (idempotent)",
     async () => await BackfillSlackIndex(ProdApp));
 
+targets.Add("backfill-event-index-test",
+    "Backfill the per-event GuildEventIndex-*/SlackEventIndex-* sets on the test app from existing channel subscriptions (idempotent)",
+    async () => await BackfillEventIndexes(TestApp));
+
+targets.Add("backfill-event-index-prod",
+    "Backfill the per-event GuildEventIndex-*/SlackEventIndex-* sets on prod from existing channel subscriptions (idempotent)",
+    async () => await BackfillEventIndexes(ProdApp));
+
 await targets.RunAndExitAsync(args);
 
 async Task BuildImage(string? dockerBuildArgs = null)
@@ -166,6 +174,72 @@ async Task BackfillSlackIndex(string app)
     });
 
     Console.WriteLine($"Backfilled TeamIndex ({indexed} team(s)) on {app}");
+}
+
+async Task BackfillEventIndexes(string app)
+{
+    // Mirrors FplBot.Domain.FplEvent minus the "All" sentinel - see ExpandBackfillEvents. Build.csproj
+    // deliberately has no reference to FplBot's domain types (this whole file talks to Redis in raw
+    // strings), so the event names are duplicated here; this is one-off migration tooling meant to be
+    // deleted once the backfill has run against both apps (see backup-redis-{test,prod} for precedent).
+    string[] concreteFplEvents =
+    [
+        "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
+        "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates",
+        "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek"
+    ];
+
+    IEnumerable<string> ExpandBackfillEvents(string? subscriptionString)
+    {
+        if (string.IsNullOrWhiteSpace(subscriptionString)) return [];
+        var tokens = subscriptionString.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Contains("All") ? concreteFplEvents : tokens;
+    }
+
+    const int maxConcurrentFetches = 64;
+    var redisUrl = await GetRedisUrl(app);
+    var redis = await ConnectionMultiplexer.ConnectAsync(ParseRedisUrl(redisUrl));
+    var db = redis.GetDatabase();
+
+    var guildIds = await db.SetMembersAsync("GuildIndex");
+    var discordIndexed = 0;
+    await Parallel.ForEachAsync(guildIds, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (guildIdValue, _) =>
+    {
+        var guildId = guildIdValue.ToString();
+        var channelIds = await db.SetMembersAsync($"GuildChannelSubIndex-{guildId}");
+        foreach (var channelIdValue in channelIds)
+        {
+            var channelId = channelIdValue.ToString();
+            var subscriptions = await db.HashGetAsync($"GuildSubs-{guildId}-Channel-{channelId}", "subs");
+            var entry = $"{guildId}:{channelId}";
+            foreach (var fplEvent in ExpandBackfillEvents(subscriptions.ToString()))
+            {
+                await db.SetAddAsync($"GuildEventIndex-{fplEvent}", entry);
+            }
+            Interlocked.Increment(ref discordIndexed);
+        }
+    });
+
+    var teamIds = await db.SetMembersAsync("TeamIndex");
+    var slackIndexed = 0;
+    await Parallel.ForEachAsync(teamIds, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (teamIdValue, _) =>
+    {
+        var teamId = teamIdValue.ToString();
+        var channelIds = await db.SetMembersAsync($"SlackChannelSubIndex-{teamId}");
+        foreach (var channelIdValue in channelIds)
+        {
+            var channelId = channelIdValue.ToString();
+            var subscriptions = await db.HashGetAsync($"SlackChannelSub-{teamId}-{channelId}", "subscriptions");
+            var entry = $"{teamId}:{channelId}";
+            foreach (var fplEvent in ExpandBackfillEvents(subscriptions.ToString()))
+            {
+                await db.SetAddAsync($"SlackEventIndex-{fplEvent}", entry);
+            }
+            Interlocked.Increment(ref slackIndexed);
+        }
+    });
+
+    Console.WriteLine($"Backfilled event indexes on {app}: {discordIndexed} Discord channel(s), {slackIndexed} Slack channel(s)");
 }
 
 ConfigurationOptions ParseRedisUrl(string redisUrl)
