@@ -23,16 +23,21 @@ public class DiscordFixtureEventsHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Handling {message.FixtureEvents.Count} new fixture events");
-        var installations = await repo.GetAllInstallations();
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FixtureStatEvents);
 
-        foreach (var installation in installations)
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.ChannelSubscriptions)
-            {
-                await context.Publish(new PublishFixtureEventsToGuild(installation.Id, channel.ChannelId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
-            }
+            await context.Publish(new PublishFixtureEventsToGuild(guildId, channelId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
         }
     }
+
+    private static readonly FplEvent[] FixtureStatEvents =
+    [
+        FplEvent.FixtureGoals,
+        FplEvent.FixtureAssists,
+        FplEvent.FixtureCards,
+        FplEvent.FixturePenaltyMisses
+    ];
 
     public async Task Consume(ConsumeContext<PublishFixtureEventsToGuild> context)
     {
