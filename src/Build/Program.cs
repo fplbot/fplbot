@@ -27,7 +27,7 @@ targets.Add("ci",
 
 targets.Add("docker-build",
     "Build the Docker image once and tag it locally for all process types",
-    async () => await BuildImage(""));
+    async () => await BuildImage());
 
 targets.Add("docker-build-from-local",
     "Like docker-build, but for building on a local machine whose Docker defaults Heroku's registry rejects (e.g. Apple Silicon + Docker Desktop's containerd image store) - pins linux/amd64 and disables provenance/SBOM attestation manifests",
@@ -61,7 +61,7 @@ targets.Add("backup-redis-prod",
 
 await targets.RunAndExitAsync(args);
 
-async Task BuildImage(string dockerBuildArgs)
+async Task BuildImage(string? dockerBuildArgs = null)
 {
     await BuildClientApp();
     await PublishBackend();
