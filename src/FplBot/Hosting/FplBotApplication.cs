@@ -91,7 +91,6 @@ public static class FplBotApplication
             configureBus(x);
         });
 
-        if (env.IsDevelopment() && config.GetValue("OTEL_ENABLED", true))
             ConfigureOpenTelemetry(services, config, active);
 
         foreach (var svc in active)
