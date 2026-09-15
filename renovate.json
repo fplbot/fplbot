@@ -80,6 +80,17 @@
       ]
     },
     {
+      "description": "Group Aspire packages",
+      "groupName": "Aspire",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "/^Aspire\\./",
+        "AlmostServiceBus.Aspire.Hosting"
+      ]
+    },
+    {
       "description": "Group Testcontainers packages",
       "groupName": "Testcontainers",
       "automerge": true,
