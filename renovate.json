@@ -86,7 +86,8 @@
       "automergeType": "pr",
       "matchUpdateTypes": ["minor", "patch"],
       "matchPackageNames": [
-        "/^Aspire\\./"
+        "/^Aspire\\./",
+        "AlmostServiceBus.Aspire.Hosting"
       ]
     },
     {
