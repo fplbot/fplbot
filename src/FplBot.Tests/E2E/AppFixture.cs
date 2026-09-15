@@ -274,17 +274,17 @@ public class AppFixture : IAsyncLifetime
         return installation;
     }
 
-    public async Task<GuildFplSubscription> SeedGuildSubscription(int? leagueId = null,
+    public async Task<Installation> SeedGuildInstallation(int? leagueId = null,
         IEnumerable<EventSubscription>? subscriptions = null)
     {
-        var sub = new GuildFplSubscription(
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            leagueId,
-            subscriptions ?? []);
+        var guildId = Guid.NewGuid().ToString("N");
+        var channelId = Guid.NewGuid().ToString("N");
+        var events = (subscriptions ?? []).Select(s => Enum.Parse<FplEvent>(s.ToString()));
+        var channel = ChannelSubscription.Load(channelId, leagueId is { } id ? new ClassicLeagueId(id) : null, events);
+        var installation = Installation.Load(guildId, "Test Guild " + guildId, token: null, [channel]);
 
-        await Services.GetRequiredService<IGuildRepository>().InsertGuildSubscription(sub);
-        return sub;
+        await Services.GetRequiredService<IGuildRepository>().Save(installation);
+        return installation;
     }
 
     public async Task SeedSearchEntry(EntryItem entry)
