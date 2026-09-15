@@ -18,14 +18,10 @@ public class SlackPriceChangeHandler(
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count} price updates");
-        var installations = await slackTeamRepo.GetAllInstallations();
-        foreach (var installation in installations)
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.PriceChanges);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            var subs = installation.GetSubscriptionsTo(FplEvent.PriceChanges);
-            foreach (var sub in subs)
-            {
-                await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId:installation.Id, ChannelId :sub.ChannelId, notification.PlayersWithPriceChanges.ToList()));
-            }
+            await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId: teamId, ChannelId: channelId, notification.PlayersWithPriceChanges.ToList()));
         }
     }
 

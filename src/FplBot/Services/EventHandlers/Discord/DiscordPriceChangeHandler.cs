@@ -15,21 +15,18 @@ public class DiscordPriceChangeHandler(IGuildRepository repo, ILogger<DiscordPri
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
-        var installations = await repo.GetAllInstallations();
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.PriceChanges);
         var filtered = notification.PlayersWithPriceChanges.Where(c => c.IsRelevant());
 
         if (filtered.Any())
         {
             var formatted = Formatter.FormatPriceChanged(filtered);
 
-            foreach (var installation in installations)
+            if (!string.IsNullOrEmpty(formatted))
             {
-                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.PriceChanges))
+                foreach (var (guildId, channelId) in subscribedChannels)
                 {
-                    if (!string.IsNullOrEmpty(formatted))
-                    {
-                        await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "ℹ️ Price changes", formatted));
-                    }
+                    await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "ℹ️ Price changes", formatted));
                 }
             }
         }
