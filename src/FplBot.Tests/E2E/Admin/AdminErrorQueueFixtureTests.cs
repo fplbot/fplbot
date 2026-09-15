@@ -18,7 +18,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
 
                 await foreach (var sub in fixture.AdminClient.GetSubscriptionsAsync(topic.Name))
                 {
-                    if (sub.SubscriptionName != nameof(AlwaysFaultsConsumer))
+                    if (sub.SubscriptionName != nameof(AlwaysFaultsHandler))
                         continue;
 
                     var runtime = await fixture.AdminClient.GetSubscriptionRuntimePropertiesAsync(topic.Name, sub.SubscriptionName);
@@ -29,7 +29,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
             return false;
         });
 
-        Assert.True(found, "Expected the faulted PoisonTestMessage to appear on AlwaysFaultsConsumer's fault subscription.");
+        Assert.True(found, "Expected the faulted PoisonTestMessage to appear on AlwaysFaultsHandler's fault subscription.");
     }
 
     private static async Task<bool> WaitForConditionAsync(Func<Task<bool>> check, int attempts = 20)

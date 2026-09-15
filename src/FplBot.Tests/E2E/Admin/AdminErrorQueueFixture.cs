@@ -39,7 +39,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
                 // services.AddSingleton<AdminErrorQueueService>();
                 services.AddMassTransit(x =>
                 {
-                    x.AddConsumer<AlwaysFaultsConsumer>();
+                    x.AddConsumer<AlwaysFaultsHandler>();
                     x.UsingAzureServiceBus((ctx, cfg) =>
                     {
                         cfg.Host(_emulator.ConnectionString);
@@ -62,7 +62,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
 
 public record PoisonTestMessage(string Key, bool AlwaysFault);
 
-public class AlwaysFaultsConsumer : IConsumer<PoisonTestMessage>
+public class AlwaysFaultsHandler : IConsumer<PoisonTestMessage>
 {
     public static readonly ConcurrentDictionary<string, int> Attempts = new();
 
