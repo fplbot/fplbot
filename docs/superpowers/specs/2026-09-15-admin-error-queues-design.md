@@ -111,15 +111,18 @@ talks to ASB directly via the official SDK, the same way
   `Admin*Endpoints` groups (same `RequireAuthorization("IsAdmin")`
   gate):
   - `GET /admin/errors/queues` → `[{ topic, subscription, length }]`
-  - `GET /admin/errors/queues/{topic}/{subscription}/messages` →
-    peeked messages with fault details + body
-  - `POST /admin/errors/queues/{topic}/{subscription}/messages/{messageId}/retry`
-  - `POST /admin/errors/queues/{topic}/{subscription}/messages/{messageId}/discard`
-  - `POST /admin/errors/queues/{topic}/{subscription}/purge`
+  - `GET /admin/errors/queue/messages?topic=&subscription=` → peeked
+    messages with fault details + body
+  - `POST /admin/errors/queue/messages/{messageId}/retry?topic=&subscription=`
+  - `POST /admin/errors/queue/messages/{messageId}/discard?topic=&subscription=`
+  - `POST /admin/errors/queue/purge?topic=&subscription=`
 
-  (`topic` and `subscription` are both needed in the route — a
-  consumer handling more than one message type can have
-  same-named subscriptions on different fault topics.)
+  (`topic` and `subscription` are both needed to identify a queue — a
+  consumer handling more than one message type can have same-named
+  subscriptions on different fault topics. `topic` is passed as a
+  query parameter rather than a path segment because fault topic names
+  contain a literal `/`, e.g. `MassTransit/Fault--...--`, which would
+  break path-segment route matching.)
 - **New admin UI tab**, following the existing Slack/Discord/Search
   admin section pattern (Vue 3 SPA,
   `src/FplBot/Services/WebApi/ClientApp`):
@@ -159,12 +162,20 @@ faults again and reappears).
 
 ## Testing
 
-Integration test in `FplBot.Tests`, against the real local Azure
-Service Bus emulator (the same one `dev/RetryFaulted.cs` and
-`devenv.sh` already use — not the in-memory transport `AppFixture`
-uses for its MassTransit tests, since this feature is inherently
-ASB-specific): force a consumer to fault, assert the fault appears in
-its topic/subscription via the list/detail endpoints including the
-body, retry it and assert the subscription empties and the consumer
-reprocesses it, then repeat for discard (message gone, no reprocess)
-and purge (multiple faults, one call empties the subscription).
+`AppFixture` (used by every other E2E test in `FplBot.Tests`) wires
+MassTransit with `UsingInMemory(...)`, which has no fault topics/ASB
+concepts at all — unusable for this feature. Instead, use
+`AlmostServiceBus.TestHost` (already in this repo's dependency
+ecosystem — it backs the local dev emulator via
+`AlmostServiceBus.Aspire.Hosting` in `FplBot.AppHost`), whose
+`ServiceBusEmulatorFixture` runs an in-process, per-test-isolated ASB
+emulator with no Docker and sub-second startup. A new fixture wires a
+real `UsingAzureServiceBus(...)` bus against that emulator's
+connection string, plus a small always-faulting test-only consumer to
+produce real faults on demand (rather than relying on an existing
+production consumer's business logic to fail in a controlled way).
+
+Test coverage: force a fault, assert it appears in the list/peek
+endpoints including the body; retry it and assert the subscription
+empties and the consumer reprocesses it; discard it (gone, no
+reprocess); purge a queue with multiple faults in one call.
