@@ -9,13 +9,10 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
 {
     public async Task Process(CancellationToken stoppingToken)
     {
-        var allGuilds = await guildRepo.GetAllGuilds();
-        var allGuildSubs = await guildRepo.GetAllGuildSubscriptions();
+        var installations = await guildRepo.GetAllInstallations();
         var counter = 0;
-        foreach (var guild in allGuilds)
+        foreach (var guild in installations)
         {
-            var guildSubs = allGuildSubs.Where(s => s.GuildId == guild.Id).ToList();
-
             try
             {
                 var fetchedGuild = await discordClient.GuildGet(guild.Id);
@@ -26,13 +23,7 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
                 counter++;
                 logger.LogInformation("AccessCheck: {GuildId} ('{GuildName}') Guild #{Count} unknown to fplbot. "
                                       , counter, guild.Id, guild.Name);
-                foreach (var sub in guildSubs)
-                {
-                    await guildRepo.DeleteGuildSubscription(sub.GuildId, sub.ChannelId);
-                    logger.LogInformation("AccessCheck: {GuildId} Deleted sub {ChannelId}.",
-                        guild.Id, sub.ChannelId);
-                }
-                await guildRepo.DeleteGuild(guild.Id);
+                await guildRepo.Delete(guild);
                 logger.LogInformation("AccessCheck: {GuildId} ('{GuildName}') Guild deleted ❌", guild.Id, guild.Name);
             }
             catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.Forbidden)
