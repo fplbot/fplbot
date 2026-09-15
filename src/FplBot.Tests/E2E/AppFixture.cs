@@ -15,6 +15,7 @@ using FplBot.Domain;
 using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.WebApi;
+using FplBot.Tests.E2E.Discord;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using FplBot.Tests.Helpers;
 using MassTransit;
@@ -49,6 +50,8 @@ public class AppFixture : IAsyncLifetime
     private ConnectionMultiplexer _multiplexer = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
+
+    public DiscordMessageCapture DiscordCapture { get; } = new();
 
     public ISlackClient SlackClient { get; private set; } = null!;
 
@@ -132,7 +135,7 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
 
         builder.Services.RemoveAll<IDiscordClient>();
-        builder.Services.AddSingleton(A.Fake<IDiscordClient>());
+        builder.Services.AddSingleton(BuildCapturingDiscordClient());
 
         ConfigureSearchClient(builder.Services);
 
@@ -346,6 +349,28 @@ public class AppFixture : IAsyncLifetime
                                      }));
 
         return fakeSlackClient;
+    }
+
+    private IDiscordClient BuildCapturingDiscordClient()
+    {
+        var fakeDiscordClient = A.Fake<IDiscordClient>();
+
+        A.CallTo(() => fakeDiscordClient.ChannelMessagePost(A<string>._, A<string>._))
+            .ReturnsLazily(call =>
+            {
+                DiscordCapture.Record(new DiscordCapturedMessage(call.Arguments.Get<string>(0)!, call.Arguments.Get<string>(1), null, null));
+                return Task.CompletedTask;
+            });
+
+        A.CallTo(() => fakeDiscordClient.ChannelMessagePost(A<string>._, A<DiscordClient.RichEmbed>._))
+            .ReturnsLazily(call =>
+            {
+                var embed = call.Arguments.Get<DiscordClient.RichEmbed>(1)!;
+                DiscordCapture.Record(new DiscordCapturedMessage(call.Arguments.Get<string>(0)!, null, embed.Title, embed.Description));
+                return Task.CompletedTask;
+            });
+
+        return fakeDiscordClient;
     }
 
     public async Task Subscribe(string teamId, string channel, params FplEvent[] events)
