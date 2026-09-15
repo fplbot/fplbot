@@ -18,39 +18,19 @@ public class BroadcastHandler(IGuildRepository repo, ILogger<BroadcastHandler> l
             return;
         }
 
-        var installations = await repo.GetAllInstallations();
-
         var devOnly = message.Filter is
             ChannelFilter.AllChannelsDevServer or
             ChannelFilter.OnlyChannelsFollowingALeagueDevServer;
 
-        foreach (var installation in installations)
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.Captains, FplEvent.Transfers, FplEvent.Standings);
+
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            if (!devOnly || installation.Id == "1546966580007542937")
+            if (!devOnly || guildId == "1546966580007542937")
             {
-                await SendToInstallation(message, context, installation);
+                logger.LogInformation("Sending message to {GuildId} {ChannelId}", guildId, channelId);
+                await context.Publish(new PublishToGuildChannel(guildId, channelId, message.Message));
             }
         }
     }
-
-    private async Task SendToInstallation(BroadcastToDiscord message, ConsumeContext context, Installation installation)
-    {
-        foreach (var channel in installation.ChannelSubscriptions)
-        {
-            if (PassesBroadcastFilter(channel))
-            {
-                logger.LogInformation("Sending message to {GuildId} {ChannelId}", installation.Id, channel.ChannelId);
-                await context.Publish(new PublishToGuildChannel(installation.Id, channel.ChannelId, message.Message));
-            }
-            else
-            {
-                logger.LogInformation("Did not pass filter. Not sending message to {GuildId} {ChannelId}", installation.Id, channel.ChannelId);
-            }
-        }
-    }
-
-    private static bool PassesBroadcastFilter(ChannelSubscription channel) =>
-        channel.IsSubscribedTo(FplEvent.Captains) ||
-        channel.IsSubscribedTo(FplEvent.Transfers) ||
-        channel.IsSubscribedTo(FplEvent.Standings);
 }
