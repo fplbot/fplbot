@@ -9,6 +9,12 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
+      "description": "Automerge minor/patch updates for every package by default - there's a test env before prod deploy, so this is the default posture; specific rules below override it where a package needs to stay manual (e.g. MassTransit's license-driven major pin)",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
       "description": "Group xunit packages",
       "matchPackageNames": [
         "xunit",
@@ -71,10 +77,11 @@
       ]
     },
     {
-      "description": "Group Slackbot.Net packages",
+      "description": "Group Slackbot.Net packages - John's own package, safe to automerge",
       "groupName": "Slackbot.Net",
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": false,
+      "automerge": true,
+      "automergeType": "pr",
       "matchPackageNames": [
         "/^Slackbot\\.Net/"
       ]
@@ -123,24 +130,6 @@
       "description": "Never automerge major bumps for any package",
       "matchUpdateTypes": ["major"],
       "automerge": false
-    },
-    {
-      "description": "Automerge patch updates for safe utility packages",
-      "matchPackageNames": [
-        "FakeItEasy",
-        "coverlet.collector",
-        "GitHubActionsTestLogger",
-        "Bullseye",
-        "SimpleExec",
-        "Fastenshtein",
-        "MinimalHttpLogger",
-        "StackExchange.Redis",
-        "Bogus",
-        "Microsoft.Testing.Extensions.GitHubActionsReport"
-      ],
-      "automerge": true,
-      "automergeType": "pr",
-      "matchUpdateTypes": ["minor", "patch"]
     }
   ],
   "nuget": {
