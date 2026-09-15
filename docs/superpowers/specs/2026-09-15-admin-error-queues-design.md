@@ -18,16 +18,36 @@ so it's worth stating precisely:
 
 - When a consumer throws, MassTransit publishes a `Fault<T>` event to
   a topic named `MassTransit/Fault--<message-type>--` (one fault topic
-  per *original message type*, not per consumer).
-- Each consumer that consumes that message type has its own
-  **subscription** on that fault topic, named after the consumer
-  (e.g. `AppInstalledHandler`).
+  per *original message type* — not per consumer, and not one per
+  faulting queue).
+- That topic gets a subscription (verified against a real, isolated
+  MassTransit/ASB bus: `AlwaysFaultsHandler`'s fault topic got exactly
+  one subscription, generically named `Fault-MassTransit`, with
+  `ForwardTo` set to a top-level `MassTransit/Fault` topic that itself
+  has no subscriptions). **The subscription name does not identify
+  which consumer faulted** — `dev/RetryFaulted.cs` already knew this:
+  it never trusts the subscription name, and instead reads the actual
+  faulting consumer from each message's own `sourceAddress` field
+  (confirmed: `sourceAddress` on a peeked fault message ends in the
+  real receive endpoint name, e.g. `.../AlwaysFaultsHandler`). Its code
+  comment about "ForwardTo subscriptions" having unreliable
+  peek/dashboard state is this exact scenario, not a fluke.
+  **Consequence for this design:** grouping "queues" by consumer
+  doesn't work — there is no per-consumer subscription to group by.
+  The natural grouping is one row per fault **topic** (i.e. per
+  original message type), and the actual faulting consumer is only
+  knowable per-message, by reading that message's `sourceAddress` —
+  exactly what the detail view already needed to show for retry
+  targeting anyway.
 - `cfg.DiscardFaultedMessages()` (`Hosting/FplBotApplication.cs:86`)
   only controls whether the *original* transport message is forwarded
-  to an error queue after a fault — it does **not** suppress the
-  `Fault<T>` publish. So fault visibility already exists today,
-  independent of that setting, and **no messaging-pipeline change is
-  needed for this feature.**
+  to a per-queue `{queue}_error` queue after a fault — it does **not**
+  affect the `Fault<T>` topic/subscription at all (re-verified directly:
+  toggling it on and off in an isolated test bus changed only whether
+  `{queue}_error` existed; the fault topic's subscription, its
+  `ForwardTo`, and its contents were identical either way). So fault
+  visibility already exists today, independent of that setting, and
+  **no messaging-pipeline change is needed for this feature.**
 - The fault message body is a JSON envelope with `sourceAddress`
   (last path segment = the original consumer's input queue — the
   retry target), `faultMessageTypes` (MassTransit type URN(s)),
@@ -74,8 +94,17 @@ talks to ASB directly via the official SDK, the same way
     `MassTransit/Fault--`; for each, `GetSubscriptionsAsync(topicName)`
     then `GetSubscriptionRuntimePropertiesAsync(topicName, subName)
     .ActiveMessageCount` for length. Returned to the UI as one row per
-    (topic, subscription) pair, labeled by the subscription name (the
-    consumer/handler name) since that's what an admin recognizes.
+    (topic, subscription) pair — normally exactly one subscription per
+    topic given this system's topology (see Ground truth above), but
+    the code doesn't assume that; it just uses whatever
+    `GetSubscriptionsAsync` returns. The row is labeled by a
+    **message-type name parsed from the topic** (strip the
+    `MassTransit/Fault--`/`--` wrapper, e.g.
+    `MassTransit/Fault--FplBot.Messaging.Contracts.Events.v1/AppInstalled--`
+    → `FplBot.Messaging.Contracts.Events.v1.AppInstalled`) — not by the
+    subscription name, which carries no consumer identity. Which
+    consumer(s) actually faulted is only visible per-message, in the
+    detail view, via each message's `sourceAddress`.
   - **Peek** (`ServiceBusReceiver` via
     `client.CreateReceiver(topicName, subscriptionName)`,
     `PeekMessagesAsync`, non-destructive/no lock — safe for a polling
@@ -110,7 +139,7 @@ talks to ASB directly via the official SDK, the same way
   registered in `WebAppExtensions.cs` next to the other
   `Admin*Endpoints` groups (same `RequireAuthorization("IsAdmin")`
   gate):
-  - `GET /admin/errors/queues` → `[{ topic, subscription, length }]`
+  - `GET /admin/errors/queues` → `[{ topic, subscription, messageType, length }]`
   - `GET /admin/errors/queue/messages?topic=&subscription=` → peeked
     messages with fault details + body
   - `POST /admin/errors/queue/messages/{messageId}/retry?topic=&subscription=`
@@ -126,25 +155,26 @@ talks to ASB directly via the official SDK, the same way
 - **New admin UI tab**, following the existing Slack/Discord/Search
   admin section pattern (Vue 3 SPA,
   `src/FplBot/Services/WebApi/ClientApp`):
-  - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list: consumer name,
+  - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list: message type,
     length, a "Purge" button per row) + `ErrorQueueDetailView.vue`
-    (messages in one queue: fault details, a pretty-printed/collapsible
-    view of the message body, and "Retry"/"Discard" buttons per
-    message).
+    (messages in one queue: fault details including the faulting
+    consumer's address, a pretty-printed/collapsible view of the
+    message body, and "Retry"/"Discard" buttons per message).
   - Wired into `router.ts` (nested under the `/admin` route) and the
     `navLinks` array in `layouts/AdminLayout.vue`.
 
 ## Data flow
 
 Consumer throws → MassTransit publishes `Fault<T>` to
-`MassTransit/Fault--<type>--`, landing in the consumer's existing
+`MassTransit/Fault--<type>--`, landing in that topic's existing
 subscription (already happens today, unaffected by this feature) →
-admin UI calls `GET /admin/errors/queues` for the list and lengths →
-selecting a queue calls the messages endpoint (peek, non-destructive)
-→ retry/discard act on one message by id; purge clears the whole
-subscription → the next list refresh reflects the new counts (a
-retried message either succeeds, emptying the subscription further, or
-faults again and reappears).
+admin UI calls `GET /admin/errors/queues` for the list, grouped by
+message type, and lengths → selecting a queue calls the messages
+endpoint (peek, non-destructive), where each message's `sourceAddress`
+reveals which consumer actually faulted → retry/discard act on one
+message by id; purge clears the whole subscription → the next list
+refresh reflects the new counts (a retried message either succeeds,
+emptying the subscription further, or faults again and reappears).
 
 ## Error handling / caveats
 
@@ -179,3 +209,10 @@ Test coverage: force a fault, assert it appears in the list/peek
 endpoints including the body; retry it and assert the subscription
 empties and the consumer reprocesses it; discard it (gone, no
 reprocess); purge a queue with multiple faults in one call.
+
+Caveat found while building the fixture: `AlmostServiceBus.TestHost`'s
+`GetSubscriptionRuntimePropertiesAsync(...).ActiveMessageCount` can lag
+behind reality shortly after a message arrives (it read 0 even when a
+direct peek found the message). Tests that need to assert "the fault
+has landed" should poll via peek/receive of the actual message, not by
+polling `ActiveMessageCount` alone, to avoid flaky false negatives.
