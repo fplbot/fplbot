@@ -134,7 +134,9 @@
         "SimpleExec",
         "Fastenshtein",
         "MinimalHttpLogger",
-        "StackExchange.Redis"
+        "StackExchange.Redis",
+        "Bogus",
+        "Microsoft.Testing.Extensions.GitHubActionsReport"
       ],
       "automerge": true,
       "automergeType": "pr",
