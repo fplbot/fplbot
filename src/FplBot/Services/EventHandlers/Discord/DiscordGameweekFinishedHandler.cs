@@ -21,14 +21,12 @@ public class DiscordGameweekFinishedHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Gameweek {message.FinishedGameweek.Id} finished");
-        var installations = await repo.GetAllInstallations();
-        foreach (var installation in installations)
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.Standings);
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.ChannelSubscriptions)
-            {
-                var leagueId = channel.FollowedLeagueId is { } id ? (int)id.Value : (int?)null;
-                await context.Publish(new PublishGameweekFinishedToGuild(installation.Id, channel.ChannelId, leagueId, message.FinishedGameweek.Id));
-            }
+            var channel = await repo.GetChannelSubscription(guildId, channelId);
+            var leagueId = channel?.FollowedLeagueId is { } id ? (int)id.Value : (int?)null;
+            await context.Publish(new PublishGameweekFinishedToGuild(guildId, channelId, leagueId, message.FinishedGameweek.Id));
         }
     }
 

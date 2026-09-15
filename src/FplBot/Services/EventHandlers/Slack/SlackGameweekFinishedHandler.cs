@@ -20,13 +20,13 @@ internal class SlackGameweekFinishedHandler(
     public async Task Consume(ConsumeContext<GameweekFinished> context)
     {
         var notification = context.Message;
-        var installations = await teamsRepo.GetAllInstallations();
-        foreach (var installation in installations)
+        var subscribedChannels = await teamsRepo.GetChannelsSubscribedTo(FplEvent.Standings);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            var channelsWithLeague = installation.GetSubscriptionsTo(FplEvent.Standings).Where(c => c.FollowedLeagueId is not null);
-            foreach (var channel in channelsWithLeague)
+            var channel = await teamsRepo.GetChannelSubscription(teamId, channelId);
+            if (channel is not null && channel.FollowedLeagueId is not null)
             {
-                await context.Publish(new PublishStandingsToSlackWorkspace(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId!.Value, notification.FinishedGameweek.Id));
+                await context.Publish(new PublishStandingsToSlackWorkspace(teamId, channelId, (int)channel.FollowedLeagueId.Value, notification.FinishedGameweek.Id));
             }
         }
     }
