@@ -1,7 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data.Discord;
-using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Domain;
 using FplBot.Formatting;
 using FplBot.Formatting.FixtureStats;
 using FplBot.Formatting.Helpers;
@@ -23,11 +23,14 @@ public class DiscordFixtureEventsHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Handling {message.FixtureEvents.Count} new fixture events");
-        var subs = await repo.GetAllGuildSubscriptions();
+        var installations = await repo.GetAllInstallations();
 
-        foreach (var sub in subs)
+        foreach (var installation in installations)
         {
-            await context.Publish(new PublishFixtureEventsToGuild(sub.GuildId, sub.ChannelId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
+            foreach (var channel in installation.ChannelSubscriptions)
+            {
+                await context.Publish(new PublishFixtureEventsToGuild(installation.Id, channel.ChannelId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
+            }
         }
     }
 
@@ -35,11 +38,12 @@ public class DiscordFixtureEventsHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.GuildId} and {message.ChannelId}");
-        var sub = await repo.GetGuildSubscription(message.GuildId, message.ChannelId);
+        var installation = await repo.FindInstallationByTeamId(message.GuildId);
+        var sub = installation?.GetChannel(message.ChannelId);
         if (sub != null)
         {
             TauntData? tauntData = null;
-            if (sub.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Taunts))
+            if (sub.FollowedLeagueId is { } leagueId && sub.IsSubscribedTo(FplEvent.Taunts))
             {
                 var gws = await globalSettingsClient.GetGlobalSettings();
                 var currentGw = gws?.Gameweeks.GetCurrentGameweek();
@@ -47,13 +51,13 @@ public class DiscordFixtureEventsHandler(
                 IEnumerable<TransfersByGameWeek.Transfer> transfers = [];
                 if (currentGw != null)
                 {
-                    entries = await leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, sub.LeagueId.Value);
-                    transfers = await transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, sub.LeagueId.Value);
+                    entries = await leagueEntriesByGameweek.GetEntriesForGameweek(currentGw.Id, (int)leagueId.Value);
+                    transfers = await transfersByGameWeek.GetTransfersByGameweek(currentGw.Id, (int)leagueId.Value);
                 }
 
                 tauntData = new TauntData(transfers, entries);
             }
-            var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, sub.Subscriptions.ContainsStat, FormattingType.Discord, tauntData);
+            var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, statType => ChannelHasStat(sub, statType), FormattingType.Discord, tauntData);
             foreach (var eventMsg in eventMessages)
             {
                 await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details));
@@ -64,4 +68,21 @@ public class DiscordFixtureEventsHandler(
             logger.LogInformation($"Guild {message.GuildId} in channel {message.ChannelId} not subbing to fixture events. Not sending");
         }
     }
+
+    private static bool ChannelHasStat(ChannelSubscription channel, StatType statType)
+    {
+        var fplEvent = GetFplEventForStat(statType);
+        return fplEvent.HasValue && channel.IsSubscribedTo(fplEvent.Value);
+    }
+
+    private static FplEvent? GetFplEventForStat(StatType statType) => statType switch
+    {
+        StatType.GoalsScored => FplEvent.FixtureGoals,
+        StatType.Assists => FplEvent.FixtureAssists,
+        StatType.OwnGoals => FplEvent.FixtureGoals,
+        StatType.RedCards => FplEvent.FixtureCards,
+        StatType.PenaltiesSaved => FplEvent.FixturePenaltyMisses,
+        StatType.PenaltiesMissed => FplEvent.FixturePenaltyMisses,
+        _ => null
+    };
 }
