@@ -59,6 +59,14 @@ targets.Add("backup-redis-prod",
     "Dump Slack/Discord installation Redis data from prod to a local JSON file (read-only)",
     async () => await BackupInstallations(ProdApp));
 
+targets.Add("backfill-slack-index-test",
+    "Backfill the TeamIndex Redis set on the test app from existing TeamId-* keys (idempotent)",
+    async () => await BackfillSlackIndex(TestApp));
+
+targets.Add("backfill-slack-index-prod",
+    "Backfill the TeamIndex Redis set on prod from existing TeamId-* keys (idempotent)",
+    async () => await BackfillSlackIndex(ProdApp));
+
 await targets.RunAndExitAsync(args);
 
 async Task BuildImage(string? dockerBuildArgs = null)
@@ -136,6 +144,28 @@ async Task BackupInstallations(string app)
 
     var counts = string.Join(", ", keysByPattern.Select(kv => $"{kv.Key}={kv.Value.Count}"));
     Console.WriteLine($"Backed up {counts} to {outputPath}");
+}
+
+async Task BackfillSlackIndex(string app)
+{
+    const int maxConcurrentFetches = 64;
+
+    var redisUrl = await GetRedisUrl(app);
+    var redis = await ConnectionMultiplexer.ConnectAsync(ParseRedisUrl(redisUrl));
+    var db = redis.GetDatabase();
+    var server = redis.GetServers().Single();
+
+    var teamKeys = server.Keys(pattern: "TeamId-*").ToList();
+    var indexed = 0;
+    await Parallel.ForEachAsync(teamKeys, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (key, _) =>
+    {
+        var teamId = await db.HashGetAsync(key, "teamId");
+        if (!teamId.HasValue) return;
+        await db.SetAddAsync("TeamIndex", teamId);
+        Interlocked.Increment(ref indexed);
+    });
+
+    Console.WriteLine($"Backfilled TeamIndex ({indexed} team(s)) on {app}");
 }
 
 ConfigurationOptions ParseRedisUrl(string redisUrl)
