@@ -59,6 +59,7 @@ public class AppFixture : IAsyncLifetime
     public IServiceProvider Services => _managerScope.ServiceProvider;
     public ISendEndpointProvider Publisher => _managerScope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
     public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
+    public IGuildRepository GuildRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildRepository>();
 
     public virtual async ValueTask InitializeAsync()
     {

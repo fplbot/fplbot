@@ -23,6 +23,21 @@ public class InstallationTests
     }
 
     [Fact]
+    public void Reinstall_TokenLess_PreservesExistingChannelsWithoutToken()
+    {
+        var existingChannel = ChannelSubscription.Load("C1", new ClassicLeagueId(42), [FplEvent.Standings]);
+
+        var installation = Installation.Reinstall("G1", "Guild One", [existingChannel]);
+
+        Assert.Equal("G1", installation.Id);
+        Assert.Equal("Guild One", installation.Name);
+        Assert.Null(installation.Token);
+        var channel = Assert.Single(installation.ChannelSubscriptions);
+        Assert.Equal("C1", channel.ChannelId);
+        Assert.True(channel.IsSubscribedTo(FplEvent.Standings));
+    }
+
+    [Fact]
     public void Uninstall_ClearsToken()
     {
         var installation = Installation.Install("T1", "Team One", "token");
