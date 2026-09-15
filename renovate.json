@@ -101,6 +101,14 @@
       ]
     },
     {
+      "description": "Group ClientApp npm dependencies",
+      "matchManagers": ["npm"],
+      "groupName": "ClientApp npm dependencies",
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
       "description": "Never automerge major bumps for any package",
       "matchUpdateTypes": ["major"],
       "automerge": false
