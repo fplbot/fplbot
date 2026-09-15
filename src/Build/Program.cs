@@ -68,13 +68,13 @@ async Task BuildImage()
     await PublishBackend();
 
     var baseTag = "fplbot-runtime:current";
-    await Command.RunAsync("docker", $"build -t {baseTag} -f ./src/Dockerfile ./src/publish");
+    await Command.RunAsync("docker", $"build --platform linux/amd64 --provenance=false --sbom=false -t {baseTag} -f ./src/Dockerfile ./src/publish");
 
     foreach (var (processType, serviceName) in ProcessServices())
     {
         var tmp = Path.GetTempFileName();
         await File.WriteAllTextAsync(tmp, $"FROM {baseTag}\nCMD [\"--services\", \"{serviceName}\"]");
-        await Command.RunAsync("docker", $"build -t fplbot/{processType} -f {tmp} .");
+        await Command.RunAsync("docker", $"build --platform linux/amd64 --provenance=false --sbom=false -t fplbot/{processType} -f {tmp} .");
         File.Delete(tmp);
     }
 }
