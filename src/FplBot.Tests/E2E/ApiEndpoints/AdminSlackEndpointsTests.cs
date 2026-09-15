@@ -65,12 +65,12 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         return await AdminSlackEndpoints.Uninstall(teamId, scope.ServiceProvider.GetRequiredService<AdminUninstallSlackWorkspace>(), NullLogger<Program>.Instance);
     }
 
-    private async Task<SlackInstallation?> WaitForInstallationToBeGone(string teamId, TimeSpan? timeout = null)
+    private async Task<Installation?> WaitForInstallationToBeGone(string teamId, TimeSpan? timeout = null)
     {
         var repository = fixture.Services.GetRequiredService<ISlackTeamRepository>();
         using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(5));
 
-        SlackInstallation? installation;
+        Installation? installation;
         do
         {
             installation = await repository.FindInstallationByTeamId(teamId);
@@ -84,9 +84,9 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         return installation;
     }
 
-    private static SlackInstallation Team(string id, string name) => SlackInstallation.Load(id, name, "token", []);
+    private static Installation Team(string id, string name) => Installation.Load(id, name, "token", []);
 
-    private static ISlackTeamRepository RepoWithTeams(params SlackInstallation[] teams)
+    private static ISlackTeamRepository RepoWithTeams(params Installation[] teams)
     {
         var repo = A.Fake<ISlackTeamRepository>();
 
@@ -210,6 +210,4 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var remaining = await fixture.SlackRepo.GetChannelSubscriptions(teamId);
         Assert.DoesNotContain(remaining, c => c.ChannelId == "#fplbot");
     }
-
-
 }

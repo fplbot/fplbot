@@ -68,11 +68,6 @@ public static class WebApplicationBuilderExtensions
             c.CLIENT_SECRET = configuration["DISCORD_CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=discord";
             c.ErrorRedirectUri = errorUri;
-            c.OnSuccess = async (guildId, guildName, s) =>
-            {
-                var msg = s.GetRequiredService<IPublishEndpoint>();
-                await msg.Publish(new AppInstalled(guildId, guildName, ChatPlatform.Discord));
-            };
         });
 
         services.Configure<AnalyticsOptions>(configuration);

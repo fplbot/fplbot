@@ -37,7 +37,7 @@ public class FplBotJoinedChannelHandler(
         return new EventHandledResponse("OK");
     }
 
-    private async Task<string> DescribeSetup(SlackInstallation installation, string joinedChannel)
+    private async Task<string> DescribeSetup(Installation installation, string joinedChannel)
     {
         var thisChannel = installation.GetChannel(joinedChannel);
 

@@ -183,9 +183,9 @@ public class AppFixture : IAsyncLifetime
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task AskSlackbot(SlackInstallation installation, string input, string channelId)
+    public async Task AskSlackbot(Installation installation, string input, string channelId)
     {
-        await AskSlackbot(installation.TeamId, channelId, input);
+        await AskSlackbot(installation.Id, channelId, input);
     }
 
     public async Task AskSlackbot(string input)
@@ -253,7 +253,7 @@ public class AppFixture : IAsyncLifetime
         return await response.Content.ReadAsStringAsync();
     }
 
-    public async Task<SlackInstallation> SeedInstallation(Action<SlackInstallation>? configure = null)
+    public async Task<Installation> SeedInstallation(Action<Installation>? configure = null)
     {
         var teamId = "T" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
         var channelId = "#" + Guid.NewGuid().ToString("N")[..8];
@@ -263,9 +263,9 @@ public class AppFixture : IAsyncLifetime
         // FPL API with this id, so it can't be random garbage that 404s.
         var channels = new[]
                        {
-                           SlackChannelSubscription.Load(channelId, new ClassicLeagueId(15263), [])
+                           ChannelSubscription.Load(channelId, new ClassicLeagueId(15263), [])
                        };
-        var installation = SlackInstallation.Load(teamId, "Test Team " + teamId, token, channels);
+        var installation = Installation.Load(teamId, "Test Team " + teamId, token, channels);
 
         configure?.Invoke(installation);
 

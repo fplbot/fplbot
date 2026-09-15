@@ -59,8 +59,8 @@ public static class AdminSlackEndpoints
         var filtered = string.IsNullOrWhiteSpace(query)
             ? installations
             : installations.Where(i =>
-                i.TeamName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                i.TeamId.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+                i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                i.Id.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
         var page_ = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var items = new List<TeamSummaryDto>();
@@ -72,16 +72,16 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, page, pageSize, filtered.Count));
     }
 
-    private static async Task<TeamSummaryDto> ToDto(SlackInstallation installation, ISlackTeamRepository teamRepo)
+    private static async Task<TeamSummaryDto> ToDto(Installation installation, ISlackTeamRepository teamRepo)
     {
-        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.TeamId, c)).ToList();
-        return new(installation.TeamId, installation.TeamName, channels, installation.PendingRemoval);
+        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.Id, c)).ToList();
+        return new(installation.Id, installation.Name, channels, installation.PendingRemoval);
     }
 
-    private static ChannelSubscriptionDto ToDto(string teamId, SlackChannelSubscription channel) =>
+    private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel) =>
         new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, ToEventSubscriptions(channel));
 
-    private static IEnumerable<EventSubscription> ToEventSubscriptions(SlackChannelSubscription? channel) =>
+    private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
 
     private static async Task<IResult> GetTeam(
@@ -132,8 +132,8 @@ public static class AdminSlackEndpoints
 
         return TypedResults.Ok(new
         {
-            teamId = installation.TeamId,
-            teamName = installation.TeamName,
+            teamId = installation.Id,
+            teamName = installation.Name,
             token = installation.Token,
             pendingRemoval = installation.PendingRemoval,
             channels
@@ -174,7 +174,7 @@ public static class AdminSlackEndpoints
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
 
         var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.TeamId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
 
         return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
     }
@@ -212,7 +212,6 @@ public static class AdminSlackEndpoints
         if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
 
         installation.MoveChannel(channelId, request.NewChannelId);
-        await teamRepo.DeleteChannelSubscription(teamIdToUpper, channelId);
         await teamRepo.Save(installation);
 
         return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
@@ -223,7 +222,12 @@ public static class AdminSlackEndpoints
         string channelId,
         ISlackTeamRepository teamRepo)
     {
-        await teamRepo.DeleteChannelSubscription(teamId.ToUpper(), channelId);
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+
+        installation.RemoveChannel(channelId);
+        await teamRepo.Save(installation);
+
         return TypedResults.Ok(new { message = $"Deleted subscription for {channelId}" });
     }
 

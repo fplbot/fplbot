@@ -32,7 +32,7 @@ public class SlackFixtureEventsHandler(
 
         foreach (var installation in installations.Where(HasChannelSubscribedToFixtureStats))
         {
-            await context.Publish(new PublishFixtureEventsToSlackWorkspace(installation.TeamId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
+            await context.Publish(new PublishFixtureEventsToSlackWorkspace(installation.Id, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
         }
     }
 
@@ -44,7 +44,7 @@ public class SlackFixtureEventsHandler(
         FplEvent.FixturePenaltyMisses
     ];
 
-    private static bool HasChannelSubscribedToFixtureStats(SlackInstallation installation) =>
+    private static bool HasChannelSubscribedToFixtureStats(Installation installation) =>
         installation.ChannelSubscriptions.Any(sub => FixtureStatEvents.Any(sub.IsSubscribedTo));
 
     public async Task Consume(ConsumeContext<PublishFixtureEventsToSlackWorkspace> context)
@@ -55,11 +55,11 @@ public class SlackFixtureEventsHandler(
 
         foreach (var sub in installation.ChannelSubscriptions)
         {
-            await DoSubHandling(installation.TeamId, installation.Token, sub, message.FixtureEvents);
+            await DoSubHandling(installation.Id, installation.Token, sub, message.FixtureEvents);
         }
     }
 
-    private async Task DoSubHandling(string teamId, string? token, SlackChannelSubscription sub, List<FixtureEvents> fixtureEvents)
+    private async Task DoSubHandling(string teamId, string? token, ChannelSubscription sub, List<FixtureEvents> fixtureEvents)
     {
         TauntData? tauntData = null;
         if (sub.IsSubscribedTo(FplEvent.Taunts) && sub.FollowedLeagueId is {} leagueId)
@@ -83,7 +83,7 @@ public class SlackFixtureEventsHandler(
         await publisher.PublishToWorkspace(teamId, sub.ChannelId, formattedStr.ToArray());
     }
 
-    private static bool ChannelHasStat(SlackChannelSubscription channel, StatType statType)
+    private static bool ChannelHasStat(ChannelSubscription channel, StatType statType)
     {
         var fplEvent = GetFplEventForStat(statType);
         return fplEvent.HasValue && channel.IsSubscribedTo(fplEvent.Value);

@@ -10,7 +10,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
 
-    public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildStore guildStore, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
+    public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildInstallationHandler guildInstallationHandler, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
     {
         var error = ctx.Request.Query["error"].FirstOrDefault();
         if (!string.IsNullOrEmpty(error))
@@ -57,8 +57,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             var guild = jsonDoc.GetProperty("guild");
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
-            await guildStore.Insert(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
-            await options.Value.OnSuccess(guildId ?? string.Empty, guild_name ?? string.Empty, provider);
+            await guildInstallationHandler.Install(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
             ctx.Response.Redirect(options.Value.SuccessRedirectUri);
         }
         else

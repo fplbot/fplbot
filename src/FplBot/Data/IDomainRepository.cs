@@ -1,0 +1,12 @@
+using FplBot.Domain;
+
+namespace FplBot.Data;
+
+public interface IDomainRepository
+{
+    Task<Installation> GetInstallation(string teamId);
+    Task Save(Installation installation);
+    Task<Installation?> FindInstallationByTeamId(string teamId);
+    Task<IEnumerable<Installation>> GetAllInstallations();
+    Task Delete(Installation installation);
+}

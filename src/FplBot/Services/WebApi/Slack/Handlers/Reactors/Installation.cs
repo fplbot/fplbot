@@ -14,7 +14,7 @@ public class SlackbotNetInstallationBridge(
 {
     public async Task Install(Workspace workspace)
     {
-        var installation = SlackInstallation.Install(workspace.TeamId, workspace.TeamName, workspace.Token);
+        var installation = Installation.Install(workspace.TeamId, workspace.TeamName, workspace.Token);
         await repository.Save(installation);
         await publisher.Publish(new AppInstalled(workspace.TeamId, workspace.TeamName, ChatPlatform.Slack));
     }
@@ -32,6 +32,6 @@ public class SlackbotNetInstallationBridge(
 
         installation.Uninstall();
         await repository.Delete(installation);
-        await publisher.Publish(new AppUninstalled(installation.TeamId, installation.TeamName));
+        await publisher.Publish(new AppUninstalled(installation.Id, installation.Name));
     }
 }

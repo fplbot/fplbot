@@ -29,7 +29,7 @@ internal class SlackGameweekStartedHandler(
         var installations = await teamsRepo.GetAllInstallations();
         foreach (var installation in installations)
         {
-            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(installation.TeamId, notification.NewGameweek.Id));
+            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(installation.Id, notification.NewGameweek.Id));
         }
     }
 
@@ -41,11 +41,11 @@ internal class SlackGameweekStartedHandler(
         var installation = await teamsRepo.GetInstallation(message.WorkspaceId);
         foreach (var sub in installation.ChannelSubscriptions)
         {
-            await DoSubHandling(installation.TeamId, sub, newGameweek);
+            await DoSubHandling(installation.Id, sub, newGameweek);
         }
     }
 
-    private async Task DoSubHandling(string teamId, SlackChannelSubscription sub, int newGameweek)
+    private async Task DoSubHandling(string teamId, ChannelSubscription sub, int newGameweek)
     {
         var messages = new List<string>();
         ClassicLeague? league = null;

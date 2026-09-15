@@ -1,38 +1,43 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.Messaging.Contracts.Events.v1;
+using MassTransit;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace FplBot.Discord.Data;
+namespace FplBot.Services.WebApi.Discord.Handlers.Reactors;
 
-public class DiscordGuildStore : IGuildStore
+public class DiscordNetInstallationBridge : IGuildInstallationHandler
 {
     private readonly RedisValue _nameField = "name";
     private readonly RedisValue _guildIdField = "guildid";
     private readonly IConnectionMultiplexer _redis;
+    private readonly IPublishEndpoint _publisher;
     private readonly IDatabase _db;
     private readonly string _server;
-    private readonly ILogger<DiscordGuildStore> _logger;
+    private readonly ILogger<DiscordNetInstallationBridge> _logger;
 
-    public DiscordGuildStore(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions,
-        ILogger<DiscordGuildStore> logger)
+    public DiscordNetInstallationBridge(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions,
+        IPublishEndpoint publisher, ILogger<DiscordNetInstallationBridge> logger)
     {
         _redis = redis;
+        _publisher = publisher;
         _db = _redis.GetDatabase();
         _server = redisOptions.Value.GetRedisServerHostAndPort;
         _logger = logger;
     }
 
 
-    public async Task Insert(Guild guild)
+    public async Task Install(Guild guild)
     {
         var hashEntries = new List<HashEntry>
         {
-            new HashEntry(_guildIdField, guild.Id), new HashEntry(_nameField, guild.Name)
+            new(_guildIdField, guild.Id), new HashEntry(_nameField, guild.Name)
         };
         await _db.HashSetAsync(FromGuildIdToGuildKey(guild.Id), hashEntries.ToArray());
+        await _publisher.Publish(new AppInstalled(guild.Id, guild.Name, ChatPlatform.Discord));
     }
 
-    public async Task<Guild?> DeleteGuild(string guildId)
+    public async Task Uninstall(string guildId)
     {
         var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("Guild-*"));
 
@@ -41,12 +46,13 @@ public class DiscordGuildStore : IGuildStore
             var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _nameField]);
             if (fetchedTeamData[0] == guildId)
             {
+                string? guildName = await _db.HashGetAsync(key, _nameField);
                 await _db.KeyDeleteAsync(key);
-                return new Guild(fetchedTeamData[0].ToString(), fetchedTeamData[1].ToString());
+                await _publisher.Publish(new AppUninstalled(guildId, guildName ?? "Unknown"));
+                return;
             }
         }
 
-        return null;
     }
 
     private static string FromGuildIdToGuildKey(string guildId)

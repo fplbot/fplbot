@@ -2,8 +2,8 @@ using Discord.Net.Endpoints.Hosting;
 using Discord.Net.HttpClients;
 using FplBot.Config;
 using FplBot.Data.Discord;
-using FplBot.Discord.Data;
 using FplBot.Discord.Handlers.SlashCommands;
+using FplBot.Services.WebApi.Discord.Handlers.Reactors;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
 
@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IConnectionMultiplexer>(connection);
         services.AddSingleton<IGuildRepository, DiscordGuildRepository>();
 
-        services.AddDiscordBotEvents<DiscordGuildStore>()
+        services.AddDiscordBotEvents<DiscordNetInstallationBridge>()
             .AddSlashCommandHandler<HelpSlashCommandHandler>()
             .AddSlashCommandHandler<FollowSlashCommandHandler>()
             .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()

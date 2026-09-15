@@ -9,7 +9,7 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
 {
     private ISlackTeamRepository Repo => fixture.Services.GetRequiredService<ISlackTeamRepository>();
 
-    private static string ChannelOf(SlackInstallation installation) => installation.ChannelSubscriptions.First().ChannelId;
+    private static string ChannelOf(Installation installation) => installation.ChannelSubscriptions.First().ChannelId;
 
     [Fact]
     public async Task SubscribingPersistsToThatChannel()
@@ -21,7 +21,7 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Contains("Updated subscriptions", response.Text, StringComparison.InvariantCultureIgnoreCase);
 
-        var installation = await Repo.GetInstallation(seeded.TeamId);
+        var installation = await Repo.GetInstallation(seeded.Id);
         var channel = installation.GetChannel(channelId);
         Assert.NotNull(channel);
         Assert.True(channel.IsSubscribedTo(FplEvent.Standings));
@@ -40,7 +40,7 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         await fixture.AskSlackbot(seeded, "<@UREFQD887> subscribe Deadlines",channelId);
         await fixture.SlackCapture.WaitForMessageAsync();
 
-        var installation = await Repo.GetInstallation(seeded.TeamId);
+        var installation = await Repo.GetInstallation(seeded.Id);
         var channel = installation.GetChannel(channelId)!;
         Assert.True(channel.IsSubscribedTo(FplEvent.Standings));
         Assert.True(channel.IsSubscribedTo(FplEvent.Deadlines));
@@ -55,11 +55,11 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         var originalChannelId = ChannelOf(seeded);
         const string newChannelId = "#brand-new-channel";
 
-        await fixture.AskSlackbot(seeded.TeamId, newChannelId, "<@UREFQD887> subscribe Standings");
+        await fixture.AskSlackbot(seeded.Id, newChannelId, "<@UREFQD887> subscribe Standings");
         var response = await fixture.SlackCapture.WaitForMessageAsync();
         Assert.Contains("Updated subscriptions", response.Text, StringComparison.InvariantCultureIgnoreCase);
 
-        var installation = await Repo.GetInstallation(seeded.TeamId);
+        var installation = await Repo.GetInstallation(seeded.Id);
 
         var newChannel = installation.GetChannel(newChannelId);
         Assert.NotNull(newChannel);
@@ -82,7 +82,7 @@ public class FplSubscribeCommandHandlerTests(AppFixture fixture)
         await fixture.AskSlackbot(seeded, "<@UREFQD887> unsubscribe Standings",channelId);
         await fixture.SlackCapture.WaitForMessageAsync();
 
-        var installation = await Repo.GetInstallation(seeded.TeamId);
+        var installation = await Repo.GetInstallation(seeded.Id);
         var channel = installation.GetChannel(channelId)!;
         Assert.False(channel.IsSubscribedTo(FplEvent.Standings));
         Assert.True(channel.IsSubscribedTo(FplEvent.Deadlines));

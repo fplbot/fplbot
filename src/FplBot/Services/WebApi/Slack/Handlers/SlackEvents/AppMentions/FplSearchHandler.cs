@@ -28,7 +28,7 @@ public class FplSearchHandler(
     {
         var term = ParseArguments(message);
 
-        SlackInstallation? installation = null;
+        Installation? installation = null;
         try
         {
             installation = await slackTeamRepo.GetInstallation(eventMetadata.Team_Id);
@@ -101,11 +101,11 @@ public class FplSearchHandler(
         return new EventHandledResponse(sb.ToString());
     }
 
-    private static SearchMetaData GetSearchMetaData(SlackInstallation? installation, long? leagueId, AppMentionEvent message)
+    private static SearchMetaData GetSearchMetaData(Installation? installation, long? leagueId, AppMentionEvent message)
     {
         var metaData = new SearchMetaData
         {
-            Team = installation?.TeamId, FollowingFplLeagueId = leagueId?.ToString(), Actor = message.User,
+            Team = installation?.Id, FollowingFplLeagueId = leagueId?.ToString(), Actor = message.User,
             Client = QueryClient.Slack
         };
         return metaData;

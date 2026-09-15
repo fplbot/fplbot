@@ -24,7 +24,7 @@ public class SlackPriceChangeHandler(
             var subs = installation.GetSubscriptionsTo(FplEvent.PriceChanges);
             foreach (var sub in subs)
             {
-                await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId:installation.TeamId, ChannelId :sub.ChannelId, notification.PlayersWithPriceChanges.ToList()));
+                await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId:installation.Id, ChannelId :sub.ChannelId, notification.PlayersWithPriceChanges.ToList()));
             }
         }
     }

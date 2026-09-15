@@ -1,6 +1,6 @@
 namespace FplBot.Data.Discord;
 
-public interface IGuildRepository
+public interface IGuildRepository : IDomainRepository
 {
     Task<IEnumerable<GuildRepoGuild>> GetAllGuilds();
     Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions();

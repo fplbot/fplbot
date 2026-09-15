@@ -31,7 +31,7 @@ internal class FplStandingsCommandHandler : HandleAppMentionBase
         var channel = installation.GetChannel(appMentioned.Channel);
         if (channel?.FollowedLeagueId is { } leagueId)
         {
-            await _publishEndpoint.Publish(new PublishStandingsToSlackWorkspace(installation.TeamId, appMentioned.Channel, (int)leagueId.Value, gameweek!.Id));
+            await _publishEndpoint.Publish(new PublishStandingsToSlackWorkspace(installation.Id, appMentioned.Channel, (int)leagueId.Value, gameweek!.Id));
         }
 
         return new EventHandledResponse("OK");
