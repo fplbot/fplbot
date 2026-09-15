@@ -2,114 +2,169 @@
 
 ## Problem
 
-Faulted MassTransit messages are currently discarded globally
-(`cfg.DiscardFaultedMessages()` in `Hosting/FplBotApplication.cs`).
-There is no visibility into consumer failures and no way to retry a
-failed message short of manually replaying the original trigger. We
-want an "Errors" tab in the admin UI that lists error queues, their
-lengths, a details view per queue, and a retry action per message.
+There is no admin visibility into consumer failures and no way to
+retry a failed message short of manually replaying the original
+trigger. We want an "Errors" tab in the admin UI that lists error
+queues, their lengths, a details view per queue (including message
+bodies), and actions to retry a message, discard a single message, or
+purge an entire queue.
+
+## Ground truth: how faults actually surface today
+
+Verified against `dev/RetryFaulted.cs` and the local Service Bus
+emulator dashboard (`http://localhost:15672`), which already reads
+this live — this is **not** MassTransit's textbook default topology,
+so it's worth stating precisely:
+
+- When a consumer throws, MassTransit publishes a `Fault<T>` event to
+  a topic named `MassTransit/Fault--<message-type>--` (one fault topic
+  per *original message type*, not per consumer).
+- Each consumer that consumes that message type has its own
+  **subscription** on that fault topic, named after the consumer
+  (e.g. `AppInstalledHandler`).
+- `cfg.DiscardFaultedMessages()` (`Hosting/FplBotApplication.cs:86`)
+  only controls whether the *original* transport message is forwarded
+  to an error queue after a fault — it does **not** suppress the
+  `Fault<T>` publish. So fault visibility already exists today,
+  independent of that setting, and **no messaging-pipeline change is
+  needed for this feature.**
+- The fault message body is a JSON envelope with `sourceAddress`
+  (last path segment = the original consumer's input queue — the
+  retry target), `faultMessageTypes` (MassTransit type URN(s)),
+  `exceptions[]` (`exceptionType`/`message` per attempt), and the
+  original payload nested at `message.message`.
+- Retrying means: complete the fault message off its subscription,
+  reconstruct a fresh MassTransit envelope wrapping the original
+  payload, and send it directly to the target queue — exactly what
+  `dev/RetryFaulted.cs` already does, interactively, via the
+  `Azure.Messaging.ServiceBus` SDK (no MassTransit hosting involved).
+  This admin feature formalizes that same proven mechanism behind a UI
+  instead of a terminal prompt loop.
 
 ## Scope
 
-- Stop discarding faulted messages; let MassTransit route them to its
-  default per-consumer `{ConsumerName}_error` queues on Azure Service
-  Bus (queues are already named `nameof(Consumer)`, one per consumer
-  class, per the existing MassTransit queue-naming convention).
-- Add a read/manage layer over those `_error` queues, exposed as new
-  admin API endpoints and a new admin UI tab.
-- Out of scope: alerting/paging on error queue growth, auto-retry
-  policies, retention/expiry changes beyond the existing 2-hour
-  `DefaultMessageTimeToLive`.
+- Read/manage layer over the *existing* fault topics/subscriptions:
+  list them with lengths, view messages (fault details + body) in one,
+  retry a message, discard a single message, purge an entire queue
+  (all messages in one subscription).
+- New admin API endpoints + a new "Errors" admin UI tab.
+- Out of scope: any change to MassTransit fault/retry pipeline
+  configuration, alerting on queue growth, auto-retry policies,
+  retention/TTL changes. Faulted messages are still purged after the
+  same 2-hour `DefaultMessageTimeToLive` as every other MassTransit
+  queue/topic in this bus — raised explicitly and accepted; no
+  dead-letter-subqueue routing or TTL override is in scope.
 
 ## Architecture
 
-Two independent changes:
-
-1. **Stop discarding faults.** Remove the global
-   `cfg.DiscardFaultedMessages()` call
-   (`Hosting/FplBotApplication.cs:82-88`). This restores MassTransit's
-   default behavior: a faulted message is moved to `{queue}_error`.
-2. **New admin surface** to read and act on those queues, backed
-   directly by Azure Service Bus — MassTransit has no API for this,
-   so the admin layer talks to ASB directly via the official SDK.
+One addition: a new admin-only surface, backed directly by Azure
+Service Bus (MassTransit has no read API for this — the admin layer
+talks to ASB directly via the official SDK, the same way
+`dev/RetryFaulted.cs` does).
 
 ## Components
 
 - **`Azure.Messaging.ServiceBus` SDK** — new package reference in
-  `FplBot.csproj`, used only from the WebApi service.
-- **`AdminErrorQueueService`** (new, WebApi) wraps:
-  - `ServiceBusAdministrationClient.GetQueuesAsync()` filtered to
-    names ending in `_error`, using
-    `RuntimeProperties.ActiveMessageCount` for queue length.
-  - `ServiceBusReceiver.PeekMessagesAsync` per queue for the details
-    view: message id, enqueued time, MassTransit's fault application
-    properties (exception type, message, stack trace), and the
-    message body itself. The body is MassTransit's JSON envelope
-    (headers, message type URN, and the original message contract's
-    fields) — returned as-is for the UI to pretty-print, with a raw
-    text/base64 fallback if it isn't valid JSON. Peek is
-    non-destructive (no lock), safe for a polling list view.
-  - **Retry**: there is no fetch-by-message-id in ASB, so retry
-    receives messages from the error queue (PeekLock), and for each:
-    if its `MessageId` matches the target, forward its body +
-    application properties to the *original* input queue via
-    `ServiceBusSender`, then `CompleteMessageAsync` on the error-queue
-    copy only after the forward succeeds; if it doesn't match,
-    `AbandonMessageAsync` immediately so it returns to the queue. Cap
-    the scan (e.g. stop after N messages or one full queue pass) so a
-    stale/missing id can't loop forever.
-- **New admin endpoints**, `Services/WebApi/Endpoints/Api/Admin/AdminErrorEndpoints.cs`,
-  registered in `WebAppExtensions.cs` next to the other `Admin*Endpoints`
-  groups (same `RequireAuthorization("IsAdmin")` gate):
-  - `GET /admin/errors/queues` → `[{ name, originalQueue, length }]`
-  - `GET /admin/errors/queues/{queue}/messages` → peeked messages with
-    fault details
-  - `POST /admin/errors/queues/{queue}/messages/{messageId}/retry`
+  `FplBot.csproj`, used only from the WebApi service. Reuses the
+  existing `ASB_CONNECTIONSTRING` config value (already used by
+  MassTransit) — no new secret/config surface.
+- **`AdminErrorQueueService`** (new, WebApi), wrapping a
+  `ServiceBusAdministrationClient` + `ServiceBusClient`:
+  - **List**: `GetTopicsAsync()` filtered to names starting with
+    `MassTransit/Fault--`; for each, `GetSubscriptionsAsync(topicName)`
+    then `GetSubscriptionRuntimePropertiesAsync(topicName, subName)
+    .ActiveMessageCount` for length. Returned to the UI as one row per
+    (topic, subscription) pair, labeled by the subscription name (the
+    consumer/handler name) since that's what an admin recognizes.
+  - **Peek** (`ServiceBusReceiver` via
+    `client.CreateReceiver(topicName, subscriptionName)`,
+    `PeekMessagesAsync`, non-destructive/no lock — safe for a polling
+    list view): returns messageId, enqueued time, `sourceAddress`,
+    `faultMessageTypes`, `exceptions[]`, and the original payload
+    (`message.message`) for the UI to pretty-print (JSON, collapsible),
+    with a raw text fallback if it isn't valid JSON.
+  - **Retry** (single message, by messageId): there's no fetch-by-id in
+    ASB, so this receives messages from the subscription (PeekLock)
+    and for each: if `MessageId` matches, parse the fault envelope,
+    build a fresh MassTransit envelope around the original payload
+    (same shape as `dev/RetryFaulted.cs` — `messageId` regenerated,
+    `conversationId` regenerated, `sourceAddress` identifying this
+    admin action, `destinationAddress` derived from the message type
+    URN, `messageType`, `message`, `sentTime`), send it via
+    `client.CreateSender(targetQueue)` where `targetQueue` is the last
+    segment of the original `sourceAddress`, then
+    `CompleteMessageAsync` the fault message only after the send
+    succeeds; non-matches are `AbandonMessageAsync`'d immediately so
+    they return to the subscription. Cap the scan (stop after one full
+    subscription pass) so a stale/missing id can't loop forever.
+  - **Discard** (single message, by messageId): same scan-for-match
+    logic as retry, but on match just `CompleteMessageAsync` — no
+    resend.
+  - **Purge** (whole subscription): read the subscription's
+    `ActiveMessageCount` up front as a bound, then loop
+    `ReceiveMessagesAsync` (batched) + `CompleteMessageAsync` each
+    until that many messages have been completed or a receive times
+    out empty — avoids looping forever if new faults land mid-purge.
+- **New admin endpoints**,
+  `Services/WebApi/Endpoints/Api/Admin/AdminErrorEndpoints.cs`,
+  registered in `WebAppExtensions.cs` next to the other
+  `Admin*Endpoints` groups (same `RequireAuthorization("IsAdmin")`
+  gate):
+  - `GET /admin/errors/queues` → `[{ topic, subscription, length }]`
+  - `GET /admin/errors/queues/{topic}/{subscription}/messages` →
+    peeked messages with fault details + body
+  - `POST /admin/errors/queues/{topic}/{subscription}/messages/{messageId}/retry`
+  - `POST /admin/errors/queues/{topic}/{subscription}/messages/{messageId}/discard`
+  - `POST /admin/errors/queues/{topic}/{subscription}/purge`
+
+  (`topic` and `subscription` are both needed in the route — a
+  consumer handling more than one message type can have
+  same-named subscriptions on different fault topics.)
 - **New admin UI tab**, following the existing Slack/Discord/Search
-  admin section pattern (Vue 3 SPA, `src/FplBot/Services/WebApi/ClientApp`):
-  - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list with lengths) +
-    `ErrorQueueDetailView.vue` (messages in one queue: fault details,
-    a pretty-printed/collapsible view of the message body, and a
-    retry button)
+  admin section pattern (Vue 3 SPA,
+  `src/FplBot/Services/WebApi/ClientApp`):
+  - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list: consumer name,
+    length, a "Purge" button per row) + `ErrorQueueDetailView.vue`
+    (messages in one queue: fault details, a pretty-printed/collapsible
+    view of the message body, and "Retry"/"Discard" buttons per
+    message).
   - Wired into `router.ts` (nested under the `/admin` route) and the
     `navLinks` array in `layouts/AdminLayout.vue`.
 
 ## Data flow
 
-Consumer throws → MassTransit moves the message to
-`{ConsumerName}_error` (instead of discarding) → admin UI calls
-`GET /admin/errors/queues` for the list and lengths → selecting a
-queue calls the messages endpoint (peek, non-destructive) → clicking
-retry receives, forwards, and completes that one message → the next
-list refresh shows the queue one message shorter (or unchanged, with
-the message re-faulting back into the error queue, if the underlying
-issue isn't fixed).
+Consumer throws → MassTransit publishes `Fault<T>` to
+`MassTransit/Fault--<type>--`, landing in the consumer's existing
+subscription (already happens today, unaffected by this feature) →
+admin UI calls `GET /admin/errors/queues` for the list and lengths →
+selecting a queue calls the messages endpoint (peek, non-destructive)
+→ retry/discard act on one message by id; purge clears the whole
+subscription → the next list refresh reflects the new counts (a
+retried message either succeeds, emptying the subscription further, or
+faults again and reappears).
 
 ## Error handling / caveats
 
-- `DefaultMessageTimeToLive = TimeSpan.FromHours(2)` in
-  `FplBotApplication.cs` is a bus-level setting MassTransit applies
-  when provisioning every queue it creates, including the new
-  `{Consumer}_error` queues — not just the live processing queues.
-  This was raised explicitly and is an **accepted trade-off**: error
-  queues are still purged after 2 hours, same TTL as live queues, no
-  separate retention mechanism. Faulted messages get *some* window for
-  visibility/retry where today they get none, but they are not
-  durably retained. No dead-letter-subqueue routing or TTL override is
-  in scope.
-- The Azure Service Bus connection string (`ASB_CONNECTIONSTRING`)
-  already exists for MassTransit; the new SDK client reuses it — no
-  new secret/config surface.
-- The retry scan-and-abandon approach bumps delivery count on messages
-  it passes over while searching for the target id. This is
-  acceptable for an infrequent, manually-triggered admin action, but
-  the implementation must bound the scan rather than loop unbounded.
+- The scan-and-abandon approach (retry/discard by message id) bumps
+  delivery count on messages it passes over while searching for the
+  target. Acceptable for an infrequent, manually-triggered admin
+  action, but the implementation must bound the scan (one pass) rather
+  than loop unbounded.
+- Purge is destructive and irreversible — the UI must ask for
+  confirmation before calling it (same pattern as the existing
+  "Uninstall" button in `SlackWorkspacesView.vue`).
+- Faulted messages are still purged by ASB itself after the same
+  2-hour `DefaultMessageTimeToLive` as every other queue/topic on this
+  bus — accepted trade-off, no retention change in scope.
 
 ## Testing
 
 Integration test in `FplBot.Tests`, against the real local Azure
-Service Bus emulator (same infra already used for other MassTransit
-integration tests): force a consumer to fault, assert the message
-lands in `{Consumer}_error`, call the list/detail endpoints, retry the
-message, assert it disappears from the error queue and is reprocessed
-by the original consumer.
+Service Bus emulator (the same one `dev/RetryFaulted.cs` and
+`devenv.sh` already use — not the in-memory transport `AppFixture`
+uses for its MassTransit tests, since this feature is inherently
+ASB-specific): force a consumer to fault, assert the fault appears in
+its topic/subscription via the list/detail endpoints including the
+body, retry it and assert the subscription empties and the consumer
+reprocesses it, then repeat for discard (message gone, no reprocess)
+and purge (multiple faults, one call empties the subscription).
