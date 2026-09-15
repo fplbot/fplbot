@@ -12,17 +12,14 @@ public class DiscordLineupReadyHandler(IGuildRepository guildRepository) : ICons
     public async Task Consume(ConsumeContext<LineupReady> context)
     {
         var message = context.Message;
-        var installations = await guildRepository.GetAllInstallations();
+        var subscribedChannels = await guildRepository.GetChannelsSubscribedTo(FplEvent.Lineups);
         var lineups = message.Lineup;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* ";
         var formattedLineup = Formatter.FormatLineup(lineups);
 
-        foreach (var installation in installations)
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Lineups))
-            {
-                await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
-            }
+            await context.Publish(new PublishRichToGuildChannel(guildId, channelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
         }
     }
 }
