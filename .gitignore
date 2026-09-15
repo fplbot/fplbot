@@ -347,4 +347,5 @@ __azurite**
 __blobstorage__/
 .claude/*
 !.claude/skills/
+!.claude/settings.json
 .tmp/

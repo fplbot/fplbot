@@ -11,6 +11,7 @@ public class SearchAppFixture : AppFixture
     private readonly ElasticsearchContainer _elasticsearch =
         new ElasticsearchBuilder("docker.elastic.co/elasticsearch/elasticsearch:8.17.3")
             .WithPassword("elastic")
+            .WithEnvironment("ES_JAVA_OPTS", "-Xms256m -Xmx256m")
             .WithReuse(true)
             .WithLabel("reuse-id", "search-app-fixture")
             .Build();
