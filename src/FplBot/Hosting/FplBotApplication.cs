@@ -5,6 +5,7 @@ using FplBot.Services.SearchIndexer;
 using FplBot.Services.WebApi;
 using MassTransit;
 using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 using Serilog.Sinks.SystemConsole.Themes;
 using StackExchange.Redis;
 
@@ -32,7 +33,7 @@ public static class FplBotApplication
     private static async Task RunAsWebApplication(string[] args, List<IFplBotService> active)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Host.UseSerilog(ConfigureSerilog);
+        builder.Host.UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active));
         var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
         // Slack requires OAuth redirect_uris to be https — even for localhost. In dev, serve
         // https on localhost using the trusted ASP.NET Core dev cert (`dotnet dev-certs https
@@ -57,7 +58,7 @@ public static class FplBotApplication
     private static async Task RunAsWorkerHost(string[] args, List<IFplBotService> active)
     {
         var host = Host.CreateDefaultBuilder(args)
-            .UseSerilog(ConfigureSerilog)
+            .UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active))
             .ConfigureServices((ctx, services) =>
             {
                 var redisConn = BuildRedisConnection(ctx.Configuration);
@@ -90,7 +91,13 @@ public static class FplBotApplication
             svc.Configure(services, config, redisConn, env);
     }
 
-    private static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc)
+    // Shared with OpenTelemetry tracing/metrics resource attribution — every telemetry signal
+    // reports under the same per-process service.name so the Aspire dashboard can tell the four
+    // FplBot services apart even though they're all built from one assembly.
+    public static string GetOtelServiceName(IEnumerable<IFplBotService> active) =>
+        string.Join("+", active.Select(s => s.ServiceType));
+
+    private static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc, List<IFplBotService> active)
     {
         lc.ReadFrom.Configuration(ctx.Configuration)
           .Enrich.WithCorrelationId()
@@ -98,6 +105,20 @@ public static class FplBotApplication
           .WriteTo.Console(
               outputTemplate: "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}",
               theme: ConsoleTheme.None);
+
+        if (ctx.HostingEnvironment.IsDevelopment())
+        {
+            Serilog.Debugging.SelfLog.Enable(msg => Console.Error.WriteLine($"[Serilog SelfLog] {msg}"));
+            lc.WriteTo.OpenTelemetry(o =>
+            {
+                o.Endpoint = ctx.Configuration["OTLP_DASHBOARD_ENDPOINT"];
+                o.Protocol = OtlpProtocol.Grpc;
+                o.ResourceAttributes = new Dictionary<string, object>
+                {
+                    ["service.name"] = GetOtelServiceName(active)
+                };
+            });
+        }
     }
 
     private static void ConfigureCommon(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redisConn)
