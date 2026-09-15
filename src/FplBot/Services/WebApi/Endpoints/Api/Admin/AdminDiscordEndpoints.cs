@@ -1,12 +1,14 @@
+using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord;
+using FplBot.Domain;
 using FplBot.EventHandlers.Discord;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record GuildWithSubsDto(string GuildId, string GuildName, IEnumerable<GuildFplSubscription> Subscriptions);
+public record GuildWithSubsDto(string GuildId, string GuildName, IEnumerable<ChannelSubscriptionDto> Subscriptions);
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
@@ -98,16 +100,15 @@ public static class AdminDiscordEndpoints
         }
     }
 
-    private static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo)
+    internal static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
 
-        var guilds = (await repo.GetAllGuilds()).ToList();
-        var allSubs = (await repo.GetAllGuildSubscriptions()).ToList();
+        var installations = (await repo.GetAllInstallations()).ToList();
 
-        var guildsWithSubs = guilds
-            .Select(g => new GuildWithSubsDto(g.Id, g.Name, allSubs.Where(s => s.GuildId == g.Id)))
+        var guildsWithSubs = installations
+            .Select(i => new GuildWithSubsDto(i.Id, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.Id, c))))
             .ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
@@ -124,15 +125,33 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, page, pageSize, filtered.Count));
     }
 
-    private static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
+    private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
+        new(guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
+            channel.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())));
+
+    internal static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
     {
-        await repo.DeleteGuildSubscription(guildId, channelId);
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        if (installation is not null)
+        {
+            installation.RemoveChannel(channelId);
+            await repo.Save(installation);
+        }
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
     }
 
-    private static async Task<IResult> DeleteAllSubscriptionsForGuild(string guildId, IGuildRepository repo)
+    internal static async Task<IResult> DeleteAllSubscriptionsForGuild(string guildId, IGuildRepository repo)
     {
-        var count = await DeleteSubscriptionsForGuild(guildId, repo);
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        var count = installation?.ChannelSubscriptions.Count ?? 0;
+        if (installation is not null)
+        {
+            foreach (var channel in installation.ChannelSubscriptions.ToList())
+            {
+                installation.RemoveChannel(channel.ChannelId);
+            }
+            await repo.Save(installation);
+        }
         return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
     }
 
@@ -141,20 +160,13 @@ public static class AdminDiscordEndpoints
     // triggered manually from the admin UI instead of automatically. This only forgets our
     // own tracked data; it doesn't call Discord to remove the bot from the server (there's no
     // "leave guild" support in DiscordClient today).
-    private static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo)
+    internal static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo)
     {
-        await DeleteSubscriptionsForGuild(guildId, repo);
-        await repo.DeleteGuild(guildId);
-        return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
-    }
-
-    private static async Task<int> DeleteSubscriptionsForGuild(string guildId, IGuildRepository repo)
-    {
-        var subs = (await repo.GetAllGuildSubscriptions()).Where(s => s.GuildId == guildId).ToList();
-        foreach (var sub in subs)
+        var installation = await repo.FindInstallationByTeamId(guildId);
+        if (installation is not null)
         {
-            await repo.DeleteGuildSubscription(sub.GuildId, sub.ChannelId);
+            await repo.Delete(installation);
         }
-        return subs.Count;
+        return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
     }
 }
