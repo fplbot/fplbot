@@ -7,7 +7,8 @@ var redis = builder.AddRedis("redis", port: 6379, password: redisPassword);
 builder.AddServiceBusEmulator("servicebus", dashboardPort:20000, port: 6000);
 var elasticsearch = builder.AddElasticsearch("elasticsearch",
         password: builder.AddParameter("elasticsearch-password", "dev", secret: true), port: 9200)
-    .WithEndpoint("internal", e => e.Port = 9300);
+    .WithEndpoint("internal", e => e.Port = 9300)
+    .WithEnvironment("ES_JAVA_OPTS", "-Xms256m -Xmx256m");
 
 builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(redis.Resource, DevSeeder.SeedAsync);
 builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(elasticsearch.Resource, DevSeeder.SeedElasticsearchAsync);
