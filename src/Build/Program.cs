@@ -47,13 +47,13 @@ targets.Add("deploy-prod",
     async () => await Command.RunAsync("heroku",
         $"container:release web eventpublisher indexer eventhandler --app {ProdApp}"));
 
-targets.Add("backup-discord-index-test",
-    "Dump Discord guild/channel Redis data from the test app to a local JSON file (read-only)",
-    async () => await BackupDiscordIndex(TestApp));
+targets.Add("backup-redis-test",
+    "Dump Slack/Discord installation Redis data from the test app to a local JSON file (read-only)",
+    async () => await BackupInstallations(TestApp));
 
-targets.Add("backup-discord-index-prod",
-    "Dump Discord guild/channel Redis data from prod to a local JSON file (read-only)",
-    async () => await BackupDiscordIndex(ProdApp));
+targets.Add("backup-redis-prod",
+    "Dump Slack/Discord installation Redis data from prod to a local JSON file (read-only)",
+    async () => await BackupInstallations(ProdApp));
 
 await targets.RunAndExitAsync(args);
 
@@ -106,7 +106,7 @@ async Task<string> GetRedisUrl(string app)
     return stdout.Trim();
 }
 
-async Task BackupDiscordIndex(string app)
+async Task BackupInstallations(string app)
 {
     const int maxConcurrentFetches = 64;
 
@@ -115,11 +115,11 @@ async Task BackupDiscordIndex(string app)
     var db = redis.GetDatabase();
     var server = redis.GetServers().Single();
 
-    var guildKeys = server.Keys(pattern: "Guild-*").ToList();
-    var channelKeys = server.Keys(pattern: "GuildSubs-*-Channel-*").ToList();
+    var patterns = new[] { "Guild-*", "GuildSubs-*-Channel-*", "TeamId-*", "SlackChannelSub-*" };
+    var keysByPattern = patterns.ToDictionary(p => p, p => server.Keys(pattern: p).ToList());
 
     var dump = new ConcurrentDictionary<string, Dictionary<string, string>>();
-    await Parallel.ForEachAsync(guildKeys.Concat(channelKeys), new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (key, _) =>
+    await Parallel.ForEachAsync(keysByPattern.Values.SelectMany(k => k), new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (key, _) =>
     {
         var hash = await db.HashGetAllAsync(key);
         dump[key.ToString()] = hash.ToDictionary(h => h.Name.ToString(), h => h.Value.ToString());
@@ -127,10 +127,11 @@ async Task BackupDiscordIndex(string app)
 
     var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "fplbot-backups");
     Directory.CreateDirectory(outputDir);
-    var outputPath = Path.Combine(outputDir, $"discord-backup-{app}-{DateTime.UtcNow:yyyyMMddHHmmss}.json");
+    var outputPath = Path.Combine(outputDir, $"fplbot-backup-{app}-{DateTime.UtcNow:yyyyMMddHHmmss}.json");
     await File.WriteAllTextAsync(outputPath, JsonSerializer.Serialize(dump.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value), new JsonSerializerOptions { WriteIndented = true }));
 
-    Console.WriteLine($"Backed up {guildKeys.Count} guild(s) and {channelKeys.Count} channel subscription(s) to {outputPath}");
+    var counts = string.Join(", ", keysByPattern.Select(kv => $"{kv.Key}={kv.Value.Count}"));
+    Console.WriteLine($"Backed up {counts} to {outputPath}");
 }
 
 ConfigurationOptions ParseRedisUrl(string redisUrl)
