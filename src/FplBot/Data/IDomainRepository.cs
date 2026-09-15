@@ -9,6 +9,4 @@ public interface IDomainRepository
     Task<Installation?> FindInstallationByTeamId(string teamId);
     Task<IEnumerable<Installation>> GetAllInstallations();
     Task Delete(Installation installation);
-    Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId);
-    Task DeleteChannelSubscription(string teamId, string channelId);
 }

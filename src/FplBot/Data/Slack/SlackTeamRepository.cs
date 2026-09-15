@@ -69,6 +69,10 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task Save(Installation installation)
     {
+        var storedChannelIds = (await _db.SetMembersAsync(ToChannelSubIndexKey(installation.Id)))
+            .Select(v => v.ToString() ?? string.Empty)
+            .ToHashSet();
+
         var hashEntries = new HashEntry[]
         {
             new(_accessTokenField, installation.Token),
@@ -79,9 +83,16 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         await _db.HashSetAsync(FromTeamIdToTeamKey(installation.Id), hashEntries);
 
+        var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
+
         foreach (var channel in installation.ChannelSubscriptions)
         {
             await SaveChannelSubscription(installation.Id, channel);
+        }
+
+        foreach (var removedChannelId in storedChannelIds.Except(currentChannelIds))
+        {
+            await DeleteChannelSubscription(installation.Id, removedChannelId);
         }
     }
 
@@ -199,7 +210,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         return result;
     }
 
-    public async Task DeleteChannelSubscription(string teamId, string channelId)
+    private async Task DeleteChannelSubscription(string teamId, string channelId)
     {
         await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId));
         await _db.SetRemoveAsync(ToChannelSubIndexKey(teamId), channelId);

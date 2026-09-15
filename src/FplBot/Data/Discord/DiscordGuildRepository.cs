@@ -179,12 +179,24 @@ public class DiscordGuildRepository : IGuildRepository
 
     public async Task Save(Installation installation)
     {
+        var storedChannelIds = (await GetAllGuildSubscriptions())
+            .Where(s => s.GuildId == installation.Id)
+            .Select(s => s.ChannelId)
+            .ToHashSet();
+
         var hashEntries = new HashEntry[] { new(_guildIdField, installation.Id), new(_nameField, installation.Name) };
         await _db.HashSetAsync(FromGuildIdToGuildKey(installation.Id), hashEntries);
+
+        var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
 
         foreach (var channel in installation.ChannelSubscriptions)
         {
             await InsertGuildSubscription(ToGuildFplSubscription(installation.Id, channel));
+        }
+
+        foreach (var removedChannelId in storedChannelIds.Except(currentChannelIds))
+        {
+            await DeleteGuildSubscription(installation.Id, removedChannelId);
         }
     }
 
@@ -198,13 +210,11 @@ public class DiscordGuildRepository : IGuildRepository
         await DeleteGuild(installation.Id);
     }
 
-    public async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId)
+    private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId)
     {
         var allSubs = await GetAllGuildSubscriptions();
         return allSubs.Where(s => s.GuildId == teamId).Select(ToChannelSubscription).ToList();
     }
-
-    public Task DeleteChannelSubscription(string teamId, string channelId) => DeleteGuildSubscription(teamId, channelId);
 
     private static ChannelSubscription ToChannelSubscription(GuildFplSubscription sub) =>
         ChannelSubscription.Load(sub.ChannelId, sub.LeagueId is { } id ? new ClassicLeagueId(id) : null, sub.Subscriptions.Select(ToDomainEvent));

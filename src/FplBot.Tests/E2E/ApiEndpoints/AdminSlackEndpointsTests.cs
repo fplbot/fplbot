@@ -210,6 +210,4 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var remaining = await fixture.SlackRepo.GetChannelSubscriptions(teamId);
         Assert.DoesNotContain(remaining, c => c.ChannelId == "#fplbot");
     }
-
-
 }

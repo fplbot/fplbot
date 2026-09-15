@@ -75,6 +75,14 @@ public class Installation
 
     public ChannelSubscription? GetChannel(string channelId) => FindChannel(channelId);
 
+    public void RemoveChannel(string channelId)
+    {
+        var existing = FindChannel(channelId);
+        if (existing is null) return;
+
+        _channelSubscriptions.Remove(existing);
+    }
+
     public void MoveChannel(string oldChannelId, string newChannelId)
     {
         var existing = FindChannel(oldChannelId);

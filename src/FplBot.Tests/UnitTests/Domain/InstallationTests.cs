@@ -252,4 +252,26 @@ public class InstallationTests
 
         Assert.Empty(installation.ChannelSubscriptions);
     }
+
+    [Fact]
+    public void RemoveChannel_RemovesTheChannel()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+
+        installation.RemoveChannel("C1");
+
+        Assert.Empty(installation.ChannelSubscriptions);
+    }
+
+    [Fact]
+    public void RemoveChannel_OnUnknownChannel_DoesNothing()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+
+        installation.RemoveChannel("C2");
+
+        Assert.Single(installation.ChannelSubscriptions);
+    }
 }

@@ -212,7 +212,6 @@ public static class AdminSlackEndpoints
         if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
 
         installation.MoveChannel(channelId, request.NewChannelId);
-        await teamRepo.DeleteChannelSubscription(teamIdToUpper, channelId);
         await teamRepo.Save(installation);
 
         return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
@@ -223,7 +222,12 @@ public static class AdminSlackEndpoints
         string channelId,
         ISlackTeamRepository teamRepo)
     {
-        await teamRepo.DeleteChannelSubscription(teamId.ToUpper(), channelId);
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+
+        installation.RemoveChannel(channelId);
+        await teamRepo.Save(installation);
+
         return TypedResults.Ok(new { message = $"Deleted subscription for {channelId}" });
     }
 
