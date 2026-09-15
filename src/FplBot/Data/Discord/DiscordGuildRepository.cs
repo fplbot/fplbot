@@ -1,5 +1,5 @@
+using System.Collections.Concurrent;
 using FplBot.Domain;
-using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace FplBot.Data.Discord;
@@ -7,6 +7,7 @@ namespace FplBot.Data.Discord;
 public class DiscordGuildRepository : IGuildRepository
 {
     private const string GuildIndexKey = "GuildIndex";
+    private const int MaxConcurrentGuildFetches = 64;
 
     private readonly RedisValue _nameField = "name";
     private readonly RedisValue _guildIdField = "guildid";
@@ -14,16 +15,12 @@ public class DiscordGuildRepository : IGuildRepository
     private readonly RedisValue _leagueIdField = "leagueid";
     private readonly RedisValue _subscriptionsField = "subs";
 
-    private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _db;
-    private readonly string _server;
     private readonly ILogger<DiscordGuildRepository> _logger;
 
-    public DiscordGuildRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<DiscordGuildRepository> logger)
+    public DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<DiscordGuildRepository> logger)
     {
-        _redis = redis;
-        _db = _redis.GetDatabase();
-        _server = redisOptions.Value.GetRedisServerHostAndPort;
+        _db = redis.GetDatabase();
         _logger = logger;
     }
 
@@ -52,23 +49,24 @@ public class DiscordGuildRepository : IGuildRepository
 
     public async Task<IEnumerable<Installation>> GetAllInstallations()
     {
-        var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("*"));
-        var installations = new List<Installation>();
-        foreach (var key in allKeys)
+        var guildIds = await _db.SetMembersAsync(GuildIndexKey);
+        var installations = new ConcurrentBag<Installation>();
+
+        await Parallel.ForEachAsync(guildIds, new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrentGuildFetches }, async (guildIdValue, _) =>
         {
-            var guildId = FromKeyToGuildId(key);
-            var fetched = await _db.HashGetAsync(key, [_nameField]);
+            var guildId = guildIdValue.ToString();
+            var fetched = await _db.HashGetAsync(FromGuildIdToGuildKey(guildId), [_nameField]);
             var channels = await GetChannelSubscriptions(guildId);
             installations.Add(Installation.Load(guildId, fetched[0].ToString() ?? string.Empty, token: null, channels));
-        }
+        });
 
         return installations;
     }
 
     public async Task Save(Installation installation)
     {
-        var storedChannelIds = (await GetChannelSubscriptions(installation.Id))
-            .Select(c => c.ChannelId)
+        var storedChannelIds = (await _db.SetMembersAsync(ToChannelSubIndexKey(installation.Id)))
+            .Select(v => v.ToString() ?? string.Empty)
             .ToHashSet();
 
         var hashEntries = new HashEntry[] { new(_guildIdField, installation.Id), new(_nameField, installation.Name) };
@@ -126,12 +124,12 @@ public class DiscordGuildRepository : IGuildRepository
 
     private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string guildId)
     {
-        var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey(guildId, "*"));
+        var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(guildId));
         var result = new List<ChannelSubscription>();
-        foreach (var key in allKeys)
+        foreach (var channelIdValue in channelIds)
         {
-            var fetched = await _db.HashGetAsync(key, [_channelIdField, _leagueIdField, _subscriptionsField]);
-            var channelId = fetched[0].ToString() ?? string.Empty;
+            var channelId = channelIdValue.ToString();
+            var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId), [_channelIdField, _leagueIdField, _subscriptionsField]);
             var leagueId = fetched[1].HasValue ? (int?)fetched[1] : null;
             var subs = ParseSubscriptionString(fetched[2].ToString(), " ");
             var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
@@ -154,11 +152,6 @@ public class DiscordGuildRepository : IGuildRepository
     private static string ToChannelSubIndexKey(string guildId)
     {
         return $"GuildChannelSubIndex-{guildId}";
-    }
-
-    private static string FromKeyToGuildId(string? key)
-    {
-        return key?.Split('-')[1] ?? string.Empty;
     }
 
     private static IEnumerable<EventSubscription> ParseSubscriptionString(string? subscriptionString, string delimiter)
