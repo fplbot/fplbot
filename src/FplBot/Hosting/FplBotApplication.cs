@@ -91,7 +91,7 @@ public static class FplBotApplication
             configureBus(x);
         });
 
-            ConfigureOpenTelemetry(services, config, active);
+        ConfigureOpenTelemetry(services, config, active);
 
         foreach (var svc in active)
             svc.Configure(services, config, redisConn, env);
