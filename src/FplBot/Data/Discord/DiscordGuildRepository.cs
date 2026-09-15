@@ -86,6 +86,13 @@ public class DiscordGuildRepository : IGuildRepository
         }
     }
 
+    public async Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents)
+    {
+        var keys = fplEvents.Select(e => (RedisKey)ToEventIndexKey(e)).ToArray();
+        var entries = await _db.SetCombineAsync(SetOperation.Union, keys);
+        return entries.Select(ParseEventIndexEntry);
+    }
+
     public async Task Delete(Installation installation)
     {
         var channels = await GetChannelSubscriptions(installation.Id);
@@ -100,6 +107,10 @@ public class DiscordGuildRepository : IGuildRepository
 
     private async Task SaveChannelSubscription(string guildId, ChannelSubscription channel)
     {
+        var key = FromGuildIdAndChannelToGuildChannelSubKey(guildId, channel.ChannelId);
+        var oldEvents = ExpandEvents(ParseSubscriptionString((await _db.HashGetAsync(key, _subscriptionsField)).ToString(), " ").Select(ToDomainEvent));
+        var newEvents = ExpandEvents(channel.Events.Current);
+
         var hashEntries = new List<HashEntry>
         {
             new(_guildIdField, guildId),
@@ -112,14 +123,59 @@ public class DiscordGuildRepository : IGuildRepository
             hashEntries.Add(new HashEntry(_leagueIdField, (int)leagueId.Value));
         }
 
-        await _db.HashSetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channel.ChannelId), hashEntries.ToArray());
+        await _db.HashSetAsync(key, hashEntries.ToArray());
         await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
+        await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
     }
 
     private async Task DeleteChannelSubscription(string guildId, string channelId)
     {
-        await _db.KeyDeleteAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
+        var key = FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId);
+        var events = ExpandEvents(ParseSubscriptionString((await _db.HashGetAsync(key, _subscriptionsField)).ToString(), " ").Select(ToDomainEvent));
+        await UpdateEventIndex(guildId, channelId, events, []);
+
+        await _db.KeyDeleteAsync(key);
         await _db.SetRemoveAsync(ToChannelSubIndexKey(guildId), channelId);
+    }
+
+    // A channel subscribed via FplEvent.All (EventCollection's short-circuit sentinel, see
+    // EventCollection.Contains) is stored as the single literal "All" in the subscriptions hash
+    // field, not as every concrete event name. Per-event index membership has to be based on the
+    // effective (expanded) set, or an "All"-subscribed channel would silently vanish from every
+    // concrete event's index.
+    private static IEnumerable<FplEvent> ExpandEvents(IEnumerable<FplEvent> events)
+    {
+        var materialized = events as ICollection<FplEvent> ?? events.ToList();
+        return materialized.Contains(FplEvent.All)
+            ? Enum.GetValues<FplEvent>().Where(e => e != FplEvent.All)
+            : materialized;
+    }
+
+    private async Task UpdateEventIndex(string guildId, string channelId, IEnumerable<FplEvent> oldEvents, IEnumerable<FplEvent> newEvents)
+    {
+        var entry = ToEventIndexEntry(guildId, channelId);
+        var oldSet = oldEvents.ToHashSet();
+        var newSet = newEvents.ToHashSet();
+
+        foreach (var removed in oldSet.Except(newSet))
+        {
+            await _db.SetRemoveAsync(ToEventIndexKey(removed), entry);
+        }
+
+        foreach (var added in newSet.Except(oldSet))
+        {
+            await _db.SetAddAsync(ToEventIndexKey(added), entry);
+        }
+    }
+
+    private static string ToEventIndexKey(FplEvent fplEvent) => $"GuildEventIndex-{fplEvent}";
+
+    private static string ToEventIndexEntry(string guildId, string channelId) => $"{guildId}:{channelId}";
+
+    private static (string InstallationId, string ChannelId) ParseEventIndexEntry(RedisValue value)
+    {
+        var parts = value.ToString().Split(':', 2);
+        return (parts[0], parts[1]);
     }
 
     private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string guildId)
