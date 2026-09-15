@@ -129,6 +129,11 @@ public static class FplBotApplication
         if (connectionString == null)
             throw new InvalidOperationException("Redis connection string not configured. Set REDIS_URL.");
 
+        return ConnectToRedis(connectionString);
+    }
+
+    internal static ConnectionMultiplexer ConnectToRedis(string connectionString)
+    {
         if (connectionString.StartsWith("redis://", StringComparison.OrdinalIgnoreCase)
             || connectionString.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase))
         {
