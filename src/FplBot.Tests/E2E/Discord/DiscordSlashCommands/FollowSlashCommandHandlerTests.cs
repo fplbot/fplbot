@@ -44,10 +44,12 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
     [Fact]
     public async Task NoExistingSubscription_CreatesOneAndSubscribesToAll()
     {
+        var installedGuild = await fixture.SeedGuildInstallation();
         var leagueId = NewLeagueId();
         SetLeagueFound(leagueId, "Test League");
 
-        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString());
+        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(),
+            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
 
         Assert.Contains("Now following the 'Test League' FPL league", response.EmbedDescription());
         Assert.Contains("Auto-subbed to all events", response.EmbedDescription());

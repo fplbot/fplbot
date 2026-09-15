@@ -3,22 +3,24 @@ using Discord.Net.Endpoints.Middleware;
 using Fpl.Client.Abstractions;
 using FplBot.Data.Discord;
 using FplBot.Discord.Extensions;
+using FplBot.Domain;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient client) : ISlashCommandHandler
+public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client) : ISlashCommandHandler
 {
     public string CommandName => "help";
 
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
         var content = "";
-        var sub = await store.GetGuildSubscription(context.GuildId, context.ChannelId);
+        var installation = await repo.GetInstallation(context.GuildId);
+        var sub = installation.GetChannel(context.ChannelId);
         if (sub != null)
         {
-            if (sub.LeagueId.HasValue)
+            if (sub.FollowedLeagueId is { } leagueId)
             {
-                var league = await client.GetClassicLeague(sub.LeagueId.Value, tolerate404:true);
+                var league = await client.GetClassicLeague((int)leagueId.Value, tolerate404:true);
                 if(league != null)
                     content += $"\n**League:**\nCurrently following the '{league.Properties?.Name}' league";
             }
@@ -28,13 +30,14 @@ public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient clien
             }
 
             var allTypes = EventSubscriptionHelper.GetAllSubscriptionTypes();
-            if (sub.Subscriptions.Any())
+            var currentSubs = sub.Events.Current.Select(ToEventSubscription).ToList();
+            if (currentSubs.Count != 0)
             {
-                content += $"\n\n**Subscriptions:**\n{string.Join("\n", sub.Subscriptions.Select(s => $" ✅ {s}"))}";
+                content += $"\n\n**Subscriptions:**\n{string.Join("\n", currentSubs.Select(s => $" ✅ {s}"))}";
 
-                if (!sub.Subscriptions.Contains(EventSubscription.All))
+                if (!currentSubs.Contains(EventSubscription.All))
                 {
-                    var allTypesExceptSubs = allTypes.Except(sub.Subscriptions).Except([EventSubscription.All]);
+                    var allTypesExceptSubs = allTypes.Except(currentSubs).Except([EventSubscription.All]);
                     content += $"\n\n**Not subscribing:**\n{string.Join("\n", allTypesExceptSubs.Select(s => $" ❌ {s}"))}";
                 }
             }
@@ -51,6 +54,8 @@ public class HelpSlashCommandHandler(IGuildRepository store, ILeagueClient clien
 
         return Respond(content);
     }
+
+    private static EventSubscription ToEventSubscription(FplEvent e) => Enum.Parse<EventSubscription>(e.ToString());
 
     private static ChannelMessageWithSourceEmbedResponse Respond(string content)
     {

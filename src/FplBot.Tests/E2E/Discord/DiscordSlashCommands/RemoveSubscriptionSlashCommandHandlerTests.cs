@@ -12,7 +12,10 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     [Fact]
     public async Task NoExistingSubscription_RespondsWithNothingToRemove()
     {
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove");
+        var installedGuild = await fixture.SeedGuildInstallation();
+
+        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
+            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
 
         Assert.Contains("Did not find any subscription", response.EmbedDescription());
     }

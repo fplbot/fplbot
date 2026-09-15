@@ -12,7 +12,10 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     [Fact]
     public async Task NoExistingSubscription_CreatesOne()
     {
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add");
+        var installedGuild = await fixture.SeedGuildInstallation();
+
+        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
+            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
 
         Assert.Contains("Added new subscription", response.EmbedDescription());
         Assert.Contains("PriceChanges", response.EmbedDescription());

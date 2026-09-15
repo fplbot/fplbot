@@ -12,7 +12,10 @@ public class HelpSlashCommandHandlerTests(AppFixture fixture)
     [Fact]
     public async Task NoSubscription_RespondsWithNoSubscriptionsMessage()
     {
-        var response = await fixture.AskDiscord("help");
+        var installedGuild = await fixture.SeedGuildInstallation();
+
+        var response = await fixture.AskDiscord("help", guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+
         Assert.Contains("Not subscribing to any events", response.EmbedDescription());
     }
 

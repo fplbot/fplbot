@@ -2,6 +2,7 @@ using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
 using Fpl.Client.Abstractions;
 using FplBot.Data.Discord;
+using FplBot.Domain;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
@@ -17,19 +18,15 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
         if(league == null)
             return Respond($"Could not find a classic league of id '{leagueId}'", success:false);
 
-        var existingSub = await repo.GetGuildSubscription(context.GuildId, context.ChannelId);
-        if (existingSub == null)
-        {
-            await repo.InsertGuildSubscription(new GuildFplSubscription(context.GuildId, context.ChannelId, leagueId, [
-                EventSubscription.All
-            ]));
+        var installation = await repo.GetInstallation(context.GuildId);
+        var isNewChannel = installation.GetChannel(context.ChannelId) is null;
 
-            return Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. (Auto-subbed to all events) ");
-        }
+        installation.Follow(context.ChannelId, new ClassicLeagueId(leagueId));
+        await repo.Save(installation);
 
-        await repo.UpdateGuildSubscription(existingSub with { LeagueId = leagueId });
-        return Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. " );
-
+        return isNewChannel
+            ? Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. (Auto-subbed to all events) ")
+            : Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. ");
     }
 
     private static SlashCommandResponse Respond(string content, bool success = true)
