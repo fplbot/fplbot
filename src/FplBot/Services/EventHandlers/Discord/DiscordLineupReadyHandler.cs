@@ -1,5 +1,5 @@
 using FplBot.Data.Discord;
-using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Domain;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -12,17 +12,17 @@ public class DiscordLineupReadyHandler(IGuildRepository guildRepository) : ICons
     public async Task Consume(ConsumeContext<LineupReady> context)
     {
         var message = context.Message;
-        var subs = await guildRepository.GetAllGuildSubscriptions();
+        var installations = await guildRepository.GetAllInstallations();
         var lineups = message.Lineup;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* ";
         var formattedLineup = Formatter.FormatLineup(lineups);
-        foreach (var sub in subs)
-        {
-            if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Lineups))
-            {
-                await context.Publish(new PublishRichToGuildChannel(sub.GuildId, sub.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
-            }
 
+        foreach (var installation in installations)
+        {
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Lineups))
+            {
+                await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, $"ℹ️ {firstMessage}", $"{formattedLineup}"));
+            }
         }
     }
 }
