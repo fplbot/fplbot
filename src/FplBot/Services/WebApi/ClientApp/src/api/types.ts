@@ -142,6 +142,20 @@ export interface GuildWithSubs {
   subscriptions: GuildSubscription[];
 }
 
+export interface GuildDetailsChannel {
+  channel: string;
+  leagueId: number | null;
+  leagueName: string | null;
+  subscriptions: EventSubscription[];
+  channelStatus: boolean | null;
+}
+
+export interface GuildDetails {
+  guildId: string;
+  guildName: string | null;
+  channels: GuildDetailsChannel[];
+}
+
 // ---- OAuth ----
 
 export interface InstallUrlResponse {

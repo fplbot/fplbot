@@ -2,6 +2,7 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
+using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -67,5 +68,33 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
+    }
+
+    [Fact]
+    public async Task PublishStandingsToDiscordGuild_PostsStandingsRegardlessOfSubscription()
+    {
+        const int gameweekId = 7;
+        const int leagueId = 12345;
+
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = new List<Gameweek> { new() { Id = gameweekId, Name = $"Gameweek {gameweekId}" } }
+        });
+
+        var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._)).Returns(new ClassicLeague
+        {
+            Properties = new ClassicLeagueProperties { Name = "Test League", StartEvent = 1 },
+            Standings = new ClassicLeagueStandings { Entries = new List<ClassicLeagueEntry>(), HasNext = false }
+        });
+
+        await fixture.Bus.Publish(new PublishStandingsToDiscordGuild(installedGuild.Id, channelId, leagueId, gameweekId), TestContext.Current.CancellationToken);
+
+        var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        Assert.Contains("Gameweek finished", msg.Title);
     }
 }

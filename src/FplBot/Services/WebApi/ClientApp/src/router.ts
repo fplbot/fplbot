@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { slackInstallationAdapter, discordInstallationAdapter } from "./composables/installationAdapters";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -59,7 +60,7 @@ const router = createRouter({
           children: [
             {
               path: "",
-              redirect: "/admin/discord/subscriptions",
+              redirect: "/admin/discord/servers",
             },
             {
               path: "broadcast",
@@ -72,8 +73,8 @@ const router = createRouter({
               component: () => import("./views/admin/DiscordSlashCommandsView.vue"),
             },
             {
-              path: "subscriptions",
-              name: "admin-discord-subscriptions",
+              path: "servers",
+              name: "admin-discord-servers",
               component: () => import("./views/admin/DiscordSubscriptionsView.vue"),
             },
           ],
@@ -99,16 +100,28 @@ const router = createRouter({
           ],
         },
         {
-          path: "teams/:teamId",
+          path: "teams/:entityId",
           name: "admin-team-details",
-          component: () => import("./views/admin/TeamDetailsView.vue"),
-          props: true,
+          component: () => import("./views/admin/InstallationDetailsView.vue"),
+          props: (route) => ({ entityId: route.params.entityId, adapter: slackInstallationAdapter }),
         },
         {
-          path: "teams/:teamId/channels/:channelId",
+          path: "teams/:entityId/channels/:channelId",
           name: "admin-team-channel-manage",
-          component: () => import("./views/admin/TeamChannelManageView.vue"),
-          props: true,
+          component: () => import("./views/admin/ChannelManageView.vue"),
+          props: (route) => ({ entityId: route.params.entityId, channelId: route.params.channelId, adapter: slackInstallationAdapter }),
+        },
+        {
+          path: "guilds/:entityId",
+          name: "admin-guild-details",
+          component: () => import("./views/admin/InstallationDetailsView.vue"),
+          props: (route) => ({ entityId: route.params.entityId, adapter: discordInstallationAdapter }),
+        },
+        {
+          path: "guilds/:entityId/channels/:channelId",
+          name: "admin-guild-channel-manage",
+          component: () => import("./views/admin/ChannelManageView.vue"),
+          props: (route) => ({ entityId: route.params.entityId, channelId: route.params.channelId, adapter: discordInstallationAdapter }),
         },
       ],
     },

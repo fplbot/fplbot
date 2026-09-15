@@ -14,7 +14,8 @@ public class DiscordGameweekFinishedHandler(
     IGlobalSettingsClient settingsClient,
     ILeagueClient leagueClient)
     : IConsumer<GameweekFinished>,
-        IConsumer<PublishGameweekFinishedToGuild>
+        IConsumer<PublishGameweekFinishedToGuild>,
+        IConsumer<PublishStandingsToDiscordGuild>
 {
     public async Task Consume(ConsumeContext<GameweekFinished> context)
     {
@@ -39,41 +40,52 @@ public class DiscordGameweekFinishedHandler(
 
         if (sub != null && message.LeagueId.HasValue && sub.IsSubscribedTo(FplEvent.Standings))
         {
-            var settings = await settingsClient.GetGlobalSettings();
-            var gameweeks = settings?.Gameweeks ?? [];
-            var gw = gameweeks.SingleOrDefault(g => g.Id == message.GameweekId);
-            var league = await leagueClient.GetClassicLeague(message.LeagueId.Value, tolerate404:true);
-            if (league != null && gw != null)
-            {
-                if (league.Properties?.StartEvent is var startEvent && message.GameweekId >= startEvent)
-                {
-                    var messages = new List<RichMesssage>();
-                    var intro = Formatter.FormatGameweekFinished(gw, league);
-                    var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
-                    var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
-                    var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
-                    messages.AddRange([
-                        new ("ℹ️ Gameweek finished!",intro),
-                        new ("ℹ️ Standings", standings),
-                        new ("ℹ️ Top 3", topThree ?? string.Empty)
-                    ]);
+            await PublishStandings(context, message.GuildId, message.ChannelId, message.LeagueId.Value, message.GameweekId);
+        }
+    }
 
-                    if (worst is not null)
-                    {
-                        messages.Add(new("ℹ️ Lantern beige", worst));
-                    }
-                    foreach (var richMessage in messages)
-                    {
-                        await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, richMessage.Title, richMessage.Description));
-                    }
+    public async Task Consume(ConsumeContext<PublishStandingsToDiscordGuild> context)
+    {
+        var message = context.Message;
+        await PublishStandings(context, message.GuildId, message.ChannelId, message.LeagueId, message.GameweekId);
+    }
+
+    private async Task PublishStandings(ConsumeContext context, string guildId, string channelId, int leagueId, int gameweekId)
+    {
+        var settings = await settingsClient.GetGlobalSettings();
+        var gameweeks = settings?.Gameweeks ?? [];
+        var gw = gameweeks.SingleOrDefault(g => g.Id == gameweekId);
+        var league = await leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+        if (league != null && gw != null)
+        {
+            if (league.Properties?.StartEvent is var startEvent && gameweekId >= startEvent)
+            {
+                var messages = new List<RichMesssage>();
+                var intro = Formatter.FormatGameweekFinished(gw, league);
+                var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
+                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
+                var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
+                messages.AddRange([
+                    new ("ℹ️ Gameweek finished!",intro),
+                    new ("ℹ️ Standings", standings),
+                    new ("ℹ️ Top 3", topThree ?? string.Empty)
+                ]);
+
+                if (worst is not null)
+                {
+                    messages.Add(new("ℹ️ Lantern beige", worst));
+                }
+                foreach (var richMessage in messages)
+                {
+                    await context.Publish(new PublishRichToGuildChannel(guildId, channelId, richMessage.Title, richMessage.Description));
                 }
             }
-            else
-            {
-                string msg = $"Standings are now generally ready, but you're subscribing to a non-classic or " +
-                             $"non-existing classic FPL league: '{message.LeagueId}'";
-                await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, "⚠️ Standings ready", msg));
-            }
+        }
+        else
+        {
+            string msg = $"Standings are now generally ready, but you're subscribing to a non-classic or " +
+                         $"non-existing classic FPL league: '{leagueId}'";
+            await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "⚠️ Standings ready", msg));
         }
     }
 }
