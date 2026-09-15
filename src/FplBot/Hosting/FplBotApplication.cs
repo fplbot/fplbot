@@ -136,6 +136,7 @@ public static class FplBotApplication
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddSource(DiagnosticHeaders.DefaultListenerName)
+                .AddSource(FplBotDiagnostics.ActivitySourceName)
                 .AddOtlpExporter(o =>
                 {
                     o.Endpoint = new Uri(config["OTLP_DASHBOARD_ENDPOINT"]!);
