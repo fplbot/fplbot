@@ -22,7 +22,7 @@ public class DiscordFixtureFulltimeHandler(
     public async Task Consume(ConsumeContext<FixtureFinished> context)
     {
         var message = context.Message;
-        var installations = await teamRepo.GetAllInstallations();
+        var subscribedChannels = await teamRepo.GetChannelsSubscribedTo(FplEvent.FixtureFullTime);
         var settings = await settingsClient.GetGlobalSettings();
         var fixtures = await fixtureClient.GetFixtures() ?? [];
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
@@ -37,12 +37,9 @@ public class DiscordFixtureFulltimeHandler(
         var fixture = FixtureFulltimeModelBuilder.CreateFinishedFixture(settings?.Teams ?? [], settings?.Players ?? [], fplfixture, liveItems);
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
-        foreach (var installation in installations)
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureFullTime))
-            {
-                await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, $"ℹ️ {title}",$"{threadMessage}"));
-            }
+            await context.Publish(new PublishRichToGuildChannel(guildId, channelId, $"ℹ️ {title}", $"{threadMessage}"));
         }
     }
 }
