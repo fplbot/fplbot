@@ -6,8 +6,6 @@ public interface IGuildRepository : IDomainRepository
     Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions();
     Task<GuildFplSubscription> GetGuildSubscription(string guildId, string channelId);
     Task DeleteGuildSubscription(string guildId, string channelId);
-    Task UpdateGuildSubscription(GuildFplSubscription guildSub);
-    Task InsertGuildSubscription(GuildFplSubscription guildSub);
     Task DeleteGuild(string guildId);
 }
 

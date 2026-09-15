@@ -24,6 +24,7 @@ public class RemoveSubscriptionSlashCommandHandler(IGuildRepository repo) : ISla
 
         EventSubscription eventSub = Enum.Parse<EventSubscription>(context.CommandInput!.Value);
         var events = existingChannel.Events.Current;
+        var wasSubscribedToAll = events.Count() == 1 && events.First() == FplEvent.All;
 
         bool isLastSub = events.Count() == 1 && events.First() == ToFplEvent(eventSub);
         if (existingChannel.FollowedLeagueId == null && (isLastSub || eventSub == EventSubscription.All))
@@ -33,36 +34,17 @@ public class RemoveSubscriptionSlashCommandHandler(IGuildRepository repo) : ISla
             return Respond("✅ Success!", "Removed subscription to this channel.");
         }
 
-        bool existingIsAll = events.Count() == 1 && events.First() == FplEvent.All;
-        if (existingIsAll && eventSub != EventSubscription.All)
-        {
-            installation.Unsubscribe(context.ChannelId, ToFplEvent(eventSub));
-            await repo.Save(installation);
-            return Respond("✅ Success!", $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}");
-        }
-
-        if (eventSub == EventSubscription.All)
-        {
-            // Selecting "All" here means "clear everything", not the domain's All-membership token —
-            // unsubscribe every individual event so it converges to empty regardless of starting state
-            // (including when currently subscribed to the All token itself).
-            foreach (var e in Enum.GetValues<FplEvent>().Where(v => v != FplEvent.All))
-            {
-                installation.Unsubscribe(context.ChannelId, e);
-            }
-        }
-        else
-        {
-            installation.Unsubscribe(context.ChannelId, ToFplEvent(eventSub));
-        }
-
+        installation.Unsubscribe(context.ChannelId, ToFplEvent(eventSub));
         await repo.Save(installation);
+
         if (existingChannel.Events.Current.Any())
         {
-            return Respond("✅ Success!", $"Unsubscribed from {eventSub}. Updated list:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}");
+            var message = wasSubscribedToAll
+                ? $"No longer subscribing to all events. Updated list:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}"
+                : $"Unsubscribed from {eventSub}. Updated list:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}";
+            return Respond("✅ Success!", message);
         }
         return Respond("✅ Success!", "No longer subscribing to any events.");
-
     }
 
     private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());

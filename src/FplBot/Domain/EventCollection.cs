@@ -53,6 +53,12 @@ public class EventCollection
 
     public void Remove(FplEvent fplEvent)
     {
+        if (fplEvent == FplEvent.All)
+        {
+            _events.Clear();
+            return;
+        }
+
         if (_events.Contains(FplEvent.All))
         {
             _events.Remove(FplEvent.All);
