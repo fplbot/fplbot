@@ -1,5 +1,5 @@
 using FplBot.Data.Discord;
-using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -15,14 +15,14 @@ public class DiscordFixtureRemovedHandler(
     {
         var message = context.Message;
         logger.LogInformation("Fixture removed from gameweek {Message}", message);
-        var subs = await guildRepo.GetAllGuildSubscriptions();
+        var installations = await guildRepo.GetAllInstallations();
 
-        foreach (var sub in subs)
+        foreach (var installation in installations)
         {
-            if (sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.FixtureRemovedFromGameweek))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureRemovedFromGameweek))
             {
-                var formattedMsg = new PublishRichToGuildChannel(sub.GuildId,
-                    sub.ChannelId,
+                var formattedMsg = new PublishRichToGuildChannel(installation.Id,
+                    channel.ChannelId,
                     "❌ Fixture off!",
                     $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}" +
                     $" has been removed from gameweek {message.Gameweek}!");
