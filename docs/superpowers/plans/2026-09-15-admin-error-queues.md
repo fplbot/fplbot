@@ -30,7 +30,7 @@
 
 **Interfaces:**
 - Produces: `AdminErrorQueueFixture` (class, `IAsyncLifetime`) with `Publisher` (`IPublishEndpoint`), `AdminClient` (`ServiceBusAdministrationClient`), `BusClient` (`ServiceBusClient`) properties, used by every later task's tests via `[Collection("AdminErrorQueue")]`.
-- Produces: `PoisonTestMessage(string Key, bool AlwaysFault)` record and `AlwaysFaultsConsumer` (`IConsumer<PoisonTestMessage>`) — faults on a message's first delivery (or every delivery if `AlwaysFault` is true), succeeds on the second delivery of the same `Key` otherwise. Later tasks publish this message type to produce controllable faults.
+- Produces: `PoisonTestMessage(string Key, bool AlwaysFault)` record and `AlwaysFaultsHandler` (`IConsumer<PoisonTestMessage>`) — faults on a message's first delivery (or every delivery if `AlwaysFault` is true), succeeds on the second delivery of the same `Key` otherwise. Later tasks publish this message type to produce controllable faults.
 
 - [ ] **Step 1: Add the test-only package reference**
 
@@ -84,7 +84,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
         services.AddSingleton<AdminErrorQueueService>();
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<AlwaysFaultsConsumer>();
+            x.AddConsumer<AlwaysFaultsHandler>();
             x.UsingAzureServiceBus((ctx, cfg) =>
             {
                 cfg.Host(_emulator.ConnectionString);
@@ -106,7 +106,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
 
 public record PoisonTestMessage(string Key, bool AlwaysFault);
 
-public class AlwaysFaultsConsumer : IConsumer<PoisonTestMessage>
+public class AlwaysFaultsHandler : IConsumer<PoisonTestMessage>
 {
     public static readonly ConcurrentDictionary<string, int> Attempts = new();
 
@@ -157,7 +157,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
 
                 await foreach (var sub in fixture.AdminClient.GetSubscriptionsAsync(topic.Name))
                 {
-                    if (sub.SubscriptionName != nameof(AlwaysFaultsConsumer))
+                    if (sub.SubscriptionName != nameof(AlwaysFaultsHandler))
                         continue;
 
                     var runtime = await fixture.AdminClient.GetSubscriptionRuntimePropertiesAsync(topic.Name, sub.SubscriptionName);
@@ -168,7 +168,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
             return false;
         });
 
-        Assert.True(found, "Expected the faulted PoisonTestMessage to appear on AlwaysFaultsConsumer's fault subscription.");
+        Assert.True(found, "Expected the faulted PoisonTestMessage to appear on AlwaysFaultsHandler's fault subscription.");
     }
 
     private static async Task<bool> WaitForConditionAsync(Func<Task<bool>> check, int attempts = 20)
@@ -237,7 +237,7 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
         var found = await WaitForMatchAsync(async () =>
         {
             var queues = await fixture.Service.ListQueuesAsync();
-            return queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsConsumer) && q.Length > 0);
+            return queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsHandler) && q.Length > 0);
         });
 
         Assert.NotNull(found);
@@ -253,7 +253,7 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
         var queue = await WaitForMatchAsync(async () =>
         {
             var queues = await fixture.Service.ListQueuesAsync();
-            return queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsConsumer) && q.Length > 0);
+            return queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsHandler) && q.Length > 0);
         });
         Assert.NotNull(queue);
 
@@ -262,7 +262,7 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
         var message = Assert.Single(messages);
         Assert.NotEmpty(message.Exceptions);
         Assert.Contains("faulted", message.Exceptions[0].Message, StringComparison.OrdinalIgnoreCase);
-        Assert.EndsWith(nameof(AlwaysFaultsConsumer), message.SourceAddress);
+        Assert.EndsWith(nameof(AlwaysFaultsHandler), message.SourceAddress);
         Assert.NotNull(message.OriginalMessageJson);
         Assert.Contains(key, message.OriginalMessageJson);
     }
@@ -393,7 +393,7 @@ git commit -m "Add AdminErrorQueueService.ListQueuesAsync and PeekMessagesAsync"
 - Test: `src/FplBot.Tests/E2E/Admin/AdminErrorQueueServiceRetryDiscardTests.cs`
 
 **Interfaces:**
-- Consumes: `AdminErrorQueueFixture.Publisher`, `.Service`, `AlwaysFaultsConsumer.Attempts` (from Task 1/2).
+- Consumes: `AdminErrorQueueFixture.Publisher`, `.Service`, `AlwaysFaultsHandler.Attempts` (from Task 1/2).
 - Produces: `AdminErrorQueueService.RetryMessageAsync(string topic, string subscription, string messageId, CancellationToken)` and `.DiscardMessageAsync(string topic, string subscription, string messageId, CancellationToken)`, both returning `Task<bool>` (`true` if a matching message was found and acted on) — used by Task 5.
 
 - [ ] **Step 1: Write the failing tests**
@@ -418,7 +418,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         var retried = await fixture.Service.RetryMessageAsync(queue.Topic, queue.Subscription, message.MessageId);
         Assert.True(retried);
 
-        var reprocessed = await WaitForConditionAsync(() => Task.FromResult(AlwaysFaultsConsumer.Attempts.GetValueOrDefault(key) >= 2));
+        var reprocessed = await WaitForConditionAsync(() => Task.FromResult(AlwaysFaultsHandler.Attempts.GetValueOrDefault(key) >= 2));
         Assert.True(reprocessed, "Expected the retried message to be reconsumed (attempt count >= 2).");
 
         var queueAfter = await WaitForEmptyAsync(queue.Topic, queue.Subscription);
@@ -439,7 +439,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
 
         var queueAfter = await WaitForEmptyAsync(queue.Topic, queue.Subscription);
         Assert.Equal(0, queueAfter);
-        Assert.Equal(1, AlwaysFaultsConsumer.Attempts[key]);
+        Assert.Equal(1, AlwaysFaultsHandler.Attempts[key]);
     }
 
     [Fact]
@@ -460,7 +460,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         for (var i = 0; i < attempts; i++)
         {
             var queues = await fixture.Service.ListQueuesAsync();
-            var match = queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsConsumer) && q.Length > 0);
+            var match = queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsHandler) && q.Length > 0);
             if (match is not null)
                 return match;
             await Task.Delay(250);
@@ -652,7 +652,7 @@ public class AdminErrorQueueServicePurgeTests(AdminErrorQueueFixture fixture)
         for (var i = 0; i < attempts; i++)
         {
             var queues = await fixture.Service.ListQueuesAsync();
-            var match = queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsConsumer) && q.Length >= minLength);
+            var match = queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsHandler) && q.Length >= minLength);
             if (match is not null)
                 return match;
             await Task.Delay(250);
@@ -761,7 +761,7 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
         var result = await AdminErrorEndpoints.GetQueues(fixture.Service, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<IReadOnlyList<ErrorQueueSummary>>>(result);
-        Assert.Contains(ok.Value!, q => q.Subscription == nameof(AlwaysFaultsConsumer));
+        Assert.Contains(ok.Value!, q => q.Subscription == nameof(AlwaysFaultsHandler));
     }
 
     [Fact]
@@ -795,7 +795,7 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
         for (var i = 0; i < attempts; i++)
         {
             var queues = await fixture.Service.ListQueuesAsync();
-            var match = queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsConsumer) && q.Length > 0);
+            var match = queues.FirstOrDefault(q => q.Subscription == nameof(AlwaysFaultsHandler) && q.Length > 0);
             if (match is not null)
                 return match;
             await Task.Delay(250);
