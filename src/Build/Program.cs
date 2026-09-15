@@ -1,5 +1,8 @@
+using System.Collections.Concurrent;
+using System.Text.Json;
 using Bullseye;
 using SimpleExec;
+using StackExchange.Redis;
 
 const string TestApp  = "blank-fplbot-test";
 const string ProdApp  = "blank-fplbot";
@@ -105,14 +108,49 @@ async Task<string> GetRedisUrl(string app)
 
 async Task BackupDiscordIndex(string app)
 {
-    var redisUrl = await GetRedisUrl(app);
-    var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "fplbot-backups");
-    var outputPath = Path.Combine(outputDir, $"discord-backup-{app}-{DateTime.UtcNow:yyyyMMddHHmmss}.json");
+    const int maxConcurrentFetches = 64;
 
-    await Command.RunAsync("dotnet",
-        $"run --project src/FplBot -- --backup-discord-channel-index {outputPath}",
-        configureEnvironment: env => env["REDIS_URL"] = redisUrl,
-        secrets: [redisUrl]);
+    var redisUrl = await GetRedisUrl(app);
+    var redis = await ConnectionMultiplexer.ConnectAsync(ParseRedisUrl(redisUrl));
+    var db = redis.GetDatabase();
+    var server = redis.GetServers().Single();
+
+    var guildKeys = server.Keys(pattern: "Guild-*").ToList();
+    var channelKeys = server.Keys(pattern: "GuildSubs-*-Channel-*").ToList();
+
+    var dump = new ConcurrentDictionary<string, Dictionary<string, string>>();
+    await Parallel.ForEachAsync(guildKeys.Concat(channelKeys), new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (key, _) =>
+    {
+        var hash = await db.HashGetAllAsync(key);
+        dump[key.ToString()] = hash.ToDictionary(h => h.Name.ToString(), h => h.Value.ToString());
+    });
+
+    var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "fplbot-backups");
+    Directory.CreateDirectory(outputDir);
+    var outputPath = Path.Combine(outputDir, $"discord-backup-{app}-{DateTime.UtcNow:yyyyMMddHHmmss}.json");
+    await File.WriteAllTextAsync(outputPath, JsonSerializer.Serialize(dump.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value), new JsonSerializerOptions { WriteIndented = true }));
+
+    Console.WriteLine($"Backed up {guildKeys.Count} guild(s) and {channelKeys.Count} channel subscription(s) to {outputPath}");
+}
+
+ConfigurationOptions ParseRedisUrl(string redisUrl)
+{
+    var uri = new Uri(redisUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var options = new ConfigurationOptions
+    {
+        Password = userInfo.Length > 1 ? userInfo[1] : null,
+        EndPoints = { uri.Host + ":" + uri.Port },
+        Ssl = redisUrl.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase),
+        SslClientAuthenticationOptions = _ => new System.Net.Security.SslClientAuthenticationOptions
+        {
+            TargetHost = uri.Host,
+            RemoteCertificateValidationCallback = (_, _, _, _) => true,
+        }
+    };
+    if (!string.IsNullOrEmpty(userInfo[0]))
+        options.User = userInfo[0];
+    return options;
 }
 
 Dictionary<string, string> ProcessServices() => new()
