@@ -23,6 +23,21 @@ public class InstallationTests
     }
 
     [Fact]
+    public void Reinstall_TokenLess_PreservesExistingChannelsWithoutToken()
+    {
+        var existingChannel = ChannelSubscription.Load("C1", new ClassicLeagueId(42), [FplEvent.Standings]);
+
+        var installation = Installation.Reinstall("G1", "Guild One", [existingChannel]);
+
+        Assert.Equal("G1", installation.Id);
+        Assert.Equal("Guild One", installation.Name);
+        Assert.Null(installation.Token);
+        var channel = Assert.Single(installation.ChannelSubscriptions);
+        Assert.Equal("C1", channel.ChannelId);
+        Assert.True(channel.IsSubscribedTo(FplEvent.Standings));
+    }
+
+    [Fact]
     public void Uninstall_ClearsToken()
     {
         var installation = Installation.Install("T1", "Team One", "token");
@@ -167,6 +182,42 @@ public class InstallationTests
         var subscription = Assert.Single(installation.ChannelSubscriptions);
         Assert.True(subscription.IsSubscribedTo(FplEvent.Deadlines));
         Assert.True(subscription.IsSubscribedTo(FplEvent.Standings));
+    }
+
+    [Fact]
+    public void Subscribe_All_ResultsInASingleAllEvent()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+
+        installation.Subscribe("C1", [FplEvent.All]);
+
+        var subscription = Assert.Single(installation.ChannelSubscriptions);
+        var evt = Assert.Single(subscription.Events.Current);
+        Assert.Equal(FplEvent.All, evt);
+    }
+
+    [Fact]
+    public void Unsubscribe_All_FromSpecificEvents_ResultsInZeroEvents()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings, FplEvent.Deadlines]);
+
+        installation.Unsubscribe("C1", FplEvent.All);
+
+        var subscription = Assert.Single(installation.ChannelSubscriptions);
+        Assert.Empty(subscription.Events.Current);
+    }
+
+    [Fact]
+    public void Unsubscribe_All_FromAll_ResultsInZeroEvents()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.All]);
+
+        installation.Unsubscribe("C1", FplEvent.All);
+
+        var subscription = Assert.Single(installation.ChannelSubscriptions);
+        Assert.Empty(subscription.Events.Current);
     }
 
     [Fact]

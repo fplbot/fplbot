@@ -15,6 +15,7 @@ using FplBot.Domain;
 using FplBot.Hosting;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.WebApi;
+using FplBot.Tests.E2E.Discord;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using FplBot.Tests.Helpers;
 using MassTransit;
@@ -50,6 +51,8 @@ public class AppFixture : IAsyncLifetime
 
     public SlackMessageCapture SlackCapture { get; } = new();
 
+    public DiscordMessageCapture DiscordCapture { get; } = new();
+
     public ISlackClient SlackClient { get; private set; } = null!;
 
     public IBus Bus => _app.Services.GetRequiredService<IBus>();
@@ -59,6 +62,7 @@ public class AppFixture : IAsyncLifetime
     public IServiceProvider Services => _managerScope.ServiceProvider;
     public ISendEndpointProvider Publisher => _managerScope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
     public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
+    public IGuildRepository GuildRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildRepository>();
 
     public virtual async ValueTask InitializeAsync()
     {
@@ -131,7 +135,7 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
 
         builder.Services.RemoveAll<IDiscordClient>();
-        builder.Services.AddSingleton(A.Fake<IDiscordClient>());
+        builder.Services.AddSingleton(BuildCapturingDiscordClient());
 
         ConfigureSearchClient(builder.Services);
 
@@ -273,17 +277,17 @@ public class AppFixture : IAsyncLifetime
         return installation;
     }
 
-    public async Task<GuildFplSubscription> SeedGuildSubscription(int? leagueId = null,
+    public async Task<Installation> SeedGuildInstallation(int? leagueId = null,
         IEnumerable<EventSubscription>? subscriptions = null)
     {
-        var sub = new GuildFplSubscription(
-            Guid.NewGuid().ToString("N"),
-            Guid.NewGuid().ToString("N"),
-            leagueId,
-            subscriptions ?? []);
+        var guildId = Guid.NewGuid().ToString("N");
+        var channelId = Guid.NewGuid().ToString("N");
+        var events = (subscriptions ?? []).Select(s => Enum.Parse<FplEvent>(s.ToString()));
+        var channel = ChannelSubscription.Load(channelId, leagueId is { } id ? new ClassicLeagueId(id) : null, events);
+        var installation = Installation.Load(guildId, "Test Guild " + guildId, token: null, [channel]);
 
-        await Services.GetRequiredService<IGuildRepository>().InsertGuildSubscription(sub);
-        return sub;
+        await Services.GetRequiredService<IGuildRepository>().Save(installation);
+        return installation;
     }
 
     public async Task SeedSearchEntry(EntryItem entry)
@@ -345,6 +349,28 @@ public class AppFixture : IAsyncLifetime
                                      }));
 
         return fakeSlackClient;
+    }
+
+    private IDiscordClient BuildCapturingDiscordClient()
+    {
+        var fakeDiscordClient = A.Fake<IDiscordClient>();
+
+        A.CallTo(() => fakeDiscordClient.ChannelMessagePost(A<string>._, A<string>._))
+            .ReturnsLazily(call =>
+            {
+                DiscordCapture.Record(new DiscordCapturedMessage(call.Arguments.Get<string>(0)!, call.Arguments.Get<string>(1), null, null));
+                return Task.CompletedTask;
+            });
+
+        A.CallTo(() => fakeDiscordClient.ChannelMessagePost(A<string>._, A<DiscordClient.RichEmbed>._))
+            .ReturnsLazily(call =>
+            {
+                var embed = call.Arguments.Get<DiscordClient.RichEmbed>(1)!;
+                DiscordCapture.Record(new DiscordCapturedMessage(call.Arguments.Get<string>(0)!, null, embed.Title, embed.Description));
+                return Task.CompletedTask;
+            });
+
+        return fakeDiscordClient;
     }
 
     public async Task Subscribe(string teamId, string channel, params FplEvent[] events)

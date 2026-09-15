@@ -1,4 +1,5 @@
 using FplBot.Data.Discord;
+using FplBot.Domain;
 using FplBot.EventHandlers.Discord.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -18,14 +19,13 @@ public class DiscordInjuryUpdateHandler(IGuildRepository repo, ILogger<DiscordIn
         if (filtered.Any())
         {
             var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-            var guildSubs = await repo.GetAllGuildSubscriptions();
-            foreach (var guildSub in guildSubs)
+            var installations = await repo.GetAllInstallations();
+            foreach (var installation in installations)
             {
-                if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.InjuryUpdates))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.InjuryUpdates))
                 {
-                    await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Injury update", formatted));
+                    await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "ℹ️ Injury update", formatted));
                 }
-
             }
         }
         else

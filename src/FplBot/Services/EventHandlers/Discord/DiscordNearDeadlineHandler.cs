@@ -1,5 +1,5 @@
 using FplBot.Data.Discord;
-using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -15,13 +15,13 @@ public class DiscordNearDeadlineHandler(IGuildRepository teamRepo, ILogger<Disco
     {
         var message = context.Message;
         logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var allGuilds = await teamRepo.GetAllGuildSubscriptions();
+        var installations = await teamRepo.GetAllInstallations();
         var text = $"😱 Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes! @here";
-        foreach (var guild in allGuilds)
+        foreach (var installation in installations)
         {
-            if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
-                await context.Publish(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, text));
+                await context.Publish(new PublishToGuildChannel(installation.Id, channel.ChannelId, text));
             }
         }
     }
@@ -30,13 +30,13 @@ public class DiscordNearDeadlineHandler(IGuildRepository teamRepo, ILogger<Disco
     {
         var message = context.Message;
         logger.LogInformation($"Notifying about 24 hours to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var allGuilds = await teamRepo.GetAllGuildSubscriptions();
+        var installations = await teamRepo.GetAllInstallations();
         var text = $"⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
-        foreach (var guild in allGuilds)
+        foreach (var installation in installations)
         {
-            if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.Deadlines))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
             {
-                await context.Publish(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, $"{text}"));
+                await context.Publish(new PublishToGuildChannel(installation.Id, channel.ChannelId, $"{text}"));
             }
         }
     }

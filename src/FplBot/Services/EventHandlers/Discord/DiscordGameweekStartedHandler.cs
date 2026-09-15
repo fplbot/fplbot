@@ -1,7 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data.Discord;
-using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Domain;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -23,10 +23,13 @@ public class DiscordGameweekStartedHandler(
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
         var notification = context.Message;
-        var subs = await repo.GetAllGuildSubscriptions();
-        foreach (var team in subs)
+        var installations = await repo.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            await context.Publish(new ProcessGameweekStartedForGuildChannel(team.GuildId, team.ChannelId, notification.NewGameweek.Id));
+            foreach (var channel in installation.ChannelSubscriptions)
+            {
+                await context.Publish(new ProcessGameweekStartedForGuildChannel(installation.Id, channel.ChannelId, notification.NewGameweek.Id));
+            }
         }
     }
 
@@ -35,26 +38,33 @@ public class DiscordGameweekStartedHandler(
         var message = context.Message;
         var newGameweek = message.GameweekId;
 
-        var team = await repo.GetGuildSubscription(message.GuildId, message.ChannelId);
+        var installation = await repo.FindInstallationByTeamId(message.GuildId);
+        var team = installation?.GetChannel(message.ChannelId);
+        if (team is null)
+        {
+            logger.LogWarning("No subscription found for guild {GuildId} channel {ChannelId}. Skipping gameweek-started notifications", message.GuildId, message.ChannelId);
+            return;
+        }
 
+        var leagueId = team.FollowedLeagueId is { } id ? (int)id.Value : (int?)null;
         var messages = new List<RichMesssage>();
 
         ClassicLeague? league = null;
-        if (team.LeagueId.HasValue)
+        if (leagueId.HasValue)
         {
-            league = await leagueClient.GetClassicLeague(team.LeagueId.Value, tolerate404:true);
+            league = await leagueClient.GetClassicLeague(leagueId.Value, tolerate404:true);
         }
 
         var leagueExists = league != null;
         var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
 
-        if (leagueExists && leagueStarted && (team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains) ||
-                                          team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers)))
+        if (leagueExists && leagueStarted && (team.IsSubscribedTo(FplEvent.Captains) ||
+                                          team.IsSubscribedTo(FplEvent.Transfers)))
             messages.Add(new RichMesssage($"Gameweek {message.GameweekId}!", ""));
 
-        if (leagueExists && leagueStarted && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+        if (leagueExists && leagueStarted && team.IsSubscribedTo(FplEvent.Captains))
         {
-            var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, team.LeagueId!.Value);
+            var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, leagueId!.Value);
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
                 string captainsByGameWeek = captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
@@ -69,20 +79,20 @@ public class DiscordGameweekStartedHandler(
             }
 
         }
-        else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Captains))
+        else if (leagueId.HasValue && !leagueExists && team.IsSubscribedTo(FplEvent.Captains))
         {
-            messages.Add(new RichMesssage("⚠️Warning!",$"️ You're subscribing to captains notifications, but following a league ({team.LeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future."));
+            messages.Add(new RichMesssage("⚠️Warning!",$"️ You're subscribing to captains notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future."));
         }
         else
         {
-            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation!.Id, leagueStarted);
         }
 
-        if (leagueExists && leagueStarted && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+        if (leagueExists && leagueStarted && team.IsSubscribedTo(FplEvent.Transfers))
         {
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
-                var transfersByGameweekTexts = await transfersByGameweek.GetTransferMessages(newGameweek, team.LeagueId!.Value, includeExternalLinks:false);
+                var transfersByGameweekTexts = await transfersByGameweek.GetTransferMessages(newGameweek, leagueId!.Value, includeExternalLinks:false);
                 // Discord max limit is 2000 chars, so chunking by 4 managers
                 if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
                 {
@@ -101,22 +111,22 @@ public class DiscordGameweekStartedHandler(
             }
             else
             {
-                var externalLink = $"See https://www.fplbot.app/leagues/{team.LeagueId!.Value} for full details";
+                var externalLink = $"See https://www.fplbot.app/leagues/{leagueId!.Value} for full details";
                 messages.Add(new RichMesssage("Captains/Transfers/Chips", externalLink));
             }
         }
-        else if (team.LeagueId.HasValue && !leagueExists && team.Subscriptions.ContainsSubscriptionFor(EventSubscription.Transfers))
+        else if (leagueId.HasValue && !leagueExists && team.IsSubscribedTo(FplEvent.Transfers))
         {
-            messages.Add(new RichMesssage("⚠️Warning!", $"⚠️ You're subscribing to transfers notifications, but following a league ({team.LeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future."));
+            messages.Add(new RichMesssage("⚠️Warning!", $"⚠️ You're subscribing to transfers notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future."));
         }
         else
         {
-            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", team.GuildId, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation!.Id, leagueStarted);
         }
 
         foreach (var richMessage in messages)
         {
-            await context.Publish(new PublishRichToGuildChannel(team.GuildId, team.ChannelId, richMessage.Title, richMessage.Description));
+            await context.Publish(new PublishRichToGuildChannel(installation!.Id, message.ChannelId, richMessage.Title, richMessage.Description));
         }
     }
 }

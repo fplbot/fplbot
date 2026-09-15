@@ -1,62 +1,39 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.Data.Discord;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Microsoft.Extensions.Options;
-using StackExchange.Redis;
 
 namespace FplBot.Services.WebApi.Discord.Handlers.Reactors;
 
-public class DiscordNetInstallationBridge : IGuildInstallationHandler
+public class DiscordNetInstallationBridge(
+    IGuildRepository repository,
+    IPublishEndpoint publisher,
+    ILogger<DiscordNetInstallationBridge> logger
+) : IGuildInstallationHandler
 {
-    private readonly RedisValue _nameField = "name";
-    private readonly RedisValue _guildIdField = "guildid";
-    private readonly IConnectionMultiplexer _redis;
-    private readonly IPublishEndpoint _publisher;
-    private readonly IDatabase _db;
-    private readonly string _server;
-    private readonly ILogger<DiscordNetInstallationBridge> _logger;
-
-    public DiscordNetInstallationBridge(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions,
-        IPublishEndpoint publisher, ILogger<DiscordNetInstallationBridge> logger)
-    {
-        _redis = redis;
-        _publisher = publisher;
-        _db = _redis.GetDatabase();
-        _server = redisOptions.Value.GetRedisServerHostAndPort;
-        _logger = logger;
-    }
-
-
     public async Task Install(Guild guild)
     {
-        var hashEntries = new List<HashEntry>
-        {
-            new(_guildIdField, guild.Id), new HashEntry(_nameField, guild.Name)
-        };
-        await _db.HashSetAsync(FromGuildIdToGuildKey(guild.Id), hashEntries.ToArray());
-        await _publisher.Publish(new AppInstalled(guild.Id, guild.Name, ChatPlatform.Discord));
+        var existing = await repository.FindInstallationByTeamId(guild.Id);
+        var installation = existing is not null
+            ? Installation.Reinstall(guild.Id, guild.Name, existing.ChannelSubscriptions)
+            : Installation.Install(guild.Id, guild.Name);
+        await repository.Save(installation);
+        await publisher.Publish(new AppInstalled(guild.Id, guild.Name, ChatPlatform.Discord));
     }
 
     public async Task Uninstall(string guildId)
     {
-        var allTeamKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("Guild-*"));
-
-        foreach (var key in allTeamKeys)
+        var installation = await repository.FindInstallationByTeamId(guildId);
+        if (installation is null)
         {
-            var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _nameField]);
-            if (fetchedTeamData[0] == guildId)
-            {
-                string? guildName = await _db.HashGetAsync(key, _nameField);
-                await _db.KeyDeleteAsync(key);
-                await _publisher.Publish(new AppUninstalled(guildId, guildName ?? "Unknown"));
-                return;
-            }
+            logger.LogWarning(
+                "Uninstall called for guildId {guildId} but no installation found. Bot was already deleted",
+                guildId);
+            return;
         }
 
-    }
-
-    private static string FromGuildIdToGuildKey(string guildId)
-    {
-        return $"Guild-{guildId}";
+        await repository.Delete(installation);
+        await publisher.Publish(new AppUninstalled(installation.Id, installation.Name));
     }
 }

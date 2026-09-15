@@ -1,4 +1,5 @@
 using FplBot.Data.Discord;
+using FplBot.Domain;
 using FplBot.EventHandlers.Discord.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -14,18 +15,21 @@ public class DiscordPriceChangeHandler(IGuildRepository repo, ILogger<DiscordPri
     {
         var notification = context.Message;
         logger.LogInformation($"Handling {notification.PlayersWithPriceChanges.Count()} price updates");
-        var guildSubs = await repo.GetAllGuildSubscriptions();
+        var installations = await repo.GetAllInstallations();
         var filtered = notification.PlayersWithPriceChanges.Where(c => c.IsRelevant());
 
         if (filtered.Any())
         {
             var formatted = Formatter.FormatPriceChanged(filtered);
 
-            foreach (var guildSub in guildSubs)
+            foreach (var installation in installations)
             {
-                if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.PriceChanges) && !string.IsNullOrEmpty(formatted))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.PriceChanges))
                 {
-                    await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId, "ℹ️ Price changes", formatted));
+                    if (!string.IsNullOrEmpty(formatted))
+                    {
+                        await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "ℹ️ Price changes", formatted));
+                    }
                 }
             }
         }

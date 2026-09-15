@@ -1,4 +1,5 @@
 using FplBot.Data.Discord;
+using FplBot.Domain;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
 
@@ -17,49 +18,39 @@ public class BroadcastHandler(IGuildRepository repo, ILogger<BroadcastHandler> l
             return;
         }
 
-        var allGuilds = await repo.GetAllGuildSubscriptions();
+        var installations = await repo.GetAllInstallations();
 
         var devOnly = message.Filter is
             ChannelFilter.AllChannelsDevServer or
             ChannelFilter.OnlyChannelsFollowingALeagueDevServer;
 
-        Func<GuildFplSubscription, bool> guildfilter =
-            someGuild => someGuild.Subscriptions.Any(c => c is
-                                EventSubscription.Captains or
-                                EventSubscription.Transfers or
-                                EventSubscription.Standings or
-                                EventSubscription.All);
-
-        var i = 0;
-        foreach (var guild in allGuilds)
+        foreach (var installation in installations)
         {
-            if (!devOnly)
+            if (!devOnly || installation.Id == "1546966580007542937")
             {
-                await SendToGuild(message, context, guild, guildfilter);
+                await SendToInstallation(message, context, installation);
+            }
+        }
+    }
+
+    private async Task SendToInstallation(BroadcastToDiscord message, ConsumeContext context, Installation installation)
+    {
+        foreach (var channel in installation.ChannelSubscriptions)
+        {
+            if (PassesBroadcastFilter(channel))
+            {
+                logger.LogInformation("Sending message to {GuildId} {ChannelId}", installation.Id, channel.ChannelId);
+                await context.Publish(new PublishToGuildChannel(installation.Id, channel.ChannelId, message.Message));
             }
             else
             {
-                if (guild.GuildId == "1546966580007542937")
-                {
-                    await SendToGuild(message, context, guild, guildfilter);
-                }
+                logger.LogInformation("Did not pass filter. Not sending message to {GuildId} {ChannelId}", installation.Id, channel.ChannelId);
             }
-
-            i++;
         }
     }
 
-    private async Task SendToGuild(BroadcastToDiscord message, ConsumeContext context, GuildFplSubscription guild,
-        Func<GuildFplSubscription, bool> filter)
-    {
-        if (filter(guild))
-        {
-            logger.LogInformation("Sending message to {GuildId} {ChannelId}", guild.GuildId, guild.ChannelId);
-            await context.Publish(new PublishToGuildChannel(guild.GuildId, guild.ChannelId, message.Message));
-        }
-        else
-        {
-            logger.LogInformation("Did not pass filter. Not sending message to {GuildId} {ChannelId}", guild.GuildId, guild.ChannelId);
-        }
-    }
+    private static bool PassesBroadcastFilter(ChannelSubscription channel) =>
+        channel.IsSubscribedTo(FplEvent.Captains) ||
+        channel.IsSubscribedTo(FplEvent.Transfers) ||
+        channel.IsSubscribedTo(FplEvent.Standings);
 }

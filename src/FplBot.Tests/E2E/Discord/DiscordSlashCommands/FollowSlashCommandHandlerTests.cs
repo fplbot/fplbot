@@ -2,6 +2,7 @@ using Bogus;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,8 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
     private static readonly Faker Faker = new();
 
     private static int NewLeagueId() => Faker.Random.Int(100_000, 999_999);
+
+    private static string ChannelOf(Installation installation) => installation.ChannelSubscriptions.First().ChannelId;
 
     private void SetLeagueFound(int leagueId, string name)
     {
@@ -41,10 +44,12 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
     [Fact]
     public async Task NoExistingSubscription_CreatesOneAndSubscribesToAll()
     {
+        var installedGuild = await fixture.SeedGuildInstallation();
         var leagueId = NewLeagueId();
         SetLeagueFound(leagueId, "Test League");
 
-        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString());
+        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(),
+            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
 
         Assert.Contains("Now following the 'Test League' FPL league", response.EmbedDescription());
         Assert.Contains("Auto-subbed to all events", response.EmbedDescription());
@@ -53,11 +58,11 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
     [Fact]
     public async Task ExistingSubscription_UpdatesLeague()
     {
-        var sub = await fixture.SeedGuildSubscription();
+        var seeded = await fixture.SeedGuildInstallation();
         var leagueId = NewLeagueId();
         SetLeagueFound(leagueId, "Other League");
 
-        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(), guildId: sub.GuildId, channelId: sub.ChannelId);
+        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(), guildId: seeded.Id, channelId: ChannelOf(seeded));
 
         Assert.Contains("Now following the 'Other League' FPL league", response.EmbedDescription());
     }

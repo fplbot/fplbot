@@ -24,6 +24,9 @@ public class Installation
     public static Installation Reinstall(string id, string name, string token, IEnumerable<ChannelSubscription> existingChannels) =>
         Load(id, name, token, existingChannels);
 
+    public static Installation Reinstall(string id, string name, IEnumerable<ChannelSubscription> existingChannels) =>
+        Load(id, name, token: null, existingChannels);
+
     public static Installation Load(string id, string name, string? token, IEnumerable<ChannelSubscription> channelSubscriptions, bool pendingRemoval = false)
     {
         var installation = new Installation(id, name, token) { PendingRemoval = pendingRemoval };
