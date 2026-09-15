@@ -117,6 +117,12 @@ public class SlackTeamRepository : ISlackTeamRepository
         return null;
     }
 
+    public async Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(FplEvent fplEvent)
+    {
+        var entries = await _db.SetMembersAsync(ToEventIndexKey(fplEvent));
+        return entries.Select(ParseEventIndexEntry);
+    }
+
     public async Task Delete(Installation installation)
     {
         var teamId = installation.Id;
@@ -174,6 +180,9 @@ public class SlackTeamRepository : ISlackTeamRepository
     private async Task SaveChannelSubscription(string teamId, ChannelSubscription channel)
     {
         var key = FromTeamAndChannelToChannelSubKey(teamId, channel.ChannelId);
+        var oldEvents = ExpandEvents(GetSubscriptions(teamId, await _db.HashGetAsync(key, _channelSubSubscriptionsField)).Select(ToDomainEvent));
+        var newEvents = ExpandEvents(channel.Events.Current);
+
         var subscriptions = channel.Events.Current.Select(ToStorageEvent);
 
         var hashEntries = new List<HashEntry>
@@ -190,6 +199,47 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         await _db.HashSetAsync(key, hashEntries.ToArray());
         await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
+        await UpdateEventIndex(teamId, channel.ChannelId, oldEvents, newEvents);
+    }
+
+    // A channel subscribed via FplEvent.All (EventCollection's short-circuit sentinel, see
+    // EventCollection.Contains) is stored as the single literal "All" in the subscriptions hash
+    // field, not as every concrete event name. Per-event index membership has to be based on the
+    // effective (expanded) set, or an "All"-subscribed channel would silently vanish from every
+    // concrete event's index.
+    private static IEnumerable<FplEvent> ExpandEvents(IEnumerable<FplEvent> events)
+    {
+        var materialized = events as ICollection<FplEvent> ?? events.ToList();
+        return materialized.Contains(FplEvent.All)
+            ? Enum.GetValues<FplEvent>().Where(e => e != FplEvent.All)
+            : materialized;
+    }
+
+    private async Task UpdateEventIndex(string teamId, string channelId, IEnumerable<FplEvent> oldEvents, IEnumerable<FplEvent> newEvents)
+    {
+        var entry = ToEventIndexEntry(teamId, channelId);
+        var oldSet = oldEvents.ToHashSet();
+        var newSet = newEvents.ToHashSet();
+
+        foreach (var removed in oldSet.Except(newSet))
+        {
+            await _db.SetRemoveAsync(ToEventIndexKey(removed), entry);
+        }
+
+        foreach (var added in newSet.Except(oldSet))
+        {
+            await _db.SetAddAsync(ToEventIndexKey(added), entry);
+        }
+    }
+
+    private static string ToEventIndexKey(FplEvent fplEvent) => $"SlackEventIndex-{fplEvent}";
+
+    private static string ToEventIndexEntry(string teamId, string channelId) => $"{teamId}:{channelId}";
+
+    private static (string InstallationId, string ChannelId) ParseEventIndexEntry(RedisValue value)
+    {
+        var parts = value.ToString().Split(':', 2);
+        return (parts[0], parts[1]);
     }
 
     // Reads the exact set of channel ids this team has saved, then fetches each channel's hash by
@@ -216,7 +266,11 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     private async Task DeleteChannelSubscription(string teamId, string channelId)
     {
-        await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId));
+        var key = FromTeamAndChannelToChannelSubKey(teamId, channelId);
+        var events = ExpandEvents(GetSubscriptions(teamId, await _db.HashGetAsync(key, _channelSubSubscriptionsField)).Select(ToDomainEvent));
+        await UpdateEventIndex(teamId, channelId, events, []);
+
+        await _db.KeyDeleteAsync(key);
         await _db.SetRemoveAsync(ToChannelSubIndexKey(teamId), channelId);
     }
 
