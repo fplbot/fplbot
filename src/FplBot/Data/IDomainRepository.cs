@@ -9,5 +9,5 @@ public interface IDomainRepository
     Task<Installation?> FindInstallationByTeamId(string teamId);
     Task<IEnumerable<Installation>> GetAllInstallations();
     Task Delete(Installation installation);
-    Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(FplEvent fplEvent);
+    Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents);
 }

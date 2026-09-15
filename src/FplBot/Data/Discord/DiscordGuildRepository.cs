@@ -86,9 +86,10 @@ public class DiscordGuildRepository : IGuildRepository
         }
     }
 
-    public async Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(FplEvent fplEvent)
+    public async Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents)
     {
-        var entries = await _db.SetMembersAsync(ToEventIndexKey(fplEvent));
+        var keys = fplEvents.Select(e => (RedisKey)ToEventIndexKey(e)).ToArray();
+        var entries = await _db.SetCombineAsync(SetOperation.Union, keys);
         return entries.Select(ParseEventIndexEntry);
     }
 
