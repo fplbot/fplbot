@@ -6,6 +6,8 @@ namespace FplBot.Data.Slack;
 
 public class SlackTeamRepository : ISlackTeamRepository
 {
+    private const string TeamIndexKey = "TeamIndex";
+
     private readonly ILogger<SlackTeamRepository> _logger;
 
     private readonly IConnectionMultiplexer _redis;
@@ -82,6 +84,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         };
 
         await _db.HashSetAsync(FromTeamIdToTeamKey(installation.Id), hashEntries);
+        await _db.SetAddAsync(TeamIndexKey, installation.Id);
 
         var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
 
@@ -124,6 +127,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId.ToString()));
         }
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
+        await _db.SetRemoveAsync(TeamIndexKey, teamId);
 
         await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
     }
