@@ -6,6 +6,8 @@ namespace FplBot.Data.Discord;
 
 public class DiscordGuildRepository : IGuildRepository
 {
+    private const string GuildIndexKey = "GuildIndex";
+
     private readonly RedisValue _nameField = "name";
     private readonly RedisValue _guildIdField = "guildid";
     private readonly RedisValue _channelIdField = "channelid";
@@ -71,6 +73,7 @@ public class DiscordGuildRepository : IGuildRepository
 
         var hashEntries = new HashEntry[] { new(_guildIdField, installation.Id), new(_nameField, installation.Name) };
         await _db.HashSetAsync(FromGuildIdToGuildKey(installation.Id), hashEntries);
+        await _db.SetAddAsync(GuildIndexKey, installation.Id);
 
         var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
 
@@ -92,6 +95,8 @@ public class DiscordGuildRepository : IGuildRepository
         {
             await DeleteChannelSubscription(installation.Id, channel.ChannelId);
         }
+        await _db.KeyDeleteAsync(ToChannelSubIndexKey(installation.Id));
+        await _db.SetRemoveAsync(GuildIndexKey, installation.Id);
         await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.Id));
     }
 
@@ -110,11 +115,13 @@ public class DiscordGuildRepository : IGuildRepository
         }
 
         await _db.HashSetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channel.ChannelId), hashEntries.ToArray());
+        await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
     }
 
     private async Task DeleteChannelSubscription(string guildId, string channelId)
     {
         await _db.KeyDeleteAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
+        await _db.SetRemoveAsync(ToChannelSubIndexKey(guildId), channelId);
     }
 
     private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string guildId)
@@ -142,6 +149,11 @@ public class DiscordGuildRepository : IGuildRepository
     private static string FromGuildIdAndChannelToGuildChannelSubKey(string guildId, string channelId)
     {
         return $"GuildSubs-{guildId}-Channel-{channelId}";
+    }
+
+    private static string ToChannelSubIndexKey(string guildId)
+    {
+        return $"GuildChannelSubIndex-{guildId}";
     }
 
     private static string FromKeyToGuildId(string? key)
