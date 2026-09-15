@@ -1,4 +1,5 @@
 using FplBot.Data.Discord;
+using FplBot.Domain;
 using FplBot.EventHandlers.Discord.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -18,14 +19,17 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
         var filtered = message.NewPlayers.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
-            var guildSubs = await repo.GetAllGuildSubscriptions();
+            var installations = await repo.GetAllInstallations();
             var formatted = Formatter.FormatNewPlayers(filtered);
 
-            foreach (var guildSub in guildSubs)
+            foreach (var installation in installations)
             {
-                if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
+                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
                 {
-                    await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"ℹ️ New players", formatted));
+                    if (!string.IsNullOrEmpty(formatted))
+                    {
+                        await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "ℹ️ New players", formatted));
+                    }
                 }
             }
         }
@@ -39,14 +43,17 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
     {
         var message = context.Message;
         logger.LogInformation($"Handling {message.Transfers.Count()} new transfers");
-        var guildSubs = await repo.GetAllGuildSubscriptions();
+        var installations = await repo.GetAllInstallations();
         var formatted = Formatter.FormatTransferredPlayers(message.Transfers, includeheader:false);
 
-        foreach (var guildSub in guildSubs)
+        foreach (var installation in installations)
         {
-            if (guildSub.Subscriptions.ContainsSubscriptionFor(EventSubscription.NewPlayers) && !string.IsNullOrEmpty(formatted))
+            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
             {
-                await context.Publish(new PublishRichToGuildChannel(guildSub.GuildId, guildSub.ChannelId,"🔄️ Transfer!", formatted));
+                if (!string.IsNullOrEmpty(formatted))
+                {
+                    await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "🔄️ Transfer!", formatted));
+                }
             }
         }
     }
