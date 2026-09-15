@@ -81,10 +81,16 @@ issue isn't fixed).
 
 ## Error handling / caveats
 
-- Faulted messages now **persist** (subject to the existing 2-hour
-  `DefaultMessageTimeToLive`) instead of vanishing. That's the
-  intended behavior change, but it means error queues now need
-  attention — nothing expires them from view besides that TTL.
+- `DefaultMessageTimeToLive = TimeSpan.FromHours(2)` in
+  `FplBotApplication.cs` is a bus-level setting MassTransit applies
+  when provisioning every queue it creates, including the new
+  `{Consumer}_error` queues — not just the live processing queues.
+  This was raised explicitly and is an **accepted trade-off**: error
+  queues are still purged after 2 hours, same TTL as live queues, no
+  separate retention mechanism. Faulted messages get *some* window for
+  visibility/retry where today they get none, but they are not
+  durably retained. No dead-letter-subqueue routing or TTL override is
+  in scope.
 - The Azure Service Bus connection string (`ASB_CONNECTIONSTRING`)
   already exists for MassTransit; the new SDK client reuses it — no
   new secret/config surface.
