@@ -42,9 +42,13 @@ Two independent changes:
     names ending in `_error`, using
     `RuntimeProperties.ActiveMessageCount` for queue length.
   - `ServiceBusReceiver.PeekMessagesAsync` per queue for the details
-    view: message id, enqueued time, and MassTransit's fault
-    application properties (exception type, message, stack trace).
-    Peek is non-destructive (no lock), safe for a polling list view.
+    view: message id, enqueued time, MassTransit's fault application
+    properties (exception type, message, stack trace), and the
+    message body itself. The body is MassTransit's JSON envelope
+    (headers, message type URN, and the original message contract's
+    fields) — returned as-is for the UI to pretty-print, with a raw
+    text/base64 fallback if it isn't valid JSON. Peek is
+    non-destructive (no lock), safe for a polling list view.
   - **Retry**: there is no fetch-by-message-id in ASB, so retry
     receives messages from the error queue (PeekLock), and for each:
     if its `MessageId` matches the target, forward its body +
@@ -64,7 +68,9 @@ Two independent changes:
 - **New admin UI tab**, following the existing Slack/Discord/Search
   admin section pattern (Vue 3 SPA, `src/FplBot/Services/WebApi/ClientApp`):
   - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list with lengths) +
-    `ErrorQueueDetailView.vue` (messages in one queue, retry button)
+    `ErrorQueueDetailView.vue` (messages in one queue: fault details,
+    a pretty-printed/collapsible view of the message body, and a
+    retry button)
   - Wired into `router.ts` (nested under the `/admin` route) and the
     `navLinks` array in `layouts/AdminLayout.vue`.
 
