@@ -39,11 +39,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
                 // services.AddSingleton<AdminErrorQueueService>();
                 services.AddMassTransit(x =>
                 {
-                    x.AddConsumer<AlwaysFaultsConsumer>(cfg =>
-                    {
-                        // Don't retry immediately, so faulted messages go straight to the fault queue
-                        cfg.UseMessageRetry(r => r.None());
-                    });
+                    x.AddConsumer<AlwaysFaultsConsumer>();
                     x.UsingAzureServiceBus((ctx, cfg) =>
                     {
                         cfg.Host(_emulator.ConnectionString);
