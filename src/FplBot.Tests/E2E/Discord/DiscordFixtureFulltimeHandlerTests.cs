@@ -11,13 +11,27 @@ namespace FplBot.Tests.E2E.Discord;
 [Collection("App")]
 public class DiscordFixtureFulltimeHandlerTests(AppFixture fixture) : IAsyncLifetime
 {
+    // GetFixtures()/GetGlobalSettings() are parameterless, so overriding them below mutates the
+    // shared fakes for every other test in the collection unless restored — capture whatever was
+    // configured before this test touches them, and put it back afterward.
+    private ICollection<Fixture> _originalFixtures = null!;
+    private GlobalSettings? _originalGlobalSettings;
+
     public async ValueTask InitializeAsync()
     {
         fixture.DiscordCapture.Reset();
         await fixture.FlushRedisAsync();
+
+        _originalFixtures = await fixture.Services.GetRequiredService<IFixtureClient>().GetFixtures() ?? [];
+        _originalGlobalSettings = await fixture.Services.GetRequiredService<IGlobalSettingsClient>().GetGlobalSettings();
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync()
+    {
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixtures()).Returns(_originalFixtures);
+        A.CallTo(() => fixture.Services.GetRequiredService<IGlobalSettingsClient>().GetGlobalSettings()).Returns(_originalGlobalSettings);
+        return ValueTask.CompletedTask;
+    }
 
     [Fact]
     public async Task WhenChannelSubscribedToFixtureFullTime_PostsFulltimeResult()
