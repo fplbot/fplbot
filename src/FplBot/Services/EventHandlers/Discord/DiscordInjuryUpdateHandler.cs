@@ -19,13 +19,10 @@ public class DiscordInjuryUpdateHandler(IGuildRepository repo, ILogger<DiscordIn
         if (filtered.Any())
         {
             var formatted = Formatter.FormatInjuryStatusUpdates(filtered);
-            var installations = await repo.GetAllInstallations();
-            foreach (var installation in installations)
+            var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.InjuryUpdates);
+            foreach (var (guildId, channelId) in subscribedChannels)
             {
-                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.InjuryUpdates))
-                {
-                    await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "ℹ️ Injury update", formatted));
-                }
+                await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "ℹ️ Injury update", formatted));
             }
         }
         else
