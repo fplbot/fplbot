@@ -5,6 +5,7 @@ using Fpl.Client.Models;
 using Fpl.EventPublishers.Extensions;
 using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.Models.Mappers;
+using FplBot.Hosting;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
@@ -20,6 +21,7 @@ public class PlayerUpdatesRecurringAction(
 
     public async Task Process(CancellationToken stoppingToken)
     {
+        using var activity = FplBotDiagnostics.ActivitySource.StartActivity(nameof(PlayerUpdatesRecurringAction));
         using var scope = logger.BeginCorrelationScope();
         try
         {
