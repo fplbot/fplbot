@@ -25,84 +25,113 @@ public class DiscordGuildRepository : IGuildRepository
         _logger = logger;
     }
 
-    public async Task<IEnumerable<GuildRepoGuild>> GetAllGuilds()
+    public async Task<Installation> GetInstallation(string teamId)
     {
-        var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("*"));
-        var guilds = new List<GuildRepoGuild>();
-        foreach (var key in allKeys)
+        var installation = await FindInstallationByTeamId(teamId);
+        if (installation is null)
         {
-            var teamId = FromKeyToGuildId(key);
-            var fetchedTeamData = await _db.HashGetAsync(key, [_nameField]);
-            guilds.Add(new GuildRepoGuild(teamId, fetchedTeamData[0].ToString() ?? string.Empty));
+            throw new KeyNotFoundException($"No Discord guild found for id '{teamId}'");
         }
-
-        return guilds;
+        return installation;
     }
 
-    public async Task<IEnumerable<GuildFplSubscription>> GetAllGuildSubscriptions()
+    public async Task<Installation?> FindInstallationByTeamId(string teamId)
     {
-        var allKeys = _redis.GetServer(_server).Keys(pattern: "GuildSubs-*-Channel-*");
-        var guilds = new List<GuildFplSubscription>();
+        var key = FromGuildIdToGuildKey(teamId);
+        if (!await _db.KeyExistsAsync(key))
+        {
+            return null;
+        }
+
+        var fetched = await _db.HashGetAsync(key, [_nameField]);
+        var channels = await GetChannelSubscriptions(teamId);
+        return Installation.Load(teamId, fetched[0].ToString() ?? string.Empty, token: null, channels);
+    }
+
+    public async Task<IEnumerable<Installation>> GetAllInstallations()
+    {
+        var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdToGuildKey("*"));
+        var installations = new List<Installation>();
         foreach (var key in allKeys)
         {
             var guildId = FromKeyToGuildId(key);
-            var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _channelIdField, _leagueIdField, _subscriptionsField
-            ]);
-            var subs = ParseSubscriptionString(fetchedTeamData[3].ToString(), " ");
-            guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1].ToString() ?? string.Empty, (int?)fetchedTeamData[2], subs));
+            var fetched = await _db.HashGetAsync(key, [_nameField]);
+            var channels = await GetChannelSubscriptions(guildId);
+            installations.Add(Installation.Load(guildId, fetched[0].ToString() ?? string.Empty, token: null, channels));
         }
 
-        return guilds;
+        return installations;
     }
 
-    public async Task<GuildFplSubscription> GetGuildSubscription(string guildId, string channelId)
+    public async Task Save(Installation installation)
     {
-        var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
-        var guilds = new List<GuildFplSubscription>();
-        foreach (var key in allKeys)
+        var storedChannelIds = (await GetChannelSubscriptions(installation.Id))
+            .Select(c => c.ChannelId)
+            .ToHashSet();
+
+        var hashEntries = new HashEntry[] { new(_guildIdField, installation.Id), new(_nameField, installation.Name) };
+        await _db.HashSetAsync(FromGuildIdToGuildKey(installation.Id), hashEntries);
+
+        var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
+
+        foreach (var channel in installation.ChannelSubscriptions)
         {
-            var fetchedTeamData = await _db.HashGetAsync(key, [_guildIdField, _channelIdField, _leagueIdField, _subscriptionsField
-            ]);
-            var subs = ParseSubscriptionString(fetchedTeamData[3].ToString(), " ");
-            guilds.Add(new GuildFplSubscription(guildId, fetchedTeamData[1].ToString() ?? string.Empty, (int?)fetchedTeamData[2], subs));
+            await SaveChannelSubscription(installation.Id, channel);
         }
 
-        return guilds.FirstOrDefault()!;
-    }
-
-    public async Task DeleteGuildSubscription(string guildId, string channelId)
-    {
-        var allTeamKeys = _redis.GetServer(_server).Keys(pattern:FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
-
-        foreach (var key in allTeamKeys)
+        foreach (var removedChannelId in storedChannelIds.Except(currentChannelIds))
         {
-            await _db.KeyDeleteAsync(key);
+            await DeleteChannelSubscription(installation.Id, removedChannelId);
         }
     }
 
-    public async Task UpdateGuildSubscription(GuildFplSubscription guildSub)
+    public async Task Delete(Installation installation)
     {
-        await InsertGuildSubscription(guildSub);
+        var channels = await GetChannelSubscriptions(installation.Id);
+        foreach (var channel in channels)
+        {
+            await DeleteChannelSubscription(installation.Id, channel.ChannelId);
+        }
+        await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.Id));
     }
 
-    public async Task InsertGuildSubscription(GuildFplSubscription guildSub)
+    private async Task SaveChannelSubscription(string guildId, ChannelSubscription channel)
     {
         var hashEntries = new List<HashEntry>
         {
-            new HashEntry(_guildIdField, guildSub.GuildId),
-            new HashEntry(_channelIdField, guildSub.ChannelId),
-            new HashEntry(_subscriptionsField, string.Join(" ", guildSub.Subscriptions))
+            new(_guildIdField, guildId),
+            new(_channelIdField, channel.ChannelId),
+            new(_subscriptionsField, string.Join(" ", channel.Events.Current.Select(ToStorageEvent)))
         };
 
-        if (guildSub.LeagueId != null)
-            hashEntries.Add(new HashEntry(_leagueIdField, guildSub.LeagueId));
+        if (channel.FollowedLeagueId is { } leagueId)
+        {
+            hashEntries.Add(new HashEntry(_leagueIdField, (int)leagueId.Value));
+        }
 
-        await _db.HashSetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildSub.GuildId, guildSub.ChannelId), hashEntries.ToArray());
+        await _db.HashSetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channel.ChannelId), hashEntries.ToArray());
     }
 
-    public async Task DeleteGuild(string guildId)
+    private async Task DeleteChannelSubscription(string guildId, string channelId)
     {
-        await _db.KeyDeleteAsync(FromGuildIdToGuildKey(guildId));
+        await _db.KeyDeleteAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId));
+    }
+
+    private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string guildId)
+    {
+        var allKeys = _redis.GetServer(_server).Keys(pattern: FromGuildIdAndChannelToGuildChannelSubKey(guildId, "*"));
+        var result = new List<ChannelSubscription>();
+        foreach (var key in allKeys)
+        {
+            var fetched = await _db.HashGetAsync(key, [_channelIdField, _leagueIdField, _subscriptionsField]);
+            var channelId = fetched[0].ToString() ?? string.Empty;
+            var leagueId = fetched[1].HasValue ? (int?)fetched[1] : null;
+            var subs = ParseSubscriptionString(fetched[2].ToString(), " ");
+            var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
+            result.Add(ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent)));
+        }
+
+        return result;
     }
 
     private static string FromGuildIdToGuildKey(string guildId)
@@ -146,81 +175,6 @@ public class DiscordGuildRepository : IGuildRepository
 
         return events;
     }
-
-    public async Task<Installation> GetInstallation(string teamId)
-    {
-        var installation = await FindInstallationByTeamId(teamId);
-        if (installation is null)
-        {
-            throw new KeyNotFoundException($"No Discord guild found for id '{teamId}'");
-        }
-        return installation;
-    }
-
-    public async Task<Installation?> FindInstallationByTeamId(string teamId)
-    {
-        var key = FromGuildIdToGuildKey(teamId);
-        if (!await _db.KeyExistsAsync(key))
-        {
-            return null;
-        }
-
-        var fetched = await _db.HashGetAsync(key, [_nameField]);
-        var channels = await GetChannelSubscriptions(teamId);
-        return Installation.Load(teamId, fetched[0].ToString() ?? string.Empty, token: null, channels);
-    }
-
-    public async Task<IEnumerable<Installation>> GetAllInstallations()
-    {
-        var guilds = await GetAllGuilds();
-        var subsByGuild = (await GetAllGuildSubscriptions()).ToLookup(s => s.GuildId);
-        return guilds.Select(g => Installation.Load(g.Id, g.Name, token: null, subsByGuild[g.Id].Select(ToChannelSubscription))).ToList();
-    }
-
-    public async Task Save(Installation installation)
-    {
-        var storedChannelIds = (await GetAllGuildSubscriptions())
-            .Where(s => s.GuildId == installation.Id)
-            .Select(s => s.ChannelId)
-            .ToHashSet();
-
-        var hashEntries = new HashEntry[] { new(_guildIdField, installation.Id), new(_nameField, installation.Name) };
-        await _db.HashSetAsync(FromGuildIdToGuildKey(installation.Id), hashEntries);
-
-        var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
-
-        foreach (var channel in installation.ChannelSubscriptions)
-        {
-            await InsertGuildSubscription(ToGuildFplSubscription(installation.Id, channel));
-        }
-
-        foreach (var removedChannelId in storedChannelIds.Except(currentChannelIds))
-        {
-            await DeleteGuildSubscription(installation.Id, removedChannelId);
-        }
-    }
-
-    public async Task Delete(Installation installation)
-    {
-        var subs = await GetChannelSubscriptions(installation.Id);
-        foreach (var sub in subs)
-        {
-            await DeleteGuildSubscription(installation.Id, sub.ChannelId);
-        }
-        await DeleteGuild(installation.Id);
-    }
-
-    private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string teamId)
-    {
-        var allSubs = await GetAllGuildSubscriptions();
-        return allSubs.Where(s => s.GuildId == teamId).Select(ToChannelSubscription).ToList();
-    }
-
-    private static ChannelSubscription ToChannelSubscription(GuildFplSubscription sub) =>
-        ChannelSubscription.Load(sub.ChannelId, sub.LeagueId is { } id ? new ClassicLeagueId(id) : null, sub.Subscriptions.Select(ToDomainEvent));
-
-    private static GuildFplSubscription ToGuildFplSubscription(string guildId, ChannelSubscription channel) =>
-        new(guildId, channel.ChannelId, channel.FollowedLeagueId is { } leagueId ? (int)leagueId.Value : null, channel.Events.Current.Select(ToStorageEvent));
 
     private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
     private static EventSubscription ToStorageEvent(FplEvent e) => Enum.Parse<EventSubscription>(e.ToString());
