@@ -44,6 +44,22 @@ targets.Add("deploy-prod",
     async () => await Command.RunAsync("heroku",
         $"container:release web eventpublisher indexer eventhandler --app {ProdApp}"));
 
+targets.Add("backup-discord-index-test",
+    "Dump Discord guild/channel Redis data from the test app to a local JSON file (read-only)",
+    async () => await BackupDiscordIndex(TestApp));
+
+targets.Add("backup-discord-index-prod",
+    "Dump Discord guild/channel Redis data from prod to a local JSON file (read-only)",
+    async () => await BackupDiscordIndex(ProdApp));
+
+targets.Add("backfill-discord-index-test",
+    "Backfill GuildIndex/GuildChannelSubIndex-* Redis sets on the test app from existing data (idempotent)",
+    async () => await BackfillDiscordIndex(TestApp));
+
+targets.Add("backfill-discord-index-prod",
+    "Backfill GuildIndex/GuildChannelSubIndex-* Redis sets on prod from existing data (idempotent)",
+    async () => await BackfillDiscordIndex(ProdApp));
+
 await targets.RunAndExitAsync(args);
 
 async Task BuildImage()
@@ -87,6 +103,34 @@ async Task PushImages(string registry)
         await Command.RunAsync("docker", $"tag fplbot/{processType} {registry}/{processType}");
         await Command.RunAsync("docker", $"push {registry}/{processType}");
     }
+}
+
+async Task<string> GetRedisUrl(string app)
+{
+    var (stdout, _) = await Command.ReadAsync("heroku", $"config:get REDIS_URL --app {app}");
+    return stdout.Trim();
+}
+
+async Task BackupDiscordIndex(string app)
+{
+    var redisUrl = await GetRedisUrl(app);
+    var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "fplbot-backups");
+    var outputPath = Path.Combine(outputDir, $"discord-backup-{app}-{DateTime.UtcNow:yyyyMMddHHmmss}.json");
+
+    await Command.RunAsync("dotnet",
+        $"run --project src/FplBot -- --backup-discord-channel-index {outputPath}",
+        configureEnvironment: env => env["REDIS_URL"] = redisUrl,
+        secrets: [redisUrl]);
+}
+
+async Task BackfillDiscordIndex(string app)
+{
+    var redisUrl = await GetRedisUrl(app);
+
+    await Command.RunAsync("dotnet",
+        "run --project src/FplBot -- --backfill-discord-channel-index",
+        configureEnvironment: env => env["REDIS_URL"] = redisUrl,
+        secrets: [redisUrl]);
 }
 
 Dictionary<string, string> ProcessServices() => new()
