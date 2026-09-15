@@ -1,6 +1,6 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Discord;
-using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Domain;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -20,19 +20,24 @@ public class DiscordGameweekFinishedHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Gameweek {message.FinishedGameweek.Id} finished");
-        var allSubs = await repo.GetAllGuildSubscriptions();
-        foreach (var sub in allSubs)
+        var installations = await repo.GetAllInstallations();
+        foreach (var installation in installations)
         {
-            await context.Publish(new PublishGameweekFinishedToGuild(sub.GuildId, sub.ChannelId, sub.LeagueId, message.FinishedGameweek.Id));
+            foreach (var channel in installation.ChannelSubscriptions)
+            {
+                var leagueId = channel.FollowedLeagueId is { } id ? (int)id.Value : (int?)null;
+                await context.Publish(new PublishGameweekFinishedToGuild(installation.Id, channel.ChannelId, leagueId, message.FinishedGameweek.Id));
+            }
         }
     }
 
     public async Task Consume(ConsumeContext<PublishGameweekFinishedToGuild> context)
     {
         var message = context.Message;
-        var sub = await repo.GetGuildSubscription(message.GuildId, message.ChannelId);
+        var installation = await repo.FindInstallationByTeamId(message.GuildId);
+        var sub = installation?.GetChannel(message.ChannelId);
 
-        if (sub != null && message.LeagueId.HasValue && sub.Subscriptions.ContainsSubscriptionFor(EventSubscription.Standings))
+        if (sub != null && message.LeagueId.HasValue && sub.IsSubscribedTo(FplEvent.Standings))
         {
             var settings = await settingsClient.GetGlobalSettings();
             var gameweeks = settings?.Gameweeks ?? [];
