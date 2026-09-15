@@ -9,7 +9,7 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "Automerge minor/patch updates for every package by default - there's a test env before prod deploy, so this is the default posture; specific rules below override it where a package needs to stay manual (e.g. MassTransit's license-driven major pin)",
+      "description": "Automerge minor/patch updates for every package by default",
       "automerge": true,
       "automergeType": "pr",
       "matchUpdateTypes": ["minor", "patch"]
@@ -77,7 +77,7 @@
       ]
     },
     {
-      "description": "Group Slackbot.Net packages - John's own package, safe to automerge",
+      "description": "Group Slackbot.Net packages",
       "groupName": "Slackbot.Net",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
