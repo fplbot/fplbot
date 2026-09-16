@@ -112,7 +112,7 @@ async function submitDanger() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="c in details.channels" :key="c.channel">
+            <tr v-for="c in details.channels" :key="c.channel" :class="{ failing: c.failureCount > 0 }">
               <td>{{ c.channel }}</td>
               <td>{{ c.leagueName || "Unknown" }} ({{ c.leagueId || "not set" }})</td>
               <td>{{ c.subscriptions.join(", ") || "none" }}</td>
