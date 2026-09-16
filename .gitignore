@@ -349,3 +349,4 @@ __blobstorage__/
 !.claude/skills/
 !.claude/settings.json
 .tmp/
+**/docs/superpowers/
