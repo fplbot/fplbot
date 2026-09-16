@@ -22,11 +22,14 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     private readonly ServiceBusEmulatorFixture _emulator = new(EmulatorPort);
     private IHost _host = null!;
 
-    public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
-    public AdminErrorQueueJobRunner Jobs => _host.Services.GetRequiredService<AdminErrorQueueJobRunner>();
-    public ServiceBusAdministrationClient AdminClient => _host.Services.GetRequiredService<ServiceBusAdministrationClient>();
-    public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
-    public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
+    private IServiceScope _managerScope = null!;
+    public IServiceProvider Services => _managerScope.ServiceProvider;
+
+    public AdminErrorQueueService Service => Services.GetRequiredService<AdminErrorQueueService>();
+    public AdminErrorQueueJobRunner Jobs => Services.GetRequiredService<AdminErrorQueueJobRunner>();
+    public ServiceBusAdministrationClient AdminClient => Services.GetRequiredService<ServiceBusAdministrationClient>();
+    public ServiceBusClient BusClient => Services.GetRequiredService<ServiceBusClient>();
+    public IPublishEndpoint Publisher => Services.GetRequiredService<IPublishEndpoint>();
 
     // Every test in this collection that publishes PoisonTestMessage shares the SAME error queue
     // (AlwaysFaultsHandler_error) — drain your own message via this helper (or via a real
@@ -85,11 +88,13 @@ public class AdminErrorQueueFixture : IAsyncLifetime
             });
 
         _host = hostBuilder.Build();
+        _managerScope = _host.Services.CreateScope();
         await _host.StartAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
+        _managerScope.Dispose();
         await _host.StopAsync();
         _host.Dispose();
         await _emulator.DisposeAsync();
