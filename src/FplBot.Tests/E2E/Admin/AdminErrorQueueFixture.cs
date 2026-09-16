@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using AlmostServiceBus.TestHost;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
-using FplBot.WebApi.Admin;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,18 +21,18 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     private readonly ServiceBusEmulatorFixture _emulator = new(EmulatorPort);
     private IHost _host = null!;
 
-    public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
+    // public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
     public ServiceBusAdministrationClient AdminClient => _host.Services.GetRequiredService<ServiceBusAdministrationClient>();
     public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
     public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
 
-    // Every test in this collection publishes the SAME PoisonTestMessage type, so they all share
-    // ONE fault topic (MassTransit provisions one fault topic per message TYPE, not per test).
-    // Tests must drain their own message when done so the next test doesn't see stray leftovers.
-    // Used only by tests — not a production code path, so it's fine to live on the fixture itself.
-    public async Task DrainMatchingAsync(string topic, string subscription, string bodyContains, int maxMessages = 50)
+    // Every test in this collection that publishes PoisonTestMessage shares the SAME error queue
+    // (AlwaysFaultsHandler_error) — drain your own message via this helper (or via a real
+    // discard/retry/purge call) before the test ends, and always identify "your" message by its
+    // `key`/body content, never by raw queue length.
+    public async Task DrainMatchingAsync(string queue, string bodyContains, int maxMessages = 50)
     {
-        await using var receiver = BusClient.CreateReceiver(topic, subscription);
+        await using var receiver = BusClient.CreateReceiver(queue);
         var received = await receiver.ReceiveMessagesAsync(maxMessages, TimeSpan.FromSeconds(2));
         foreach (var m in received)
         {
@@ -54,15 +53,12 @@ public class AdminErrorQueueFixture : IAsyncLifetime
                 services.AddLogging(b => b.AddConsole());
                 services.AddSingleton(new ServiceBusAdministrationClient(_emulator.ConnectionString));
                 services.AddSingleton(new ServiceBusClient(_emulator.ConnectionString));
-                services.AddSingleton<AdminErrorQueueService>();
+                // services.AddSingleton<AdminErrorQueueService>();
                 services.AddMassTransit(x =>
                 {
                     x.AddConsumer<AlwaysFaultsHandler>();
-                    // Matches Hosting/FplBotApplication.cs's production bus config exactly — verified
-                    // this has zero effect on the fault topic itself (only on whether a {queue}_error
-                    // queue also gets created), but matching it keeps this fixture faithful to the
-                    // real topology.
-                    x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
+                    // Deliberately NOT calling DiscardFaultedMessages() — matches the corrected
+                    // production config (Step 1), so faults land in AlwaysFaultsHandler_error.
                     x.UsingAzureServiceBus((ctx, cfg) =>
                     {
                         cfg.Host(_emulator.ConnectionString);

@@ -83,7 +83,6 @@ public static class FplBotApplication
         {
             foreach (var svc in active)
                 svc.ConfigureMassTransit(x);
-            x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
             configureBus(x);
         });
 
