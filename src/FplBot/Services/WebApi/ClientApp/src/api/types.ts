@@ -247,22 +247,17 @@ export interface LeagueDetails {
 // ---- Admin: error queues ----
 
 export interface ErrorQueueSummary {
-  topic: string;
-  subscription: string;
-  messageType: string;
+  queue: string;
+  consumer: string;
   length: number;
-}
-
-export interface FaultException {
-  exceptionType: string;
-  message: string;
 }
 
 export interface ErrorQueueMessage {
   messageId: string;
   enqueuedTime: string;
-  sourceAddress: string;
-  faultMessageTypes: string[];
-  exceptions: FaultException[];
+  exceptionType: string;
+  exceptionMessage: string;
+  stackTrace: string | null;
+  consumerType: string | null;
   originalMessageJson: string | null;
 }

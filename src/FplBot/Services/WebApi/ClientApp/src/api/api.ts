@@ -262,22 +262,18 @@ export function getErrorQueues(): Promise<ErrorQueueSummary[]> {
   return request("/api/admin/errors/queues");
 }
 
-export function getErrorQueueMessages(topic: string, subscription: string): Promise<ErrorQueueMessage[]> {
-  const params = new URLSearchParams({ topic, subscription });
-  return request(`/api/admin/errors/queue/messages?${params.toString()}`);
+export function getErrorQueueMessages(queue: string): Promise<ErrorQueueMessage[]> {
+  return request(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages`);
 }
 
-export function retryErrorMessage(topic: string, subscription: string, messageId: string): Promise<MessageResponse> {
-  const params = new URLSearchParams({ topic, subscription });
-  return postJson(`/api/admin/errors/queue/messages/${encodeURIComponent(messageId)}/retry?${params.toString()}`);
+export function retryErrorMessage(queue: string, messageId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/retry`);
 }
 
-export function discardErrorMessage(topic: string, subscription: string, messageId: string): Promise<MessageResponse> {
-  const params = new URLSearchParams({ topic, subscription });
-  return postJson(`/api/admin/errors/queue/messages/${encodeURIComponent(messageId)}/discard?${params.toString()}`);
+export function discardErrorMessage(queue: string, messageId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/discard`);
 }
 
-export function purgeErrorQueue(topic: string, subscription: string): Promise<{ purged: number }> {
-  const params = new URLSearchParams({ topic, subscription });
-  return postJson(`/api/admin/errors/queue/purge?${params.toString()}`);
+export function purgeErrorQueue(queue: string): Promise<{ purged: number }> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/purge`);
 }
