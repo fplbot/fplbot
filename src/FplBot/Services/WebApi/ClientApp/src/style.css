@@ -185,6 +185,15 @@ a {
   background: #fef9c3;
 }
 
+.admin-table tbody tr.failing td .icon-btn:not(.danger) {
+  background: transparent;
+  border-color: #d6c97a;
+}
+
+.admin-table tbody tr.failing td .icon-btn:not(.danger):hover {
+  background: #fdf0a8;
+}
+
 .btn.small {
   padding: 0.3rem 0.75rem;
   font-size: 0.8rem;
