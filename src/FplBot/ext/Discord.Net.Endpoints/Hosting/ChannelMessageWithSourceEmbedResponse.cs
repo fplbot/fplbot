@@ -9,6 +9,8 @@ public class ChannelMessageWithSourceEmbedResponse : SlashCommandResponse
     }
 
     public List<RichEmbed> Embeds { get; set; }
+
+    public int? Flags { get; set; }
 }
 
 public record RichEmbed(string Title, string Description, int Color = 3604540, string Type = "rich");

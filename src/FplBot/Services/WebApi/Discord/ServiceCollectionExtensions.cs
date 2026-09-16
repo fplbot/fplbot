@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
         ConnectionMultiplexer connection, IHostEnvironment env)
     {
         services.AddSingleton<DiscordSlashCommandsEnsurer>();
+        services.AddSingleton<ChannelDeliveryProbe>();
         services.AddDiscordHttpClient(c =>
         {
             c.DiscordApplicationId = config["DiscordAppId"] ?? string.Empty;
@@ -35,7 +36,8 @@ public static class ServiceCollectionExtensions
             .AddSlashCommandHandler<HelpSlashCommandHandler>()
             .AddSlashCommandHandler<FollowSlashCommandHandler>()
             .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()
-            .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>();
+            .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>()
+            .AddSlashCommandHandler<PingSlashCommandHandler>();
         services.AddOptions<DiscordClientOptions>()
             .ValidateWithFluentValidation(new DiscordClientOptionsValidator())
             .ValidateOnStart();
