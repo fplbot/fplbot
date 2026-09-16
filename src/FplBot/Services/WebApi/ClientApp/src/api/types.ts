@@ -243,3 +243,26 @@ export interface LeagueDetails {
   standings: StandingEntry[];
   summaries: EntrySummary[];
 }
+
+// ---- Admin: error queues ----
+
+export interface ErrorQueueSummary {
+  topic: string;
+  subscription: string;
+  messageType: string;
+  length: number;
+}
+
+export interface FaultException {
+  exceptionType: string;
+  message: string;
+}
+
+export interface ErrorQueueMessage {
+  messageId: string;
+  enqueuedTime: string;
+  sourceAddress: string;
+  faultMessageTypes: string[];
+  exceptions: FaultException[];
+  originalMessageJson: string | null;
+}

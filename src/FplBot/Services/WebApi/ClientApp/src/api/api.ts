@@ -3,6 +3,8 @@ import type {
   Bookmarks,
   ChannelFilter,
   DiscordSlashCommand,
+  ErrorQueueMessage,
+  ErrorQueueSummary,
   EventSubscription,
   GuildDetails,
   GuildWithSubs,
@@ -252,4 +254,30 @@ export async function getLeagueDetails(leagueId: number): Promise<LeagueDetails 
     throw new Error(`League details request failed with status ${res.status}`);
   }
   return res.json();
+}
+
+// ---- Admin: error queues ----
+
+export function getErrorQueues(): Promise<ErrorQueueSummary[]> {
+  return request("/api/admin/errors/queues");
+}
+
+export function getErrorQueueMessages(topic: string, subscription: string): Promise<ErrorQueueMessage[]> {
+  const params = new URLSearchParams({ topic, subscription });
+  return request(`/api/admin/errors/queue/messages?${params.toString()}`);
+}
+
+export function retryErrorMessage(topic: string, subscription: string, messageId: string): Promise<MessageResponse> {
+  const params = new URLSearchParams({ topic, subscription });
+  return postJson(`/api/admin/errors/queue/messages/${encodeURIComponent(messageId)}/retry?${params.toString()}`);
+}
+
+export function discardErrorMessage(topic: string, subscription: string, messageId: string): Promise<MessageResponse> {
+  const params = new URLSearchParams({ topic, subscription });
+  return postJson(`/api/admin/errors/queue/messages/${encodeURIComponent(messageId)}/discard?${params.toString()}`);
+}
+
+export function purgeErrorQueue(topic: string, subscription: string): Promise<{ purged: number }> {
+  const params = new URLSearchParams({ topic, subscription });
+  return postJson(`/api/admin/errors/queue/purge?${params.toString()}`);
 }
