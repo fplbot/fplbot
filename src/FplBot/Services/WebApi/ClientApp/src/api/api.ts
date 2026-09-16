@@ -297,7 +297,17 @@ export async function runErrorQueueJob(
 ): Promise<string> {
   const { jobId } = await start();
   for (;;) {
-    const job = await getErrorQueueJob(jobId);
+    let job: ErrorQueueJobState;
+    try {
+      job = await getErrorQueueJob(jobId);
+    } catch (e) {
+      // Jobs live in memory on the instance that accepted them, so a restart mid-run loses the
+      // record. Say that, rather than surfacing a bare 404 — the exact thing this flow replaced.
+      if (e instanceof AdminApiError && e.status === 404) {
+        throw new Error("This action is no longer being tracked (the server may have restarted). Refresh to see the current state of the queue.");
+      }
+      throw e;
+    }
     if (job.status === "Succeeded") return job.message ?? "Done.";
     if (job.status === "Failed") throw new Error(job.message ?? "The job failed.");
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));

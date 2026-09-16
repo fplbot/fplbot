@@ -220,19 +220,26 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
     // scans for a specific id, so it can't miss a message sitting deeper in the queue and doesn't
     // spend a delivery attempt on every bystander it passes.
     //
-    // Bounded by a start timestamp rather than "until the queue is empty": when the consumer is
-    // still broken every resend faults straight back into this same queue, and an unbounded drain
-    // would keep picking up its own output. Messages enqueued after the drain began are held
-    // rather than abandoned one by one, which keeps them invisible to this receiver for the rest
-    // of the run — that is what lets the loop finish — and they are released at the end.
+    // Bounded to the messages already in the queue rather than "until the queue is empty": when
+    // the consumer is still broken every resend faults straight back into this same queue, and an
+    // unbounded drain would keep picking up its own output. The bound is the highest sequence
+    // number present when the run starts — broker-assigned and monotonic, so unlike a timestamp
+    // comparison it can't be thrown off by the app's clock sitting ahead of or behind the bus.
+    // Anything above it is held rather than abandoned one by one, which keeps it invisible to this
+    // receiver for the rest of the run (that is what lets the loop finish) and released at the end.
     public async Task<int> RetryAllMessagesAsync(string queue, CancellationToken ct = default)
     {
         const int maxRetried = 1000;
         var targetQueue = queue[..^ErrorQueueSuffix.Length];
-        var startedAt = DateTimeOffset.UtcNow;
 
         using var gate = await EnterQueueAsync(queue, ct);
         await using var receiver = client.CreateReceiver(queue);
+
+        var present = await receiver.PeekMessagesAsync(maxRetried, cancellationToken: ct);
+        if (present.Count == 0)
+            return 0;
+        var highestAtStart = present.Max(m => m.SequenceNumber);
+
         await using var sender = client.CreateSender(targetQueue);
         var held = new List<ServiceBusReceivedMessage>();
         var retried = 0;
@@ -247,7 +254,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
 
                 foreach (var message in batch)
                 {
-                    if (message.EnqueuedTime >= startedAt)
+                    if (message.SequenceNumber > highestAtStart)
                     {
                         held.Add(message);
                         continue;
@@ -303,13 +310,19 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
                 properties.MaxDeliveryCount = ScanDeliveryBudget;
                 await adminClient.UpdateQueueAsync(properties, ct);
             }
-            BudgetEnsured[queue] = true;
         }
         catch (Exception e)
         {
             // Never fail an admin action over this — without it the worst case is the behaviour
             // that already existed (bystanders dead-letter sooner), not a broken retry.
             logger.LogWarning(e, "Could not raise MaxDeliveryCount on {Queue}", queue);
+        }
+        finally
+        {
+            // Marked whether or not it worked: if the bus denies this (no Manage rights, say),
+            // retrying it on every single admin action would put a failed round-trip and a log
+            // line in front of every click, forever, for something that is an optimisation.
+            BudgetEnsured[queue] = true;
         }
     }
 
