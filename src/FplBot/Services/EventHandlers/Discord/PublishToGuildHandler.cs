@@ -50,7 +50,7 @@ public class PublishToGuildHandler(
         {
             if (DeliveryFailureClassifier.Classify(e) is { } reason)
             {
-                logger.LogWarning("Delivery to Discord channel {ChannelId} failed: {Reason}", channelId, reason);
+                logger.LogWarning(e, "Delivery to Discord channel {ChannelId} failed: {Reason}", channelId, reason);
                 await context.Publish(new DiscordChannelDeliveryFailed(guildId, channelId, reason, DateTimeOffset.UtcNow));
             }
             else
