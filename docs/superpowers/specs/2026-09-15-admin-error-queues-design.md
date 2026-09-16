@@ -93,7 +93,10 @@ talks to ASB directly via the official SDK, the same way
   - **List**: `GetTopicsAsync()` filtered to names starting with
     `MassTransit/Fault--`; for each, `GetSubscriptionsAsync(topicName)`
     then `GetSubscriptionRuntimePropertiesAsync(topicName, subName)
-    .ActiveMessageCount` for length. Returned to the UI as one row per
+    .ActiveMessageCount` for length, falling back to a peek-based count
+    when that reads 0 (see Error handling / caveats — this emulator
+    never populates the field at all, not just briefly). Returned to
+    the UI as one row per
     (topic, subscription) pair — normally exactly one subscription per
     topic given this system's topology (see Ground truth above), but
     the code doesn't assume that; it just uses whatever
@@ -124,16 +127,19 @@ talks to ASB directly via the official SDK, the same way
     segment of the original `sourceAddress`, then
     `CompleteMessageAsync` the fault message only after the send
     succeeds; non-matches are `AbandonMessageAsync`'d immediately so
-    they return to the subscription. Cap the scan (stop after one full
-    subscription pass) so a stale/missing id can't loop forever.
+    they return to the subscription. Bounded by tracking already-seen
+    (abandoned) message ids in this scan and stopping the moment one
+    repeats — that means a full cycle with no match, so a stale/missing
+    id can't loop forever. (Not bounded by `ActiveMessageCount` — see
+    Error handling / caveats.)
   - **Discard** (single message, by messageId): same scan-for-match
     logic as retry, but on match just `CompleteMessageAsync` — no
     resend.
-  - **Purge** (whole subscription): read the subscription's
-    `ActiveMessageCount` up front as a bound, then loop
-    `ReceiveMessagesAsync` (batched) + `CompleteMessageAsync` each
-    until that many messages have been completed or a receive times
-    out empty — avoids looping forever if new faults land mid-purge.
+  - **Purge** (whole subscription): loop `ReceiveMessagesAsync`
+    (batched) + `CompleteMessageAsync` each, until a receive call
+    returns zero messages — self-terminating (every message is removed
+    for good, never abandoned back), so it needs no `ActiveMessageCount`
+    bound at all.
 - **New admin endpoints**,
   `Services/WebApi/Endpoints/Api/Admin/AdminErrorEndpoints.cs`,
   registered in `WebAppExtensions.cs` next to the other
@@ -182,7 +188,21 @@ emptying the subscription further, or faults again and reappears).
   delivery count on messages it passes over while searching for the
   target. Acceptable for an infrequent, manually-triggered admin
   action, but the implementation must bound the scan (one pass) rather
-  than loop unbounded.
+  than loop unbounded — bound it by tracking already-abandoned message
+  ids and stopping on the first repeat (a full cycle with no match),
+  not by any admin-API message count (see next point).
+- `ServiceBusAdministrationClient`'s subscription runtime properties
+  (`ActiveMessageCount`) cannot be trusted as a bound or a "how many
+  are there" signal in this repo's test environment: confirmed by
+  decompiling `AlmostServiceBus.TestHost` 0.6.0 that its management API
+  never serializes a subscription's message-count field at all — it
+  reads 0 unconditionally, not just briefly after publish. (Real Azure
+  Service Bus is expected to report this accurately; this is specific
+  to the local test emulator.) `ListQueuesAsync`'s displayed length
+  falls back to a peek-based count when the runtime count reads 0, so
+  the admin UI still shows something meaningful either way. Retry,
+  discard, and purge do not depend on this count for correctness at
+  all — the point above.
 - Purge is destructive and irreversible — the UI must ask for
   confirmation before calling it (same pattern as the existing
   "Uninstall" button in `SlackWorkspacesView.vue`).
