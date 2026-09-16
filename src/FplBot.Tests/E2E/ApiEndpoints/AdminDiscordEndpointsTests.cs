@@ -25,7 +25,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation(12345, [EventSubscription.Standings]);
 
-        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, false, fixture.GuildRepo);
 
         var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
         var guild = Assert.Single(ok.Value!.Items, g => g.GuildId == installedGuild.Id);
@@ -44,13 +44,28 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1), "50013");
         await fixture.GuildRepo.Save(guild);
 
-        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, false, fixture.GuildRepo);
 
         var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
         var dto = ok.Value!.Items.Single(g => g.GuildId == guild.Id).Subscriptions.Single();
         Assert.Equal(2, dto.FailureCount);
         Assert.Equal(failingSince, dto.FailingSince);
         Assert.Equal("50013", dto.LastFailureReason);
+    }
+
+    [Fact]
+    public async Task GetSubscriptions_FailingOnly_ExcludesHealthyGuilds()
+    {
+        var failing = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var healthy = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        failing.GetChannel(failing.ChannelSubscriptions.First().ChannelId)!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "50013");
+        await fixture.GuildRepo.Save(failing);
+
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, true, fixture.GuildRepo);
+
+        var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
+        Assert.Equal(failing.Id, Assert.Single(ok.Value!.Items).GuildId);
+        Assert.DoesNotContain(ok.Value.Items, g => g.GuildId == healthy.Id);
     }
 
     [Fact]
@@ -99,7 +114,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var matching = await fixture.SeedGuildInstallation();
         await fixture.SeedGuildInstallation();
 
-        var result = await AdminDiscordEndpoints.GetSubscriptions(matching.Id, 1, 25, fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.GetSubscriptions(matching.Id, 1, 25, false, fixture.GuildRepo);
 
         var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
         var guild = Assert.Single(ok.Value!.Items);

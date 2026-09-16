@@ -125,7 +125,7 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo)
+    internal static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, bool failingOnly, IGuildRepository repo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
@@ -141,6 +141,11 @@ public static class AdminDiscordEndpoints
             : guildsWithSubs.Where(g =>
                 g.GuildName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (failingOnly)
+        {
+            filtered = filtered.Where(g => g.Subscriptions.Any(c => c.FailureCount > 0)).ToList();
+        }
 
         var items = filtered
             .Skip((page - 1) * pageSize)

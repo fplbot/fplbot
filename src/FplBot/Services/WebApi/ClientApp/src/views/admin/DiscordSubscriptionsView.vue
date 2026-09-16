@@ -54,7 +54,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await getDiscordServers(query.value, page.value, pageSize);
+    const result = await getDiscordServers(query.value, page.value, pageSize, failingOnly.value);
     guilds.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
@@ -64,7 +64,7 @@ async function load() {
   }
 }
 
-const { query, page, goToPage } = useAdminListQuery(load);
+const { query, page, failingOnly, goToPage } = useAdminListQuery(load);
 
 void loadFailureStats();
 
@@ -139,6 +139,13 @@ async function removeGuild(guildId: string, guildName: string) {
       <div class="field">
         <label for="guild-search">Search by server name or id</label>
         <input id="guild-search" v-model="query" type="text" placeholder="e.g. my server" />
+      </div>
+
+      <div class="field checkbox-field">
+        <label for="guild-search-failing">
+          <input id="guild-search-failing" v-model="failingOnly" type="checkbox" />
+          Only show installations with delivery failures
+        </label>
       </div>
 
       <p v-if="error" class="alert alert-error">{{ error }}</p>

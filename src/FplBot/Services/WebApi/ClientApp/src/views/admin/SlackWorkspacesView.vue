@@ -48,7 +48,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await getTeams(query.value, page.value, pageSize);
+    const result = await getTeams(query.value, page.value, pageSize, failingOnly.value);
     teams.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
@@ -58,7 +58,7 @@ async function load() {
   }
 }
 
-const { query, page, goToPage } = useAdminListQuery(load);
+const { query, page, failingOnly, goToPage } = useAdminListQuery(load);
 
 void loadFailureStats();
 
@@ -117,6 +117,13 @@ async function removeSub(teamId: string, channelId: string) {
       <div class="field">
         <label for="team-search">Search by team name or id</label>
         <input id="team-search" v-model="query" type="text" placeholder="e.g. Blank" />
+      </div>
+
+      <div class="field checkbox-field">
+        <label for="team-search-failing">
+          <input id="team-search-failing" v-model="failingOnly" type="checkbox" />
+          Only show installations with delivery failures
+        </label>
       </div>
 
       <p v-if="error" class="alert alert-error">{{ error }}</p>

@@ -23,15 +23,15 @@ public static class ServiceCollectionExtensions
         });
         if (env.IsDevelopment())
         {
-            services.AddTransient<IDiscordClient>(sp => sp.GetRequiredService<DiscordClient>());
-        }
-        else
-        {
             services.AddTransient<IDiscordClient>(sp =>
                 new DevLoggingDiscordClient(
                     sp.GetRequiredService<DiscordClient>(),
                     sp.GetRequiredService<IHostEnvironment>(),
                     sp.GetRequiredService<ILogger<DevLoggingDiscordClient>>()));
+        }
+        else
+        {
+            services.AddTransient<IDiscordClient>(sp => sp.GetRequiredService<DiscordClient>());
         }
 
         services.Configure<RedisOptions>(config);

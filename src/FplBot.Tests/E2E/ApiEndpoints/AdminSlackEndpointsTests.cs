@@ -102,7 +102,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
             Team("T2", "Other Workspace"),
             Team("T3", "Another blank one"));
 
-        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, repo);
+        var result = await AdminSlackEndpoints.GetTeams("blank", 1, 25, false, repo);
 
         var ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(result);
         Assert.Equal(2, ok.Value!.TotalCount);
@@ -115,8 +115,8 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var teams = Enumerable.Range(1, 5).Select(i => Team($"T{i}", $"Team {i}")).ToArray();
         var repo = RepoWithTeams(teams);
 
-        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, repo);
-        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, repo);
+        var page1 = await AdminSlackEndpoints.GetTeams(null, 1, 2, false, repo);
+        var page2 = await AdminSlackEndpoints.GetTeams(null, 2, 2, false, repo);
 
         var page1Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page1);
         var page2Ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(page2);
@@ -221,6 +221,24 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         Assert.Equal(failingSince + ChannelSubscription.MaxFailureAge, (DateTimeOffset?)channel.purgeEligibleAt);
         Assert.Equal(ChannelSubscription.MaxFailures - 2, (int)channel.failuresUntilPurge);
         Assert.Equal(ChannelSubscription.MaxFailures, (int)channel.purgeFailureLimit);
+    }
+
+    [Fact]
+    public async Task GetTeams_FailingOnly_ExcludesHealthyTeams()
+    {
+        var failingTeamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(failingTeamId, "#fplbot", FplEvent.Standings);
+        var healthyTeamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(healthyTeamId, "#fplbot", FplEvent.Standings);
+        var installation = await fixture.SlackRepo.GetInstallation(failingTeamId);
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "not_in_channel");
+        await fixture.SlackRepo.Save(installation);
+
+        var result = await AdminSlackEndpoints.GetTeams(null, 1, 25, true, fixture.SlackRepo);
+
+        var ok = Assert.IsType<Ok<PagedResult<TeamSummaryDto>>>(result);
+        Assert.Equal(failingTeamId, Assert.Single(ok.Value!.Items).TeamId);
+        Assert.DoesNotContain(ok.Value.Items, t => t.TeamId == healthyTeamId);
     }
 
     [Fact]

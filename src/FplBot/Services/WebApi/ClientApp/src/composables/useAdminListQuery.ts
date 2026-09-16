@@ -12,6 +12,7 @@ export function useAdminListQuery(load: () => void | Promise<void>, debounceMs =
   const initialPage = Number(route.query.page);
   const query = ref(typeof route.query.q === "string" ? route.query.q : "");
   const page = ref(Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1);
+  const failingOnly = ref(route.query.failing === "1");
 
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -19,6 +20,7 @@ export function useAdminListQuery(load: () => void | Promise<void>, debounceMs =
     const q: Record<string, string> = {};
     if (query.value) q.q = query.value;
     if (page.value > 1) q.page = String(page.value);
+    if (failingOnly.value) q.failing = "1";
     router.replace({ query: q });
   }
 
@@ -31,6 +33,12 @@ export function useAdminListQuery(load: () => void | Promise<void>, debounceMs =
     }, debounceMs);
   });
 
+  watch(failingOnly, () => {
+    page.value = 1;
+    syncUrl();
+    load();
+  });
+
   function goToPage(newPage: number) {
     page.value = newPage;
     syncUrl();
@@ -39,5 +47,5 @@ export function useAdminListQuery(load: () => void | Promise<void>, debounceMs =
 
   onMounted(load);
 
-  return { query, page, goToPage };
+  return { query, page, failingOnly, goToPage };
 }

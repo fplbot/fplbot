@@ -62,7 +62,7 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo)
+    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, bool failingOnly, ISlackTeamRepository teamRepo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
@@ -74,6 +74,11 @@ public static class AdminSlackEndpoints
             : installations.Where(i =>
                 i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 i.Id.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (failingOnly)
+        {
+            filtered = filtered.Where(i => i.ChannelSubscriptions.Any(c => c.FailureCount > 0)).ToList();
+        }
 
         var page_ = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var items = new List<TeamSummaryDto>();
