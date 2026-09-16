@@ -38,20 +38,12 @@ const purgeStatus = computed(() => {
     return null;
   }
   const at = new Date(c.purgeEligibleAt);
-  const daysLeft = Math.ceil((at.getTime() - Date.now()) / 86400000);
   const attempts = c.failuresUntilPurge;
-  const pending: string[] = [];
-  if (daysLeft > 0) {
-    pending.push(`${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`);
+  const condition = attempts > 0 ? ` if seeing ${attempts} more ${attempts === 1 ? "failure" : "failures"}` : "";
+  if (at.getTime() > Date.now()) {
+    return `Purging ${at.toLocaleString()}${condition}`;
   }
-  if (attempts > 0) {
-    pending.push(`${attempts} more failed ${attempts === 1 ? "delivery" : "deliveries"} needed`);
-  }
-  return {
-    lead: daysLeft > 0 ? "Will be automatically purged at" : "Eligible for automatic purge since",
-    at: at.toLocaleString(),
-    detail: pending.length > 0 ? pending.join(", ") : "happens on the next failed delivery",
-  };
+  return condition ? `Purging${condition}` : "Purging on the next failure";
 });
 
 async function load() {
@@ -192,7 +184,7 @@ async function submitDelete() {
           <template v-if="purgeStatus">
             <dt>Automatic purge</dt>
             <dd>
-              <span class="status bad">{{ purgeStatus.lead }} {{ purgeStatus.at }} &mdash; {{ purgeStatus.detail }}</span>
+              <span class="status">{{ purgeStatus }}</span>
             </dd>
           </template>
         </dl>
