@@ -1,6 +1,6 @@
-using System.Net;
 using Discord.Net.HttpClients;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
@@ -21,34 +21,46 @@ public class PublishToGuildHandler(
         {
             publishMessage = $"[{Environment.MachineName}]\n{publishMessage}";
         }
-        await discordClient.ChannelMessagePost(message.ChannelId, publishMessage);
+
+        await Post(context, message.GuildId, message.ChannelId,
+            () => discordClient.ChannelMessagePost(message.ChannelId, publishMessage));
     }
 
     public async Task Consume(ConsumeContext<PublishRichToGuildChannel> context)
     {
         var message = context.Message;
         int? color = null;
-
         if (env.IsDevelopment())
         {
             color = 14177041;
         }
 
+        await Post(context, message.GuildId, message.ChannelId,
+            () => discordClient.ChannelMessagePost(message.ChannelId,
+                new DiscordClient.RichEmbed(message.Title, message.Description, color)));
+    }
+
+    private async Task Post(ConsumeContext context, string guildId, string channelId, Func<Task> post)
+    {
         try
         {
-            await discordClient.ChannelMessagePost(message.ChannelId, new DiscordClient.RichEmbed(message.Title, message.Description, color));
+            await post();
         }
-        catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.Forbidden)
+        catch (DiscordApiException e)
         {
-            // Scenarios:
-            // - Setup a subscription in a channel without giving the bot permissions (fplbot role needs access)
-            logger.LogWarning("Unauthorized to post to Discord channel {channel}", message.ChannelId);
+            if (DeliveryFailureClassifier.Classify(e) is { } reason)
+            {
+                logger.LogWarning("Delivery to Discord channel {ChannelId} failed: {Reason}", channelId, reason);
+                await context.Publish(new DiscordChannelDeliveryFailed(guildId, channelId, reason, DateTimeOffset.UtcNow));
+            }
+            else
+            {
+                logger.LogWarning(e, "Delivery to Discord channel {ChannelId} failed, not counted", channelId);
+            }
         }
-        catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.NotFound)
+        catch (Exception e)
         {
-            // Scenarios:
-            // - Deleted channel?
-            logger.LogWarning("Discord channel {channel} not found", message.ChannelId);
+            logger.LogWarning(e, "Delivery to Discord channel {ChannelId} failed, not counted", channelId);
         }
     }
 }
