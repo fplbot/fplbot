@@ -20,6 +20,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         fixture.SlackCapture.Reset();
+        fixture.ResetChannelOutcomes();
         await fixture.FlushRedisAsync();
     }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -28,7 +29,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     public async Task Uninstall_SlackAcceptsUninstall_MarksForRemovalAndDeletesLocally()
     {
         var teamId = await fixture.InstallSlackbot();
-        A.CallTo(() => fixture.SlackClient.AppsUninstall(A<string>._, A<string>._)).Returns(new Response { Ok = true });
+        fixture.SetSlackAppsUninstallResult(new Response { Ok = true });
 
         var result = await ExecuteUninstall(teamId);
 
@@ -40,7 +41,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     public async Task Uninstall_SlackRejectsUninstall_StillDeletesLocally()
     {
         var teamId = await fixture.InstallSlackbot();
-        A.CallTo(() => fixture.SlackClient.AppsUninstall(A<string>._, A<string>._)).Returns(new Response { Ok = false, Error = "something_broke" });
+        fixture.SetSlackAppsUninstallResult(new Response { Ok = false, Error = "something_broke" });
 
         await ExecuteUninstall(teamId);
 
@@ -51,8 +52,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     public async Task Uninstall_SlackThrows_StillDeletesLocallyAndDoesNotCrash()
     {
         var teamId = await fixture.InstallSlackbot();
-        A.CallTo(() => fixture.SlackClient.AppsUninstall(A<string>._, A<string>._))
-            .Throws(new WellKnownSlackApiException(error: "account_inactive", responseContent: "{}"));
+        fixture.SetSlackAppsUninstallThrows(new WellKnownSlackApiException(error: "account_inactive", responseContent: "{}"));
 
         await ExecuteUninstall(teamId);
 
