@@ -31,7 +31,7 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
         if (!result.Delivered)
         {
             return RespondSavedButBlocked(
-                $"Following '{leagueName}'! But there is a permission issue you need to solve. {ChannelDeliveryProbe.ProblemAndFix(result)}");
+                $"Following '{leagueName}'! {ChannelDeliveryProbe.Advice(result)}");
         }
 
         return isNewChannel

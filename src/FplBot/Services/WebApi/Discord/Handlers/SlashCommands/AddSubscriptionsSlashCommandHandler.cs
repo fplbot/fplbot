@@ -46,7 +46,7 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo, ChannelDe
         return result.Delivered
             ? Respond("✅ Success!", description)
             : Respond("⚠️ Saved, but I can't post here yet",
-                $"Subscribed! But there is a permission issue you need to solve. {ChannelDeliveryProbe.ProblemAndFix(result)}\n\n{description}");
+                $"Subscribed! {ChannelDeliveryProbe.Advice(result)}\n\n{description}");
     }
 
     private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
