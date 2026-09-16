@@ -21,17 +21,25 @@ public class SearchAppFixture : AppFixture
     public override async ValueTask InitializeAsync()
     {
         await _elasticsearch.StartAsync();
+        await PurgeLeftoverIndices();
         await base.InitializeAsync();
     }
 
-    protected override void ConfigureSearchClient(IServiceCollection services)
+    private async Task PurgeLeftoverIndices()
     {
-        var settings = new ConnectionSettings(new Uri(_elasticsearch.GetConnectionString()))
+        await new ElasticClient(ConnectionSettings())
+            .Indices.DeleteAsync("entries-*,leagues-*,analytics-*");
+    }
+
+    private ConnectionSettings ConnectionSettings() =>
+        new ConnectionSettings(new Uri(_elasticsearch.GetConnectionString()))
             .BasicAuthentication("elastic", "elastic")
             .ServerCertificateValidationCallback(CertificateValidations.AllowAll);
 
+    protected override void ConfigureSearchClient(IServiceCollection services)
+    {
         services.RemoveAll<IElasticClient>();
-        services.AddSingleton<IElasticClient>(new ElasticClient(settings));
+        services.AddSingleton<IElasticClient>(new ElasticClient(ConnectionSettings()));
     }
 }
 
