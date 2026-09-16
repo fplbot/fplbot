@@ -134,4 +134,28 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
 
         return false;
     }
+
+    // Not bounded by ActiveMessageCount (confirmed unreliable against this repo's test emulator).
+    // Every message here is completed, never abandoned back, so looping until a receive call
+    // returns nothing is already self-terminating and needs no external bound.
+    public async Task<int> PurgeQueueAsync(string queue, CancellationToken ct = default)
+    {
+        await using var receiver = client.CreateReceiver(queue);
+        var purged = 0;
+
+        while (true)
+        {
+            var messages = await receiver.ReceiveMessagesAsync(maxMessages: 50, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
+            if (messages.Count == 0)
+                break;
+
+            foreach (var message in messages)
+            {
+                await receiver.CompleteMessageAsync(message, ct);
+                purged++;
+            }
+        }
+
+        return purged;
+    }
 }
