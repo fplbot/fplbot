@@ -90,6 +90,34 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
     }
 
     [Fact]
+    public async Task RetryAllMessages_AcceptsBeforeTheDrainHasRun_AndReportsTheCountViaTheJob()
+    {
+        var key = Guid.NewGuid().ToString();
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: false), TestContext.Current.CancellationToken);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
+
+        // Draining a queue outlasts what a browser will wait on a POST, so this must hand back a
+        // job rather than block — the result is Accepted while the drain is still to happen, and
+        // the count only shows up on the job once it has.
+        var accepted = Assert.IsType<Accepted<ErrorQueueJobAccepted>>(
+            AdminErrorEndpoints.RetryAllMessages(Queue, fixture.Jobs));
+        Assert.Equal("retry-all", accepted.Value!.Kind);
+
+        var job = await fixture.WaitForJobAsync(accepted.Value.JobId);
+
+        Assert.Equal(ErrorQueueJobStatus.Succeeded, job.Status);
+        Assert.Contains("Retried", job.Message);
+    }
+
+    [Fact]
+    public void RetryAllMessages_NonErrorQueue_ReturnsBadRequest()
+    {
+        var result = AdminErrorEndpoints.RetryAllMessages("AlwaysFaultsHandler", fixture.Jobs);
+
+        Assert.IsType<BadRequest<object>>(result);
+    }
+
+    [Fact]
     public void GetJob_UnknownId_ReturnsNotFound()
     {
         var result = AdminErrorEndpoints.GetJob(Guid.NewGuid(), fixture.Jobs);
