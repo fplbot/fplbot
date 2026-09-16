@@ -58,8 +58,6 @@ export interface ChannelSubscription {
   failureCount: number;
   failingSince: string | null;
   lastFailureReason: string | null;
-  purgeEligibleAt: string | null;
-  failuresUntilPurge: number;
 }
 
 export interface TeamSummary {
@@ -147,8 +145,6 @@ export interface GuildSubscription {
   failureCount: number;
   failingSince: string | null;
   lastFailureReason: string | null;
-  purgeEligibleAt: string | null;
-  failuresUntilPurge: number;
 }
 
 export interface GuildWithSubs {

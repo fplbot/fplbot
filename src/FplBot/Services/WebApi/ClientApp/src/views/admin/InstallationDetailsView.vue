@@ -124,7 +124,7 @@ async function submitDanger() {
                 <span v-if="c.failureCount > 0" class="status bad" :title="`Failing since ${formatFailingSince(c.failingSince)}`">
                   &#9888; {{ c.failureCount }} consecutive failed {{ c.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(c.failingSince) }})<template v-if="c.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(c.lastFailureReason) }}</template>
                 </span>
-                <span v-else class="no-subs">no failures</span>
+                <span v-else class="no-subs">not currently failing</span>
               </td>
               <td class="row-actions">
                 <router-link

@@ -48,6 +48,7 @@ const purgeStatus = computed(() => {
     pending.push(`${attempts} more failed ${attempts === 1 ? "delivery" : "deliveries"} needed`);
   }
   return {
+    lead: daysLeft > 0 ? "Will be automatically purged at" : "Eligible for automatic purge since",
     at: at.toLocaleString(),
     detail: pending.length > 0 ? pending.join(", ") : "happens on the next failed delivery",
   };
@@ -186,12 +187,12 @@ async function submitDelete() {
             <span v-if="channel.failureCount > 0" class="status bad">
               &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(channel.failingSince) }})<template v-if="channel.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(channel.lastFailureReason) }}</template>
             </span>
-            <span v-else class="status">no failures</span>
+            <span v-else class="status">not currently failing</span>
           </dd>
           <template v-if="purgeStatus">
             <dt>Automatic purge</dt>
             <dd>
-              <span class="status bad">Will be automatically purged at {{ purgeStatus.at }} &mdash; {{ purgeStatus.detail }}</span>
+              <span class="status bad">{{ purgeStatus.lead }} {{ purgeStatus.at }} &mdash; {{ purgeStatus.detail }}</span>
             </dd>
           </template>
         </dl>

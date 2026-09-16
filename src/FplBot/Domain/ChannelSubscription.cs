@@ -3,7 +3,7 @@ namespace FplBot.Domain;
 public class ChannelSubscription
 {
     public const int MaxFailures = 5;
-    public static readonly TimeSpan MaxFailureAge = TimeSpan.FromDays(30);
+    public static readonly TimeSpan MaxFailureAge = TimeSpan.FromDays(7);
 
     public string ChannelId { get; }
 
