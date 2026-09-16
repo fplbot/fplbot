@@ -14,6 +14,8 @@ public class DiscordGuildRepository : IGuildRepository
     private readonly RedisValue _channelIdField = "channelid";
     private readonly RedisValue _leagueIdField = "leagueid";
     private readonly RedisValue _subscriptionsField = "subs";
+    private readonly RedisValue _failureCountField = "failureCount";
+    private readonly RedisValue _failingSinceField = "failingSince";
 
     private readonly IDatabase _db;
     private readonly ILogger<DiscordGuildRepository> _logger;
@@ -115,7 +117,8 @@ public class DiscordGuildRepository : IGuildRepository
         {
             new(_guildIdField, guildId),
             new(_channelIdField, channel.ChannelId),
-            new(_subscriptionsField, string.Join(" ", channel.Events.Current.Select(ToStorageEvent)))
+            new(_subscriptionsField, string.Join(" ", channel.Events.Current.Select(ToStorageEvent))),
+            new(_failureCountField, channel.FailureCount)
         };
 
         if (channel.FollowedLeagueId is { } leagueId)
@@ -124,6 +127,14 @@ public class DiscordGuildRepository : IGuildRepository
         }
 
         await _db.HashSetAsync(key, hashEntries.ToArray());
+        if (channel.FailingSince is { } failingSince)
+        {
+            await _db.HashSetAsync(key, _failingSinceField, failingSince.ToUnixTimeMilliseconds());
+        }
+        else
+        {
+            await _db.HashDeleteAsync(key, _failingSinceField);
+        }
         await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
         await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
     }
@@ -199,7 +210,8 @@ public class DiscordGuildRepository : IGuildRepository
 
     private async Task<ChannelSubscription?> ReadChannelSubscription(string guildId, string channelId)
     {
-        var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId), [_channelIdField, _leagueIdField, _subscriptionsField]);
+        var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId),
+            [_channelIdField, _leagueIdField, _subscriptionsField, _failureCountField, _failingSinceField]);
         if (!fetched[0].HasValue)
         {
             return null;
@@ -208,7 +220,11 @@ public class DiscordGuildRepository : IGuildRepository
         var leagueId = fetched[1].HasValue ? (int?)fetched[1] : null;
         var subs = ParseSubscriptionString(fetched[2].ToString(), " ");
         var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
-        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent));
+        var failureCount = fetched[3].HasValue ? (int)fetched[3] : 0;
+        var failingSince = fetched[4].HasValue
+            ? DateTimeOffset.FromUnixTimeMilliseconds((long)fetched[4])
+            : (DateTimeOffset?)null;
+        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince);
     }
 
     private static string FromGuildIdToGuildKey(string guildId)

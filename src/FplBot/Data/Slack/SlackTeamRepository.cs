@@ -23,6 +23,8 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly string _channelSubChannelIdField = "channelId";
     private readonly string _channelSubLeagueIdField = "leagueId";
     private readonly string _channelSubSubscriptionsField = "subscriptions";
+    private readonly string _channelSubFailureCountField = "failureCount";
+    private readonly string _channelSubFailingSinceField = "failingSince";
 
     public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
     {
@@ -190,7 +192,8 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             new HashEntry(_teamIdField, teamId),
             new HashEntry(_channelSubChannelIdField, channel.ChannelId),
-            new HashEntry(_channelSubSubscriptionsField, string.Join(" ", subscriptions))
+            new HashEntry(_channelSubSubscriptionsField, string.Join(" ", subscriptions)),
+            new HashEntry(_channelSubFailureCountField, channel.FailureCount)
         };
 
         if (channel.FollowedLeagueId is { } leagueId)
@@ -199,6 +202,14 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
 
         await _db.HashSetAsync(key, hashEntries.ToArray());
+        if (channel.FailingSince is { } failingSince)
+        {
+            await _db.HashSetAsync(key, _channelSubFailingSinceField, failingSince.ToUnixTimeMilliseconds());
+        }
+        else
+        {
+            await _db.HashDeleteAsync(key, _channelSubFailingSinceField);
+        }
         await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
         await UpdateEventIndex(teamId, channel.ChannelId, oldEvents, newEvents);
     }
@@ -269,7 +280,9 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     private async Task<ChannelSubscription?> ReadChannelSubscription(string teamId, string channelId)
     {
-        var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
+        var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId),
+            [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField,
+             _channelSubFailureCountField, _channelSubFailingSinceField]);
         if (!fetched[0].HasValue)
         {
             return null;
@@ -278,7 +291,11 @@ public class SlackTeamRepository : ISlackTeamRepository
         int? leagueId = fetched[1].HasValue ? int.Parse(fetched[1]!) : null;
         var subs = GetSubscriptions(teamId, fetched[2]);
         var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
-        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent));
+        var failureCount = fetched[3].HasValue ? (int)fetched[3] : 0;
+        var failingSince = fetched[4].HasValue
+            ? DateTimeOffset.FromUnixTimeMilliseconds((long)fetched[4])
+            : (DateTimeOffset?)null;
+        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince);
     }
 
     private async Task DeleteChannelSubscription(string teamId, string channelId)
