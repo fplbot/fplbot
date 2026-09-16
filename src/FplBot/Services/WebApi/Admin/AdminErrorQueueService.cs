@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
@@ -64,7 +65,19 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
     private static ErrorQueueMessage ToErrorQueueMessage(ServiceBusReceivedMessage message)
     {
         var props = message.ApplicationProperties;
-        var original = JsonNode.Parse(message.Body.ToString())?["message"];
+        var bodyText = message.Body.ToString();
+        string? originalMessageJson;
+        try
+        {
+            originalMessageJson = JsonNode.Parse(bodyText)?["message"]?.ToJsonString();
+        }
+        catch (JsonException)
+        {
+            // Not a valid MassTransit JSON envelope — fall back to the raw body text so the
+            // frontend's existing non-JSON fallback (prettyBody() in ErrorQueueDetailView.vue)
+            // has something to render, instead of crashing the whole queue's peek.
+            originalMessageJson = bodyText;
+        }
 
         return new ErrorQueueMessage(
             message.MessageId,
@@ -73,7 +86,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             GetProperty(props, "MT-Fault-Message") ?? "",
             GetProperty(props, "MT-Fault-StackTrace"),
             GetProperty(props, "MT-Fault-ConsumerType"),
-            original?.ToJsonString());
+            originalMessageJson);
     }
 
     private static string? GetProperty(IReadOnlyDictionary<string, object> props, string key) =>
@@ -98,41 +111,64 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
     public Task<bool> DiscardMessageAsync(string queue, string messageId, CancellationToken ct = default) =>
         ScanAndActAsync(queue, messageId, (receiver, message) => receiver.CompleteMessageAsync(message, ct), ct);
 
-    // There is no fetch-by-message-id in Azure Service Bus, so this scans the queue (PeekLock),
-    // abandoning every non-matching message immediately so it returns to the queue. Bounded by
-    // cycle detection, NOT by ActiveMessageCount (confirmed unreliable against this repo's test
-    // emulator — see the class-level notes): abandoning a non-matching message makes it instantly
-    // redeliverable, so once a message id repeats, the scan has cycled through everything in the
-    // queue without finding the target — stop there.
+    // There is no fetch-by-message-id in Azure Service Bus, so this scans the queue (PeekLock).
+    // Abandoning a message makes it immediately redeliverable, and this transport delivers in
+    // order — so abandoning non-matching messages one at a time as we go would just keep handing
+    // us the same head-of-queue message back before we ever reached a target sitting deeper in
+    // the queue. Instead: receive whole batches, keep every held message's lock until we've either
+    // found the match or exhausted the queue, and only then abandon the non-matching ones (once,
+    // at the end). Because every message we've looked at stays locked throughout, none of them
+    // become redeliverable mid-scan, so message order can't fool this into stopping early.
+    // Capped at maxScanned total messages as a safety net, consistent with this file's other
+    // bounded scans (PurgeQueueAsync, PeekCountAsync) — not by ActiveMessageCount, which is
+    // confirmed unreliable against this repo's test emulator (see class-level notes).
     private async Task<bool> ScanAndActAsync(
         string queue, string messageId,
         Func<ServiceBusReceiver, ServiceBusReceivedMessage, Task> onMatch, CancellationToken ct)
     {
+        const int maxScanned = 1000;
         await using var receiver = client.CreateReceiver(queue);
-        var seen = new HashSet<string>();
+        var held = new List<ServiceBusReceivedMessage>();
+        ServiceBusReceivedMessage? match = null;
 
-        while (true)
+        try
         {
-            var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(5), ct);
-            if (message is null)
-                break;
-
-            if (message.MessageId == messageId)
+            while (match is null && held.Count < maxScanned)
             {
-                await onMatch(receiver, message);
-                return true;
+                var batch = await receiver.ReceiveMessagesAsync(maxMessages: 100, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
+                if (batch.Count == 0)
+                    break;
+
+                foreach (var message in batch)
+                {
+                    if (message.MessageId == messageId)
+                    {
+                        match = message;
+                        break;
+                    }
+                    held.Add(message);
+                }
             }
 
-            if (!seen.Add(message.MessageId))
-            {
-                await receiver.AbandonMessageAsync(message, cancellationToken: ct);
-                break;
-            }
+            if (match is not null)
+                await onMatch(receiver, match);
 
-            await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+            return match is not null;
         }
-
-        return false;
+        finally
+        {
+            foreach (var message in held)
+            {
+                try
+                {
+                    await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+                }
+                catch
+                {
+                    // Best effort — a lock may have expired if the scan ran long; nothing more to do.
+                }
+            }
+        }
     }
 
     // Not bounded by ActiveMessageCount (confirmed unreliable against this repo's test emulator).

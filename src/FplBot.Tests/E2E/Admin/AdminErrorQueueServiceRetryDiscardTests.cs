@@ -47,6 +47,41 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
     }
 
     [Fact]
+    public async Task DiscardMessageAsync_ActsOnANonHeadMessage_NotJustTheQueueHead()
+    {
+        // Regression test for the cycle-detection race: abandoning the head message makes it
+        // immediately redeliverable (this transport delivers in order), so a scan that abandons
+        // non-matching messages one at a time as it goes never actually reaches message #2 or #3
+        // — it just keeps seeing message #1 and gives up, declaring "not found" even though the
+        // real target is sitting deeper in the queue. Publish 3 messages and act on the LAST one
+        // published to prove the scan finds it regardless of queue position.
+        var keys = Enumerable.Range(0, 3).Select(_ => Guid.NewGuid().ToString()).ToList();
+        foreach (var key in keys)
+            await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+
+        foreach (var key in keys)
+            Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
+
+        var targetKey = keys[^1];
+        var target = await WaitForOwnMessageAsync(targetKey);
+
+        var discarded = await fixture.Service.DiscardMessageAsync(Queue, target.MessageId);
+        Assert.True(discarded, "Expected the last-published (non-head) message to be found and discarded.");
+
+        var targetStillThere = await MessageStillPresentAsync(targetKey);
+        Assert.False(targetStillThere, "Expected the discarded message to be gone from the error queue.");
+
+        // The other two messages were scanned past but never acted on — confirm they're still
+        // present (proving the scan didn't discard everything it touched), then clean them up.
+        foreach (var otherKey in keys.Take(2))
+        {
+            var otherStillThere = await MessageStillPresentAsync(otherKey);
+            Assert.True(otherStillThere, $"Expected the non-target message {otherKey} to remain in the queue.");
+            await fixture.DrainMatchingAsync(Queue, otherKey);
+        }
+    }
+
+    [Fact]
     public async Task RetryMessageAsync_UnknownMessageId_ReturnsFalse()
     {
         var key = Guid.NewGuid().ToString();

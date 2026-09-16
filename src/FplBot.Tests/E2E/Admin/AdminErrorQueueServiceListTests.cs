@@ -1,3 +1,5 @@
+using Azure.Messaging.ServiceBus;
+
 namespace FplBot.Tests.E2E.Admin;
 
 // Every test in this collection publishes the same PoisonTestMessage type and shares one error
@@ -44,5 +46,28 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
         Assert.Equal(nameof(AlwaysFaultsHandler), message.ConsumerType!.Split('.').Last());
 
         await fixture.DrainMatchingAsync(AdminErrorQueueFixtureTests.ErrorQueueName, key);
+    }
+
+    [Fact]
+    public async Task PeekMessagesAsync_NonJsonBody_FallsBackToRawText_InsteadOfThrowing()
+    {
+        var marker = Guid.NewGuid().ToString();
+        var rawBody = $"not valid json {marker}";
+
+        await using (var sender = fixture.BusClient.CreateSender(AdminErrorQueueFixtureTests.ErrorQueueName))
+        {
+            await sender.SendMessageAsync(new ServiceBusMessage(rawBody));
+        }
+
+        var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
+            fixture, AdminErrorQueueFixtureTests.ErrorQueueName, marker);
+        Assert.True(found);
+
+        var messages = await fixture.Service.PeekMessagesAsync(AdminErrorQueueFixtureTests.ErrorQueueName);
+        var message = messages.Single(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(marker));
+
+        Assert.Equal(rawBody, message.OriginalMessageJson);
+
+        await fixture.DrainMatchingAsync(AdminErrorQueueFixtureTests.ErrorQueueName, marker);
     }
 }
