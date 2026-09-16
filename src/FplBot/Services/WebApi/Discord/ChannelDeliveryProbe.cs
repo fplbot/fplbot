@@ -1,5 +1,6 @@
 using Discord.Net.HttpClients;
 using FplBot.Data.Discord;
+using FplBot.EventHandlers;
 
 namespace FplBot.Discord;
 
@@ -15,7 +16,7 @@ public class ChannelDeliveryProbe(
         try
         {
             await discordClient.ChannelMessagePost(channelId, message);
-            await ClearFailures(guildId, channelId);
+            await StaleChannelSubscriptions.ClearFailures(repo, guildId, channelId, logger);
             return new ProbeResult(true, null, null);
         }
         catch (DiscordApiException e)
@@ -41,16 +42,4 @@ public class ChannelDeliveryProbe(
     private const string FixThenPing = "Fix that - and get back here to test with `/ping`.";
 
     public static string ProblemAndFix(ProbeResult result) => $"{result.Problem} {FixThenPing}";
-
-    private async Task ClearFailures(string guildId, string channelId)
-    {
-        var subscription = await repo.GetChannelSubscription(guildId, channelId);
-        if (subscription is null || subscription.FailureCount == 0)
-        {
-            return;
-        }
-
-        subscription.ClearDeliveryFailures();
-        await repo.SaveChannelSubscription(guildId, subscription);
-    }
 }

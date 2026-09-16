@@ -28,4 +28,27 @@ public static class StaleChannelSubscriptions
         await repository.DeleteChannelSubscription(installationId, channelId);
         return subscription;
     }
+
+    public static async Task ClearFailures(
+        IDomainRepository repository,
+        string installationId,
+        string channelId,
+        ILogger logger)
+    {
+        try
+        {
+            var subscription = await repository.GetChannelSubscription(installationId, channelId);
+            if (subscription is null || subscription.FailureCount == 0)
+            {
+                return;
+            }
+
+            subscription.ClearDeliveryFailures();
+            await repository.SaveChannelSubscription(installationId, subscription);
+        }
+        catch (Exception e)
+        {
+            logger.LogWarning(e, "Could not clear delivery failures for {InstallationId} channel {ChannelId}", installationId, channelId);
+        }
+    }
 }

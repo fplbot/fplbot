@@ -47,7 +47,7 @@ public class PublishToGuildHandler(
         try
         {
             await post();
-            await ClearFailures(guildId, channelId);
+            await StaleChannelSubscriptions.ClearFailures(guildRepository, guildId, channelId, logger);
         }
         catch (DiscordApiException e)
         {
@@ -65,17 +65,5 @@ public class PublishToGuildHandler(
         {
             logger.LogWarning(e, "Delivery to Discord channel {ChannelId} failed, not counted", channelId);
         }
-    }
-
-    private async Task ClearFailures(string guildId, string channelId)
-    {
-        var subscription = await guildRepository.GetChannelSubscription(guildId, channelId);
-        if (subscription is null || subscription.FailureCount == 0)
-        {
-            return;
-        }
-
-        subscription.ClearDeliveryFailures();
-        await guildRepository.SaveChannelSubscription(guildId, subscription);
     }
 }
