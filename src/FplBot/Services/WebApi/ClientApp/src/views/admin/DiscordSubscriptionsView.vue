@@ -124,11 +124,15 @@ async function removeGuild(guildId: string, guildName: string) {
       <template v-if="failureStats.channelsWithFailures > 0">
         &#9888; {{ failureStats.channelsWithFailures }} channel(s) across {{ failureStats.installationsWithFailures }} server(s) are failing delivery,
         {{ failureStats.channelsEligibleForPurge }} of them already due to be purged.
-        <button class="btn small danger" :disabled="resettingFailures" @click="resetFailures">
-          {{ resettingFailures ? "Resetting..." : "Reset all failure counters" }}
-        </button>
       </template>
       <template v-else>No channels are currently failing delivery.</template>
+      <button
+        class="btn small danger"
+        :disabled="resettingFailures || failureStats.channelsWithFailures === 0"
+        @click="resetFailures"
+      >
+        {{ resettingFailures ? "Resetting..." : "Reset all failure counters" }}
+      </button>
     </p>
 
     <div class="card">
