@@ -298,7 +298,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince);
     }
 
-    private async Task DeleteChannelSubscription(string teamId, string channelId)
+    public async Task DeleteChannelSubscription(string teamId, string channelId)
     {
         var key = FromTeamAndChannelToChannelSubKey(teamId, channelId);
         var events = ExpandEvents(GetSubscriptions(teamId, await _db.HashGetAsync(key, _channelSubSubscriptionsField)).Select(ToDomainEvent));

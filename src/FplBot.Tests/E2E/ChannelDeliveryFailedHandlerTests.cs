@@ -91,6 +91,33 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
     }
 
     [Fact]
+    public async Task ConcurrentRemovalAndSiblingAccrual_SiblingNotReverted()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var removingChannel = guild.ChannelSubscriptions.First().ChannelId;
+        var survivingChannel = "sibling-" + Guid.NewGuid().ToString("N");
+        guild.Subscribe(survivingChannel, [FplEvent.PriceChanges]);
+        await fixture.GuildRepo.Save(guild);
+
+        const int rounds = 5;
+
+        for (var day = 0; day < rounds; day++)
+        {
+            await Task.WhenAll(
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, removingChannel, "50001", Day0.AddDays(day * 2)),
+                    TestContext.Current.CancellationToken),
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, survivingChannel, "50001", Day0),
+                    TestContext.Current.CancellationToken));
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+
+        await WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, removingChannel) is null);
+
+        var surviving = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, survivingChannel), rounds);
+        Assert.Equal(rounds, surviving.FailureCount);
+    }
+
+    [Fact]
     public async Task SlackFailure_IncrementsCounters()
     {
         var installation = await fixture.SeedInstallation();

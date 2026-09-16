@@ -12,4 +12,5 @@ public interface IDomainRepository
     Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents);
     Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId);
     Task SaveChannelSubscription(string installationId, ChannelSubscription channel);
+    Task DeleteChannelSubscription(string installationId, string channelId);
 }

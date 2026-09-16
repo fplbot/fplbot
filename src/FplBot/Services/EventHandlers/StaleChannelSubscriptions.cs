@@ -25,14 +25,7 @@ public static class StaleChannelSubscriptions
             return null;
         }
 
-        var installation = await repository.FindInstallationByTeamId(installationId);
-        if (installation is null)
-        {
-            return null;
-        }
-
-        installation.RemoveChannel(channelId);
-        await repository.Save(installation);
+        await repository.DeleteChannelSubscription(installationId, channelId);
         return subscription;
     }
 }

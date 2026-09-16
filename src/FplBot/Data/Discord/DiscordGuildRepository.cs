@@ -139,7 +139,7 @@ public class DiscordGuildRepository : IGuildRepository
         await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
     }
 
-    private async Task DeleteChannelSubscription(string guildId, string channelId)
+    public async Task DeleteChannelSubscription(string guildId, string channelId)
     {
         var key = FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId);
         var events = ExpandEvents(ParseSubscriptionString((await _db.HashGetAsync(key, _subscriptionsField)).ToString(), " ").Select(ToDomainEvent));
