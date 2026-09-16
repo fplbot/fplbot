@@ -14,7 +14,7 @@
 
 - Reuse the existing `ASB_CONNECTIONSTRING` config value — no new secret/config surface.
 - `topic` is always passed as a query parameter, never a path segment (fault topic names contain a literal `/`).
-- Every retry/discard scan is bounded to one pass over the subscription's message count at call time — never an unbounded loop.
+- Every retry/discard scan is bounded to one pass over the subscription — detected by tracking already-abandoned message ids and stopping on the first repeat — never an unbounded loop, and never bounded by `ActiveMessageCount` (confirmed unreliable against this repo's test emulator — see Task 2's notes).
 - Purge is destructive; the UI must confirm before calling it.
 - Every new `/admin/errors/**` route lives behind the existing `RequireAuthorization("IsAdmin")` group in `WebAppExtensions.cs` — do not add a separate auth check.
 - No dead-letter-subqueue routing, TTL override, or MassTransit fault-pipeline change — faulted messages still expire after the existing 2-hour `DefaultMessageTimeToLive`, same as every other queue/topic on this bus.
@@ -246,7 +246,7 @@ git commit -m "Add ASB-backed test fixture and poison consumer for error-queue t
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueFixture.Publisher`, `.AdminClient` (from Task 1).
-- Produces: `ErrorQueueSummary(string Topic, string Subscription, string MessageType, long Length)`, `FaultException(string ExceptionType, string Message)`, `ErrorQueueMessage(string MessageId, DateTimeOffset EnqueuedTime, string SourceAddress, IReadOnlyList<string> FaultMessageTypes, IReadOnlyList<FaultException> Exceptions, string? OriginalMessageJson)` records, and `AdminErrorQueueService.ListQueuesAsync(CancellationToken)` / `.PeekMessagesAsync(string topic, string subscription, int maxMessages = 50, CancellationToken)` methods — used by Task 3, 4, and 5. `MessageType` is parsed from the topic name (see the spec's "Ground truth" section — the subscription name does not identify anything meaningful; grouping and display both key off the message type instead).
+- Produces: `ErrorQueueSummary(string Topic, string Subscription, string MessageType, long Length)`, `FaultException(string ExceptionType, string Message)`, `ErrorQueueMessage(string MessageId, DateTimeOffset EnqueuedTime, string SourceAddress, IReadOnlyList<string> FaultMessageTypes, IReadOnlyList<FaultException> Exceptions, string? OriginalMessageJson)` records, and `AdminErrorQueueService.ListQueuesAsync(CancellationToken)` / `.PeekMessagesAsync(string topic, string subscription, int maxMessages = 50, CancellationToken)` methods — used by Task 3, 4, and 5. `MessageType` is parsed from the topic name (see the spec's "Ground truth" section — the subscription name does not identify anything meaningful; grouping and display both key off the message type instead). `Length` reads `ActiveMessageCount`, falling back to a peek-based count when that's 0 — this repo's test emulator (`AlmostServiceBus.TestHost` 0.6.0) never populates that field at all in its management API, confirmed by decompiling it, so the fallback isn't optional for this to be testable. Tasks 3 and 4 must NOT bound their own retry/discard/purge logic on `ActiveMessageCount` for the same reason — see their Interfaces notes.
 
 - [ ] **Step 1: Add the `Azure.Messaging.ServiceBus` package reference**
 
@@ -355,10 +355,26 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             await foreach (var sub in adminClient.GetSubscriptionsAsync(topic.Name, ct))
             {
                 var runtime = await adminClient.GetSubscriptionRuntimePropertiesAsync(topic.Name, sub.SubscriptionName, ct);
-                result.Add(new ErrorQueueSummary(topic.Name, sub.SubscriptionName, messageType, runtime.Value.ActiveMessageCount));
+                var length = runtime.Value.ActiveMessageCount;
+                // AlmostServiceBus.TestHost 0.6.0's management API never serializes a
+                // subscription's message-count field at all (confirmed by decompiling it) — this
+                // reads 0 unconditionally against that emulator, not just briefly after publish.
+                // Falling back to a peek-based count only when the runtime count reads 0 keeps
+                // real Azure's accurate count authoritative (a truly empty subscription just peeks
+                // empty too, so this is a no-op there) while making this queryable in tests.
+                if (length == 0)
+                    length = await PeekCountAsync(topic.Name, sub.SubscriptionName, ct);
+                result.Add(new ErrorQueueSummary(topic.Name, sub.SubscriptionName, messageType, length));
             }
         }
         return result;
+    }
+
+    private async Task<long> PeekCountAsync(string topic, string subscription, CancellationToken ct)
+    {
+        await using var receiver = client.CreateReceiver(topic, subscription);
+        var peeked = await receiver.PeekMessagesAsync(50, cancellationToken: ct);
+        return peeked.Count;
     }
 
     // "MassTransit/Fault--FplBot.Messaging.Contracts.Events.v1/AppInstalled--" -> "FplBot.Messaging.Contracts.Events.v1.AppInstalled"
@@ -437,7 +453,7 @@ git commit -m "Add AdminErrorQueueService.ListQueuesAsync and PeekMessagesAsync"
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueFixture.Publisher`, `.Service`, `AlwaysFaultsHandler.Attempts` (from Task 1/2).
-- Produces: `AdminErrorQueueService.RetryMessageAsync(string topic, string subscription, string messageId, CancellationToken)` and `.DiscardMessageAsync(string topic, string subscription, string messageId, CancellationToken)`, both returning `Task<bool>` (`true` if a matching message was found and acted on) — used by Task 5.
+- Produces: `AdminErrorQueueService.RetryMessageAsync(string topic, string subscription, string messageId, CancellationToken)` and `.DiscardMessageAsync(string topic, string subscription, string messageId, CancellationToken)`, both returning `Task<bool>` (`true` if a matching message was found and acted on) — used by Task 5. The shared scan helper (`ScanAndActAsync`) bounds itself by cycle detection (tracking already-abandoned message ids, stopping on the first repeat) — do NOT bound it by `ActiveMessageCount` (confirmed unreliable against this repo's test emulator in Task 2).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -606,28 +622,37 @@ Add to `src/FplBot/Services/WebApi/Admin/AdminErrorQueueService.cs` (inside the 
     // (PeekLock), abandoning every non-matching message immediately so it returns to the
     // subscription, and stops after one full pass (bounded by the subscription's message
     // count at call time) so a stale/missing id can't loop forever.
+    // Bounded by cycle detection, NOT by ActiveMessageCount (confirmed unreliable against this
+    // repo's test emulator — see Task 2's notes; it also wouldn't be the right bound even against
+    // real Azure, since it can change while the scan runs). Abandoning a non-matching message
+    // makes it immediately redeliverable, so once a message id repeats, the scan has cycled through
+    // every message currently in the subscription without finding the target — stop there.
     private async Task<bool> ScanAndActAsync(
         string topic, string subscription, string messageId,
         Func<ServiceBusReceiver, ServiceBusReceivedMessage, Task> onMatch, CancellationToken ct)
     {
         await using var receiver = client.CreateReceiver(topic, subscription);
-        var runtime = await adminClient.GetSubscriptionRuntimePropertiesAsync(topic, subscription, ct);
-        var scanLimit = (int)runtime.Value.ActiveMessageCount;
+        var seen = new HashSet<string>();
 
-        for (var i = 0; i < scanLimit; i++)
+        while (true)
         {
             var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(5), ct);
             if (message is null)
                 break;
 
-            if (message.MessageId != messageId)
+            if (message.MessageId == messageId)
             {
-                await receiver.AbandonMessageAsync(message, cancellationToken: ct);
-                continue;
+                await onMatch(receiver, message);
+                return true;
             }
 
-            await onMatch(receiver, message);
-            return true;
+            if (!seen.Add(message.MessageId))
+            {
+                await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+                break;
+            }
+
+            await receiver.AbandonMessageAsync(message, cancellationToken: ct);
         }
 
         return false;
@@ -658,7 +683,7 @@ git commit -m "Add AdminErrorQueueService.RetryMessageAsync and DiscardMessageAs
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueFixture` (from Task 1/2).
-- Produces: `AdminErrorQueueService.PurgeQueueAsync(string topic, string subscription, CancellationToken)` returning `Task<int>` (count purged) — used by Task 5.
+- Produces: `AdminErrorQueueService.PurgeQueueAsync(string topic, string subscription, CancellationToken)` returning `Task<int>` (count purged) — used by Task 5. Loops until a receive call returns zero messages — self-terminating (every message is completed, never abandoned back), so it needs no `ActiveMessageCount` bound (confirmed unreliable against this repo's test emulator in Task 2).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -735,14 +760,15 @@ Expected: FAIL (compile error) — `PurgeQueueAsync` doesn't exist yet.
 Add to `src/FplBot/Services/WebApi/Admin/AdminErrorQueueService.cs` (inside the class, after `ScanAndActAsync`):
 
 ```csharp
+    // Not bounded by ActiveMessageCount (confirmed unreliable against this repo's test emulator —
+    // see Task 2's notes). Every message here is completed, never abandoned back, so looping until
+    // a receive call returns nothing is already self-terminating and needs no external bound.
     public async Task<int> PurgeQueueAsync(string topic, string subscription, CancellationToken ct = default)
     {
         await using var receiver = client.CreateReceiver(topic, subscription);
-        var runtime = await adminClient.GetSubscriptionRuntimePropertiesAsync(topic, subscription, ct);
-        var bound = (int)runtime.Value.ActiveMessageCount;
         var purged = 0;
 
-        while (purged < bound)
+        while (true)
         {
             var messages = await receiver.ReceiveMessagesAsync(maxMessages: 50, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
             if (messages.Count == 0)
