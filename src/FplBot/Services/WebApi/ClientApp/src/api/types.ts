@@ -57,6 +57,7 @@ export interface ChannelSubscription {
   subscriptions: EventSubscription[];
   failureCount: number;
   failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface TeamSummary {
@@ -74,6 +75,7 @@ export interface TeamDetailsChannel {
   channelStatus: boolean | null;
   failureCount: number;
   failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface TeamDetails {
@@ -140,6 +142,7 @@ export interface GuildSubscription {
   subscriptions: EventSubscription[];
   failureCount: number;
   failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface GuildWithSubs {
@@ -156,6 +159,7 @@ export interface GuildDetailsChannel {
   channelStatus: boolean | null;
   failureCount: number;
   failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface GuildDetails {

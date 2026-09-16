@@ -10,6 +10,7 @@ import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { useAdminListQuery } from "../../composables/useAdminListQuery";
 import AdminPager from "../../components/AdminPager.vue";
+import { failureSummary } from "../../api/deliveryFailures";
 
 const pageSize = 25;
 const guilds = ref<GuildWithSubs[]>([]);
@@ -135,10 +136,10 @@ async function removeGuild(guildId: string, guildName: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in g.subscriptions" :key="s.channelId">
+              <tr v-for="s in g.subscriptions" :key="s.channelId" :class="{ failing: s.failureCount > 0 }">
                 <td>
                   {{ s.channelId }}
-                  <span v-if="s.failureCount > 0" :title="`${s.failureCount} failed deliveries since ${s.failingSince}`">⚠️</span>
+                  <span v-if="s.failureCount > 0" :title="failureSummary(s)">⚠️</span>
                 </td>
                 <td>{{ s.leagueId || "—" }}</td>
                 <td>{{ s.subscriptions.join(", ") || "—" }}</td>

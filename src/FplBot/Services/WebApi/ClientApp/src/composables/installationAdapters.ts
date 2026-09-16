@@ -22,6 +22,7 @@ export interface EntityChannel {
   channelStatus: boolean | null;
   failureCount: number;
   failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface EntityDetails {

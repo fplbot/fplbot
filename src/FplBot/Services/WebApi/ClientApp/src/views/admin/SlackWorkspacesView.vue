@@ -5,6 +5,7 @@ import type { TeamSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { useAdminListQuery } from "../../composables/useAdminListQuery";
 import AdminPager from "../../components/AdminPager.vue";
+import { failureSummary } from "../../api/deliveryFailures";
 
 const pageSize = 25;
 const teams = ref<TeamSummary[]>([]);
@@ -104,10 +105,10 @@ async function removeSub(teamId: string, channelId: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in t.subscriptions" :key="s.channelId">
+              <tr v-for="s in t.subscriptions" :key="s.channelId" :class="{ failing: s.failureCount > 0 }">
                 <td>
                   {{ s.channelId }}
-                  <span v-if="s.failureCount > 0" :title="`${s.failureCount} failed deliveries since ${s.failingSince}`">⚠️</span>
+                  <span v-if="s.failureCount > 0" :title="failureSummary(s)">⚠️</span>
                 </td>
                 <td>{{ s.leagueId || "—" }}</td>
                 <td>{{ s.subscriptions.join(", ") || "—" }}</td>

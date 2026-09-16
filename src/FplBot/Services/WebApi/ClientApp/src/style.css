@@ -180,6 +180,10 @@ a {
   background: white;
 }
 
+.admin-table tbody tr.failing td {
+  background: #fef9c3;
+}
+
 .btn.small {
   padding: 0.3rem 0.75rem;
   font-size: 0.8rem;

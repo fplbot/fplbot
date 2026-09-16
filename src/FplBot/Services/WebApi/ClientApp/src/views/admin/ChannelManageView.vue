@@ -5,6 +5,7 @@ import { ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
 import type { EventSubscription } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import { describeFailureReason } from "../../api/deliveryFailures";
 
 const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
@@ -162,7 +163,7 @@ async function submitDelete() {
           <dt>Delivery</dt>
           <dd>
             <span v-if="channel.failureCount > 0" class="status bad">
-              &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(channel.failingSince) }})
+              &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(channel.failingSince) }})<template v-if="channel.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(channel.lastFailureReason) }}</template>
             </span>
             <span v-else class="status">no failures</span>
           </dd>
