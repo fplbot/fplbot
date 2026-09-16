@@ -103,4 +103,89 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             exceptions,
             original?.ToJsonString());
     }
+
+    public Task<bool> RetryMessageAsync(string topic, string subscription, string messageId, CancellationToken ct = default) =>
+        ScanAndActAsync(topic, subscription, messageId, async (receiver, message) =>
+        {
+            var envelope = JsonNode.Parse(message.Body.ToString())!;
+            var fault = envelope["message"]!;
+            var messageType = fault["faultMessageTypes"]!.AsArray()[0]!.GetValue<string>();
+            var sourceAddress = envelope["sourceAddress"]!.GetValue<string>();
+            var targetQueue = sourceAddress.Split('/').Last();
+            var original = fault["message"];
+
+            // urn:message:FplBot.Messaging.Contracts.Events.v1:AppInstalled -> FplBot.Messaging.Contracts.Events.v1/AppInstalled
+            var typePath = messageType.Replace("urn:message:", "");
+            var lastColon = typePath.LastIndexOf(':');
+            typePath = typePath[..lastColon] + "/" + typePath[(lastColon + 1)..];
+
+            var retryEnvelope = new JsonObject
+            {
+                ["messageId"] = Guid.NewGuid().ToString(),
+                ["requestId"] = null,
+                ["correlationId"] = null,
+                ["conversationId"] = Guid.NewGuid().ToString(),
+                ["initiatorId"] = null,
+                ["sourceAddress"] = "sb://localhost/AdminErrorQueueService",
+                ["destinationAddress"] = $"sb://localhost/{typePath}?type=topic",
+                ["responseAddress"] = null,
+                ["faultAddress"] = null,
+                ["messageType"] = new JsonArray(messageType),
+                ["message"] = original?.DeepClone(),
+                ["expirationTime"] = null,
+                ["sentTime"] = DateTimeOffset.UtcNow,
+                ["headers"] = new JsonObject(),
+            };
+
+            var sender = client.CreateSender(targetQueue);
+            await sender.SendMessageAsync(new ServiceBusMessage(retryEnvelope.ToJsonString())
+            {
+                ContentType = "application/vnd.masstransit+json",
+            }, ct);
+
+            await receiver.CompleteMessageAsync(message, ct);
+        }, ct);
+
+    public Task<bool> DiscardMessageAsync(string topic, string subscription, string messageId, CancellationToken ct = default) =>
+        ScanAndActAsync(topic, subscription, messageId, (receiver, message) => receiver.CompleteMessageAsync(message, ct), ct);
+
+    // There is no fetch-by-message-id in Azure Service Bus, so this scans the subscription
+    // (PeekLock), abandoning every non-matching message immediately so it returns to the
+    // subscription, and stops after one full pass (bounded by the subscription's message
+    // count at call time) so a stale/missing id can't loop forever.
+    // Bounded by cycle detection, NOT by ActiveMessageCount (confirmed unreliable against this
+    // repo's test emulator — see Task 2's notes; it also wouldn't be the right bound even against
+    // real Azure, since it can change while the scan runs). Abandoning a non-matching message
+    // makes it immediately redeliverable, so once a message id repeats, the scan has cycled through
+    // every message currently in the subscription without finding the target — stop there.
+    private async Task<bool> ScanAndActAsync(
+        string topic, string subscription, string messageId,
+        Func<ServiceBusReceiver, ServiceBusReceivedMessage, Task> onMatch, CancellationToken ct)
+    {
+        await using var receiver = client.CreateReceiver(topic, subscription);
+        var seen = new HashSet<string>();
+
+        while (true)
+        {
+            var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(5), ct);
+            if (message is null)
+                break;
+
+            if (message.MessageId == messageId)
+            {
+                await onMatch(receiver, message);
+                return true;
+            }
+
+            if (!seen.Add(message.MessageId))
+            {
+                await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+                break;
+            }
+
+            await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+        }
+
+        return false;
+    }
 }
