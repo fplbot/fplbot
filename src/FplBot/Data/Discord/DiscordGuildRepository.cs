@@ -178,21 +178,37 @@ public class DiscordGuildRepository : IGuildRepository
         return (parts[0], parts[1]);
     }
 
+    public Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId) =>
+        ReadChannelSubscription(installationId, channelId);
+
     private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string guildId)
     {
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(guildId));
         var result = new List<ChannelSubscription>();
         foreach (var channelIdValue in channelIds)
         {
-            var channelId = channelIdValue.ToString();
-            var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId), [_channelIdField, _leagueIdField, _subscriptionsField]);
-            var leagueId = fetched[1].HasValue ? (int?)fetched[1] : null;
-            var subs = ParseSubscriptionString(fetched[2].ToString(), " ");
-            var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
-            result.Add(ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent)));
+            var sub = await ReadChannelSubscription(guildId, channelIdValue.ToString()!);
+            if (sub is not null)
+            {
+                result.Add(sub);
+            }
         }
 
         return result;
+    }
+
+    private async Task<ChannelSubscription?> ReadChannelSubscription(string guildId, string channelId)
+    {
+        var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId), [_channelIdField, _leagueIdField, _subscriptionsField]);
+        if (!fetched[0].HasValue)
+        {
+            return null;
+        }
+
+        var leagueId = fetched[1].HasValue ? (int?)fetched[1] : null;
+        var subs = ParseSubscriptionString(fetched[2].ToString(), " ");
+        var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
+        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent));
     }
 
     private static string FromGuildIdToGuildKey(string guildId)

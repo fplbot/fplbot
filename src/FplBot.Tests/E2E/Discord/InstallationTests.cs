@@ -1,5 +1,6 @@
 using Discord.Net.Endpoints.Hosting;
 using FakeItEasy;
+using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -75,5 +76,28 @@ public class DiscordNetInstallationBridgeTests(AppFixture fixture) : IAsyncLifet
         await _sut.Uninstall("G1");
 
         Assert.Empty(_publishEndpoint.PublishedMessages);
+    }
+
+    [Fact]
+    public async Task GetChannelSubscription_ReturnsFollowedLeagueId_ForExistingChannel()
+    {
+        var installation = await fixture.SeedGuildInstallation(leagueId: 12345, subscriptions: [EventSubscription.Standings]);
+        var channel = installation.ChannelSubscriptions.Single();
+
+        var result = await Repo.GetChannelSubscription(installation.Id, channel.ChannelId);
+
+        Assert.NotNull(result);
+        Assert.Equal(channel.FollowedLeagueId, result!.FollowedLeagueId);
+        Assert.True(result.IsSubscribedTo(FplEvent.Standings));
+    }
+
+    [Fact]
+    public async Task GetChannelSubscription_ReturnsNull_ForNonexistentChannel()
+    {
+        var installation = await fixture.SeedGuildInstallation(leagueId: 12345);
+
+        var result = await Repo.GetChannelSubscription(installation.Id, "does-not-exist");
+
+        Assert.Null(result);
     }
 }

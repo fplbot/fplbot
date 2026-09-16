@@ -16,15 +16,12 @@ public class SlackFixtureRemovedHandler(
         var message = context.Message;
         logger.LogInformation("Fixture removed from gameweek {Message}", message);
 
-        var installations = await teamRepo.GetAllInstallations();
-        foreach (var installation in installations)
+        var subscribedChannels = await teamRepo.GetChannelsSubscribedTo(FplEvent.FixtureRemovedFromGameweek);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureRemovedFromGameweek))
-            {
-                var fixture = $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}";
-                var msg = $"❌ *Fixture off!*\n {fixture} has been removed from gameweek {message.Gameweek}!";
-                await context.Publish(new PublishToSlack(installation.Id, channel.ChannelId, msg));
-            }
+            var fixture = $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}";
+            var msg = $"❌ *Fixture off!*\n {fixture} has been removed from gameweek {message.Gameweek}!";
+            await context.Publish(new PublishToSlack(teamId, channelId, msg));
         }
     }
 }

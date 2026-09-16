@@ -19,17 +19,14 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
         var filtered = message.NewPlayers.Where(c => c.IsRelevant());
         if (filtered.Any())
         {
-            var installations = await repo.GetAllInstallations();
+            var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
             var formatted = Formatter.FormatNewPlayers(filtered);
 
-            foreach (var installation in installations)
+            if (!string.IsNullOrEmpty(formatted))
             {
-                foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
+                foreach (var (guildId, channelId) in subscribedChannels)
                 {
-                    if (!string.IsNullOrEmpty(formatted))
-                    {
-                        await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "ℹ️ New players", formatted));
-                    }
+                    await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "ℹ️ New players", formatted));
                 }
             }
         }
@@ -43,17 +40,14 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
     {
         var message = context.Message;
         logger.LogInformation($"Handling {message.Transfers.Count()} new transfers");
-        var installations = await repo.GetAllInstallations();
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
         var formatted = Formatter.FormatTransferredPlayers(message.Transfers, includeheader:false);
 
-        foreach (var installation in installations)
+        if (!string.IsNullOrEmpty(formatted))
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.NewPlayers))
+            foreach (var (guildId, channelId) in subscribedChannels)
             {
-                if (!string.IsNullOrEmpty(formatted))
-                {
-                    await context.Publish(new PublishRichToGuildChannel(installation.Id, channel.ChannelId, "🔄️ Transfer!", formatted));
-                }
+                await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "🔄️ Transfer!", formatted));
             }
         }
     }

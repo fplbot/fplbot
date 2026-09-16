@@ -24,7 +24,7 @@ public class SlackFixtureFulltimeHandler(
     {
         var message = context.Message;
         logger.LogInformation("Handling fixture full time");
-        var installations = await slackTeamRepo.GetAllInstallations();
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.FixtureFullTime);
         var settings = await settingsClient.GetGlobalSettings();
         var fixtures = await fixtureClient.GetFixtures() ?? [];
         var fplfixture = fixtures.FirstOrDefault(f => f.Id == message.FixtureId);
@@ -40,12 +40,9 @@ public class SlackFixtureFulltimeHandler(
         var title = $"*FT: {fixture.HomeTeam.ShortName} {fixture.Fixture.HomeTeamScore}-{fixture.Fixture.AwayTeamScore} {fixture.AwayTeam.ShortName}*";
         var threadMessage = Formatter.FormatProvisionalFinished(fixture);
 
-        foreach (var installation in installations)
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureFullTime))
-            {
-                await context.Publish(new PublishFulltimeMessageToSlackWorkspace(installation.Id, channel.ChannelId, title, threadMessage));
-            }
+            await context.Publish(new PublishFulltimeMessageToSlackWorkspace(teamId, channelId, title, threadMessage));
         }
     }
 

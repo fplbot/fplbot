@@ -15,14 +15,11 @@ public class DiscordNearDeadlineHandler(IGuildRepository teamRepo, ILogger<Disco
     {
         var message = context.Message;
         logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var installations = await teamRepo.GetAllInstallations();
+        var subscribedChannels = await teamRepo.GetChannelsSubscribedTo(FplEvent.Deadlines);
         var text = $"😱 Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes! @here";
-        foreach (var installation in installations)
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
-            {
-                await context.Publish(new PublishToGuildChannel(installation.Id, channel.ChannelId, text));
-            }
+            await context.Publish(new PublishToGuildChannel(guildId, channelId, text));
         }
     }
 
@@ -30,14 +27,11 @@ public class DiscordNearDeadlineHandler(IGuildRepository teamRepo, ILogger<Disco
     {
         var message = context.Message;
         logger.LogInformation($"Notifying about 24 hours to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var installations = await teamRepo.GetAllInstallations();
+        var subscribedChannels = await teamRepo.GetChannelsSubscribedTo(FplEvent.Deadlines);
         var text = $"⏳Gameweek {message.GameweekNearingDeadline.Id} deadline in 24 hours!";
-        foreach (var installation in installations)
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
-            {
-                await context.Publish(new PublishToGuildChannel(installation.Id, channel.ChannelId, $"{text}"));
-            }
+            await context.Publish(new PublishToGuildChannel(guildId, channelId, $"{text}"));
         }
     }
 }

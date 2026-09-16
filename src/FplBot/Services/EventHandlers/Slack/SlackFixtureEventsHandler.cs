@@ -28,11 +28,12 @@ public class SlackFixtureEventsHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Handling {message.FixtureEvents.Count} new fixture events");
-        var installations = await slackTeamRepo.GetAllInstallations();
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FixtureStatEvents);
+        var subscribedInstallationIds = subscribedChannels.Select(c => c.InstallationId).Distinct();
 
-        foreach (var installation in installations.Where(HasChannelSubscribedToFixtureStats))
+        foreach (var installationId in subscribedInstallationIds)
         {
-            await context.Publish(new PublishFixtureEventsToSlackWorkspace(installation.Id, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
+            await context.Publish(new PublishFixtureEventsToSlackWorkspace(installationId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
         }
     }
 
@@ -43,9 +44,6 @@ public class SlackFixtureEventsHandler(
         FplEvent.FixtureCards,
         FplEvent.FixturePenaltyMisses
     ];
-
-    private static bool HasChannelSubscribedToFixtureStats(Installation installation) =>
-        installation.ChannelSubscriptions.Any(sub => FixtureStatEvents.Any(sub.IsSubscribedTo));
 
     public async Task Consume(ConsumeContext<PublishFixtureEventsToSlackWorkspace> context)
     {

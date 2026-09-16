@@ -15,19 +15,16 @@ public class DiscordFixtureRemovedHandler(
     {
         var message = context.Message;
         logger.LogInformation("Fixture removed from gameweek {Message}", message);
-        var installations = await guildRepo.GetAllInstallations();
+        var subscribedChannels = await guildRepo.GetChannelsSubscribedTo(FplEvent.FixtureRemovedFromGameweek);
 
-        foreach (var installation in installations)
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.FixtureRemovedFromGameweek))
-            {
-                var formattedMsg = new PublishRichToGuildChannel(installation.Id,
-                    channel.ChannelId,
-                    "❌ Fixture off!",
-                    $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}" +
-                    $" has been removed from gameweek {message.Gameweek}!");
-                await context.Publish(formattedMsg);
-            }
+            var formattedMsg = new PublishRichToGuildChannel(guildId,
+                channelId,
+                "❌ Fixture off!",
+                $"{message.RemovedFixture.Home.Name}-{message.RemovedFixture.Away.Name}" +
+                $" has been removed from gameweek {message.Gameweek}!");
+            await context.Publish(formattedMsg);
         }
     }
 }

@@ -25,15 +25,12 @@ public class SlackNearDeadlineHandler(
     {
         var message = context.Message;
         logger.LogInformation($"Notifying about 60 minutes to (gw{message.GameweekNearingDeadline.Id}) deadline");
-        var allInstallations = await teamRepo.GetAllInstallations();
-        foreach (var installation in allInstallations)
+        var subscribedChannels = await teamRepo.GetChannelsSubscribedTo(FplEvent.Deadlines);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
-            {
-                var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
-                var command = new PublishToSlack(installation.Id, channel.ChannelId, text);
-                await context.Publish(command);
-            }
+            var text = $"<!channel> ⏳ Gameweek {message.GameweekNearingDeadline.Id} deadline in 60 minutes!";
+            var command = new PublishToSlack(teamId, channelId, text);
+            await context.Publish(command);
         }
     }
 
@@ -42,14 +39,11 @@ public class SlackNearDeadlineHandler(
         var message = context.Message;
         logger.LogInformation($"Notifying about 24h to (gw{message.GameweekNearingDeadline.Id}) deadline");
 
-        var allInstallations = await teamRepo.GetAllInstallations();
-        foreach (var installation in allInstallations)
+        var subscribedChannels = await teamRepo.GetChannelsSubscribedTo(FplEvent.Deadlines);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Deadlines))
-            {
-                var command = new PublishDeadlineNotificationToSlackWorkspace(installation.Id, channel.ChannelId, message.GameweekNearingDeadline);
-                await context.Publish(command);
-            }
+            var command = new PublishDeadlineNotificationToSlackWorkspace(teamId, channelId, message.GameweekNearingDeadline);
+            await context.Publish(command);
         }
     }
 

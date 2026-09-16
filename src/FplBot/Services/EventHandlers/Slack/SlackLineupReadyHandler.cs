@@ -18,14 +18,11 @@ public class SlackLineupReadyHandler(
     {
         var message = context.Message;
         logger.LogInformation("Handling new lineups");
-        var installations = await slackTeamRepo.GetAllInstallations();
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.Lineups);
 
-        foreach (var installation in installations)
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.GetSubscriptionsTo(FplEvent.Lineups))
-            {
-                await context.Publish(new PublishLineupsToSlackWorkspace(installation.Id, channel.ChannelId, message.Lineup));
-            }
+            await context.Publish(new PublishLineupsToSlackWorkspace(teamId, channelId, message.Lineup));
         }
     }
 

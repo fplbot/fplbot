@@ -75,4 +75,40 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
 
         Assert.Empty(_publishEndpoint.PublishedMessages);
     }
+
+    [Fact]
+    public async Task GetChannelSubscription_ReturnsFollowedLeagueId_ForExistingChannel()
+    {
+        var installation = await fixture.SeedInstallation(i => i.Subscribe(i.ChannelSubscriptions.Single().ChannelId, [FplEvent.Standings]));
+        var channel = installation.ChannelSubscriptions.Single();
+
+        var result = await Repo.GetChannelSubscription(installation.Id, channel.ChannelId);
+
+        Assert.NotNull(result);
+        Assert.Equal(channel.FollowedLeagueId, result!.FollowedLeagueId);
+        Assert.True(result.IsSubscribedTo(FplEvent.Standings));
+    }
+
+    [Fact]
+    public async Task GetChannelSubscription_ReturnsNull_ForNonexistentChannel()
+    {
+        var installation = await fixture.SeedInstallation();
+
+        var result = await Repo.GetChannelSubscription(installation.Id, "#does-not-exist");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Delete_RemovesChannelFromEventIndex()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Deadlines);
+        var installation = await Repo.GetInstallation(teamId);
+
+        await Repo.Delete(installation);
+
+        var subscribed = await Repo.GetChannelsSubscribedTo(FplEvent.Deadlines);
+        Assert.DoesNotContain((teamId, "#fplbot"), subscribed);
+    }
 }

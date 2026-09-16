@@ -131,7 +131,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
         foreach (var channelId in channelIds)
         {
-            await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId.ToString()));
+            await DeleteChannelSubscription(teamId, channelId.ToString()!);
         }
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
         await _db.SetRemoveAsync(TeamIndexKey, teamId);
@@ -243,6 +243,9 @@ public class SlackTeamRepository : ISlackTeamRepository
         return (parts[0], parts[1]);
     }
 
+    public Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId) =>
+        ReadChannelSubscription(installationId, channelId);
+
     // Reads the exact set of channel ids this team has saved, then fetches each channel's hash by
     // its exact key. Deliberately avoids a KEYS pattern scan on "SlackChannelSub-{teamId}-*": that
     // glob also matches OTHER teams whose id happens to start with this team's id plus a dash
@@ -254,15 +257,28 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         foreach (var channelIdValue in channelIds)
         {
-            var channelId = channelIdValue.ToString();
-            var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
-            int? leagueId = fetched[1].HasValue ? int.Parse(fetched[1]!) : null;
-            var subs = GetSubscriptions(teamId, fetched[2]);
-            var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
-            result.Add(ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent)));
+            var sub = await ReadChannelSubscription(teamId, channelIdValue.ToString()!);
+            if (sub is not null)
+            {
+                result.Add(sub);
+            }
         }
 
         return result;
+    }
+
+    private async Task<ChannelSubscription?> ReadChannelSubscription(string teamId, string channelId)
+    {
+        var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField]);
+        if (!fetched[0].HasValue)
+        {
+            return null;
+        }
+
+        int? leagueId = fetched[1].HasValue ? int.Parse(fetched[1]!) : null;
+        var subs = GetSubscriptions(teamId, fetched[2]);
+        var domainLeagueId = leagueId is { } id ? new ClassicLeagueId(id) : null;
+        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent));
     }
 
     private async Task DeleteChannelSubscription(string teamId, string channelId)
