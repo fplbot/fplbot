@@ -83,6 +83,7 @@ public static class WebApplicationBuilderExtensions
         services.AddSingleton(new ServiceBusAdministrationClient(asbConnectionString));
         services.AddSingleton(new ServiceBusClient(asbConnectionString));
         services.AddSingleton<AdminErrorQueueService>();
+        services.AddSingleton<AdminErrorQueueJobRunner>();
 
         services.AddAuthentication(options =>
             {

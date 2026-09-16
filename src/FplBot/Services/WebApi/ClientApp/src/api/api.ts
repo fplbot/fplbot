@@ -3,6 +3,8 @@ import type {
   Bookmarks,
   ChannelFilter,
   DiscordSlashCommand,
+  ErrorQueueJobAccepted,
+  ErrorQueueJobState,
   ErrorQueueMessage,
   ErrorQueueSummary,
   EventSubscription,
@@ -266,14 +268,38 @@ export function getErrorQueueMessages(queue: string): Promise<ErrorQueueMessage[
   return request(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages`);
 }
 
-export function retryErrorMessage(queue: string, messageId: string): Promise<MessageResponse> {
+export function retryErrorMessage(queue: string, messageId: string): Promise<ErrorQueueJobAccepted> {
   return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/retry`);
 }
 
-export function discardErrorMessage(queue: string, messageId: string): Promise<MessageResponse> {
+export function discardErrorMessage(queue: string, messageId: string): Promise<ErrorQueueJobAccepted> {
   return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/discard`);
 }
 
-export function purgeErrorQueue(queue: string): Promise<{ purged: number }> {
+export function retryAllErrorMessages(queue: string): Promise<ErrorQueueJobAccepted> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/retry-all`);
+}
+
+export function purgeErrorQueue(queue: string): Promise<ErrorQueueJobAccepted> {
   return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/purge`);
+}
+
+export function getErrorQueueJob(jobId: string): Promise<ErrorQueueJobState> {
+  return request(`/api/admin/errors/jobs/${encodeURIComponent(jobId)}`);
+}
+
+// Starts one of the mutating error-queue actions and resolves once it has actually finished,
+// so callers can keep a single "doing it..." state and then show a real outcome. A job that
+// finishes as Failed rejects, which puts it on the same error path as a failed request.
+export async function runErrorQueueJob(
+  start: () => Promise<ErrorQueueJobAccepted>,
+  pollIntervalMs = 500,
+): Promise<string> {
+  const { jobId } = await start();
+  for (;;) {
+    const job = await getErrorQueueJob(jobId);
+    if (job.status === "Succeeded") return job.message ?? "Done.";
+    if (job.status === "Failed") throw new Error(job.message ?? "The job failed.");
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+  }
 }

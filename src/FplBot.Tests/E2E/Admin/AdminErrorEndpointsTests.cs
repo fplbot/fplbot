@@ -16,7 +16,7 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
     public async Task GetQueues_ReturnsOkWithTheErrorQueue()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
         Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
         var result = await AdminErrorEndpoints.GetQueues(fixture.Service, CancellationToken.None);
@@ -28,37 +28,72 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
     }
 
     [Fact]
-    public async Task RetryMessage_UnknownId_ReturnsNotFound()
+    public async Task RetryMessage_AcceptsImmediately_AndReportsTheOutcomeViaTheJob()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: false), TestContext.Current.CancellationToken);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
+        var message = (await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken))
+            .Single(m => m.OriginalMessageJson!.Contains(key, StringComparison.Ordinal));
+
+        var accepted = Assert.IsType<Accepted<ErrorQueueJobAccepted>>(
+            AdminErrorEndpoints.RetryMessage(Queue, message.MessageId, fixture.Jobs));
+
+        var job = await fixture.WaitForJobAsync(accepted.Value!.JobId);
+
+        Assert.Equal(ErrorQueueJobStatus.Succeeded, job.Status);
+        Assert.Equal("Message retried.", job.Message);
+    }
+
+    [Fact]
+    public async Task RetryMessage_UnknownId_ReportsAFinishedJobSayingTheMessageIsGone()
+    {
+        var key = Guid.NewGuid().ToString();
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
         Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var result = await AdminErrorEndpoints.RetryMessage(Queue, Guid.NewGuid().ToString(), fixture.Service, CancellationToken.None);
+        var accepted = Assert.IsType<Accepted<ErrorQueueJobAccepted>>(
+            AdminErrorEndpoints.RetryMessage(Queue, Guid.NewGuid().ToString(), fixture.Jobs));
 
-        Assert.IsType<NotFound>(result);
+        var job = await fixture.WaitForJobAsync(accepted.Value!.JobId);
+
+        // The job finishes rather than faulting — "that message is gone" is an outcome to report,
+        // not an error — and it must say so in words the operator can act on.
+        Assert.Equal(ErrorQueueJobStatus.Succeeded, job.Status);
+        Assert.Contains("no longer in the queue", job.Message);
 
         await fixture.DrainMatchingAsync(Queue, key);
     }
 
     [Fact]
-    public async Task RetryMessage_NonErrorQueue_ReturnsBadRequest()
+    public void RetryMessage_NonErrorQueue_ReturnsBadRequest()
     {
-        var result = await AdminErrorEndpoints.RetryMessage("AlwaysFaultsHandler", "any-id", fixture.Service, CancellationToken.None);
+        var result = AdminErrorEndpoints.RetryMessage("AlwaysFaultsHandler", "any-id", fixture.Jobs);
 
         Assert.IsType<BadRequest<object>>(result);
     }
 
     [Fact]
-    public async Task PurgeQueue_ReturnsPurgedCount()
+    public async Task PurgeQueue_ReportsThePurgedCount()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
         Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var result = await AdminErrorEndpoints.PurgeQueue(Queue, fixture.Service, CancellationToken.None);
+        var accepted = Assert.IsType<Accepted<ErrorQueueJobAccepted>>(
+            AdminErrorEndpoints.PurgeQueue(Queue, fixture.Jobs));
 
-        var ok = Assert.IsType<Ok<PurgeResult>>(result);
-        Assert.True(ok.Value!.Purged >= 1);
+        var job = await fixture.WaitForJobAsync(accepted.Value!.JobId);
+
+        Assert.Equal(ErrorQueueJobStatus.Succeeded, job.Status);
+        Assert.Contains("Purged", job.Message);
+    }
+
+    [Fact]
+    public void GetJob_UnknownId_ReturnsNotFound()
+    {
+        var result = AdminErrorEndpoints.GetJob(Guid.NewGuid(), fixture.Jobs);
+
+        Assert.IsType<NotFound>(result);
     }
 }

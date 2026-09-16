@@ -261,3 +261,19 @@ export interface ErrorQueueMessage {
   consumerType: string | null;
   originalMessageJson: string | null;
 }
+
+// Retry/discard/purge/retry-all drain a Service Bus queue, which takes longer than a browser
+// should wait on a POST — the backend accepts the work (202) and reports the outcome via the job.
+export interface ErrorQueueJobAccepted {
+  jobId: string;
+  kind: string;
+  queue: string;
+}
+
+export interface ErrorQueueJobState {
+  jobId: string;
+  kind: string;
+  queue: string;
+  status: "Queued" | "Running" | "Succeeded" | "Failed";
+  message: string | null;
+}

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Azure.Messaging.ServiceBus;
@@ -16,9 +17,27 @@ public record ErrorQueueMessage(
     string? ConsumerType,
     string? OriginalMessageJson);
 
-public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, ServiceBusClient client)
+public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, ServiceBusClient client, ILogger<AdminErrorQueueService> logger)
 {
     private const string ErrorQueueSuffix = "_error";
+
+    // Every receive-based operation below locks messages it looks at, and this transport's lock
+    // duration is minutes, not seconds. Two overlapping operations on the same queue therefore
+    // don't just interleave — the second one sees an empty queue (everything is locked by the
+    // first), concludes "not found", and reports a false failure. One gate per queue makes them
+    // queue up instead. Receive-based operations on *different* queues never contend, so the gate
+    // is per queue name rather than global.
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> QueueGates = new();
+
+    // An _error queue has no consumer, so a message's DeliveryCount only ever counts how many
+    // times an admin scan here has picked it up — including scans looking for a *different*
+    // message in the same queue. Against the transport default (10, or MassTransit's 5) that
+    // silently dead-letters innocent bystanders after a handful of admin actions, and a
+    // dead-lettered message drops out of PeekMessagesAsync, so it vanishes from the UI entirely.
+    // Raise the budget once per queue per process so routine admin use can't destroy the very
+    // messages this tool exists to recover.
+    private const int ScanDeliveryBudget = 50;
+    private static readonly ConcurrentDictionary<string, bool> BudgetEnsured = new();
 
     public static bool IsErrorQueue(string queue) => queue.EndsWith(ErrorQueueSuffix, StringComparison.Ordinal);
 
@@ -97,19 +116,23 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
         var targetQueue = queue[..^ErrorQueueSuffix.Length];
         return ScanAndActAsync(queue, messageId, async (receiver, message) =>
         {
-            // The error-queue message body is already a complete, valid MassTransit envelope for
-            // its original message type — no reconstruction needed, just resend it. A fresh
-            // transport MessageId avoids any confusion with the completed original.
             await using var sender = client.CreateSender(targetQueue);
-            var retryMessage = new ServiceBusMessage(message.Body) { ContentType = message.ContentType };
-            await sender.SendMessageAsync(retryMessage, ct);
-
+            await sender.SendMessageAsync(ToRetryMessage(message), ct);
             await receiver.CompleteMessageAsync(message, ct);
         }, ct);
     }
 
     public Task<bool> DiscardMessageAsync(string queue, string messageId, CancellationToken ct = default) =>
         ScanAndActAsync(queue, messageId, (receiver, message) => receiver.CompleteMessageAsync(message, ct), ct);
+
+    // The error-queue message body is already a complete, valid MassTransit envelope for its
+    // original message type — no reconstruction needed, just resend it. The MT-Fault-* headers are
+    // deliberately not carried over: a retry is a fresh delivery attempt, not a fault. The
+    // MessageId is, so a message that faults again comes back under the id the operator just acted
+    // on — otherwise every retry makes it reappear as a brand new broker-assigned id, which reads
+    // as "retry did nothing" rather than "it ran and failed again".
+    private static ServiceBusMessage ToRetryMessage(ServiceBusReceivedMessage message) =>
+        new(message.Body) { ContentType = message.ContentType, MessageId = message.MessageId };
 
     // There is no fetch-by-message-id in Azure Service Bus, so this scans the queue (PeekLock).
     // Abandoning a message makes it immediately redeliverable, and this transport delivers in
@@ -127,6 +150,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
         Func<ServiceBusReceiver, ServiceBusReceivedMessage, Task> onMatch, CancellationToken ct)
     {
         const int maxScanned = 1000;
+        using var gate = await EnterQueueAsync(queue, ct);
         await using var receiver = client.CreateReceiver(queue);
         var held = new List<ServiceBusReceivedMessage>();
         ServiceBusReceivedMessage? match = null;
@@ -141,11 +165,17 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
 
                 foreach (var message in batch)
                 {
-                    if (message.MessageId == messageId)
+                    if (match is null && message.MessageId == messageId)
                     {
                         match = message;
-                        break;
+                        continue;
                     }
+
+                    // Everything received that isn't the match is held for release below — the
+                    // rest of the match's own batch included. Dropping those on the floor instead
+                    // would leave them locked for the full lock duration (minutes on this
+                    // transport), and a locked message is invisible to the next scan, so the very
+                    // next retry on one of them reports "not found" for a message that is there.
                     held.Add(message);
                 }
             }
@@ -157,17 +187,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
         }
         finally
         {
-            foreach (var message in held)
-            {
-                try
-                {
-                    await receiver.AbandonMessageAsync(message, cancellationToken: ct);
-                }
-                catch
-                {
-                    // Best effort — a lock may have expired if the scan ran long; nothing more to do.
-                }
-            }
+            await ReleaseAsync(receiver, held, ct);
         }
     }
 
@@ -176,6 +196,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
     // returns nothing is already self-terminating and needs no external bound.
     public async Task<int> PurgeQueueAsync(string queue, CancellationToken ct = default)
     {
+        using var gate = await EnterQueueAsync(queue, ct);
         await using var receiver = client.CreateReceiver(queue);
         var purged = 0;
 
@@ -193,5 +214,107 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
         }
 
         return purged;
+    }
+
+    // Resends every message in the queue in one drain. Unlike repeated single retries this never
+    // scans for a specific id, so it can't miss a message sitting deeper in the queue and doesn't
+    // spend a delivery attempt on every bystander it passes.
+    //
+    // Bounded by a start timestamp rather than "until the queue is empty": when the consumer is
+    // still broken every resend faults straight back into this same queue, and an unbounded drain
+    // would keep picking up its own output. Messages enqueued after the drain began are held
+    // rather than abandoned one by one, which keeps them invisible to this receiver for the rest
+    // of the run — that is what lets the loop finish — and they are released at the end.
+    public async Task<int> RetryAllMessagesAsync(string queue, CancellationToken ct = default)
+    {
+        const int maxRetried = 1000;
+        var targetQueue = queue[..^ErrorQueueSuffix.Length];
+        var startedAt = DateTimeOffset.UtcNow;
+
+        using var gate = await EnterQueueAsync(queue, ct);
+        await using var receiver = client.CreateReceiver(queue);
+        await using var sender = client.CreateSender(targetQueue);
+        var held = new List<ServiceBusReceivedMessage>();
+        var retried = 0;
+
+        try
+        {
+            while (retried < maxRetried)
+            {
+                var batch = await receiver.ReceiveMessagesAsync(maxMessages: 50, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
+                if (batch.Count == 0)
+                    break;
+
+                foreach (var message in batch)
+                {
+                    if (message.EnqueuedTime >= startedAt)
+                    {
+                        held.Add(message);
+                        continue;
+                    }
+
+                    await sender.SendMessageAsync(ToRetryMessage(message), ct);
+                    await receiver.CompleteMessageAsync(message, ct);
+                    retried++;
+                }
+            }
+
+            return retried;
+        }
+        finally
+        {
+            await ReleaseAsync(receiver, held, ct);
+        }
+    }
+
+    private static async Task ReleaseAsync(ServiceBusReceiver receiver, List<ServiceBusReceivedMessage> held, CancellationToken ct)
+    {
+        foreach (var message in held)
+        {
+            try
+            {
+                await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+            }
+            catch
+            {
+                // Best effort — a lock may have expired if the scan ran long; nothing more to do.
+            }
+        }
+    }
+
+    private async Task<IDisposable> EnterQueueAsync(string queue, CancellationToken ct)
+    {
+        await EnsureScanBudgetAsync(queue, ct);
+        var gate = QueueGates.GetOrAdd(queue, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(ct);
+        return new QueueGate(gate);
+    }
+
+    private async Task EnsureScanBudgetAsync(string queue, CancellationToken ct)
+    {
+        if (BudgetEnsured.ContainsKey(queue))
+            return;
+
+        try
+        {
+            var properties = (await adminClient.GetQueueAsync(queue, ct)).Value;
+            if (properties.MaxDeliveryCount < ScanDeliveryBudget)
+            {
+                properties.MaxDeliveryCount = ScanDeliveryBudget;
+                await adminClient.UpdateQueueAsync(properties, ct);
+            }
+            BudgetEnsured[queue] = true;
+        }
+        catch (Exception e)
+        {
+            // Never fail an admin action over this — without it the worst case is the behaviour
+            // that already existed (bystanders dead-letter sooner), not a broken retry.
+            logger.LogWarning(e, "Could not raise MaxDeliveryCount on {Queue}", queue);
+        }
+    }
+
+    private sealed class QueueGate(SemaphoreSlim gate) : IDisposable
+    {
+        public void Dispose() => gate.Release();
     }
 }

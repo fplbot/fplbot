@@ -14,12 +14,12 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
     public async Task RetryMessageAsync_ReconsumesTheOriginalPayload_AndClearsTheFault()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: false));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: false), TestContext.Current.CancellationToken);
 
         Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
         var message = await WaitForOwnMessageAsync(key);
 
-        var retried = await fixture.Service.RetryMessageAsync(Queue, message.MessageId);
+        var retried = await fixture.Service.RetryMessageAsync(Queue, message.MessageId, TestContext.Current.CancellationToken);
         Assert.True(retried);
 
         var reprocessed = await WaitForConditionAsync(() => Task.FromResult(AlwaysFaultsHandler.Attempts.GetValueOrDefault(key) >= 2));
@@ -33,12 +33,12 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
     public async Task DiscardMessageAsync_RemovesTheMessage_WithoutReconsuming()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
         var message = await WaitForOwnMessageAsync(key);
 
-        var discarded = await fixture.Service.DiscardMessageAsync(Queue, message.MessageId);
+        var discarded = await fixture.Service.DiscardMessageAsync(Queue, message.MessageId, TestContext.Current.CancellationToken);
         Assert.True(discarded);
 
         var stillThere = await MessageStillPresentAsync(key);
@@ -57,7 +57,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         // published to prove the scan finds it regardless of queue position.
         var keys = Enumerable.Range(0, 3).Select(_ => Guid.NewGuid().ToString()).ToList();
         foreach (var key in keys)
-            await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+            await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         foreach (var key in keys)
             Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
@@ -65,7 +65,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         var targetKey = keys[^1];
         var target = await WaitForOwnMessageAsync(targetKey);
 
-        var discarded = await fixture.Service.DiscardMessageAsync(Queue, target.MessageId);
+        var discarded = await fixture.Service.DiscardMessageAsync(Queue, target.MessageId, TestContext.Current.CancellationToken);
         Assert.True(discarded, "Expected the last-published (non-head) message to be found and discarded.");
 
         var targetStillThere = await MessageStillPresentAsync(targetKey);
@@ -82,14 +82,46 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
     }
 
     [Fact]
+    public async Task ConcurrentActionsOnTheSameQueue_BothFindTheirMessage()
+    {
+        // Regression test for the false "not found" behind the UI's hang-then-404: these
+        // operations receive in PeekLock mode, and a locked message is not handed to anyone else.
+        // Two overlapping actions on one queue therefore used to have the second one see an empty
+        // queue — everything locked by the first — wait out its receive timeout, and report the
+        // message as gone while it was sitting right there. The UI allows this: it only disables
+        // the row being acted on, so clicking a second row (or the same one twice) overlaps.
+        var keys = Enumerable.Range(0, 3).Select(_ => Guid.NewGuid().ToString()).ToList();
+        foreach (var key in keys)
+            await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
+
+        foreach (var key in keys)
+            Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
+
+        var peeked = await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken);
+        var mine = keys
+            .Select(k => peeked.Single(m => m.OriginalMessageJson!.Contains(k, StringComparison.Ordinal)))
+            .ToList();
+
+        var first = fixture.Service.DiscardMessageAsync(Queue, mine[0].MessageId, TestContext.Current.CancellationToken);
+        var second = fixture.Service.DiscardMessageAsync(Queue, mine[1].MessageId, TestContext.Current.CancellationToken);
+        var results = await Task.WhenAll(first, second);
+
+        foreach (var key in keys)
+            await fixture.DrainMatchingAsync(Queue, key);
+
+        Assert.True(results[0], "Expected the first of two overlapping discards to find its message.");
+        Assert.True(results[1], "Expected the second of two overlapping discards to find its message.");
+    }
+
+    [Fact]
     public async Task RetryMessageAsync_UnknownMessageId_ReturnsFalse()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var result = await fixture.Service.RetryMessageAsync(Queue, Guid.NewGuid().ToString());
+        var result = await fixture.Service.RetryMessageAsync(Queue, Guid.NewGuid().ToString(), TestContext.Current.CancellationToken);
 
         Assert.False(result);
 
@@ -102,11 +134,11 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
     {
         for (var i = 0; i < attempts; i++)
         {
-            var messages = await fixture.Service.PeekMessagesAsync(Queue);
+            var messages = await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken);
             var match = messages.FirstOrDefault(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
             if (match is not null)
                 return match;
-            await Task.Delay(250);
+            await Task.Delay(250, TestContext.Current.CancellationToken);
         }
         throw new TimeoutException("No peekable message matching this test's key appeared in time.");
     }
@@ -115,10 +147,10 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
     {
         for (var i = 0; i < attempts; i++)
         {
-            var messages = await fixture.Service.PeekMessagesAsync(Queue);
+            var messages = await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken);
             if (messages.All(m => m.OriginalMessageJson == null || !m.OriginalMessageJson.Contains(key)))
                 return false;
-            await Task.Delay(250);
+            await Task.Delay(250, TestContext.Current.CancellationToken);
         }
         return true;
     }
@@ -129,7 +161,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         {
             if (await check())
                 return true;
-            await Task.Delay(250);
+            await Task.Delay(250, TestContext.Current.CancellationToken);
         }
         return false;
     }

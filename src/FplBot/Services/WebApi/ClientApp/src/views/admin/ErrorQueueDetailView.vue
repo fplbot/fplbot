@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { getErrorQueueMessages, retryErrorMessage, discardErrorMessage } from "../../api/api";
-import type { ErrorQueueMessage } from "../../api/types";
+import {
+  getErrorQueueMessages,
+  retryErrorMessage,
+  discardErrorMessage,
+  retryAllErrorMessages,
+  runErrorQueueJob,
+} from "../../api/api";
+import type { ErrorQueueJobAccepted, ErrorQueueMessage } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const props = defineProps<{ queue: string }>();
@@ -9,7 +15,9 @@ const props = defineProps<{ queue: string }>();
 const messages = ref<ErrorQueueMessage[]>([]);
 const loading = ref(true);
 const error = ref("");
+const outcome = ref("");
 const acting = ref<string | null>(null);
+const bulkAction = ref<string | null>(null);
 const expanded = ref<Set<string>>(new Set());
 
 async function load() {
@@ -41,14 +49,21 @@ function prettyBody(m: ErrorQueueMessage): string {
   }
 }
 
-async function retry(m: ErrorQueueMessage) {
-  acting.value = m.messageId;
+async function run(start: () => Promise<ErrorQueueJobAccepted>) {
   error.value = "";
+  outcome.value = "";
   try {
-    await retryErrorMessage(props.queue, m.messageId);
-    await load();
+    outcome.value = await runErrorQueueJob(start);
   } catch (e) {
     error.value = describeAdminError(e);
+  }
+  await load();
+}
+
+async function retry(m: ErrorQueueMessage) {
+  acting.value = m.messageId;
+  try {
+    await run(() => retryErrorMessage(props.queue, m.messageId));
   } finally {
     acting.value = null;
   }
@@ -57,14 +72,20 @@ async function retry(m: ErrorQueueMessage) {
 async function discard(m: ErrorQueueMessage) {
   if (!confirm("Discard this message? This cannot be undone.")) return;
   acting.value = m.messageId;
-  error.value = "";
   try {
-    await discardErrorMessage(props.queue, m.messageId);
-    await load();
-  } catch (e) {
-    error.value = describeAdminError(e);
+    await run(() => discardErrorMessage(props.queue, m.messageId));
   } finally {
     acting.value = null;
+  }
+}
+
+async function retryAll() {
+  if (!confirm(`Retry all ${messages.value.length} message(s) in this queue?`)) return;
+  bulkAction.value = "retry-all";
+  try {
+    await run(() => retryAllErrorMessages(props.queue));
+  } finally {
+    bulkAction.value = null;
   }
 }
 
@@ -75,10 +96,21 @@ onMounted(load);
   <div>
     <router-link to="/admin/errors" class="btn small btn-secondary">&larr; Back to queues</router-link>
     <h1>{{ queue }}</h1>
-    <p class="lead" v-if="!loading">{{ messages.length }} message(s) in this queue.</p>
+    <div class="queue-header" v-if="!loading">
+      <p class="lead">{{ messages.length }} message(s) in this queue.</p>
+      <button
+        v-if="messages.length > 0"
+        class="btn small"
+        :disabled="bulkAction !== null || acting !== null"
+        @click="retryAll"
+      >
+        {{ bulkAction === "retry-all" ? "Retrying all..." : "Retry all" }}
+      </button>
+    </div>
 
     <div class="card">
       <p v-if="error" class="alert alert-error">{{ error }}</p>
+      <p v-if="outcome" class="alert alert-success">{{ outcome }}</p>
       <div v-if="loading" class="spinner"></div>
 
       <template v-else>
@@ -90,10 +122,10 @@ onMounted(load);
               <div class="meta">{{ new Date(m.enqueuedTime).toLocaleString() }}</div>
             </div>
             <div class="message-actions">
-              <button class="btn small" :disabled="acting === m.messageId" @click="retry(m)">
+              <button class="btn small" :disabled="acting !== null || bulkAction !== null" @click="retry(m)">
                 {{ acting === m.messageId ? "Retrying..." : "Retry" }}
               </button>
-              <button class="btn small danger" :disabled="acting === m.messageId" @click="discard(m)">
+              <button class="btn small danger" :disabled="acting !== null || bulkAction !== null" @click="discard(m)">
                 {{ acting === m.messageId ? "Discarding..." : "Discard" }}
               </button>
             </div>
@@ -118,6 +150,17 @@ onMounted(load);
 .lead {
   color: #6b7280;
   margin-bottom: 1rem;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.queue-header .lead {
+  margin-bottom: 0;
 }
 
 .message {

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { getErrorQueues, purgeErrorQueue } from "../../api/api";
-import type { ErrorQueueSummary } from "../../api/types";
+import { getErrorQueues, purgeErrorQueue, retryAllErrorMessages, runErrorQueueJob } from "../../api/api";
+import type { ErrorQueueJobAccepted, ErrorQueueSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
 const queues = ref<ErrorQueueSummary[]>([]);
 const loading = ref(true);
 const error = ref("");
-const purging = ref<string | null>(null);
+const outcome = ref("");
+const acting = ref<string | null>(null);
 
 async function load() {
   loading.value = true;
@@ -21,18 +22,28 @@ async function load() {
   }
 }
 
-async function purge(queue: ErrorQueueSummary) {
-  if (!confirm(`Purge all ${queue.length} message(s) for "${queue.consumer}"? This cannot be undone.`)) return;
-  purging.value = queue.queue;
+async function run(queue: ErrorQueueSummary, start: () => Promise<ErrorQueueJobAccepted>) {
+  acting.value = queue.queue;
   error.value = "";
+  outcome.value = "";
   try {
-    await purgeErrorQueue(queue.queue);
-    await load();
+    outcome.value = await runErrorQueueJob(start);
   } catch (e) {
     error.value = describeAdminError(e);
   } finally {
-    purging.value = null;
+    acting.value = null;
   }
+  await load();
+}
+
+function retryAll(queue: ErrorQueueSummary) {
+  if (!confirm(`Retry all ${queue.length} message(s) for "${queue.consumer}"?`)) return;
+  return run(queue, () => retryAllErrorMessages(queue.queue));
+}
+
+function purge(queue: ErrorQueueSummary) {
+  if (!confirm(`Purge all ${queue.length} message(s) for "${queue.consumer}"? This cannot be undone.`)) return;
+  return run(queue, () => purgeErrorQueue(queue.queue));
 }
 
 onMounted(load);
@@ -45,6 +56,7 @@ onMounted(load);
 
     <div class="card">
       <p v-if="error" class="alert alert-error">{{ error }}</p>
+      <p v-if="outcome" class="alert alert-success">{{ outcome }}</p>
       <div v-if="loading" class="spinner"></div>
 
       <template v-else>
@@ -69,11 +81,18 @@ onMounted(load);
                   View
                 </router-link>
                 <button
+                  class="btn small"
+                  :disabled="acting !== null || q.length === 0"
+                  @click="retryAll(q)"
+                >
+                  Retry all
+                </button>
+                <button
                   class="btn small danger"
-                  :disabled="purging === q.queue"
+                  :disabled="acting !== null"
                   @click="purge(q)"
                 >
-                  {{ purging === q.queue ? "Purging..." : "Purge" }}
+                  {{ acting === q.queue ? "Working..." : "Purge" }}
                 </button>
               </td>
             </tr>

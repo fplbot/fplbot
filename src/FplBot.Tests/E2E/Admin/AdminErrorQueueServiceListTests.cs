@@ -12,13 +12,13 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
     public async Task ListQueuesAsync_IncludesTheErrorQueue()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
             fixture, AdminErrorQueueFixtureTests.ErrorQueueName, key);
         Assert.True(found);
 
-        var queues = await fixture.Service.ListQueuesAsync();
+        var queues = await fixture.Service.ListQueuesAsync(TestContext.Current.CancellationToken);
         var match = queues.FirstOrDefault(q => q.Queue == AdminErrorQueueFixtureTests.ErrorQueueName);
 
         Assert.NotNull(match);
@@ -32,13 +32,13 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
     public async Task PeekMessagesAsync_ReturnsFaultDetailsAndOriginalPayload()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
             fixture, AdminErrorQueueFixtureTests.ErrorQueueName, key);
         Assert.True(found);
 
-        var messages = await fixture.Service.PeekMessagesAsync(AdminErrorQueueFixtureTests.ErrorQueueName);
+        var messages = await fixture.Service.PeekMessagesAsync(AdminErrorQueueFixtureTests.ErrorQueueName, ct: TestContext.Current.CancellationToken);
         var message = messages.Single(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
 
         Assert.Equal("System.InvalidOperationException", message.ExceptionType);
@@ -56,14 +56,14 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
 
         await using (var sender = fixture.BusClient.CreateSender(AdminErrorQueueFixtureTests.ErrorQueueName))
         {
-            await sender.SendMessageAsync(new ServiceBusMessage(rawBody));
+            await sender.SendMessageAsync(new ServiceBusMessage(rawBody), TestContext.Current.CancellationToken);
         }
 
         var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
             fixture, AdminErrorQueueFixtureTests.ErrorQueueName, marker);
         Assert.True(found);
 
-        var messages = await fixture.Service.PeekMessagesAsync(AdminErrorQueueFixtureTests.ErrorQueueName);
+        var messages = await fixture.Service.PeekMessagesAsync(AdminErrorQueueFixtureTests.ErrorQueueName, ct: TestContext.Current.CancellationToken);
         var message = messages.Single(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(marker));
 
         Assert.Equal(rawBody, message.OriginalMessageJson);

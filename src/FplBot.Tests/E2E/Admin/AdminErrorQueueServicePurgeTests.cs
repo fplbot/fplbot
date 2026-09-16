@@ -13,12 +13,12 @@ public class AdminErrorQueueServicePurgeTests(AdminErrorQueueFixture fixture)
     {
         var keys = Enumerable.Range(0, 3).Select(_ => Guid.NewGuid().ToString()).ToList();
         foreach (var key in keys)
-            await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+            await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         foreach (var key in keys)
             Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var purged = await fixture.Service.PurgeQueueAsync(Queue);
+        var purged = await fixture.Service.PurgeQueueAsync(Queue, TestContext.Current.CancellationToken);
 
         // >= rather than == : purge legitimately clears every message currently in the shared
         // queue, including any stray leftovers from an earlier test's failed cleanup — this test
@@ -26,7 +26,7 @@ public class AdminErrorQueueServicePurgeTests(AdminErrorQueueFixture fixture)
         Assert.True(purged >= keys.Count, $"Expected at least {keys.Count} messages purged, got {purged}.");
         foreach (var key in keys)
         {
-            var messages = await fixture.Service.PeekMessagesAsync(Queue);
+            var messages = await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken);
             Assert.DoesNotContain(messages, m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
         }
     }

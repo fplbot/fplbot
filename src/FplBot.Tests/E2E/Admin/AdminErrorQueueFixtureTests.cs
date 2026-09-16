@@ -9,7 +9,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
     public async Task FaultedMessage_LandsInTheErrorQueue()
     {
         var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
 
         var found = await WaitForMessageAsync(fixture, ErrorQueueName, key);
 
@@ -27,10 +27,10 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
         for (var i = 0; i < attempts; i++)
         {
             await using var receiver = fixture.BusClient.CreateReceiver(queue);
-            var peeked = await receiver.PeekMessagesAsync(10);
+            var peeked = await receiver.PeekMessagesAsync(10, cancellationToken: TestContext.Current.CancellationToken);
             if (peeked.Any(m => m.Body.ToString().Contains(bodyContains, StringComparison.Ordinal)))
                 return true;
-            await Task.Delay(250);
+            await Task.Delay(250, TestContext.Current.CancellationToken);
         }
         return false;
     }

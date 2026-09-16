@@ -23,6 +23,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     private IHost _host = null!;
 
     public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
+    public AdminErrorQueueJobRunner Jobs => _host.Services.GetRequiredService<AdminErrorQueueJobRunner>();
     public ServiceBusAdministrationClient AdminClient => _host.Services.GetRequiredService<ServiceBusAdministrationClient>();
     public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
     public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
@@ -44,6 +45,20 @@ public class AdminErrorQueueFixture : IAsyncLifetime
         }
     }
 
+    // Mutating admin endpoints answer 202 and finish the work in the background, so a test that
+    // asserts on the outcome has to wait for the job rather than for the HTTP response.
+    public async Task<ErrorQueueJob> WaitForJobAsync(Guid jobId, int attempts = 60)
+    {
+        for (var i = 0; i < attempts; i++)
+        {
+            var job = Jobs.Get(jobId);
+            if (job is { Status: ErrorQueueJobStatus.Succeeded or ErrorQueueJobStatus.Failed })
+                return job;
+            await Task.Delay(250);
+        }
+        throw new TimeoutException($"Job {jobId} did not finish in time.");
+    }
+
     public async ValueTask InitializeAsync()
     {
         await _emulator.StartAsync();
@@ -55,6 +70,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
                 services.AddSingleton(new ServiceBusAdministrationClient(_emulator.ConnectionString));
                 services.AddSingleton(new ServiceBusClient(_emulator.ConnectionString));
                 services.AddSingleton<AdminErrorQueueService>();
+                services.AddSingleton<AdminErrorQueueJobRunner>();
                 services.AddMassTransit(x =>
                 {
                     x.AddConsumer<AlwaysFaultsHandler>();
