@@ -109,10 +109,10 @@ const router = createRouter({
               component: () => import("./views/admin/ErrorQueuesView.vue"),
             },
             {
-              path: "queue",
+              path: ":queue",
               name: "admin-errors-queue-detail",
               component: () => import("./views/admin/ErrorQueueDetailView.vue"),
-              props: (route) => ({ topic: route.query.topic, subscription: route.query.subscription, messageType: route.query.messageType }),
+              props: true,
             },
           ],
         },

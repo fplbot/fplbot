@@ -9,10 +9,6 @@ const loading = ref(true);
 const error = ref("");
 const purging = ref<string | null>(null);
 
-function queueKey(q: ErrorQueueSummary) {
-  return `${q.topic}::${q.subscription}`;
-}
-
 async function load() {
   loading.value = true;
   error.value = "";
@@ -26,11 +22,11 @@ async function load() {
 }
 
 async function purge(queue: ErrorQueueSummary) {
-  if (!confirm(`Purge all ${queue.length} message(s) for "${queue.messageType}"? This cannot be undone.`)) return;
-  purging.value = queueKey(queue);
+  if (!confirm(`Purge all ${queue.length} message(s) for "${queue.consumer}"? This cannot be undone.`)) return;
+  purging.value = queue.queue;
   error.value = "";
   try {
-    await purgeErrorQueue(queue.topic, queue.subscription);
+    await purgeErrorQueue(queue.queue);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -45,7 +41,7 @@ onMounted(load);
 <template>
   <div>
     <h1>Error queues</h1>
-    <p class="lead">Faulted messages, grouped by message type. Open a queue to see which consumer actually faulted per message.</p>
+    <p class="lead">Faulted messages, one queue per consumer.</p>
 
     <div class="card">
       <p v-if="error" class="alert alert-error">{{ error }}</p>
@@ -56,28 +52,28 @@ onMounted(load);
         <table v-else class="admin-table">
           <thead>
             <tr>
-              <th>Message type</th>
+              <th>Consumer</th>
               <th>Length</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="q in queues" :key="queueKey(q)">
-              <td>{{ q.messageType }}</td>
+            <tr v-for="q in queues" :key="q.queue">
+              <td>{{ q.consumer }}</td>
               <td>{{ q.length }}</td>
               <td class="row-actions">
                 <router-link
                   class="btn small btn-secondary"
-                  :to="{ path: '/admin/errors/queue', query: { topic: q.topic, subscription: q.subscription, messageType: q.messageType } }"
+                  :to="{ name: 'admin-errors-queue-detail', params: { queue: q.queue } }"
                 >
                   View
                 </router-link>
                 <button
                   class="btn small danger"
-                  :disabled="purging === queueKey(q)"
+                  :disabled="purging === q.queue"
                   @click="purge(q)"
                 >
-                  {{ purging === queueKey(q) ? "Purging..." : "Purge" }}
+                  {{ purging === q.queue ? "Purging..." : "Purge" }}
                 </button>
               </td>
             </tr>
