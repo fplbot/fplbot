@@ -26,10 +26,11 @@ internal class SlackGameweekStartedHandler(
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
         var notification = context.Message;
-        var installations = await teamsRepo.GetAllInstallations();
-        foreach (var installation in installations)
+        var subscribedChannels = await teamsRepo.GetChannelsSubscribedTo(FplEvent.Captains, FplEvent.Transfers);
+        var subscribedInstallationIds = subscribedChannels.Select(c => c.InstallationId).Distinct();
+        foreach (var installationId in subscribedInstallationIds)
         {
-            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(installation.Id, notification.NewGameweek.Id));
+            await context.Publish(new ProcessGameweekStartedForSlackWorkspace(installationId, notification.NewGameweek.Id));
         }
     }
 

@@ -23,13 +23,10 @@ public class DiscordGameweekStartedHandler(
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
         var notification = context.Message;
-        var installations = await repo.GetAllInstallations();
-        foreach (var installation in installations)
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.Captains, FplEvent.Transfers);
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            foreach (var channel in installation.ChannelSubscriptions)
-            {
-                await context.Publish(new ProcessGameweekStartedForGuildChannel(installation.Id, channel.ChannelId, notification.NewGameweek.Id));
-            }
+            await context.Publish(new ProcessGameweekStartedForGuildChannel(guildId, channelId, notification.NewGameweek.Id));
         }
     }
 
