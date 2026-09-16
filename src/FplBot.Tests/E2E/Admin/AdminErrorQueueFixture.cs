@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using AlmostServiceBus.TestHost;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
+using FplBot.WebApi.Admin;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,7 +22,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     private readonly ServiceBusEmulatorFixture _emulator = new(EmulatorPort);
     private IHost _host = null!;
 
-    // public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
+    public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
     public ServiceBusAdministrationClient AdminClient => _host.Services.GetRequiredService<ServiceBusAdministrationClient>();
     public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
     public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
@@ -53,7 +54,7 @@ public class AdminErrorQueueFixture : IAsyncLifetime
                 services.AddLogging(b => b.AddConsole());
                 services.AddSingleton(new ServiceBusAdministrationClient(_emulator.ConnectionString));
                 services.AddSingleton(new ServiceBusClient(_emulator.ConnectionString));
-                // services.AddSingleton<AdminErrorQueueService>();
+                services.AddSingleton<AdminErrorQueueService>();
                 services.AddMassTransit(x =>
                 {
                     x.AddConsumer<AlwaysFaultsHandler>();
