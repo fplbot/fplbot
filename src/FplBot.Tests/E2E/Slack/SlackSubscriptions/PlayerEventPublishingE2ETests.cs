@@ -34,7 +34,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
 
-        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
         Assert.Contains("PlayerWebname", msg.Text);
     }
@@ -46,7 +46,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
 
-        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
         Assert.Contains("PlayerWebname", msg.Text);
     }
@@ -58,7 +58,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
 
-        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
         Assert.Contains("New player", msg.Text);
     }
@@ -70,7 +70,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         await state.Process(CancellationToken.None);
         await state.Process(CancellationToken.None);
 
-        var msg = await fixture.SlackCapture.WaitForMessageAsync();
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
         Assert.Contains("PlayerWebname", msg.Text);
     }
