@@ -72,6 +72,8 @@ export interface TeamDetailsChannel {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
+  failureCount: number;
+  failingSince: string | null;
 }
 
 export interface TeamDetails {
@@ -152,6 +154,8 @@ export interface GuildDetailsChannel {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
+  failureCount: number;
+  failingSince: string | null;
 }
 
 export interface GuildDetails {

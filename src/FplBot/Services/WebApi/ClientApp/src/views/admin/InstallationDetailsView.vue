@@ -16,6 +16,10 @@ const dangerFeedback = ref<{ type: "success" | "error"; text: string } | null>(n
 
 const deleting = ref<string | null>(null);
 
+function formatFailingSince(failingSince: string | null): string {
+  return failingSince ? new Date(failingSince).toLocaleString() : "";
+}
+
 async function load() {
   loading.value = true;
   loadError.value = "";
@@ -102,6 +106,7 @@ async function submitDanger() {
               <th>League</th>
               <th>Subscriptions</th>
               <th>Status</th>
+              <th>Delivery</th>
               <th></th>
             </tr>
           </thead>
@@ -113,6 +118,12 @@ async function submitDanger() {
               <td>
                 <span v-if="c.channelStatus === true" class="status ok">&#10003; found</span>
                 <span v-else-if="c.channelStatus === false" class="status bad">&#10007; not found via {{ adapter.apiLabel }}</span>
+              </td>
+              <td>
+                <span v-if="c.failureCount > 0" class="status bad" :title="`Failing since ${formatFailingSince(c.failingSince)}`">
+                  &#9888; {{ c.failureCount }} consecutive failed {{ c.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(c.failingSince) }})
+                </span>
+                <span v-else class="no-subs">no failures</span>
               </td>
               <td class="row-actions">
                 <router-link

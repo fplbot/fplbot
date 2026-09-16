@@ -116,6 +116,26 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetGuild_IncludesFailureState()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince);
+        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1));
+        await fixture.GuildRepo.Save(installedGuild);
+
+        var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();
+        var result = await AdminDiscordEndpoints.GetGuild(installedGuild.Id, fixture.GuildRepo, A.Fake<ILeagueClient>(), discordClient, NullLogger<Program>.Instance);
+
+        var ok = Assert.IsAssignableFrom<IValueHttpResult>(result);
+        dynamic value = ok.Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Equal(2, (int)channel.failureCount);
+        Assert.Equal(failingSince, (DateTimeOffset?)channel.failingSince);
+    }
+
+    [Fact]
     public async Task GetGuild_GuildNotFound_ReturnsNotFound()
     {
         var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();

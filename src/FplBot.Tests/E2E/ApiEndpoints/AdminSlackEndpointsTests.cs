@@ -199,6 +199,27 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetTeam_IncludesFailureState()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+        var installation = await fixture.SlackRepo.GetInstallation(teamId);
+        var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(failingSince);
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(failingSince.AddDays(1));
+        await fixture.SlackRepo.Save(installation);
+
+        var slackClientBuilder = fixture.Services.GetRequiredService<Slackbot.Net.SlackClients.Http.ISlackClientBuilder>();
+        var result = await AdminSlackEndpoints.GetTeam(teamId, fixture.SlackRepo, A.Fake<ILeagueClient>(), slackClientBuilder, NullLogger<Program>.Instance);
+
+        var ok = Assert.IsAssignableFrom<IValueHttpResult>(result);
+        dynamic value = ok.Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Equal(2, (int)channel.failureCount);
+        Assert.Equal(failingSince, (DateTimeOffset?)channel.failingSince);
+    }
+
+    [Fact]
     public async Task DeleteChannelSubscription_RemovesSubscriptionFromRepository()
     {
         var teamId = await fixture.InstallSlackbot();

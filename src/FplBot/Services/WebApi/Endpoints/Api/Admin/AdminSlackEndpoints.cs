@@ -85,7 +85,7 @@ public static class AdminSlackEndpoints
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
 
-    private static async Task<IResult> GetTeam(
+    internal static async Task<IResult> GetTeam(
         string teamId,
         ISlackTeamRepository teamRepo,
         ILeagueClient leagueClient,
@@ -127,7 +127,9 @@ public static class AdminSlackEndpoints
                 leagueId,
                 leagueName,
                 subscriptions = ToEventSubscriptions(channel),
-                channelStatus
+                channelStatus,
+                failureCount = channel.FailureCount,
+                failingSince = channel.FailingSince
             });
         }
 

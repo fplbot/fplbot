@@ -187,7 +187,9 @@ public static class AdminDiscordEndpoints
                 leagueId,
                 leagueName,
                 subscriptions = ToEventSubscriptions(channel),
-                channelStatus
+                channelStatus,
+                failureCount = channel.FailureCount,
+                failingSince = channel.FailingSince
             });
         }
 

@@ -27,6 +27,10 @@ const deleting = ref(false);
 const publishing = ref(false);
 const publishFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
+function formatFailingSince(failingSince: string | null): string {
+  return failingSince ? new Date(failingSince).toLocaleString() : "";
+}
+
 async function load() {
   loading.value = true;
   loadError.value = "";
@@ -147,6 +151,25 @@ async function submitDelete() {
       <p class="channel-id">{{ channel.channel }}</p>
 
       <div class="card">
+        <h2>Status</h2>
+        <dl class="summary">
+          <dt>Channel visible via {{ adapter.apiLabel }}</dt>
+          <dd>
+            <span v-if="channel.channelStatus === true" class="status ok">&#10003; found</span>
+            <span v-else-if="channel.channelStatus === false" class="status bad">&#10007; not found via {{ adapter.apiLabel }}</span>
+            <span v-else class="status">unknown</span>
+          </dd>
+          <dt>Delivery</dt>
+          <dd>
+            <span v-if="channel.failureCount > 0" class="status bad">
+              &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(channel.failingSince) }})
+            </span>
+            <span v-else class="status">no failures</span>
+          </dd>
+        </dl>
+      </div>
+
+      <div class="card">
         <h2>Subscribed events</h2>
         <p v-if="subscriptionsFeedback" :class="['alert', subscriptionsFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ subscriptionsFeedback.text }}
@@ -224,6 +247,33 @@ async function submitDelete() {
 .card h2 {
   font-size: 1.1rem;
   margin-bottom: 1rem;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: 14rem 1fr;
+  row-gap: 0.5rem;
+}
+
+.summary dt {
+  font-weight: bold;
+}
+
+.summary dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+.status {
+  font-size: 0.85rem;
+}
+
+.status.ok {
+  color: #16a34a;
+}
+
+.status.bad {
+  color: #dc2626;
 }
 
 .subscription-grid {
