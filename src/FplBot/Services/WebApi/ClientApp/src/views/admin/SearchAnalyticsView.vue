@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import { getSearchAnalytics } from "../../api/api";
 import type { SearchAnalyticsResult } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import { formatDateTime } from "../../formatting";
 
 const days = ref(7);
 const loading = ref(true);
@@ -45,7 +46,7 @@ watch(days, load);
       <div v-if="loading" class="spinner"></div>
 
       <template v-else-if="result">
-        <p class="lead">{{ result.totalQueries }} searches (all clients) since {{ new Date(result.from).toLocaleString() }}.</p>
+        <p class="lead">{{ result.totalQueries }} searches (all clients) since {{ formatDateTime(result.from) }}.</p>
 
         <div class="analytics-columns">
           <div>

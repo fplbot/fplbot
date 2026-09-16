@@ -1,3 +1,5 @@
+import { formatDateTime } from "../formatting";
+
 export interface ChannelFailureState {
   failureCount: number;
   failingSince: string | null;
@@ -25,7 +27,7 @@ export function describeFailureReason(reason: string | null): string {
 }
 
 export function failureSummary(state: ChannelFailureState): string {
-  const since = state.failingSince ? new Date(state.failingSince).toLocaleString() : "unknown";
+  const since = formatDateTime(state.failingSince) || "unknown";
   const deliveries = state.failureCount === 1 ? "delivery" : "deliveries";
   const summary = `${state.failureCount} failed ${deliveries} since ${since}`;
   const reason = describeFailureReason(state.lastFailureReason);

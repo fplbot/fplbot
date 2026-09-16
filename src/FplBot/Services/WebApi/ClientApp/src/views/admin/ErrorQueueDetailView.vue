@@ -9,6 +9,7 @@ import {
 } from "../../api/api";
 import type { ErrorQueueJobAccepted, ErrorQueueMessage } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import { formatDateTime } from "../../formatting";
 
 const props = defineProps<{ queue: string }>();
 
@@ -119,7 +120,7 @@ onMounted(load);
           <div class="message-header">
             <div>
               <div><b>{{ m.messageId }}</b></div>
-              <div class="meta">{{ new Date(m.enqueuedTime).toLocaleString() }}</div>
+              <div class="meta">{{ formatDateTime(m.enqueuedTime) }}</div>
             </div>
             <div class="message-actions">
               <button class="btn small" :disabled="acting !== null || bulkAction !== null" @click="retry(m)">

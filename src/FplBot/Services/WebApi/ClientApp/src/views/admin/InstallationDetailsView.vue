@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import type { InstallationAdapter, EntityDetails } from "../../composables/installationAdapters";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
+import { formatDateTime } from "../../formatting";
 
 const props = defineProps<{ entityId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
@@ -16,10 +17,6 @@ const dangerBusy = ref(false);
 const dangerFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
 const deleting = ref<string | null>(null);
-
-function formatFailingSince(failingSince: string | null): string {
-  return failingSince ? new Date(failingSince).toLocaleString() : "";
-}
 
 async function load() {
   loading.value = true;
@@ -121,8 +118,8 @@ async function submitDanger() {
                 <span v-else-if="c.channelStatus === false" class="status bad">&#10007; not found via {{ adapter.apiLabel }}</span>
               </td>
               <td>
-                <span v-if="c.failureCount > 0" class="status bad" :title="`Failing since ${formatFailingSince(c.failingSince)}`">
-                  &#9888; {{ c.failureCount }} consecutive failed {{ c.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(c.failingSince) }})<template v-if="c.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(c.lastFailureReason) }}</template>
+                <span v-if="c.failureCount > 0" class="status bad" :title="`Failing since ${formatDateTime(c.failingSince)}`">
+                  &#9888; {{ c.failureCount }} consecutive failed {{ c.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatDateTime(c.failingSince) }})<template v-if="c.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(c.lastFailureReason) }}</template>
                 </span>
                 <span v-else class="no-subs">not currently failing</span>
               </td>

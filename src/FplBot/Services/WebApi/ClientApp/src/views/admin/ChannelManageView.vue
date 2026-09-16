@@ -6,6 +6,7 @@ import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../co
 import type { EventSubscription } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
+import { formatDateTime } from "../../formatting";
 
 const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
@@ -28,10 +29,6 @@ const deleting = ref(false);
 const publishing = ref(false);
 const publishFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
-function formatFailingSince(failingSince: string | null): string {
-  return failingSince ? new Date(failingSince).toLocaleString() : "";
-}
-
 const purgeStatus = computed(() => {
   const c = channel.value;
   if (!c || !c.purgeEligibleAt || c.failureCount === 0) {
@@ -41,7 +38,7 @@ const purgeStatus = computed(() => {
   const attempts = c.failuresUntilPurge;
   const condition = attempts > 0 ? ` if seeing ${attempts} more ${attempts === 1 ? "failure" : "failures"}` : "";
   if (at.getTime() > Date.now()) {
-    return `Purging ${at.toLocaleString()}${condition}`;
+    return `Purging ${formatDateTime(c.purgeEligibleAt)}${condition}`;
   }
   return condition ? `Purging${condition}` : "Purging on the next failure";
 });
@@ -177,7 +174,7 @@ async function submitDelete() {
           <dt>Delivery</dt>
           <dd>
             <span v-if="channel.failureCount > 0" class="status bad">
-              &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatFailingSince(channel.failingSince) }})<template v-if="channel.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(channel.lastFailureReason) }}</template>
+              &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatDateTime(channel.failingSince) }})<template v-if="channel.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(channel.lastFailureReason) }}</template>
             </span>
             <span v-else class="status">not currently failing</span>
           </dd>
