@@ -31,6 +31,9 @@ public static class AdminSlackEndpoints
         group.MapPut("/teams/{teamId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
         group.MapPut("/teams/{teamId}/channels/{channelId}/channel", MoveChannel);
         group.MapDelete("/teams/{teamId}/channels/{channelId}", DeleteChannelSubscription);
+        group.MapGet("/slack/failures", GetFailureStats);
+        group.MapPost("/slack/failures/reset", ResetFailures);
+
         group.MapPost("/slack/broadcast", BroadcastToSlack);
     }
 
@@ -47,6 +50,16 @@ public static class AdminSlackEndpoints
         {
             return TypedResults.Ok(new { message = $"Broadcast to Slack failed '{e}'" });
         }
+    }
+
+    internal static async Task<IResult> GetFailureStats(ISlackTeamRepository repo) =>
+        TypedResults.Ok(await ChannelFailureAdmin.GetStats(repo, DateTimeOffset.UtcNow));
+
+    internal static async Task<IResult> ResetFailures(ISlackTeamRepository repo, ILogger<Program> logger)
+    {
+        var cleared = await ChannelFailureAdmin.ResetAll(repo, logger);
+        logger.LogWarning("Admin reset delivery failure counters for {Cleared} Slack channel(s)", cleared);
+        return TypedResults.Ok(new { cleared });
     }
 
     internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo)

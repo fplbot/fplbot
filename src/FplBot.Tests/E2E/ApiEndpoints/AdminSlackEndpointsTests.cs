@@ -223,6 +223,41 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetFailureStats_CountsFailingChannelsAndTeams()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+        var installation = await fixture.SlackRepo.GetInstallation(teamId);
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "not_in_channel");
+        await fixture.SlackRepo.Save(installation);
+
+        var result = await AdminSlackEndpoints.GetFailureStats(fixture.SlackRepo);
+
+        var ok = Assert.IsType<Ok<ChannelFailureStatsDto>>(result);
+        Assert.Equal(1, ok.Value!.ChannelsWithFailures);
+        Assert.Equal(1, ok.Value.InstallationsWithFailures);
+        Assert.Equal(0, ok.Value.ChannelsEligibleForPurge);
+    }
+
+    [Fact]
+    public async Task ResetFailures_ClearsCountersAcrossAllTeams()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+        var installation = await fixture.SlackRepo.GetInstallation(teamId);
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "not_in_channel");
+        await fixture.SlackRepo.Save(installation);
+
+        await AdminSlackEndpoints.ResetFailures(fixture.SlackRepo, NullLogger<Program>.Instance);
+
+        var reloaded = await fixture.SlackRepo.GetInstallation(teamId);
+        var channel = reloaded.GetChannel("#fplbot")!;
+        Assert.Equal(0, channel.FailureCount);
+        Assert.Null(channel.FailingSince);
+        Assert.Null(channel.LastFailureReason);
+    }
+
+    [Fact]
     public async Task DeleteChannelSubscription_RemovesSubscriptionFromRepository()
     {
         var teamId = await fixture.InstallSlackbot();

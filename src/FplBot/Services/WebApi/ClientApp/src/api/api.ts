@@ -1,6 +1,7 @@
 import type {
   AdminMe,
   Bookmarks,
+  ChannelFailureStats,
   ChannelFilter,
   DiscordSlashCommand,
   ErrorQueueJobAccepted,
@@ -186,6 +187,22 @@ export function deleteDiscordSubscription(guildId: string, channelId: string): P
 
 export function deleteAllDiscordSubscriptionsForGuild(guildId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/guilds/${guildId}/subscriptions`, { method: "DELETE" });
+}
+
+export function getDiscordFailureStats(): Promise<ChannelFailureStats> {
+  return request(`/api/admin/discord/failures`);
+}
+
+export function resetDiscordFailures(): Promise<{ cleared: number }> {
+  return request(`/api/admin/discord/failures/reset`, { method: "POST" });
+}
+
+export function getSlackFailureStats(): Promise<ChannelFailureStats> {
+  return request(`/api/admin/slack/failures`);
+}
+
+export function resetSlackFailures(): Promise<{ cleared: number }> {
+  return request(`/api/admin/slack/failures/reset`, { method: "POST" });
 }
 
 export function deleteDiscordGuild(guildId: string): Promise<MessageResponse> {

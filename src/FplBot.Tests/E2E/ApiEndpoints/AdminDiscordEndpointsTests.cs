@@ -54,6 +54,46 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetFailureStats_CountsFailingChannelsAndGuilds()
+    {
+        var failing = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = failing.ChannelSubscriptions.First().ChannelId;
+        failing.GetChannel(channelId)!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "50013");
+        await fixture.GuildRepo.Save(failing);
+
+        var result = await AdminDiscordEndpoints.GetFailureStats(fixture.GuildRepo);
+
+        var ok = Assert.IsType<Ok<ChannelFailureStatsDto>>(result);
+        Assert.Equal(1, ok.Value!.ChannelsWithFailures);
+        Assert.Equal(1, ok.Value.InstallationsWithFailures);
+        Assert.Equal(0, ok.Value.ChannelsEligibleForPurge);
+    }
+
+    [Fact]
+    public async Task ResetFailures_ClearsCountersAcrossAllGuilds()
+    {
+        var first = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var second = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        foreach (var guild in new[] { first, second })
+        {
+            guild.GetChannel(guild.ChannelSubscriptions.First().ChannelId)!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "50013");
+            await fixture.GuildRepo.Save(guild);
+        }
+
+        await AdminDiscordEndpoints.ResetFailures(fixture.GuildRepo, NullLogger<Program>.Instance);
+
+        foreach (var guild in new[] { first, second })
+        {
+            var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+            var channel = reloaded.GetChannel(guild.ChannelSubscriptions.First().ChannelId)!;
+            Assert.Equal(0, channel.FailureCount);
+            Assert.Null(channel.FailingSince);
+            Assert.Null(channel.LastFailureReason);
+        }
+    }
+
+    [Fact]
     public async Task GetSubscriptions_FiltersByGuildId()
     {
         var matching = await fixture.SeedGuildInstallation();

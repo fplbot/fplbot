@@ -30,7 +30,7 @@ public static class StaleChannelSubscriptions
         return subscription;
     }
 
-    public static async Task ClearFailures(
+    public static async Task<bool> ClearFailures(
         IDomainRepository repository,
         string installationId,
         string channelId,
@@ -41,15 +41,17 @@ public static class StaleChannelSubscriptions
             var subscription = await repository.GetChannelSubscription(installationId, channelId);
             if (subscription is null || subscription.FailureCount == 0)
             {
-                return;
+                return false;
             }
 
             subscription.ClearDeliveryFailures();
             await repository.SaveChannelSubscription(installationId, subscription);
+            return true;
         }
         catch (Exception e)
         {
             logger.LogWarning(e, "Could not clear delivery failures for {InstallationId} channel {ChannelId}", installationId, channelId);
+            return false;
         }
     }
 }

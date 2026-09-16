@@ -5,12 +5,15 @@ import {
   deleteDiscordSubscription,
   deleteAllDiscordSubscriptionsForGuild,
   deleteDiscordGuild,
+  getDiscordFailureStats,
+  resetDiscordFailures,
 } from "../../api/api";
 import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { useAdminListQuery } from "../../composables/useAdminListQuery";
 import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
+import type { ChannelFailureStats } from "../../api/types";
 
 const pageSize = 25;
 const guilds = ref<GuildWithSubs[]>([]);
@@ -18,6 +21,34 @@ const totalCount = ref(0);
 const loading = ref(true);
 const error = ref("");
 const deleting = ref<string | null>(null);
+
+const failureStats = ref<ChannelFailureStats | null>(null);
+const resettingFailures = ref(false);
+
+async function loadFailureStats() {
+  try {
+    failureStats.value = await getDiscordFailureStats();
+  } catch {
+    failureStats.value = null;
+  }
+}
+
+async function resetFailures() {
+  const stats = failureStats.value;
+  if (!stats || stats.channelsWithFailures === 0) return;
+  if (!confirm(`Reset delivery failure counters for ${stats.channelsWithFailures} channel(s) across ${stats.installationsWithFailures} Discord server(s)? Subscriptions stay in place; only the failure history is cleared.`)) return;
+  resettingFailures.value = true;
+  error.value = "";
+  try {
+    await resetDiscordFailures();
+    await loadFailureStats();
+    await load();
+  } catch (e) {
+    error.value = describeAdminError(e);
+  } finally {
+    resettingFailures.value = false;
+  }
+}
 
 async function load() {
   loading.value = true;
@@ -34,6 +65,8 @@ async function load() {
 }
 
 const { query, page, goToPage } = useAdminListQuery(load);
+
+void loadFailureStats();
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
@@ -86,6 +119,17 @@ async function removeGuild(guildId: string, guildName: string) {
   <div>
     <h1>Discord servers</h1>
     <p class="lead">{{ totalCount }} server(s) with fplbot installed.</p>
+
+    <p v-if="failureStats" class="lead delivery-health">
+      <template v-if="failureStats.channelsWithFailures > 0">
+        &#9888; {{ failureStats.channelsWithFailures }} channel(s) across {{ failureStats.installationsWithFailures }} server(s) are failing delivery,
+        {{ failureStats.channelsEligibleForPurge }} of them already due to be purged.
+        <button class="btn small danger" :disabled="resettingFailures" @click="resetFailures">
+          {{ resettingFailures ? "Resetting..." : "Reset all failure counters" }}
+        </button>
+      </template>
+      <template v-else>No channels are currently failing delivery.</template>
+    </p>
 
     <div class="card">
       <div class="field">
@@ -180,6 +224,13 @@ async function removeGuild(guildId: string, guildName: string) {
 .lead {
   color: #6b7280;
   margin-bottom: 1rem;
+}
+
+.delivery-health {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .guild-list {

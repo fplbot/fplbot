@@ -293,3 +293,9 @@ export interface ErrorQueueJobState {
   status: "Queued" | "Running" | "Succeeded" | "Failed";
   message: string | null;
 }
+
+export interface ChannelFailureStats {
+  installationsWithFailures: number;
+  channelsWithFailures: number;
+  channelsEligibleForPurge: number;
+}

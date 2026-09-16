@@ -52,10 +52,10 @@ public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client
             content = "⚠️ Not subscribing to any events. Add one to get notifications!";
         }
 
-        var result = await probe.Probe(context.GuildId, context.ChannelId, "🏓 fplbot can post in this channel.");
+        var result = await probe.Probe(context.GuildId, context.ChannelId, "permission check: ✅");
         if (!result.Delivered)
         {
-            content = $"⚠️ I'm currently unable to post in this channel. {ChannelDeliveryProbe.ProblemAndFix(result)}\n{content}";
+            content = $"⚠️ I'm currently unable to post in this channel. {ChannelDeliveryProbe.ProblemAndFix(result)}\n{content}\n\n";
         }
 
         return Respond(content);

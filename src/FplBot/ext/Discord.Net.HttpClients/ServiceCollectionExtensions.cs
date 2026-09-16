@@ -15,11 +15,6 @@ public static class ServiceCollectionExtensions
             c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", token);
             c.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("fplbot", "1"));
         });
-        services.AddTransient<IDiscordClient>(sp =>
-            new DevLoggingDiscordClient(
-                sp.GetRequiredService<DiscordClient>(),
-                sp.GetRequiredService<IHostEnvironment>(),
-                sp.GetRequiredService<ILogger<DevLoggingDiscordClient>>()));
         return services;
     }
 }
