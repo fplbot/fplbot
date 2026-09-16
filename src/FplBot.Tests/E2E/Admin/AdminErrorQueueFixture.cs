@@ -26,6 +26,23 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
     public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
 
+    // Every test in this collection publishes the SAME PoisonTestMessage type, so they all share
+    // ONE fault topic (MassTransit provisions one fault topic per message TYPE, not per test).
+    // Tests must drain their own message when done so the next test doesn't see stray leftovers.
+    // Used only by tests — not a production code path, so it's fine to live on the fixture itself.
+    public async Task DrainMatchingAsync(string topic, string subscription, string bodyContains, int maxMessages = 50)
+    {
+        await using var receiver = BusClient.CreateReceiver(topic, subscription);
+        var received = await receiver.ReceiveMessagesAsync(maxMessages, TimeSpan.FromSeconds(2));
+        foreach (var m in received)
+        {
+            if (m.Body.ToString().Contains(bodyContains, StringComparison.Ordinal))
+                await receiver.CompleteMessageAsync(m);
+            else
+                await receiver.AbandonMessageAsync(m);
+        }
+    }
+
     public async ValueTask InitializeAsync()
     {
         await _emulator.StartAsync();
@@ -40,6 +57,11 @@ public class AdminErrorQueueFixture : IAsyncLifetime
                 services.AddMassTransit(x =>
                 {
                     x.AddConsumer<AlwaysFaultsHandler>();
+                    // Matches Hosting/FplBotApplication.cs's production bus config exactly — verified
+                    // this has zero effect on the fault topic itself (only on whether a {queue}_error
+                    // queue also gets created), but matching it keeps this fixture faithful to the
+                    // real topology.
+                    x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
                     x.UsingAzureServiceBus((ctx, cfg) =>
                     {
                         cfg.Host(_emulator.ConnectionString);
