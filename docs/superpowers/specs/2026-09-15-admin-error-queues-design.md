@@ -9,230 +9,238 @@ queues, their lengths, a details view per queue (including message
 bodies), and actions to retry a message, discard a single message, or
 purge an entire queue.
 
-## Ground truth: how faults actually surface today
+## Revision note
 
-Verified against `dev/RetryFaulted.cs` and the local Service Bus
-emulator dashboard (`http://localhost:15672`), which already reads
-this live — this is **not** MassTransit's textbook default topology,
-so it's worth stating precisely:
+An earlier version of this spec was built around MassTransit's
+`Fault<T>` **topic** mechanism (`MassTransit/Fault--<type>--`). That
+version was fully implemented and passed review, but the final
+whole-branch review flagged a fatal, previously-unverified assumption:
+the fault topic's only subscription had `ForwardTo` set to a
+subscription-less topic, and Azure Service Bus (a) auto-forwards
+messages out of a source entity immediately when `ForwardTo` is set,
+and (b) does not allow creating a receiver on an auto-forwarding
+source entity at all. Every prior verification of that design was
+against `AlmostServiceBus.TestHost`, a third-party emulator that
+apparently doesn't enforce that restriction — so the topic-based
+design likely would not have worked against real Azure Service Bus at
+all (messages would auto-forward away before anything could read
+them, and `CreateReceiver` itself might throw).
 
-- When a consumer throws, MassTransit publishes a `Fault<T>` event to
-  a topic named `MassTransit/Fault--<message-type>--` (one fault topic
-  per *original message type* — not per consumer, and not one per
-  faulting queue).
-- That topic gets a subscription (verified against a real, isolated
-  MassTransit/ASB bus: `AlwaysFaultsHandler`'s fault topic got exactly
-  one subscription, generically named `Fault-MassTransit`, with
-  `ForwardTo` set to a top-level `MassTransit/Fault` topic that itself
-  has no subscriptions). **The subscription name does not identify
-  which consumer faulted** — `dev/RetryFaulted.cs` already knew this:
-  it never trusts the subscription name, and instead reads the actual
-  faulting consumer from each message's own `sourceAddress` field
-  (confirmed: `sourceAddress` on a peeked fault message ends in the
-  real receive endpoint name, e.g. `.../AlwaysFaultsHandler`). Its code
-  comment about "ForwardTo subscriptions" having unreliable
-  peek/dashboard state is this exact scenario, not a fluke.
-  **Consequence for this design:** grouping "queues" by consumer
-  doesn't work — there is no per-consumer subscription to group by.
-  The natural grouping is one row per fault **topic** (i.e. per
-  original message type), and the actual faulting consumer is only
-  knowable per-message, by reading that message's `sourceAddress` —
-  exactly what the detail view already needed to show for retry
-  targeting anyway.
-- `cfg.DiscardFaultedMessages()` (`Hosting/FplBotApplication.cs:86`)
-  only controls whether the *original* transport message is forwarded
-  to a per-queue `{queue}_error` queue after a fault — it does **not**
-  affect the `Fault<T>` topic/subscription at all (re-verified directly:
-  toggling it on and off in an isolated test bus changed only whether
-  `{queue}_error` existed; the fault topic's subscription, its
-  `ForwardTo`, and its contents were identical either way). So fault
-  visibility already exists today, independent of that setting, and
-  **no messaging-pipeline change is needed for this feature.**
-- The fault message body is a JSON envelope with `sourceAddress`
-  (last path segment = the original consumer's input queue — the
-  retry target), `faultMessageTypes` (MassTransit type URN(s)),
-  `exceptions[]` (`exceptionType`/`message` per attempt), and the
-  original payload nested at `message.message`.
-- Retrying means: complete the fault message off its subscription,
-  reconstruct a fresh MassTransit envelope wrapping the original
-  payload, and send it directly to the target queue — exactly what
-  `dev/RetryFaulted.cs` already does, interactively, via the
-  `Azure.Messaging.ServiceBus` SDK (no MassTransit hosting involved).
-  This admin feature formalizes that same proven mechanism behind a UI
-  instead of a terminal prompt loop.
+Per direction from the repo owner: abide by MassTransit's own default
+behavior rather than routing around it. This revision replaces the
+topic-based design with MassTransit's standard `{queue}_error` **queue**
+mechanism — a plain queue, no `ForwardTo`, safe to receive/peek/purge
+on both the local emulator and real Azure.
+
+## Ground truth: how faults actually surface
+
+Verified directly against an isolated MassTransit/ASB bus (in-process,
+via `AlmostServiceBus.TestHost`) — plain queues carry none of the
+`ForwardTo` risk the topic-based approach had, since queues aren't a
+pub/sub construct:
+
+- When a consumer throws and the receive endpoint does **not** call
+  `cfg.DiscardFaultedMessages()`, MassTransit moves the faulted message
+  to a queue named `{OriginalQueueName}_error` — one queue per
+  *consumer*, matching this repo's existing queue-naming convention
+  (`nameof(Consumer)`), so `AlwaysFaultsHandler` produces
+  `AlwaysFaultsHandler_error`.
+- `DiscardFaultedMessages()` is what suppresses this — it makes
+  MassTransit discard the faulted message instead of moving it. This
+  repo's production bus currently calls it
+  (`Hosting/FplBotApplication.cs:86`). **This setting must be removed**
+  for this feature to have anything to read — this is a real,
+  intentional messaging-pipeline change (unlike the discarded topic
+  design, which mistakenly concluded no pipeline change was needed).
+- Exception/fault details are attached as **message application
+  properties** on the moved message, not embedded in the JSON body:
+  `MT-Reason` ("fault"), `MT-Fault-ExceptionType`, `MT-Fault-Message`,
+  `MT-Fault-StackTrace`, `MT-Fault-Timestamp`, `MT-Fault-ConsumerType`,
+  `MT-Fault-MessageType`, `MT-Fault-InputAddress` (the original
+  queue's address — confirmed to end in the real consumer name, e.g.
+  `.../AlwaysFaultsHandler`).
+- The message **body** is the original MassTransit envelope, completely
+  unmodified — `envelope.message` is the original payload directly (no
+  nested `fault` wrapper the way the old `Fault<T>` topic design had).
+  This means retry is simpler than the old design: resend the exact
+  same body/properties to the target queue (no envelope reconstruction,
+  no URN parsing) — just a fresh `messageId`/`conversationId`.
+- The target queue for a retry is simply the current queue's name with
+  the `_error` suffix stripped (`AlwaysFaultsHandler_error` →
+  `AlwaysFaultsHandler`) — no need to parse `MT-Fault-InputAddress`,
+  though it agrees and could be used as a cross-check.
+- `ServiceBusAdministrationClient.GetQueueRuntimePropertiesAsync(...)
+  .ActiveMessageCount` has the same gap already found for subscriptions
+  in the discarded design: confirmed by direct testing that it reads 0
+  unconditionally against `AlmostServiceBus.TestHost`, even when a
+  message is genuinely present and peekable. Same fallback needed: peek
+  for a count when the runtime property reads 0.
 
 ## Scope
 
-- Read/manage layer over the *existing* fault topics/subscriptions:
-  list them with lengths, view messages (fault details + body) in one,
-  retry a message, discard a single message, purge an entire queue
-  (all messages in one subscription).
+- Remove `cfg.DiscardFaultedMessages()` from
+  `Hosting/FplBotApplication.cs` so faulted messages accumulate in
+  `{consumer}_error` queues instead of being discarded. This is the one
+  intentional messaging-pipeline change in this feature.
+- Read/manage layer over those `_error` queues: list them with
+  lengths, view messages (fault details + body) in one, retry a
+  message, discard a single message, purge an entire queue.
 - New admin API endpoints + a new "Errors" admin UI tab.
-- Out of scope: any change to MassTransit fault/retry pipeline
-  configuration, alerting on queue growth, auto-retry policies,
-  retention/TTL changes. Faulted messages are still purged after the
-  same 2-hour `DefaultMessageTimeToLive` as every other MassTransit
-  queue/topic in this bus — raised explicitly and accepted; no
-  dead-letter-subqueue routing or TTL override is in scope.
+- Out of scope: alerting on queue growth, auto-retry policies,
+  retention/TTL changes, dead-letter-subqueue routing. Faulted
+  messages are still purged after the same 2-hour
+  `DefaultMessageTimeToLive` as every other queue on this bus — raised
+  explicitly and accepted.
 
 ## Architecture
 
-One addition: a new admin-only surface, backed directly by Azure
-Service Bus (MassTransit has no read API for this — the admin layer
-talks to ASB directly via the official SDK, the same way
-`dev/RetryFaulted.cs` does).
+Two changes:
+
+1. **Stop discarding faults.** Remove the global
+   `cfg.DiscardFaultedMessages()` call so MassTransit's default
+   behavior applies.
+2. **New admin surface** to read and act on the resulting `_error`
+   queues, backed directly by Azure Service Bus (MassTransit has no
+   read API for this).
 
 ## Components
 
-- **`Azure.Messaging.ServiceBus` SDK** — new package reference in
+- **`Azure.Messaging.ServiceBus` SDK** — package reference in
   `FplBot.csproj`, used only from the WebApi service. Reuses the
-  existing `ASB_CONNECTIONSTRING` config value (already used by
-  MassTransit) — no new secret/config surface.
-- **`AdminErrorQueueService`** (new, WebApi), wrapping a
+  existing `ASB_CONNECTIONSTRING` config value — no new secret/config
+  surface.
+- **`AdminErrorQueueService`** (WebApi), wrapping a
   `ServiceBusAdministrationClient` + `ServiceBusClient`:
-  - **List**: `GetTopicsAsync()` filtered to names starting with
-    `MassTransit/Fault--`; for each, `GetSubscriptionsAsync(topicName)`
-    then `GetSubscriptionRuntimePropertiesAsync(topicName, subName)
-    .ActiveMessageCount` for length, falling back to a peek-based count
-    when that reads 0 (see Error handling / caveats — this emulator
-    never populates the field at all, not just briefly). Returned to
-    the UI as one row per
-    (topic, subscription) pair — normally exactly one subscription per
-    topic given this system's topology (see Ground truth above), but
-    the code doesn't assume that; it just uses whatever
-    `GetSubscriptionsAsync` returns. The row is labeled by a
-    **message-type name parsed from the topic** (strip the
-    `MassTransit/Fault--`/`--` wrapper, e.g.
-    `MassTransit/Fault--FplBot.Messaging.Contracts.Events.v1/AppInstalled--`
-    → `FplBot.Messaging.Contracts.Events.v1.AppInstalled`) — not by the
-    subscription name, which carries no consumer identity. Which
-    consumer(s) actually faulted is only visible per-message, in the
-    detail view, via each message's `sourceAddress`.
-  - **Peek** (`ServiceBusReceiver` via
-    `client.CreateReceiver(topicName, subscriptionName)`,
-    `PeekMessagesAsync`, non-destructive/no lock — safe for a polling
-    list view): returns messageId, enqueued time, `sourceAddress`,
-    `faultMessageTypes`, `exceptions[]`, and the original payload
-    (`message.message`) for the UI to pretty-print (JSON, collapsible),
-    with a raw text fallback if it isn't valid JSON.
-  - **Retry** (single message, by messageId): there's no fetch-by-id in
-    ASB, so this receives messages from the subscription (PeekLock)
-    and for each: if `MessageId` matches, parse the fault envelope,
-    build a fresh MassTransit envelope around the original payload
-    (same shape as `dev/RetryFaulted.cs` — `messageId` regenerated,
-    `conversationId` regenerated, `sourceAddress` identifying this
-    admin action, `destinationAddress` derived from the message type
-    URN, `messageType`, `message`, `sentTime`), send it via
-    `client.CreateSender(targetQueue)` where `targetQueue` is the last
-    segment of the original `sourceAddress`, then
-    `CompleteMessageAsync` the fault message only after the send
-    succeeds; non-matches are `AbandonMessageAsync`'d immediately so
-    they return to the subscription. Bounded by tracking already-seen
-    (abandoned) message ids in this scan and stopping the moment one
-    repeats — that means a full cycle with no match, so a stale/missing
-    id can't loop forever. (Not bounded by `ActiveMessageCount` — see
-    Error handling / caveats.)
+  - **List**: `GetQueuesAsync()` filtered to names ending in `_error`;
+    for each, `GetQueueRuntimePropertiesAsync(name).ActiveMessageCount`
+    for length, falling back to a peek-based count when that reads 0
+    (same gap as before, now confirmed for queues too). Labeled by the
+    queue name with the `_error` suffix stripped — this **is** the
+    consumer name, no parsing/guessing needed.
+  - **Peek** (`ServiceBusReceiver` via `client.CreateReceiver(queueName)`,
+    `PeekMessagesAsync`, non-destructive — safe for a polling list
+    view): returns messageId, enqueued time, the `MT-Fault-*`
+    application properties (exception type, message, stack trace,
+    consumer type, timestamp), and the original payload
+    (`envelope.message`) for the UI to pretty-print, with a raw text
+    fallback if it isn't valid JSON.
+  - **Retry** (single message, by messageId): no fetch-by-id in ASB, so
+    this receives messages from the queue (PeekLock) and for each: if
+    `MessageId` matches, build a fresh `ServiceBusMessage` from the
+    *same* body and content type (no JSON reconstruction needed — the
+    body is already a valid envelope), regenerate `messageId` in that
+    body's JSON, send it to the target queue (current queue name minus
+    `_error`), then `CompleteMessageAsync` the original only after the
+    send succeeds; non-matches are `AbandonMessageAsync`'d immediately.
+    Bounded by tracking already-abandoned message ids and stopping the
+    moment one repeats (a full cycle with no match) — never bounded by
+    `ActiveMessageCount`.
   - **Discard** (single message, by messageId): same scan-for-match
     logic as retry, but on match just `CompleteMessageAsync` — no
     resend.
-  - **Purge** (whole subscription): loop `ReceiveMessagesAsync`
-    (batched) + `CompleteMessageAsync` each, until a receive call
-    returns zero messages — self-terminating (every message is removed
-    for good, never abandoned back), so it needs no `ActiveMessageCount`
-    bound at all.
+  - **Purge** (whole queue): loop `ReceiveMessagesAsync` (batched) +
+    `CompleteMessageAsync` each, until a receive call returns zero
+    messages — self-terminating, no `ActiveMessageCount` bound needed.
 - **New admin endpoints**,
   `Services/WebApi/Endpoints/Api/Admin/AdminErrorEndpoints.cs`,
   registered in `WebAppExtensions.cs` next to the other
   `Admin*Endpoints` groups (same `RequireAuthorization("IsAdmin")`
   gate):
-  - `GET /admin/errors/queues` → `[{ topic, subscription, messageType, length }]`
-  - `GET /admin/errors/queue/messages?topic=&subscription=` → peeked
-    messages with fault details + body
-  - `POST /admin/errors/queue/messages/{messageId}/retry?topic=&subscription=`
-  - `POST /admin/errors/queue/messages/{messageId}/discard?topic=&subscription=`
-  - `POST /admin/errors/queue/purge?topic=&subscription=`
+  - `GET /admin/errors/queues` → `[{ queue, consumer, length }]`
+  - `GET /admin/errors/queues/{queue}/messages` → peeked messages with
+    fault details + body
+  - `POST /admin/errors/queues/{queue}/messages/{messageId}/retry`
+  - `POST /admin/errors/queues/{queue}/messages/{messageId}/discard`
+  - `POST /admin/errors/queues/{queue}/purge`
 
-  (`topic` and `subscription` are both needed to identify a queue — a
-  consumer handling more than one message type can have same-named
-  subscriptions on different fault topics. `topic` is passed as a
-  query parameter rather than a path segment because fault topic names
-  contain a literal `/`, e.g. `MassTransit/Fault--...--`, which would
-  break path-segment route matching.)
+  Queue names never contain a `/`, so `queue` is a normal path segment
+  here — unlike the discarded topic-based design, there's no encoding
+  problem to work around.
+- **Guard**: every endpoint must reject a `queue` that doesn't end in
+  `_error` (`BadRequest`), so a typo'd or copy-pasted queue name can't
+  reach retry/discard/purge against a live, non-error queue. This is a
+  destructive admin surface; it should only ever reach `_error` queues.
 - **New admin UI tab**, following the existing Slack/Discord/Search
   admin section pattern (Vue 3 SPA,
   `src/FplBot/Services/WebApi/ClientApp`):
-  - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list: message type,
+  - `ErrorsSection.vue` + `ErrorQueuesView.vue` (list: consumer name,
     length, a "Purge" button per row) + `ErrorQueueDetailView.vue`
-    (messages in one queue: fault details including the faulting
-    consumer's address, a pretty-printed/collapsible view of the
-    message body, and "Retry"/"Discard" buttons per message).
+    (messages in one queue: fault details, a pretty-printed/collapsible
+    view of the message body, and "Retry"/"Discard" buttons per
+    message).
   - Wired into `router.ts` (nested under the `/admin` route) and the
     `navLinks` array in `layouts/AdminLayout.vue`.
 
 ## Data flow
 
-Consumer throws → MassTransit publishes `Fault<T>` to
-`MassTransit/Fault--<type>--`, landing in that topic's existing
-subscription (already happens today, unaffected by this feature) →
-admin UI calls `GET /admin/errors/queues` for the list, grouped by
-message type, and lengths → selecting a queue calls the messages
-endpoint (peek, non-destructive), where each message's `sourceAddress`
-reveals which consumer actually faulted → retry/discard act on one
-message by id; purge clears the whole subscription → the next list
-refresh reflects the new counts (a retried message either succeeds,
-emptying the subscription further, or faults again and reappears).
+Consumer throws → MassTransit moves the message to
+`{Consumer}_error` (now that `DiscardFaultedMessages()` is removed) →
+admin UI calls `GET /admin/errors/queues` for the list and lengths →
+selecting a queue calls the messages endpoint (peek, non-destructive)
+→ retry/discard act on one message by id; purge clears the whole
+queue → the next list refresh reflects the new counts (a retried
+message either succeeds, emptying the queue further, or faults again
+and reappears).
 
 ## Error handling / caveats
 
 - The scan-and-abandon approach (retry/discard by message id) bumps
-  delivery count on messages it passes over while searching for the
-  target. Acceptable for an infrequent, manually-triggered admin
-  action, but the implementation must bound the scan (one pass) rather
-  than loop unbounded — bound it by tracking already-abandoned message
-  ids and stopping on the first repeat (a full cycle with no match),
-  not by any admin-API message count (see next point).
-- `ServiceBusAdministrationClient`'s subscription runtime properties
-  (`ActiveMessageCount`) cannot be trusted as a bound or a "how many
-  are there" signal in this repo's test environment: confirmed by
-  decompiling `AlmostServiceBus.TestHost` 0.6.0 that its management API
-  never serializes a subscription's message-count field at all — it
-  reads 0 unconditionally, not just briefly after publish. (Real Azure
-  Service Bus is expected to report this accurately; this is specific
-  to the local test emulator.) `ListQueuesAsync`'s displayed length
-  falls back to a peek-based count when the runtime count reads 0, so
-  the admin UI still shows something meaningful either way. Retry,
-  discard, and purge do not depend on this count for correctness at
-  all — the point above.
-- Purge is destructive and irreversible — the UI must ask for
-  confirmation before calling it (same pattern as the existing
-  "Uninstall" button in `SlackWorkspacesView.vue`).
+  delivery count on messages it passes over. Acceptable for an
+  infrequent, manually-triggered admin action; bounded by tracking
+  already-abandoned message ids and stopping on the first repeat —
+  never by `ActiveMessageCount` (confirmed unreliable against this
+  repo's test emulator, for both queues and the earlier subscription
+  design).
+- Purge is destructive and irreversible — the UI must confirm before
+  calling it (same pattern as the existing "Uninstall" button in
+  `SlackWorkspacesView.vue`).
+- Every retry/discard/purge call is guarded against acting on a queue
+  that doesn't end in `_error` — this feature must never be usable to
+  drain a live, non-error queue.
 - Faulted messages are still purged by ASB itself after the same
-  2-hour `DefaultMessageTimeToLive` as every other queue/topic on this
-  bus — accepted trade-off, no retention change in scope.
+  2-hour `DefaultMessageTimeToLive` as every other queue on this bus —
+  accepted trade-off, no retention change in scope.
+- Removing `DiscardFaultedMessages()` means faulted messages now
+  persist (subject to that same 2-hour TTL) instead of vanishing
+  immediately — this is the intended behavior change and was the
+  entire point of the original (now-corrected) design; re-flagging it
+  here since the pipeline change is new to this revision.
 
 ## Testing
 
 `AppFixture` (used by every other E2E test in `FplBot.Tests`) wires
-MassTransit with `UsingInMemory(...)`, which has no fault topics/ASB
+MassTransit with `UsingInMemory(...)`, which has no error-queue/ASB
 concepts at all — unusable for this feature. Instead, use
 `AlmostServiceBus.TestHost` (already in this repo's dependency
 ecosystem — it backs the local dev emulator via
 `AlmostServiceBus.Aspire.Hosting` in `FplBot.AppHost`), whose
 `ServiceBusEmulatorFixture` runs an in-process, per-test-isolated ASB
-emulator with no Docker and sub-second startup. A new fixture wires a
-real `UsingAzureServiceBus(...)` bus against that emulator's
-connection string, plus a small always-faulting test-only consumer to
-produce real faults on demand (rather than relying on an existing
-production consumer's business logic to fail in a controlled way).
+emulator with no Docker and sub-second startup. A fixture wires a real
+`UsingAzureServiceBus(...)` bus against that emulator's connection
+string — **without** `DiscardFaultedMessages()`, matching the
+corrected production config — plus a small always-faulting test-only
+consumer to produce real faults on demand.
 
 Test coverage: force a fault, assert it appears in the list/peek
-endpoints including the body; retry it and assert the subscription
-empties and the consumer reprocesses it; discard it (gone, no
-reprocess); purge a queue with multiple faults in one call.
+endpoints (queue name, application properties, body); retry it and
+assert the queue empties and the consumer reprocesses it; discard it
+(gone, no reprocess); purge a queue with multiple faults in one call;
+confirm the `_error`-suffix guard rejects a non-error queue name.
 
-Caveat found while building the fixture: `AlmostServiceBus.TestHost`'s
-`GetSubscriptionRuntimePropertiesAsync(...).ActiveMessageCount` can lag
-behind reality shortly after a message arrives (it read 0 even when a
-direct peek found the message). Tests that need to assert "the fault
-has landed" should poll via peek/receive of the actual message, not by
-polling `ActiveMessageCount` alone, to avoid flaky false negatives.
+Caveat found while building the fixture: `ActiveMessageCount` can read
+0 against `AlmostServiceBus.TestHost` even when a message is genuinely
+present and peekable (confirmed for both queues and subscriptions —
+its management API never serializes message-count fields at all, not
+a timing lag). Tests that need to assert "the fault has landed" should
+poll via peek/receive of the actual message, not by polling
+`ActiveMessageCount` alone.
+
+## Residual risk
+
+This design is queue-based, which avoids the specific `ForwardTo`
+problem that broke the topic-based version. It has not been verified
+against a real Azure Service Bus namespace (only against
+`AlmostServiceBus.TestHost`) — plain queues are a much better-supported
+emulator feature with no pub/sub forwarding semantics to get wrong,
+so the risk is materially lower, but this is still worth a real check
+before or shortly after shipping.
