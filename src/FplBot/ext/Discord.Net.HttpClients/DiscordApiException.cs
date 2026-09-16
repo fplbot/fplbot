@@ -16,17 +16,20 @@ public class DiscordApiException(HttpStatusCode? statusCode, int? errorCode, str
         try
         {
             using var document = JsonDocument.Parse(responseBody);
-            if (document.RootElement.TryGetProperty("code", out var codeElement) && codeElement.TryGetInt32(out var parsed))
+            if (document.RootElement.ValueKind == JsonValueKind.Object)
             {
-                code = parsed;
-            }
+                if (document.RootElement.TryGetProperty("code", out var codeElement) && codeElement.TryGetInt32(out var parsed))
+                {
+                    code = parsed;
+                }
 
-            if (document.RootElement.TryGetProperty("message", out var messageElement))
-            {
-                discordMessage = messageElement.GetString();
+                if (document.RootElement.TryGetProperty("message", out var messageElement) && messageElement.ValueKind == JsonValueKind.String)
+                {
+                    discordMessage = messageElement.GetString();
+                }
             }
         }
-        catch (JsonException)
+        catch (Exception)
         {
         }
 

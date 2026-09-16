@@ -43,6 +43,39 @@ public class DiscordApiExceptionTests
     }
 
     [Fact]
+    public async Task Failure_WithNullBody_ThrowsWithNullErrorCode()
+    {
+        var client = BuildClient(HttpStatusCode.InternalServerError, "null");
+
+        var ex = await Assert.ThrowsAsync<DiscordApiException>(() => client.ChannelMessagePost("C1", "hi"));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
+        Assert.Null(ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task Failure_WithArrayBody_ThrowsWithNullErrorCode()
+    {
+        var client = BuildClient(HttpStatusCode.InternalServerError, "[]");
+
+        var ex = await Assert.ThrowsAsync<DiscordApiException>(() => client.ChannelMessagePost("C1", "hi"));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
+        Assert.Null(ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task Failure_WithNonStringMessageBody_StillReadsErrorCode()
+    {
+        var client = BuildClient(HttpStatusCode.Forbidden, """{"message": 123, "code": 50001}""");
+
+        var ex = await Assert.ThrowsAsync<DiscordApiException>(() => client.ChannelMessagePost("C1", "hi"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, ex.StatusCode);
+        Assert.Equal(50001, ex.ErrorCode);
+    }
+
+    [Fact]
     public async Task IsCatchableAsHttpRequestException()
     {
         var client = BuildClient(HttpStatusCode.NotFound, """{"message": "Unknown Channel", "code": 10003}""");
