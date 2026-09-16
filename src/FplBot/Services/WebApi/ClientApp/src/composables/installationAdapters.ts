@@ -25,6 +25,7 @@ export interface EntityChannel {
   lastFailureReason: string | null;
   purgeEligibleAt: string | null;
   failuresUntilPurge: number;
+  purgeFailureLimit: number;
 }
 
 export interface EntityDetails {

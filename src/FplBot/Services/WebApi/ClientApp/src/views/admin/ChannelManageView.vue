@@ -180,7 +180,9 @@ async function submitDelete() {
           </dd>
           <dt>Failure count</dt>
           <dd>
-            <span class="status">{{ channel.failureCount }}</span>
+            <span :class="['status', { bad: channel.failureCount >= channel.purgeFailureLimit }]">
+              {{ channel.failureCount }} out of {{ channel.purgeFailureLimit }}
+            </span>
           </dd>
           <template v-if="purgeStatus">
             <dt>Automatic purge</dt>

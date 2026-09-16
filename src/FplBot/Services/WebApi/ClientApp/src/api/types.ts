@@ -78,6 +78,7 @@ export interface TeamDetailsChannel {
   lastFailureReason: string | null;
   purgeEligibleAt: string | null;
   failuresUntilPurge: number;
+  purgeFailureLimit: number;
 }
 
 export interface TeamDetails {
@@ -164,6 +165,7 @@ export interface GuildDetailsChannel {
   lastFailureReason: string | null;
   purgeEligibleAt: string | null;
   failuresUntilPurge: number;
+  purgeFailureLimit: number;
 }
 
 export interface GuildDetails {
