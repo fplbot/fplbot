@@ -6,7 +6,7 @@ using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using FplEvent = FplBot.Domain.FplEvent;
+using FplBot.Domain;
 
 namespace FplBot.EventHandlers.Slack;
 

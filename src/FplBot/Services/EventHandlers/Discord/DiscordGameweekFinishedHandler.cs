@@ -26,6 +26,10 @@ public class DiscordGameweekFinishedHandler(
         {
             var channel = await repo.GetChannelSubscription(guildId, channelId);
             var leagueId = channel?.FollowedLeagueId is { } id ? (int)id.Value : (int?)null;
+            if (leagueId is null)
+            {
+                continue;
+            }
             await context.Publish(new PublishGameweekFinishedToGuild(guildId, channelId, leagueId, message.FinishedGameweek.Id));
         }
     }

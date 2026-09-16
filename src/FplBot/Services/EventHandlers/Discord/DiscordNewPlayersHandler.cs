@@ -22,9 +22,9 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
             var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
             var formatted = Formatter.FormatNewPlayers(filtered);
 
-            foreach (var (guildId, channelId) in subscribedChannels)
+            if (!string.IsNullOrEmpty(formatted))
             {
-                if (!string.IsNullOrEmpty(formatted))
+                foreach (var (guildId, channelId) in subscribedChannels)
                 {
                     await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "ℹ️ New players", formatted));
                 }
@@ -43,9 +43,9 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
         var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
         var formatted = Formatter.FormatTransferredPlayers(message.Transfers, includeheader:false);
 
-        foreach (var (guildId, channelId) in subscribedChannels)
+        if (!string.IsNullOrEmpty(formatted))
         {
-            if (!string.IsNullOrEmpty(formatted))
+            foreach (var (guildId, channelId) in subscribedChannels)
             {
                 await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "🔄️ Transfer!", formatted));
             }

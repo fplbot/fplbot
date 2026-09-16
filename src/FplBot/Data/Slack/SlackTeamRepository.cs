@@ -131,7 +131,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
         foreach (var channelId in channelIds)
         {
-            await _db.KeyDeleteAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId.ToString()));
+            await DeleteChannelSubscription(teamId, channelId.ToString()!);
         }
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
         await _db.SetRemoveAsync(TeamIndexKey, teamId);
