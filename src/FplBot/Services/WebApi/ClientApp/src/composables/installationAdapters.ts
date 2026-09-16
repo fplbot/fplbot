@@ -23,6 +23,8 @@ export interface EntityChannel {
   failureCount: number;
   failingSince: string | null;
   lastFailureReason: string | null;
+  purgeEligibleAt: string | null;
+  failuresUntilPurge: number;
 }
 
 export interface EntityDetails {

@@ -190,7 +190,9 @@ public static class AdminDiscordEndpoints
                 channelStatus,
                 failureCount = channel.FailureCount,
                 failingSince = channel.FailingSince,
-                lastFailureReason = channel.LastFailureReason
+                lastFailureReason = channel.LastFailureReason,
+                purgeEligibleAt = channel.FailingSince is { } since ? since + ChannelSubscription.MaxFailureAge : (DateTimeOffset?)null,
+                failuresUntilPurge = Math.Max(0, ChannelSubscription.MaxFailures - channel.FailureCount)
             });
         }
 

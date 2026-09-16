@@ -32,6 +32,27 @@ function formatFailingSince(failingSince: string | null): string {
   return failingSince ? new Date(failingSince).toLocaleString() : "";
 }
 
+const purgeStatus = computed(() => {
+  const c = channel.value;
+  if (!c || !c.purgeEligibleAt || c.failureCount === 0) {
+    return null;
+  }
+  const at = new Date(c.purgeEligibleAt);
+  const daysLeft = Math.ceil((at.getTime() - Date.now()) / 86400000);
+  const attempts = c.failuresUntilPurge;
+  const pending: string[] = [];
+  if (daysLeft > 0) {
+    pending.push(`${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`);
+  }
+  if (attempts > 0) {
+    pending.push(`${attempts} more failed ${attempts === 1 ? "delivery" : "deliveries"} needed`);
+  }
+  return {
+    at: at.toLocaleString(),
+    detail: pending.length > 0 ? pending.join(", ") : "happens on the next failed delivery",
+  };
+});
+
 async function load() {
   loading.value = true;
   loadError.value = "";
@@ -167,6 +188,12 @@ async function submitDelete() {
             </span>
             <span v-else class="status">no failures</span>
           </dd>
+          <template v-if="purgeStatus">
+            <dt>Automatic purge</dt>
+            <dd>
+              <span class="status bad">Will be automatically purged at {{ purgeStatus.at }} &mdash; {{ purgeStatus.detail }}</span>
+            </dd>
+          </template>
         </dl>
       </div>
 

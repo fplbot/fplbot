@@ -135,6 +135,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         Assert.Equal(2, (int)channel.failureCount);
         Assert.Equal(failingSince, (DateTimeOffset?)channel.failingSince);
         Assert.Equal("50013", (string?)channel.lastFailureReason);
+        Assert.Equal(failingSince + ChannelSubscription.MaxFailureAge, (DateTimeOffset?)channel.purgeEligibleAt);
+        Assert.Equal(ChannelSubscription.MaxFailures - 2, (int)channel.failuresUntilPurge);
     }
 
     [Fact]
