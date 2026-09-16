@@ -181,9 +181,17 @@ a {
 }
 
 .admin-table td.row-actions {
-  flex-wrap: nowrap;
+  display: table-cell;
   white-space: nowrap;
   width: 1%;
+}
+
+.admin-table td.row-actions > * {
+  vertical-align: middle;
+}
+
+.admin-table td.row-actions > * + * {
+  margin-left: 0.5rem;
 }
 
 .admin-table tbody tr.failing,
