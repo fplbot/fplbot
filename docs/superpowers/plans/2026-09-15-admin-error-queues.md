@@ -53,6 +53,7 @@ using Azure.Messaging.ServiceBus.Administration;
 using FplBot.WebApi.Admin;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace FplBot.Tests.E2E.Admin;
@@ -67,12 +68,12 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     private const int EmulatorPort = 16712;
 
     private readonly ServiceBusEmulatorFixture _emulator = new(EmulatorPort);
-    private ServiceProvider _provider = null!;
+    private IHost _host = null!;
 
-    public AdminErrorQueueService Service => _provider.GetRequiredService<AdminErrorQueueService>();
-    public ServiceBusAdministrationClient AdminClient => _provider.GetRequiredService<ServiceBusAdministrationClient>();
-    public ServiceBusClient BusClient => _provider.GetRequiredService<ServiceBusClient>();
-    public IPublishEndpoint Publisher => _provider.GetRequiredService<IPublishEndpoint>();
+    public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
+    public ServiceBusAdministrationClient AdminClient => _host.Services.GetRequiredService<ServiceBusAdministrationClient>();
+    public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
+    public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
 
     // Every test in this collection publishes the SAME PoisonTestMessage type, so they all share
     // ONE fault topic (MassTransit provisions one fault topic per message TYPE, not per test).
@@ -95,33 +96,40 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     {
         await _emulator.StartAsync();
 
-        var services = new ServiceCollection();
-        services.AddLogging(b => b.AddConsole());
-        services.AddSingleton(new ServiceBusAdministrationClient(_emulator.ConnectionString));
-        services.AddSingleton(new ServiceBusClient(_emulator.ConnectionString));
-        services.AddSingleton<AdminErrorQueueService>();
-        services.AddMassTransit(x =>
-        {
-            x.AddConsumer<AlwaysFaultsHandler>();
-            // Matches Hosting/FplBotApplication.cs's production bus config exactly — verified this
-            // has zero effect on the fault topic itself (only on whether a {queue}_error queue also
-            // gets created), but matching it keeps this fixture faithful to the real topology.
-            x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
-            x.UsingAzureServiceBus((ctx, cfg) =>
+        // MassTransit 8.5.10 has no ServiceProvider.StartMassTransitAsync()/StopMassTransitAsync()
+        // extension on a bare ServiceCollection — its hosted service needs a real IHost to run
+        // under, so build one instead of a plain ServiceProvider.
+        var hostBuilder = Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
             {
-                cfg.Host(_emulator.ConnectionString);
-                cfg.ConfigureEndpoints(ctx);
+                services.AddLogging(b => b.AddConsole());
+                services.AddSingleton(new ServiceBusAdministrationClient(_emulator.ConnectionString));
+                services.AddSingleton(new ServiceBusClient(_emulator.ConnectionString));
+                services.AddSingleton<AdminErrorQueueService>();
+                services.AddMassTransit(x =>
+                {
+                    x.AddConsumer<AlwaysFaultsHandler>();
+                    // Matches Hosting/FplBotApplication.cs's production bus config exactly —
+                    // verified this has zero effect on the fault topic itself (only on whether a
+                    // {queue}_error queue also gets created), but matching it keeps this fixture
+                    // faithful to the real topology.
+                    x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
+                    x.UsingAzureServiceBus((ctx, cfg) =>
+                    {
+                        cfg.Host(_emulator.ConnectionString);
+                        cfg.ConfigureEndpoints(ctx);
+                    });
+                });
             });
-        });
 
-        _provider = services.BuildServiceProvider();
-        await _provider.StartMassTransitAsync();
+        _host = hostBuilder.Build();
+        await _host.StartAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _provider.StopMassTransitAsync();
-        await _provider.DisposeAsync();
+        await _host.StopAsync();
+        _host.Dispose();
         await _emulator.DisposeAsync();
     }
 }
@@ -149,7 +157,7 @@ public class AdminErrorQueueCollection : ICollectionFixture<AdminErrorQueueFixtu
 This won't compile yet — `FplBot.WebApi.Admin.AdminErrorQueueService` doesn't exist. That's expected; it's created in Task 2. For now, comment out the `Service` property and the `services.AddSingleton<AdminErrorQueueService>();` line so the rest of the fixture compiles:
 
 ```csharp
-// public AdminErrorQueueService Service => _provider.GetRequiredService<AdminErrorQueueService>();
+// public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
 ```
 
 and remove the `services.AddSingleton<AdminErrorQueueService>();` line and its `using FplBot.WebApi.Admin;`. (Task 2 restores both.)
@@ -919,7 +927,7 @@ Expected: PASS (all 3 tests)
 
 - [ ] **Step 6: Full build check**
 
-Run: `dotnet build src/FplBot.sln --no-incremental`
+Run: `dotnet build src/FplBot.slnx --no-incremental`
 Expected: builds with no warnings — confirms `WebApiService` still wires correctly end-to-end (the `ASB_CONNECTIONSTRING`-backed clients are constructed lazily, so this doesn't require a live Service Bus).
 
 - [ ] **Step 7: Commit**
@@ -1408,7 +1416,7 @@ Expected: no errors
 
 - [ ] **Step 3: Full solution build**
 
-Run: `dotnet build src/FplBot.sln --no-incremental`
+Run: `dotnet build src/FplBot.slnx --no-incremental`
 Expected: builds with no warnings
 
 - [ ] **Step 4: Full test run**
