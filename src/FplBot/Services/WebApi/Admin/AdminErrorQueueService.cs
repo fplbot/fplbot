@@ -137,7 +137,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
                 ["headers"] = new JsonObject(),
             };
 
-            var sender = client.CreateSender(targetQueue);
+            await using var sender = client.CreateSender(targetQueue);
             await sender.SendMessageAsync(new ServiceBusMessage(retryEnvelope.ToJsonString())
             {
                 ContentType = "application/vnd.masstransit+json",
