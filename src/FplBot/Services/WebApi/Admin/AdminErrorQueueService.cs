@@ -78,4 +78,60 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
 
     private static string? GetProperty(IReadOnlyDictionary<string, object> props, string key) =>
         props.TryGetValue(key, out var value) ? value?.ToString() : null;
+
+    public Task<bool> RetryMessageAsync(string queue, string messageId, CancellationToken ct = default)
+    {
+        var targetQueue = queue[..^ErrorQueueSuffix.Length];
+        return ScanAndActAsync(queue, messageId, async (receiver, message) =>
+        {
+            // The error-queue message body is already a complete, valid MassTransit envelope for
+            // its original message type — no reconstruction needed, just resend it. A fresh
+            // transport MessageId avoids any confusion with the completed original.
+            await using var sender = client.CreateSender(targetQueue);
+            var retryMessage = new ServiceBusMessage(message.Body) { ContentType = message.ContentType };
+            await sender.SendMessageAsync(retryMessage, ct);
+
+            await receiver.CompleteMessageAsync(message, ct);
+        }, ct);
+    }
+
+    public Task<bool> DiscardMessageAsync(string queue, string messageId, CancellationToken ct = default) =>
+        ScanAndActAsync(queue, messageId, (receiver, message) => receiver.CompleteMessageAsync(message, ct), ct);
+
+    // There is no fetch-by-message-id in Azure Service Bus, so this scans the queue (PeekLock),
+    // abandoning every non-matching message immediately so it returns to the queue. Bounded by
+    // cycle detection, NOT by ActiveMessageCount (confirmed unreliable against this repo's test
+    // emulator — see the class-level notes): abandoning a non-matching message makes it instantly
+    // redeliverable, so once a message id repeats, the scan has cycled through everything in the
+    // queue without finding the target — stop there.
+    private async Task<bool> ScanAndActAsync(
+        string queue, string messageId,
+        Func<ServiceBusReceiver, ServiceBusReceivedMessage, Task> onMatch, CancellationToken ct)
+    {
+        await using var receiver = client.CreateReceiver(queue);
+        var seen = new HashSet<string>();
+
+        while (true)
+        {
+            var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(5), ct);
+            if (message is null)
+                break;
+
+            if (message.MessageId == messageId)
+            {
+                await onMatch(receiver, message);
+                return true;
+            }
+
+            if (!seen.Add(message.MessageId))
+            {
+                await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+                break;
+            }
+
+            await receiver.AbandonMessageAsync(message, cancellationToken: ct);
+        }
+
+        return false;
+    }
 }
