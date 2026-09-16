@@ -205,8 +205,8 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
         var installation = await fixture.SlackRepo.GetInstallation(teamId);
         var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
-        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(failingSince);
-        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(failingSince.AddDays(1));
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(failingSince, "not_in_channel");
+        installation.GetChannel("#fplbot")!.RecordDeliveryFailure(failingSince.AddDays(1), "not_in_channel");
         await fixture.SlackRepo.Save(installation);
 
         var slackClientBuilder = fixture.Services.GetRequiredService<Slackbot.Net.SlackClients.Http.ISlackClientBuilder>();

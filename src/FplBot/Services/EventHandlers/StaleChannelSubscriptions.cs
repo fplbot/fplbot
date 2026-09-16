@@ -9,6 +9,7 @@ public static class StaleChannelSubscriptions
         IDomainRepository repository,
         string installationId,
         string channelId,
+        string reason,
         DateTimeOffset now)
     {
         var subscription = await repository.GetChannelSubscription(installationId, channelId);
@@ -17,7 +18,7 @@ public static class StaleChannelSubscriptions
             return null;
         }
 
-        subscription.RecordDeliveryFailure(now);
+        subscription.RecordDeliveryFailure(now, reason);
 
         if (!subscription.IsStale(now))
         {

@@ -106,7 +106,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0);
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "50013");
         await fixture.GuildRepo.Save(guild);
 
         await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);

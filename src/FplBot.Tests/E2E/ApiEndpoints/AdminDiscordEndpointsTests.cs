@@ -40,8 +40,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
         var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince);
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1));
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince, "50013");
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1), "50013");
         await fixture.GuildRepo.Save(guild);
 
         var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, fixture.GuildRepo);
@@ -121,8 +121,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
         var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
-        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince);
-        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1));
+        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince, "50013");
+        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1), "50013");
         await fixture.GuildRepo.Save(installedGuild);
 
         var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();

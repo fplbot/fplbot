@@ -12,7 +12,7 @@ public class DiscordChannelDeliveryFailedHandler(
     {
         var message = context.Message;
         var removed = await StaleChannelSubscriptions.RecordFailure(
-            repository, message.GuildId, message.ChannelId, message.OccuredAt);
+            repository, message.GuildId, message.ChannelId, message.Reason, message.OccuredAt);
 
         if (removed is null)
         {

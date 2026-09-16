@@ -39,8 +39,8 @@ public class PingSlashCommandHandlerTests(AppFixture fixture) : IAsyncLifetime
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0);
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1));
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "50013");
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1), "50013");
         await fixture.GuildRepo.Save(guild);
 
         await fixture.AskDiscord("ping", guildId: guild.Id, channelId: channelId);
@@ -56,8 +56,8 @@ public class PingSlashCommandHandlerTests(AppFixture fixture) : IAsyncLifetime
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0);
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1));
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "50013");
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1), "50013");
         await fixture.GuildRepo.Save(guild);
         fixture.DiscordChannelFails(channelId, 50013);
 
@@ -87,8 +87,8 @@ public class PingSlashCommandHandlerTests(AppFixture fixture) : IAsyncLifetime
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0);
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1));
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "50013");
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1), "50013");
         await fixture.GuildRepo.Save(guild);
         fixture.DiscordChannelFails(channelId, new HttpRequestException("connection reset"));
 

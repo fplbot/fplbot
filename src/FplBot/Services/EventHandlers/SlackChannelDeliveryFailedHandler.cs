@@ -12,7 +12,7 @@ public class SlackChannelDeliveryFailedHandler(
     {
         var message = context.Message;
         var removed = await StaleChannelSubscriptions.RecordFailure(
-            repository, message.TeamId, message.ChannelId, message.OccuredAt);
+            repository, message.TeamId, message.ChannelId, message.Reason, message.OccuredAt);
 
         if (removed is null)
         {

@@ -25,6 +25,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly string _channelSubSubscriptionsField = "subscriptions";
     private readonly string _channelSubFailureCountField = "failureCount";
     private readonly string _channelSubFailingSinceField = "failingSince";
+    private readonly string _channelSubLastFailureReasonField = "lastFailureReason";
 
     public SlackTeamRepository(IConnectionMultiplexer redis, IOptions<RedisOptions> redisOptions, ILogger<SlackTeamRepository> logger)
     {
@@ -204,11 +205,16 @@ public class SlackTeamRepository : ISlackTeamRepository
         await _db.HashSetAsync(key, hashEntries.ToArray());
         if (channel.FailingSince is { } failingSince)
         {
-            await _db.HashSetAsync(key, _channelSubFailingSinceField, failingSince.ToUnixTimeMilliseconds());
+            await _db.HashSetAsync(key,
+            [
+                new HashEntry(_channelSubFailingSinceField, failingSince.ToUnixTimeMilliseconds()),
+                new HashEntry(_channelSubLastFailureReasonField, channel.LastFailureReason)
+            ]);
         }
         else
         {
-            await _db.HashDeleteAsync(key, _channelSubFailingSinceField);
+            await _db.HashDeleteAsync(key,
+                [(RedisValue)_channelSubFailingSinceField, (RedisValue)_channelSubLastFailureReasonField]);
         }
         await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
         await UpdateEventIndex(teamId, channel.ChannelId, oldEvents, newEvents);
@@ -282,7 +288,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     {
         var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId),
             [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField,
-             _channelSubFailureCountField, _channelSubFailingSinceField]);
+             _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField]);
         if (!fetched[0].HasValue)
         {
             return null;
@@ -295,7 +301,9 @@ public class SlackTeamRepository : ISlackTeamRepository
         var failingSince = fetched[4].HasValue
             ? DateTimeOffset.FromUnixTimeMilliseconds((long)fetched[4])
             : (DateTimeOffset?)null;
-        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince);
+        var lastFailureReason = fetched[5].HasValue ? fetched[5].ToString() : null;
+        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
+            lastFailureReason);
     }
 
     public async Task DeleteChannelSubscription(string teamId, string channelId)

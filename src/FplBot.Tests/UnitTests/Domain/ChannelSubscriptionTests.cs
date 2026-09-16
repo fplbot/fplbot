@@ -24,7 +24,7 @@ public class ChannelSubscriptionTests
     {
         var sub = NewSubscription();
 
-        sub.RecordDeliveryFailure(Day0);
+        sub.RecordDeliveryFailure(Day0, "not_in_channel");
 
         Assert.Equal(1, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);
@@ -35,8 +35,8 @@ public class ChannelSubscriptionTests
     {
         var sub = NewSubscription();
 
-        sub.RecordDeliveryFailure(Day0);
-        sub.RecordDeliveryFailure(Day0.AddDays(3));
+        sub.RecordDeliveryFailure(Day0, "not_in_channel");
+        sub.RecordDeliveryFailure(Day0.AddDays(3), "not_in_channel");
 
         Assert.Equal(2, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);
@@ -46,8 +46,8 @@ public class ChannelSubscriptionTests
     public void ClearDeliveryFailures_ResetsBothFields()
     {
         var sub = NewSubscription();
-        sub.RecordDeliveryFailure(Day0);
-        sub.RecordDeliveryFailure(Day0.AddDays(1));
+        sub.RecordDeliveryFailure(Day0, "not_in_channel");
+        sub.RecordDeliveryFailure(Day0.AddDays(1), "not_in_channel");
 
         sub.ClearDeliveryFailures();
 
@@ -61,7 +61,7 @@ public class ChannelSubscriptionTests
         var sub = NewSubscription();
         for (var i = 0; i < 5; i++)
         {
-            sub.RecordDeliveryFailure(Day0.AddHours(i));
+            sub.RecordDeliveryFailure(Day0.AddHours(i), "not_in_channel");
         }
 
         Assert.False(sub.IsStale(Day0.AddDays(6)));
@@ -73,7 +73,7 @@ public class ChannelSubscriptionTests
         var sub = NewSubscription();
         for (var i = 0; i < 4; i++)
         {
-            sub.RecordDeliveryFailure(Day0.AddDays(i));
+            sub.RecordDeliveryFailure(Day0.AddDays(i), "not_in_channel");
         }
 
         Assert.False(sub.IsStale(Day0.AddDays(8)));
@@ -85,7 +85,7 @@ public class ChannelSubscriptionTests
         var sub = NewSubscription();
         for (var i = 0; i < 5; i++)
         {
-            sub.RecordDeliveryFailure(Day0.AddDays(i));
+            sub.RecordDeliveryFailure(Day0.AddDays(i), "not_in_channel");
         }
 
         Assert.True(sub.IsStale(Day0.AddDays(8)));
@@ -97,7 +97,7 @@ public class ChannelSubscriptionTests
         var sub = NewSubscription();
         for (var i = 0; i < 5; i++)
         {
-            sub.RecordDeliveryFailure(Day0.AddDays(i));
+            sub.RecordDeliveryFailure(Day0.AddDays(i), "not_in_channel");
         }
 
         sub.ClearDeliveryFailures();

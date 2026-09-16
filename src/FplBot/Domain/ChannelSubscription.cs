@@ -3,7 +3,7 @@ namespace FplBot.Domain;
 public class ChannelSubscription
 {
     public const int MaxFailures = 5;
-    public static readonly TimeSpan MaxFailureAge = TimeSpan.FromDays(7);
+    public static readonly TimeSpan MaxFailureAge = TimeSpan.FromDays(30);
 
     public string ChannelId { get; }
 
@@ -12,6 +12,8 @@ public class ChannelSubscription
     public int FailureCount { get; private set; }
 
     public DateTimeOffset? FailingSince { get; private set; }
+
+    public string? LastFailureReason { get; private set; }
 
     public EventCollection Events { get; } = EventCollection.Empty();
 
@@ -35,13 +37,14 @@ public class ChannelSubscription
     }
 
     public static ChannelSubscription Load(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events,
-        int failureCount = 0, DateTimeOffset? failingSince = null)
+        int failureCount = 0, DateTimeOffset? failingSince = null, string? lastFailureReason = null)
     {
         var subscription = new ChannelSubscription(channelId)
         {
             FollowedLeagueId = followedLeagueId,
             FailureCount = failureCount,
-            FailingSince = failingSince
+            FailingSince = failingSince,
+            LastFailureReason = lastFailureReason
         };
         subscription.Events.Add(events);
         return subscription;
@@ -81,15 +84,17 @@ public class ChannelSubscription
         return Events.Contains(fplEvent);
     }
 
-    public void RecordDeliveryFailure(DateTimeOffset now)
+    public void RecordDeliveryFailure(DateTimeOffset now, string reason)
     {
         FailingSince ??= now;
+        LastFailureReason = reason;
         FailureCount++;
     }
 
     public void ClearDeliveryFailures()
     {
         FailingSince = null;
+        LastFailureReason = null;
         FailureCount = 0;
     }
 

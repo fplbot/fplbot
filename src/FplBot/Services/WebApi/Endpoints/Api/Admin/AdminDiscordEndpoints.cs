@@ -139,7 +139,7 @@ public static class AdminDiscordEndpoints
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
         new(guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
-            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince);
+            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason);
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
@@ -189,7 +189,8 @@ public static class AdminDiscordEndpoints
                 subscriptions = ToEventSubscriptions(channel),
                 channelStatus,
                 failureCount = channel.FailureCount,
-                failingSince = channel.FailingSince
+                failingSince = channel.FailingSince,
+                lastFailureReason = channel.LastFailureReason
             });
         }
 
