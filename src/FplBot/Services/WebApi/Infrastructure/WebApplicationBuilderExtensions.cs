@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.Slack;
+using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using CronBackgroundServices;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
@@ -7,6 +9,7 @@ using Fpl.Search;
 using FplBot.Config;
 using FplBot.Discord;
 using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.WebApi.Admin;
 using FplBot.WebApi.Configurations;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -74,6 +77,13 @@ public static class WebApplicationBuilderExtensions
         services.AddFplBotSlackWebEndpoints(configuration, redisConn, env);
         services.AddFplBotDiscordWebEndpoints(configuration, redisConn, env);
         services.AddIndexingServices(configuration, redisConn);
+
+        var asbConnectionString = configuration["ASB_CONNECTIONSTRING"]
+            ?? throw new InvalidOperationException("Service bus connection string not configured. Set ASB_CONNECTIONSTRING.");
+        services.AddSingleton(new ServiceBusAdministrationClient(asbConnectionString));
+        services.AddSingleton(new ServiceBusClient(asbConnectionString));
+        services.AddSingleton<AdminErrorQueueService>();
+        services.AddSingleton<AdminErrorQueueJobRunner>();
 
         services.AddAuthentication(options =>
             {

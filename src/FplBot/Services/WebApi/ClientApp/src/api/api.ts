@@ -3,6 +3,10 @@ import type {
   Bookmarks,
   ChannelFilter,
   DiscordSlashCommand,
+  ErrorQueueJobAccepted,
+  ErrorQueueJobState,
+  ErrorQueueMessage,
+  ErrorQueueSummary,
   EventSubscription,
   GuildDetails,
   GuildWithSubs,
@@ -252,4 +256,60 @@ export async function getLeagueDetails(leagueId: number): Promise<LeagueDetails 
     throw new Error(`League details request failed with status ${res.status}`);
   }
   return res.json();
+}
+
+// ---- Admin: error queues ----
+
+export function getErrorQueues(): Promise<ErrorQueueSummary[]> {
+  return request("/api/admin/errors/queues");
+}
+
+export function getErrorQueueMessages(queue: string): Promise<ErrorQueueMessage[]> {
+  return request(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages`);
+}
+
+export function retryErrorMessage(queue: string, messageId: string): Promise<ErrorQueueJobAccepted> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/retry`);
+}
+
+export function discardErrorMessage(queue: string, messageId: string): Promise<ErrorQueueJobAccepted> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/discard`);
+}
+
+export function retryAllErrorMessages(queue: string): Promise<ErrorQueueJobAccepted> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/retry-all`);
+}
+
+export function purgeErrorQueue(queue: string): Promise<ErrorQueueJobAccepted> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/purge`);
+}
+
+export function getErrorQueueJob(jobId: string): Promise<ErrorQueueJobState> {
+  return request(`/api/admin/errors/jobs/${encodeURIComponent(jobId)}`);
+}
+
+// Starts one of the mutating error-queue actions and resolves once it has actually finished,
+// so callers can keep a single "doing it..." state and then show a real outcome. A job that
+// finishes as Failed rejects, which puts it on the same error path as a failed request.
+export async function runErrorQueueJob(
+  start: () => Promise<ErrorQueueJobAccepted>,
+  pollIntervalMs = 500,
+): Promise<string> {
+  const { jobId } = await start();
+  for (;;) {
+    let job: ErrorQueueJobState;
+    try {
+      job = await getErrorQueueJob(jobId);
+    } catch (e) {
+      // Jobs live in memory on the instance that accepted them, so a restart mid-run loses the
+      // record. Say that, rather than surfacing a bare 404 — the exact thing this flow replaced.
+      if (e instanceof AdminApiError && e.status === 404) {
+        throw new Error("This action is no longer being tracked (the server may have restarted). Refresh to see the current state of the queue.");
+      }
+      throw e;
+    }
+    if (job.status === "Succeeded") return job.message ?? "Done.";
+    if (job.status === "Failed") throw new Error(job.message ?? "The job failed.");
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+  }
 }

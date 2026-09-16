@@ -100,6 +100,23 @@ const router = createRouter({
           ],
         },
         {
+          path: "errors",
+          component: () => import("./views/admin/ErrorsSection.vue"),
+          children: [
+            {
+              path: "",
+              name: "admin-errors-queues",
+              component: () => import("./views/admin/ErrorQueuesView.vue"),
+            },
+            {
+              path: ":queue",
+              name: "admin-errors-queue-detail",
+              component: () => import("./views/admin/ErrorQueueDetailView.vue"),
+              props: true,
+            },
+          ],
+        },
+        {
           path: "teams/:entityId",
           name: "admin-team-details",
           component: () => import("./views/admin/InstallationDetailsView.vue"),
