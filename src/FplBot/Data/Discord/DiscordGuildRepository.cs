@@ -107,7 +107,7 @@ public class DiscordGuildRepository : IGuildRepository
         await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.Id));
     }
 
-    private async Task SaveChannelSubscription(string guildId, ChannelSubscription channel)
+    public async Task SaveChannelSubscription(string guildId, ChannelSubscription channel)
     {
         var key = FromGuildIdAndChannelToGuildChannelSubKey(guildId, channel.ChannelId);
         var oldEvents = ExpandEvents(ParseSubscriptionString((await _db.HashGetAsync(key, _subscriptionsField)).ToString(), " ").Select(ToDomainEvent));

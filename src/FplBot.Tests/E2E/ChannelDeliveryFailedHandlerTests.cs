@@ -65,6 +65,32 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
     }
 
     [Fact]
+    public async Task ConcurrentFailuresOnDifferentChannelsOfSameGuild_BothRecordedWithoutClobbering()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelA = guild.ChannelSubscriptions.First().ChannelId;
+        var channelB = "sibling-" + Guid.NewGuid().ToString("N");
+        guild.Subscribe(channelB, [FplEvent.PriceChanges]);
+        await fixture.GuildRepo.Save(guild);
+
+        const int failuresPerChannel = 5;
+
+        for (var i = 0; i < failuresPerChannel; i++)
+        {
+            await Task.WhenAll(
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelA, "50001", Day0), TestContext.Current.CancellationToken),
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelB, "50001", Day0), TestContext.Current.CancellationToken));
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+
+        var subA = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelA), failuresPerChannel);
+        var subB = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelB), failuresPerChannel);
+
+        Assert.Equal(failuresPerChannel, subA.FailureCount);
+        Assert.Equal(failuresPerChannel, subB.FailureCount);
+    }
+
+    [Fact]
     public async Task SlackFailure_IncrementsCounters()
     {
         var installation = await fixture.SeedInstallation();

@@ -11,23 +11,28 @@ public static class StaleChannelSubscriptions
         string channelId,
         DateTimeOffset now)
     {
-        var installation = await repository.FindInstallationByTeamId(installationId);
-        var subscription = installation?.GetChannel(channelId);
-        if (installation is null || subscription is null)
+        var subscription = await repository.GetChannelSubscription(installationId, channelId);
+        if (subscription is null)
         {
             return null;
         }
 
         subscription.RecordDeliveryFailure(now);
 
-        if (subscription.IsStale(now))
+        if (!subscription.IsStale(now))
         {
-            installation.RemoveChannel(channelId);
-            await repository.Save(installation);
-            return subscription;
+            await repository.SaveChannelSubscription(installationId, subscription);
+            return null;
         }
 
+        var installation = await repository.FindInstallationByTeamId(installationId);
+        if (installation is null)
+        {
+            return null;
+        }
+
+        installation.RemoveChannel(channelId);
         await repository.Save(installation);
-        return null;
+        return subscription;
     }
 }

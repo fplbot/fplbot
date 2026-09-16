@@ -180,7 +180,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         return installations;
     }
 
-    private async Task SaveChannelSubscription(string teamId, ChannelSubscription channel)
+    public async Task SaveChannelSubscription(string teamId, ChannelSubscription channel)
     {
         var key = FromTeamAndChannelToChannelSubKey(teamId, channel.ChannelId);
         var oldEvents = ExpandEvents(GetSubscriptions(teamId, await _db.HashGetAsync(key, _channelSubSubscriptionsField)).Select(ToDomainEvent));
