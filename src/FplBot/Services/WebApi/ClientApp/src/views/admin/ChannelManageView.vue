@@ -235,12 +235,13 @@ async function submitDelete() {
         </button>
       </div>
 
-      <div v-if="channel.leagueId" class="card">
+      <div class="card">
         <h2>Publish standings</h2>
         <p v-if="publishFeedback" :class="['alert', publishFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ publishFeedback.text }}
         </p>
-        <button class="btn small" :disabled="publishing" @click="submitPublish">
+        <p v-if="!channel.leagueId" class="hint">Not following a league, so there are no standings to publish.</p>
+        <button class="btn small" :disabled="publishing || !channel.leagueId" @click="submitPublish">
           {{ publishing ? "Publishing..." : "Publish standings" }}
         </button>
       </div>
@@ -291,6 +292,11 @@ async function submitDelete() {
 .summary dd {
   margin: 0;
   word-break: break-all;
+}
+
+.hint {
+  color: #6b7280;
+  font-style: italic;
 }
 
 .status {
