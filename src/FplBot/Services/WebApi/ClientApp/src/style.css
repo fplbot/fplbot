@@ -180,6 +180,12 @@ a {
   background: white;
 }
 
+.admin-table td.row-actions {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  width: 1%;
+}
+
 .admin-table tbody tr.failing,
 .admin-table tbody tr.failing td {
   background: #fef9c3;
