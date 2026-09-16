@@ -80,6 +80,9 @@ public class AppFixture : IAsyncLifetime
     public void DiscordChannelFails(string channelId, HttpStatusCode status) =>
         _capturingDiscordClient.FailChannel(channelId, status);
 
+    public void DiscordChannelFails(string channelId, Exception exception) =>
+        _capturingDiscordClient.FailChannel(channelId, exception);
+
     public void RecoverDiscordChannel(string channelId) => _capturingDiscordClient.RecoverChannel(channelId);
 
     public void ResetChannelOutcomes()

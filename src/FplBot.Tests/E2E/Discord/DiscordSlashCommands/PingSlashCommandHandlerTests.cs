@@ -81,4 +81,23 @@ public class PingSlashCommandHandlerTests(AppFixture fixture) : IAsyncLifetime
 
         Assert.Contains("can't see it", response.EmbedDescription(), StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task FailedPing_DueToNetworkError_ReturnsDiagnosisInsteadOfThrowing()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0);
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1));
+        await fixture.GuildRepo.Save(guild);
+        fixture.DiscordChannelFails(channelId, new HttpRequestException("connection reset"));
+
+        var response = await fixture.AskDiscord("ping", guildId: guild.Id, channelId: channelId);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
+
+        Assert.Contains("couldn't reach discord", response.EmbedDescription(), StringComparison.OrdinalIgnoreCase);
+        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
+        Assert.Equal(2, sub!.FailureCount);
+        Assert.Equal(Day0, sub.FailingSince);
+    }
 }

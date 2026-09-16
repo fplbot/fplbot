@@ -7,7 +7,7 @@ namespace FplBot.Tests.E2E;
 
 public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordClient
 {
-    private readonly ConcurrentDictionary<string, DiscordApiException> _failing = new();
+    private readonly ConcurrentDictionary<string, Exception> _failing = new();
 
     public void FailChannel(string channelId, int errorCode) =>
         _failing[channelId] = new DiscordApiException(
@@ -15,6 +15,9 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
 
     public void FailChannel(string channelId, HttpStatusCode status) =>
         _failing[channelId] = new DiscordApiException(status, null, $"stubbed {status}");
+
+    public void FailChannel(string channelId, Exception exception) =>
+        _failing[channelId] = exception;
 
     public void RecoverChannel(string channelId) => _failing.TryRemove(channelId, out _);
 

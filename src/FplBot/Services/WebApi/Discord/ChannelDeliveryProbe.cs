@@ -23,6 +23,11 @@ public class ChannelDeliveryProbe(
             logger.LogWarning(e, "Probe failed for guild {GuildId} channel {ChannelId}", guildId, channelId);
             return new ProbeResult(false, e.Message, Describe(e));
         }
+        catch (Exception e)
+        {
+            logger.LogWarning(e, "Probe could not reach Discord for guild {GuildId} channel {ChannelId}", guildId, channelId);
+            return new ProbeResult(false, e.Message, "I couldn't reach Discord to test this channel. Try again in a moment.");
+        }
     }
 
     private static string Describe(DiscordApiException e) => e.ErrorCode switch
