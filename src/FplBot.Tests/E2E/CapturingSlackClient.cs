@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.AssistantThreadsSetStatus;
 using Slackbot.Net.SlackClients.Http.Models.Requests.AssistantThreadsSetSuggestedPrompts;
 using Slackbot.Net.SlackClients.Http.Models.Requests.AssistantThreadsSetTitle;
@@ -47,7 +48,7 @@ public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
     {
         if (_failing.TryGetValue(postMessage.Channel, out var error))
         {
-            return Task.FromResult(new ChatPostMessageResponse { Ok = false, Error = error });
+            throw new WellKnownSlackApiException(error: error, responseContent: "{}");
         }
 
         capture.Record(postMessage);
