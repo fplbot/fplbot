@@ -1,4 +1,5 @@
 using Discord.Net.HttpClients;
+using FplBot.Data.Discord;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -7,6 +8,7 @@ namespace FplBot.EventHandlers.Discord;
 
 public class PublishToGuildHandler(
     IDiscordClient discordClient,
+    IGuildRepository guildRepository,
     ILogger<PublishToGuildHandler> logger,
     IHostEnvironment env)
     :
@@ -45,6 +47,7 @@ public class PublishToGuildHandler(
         try
         {
             await post();
+            await ClearFailures(guildId, channelId);
         }
         catch (DiscordApiException e)
         {
@@ -62,5 +65,17 @@ public class PublishToGuildHandler(
         {
             logger.LogWarning(e, "Delivery to Discord channel {ChannelId} failed, not counted", channelId);
         }
+    }
+
+    private async Task ClearFailures(string guildId, string channelId)
+    {
+        var subscription = await guildRepository.GetChannelSubscription(guildId, channelId);
+        if (subscription is null || subscription.FailureCount == 0)
+        {
+            return;
+        }
+
+        subscription.ClearDeliveryFailures();
+        await guildRepository.SaveChannelSubscription(guildId, subscription);
     }
 }
