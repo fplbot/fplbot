@@ -6,7 +6,7 @@ using FplBot.Formatting;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashCommandHandler
+public class AddSubscriptionSlashCommandHandler(IGuildRepository repo, ChannelDeliveryProbe probe) : ISlashCommandHandler
 {
     public string CommandName => "subscriptions";
 
@@ -25,7 +25,7 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashC
             installation.Subscribe(context.ChannelId, [newFplEvent]);
             await repo.Save(installation);
             var created = installation.GetChannel(context.ChannelId)!;
-            return Respond("✅ Success!", $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(created.Events.Current.Select(ToEventSubscription))}");
+            return await RespondWithProbe(context, $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(created.Events.Current.Select(ToEventSubscription))}");
         }
 
         if (existingChannel.IsSubscribedTo(newFplEvent))
@@ -35,7 +35,18 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashC
 
         installation.Subscribe(context.ChannelId, [newFplEvent]);
         await repo.Save(installation);
-        return Respond("✅ Success!", $"Updated subscriptions:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}");
+        return await RespondWithProbe(context, $"Updated subscriptions:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}");
+    }
+
+    private async Task<SlashCommandResponse> RespondWithProbe(SlashCommandContext context, string description)
+    {
+        var result = await probe.Probe(context.GuildId, context.ChannelId,
+            "✅ Subscriptions updated for this channel.");
+
+        return result.Delivered
+            ? Respond("✅ Success!", description)
+            : Respond("⚠️ Saved, but I can't post here yet",
+                $"Subscribed! But there is a permission issue you need to solve. {ChannelDeliveryProbe.ProblemAndFix(result)}\n\n{description}");
     }
 
     private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());

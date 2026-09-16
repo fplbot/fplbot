@@ -7,7 +7,7 @@ using FplBot.Domain;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client) : ISlashCommandHandler
+public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client, ChannelDeliveryProbe probe) : ISlashCommandHandler
 {
     public string CommandName => "help";
 
@@ -50,6 +50,12 @@ public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client
         else
         {
             content = "⚠️ Not subscribing to any events. Add one to get notifications!";
+        }
+
+        var result = await probe.Probe(context.GuildId, context.ChannelId, "🏓 fplbot can post in this channel.");
+        if (!result.Delivered)
+        {
+            content = $"⚠️ I'm currently unable to post in this channel. {ChannelDeliveryProbe.ProblemAndFix(result)}\n{content}";
         }
 
         return Respond(content);
