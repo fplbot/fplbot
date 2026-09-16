@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an "Errors" tab to the fplbot admin UI that lists MassTransit's existing fault queues (one row per faulted message *type*, i.e. per `MassTransit/Fault--<type>--` topic+subscription pair), lets an admin inspect a faulted message's details and body — including which consumer actually faulted, read per-message from `sourceAddress` — retry it, discard it, or purge an entire queue.
+**Goal:** Add an "Errors" tab to the fplbot admin UI that lists MassTransit's standard `{Consumer}_error` queues (one per faulting consumer), lets an admin inspect a faulted message's details and body, retry it, discard it, or purge an entire queue.
 
-**Architecture:** A new `AdminErrorQueueService` in the WebApi service talks directly to Azure Service Bus via the `Azure.Messaging.ServiceBus` SDK (list/peek/retry/discard/purge against `MassTransit/Fault--<type>--` topics and their subscription(s) — the mechanism that already produces fault visibility today, unchanged). Note: the fault topic's subscription is **not** named per consumer (verified directly — it's a generic, shared subscription); grouping is by message type, and the actual faulting consumer is only knowable per-message via `sourceAddress`. New minimal-API endpoints under `/api/admin/errors/**` expose it; a new Vue admin tab consumes those endpoints. No MassTransit pipeline configuration changes.
+**Architecture:** Remove `cfg.DiscardFaultedMessages()` from the production bus config so MassTransit's default behavior applies: a faulted message moves to a plain queue named `{Consumer}_error`, with exception details attached as `MT-Fault-*` message application properties and the original envelope untouched in the body. A new `AdminErrorQueueService` in the WebApi service talks directly to Azure Service Bus via the `Azure.Messaging.ServiceBus` SDK (list/peek/retry/discard/purge against these plain queues — no topics, no subscriptions, no `ForwardTo` risk). New minimal-API endpoints under `/api/admin/errors/**` expose it; a new Vue admin tab consumes those endpoints.
 
 **Tech Stack:** .NET 11 minimal APIs, MassTransit 8.5.10 + Azure Service Bus transport, `Azure.Messaging.ServiceBus` 7.20.2, Vue 3 + vue-router, xUnit v3 + `AlmostServiceBus.TestHost` 0.6.0 for integration tests.
 
@@ -13,27 +13,59 @@
 ## Global Constraints
 
 - Reuse the existing `ASB_CONNECTIONSTRING` config value — no new secret/config surface.
-- `topic` is always passed as a query parameter, never a path segment (fault topic names contain a literal `/`).
-- Every retry/discard scan is bounded to one pass over the subscription — detected by tracking already-abandoned message ids and stopping on the first repeat — never an unbounded loop, and never bounded by `ActiveMessageCount` (confirmed unreliable against this repo's test emulator — see Task 2's notes).
-- Purge is destructive; the UI must confirm before calling it.
+- Every retry/discard/purge/messages call must reject a queue name that doesn't end in `_error` (via `AdminErrorQueueService.IsErrorQueue(string)`) — this is a destructive admin surface and must never reach a live, non-error queue.
+- Every retry/discard scan is bounded by tracking already-abandoned message ids and stopping on the first repeat (a full cycle with no match) — never by `ActiveMessageCount`, which reads 0 unconditionally against this repo's test emulator (`AlmostServiceBus.TestHost` 0.6.0, confirmed for both queues and subscriptions by direct testing — its management API never serializes message-count fields at all).
+- Purge loops until a receive call returns zero messages — self-terminating (every message is completed, never abandoned back), so it needs no count-based bound either.
 - Every new `/admin/errors/**` route lives behind the existing `RequireAuthorization("IsAdmin")` group in `WebAppExtensions.cs` — do not add a separate auth check.
-- No dead-letter-subqueue routing, TTL override, or MassTransit fault-pipeline change — faulted messages still expire after the existing 2-hour `DefaultMessageTimeToLive`, same as every other queue/topic on this bus.
+- `DiscardFaultedMessages()` is intentionally removed from `Hosting/FplBotApplication.cs` as part of this plan — this is a real, deliberate messaging-pipeline change (faulted messages now persist in `_error` queues instead of being discarded), not an accident.
+- Faulted messages still expire after the existing 2-hour `DefaultMessageTimeToLive`, same as every other queue on this bus — no TTL override, no dead-letter-subqueue routing.
 
 ---
 
-## Task 1: Test infrastructure — ASB-backed fixture and a controllable faulting consumer
+## Task 1: Remove DiscardFaultedMessages(), and build the ASB-backed test fixture
 
 **Files:**
+- Modify: `src/FplBot/Hosting/FplBotApplication.cs` — remove `cfg.DiscardFaultedMessages()`
 - Modify: `src/FplBot.Tests/FplBot.Tests.csproj` — add `AlmostServiceBus.TestHost` 0.6.0
 - Create: `src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixture.cs`
 - Test: `src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixtureTests.cs`
 
 **Interfaces:**
-- Produces: `AdminErrorQueueFixture` (class, `IAsyncLifetime`) with `Publisher` (`IPublishEndpoint`), `AdminClient` (`ServiceBusAdministrationClient`), `BusClient` (`ServiceBusClient`) properties, and a `DrainMatchingAsync(string topic, string subscription, string bodyContains, int maxMessages = 50)` test-cleanup helper, used by every later task's tests via `[Collection("AdminErrorQueue")]`. Every test that publishes a `PoisonTestMessage` shares one fault topic with every other test in the collection (same message type) — always drain your own message via this helper (or via a real discard/retry/purge call) before the test ends, and always identify "your" message by its `key`/body content, never by raw queue length (which reflects everything currently in the shared topic, not just this test's own message).
-- Produces: `PoisonTestMessage(string Key, bool AlwaysFault)` record and `AlwaysFaultsHandler` (`IConsumer<PoisonTestMessage>`) — faults on a message's first delivery (or every delivery if `AlwaysFault` is true), succeeds on the second delivery of the same `Key` otherwise. Later tasks publish this message type to produce controllable faults.
-- Produces: `AdminErrorQueueFixtureTests.WaitForMessageAsync(AdminErrorQueueFixture fixture, string bodyContains, int attempts = 20)` (static, internal) — polls every fault topic/subscription by peeking for a message whose body contains `bodyContains` (normally the test's own `key`), returning the `(topic, subscription)` it was found on, or `(null, null)` if it never showed up. Later tasks use this instead of writing their own polling loop, and instead of trusting `ActiveMessageCount` (see Testing note below).
+- Produces: `AdminErrorQueueFixture` (class, `IAsyncLifetime`) with `Publisher` (`IPublishEndpoint`), `AdminClient` (`ServiceBusAdministrationClient`), `BusClient` (`ServiceBusClient`) properties, and a `DrainMatchingAsync(string queue, string bodyContains, int maxMessages = 50)` test-cleanup helper, used by every later task's tests via `[Collection("AdminErrorQueue")]`.
+- Produces: `PoisonTestMessage(string Key, bool AlwaysFault)` record and `AlwaysFaultsHandler` (`IConsumer<PoisonTestMessage>`) — faults on a message's first delivery (or every delivery if `AlwaysFault` is true), succeeds on the second delivery of the same `Key` otherwise. Its faults land in queue `AlwaysFaultsHandler_error` (MassTransit names the error queue after the consumer, matching this repo's existing queue-naming convention). Later tasks publish this message type to produce controllable faults.
+- Produces: `AdminErrorQueueFixtureTests.WaitForMessageAsync(AdminErrorQueueFixture fixture, string queue, string bodyContains, int attempts = 20)` (static, internal) — polls the given queue by peeking for a message whose body contains `bodyContains` (normally the test's own `key`), returning `true`/`false`. Later tasks use this instead of writing their own polling loop, and instead of trusting `ActiveMessageCount`.
 
-- [ ] **Step 1: Add the test-only package reference**
+- [ ] **Step 1: Remove `DiscardFaultedMessages()` from production**
+
+Edit `src/FplBot/Hosting/FplBotApplication.cs`. Find:
+
+```csharp
+        services.AddMassTransit(x =>
+        {
+            foreach (var svc in active)
+                svc.ConfigureMassTransit(x);
+            x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
+            configureBus(x);
+        });
+```
+
+Replace with:
+
+```csharp
+        services.AddMassTransit(x =>
+        {
+            foreach (var svc in active)
+                svc.ConfigureMassTransit(x);
+            configureBus(x);
+        });
+```
+
+- [ ] **Step 2: Run the full existing test suite to confirm nothing depends on discard-on-fault**
+
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests` (full run, no filter).
+Expected: same pass/fail counts as before this change (the existing suite uses `AppFixture`'s in-memory MassTransit transport, which doesn't persist `_error` queues across runs the way a real broker does, so this change should be invisible to it — but confirm empirically rather than assume). If you see failures in `FplBot.Tests.E2E.Search.SearchEndpointsTests`/`AdminSearchEndpointsTests` (Elasticsearch Testcontainer errors), that's pre-existing, unrelated environmental flakiness under constrained local Docker memory — not something this step is checking for. Compare against a baseline run on the commit *before* Step 1's edit if you want to confirm that specifically.
+
+- [ ] **Step 3: Add the test-only package reference**
 
 Edit `src/FplBot.Tests/FplBot.Tests.csproj`, inside the existing `<ItemGroup>` of `PackageReference`s, add:
 
@@ -41,7 +73,7 @@ Edit `src/FplBot.Tests/FplBot.Tests.csproj`, inside the existing `<ItemGroup>` o
 <PackageReference Include="AlmostServiceBus.TestHost" Version="0.6.0" />
 ```
 
-- [ ] **Step 2: Write the fixture, poison consumer, and collection definition**
+- [ ] **Step 4: Write the fixture, poison consumer, and collection definition**
 
 Create `src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixture.cs`:
 
@@ -50,7 +82,6 @@ using System.Collections.Concurrent;
 using AlmostServiceBus.TestHost;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
-using FplBot.WebApi.Admin;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -70,18 +101,18 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     private readonly ServiceBusEmulatorFixture _emulator = new(EmulatorPort);
     private IHost _host = null!;
 
-    public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
+    // public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
     public ServiceBusAdministrationClient AdminClient => _host.Services.GetRequiredService<ServiceBusAdministrationClient>();
     public ServiceBusClient BusClient => _host.Services.GetRequiredService<ServiceBusClient>();
     public IPublishEndpoint Publisher => _host.Services.GetRequiredService<IPublishEndpoint>();
 
-    // Every test in this collection publishes the SAME PoisonTestMessage type, so they all share
-    // ONE fault topic (MassTransit provisions one fault topic per message TYPE, not per test).
-    // Tests must drain their own message when done so the next test doesn't see stray leftovers.
-    // Used only by tests — not a production code path, so it's fine to live on the fixture itself.
-    public async Task DrainMatchingAsync(string topic, string subscription, string bodyContains, int maxMessages = 50)
+    // Every test in this collection that publishes PoisonTestMessage shares the SAME error queue
+    // (AlwaysFaultsHandler_error) — drain your own message via this helper (or via a real
+    // discard/retry/purge call) before the test ends, and always identify "your" message by its
+    // `key`/body content, never by raw queue length.
+    public async Task DrainMatchingAsync(string queue, string bodyContains, int maxMessages = 50)
     {
-        await using var receiver = BusClient.CreateReceiver(topic, subscription);
+        await using var receiver = BusClient.CreateReceiver(queue);
         var received = await receiver.ReceiveMessagesAsync(maxMessages, TimeSpan.FromSeconds(2));
         foreach (var m in received)
         {
@@ -96,24 +127,18 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     {
         await _emulator.StartAsync();
 
-        // MassTransit 8.5.10 has no ServiceProvider.StartMassTransitAsync()/StopMassTransitAsync()
-        // extension on a bare ServiceCollection — its hosted service needs a real IHost to run
-        // under, so build one instead of a plain ServiceProvider.
         var hostBuilder = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
                 services.AddLogging(b => b.AddConsole());
                 services.AddSingleton(new ServiceBusAdministrationClient(_emulator.ConnectionString));
                 services.AddSingleton(new ServiceBusClient(_emulator.ConnectionString));
-                services.AddSingleton<AdminErrorQueueService>();
+                // services.AddSingleton<AdminErrorQueueService>();
                 services.AddMassTransit(x =>
                 {
                     x.AddConsumer<AlwaysFaultsHandler>();
-                    // Matches Hosting/FplBotApplication.cs's production bus config exactly —
-                    // verified this has zero effect on the fault topic itself (only on whether a
-                    // {queue}_error queue also gets created), but matching it keeps this fixture
-                    // faithful to the real topology.
-                    x.AddConfigureEndpointsCallback((_, cfg) => cfg.DiscardFaultedMessages());
+                    // Deliberately NOT calling DiscardFaultedMessages() — matches the corrected
+                    // production config (Step 1), so faults land in AlwaysFaultsHandler_error.
                     x.UsingAzureServiceBus((ctx, cfg) =>
                     {
                         cfg.Host(_emulator.ConnectionString);
@@ -154,15 +179,9 @@ public class AlwaysFaultsHandler : IConsumer<PoisonTestMessage>
 public class AdminErrorQueueCollection : ICollectionFixture<AdminErrorQueueFixture>;
 ```
 
-This won't compile yet — `FplBot.WebApi.Admin.AdminErrorQueueService` doesn't exist. That's expected; it's created in Task 2. For now, comment out the `Service` property and the `services.AddSingleton<AdminErrorQueueService>();` line so the rest of the fixture compiles:
+This won't compile yet — `FplBot.WebApi.Admin.AdminErrorQueueService` doesn't exist. That's expected; it's created in Task 2. The `Service` property and its DI registration are already commented out above so the rest of the fixture compiles. (Task 2 restores both, and adds `using FplBot.WebApi.Admin;`.)
 
-```csharp
-// public AdminErrorQueueService Service => _host.Services.GetRequiredService<AdminErrorQueueService>();
-```
-
-and remove the `services.AddSingleton<AdminErrorQueueService>();` line and its `using FplBot.WebApi.Admin;`. (Task 2 restores both.)
-
-- [ ] **Step 3: Write the test proving the harness itself**
+- [ ] **Step 5: Write the test proving the harness itself**
 
 Create `src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixtureTests.cs`:
 
@@ -172,66 +191,50 @@ namespace FplBot.Tests.E2E.Admin;
 [Collection("AdminErrorQueue")]
 public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
 {
-    // The fault topic's subscription is NOT named per consumer (verified directly against an
-    // isolated bus: it's a generic, shared subscription — see the spec's "Ground truth" section).
-    // So this checks by topic name (which does encode the message type) and confirms the actual
-    // message content by peeking it, rather than filtering subscriptions by an assumed name and
-    // trusting ActiveMessageCount (which was also observed to lag behind a real, peekable message
-    // shortly after publish in AlmostServiceBus.TestHost).
+    public const string ErrorQueueName = "AlwaysFaultsHandler_error";
+
     [Fact]
-    public async Task FaultedMessage_AppearsOnItsFaultTopic()
+    public async Task FaultedMessage_LandsInTheErrorQueue()
     {
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
 
-        var (topic, subscription) = await WaitForMessageAsync(key);
+        var found = await WaitForMessageAsync(fixture, ErrorQueueName, key);
 
-        Assert.NotNull(topic);
-        Assert.StartsWith("MassTransit/Fault--", topic);
+        Assert.True(found, $"Expected the faulted PoisonTestMessage to appear in {ErrorQueueName}.");
 
-        await fixture.DrainMatchingAsync(topic!, subscription!, key);
+        await fixture.DrainMatchingAsync(ErrorQueueName, key);
     }
 
-    // Returns the (topic, subscription) that actually held a message containing `bodyContains`,
-    // or (null, null) if none was found within the wait window. Reused by later tasks' tests.
-    internal static async Task<(string? Topic, string? Subscription)> WaitForMessageAsync(
-        AdminErrorQueueFixture fixture, string bodyContains, int attempts = 20)
+    // Polls the given queue by peeking for a message whose body contains `bodyContains`. Reused
+    // by later tasks' tests instead of a bespoke polling loop, and instead of trusting
+    // ActiveMessageCount (see Task 2's notes — it reads 0 unconditionally against this emulator).
+    internal static async Task<bool> WaitForMessageAsync(
+        AdminErrorQueueFixture fixture, string queue, string bodyContains, int attempts = 20)
     {
         for (var i = 0; i < attempts; i++)
         {
-            await foreach (var topic in fixture.AdminClient.GetTopicsAsync())
-            {
-                if (!topic.Name.StartsWith("MassTransit/Fault--", StringComparison.Ordinal))
-                    continue;
-
-                await foreach (var sub in fixture.AdminClient.GetSubscriptionsAsync(topic.Name))
-                {
-                    await using var receiver = fixture.BusClient.CreateReceiver(topic.Name, sub.SubscriptionName);
-                    var peeked = await receiver.PeekMessagesAsync(10);
-                    if (peeked.Any(m => m.Body.ToString().Contains(bodyContains, StringComparison.Ordinal)))
-                        return (topic.Name, sub.SubscriptionName);
-                }
-            }
+            await using var receiver = fixture.BusClient.CreateReceiver(queue);
+            var peeked = await receiver.PeekMessagesAsync(10);
+            if (peeked.Any(m => m.Body.ToString().Contains(bodyContains, StringComparison.Ordinal)))
+                return true;
             await Task.Delay(250);
         }
-        return (null, null);
+        return false;
     }
-
-    private Task<(string? Topic, string? Subscription)> WaitForMessageAsync(string bodyContains) =>
-        WaitForMessageAsync(fixture, bodyContains);
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [ ] **Step 6: Run the test to verify it passes**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueFixtureTests" --no-incremental`
-Expected: PASS — proves the emulator, the poison consumer, and the fault-topic mechanism work end-to-end before any production code is written.
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests --filter-query "/*/*/AdminErrorQueueFixtureTests/*"` (a prior task in this plan's history found `dotnet test --filter` can produce spurious "Zero tests ran / Handshake failures" on this repo's xUnit v3 runner — running the built executable directly with `--filter-query` is reliable).
+Expected: PASS — proves the emulator, the corrected (no-discard) bus config, the poison consumer, and the `_error` queue mechanism work end-to-end before any production admin code is written.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/FplBot.Tests/FplBot.Tests.csproj src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixture.cs src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixtureTests.cs
-git commit -m "Add ASB-backed test fixture and poison consumer for error-queue tests"
+git add src/FplBot/Hosting/FplBotApplication.cs src/FplBot.Tests/FplBot.Tests.csproj src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixture.cs src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixtureTests.cs
+git commit -m "Remove DiscardFaultedMessages() and add ASB-backed test fixture for error-queue tests"
 ```
 
 ---
@@ -246,7 +249,7 @@ git commit -m "Add ASB-backed test fixture and poison consumer for error-queue t
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueFixture.Publisher`, `.AdminClient` (from Task 1).
-- Produces: `ErrorQueueSummary(string Topic, string Subscription, string MessageType, long Length)`, `FaultException(string ExceptionType, string Message)`, `ErrorQueueMessage(string MessageId, DateTimeOffset EnqueuedTime, string SourceAddress, IReadOnlyList<string> FaultMessageTypes, IReadOnlyList<FaultException> Exceptions, string? OriginalMessageJson)` records, and `AdminErrorQueueService.ListQueuesAsync(CancellationToken)` / `.PeekMessagesAsync(string topic, string subscription, int maxMessages = 50, CancellationToken)` methods — used by Task 3, 4, and 5. `MessageType` is parsed from the topic name (see the spec's "Ground truth" section — the subscription name does not identify anything meaningful; grouping and display both key off the message type instead). `Length` reads `ActiveMessageCount`, falling back to a peek-based count when that's 0 — this repo's test emulator (`AlmostServiceBus.TestHost` 0.6.0) never populates that field at all in its management API, confirmed by decompiling it, so the fallback isn't optional for this to be testable. Tasks 3 and 4 must NOT bound their own retry/discard/purge logic on `ActiveMessageCount` for the same reason — see their Interfaces notes.
+- Produces: `ErrorQueueSummary(string Queue, string Consumer, long Length)`, `ErrorQueueMessage(string MessageId, DateTimeOffset EnqueuedTime, string ExceptionType, string ExceptionMessage, string? StackTrace, string? ConsumerType, string? OriginalMessageJson)` records; `AdminErrorQueueService.IsErrorQueue(string queue)` (public static, `queue.EndsWith("_error")`) — used by Task 5's endpoints as the destructive-surface guard; `AdminErrorQueueService.ListQueuesAsync(CancellationToken)` / `.PeekMessagesAsync(string queue, int maxMessages = 50, CancellationToken)` methods — used by Task 3, 4, and 5. `Consumer` is the queue name with the `_error` suffix stripped — this **is** the real consumer name, no parsing needed (unlike the discarded topic-based design). `Length` reads `ActiveMessageCount`, falling back to a peek-based count when that's 0 — confirmed unconditionally 0 against `AlmostServiceBus.TestHost` 0.6.0 for queues (same gap already found for subscriptions), not a timing lag.
 
 - [ ] **Step 1: Add the `Azure.Messaging.ServiceBus` package reference**
 
@@ -263,30 +266,30 @@ Create `src/FplBot.Tests/E2E/Admin/AdminErrorQueueServiceListTests.cs`:
 ```csharp
 namespace FplBot.Tests.E2E.Admin;
 
+// Every test in this collection publishes the same PoisonTestMessage type and shares one error
+// queue (AlwaysFaultsHandler_error), so assertions identify "this test's own message" by its
+// `key` (via peek/body content), never by raw Length/ActiveMessageCount.
 [Collection("AdminErrorQueue")]
 public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
 {
-    // Every test in this collection shares one fault topic per message type (see Task 1's fixture
-    // notes) — so assertions here match by this test's own `key` (via peek/body content) rather
-    // than by an exact queue Length, which reflects everything currently in the shared topic, and
-    // rather than by ActiveMessageCount, which was observed to lag behind a real, peekable message.
     [Fact]
-    public async Task ListQueuesAsync_IncludesQueueForTheFaultedMessageType()
+    public async Task ListQueuesAsync_IncludesTheErrorQueue()
     {
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
 
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
+        var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
+            fixture, AdminErrorQueueFixtureTests.ErrorQueueName, key);
+        Assert.True(found);
 
         var queues = await fixture.Service.ListQueuesAsync();
-        var found = queues.FirstOrDefault(q => q.Topic == topic && q.Subscription == subscription);
+        var match = queues.FirstOrDefault(q => q.Queue == AdminErrorQueueFixtureTests.ErrorQueueName);
 
-        Assert.NotNull(found);
-        Assert.Contains(nameof(PoisonTestMessage), found!.MessageType);
-        Assert.True(found.Length >= 1);
+        Assert.NotNull(match);
+        Assert.Equal("AlwaysFaultsHandler", match!.Consumer);
+        Assert.True(match.Length >= 1);
 
-        await fixture.DrainMatchingAsync(topic!, subscription!, key);
+        await fixture.DrainMatchingAsync(AdminErrorQueueFixtureTests.ErrorQueueName, key);
     }
 
     [Fact]
@@ -295,25 +298,26 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
 
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
+        var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
+            fixture, AdminErrorQueueFixtureTests.ErrorQueueName, key);
+        Assert.True(found);
 
-        var messages = await fixture.Service.PeekMessagesAsync(topic!, subscription!);
+        var messages = await fixture.Service.PeekMessagesAsync(AdminErrorQueueFixtureTests.ErrorQueueName);
         var message = messages.Single(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
 
-        Assert.NotEmpty(message.Exceptions);
-        Assert.Contains("faulted", message.Exceptions[0].Message, StringComparison.OrdinalIgnoreCase);
-        Assert.EndsWith(nameof(AlwaysFaultsHandler), message.SourceAddress);
+        Assert.Equal("System.InvalidOperationException", message.ExceptionType);
+        Assert.Contains("faulted", message.ExceptionMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(nameof(AlwaysFaultsHandler), message.ConsumerType!.Split('.').Last());
 
-        await fixture.DrainMatchingAsync(topic!, subscription!, key);
+        await fixture.DrainMatchingAsync(AdminErrorQueueFixtureTests.ErrorQueueName, key);
     }
 }
 ```
 
 - [ ] **Step 3: Run the test to verify it fails**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueServiceListTests" --no-incremental`
-Expected: FAIL (compile error) — `AdminErrorQueueService`/`ErrorQueueSummary`/`ErrorQueueMessage` don't exist yet.
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental`
+Expected: FAIL (compile error) — `AdminErrorQueueService`/`ErrorQueueSummary`/`ErrorQueueMessage`/`fixture.Service` don't exist yet.
 
 - [ ] **Step 4: Implement `AdminErrorQueueService` (list + peek)**
 
@@ -326,114 +330,90 @@ using Azure.Messaging.ServiceBus.Administration;
 
 namespace FplBot.WebApi.Admin;
 
-public record ErrorQueueSummary(string Topic, string Subscription, string MessageType, long Length);
-
-public record FaultException(string ExceptionType, string Message);
+public record ErrorQueueSummary(string Queue, string Consumer, long Length);
 
 public record ErrorQueueMessage(
     string MessageId,
     DateTimeOffset EnqueuedTime,
-    string SourceAddress,
-    IReadOnlyList<string> FaultMessageTypes,
-    IReadOnlyList<FaultException> Exceptions,
+    string ExceptionType,
+    string ExceptionMessage,
+    string? StackTrace,
+    string? ConsumerType,
     string? OriginalMessageJson);
 
 public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, ServiceBusClient client)
 {
-    private const string FaultTopicPrefix = "MassTransit/Fault--";
-    private const string FaultTopicSuffix = "--";
+    private const string ErrorQueueSuffix = "_error";
+
+    public static bool IsErrorQueue(string queue) => queue.EndsWith(ErrorQueueSuffix, StringComparison.Ordinal);
 
     public async Task<IReadOnlyList<ErrorQueueSummary>> ListQueuesAsync(CancellationToken ct = default)
     {
         var result = new List<ErrorQueueSummary>();
-        await foreach (var topic in adminClient.GetTopicsAsync(ct))
+        await foreach (var queue in adminClient.GetQueuesAsync(ct))
         {
-            if (!topic.Name.StartsWith(FaultTopicPrefix, StringComparison.Ordinal))
+            if (!IsErrorQueue(queue.Name))
                 continue;
 
-            var messageType = ParseMessageType(topic.Name);
-            await foreach (var sub in adminClient.GetSubscriptionsAsync(topic.Name, ct))
-            {
-                var runtime = await adminClient.GetSubscriptionRuntimePropertiesAsync(topic.Name, sub.SubscriptionName, ct);
-                var length = runtime.Value.ActiveMessageCount;
-                // AlmostServiceBus.TestHost 0.6.0's management API never serializes a
-                // subscription's message-count field at all (confirmed by decompiling it) — this
-                // reads 0 unconditionally against that emulator, not just briefly after publish.
-                // Falling back to a peek-based count only when the runtime count reads 0 keeps
-                // real Azure's accurate count authoritative (a truly empty subscription just peeks
-                // empty too, so this is a no-op there) while making this queryable in tests.
-                if (length == 0)
-                    length = await PeekCountAsync(topic.Name, sub.SubscriptionName, ct);
-                result.Add(new ErrorQueueSummary(topic.Name, sub.SubscriptionName, messageType, length));
-            }
+            var runtime = await adminClient.GetQueueRuntimePropertiesAsync(queue.Name, ct);
+            var length = runtime.Value.ActiveMessageCount;
+            // AlmostServiceBus.TestHost 0.6.0's management API never serializes a queue's
+            // message-count field at all (confirmed by direct testing, same gap already found for
+            // subscriptions in the discarded topic-based design) — this reads 0 unconditionally
+            // against that emulator. Falling back to a peek-based count only when the runtime
+            // count reads 0 keeps real Azure's accurate count authoritative (a truly empty queue
+            // just peeks empty too, so this is a no-op there) while making this queryable in tests.
+            if (length == 0)
+                length = await PeekCountAsync(queue.Name, ct);
+
+            var consumer = queue.Name[..^ErrorQueueSuffix.Length];
+            result.Add(new ErrorQueueSummary(queue.Name, consumer, length));
         }
         return result;
     }
 
-    private async Task<long> PeekCountAsync(string topic, string subscription, CancellationToken ct)
+    private async Task<long> PeekCountAsync(string queue, CancellationToken ct)
     {
-        await using var receiver = client.CreateReceiver(topic, subscription);
+        await using var receiver = client.CreateReceiver(queue);
         var peeked = await receiver.PeekMessagesAsync(50, cancellationToken: ct);
         return peeked.Count;
     }
 
-    // "MassTransit/Fault--FplBot.Messaging.Contracts.Events.v1/AppInstalled--" -> "FplBot.Messaging.Contracts.Events.v1.AppInstalled"
-    // The subscription name carries no consumer identity here (see the spec's "Ground truth"
-    // section) — the message type parsed from the topic is the only meaningful label to group and
-    // display by.
-    private static string ParseMessageType(string topicName)
-    {
-        var trimmed = topicName[FaultTopicPrefix.Length..];
-        if (trimmed.EndsWith(FaultTopicSuffix, StringComparison.Ordinal))
-            trimmed = trimmed[..^FaultTopicSuffix.Length];
-        return trimmed.Replace('/', '.');
-    }
-
     public async Task<IReadOnlyList<ErrorQueueMessage>> PeekMessagesAsync(
-        string topic, string subscription, int maxMessages = 50, CancellationToken ct = default)
+        string queue, int maxMessages = 50, CancellationToken ct = default)
     {
-        await using var receiver = client.CreateReceiver(topic, subscription);
+        await using var receiver = client.CreateReceiver(queue);
         var peeked = await receiver.PeekMessagesAsync(maxMessages, cancellationToken: ct);
         return peeked.Select(ToErrorQueueMessage).ToList();
     }
 
     private static ErrorQueueMessage ToErrorQueueMessage(ServiceBusReceivedMessage message)
     {
-        var envelope = JsonNode.Parse(message.Body.ToString())!;
-        var fault = envelope["message"]!;
-
-        var exceptions = fault["exceptions"]?.AsArray()
-            .Where(e => e is not null)
-            .Select(e => new FaultException(
-                e!["exceptionType"]?.GetValue<string>() ?? "Unknown",
-                e["message"]?.GetValue<string>() ?? ""))
-            .ToList() ?? [];
-
-        var faultMessageTypes = fault["faultMessageTypes"]?.AsArray()
-            .Where(t => t is not null)
-            .Select(t => t!.GetValue<string>())
-            .ToList() ?? [];
-
-        var original = fault["message"];
+        var props = message.ApplicationProperties;
+        var original = JsonNode.Parse(message.Body.ToString())?["message"];
 
         return new ErrorQueueMessage(
             message.MessageId,
             message.EnqueuedTime,
-            envelope["sourceAddress"]?.GetValue<string>() ?? "",
-            faultMessageTypes,
-            exceptions,
+            GetProperty(props, "MT-Fault-ExceptionType") ?? "Unknown",
+            GetProperty(props, "MT-Fault-Message") ?? "",
+            GetProperty(props, "MT-Fault-StackTrace"),
+            GetProperty(props, "MT-Fault-ConsumerType"),
             original?.ToJsonString());
     }
+
+    private static string? GetProperty(IReadOnlyDictionary<string, object> props, string key) =>
+        props.TryGetValue(key, out var value) ? value?.ToString() : null;
 }
 ```
 
 - [ ] **Step 5: Restore the fixture's `AdminErrorQueueService` registration**
 
-Edit `src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixture.cs`: uncomment `public AdminErrorQueueService Service => ...`, add back `services.AddSingleton<AdminErrorQueueService>();` in `InitializeAsync`, and add back `using FplBot.WebApi.Admin;`.
+Edit `src/FplBot.Tests/E2E/Admin/AdminErrorQueueFixture.cs`: uncomment `public AdminErrorQueueService Service => ...`, add back `services.AddSingleton<AdminErrorQueueService>();` in `InitializeAsync`, and add `using FplBot.WebApi.Admin;` to the top of the file.
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueServiceListTests|FullyQualifiedName~AdminErrorQueueFixtureTests" --no-incremental`
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests --filter-query "/*/*/AdminErrorQueueServiceListTests/*" "/*/*/AdminErrorQueueFixtureTests/*"`
 Expected: PASS (all 3 tests)
 
 - [ ] **Step 7: Commit**
@@ -453,7 +433,7 @@ git commit -m "Add AdminErrorQueueService.ListQueuesAsync and PeekMessagesAsync"
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueFixture.Publisher`, `.Service`, `AlwaysFaultsHandler.Attempts` (from Task 1/2).
-- Produces: `AdminErrorQueueService.RetryMessageAsync(string topic, string subscription, string messageId, CancellationToken)` and `.DiscardMessageAsync(string topic, string subscription, string messageId, CancellationToken)`, both returning `Task<bool>` (`true` if a matching message was found and acted on) — used by Task 5. The shared scan helper (`ScanAndActAsync`) bounds itself by cycle detection (tracking already-abandoned message ids, stopping on the first repeat) — do NOT bound it by `ActiveMessageCount` (confirmed unreliable against this repo's test emulator in Task 2).
+- Produces: `AdminErrorQueueService.RetryMessageAsync(string queue, string messageId, CancellationToken)` and `.DiscardMessageAsync(string queue, string messageId, CancellationToken)`, both returning `Task<bool>` (`true` if a matching message was found and acted on) — used by Task 5. The shared scan helper (`ScanAndActAsync`) bounds itself by cycle detection (tracking already-abandoned message ids, stopping on the first repeat) — never by `ActiveMessageCount`. Retry resends the message's exact original body (no envelope reconstruction needed — unlike the discarded topic-based design, the `_error` queue message body is already a complete, valid MassTransit envelope) to the target queue, which is simply `queue` with the `_error` suffix stripped.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -462,30 +442,31 @@ Create `src/FplBot.Tests/E2E/Admin/AdminErrorQueueServiceRetryDiscardTests.cs`:
 ```csharp
 namespace FplBot.Tests.E2E.Admin;
 
-// Like Task 2's tests, every assertion here identifies "this test's own message" by its `key`
-// (never by raw queue Length or ActiveMessageCount — see Task 1/2's notes on why), because every
-// test in this collection shares one fault topic per message type.
+// Same rule as Task 2's tests: identify messages by key/content, never by raw Length or
+// ActiveMessageCount, because every test in this collection shares the AlwaysFaultsHandler_error
+// queue.
 [Collection("AdminErrorQueue")]
 public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixture)
 {
+    private const string Queue = AdminErrorQueueFixtureTests.ErrorQueueName;
+
     [Fact]
     public async Task RetryMessageAsync_ReconsumesTheOriginalPayload_AndClearsTheFault()
     {
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: false));
 
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
-        var message = await WaitForOwnMessageAsync(topic!, subscription!, key);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
+        var message = await WaitForOwnMessageAsync(key);
 
-        var retried = await fixture.Service.RetryMessageAsync(topic!, subscription!, message.MessageId);
+        var retried = await fixture.Service.RetryMessageAsync(Queue, message.MessageId);
         Assert.True(retried);
 
         var reprocessed = await WaitForConditionAsync(() => Task.FromResult(AlwaysFaultsHandler.Attempts.GetValueOrDefault(key) >= 2));
         Assert.True(reprocessed, "Expected the retried message to be reconsumed (attempt count >= 2).");
 
-        var stillThere = await MessageStillPresentAsync(topic!, subscription!, key);
-        Assert.False(stillThere, "Expected the retried message to be gone from the fault subscription.");
+        var stillThere = await MessageStillPresentAsync(key);
+        Assert.False(stillThere, "Expected the retried message to be gone from the error queue.");
     }
 
     [Fact]
@@ -494,15 +475,14 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
 
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
-        var message = await WaitForOwnMessageAsync(topic!, subscription!, key);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
+        var message = await WaitForOwnMessageAsync(key);
 
-        var discarded = await fixture.Service.DiscardMessageAsync(topic!, subscription!, message.MessageId);
+        var discarded = await fixture.Service.DiscardMessageAsync(Queue, message.MessageId);
         Assert.True(discarded);
 
-        var stillThere = await MessageStillPresentAsync(topic!, subscription!, key);
-        Assert.False(stillThere, "Expected the discarded message to be gone from the fault subscription.");
+        var stillThere = await MessageStillPresentAsync(key);
+        Assert.False(stillThere, "Expected the discarded message to be gone from the error queue.");
         Assert.Equal(1, AlwaysFaultsHandler.Attempts[key]);
     }
 
@@ -512,24 +492,22 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
 
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
-        await WaitForOwnMessageAsync(topic!, subscription!, key);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var result = await fixture.Service.RetryMessageAsync(topic!, subscription!, Guid.NewGuid().ToString());
+        var result = await fixture.Service.RetryMessageAsync(Queue, Guid.NewGuid().ToString());
 
         Assert.False(result);
 
         // A non-matching messageId leaves every real message untouched (abandoned back) — drain
-        // this test's own message so it doesn't leak into later tests' shared-topic assertions.
-        await fixture.DrainMatchingAsync(topic!, subscription!, key);
+        // this test's own message so it doesn't leak into later tests.
+        await fixture.DrainMatchingAsync(Queue, key);
     }
 
-    private async Task<ErrorQueueMessage> WaitForOwnMessageAsync(string topic, string subscription, string key, int attempts = 20)
+    private async Task<ErrorQueueMessage> WaitForOwnMessageAsync(string key, int attempts = 20)
     {
         for (var i = 0; i < attempts; i++)
         {
-            var messages = await fixture.Service.PeekMessagesAsync(topic, subscription);
+            var messages = await fixture.Service.PeekMessagesAsync(Queue);
             var match = messages.FirstOrDefault(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
             if (match is not null)
                 return match;
@@ -538,11 +516,11 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         throw new TimeoutException("No peekable message matching this test's key appeared in time.");
     }
 
-    private async Task<bool> MessageStillPresentAsync(string topic, string subscription, string key, int attempts = 12)
+    private async Task<bool> MessageStillPresentAsync(string key, int attempts = 12)
     {
         for (var i = 0; i < attempts; i++)
         {
-            var messages = await fixture.Service.PeekMessagesAsync(topic, subscription);
+            var messages = await fixture.Service.PeekMessagesAsync(Queue);
             if (messages.All(m => m.OriginalMessageJson == null || !m.OriginalMessageJson.Contains(key)))
                 return false;
             await Task.Delay(250);
@@ -565,73 +543,44 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueServiceRetryDiscardTests" --no-incremental`
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental`
 Expected: FAIL (compile error) — `RetryMessageAsync`/`DiscardMessageAsync` don't exist yet.
 
 - [ ] **Step 3: Implement retry and discard**
 
-Add to `src/FplBot/Services/WebApi/Admin/AdminErrorQueueService.cs` (inside the `AdminErrorQueueService` class, after `PeekMessagesAsync`):
+Add to `src/FplBot/Services/WebApi/Admin/AdminErrorQueueService.cs` (inside the `AdminErrorQueueService` class, after `PeekMessagesAsync`/`ToErrorQueueMessage`/`GetProperty`):
 
 ```csharp
-    public Task<bool> RetryMessageAsync(string topic, string subscription, string messageId, CancellationToken ct = default) =>
-        ScanAndActAsync(topic, subscription, messageId, async (receiver, message) =>
+    public Task<bool> RetryMessageAsync(string queue, string messageId, CancellationToken ct = default)
+    {
+        var targetQueue = queue[..^ErrorQueueSuffix.Length];
+        return ScanAndActAsync(queue, messageId, async (receiver, message) =>
         {
-            var envelope = JsonNode.Parse(message.Body.ToString())!;
-            var fault = envelope["message"]!;
-            var messageType = fault["faultMessageTypes"]!.AsArray()[0]!.GetValue<string>();
-            var sourceAddress = envelope["sourceAddress"]!.GetValue<string>();
-            var targetQueue = sourceAddress.Split('/').Last();
-            var original = fault["message"];
-
-            // urn:message:FplBot.Messaging.Contracts.Events.v1:AppInstalled -> FplBot.Messaging.Contracts.Events.v1/AppInstalled
-            var typePath = messageType.Replace("urn:message:", "");
-            var lastColon = typePath.LastIndexOf(':');
-            typePath = typePath[..lastColon] + "/" + typePath[(lastColon + 1)..];
-
-            var retryEnvelope = new JsonObject
-            {
-                ["messageId"] = Guid.NewGuid().ToString(),
-                ["requestId"] = null,
-                ["correlationId"] = null,
-                ["conversationId"] = Guid.NewGuid().ToString(),
-                ["initiatorId"] = null,
-                ["sourceAddress"] = "sb://localhost/AdminErrorQueueService",
-                ["destinationAddress"] = $"sb://localhost/{typePath}?type=topic",
-                ["responseAddress"] = null,
-                ["faultAddress"] = null,
-                ["messageType"] = new JsonArray(messageType),
-                ["message"] = original?.DeepClone(),
-                ["expirationTime"] = null,
-                ["sentTime"] = DateTimeOffset.UtcNow,
-                ["headers"] = new JsonObject(),
-            };
-
+            // The error-queue message body is already a complete, valid MassTransit envelope for
+            // its original message type — no reconstruction needed, just resend it. A fresh
+            // transport MessageId avoids any confusion with the completed original.
             await using var sender = client.CreateSender(targetQueue);
-            await sender.SendMessageAsync(new ServiceBusMessage(retryEnvelope.ToJsonString())
-            {
-                ContentType = "application/vnd.masstransit+json",
-            }, ct);
+            var retryMessage = new ServiceBusMessage(message.Body) { ContentType = message.ContentType };
+            await sender.SendMessageAsync(retryMessage, ct);
 
             await receiver.CompleteMessageAsync(message, ct);
         }, ct);
+    }
 
-    public Task<bool> DiscardMessageAsync(string topic, string subscription, string messageId, CancellationToken ct = default) =>
-        ScanAndActAsync(topic, subscription, messageId, (receiver, message) => receiver.CompleteMessageAsync(message, ct), ct);
+    public Task<bool> DiscardMessageAsync(string queue, string messageId, CancellationToken ct = default) =>
+        ScanAndActAsync(queue, messageId, (receiver, message) => receiver.CompleteMessageAsync(message, ct), ct);
 
-    // There is no fetch-by-message-id in Azure Service Bus, so this scans the subscription
-    // (PeekLock), abandoning every non-matching message immediately so it returns to the
-    // subscription, and stops after one full pass (bounded by the subscription's message
-    // count at call time) so a stale/missing id can't loop forever.
-    // Bounded by cycle detection, NOT by ActiveMessageCount (confirmed unreliable against this
-    // repo's test emulator — see Task 2's notes; it also wouldn't be the right bound even against
-    // real Azure, since it can change while the scan runs). Abandoning a non-matching message
-    // makes it immediately redeliverable, so once a message id repeats, the scan has cycled through
-    // every message currently in the subscription without finding the target — stop there.
+    // There is no fetch-by-message-id in Azure Service Bus, so this scans the queue (PeekLock),
+    // abandoning every non-matching message immediately so it returns to the queue. Bounded by
+    // cycle detection, NOT by ActiveMessageCount (confirmed unreliable against this repo's test
+    // emulator — see the class-level notes): abandoning a non-matching message makes it instantly
+    // redeliverable, so once a message id repeats, the scan has cycled through everything in the
+    // queue without finding the target — stop there.
     private async Task<bool> ScanAndActAsync(
-        string topic, string subscription, string messageId,
+        string queue, string messageId,
         Func<ServiceBusReceiver, ServiceBusReceivedMessage, Task> onMatch, CancellationToken ct)
     {
-        await using var receiver = client.CreateReceiver(topic, subscription);
+        await using var receiver = client.CreateReceiver(queue);
         var seen = new HashSet<string>();
 
         while (true)
@@ -663,7 +612,7 @@ No new `using` directives are needed — `Azure.Messaging.ServiceBus` and `Syste
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueServiceRetryDiscardTests" --no-incremental`
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests --filter-query "/*/*/AdminErrorQueueServiceRetryDiscardTests/*"`
 Expected: PASS (all 3 tests)
 
 - [ ] **Step 5: Commit**
@@ -683,7 +632,7 @@ git commit -m "Add AdminErrorQueueService.RetryMessageAsync and DiscardMessageAs
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueFixture` (from Task 1/2).
-- Produces: `AdminErrorQueueService.PurgeQueueAsync(string topic, string subscription, CancellationToken)` returning `Task<int>` (count purged) — used by Task 5. Loops until a receive call returns zero messages — self-terminating (every message is completed, never abandoned back), so it needs no `ActiveMessageCount` bound (confirmed unreliable against this repo's test emulator in Task 2).
+- Produces: `AdminErrorQueueService.PurgeQueueAsync(string queue, CancellationToken)` returning `Task<int>` (count purged) — used by Task 5. Loops until a receive call returns zero messages — self-terminating (every message is completed, never abandoned back), so it needs no `ActiveMessageCount` bound.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -693,11 +642,13 @@ Create `src/FplBot.Tests/E2E/Admin/AdminErrorQueueServicePurgeTests.cs`:
 namespace FplBot.Tests.E2E.Admin;
 
 // Same rule as Tasks 2/3: identify messages by key/content, never by raw Length or
-// ActiveMessageCount, because every test in this collection shares one fault topic per message
-// type.
+// ActiveMessageCount, because every test in this collection shares the AlwaysFaultsHandler_error
+// queue.
 [Collection("AdminErrorQueue")]
 public class AdminErrorQueueServicePurgeTests(AdminErrorQueueFixture fixture)
 {
+    private const string Queue = AdminErrorQueueFixtureTests.ErrorQueueName;
+
     [Fact]
     public async Task PurgeQueueAsync_RemovesEveryMessage_InOneCall()
     {
@@ -705,54 +656,27 @@ public class AdminErrorQueueServicePurgeTests(AdminErrorQueueFixture fixture)
         foreach (var key in keys)
             await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
 
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, keys[0]);
-        Assert.NotNull(topic);
-        foreach (var key in keys.Skip(1))
-            await WaitForOwnMessageAsync(topic!, subscription!, key);
+        foreach (var key in keys)
+            Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var purged = await fixture.Service.PurgeQueueAsync(topic!, subscription!);
+        var purged = await fixture.Service.PurgeQueueAsync(Queue);
 
         // >= rather than == : purge legitimately clears every message currently in the shared
-        // topic, including any stray leftovers from an earlier test's failed cleanup — this test
+        // queue, including any stray leftovers from an earlier test's failed cleanup — this test
         // only needs to know its own 3 keys are gone, not that purged is exactly 3.
         Assert.True(purged >= keys.Count, $"Expected at least {keys.Count} messages purged, got {purged}.");
         foreach (var key in keys)
         {
-            var stillThere = await MessageStillPresentAsync(topic!, subscription!, key);
-            Assert.False(stillThere, $"Expected key {key} to be gone after purge.");
+            var messages = await fixture.Service.PeekMessagesAsync(Queue);
+            Assert.DoesNotContain(messages, m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
         }
-    }
-
-    private async Task<ErrorQueueMessage> WaitForOwnMessageAsync(string topic, string subscription, string key, int attempts = 20)
-    {
-        for (var i = 0; i < attempts; i++)
-        {
-            var messages = await fixture.Service.PeekMessagesAsync(topic, subscription);
-            var match = messages.FirstOrDefault(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
-            if (match is not null)
-                return match;
-            await Task.Delay(250);
-        }
-        throw new TimeoutException("No peekable message matching this test's key appeared in time.");
-    }
-
-    private async Task<bool> MessageStillPresentAsync(string topic, string subscription, string key, int attempts = 12)
-    {
-        for (var i = 0; i < attempts; i++)
-        {
-            var messages = await fixture.Service.PeekMessagesAsync(topic, subscription);
-            if (messages.All(m => m.OriginalMessageJson == null || !m.OriginalMessageJson.Contains(key)))
-                return false;
-            await Task.Delay(250);
-        }
-        return true;
     }
 }
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueServicePurgeTests" --no-incremental`
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental`
 Expected: FAIL (compile error) — `PurgeQueueAsync` doesn't exist yet.
 
 - [ ] **Step 3: Implement purge**
@@ -760,12 +684,12 @@ Expected: FAIL (compile error) — `PurgeQueueAsync` doesn't exist yet.
 Add to `src/FplBot/Services/WebApi/Admin/AdminErrorQueueService.cs` (inside the class, after `ScanAndActAsync`):
 
 ```csharp
-    // Not bounded by ActiveMessageCount (confirmed unreliable against this repo's test emulator —
-    // see Task 2's notes). Every message here is completed, never abandoned back, so looping until
-    // a receive call returns nothing is already self-terminating and needs no external bound.
-    public async Task<int> PurgeQueueAsync(string topic, string subscription, CancellationToken ct = default)
+    // Not bounded by ActiveMessageCount (confirmed unreliable against this repo's test emulator).
+    // Every message here is completed, never abandoned back, so looping until a receive call
+    // returns nothing is already self-terminating and needs no external bound.
+    public async Task<int> PurgeQueueAsync(string queue, CancellationToken ct = default)
     {
-        await using var receiver = client.CreateReceiver(topic, subscription);
+        await using var receiver = client.CreateReceiver(queue);
         var purged = 0;
 
         while (true)
@@ -787,7 +711,7 @@ Add to `src/FplBot/Services/WebApi/Admin/AdminErrorQueueService.cs` (inside the 
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorQueueServicePurgeTests" --no-incremental`
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests --filter-query "/*/*/AdminErrorQueueServicePurgeTests/*"`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -809,7 +733,7 @@ git commit -m "Add AdminErrorQueueService.PurgeQueueAsync"
 
 **Interfaces:**
 - Consumes: `AdminErrorQueueService` (from Tasks 2–4), `AdminErrorQueueFixture.Service` (from Task 1).
-- Produces: `GET /api/admin/errors/queues`, `GET /api/admin/errors/queue/messages`, `POST /api/admin/errors/queue/messages/{messageId}/retry`, `POST /api/admin/errors/queue/messages/{messageId}/discard`, `POST /api/admin/errors/queue/purge` — consumed by the frontend in Tasks 6–8.
+- Produces: `GET /api/admin/errors/queues`, `GET /api/admin/errors/queues/{queue}/messages`, `POST /api/admin/errors/queues/{queue}/messages/{messageId}/retry`, `POST /api/admin/errors/queues/{queue}/messages/{messageId}/discard`, `POST /api/admin/errors/queues/{queue}/purge` — consumed by the frontend in Tasks 6–8. `queue` is a normal path segment (queue names never contain `/`, unlike the discarded topic-based design's fault-topic names). Every handler that takes a `queue` calls `AdminErrorQueueService.IsErrorQueue(queue)` first and returns `TypedResults.BadRequest(...)` if false — this destructive surface must never reach a live, non-error queue.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -823,24 +747,25 @@ using Microsoft.AspNetCore.Http.HttpResults;
 namespace FplBot.Tests.E2E.Admin;
 
 // Same rule as every earlier task's tests: identify this test's own message by its `key`, never
-// by raw Length/ActiveMessageCount, since the fault topic is shared across the whole collection.
+// by raw Length/ActiveMessageCount, since the error queue is shared across the whole collection.
 [Collection("AdminErrorQueue")]
 public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
 {
+    private const string Queue = AdminErrorQueueFixtureTests.ErrorQueueName;
+
     [Fact]
-    public async Task GetQueues_ReturnsOkWithTheFaultedQueue()
+    public async Task GetQueues_ReturnsOkWithTheErrorQueue()
     {
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
         var result = await AdminErrorEndpoints.GetQueues(fixture.Service, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<IReadOnlyList<ErrorQueueSummary>>>(result);
-        Assert.Contains(ok.Value!, q => q.Topic == topic && q.Subscription == subscription);
+        Assert.Contains(ok.Value!, q => q.Queue == Queue);
 
-        await fixture.DrainMatchingAsync(topic!, subscription!, key);
+        await fixture.DrainMatchingAsync(Queue, key);
     }
 
     [Fact]
@@ -848,15 +773,21 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
     {
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var result = await AdminErrorEndpoints.RetryMessage(
-            Guid.NewGuid().ToString(), topic!, subscription!, fixture.Service, CancellationToken.None);
+        var result = await AdminErrorEndpoints.RetryMessage(Queue, Guid.NewGuid().ToString(), fixture.Service, CancellationToken.None);
 
         Assert.IsType<NotFound>(result);
 
-        await fixture.DrainMatchingAsync(topic!, subscription!, key);
+        await fixture.DrainMatchingAsync(Queue, key);
+    }
+
+    [Fact]
+    public async Task RetryMessage_NonErrorQueue_ReturnsBadRequest()
+    {
+        var result = await AdminErrorEndpoints.RetryMessage("AlwaysFaultsHandler", "any-id", fixture.Service, CancellationToken.None);
+
+        Assert.IsType<BadRequest<object>>(result);
     }
 
     [Fact]
@@ -864,10 +795,9 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
     {
         var key = Guid.NewGuid().ToString();
         await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true));
-        var (topic, subscription) = await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, key);
-        Assert.NotNull(topic);
+        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
 
-        var result = await AdminErrorEndpoints.PurgeQueue(topic!, subscription!, fixture.Service, CancellationToken.None);
+        var result = await AdminErrorEndpoints.PurgeQueue(Queue, fixture.Service, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<PurgeResult>>(result);
         Assert.True(ok.Value!.Purged >= 1);
@@ -877,7 +807,7 @@ public class AdminErrorEndpointsTests(AdminErrorQueueFixture fixture)
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorEndpointsTests" --no-incremental`
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental`
 Expected: FAIL (compile error) — `AdminErrorEndpoints` doesn't exist yet.
 
 - [ ] **Step 3: Implement the endpoints**
@@ -896,33 +826,47 @@ public static class AdminErrorEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/errors/queues", GetQueues);
-        group.MapGet("/errors/queue/messages", GetMessages);
-        group.MapPost("/errors/queue/messages/{messageId}/retry", RetryMessage);
-        group.MapPost("/errors/queue/messages/{messageId}/discard", DiscardMessage);
-        group.MapPost("/errors/queue/purge", PurgeQueue);
+        group.MapGet("/errors/queues/{queue}/messages", GetMessages);
+        group.MapPost("/errors/queues/{queue}/messages/{messageId}/retry", RetryMessage);
+        group.MapPost("/errors/queues/{queue}/messages/{messageId}/discard", DiscardMessage);
+        group.MapPost("/errors/queues/{queue}/purge", PurgeQueue);
     }
 
     internal static async Task<IResult> GetQueues(AdminErrorQueueService service, CancellationToken ct)
         => TypedResults.Ok(await service.ListQueuesAsync(ct));
 
-    internal static async Task<IResult> GetMessages(string topic, string subscription, AdminErrorQueueService service, CancellationToken ct)
-        => TypedResults.Ok(await service.PeekMessagesAsync(topic, subscription, ct: ct));
-
-    internal static async Task<IResult> RetryMessage(string messageId, string topic, string subscription, AdminErrorQueueService service, CancellationToken ct)
+    internal static async Task<IResult> GetMessages(string queue, AdminErrorQueueService service, CancellationToken ct)
     {
-        var retried = await service.RetryMessageAsync(topic, subscription, messageId, ct);
+        if (!AdminErrorQueueService.IsErrorQueue(queue))
+            return TypedResults.BadRequest<object>(new { message = $"'{queue}' is not an error queue." });
+
+        return TypedResults.Ok(await service.PeekMessagesAsync(queue, ct: ct));
+    }
+
+    internal static async Task<IResult> RetryMessage(string queue, string messageId, AdminErrorQueueService service, CancellationToken ct)
+    {
+        if (!AdminErrorQueueService.IsErrorQueue(queue))
+            return TypedResults.BadRequest<object>(new { message = $"'{queue}' is not an error queue." });
+
+        var retried = await service.RetryMessageAsync(queue, messageId, ct);
         return retried ? TypedResults.Ok(new { message = "Message retried" }) : TypedResults.NotFound();
     }
 
-    internal static async Task<IResult> DiscardMessage(string messageId, string topic, string subscription, AdminErrorQueueService service, CancellationToken ct)
+    internal static async Task<IResult> DiscardMessage(string queue, string messageId, AdminErrorQueueService service, CancellationToken ct)
     {
-        var discarded = await service.DiscardMessageAsync(topic, subscription, messageId, ct);
+        if (!AdminErrorQueueService.IsErrorQueue(queue))
+            return TypedResults.BadRequest<object>(new { message = $"'{queue}' is not an error queue." });
+
+        var discarded = await service.DiscardMessageAsync(queue, messageId, ct);
         return discarded ? TypedResults.Ok(new { message = "Message discarded" }) : TypedResults.NotFound();
     }
 
-    internal static async Task<IResult> PurgeQueue(string topic, string subscription, AdminErrorQueueService service, CancellationToken ct)
+    internal static async Task<IResult> PurgeQueue(string queue, AdminErrorQueueService service, CancellationToken ct)
     {
-        var purged = await service.PurgeQueueAsync(topic, subscription, ct);
+        if (!AdminErrorQueueService.IsErrorQueue(queue))
+            return TypedResults.BadRequest<object>(new { message = $"'{queue}' is not an error queue." });
+
+        var purged = await service.PurgeQueueAsync(queue, ct);
         return TypedResults.Ok(new PurgeResult(purged));
     }
 }
@@ -930,7 +874,7 @@ public static class AdminErrorEndpoints
 
 - [ ] **Step 4: Register the service and map the endpoints**
 
-Edit `src/FplBot/Services/WebApi/Infrastructure/WebApplicationBuilderExtensions.cs`. Add `using Azure.Messaging.ServiceBus;`, `using Azure.Messaging.ServiceBus.Administration;`, and `using FplBot.WebApi.Admin;` to the top, and add this block right after `services.AddIndexingServices(configuration, redisConn);` (line 76):
+Edit `src/FplBot/Services/WebApi/Infrastructure/WebApplicationBuilderExtensions.cs`. Add `using Azure.Messaging.ServiceBus;`, `using Azure.Messaging.ServiceBus.Administration;`, and `using FplBot.WebApi.Admin;` to the top, and add this block right after `services.AddIndexingServices(configuration, redisConn);`:
 
 ```csharp
         var asbConnectionString = configuration["ASB_CONNECTIONSTRING"]
@@ -940,21 +884,23 @@ Edit `src/FplBot/Services/WebApi/Infrastructure/WebApplicationBuilderExtensions.
         services.AddSingleton<AdminErrorQueueService>();
 ```
 
-Edit `src/FplBot/Services/WebApi/Infrastructure/WebAppExtensions.cs`: add `using FplBot.WebApi.Endpoints.Api.Admin;` is already present (the file already imports that namespace for the other `Admin*Endpoints`); add this line after `AdminHealthEndpoints.Map(admin, env);` (line 74):
+Edit `src/FplBot/Services/WebApi/Infrastructure/WebAppExtensions.cs`: add this line after `AdminHealthEndpoints.Map(admin, env);`:
 
 ```csharp
         AdminErrorEndpoints.Map(admin);
 ```
 
+(`using FplBot.WebApi.Endpoints.Api.Admin;` is already present in this file for the other `Admin*Endpoints`.)
+
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `dotnet test src/FplBot.Tests --filter "FullyQualifiedName~AdminErrorEndpointsTests" --no-incremental`
-Expected: PASS (all 3 tests)
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests --filter-query "/*/*/AdminErrorEndpointsTests/*"`
+Expected: PASS (all 4 tests)
 
 - [ ] **Step 6: Full build check**
 
 Run: `dotnet build src/FplBot.slnx --no-incremental`
-Expected: builds with no warnings — confirms `WebApiService` still wires correctly end-to-end (the `ASB_CONNECTIONSTRING`-backed clients are constructed lazily, so this doesn't require a live Service Bus).
+Expected: builds with no new warnings — confirms `WebApiService` still wires correctly end-to-end (the `ASB_CONNECTIONSTRING`-backed clients are constructed lazily, so this doesn't require a live Service Bus).
 
 - [ ] **Step 7: Commit**
 
@@ -972,7 +918,7 @@ git commit -m "Add /api/admin/errors/** endpoints for the error-queues admin fea
 - Modify: `src/FplBot/Services/WebApi/ClientApp/src/api/api.ts`
 
 **Interfaces:**
-- Produces: TS interfaces `ErrorQueueSummary`, `FaultException`, `ErrorQueueMessage` and functions `getErrorQueues()`, `getErrorQueueMessages(topic, subscription)`, `retryErrorMessage(topic, subscription, messageId)`, `discardErrorMessage(topic, subscription, messageId)`, `purgeErrorQueue(topic, subscription)` — used by Tasks 7 and 8.
+- Produces: TS interfaces `ErrorQueueSummary`, `ErrorQueueMessage` and functions `getErrorQueues()`, `getErrorQueueMessages(queue)`, `retryErrorMessage(queue, messageId)`, `discardErrorMessage(queue, messageId)`, `purgeErrorQueue(queue)` — used by Tasks 7 and 8. Every function takes a single `queue` string (URL-encoded where it appears in a path segment) — no `topic`/`subscription` pair, unlike the discarded topic-based design.
 
 - [ ] **Step 1: Add the types**
 
@@ -982,23 +928,18 @@ Edit `src/FplBot/Services/WebApi/ClientApp/src/api/types.ts`, appending at the e
 // ---- Admin: error queues ----
 
 export interface ErrorQueueSummary {
-  topic: string;
-  subscription: string;
-  messageType: string;
+  queue: string;
+  consumer: string;
   length: number;
-}
-
-export interface FaultException {
-  exceptionType: string;
-  message: string;
 }
 
 export interface ErrorQueueMessage {
   messageId: string;
   enqueuedTime: string;
-  sourceAddress: string;
-  faultMessageTypes: string[];
-  exceptions: FaultException[];
+  exceptionType: string;
+  exceptionMessage: string;
+  stackTrace: string | null;
+  consumerType: string | null;
   originalMessageJson: string | null;
 }
 ```
@@ -1014,24 +955,20 @@ export function getErrorQueues(): Promise<ErrorQueueSummary[]> {
   return request("/api/admin/errors/queues");
 }
 
-export function getErrorQueueMessages(topic: string, subscription: string): Promise<ErrorQueueMessage[]> {
-  const params = new URLSearchParams({ topic, subscription });
-  return request(`/api/admin/errors/queue/messages?${params.toString()}`);
+export function getErrorQueueMessages(queue: string): Promise<ErrorQueueMessage[]> {
+  return request(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages`);
 }
 
-export function retryErrorMessage(topic: string, subscription: string, messageId: string): Promise<MessageResponse> {
-  const params = new URLSearchParams({ topic, subscription });
-  return postJson(`/api/admin/errors/queue/messages/${encodeURIComponent(messageId)}/retry?${params.toString()}`);
+export function retryErrorMessage(queue: string, messageId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/retry`);
 }
 
-export function discardErrorMessage(topic: string, subscription: string, messageId: string): Promise<MessageResponse> {
-  const params = new URLSearchParams({ topic, subscription });
-  return postJson(`/api/admin/errors/queue/messages/${encodeURIComponent(messageId)}/discard?${params.toString()}`);
+export function discardErrorMessage(queue: string, messageId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/messages/${encodeURIComponent(messageId)}/discard`);
 }
 
-export function purgeErrorQueue(topic: string, subscription: string): Promise<{ purged: number }> {
-  const params = new URLSearchParams({ topic, subscription });
-  return postJson(`/api/admin/errors/queue/purge?${params.toString()}`);
+export function purgeErrorQueue(queue: string): Promise<{ purged: number }> {
+  return postJson(`/api/admin/errors/queues/${encodeURIComponent(queue)}/purge`);
 }
 ```
 
@@ -1059,7 +996,7 @@ git commit -m "Add frontend types and API client functions for error queues"
 
 **Interfaces:**
 - Consumes: `getErrorQueues()`, `purgeErrorQueue()`, `describeAdminError()` (from Task 6 and `useAdminAuth.ts`).
-- Produces: route `admin-errors-queues` at `/admin/errors`, and the router push target `{ path: "/admin/errors/queue", query: { topic, subscription, messageType } }` that Task 8's detail view is reached from.
+- Produces: route `admin-errors-queues` at `/admin/errors`, and the router push target `{ name: 'admin-errors-queue-detail', params: { queue } }` that Task 8's detail view is reached from (a route **param**, not a query string — queue names never contain `/`, so this is a plain path segment, unlike the discarded topic-based design).
 
 - [ ] **Step 1: Create the section wrapper**
 
@@ -1087,10 +1024,6 @@ const loading = ref(true);
 const error = ref("");
 const purging = ref<string | null>(null);
 
-function queueKey(q: ErrorQueueSummary) {
-  return `${q.topic}::${q.subscription}`;
-}
-
 async function load() {
   loading.value = true;
   error.value = "";
@@ -1104,11 +1037,11 @@ async function load() {
 }
 
 async function purge(queue: ErrorQueueSummary) {
-  if (!confirm(`Purge all ${queue.length} message(s) for "${queue.messageType}"? This cannot be undone.`)) return;
-  purging.value = queueKey(queue);
+  if (!confirm(`Purge all ${queue.length} message(s) for "${queue.consumer}"? This cannot be undone.`)) return;
+  purging.value = queue.queue;
   error.value = "";
   try {
-    await purgeErrorQueue(queue.topic, queue.subscription);
+    await purgeErrorQueue(queue.queue);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -1123,7 +1056,7 @@ onMounted(load);
 <template>
   <div>
     <h1>Error queues</h1>
-    <p class="lead">Faulted messages, grouped by message type. Open a queue to see which consumer actually faulted per message.</p>
+    <p class="lead">Faulted messages, one queue per consumer.</p>
 
     <div class="card">
       <p v-if="error" class="alert alert-error">{{ error }}</p>
@@ -1134,28 +1067,28 @@ onMounted(load);
         <table v-else class="admin-table">
           <thead>
             <tr>
-              <th>Message type</th>
+              <th>Consumer</th>
               <th>Length</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="q in queues" :key="queueKey(q)">
-              <td>{{ q.messageType }}</td>
+            <tr v-for="q in queues" :key="q.queue">
+              <td>{{ q.consumer }}</td>
               <td>{{ q.length }}</td>
               <td class="row-actions">
                 <router-link
                   class="btn small btn-secondary"
-                  :to="{ path: '/admin/errors/queue', query: { topic: q.topic, subscription: q.subscription, messageType: q.messageType } }"
+                  :to="{ name: 'admin-errors-queue-detail', params: { queue: q.queue } }"
                 >
                   View
                 </router-link>
                 <button
                   class="btn small danger"
-                  :disabled="purging === queueKey(q)"
+                  :disabled="purging === q.queue"
                   @click="purge(q)"
                 >
-                  {{ purging === queueKey(q) ? "Purging..." : "Purge" }}
+                  {{ purging === q.queue ? "Purging..." : "Purge" }}
                 </button>
               </td>
             </tr>
@@ -1192,7 +1125,7 @@ onMounted(load);
 
 - [ ] **Step 3: Wire the routes**
 
-Edit `src/FplBot/Services/WebApi/ClientApp/src/router.ts`. Add this block to the `/admin` route's `children` array, right after the `search` block (after line 101's closing `},`):
+Edit `src/FplBot/Services/WebApi/ClientApp/src/router.ts`. Add this block to the `/admin` route's `children` array, right after the `search` block:
 
 ```typescript
         {
@@ -1205,20 +1138,31 @@ Edit `src/FplBot/Services/WebApi/ClientApp/src/router.ts`. Add this block to the
               component: () => import("./views/admin/ErrorQueuesView.vue"),
             },
             {
-              path: "queue",
+              path: ":queue",
               name: "admin-errors-queue-detail",
               component: () => import("./views/admin/ErrorQueueDetailView.vue"),
-              props: (route) => ({ topic: route.query.topic, subscription: route.query.subscription, messageType: route.query.messageType }),
+              props: true,
             },
           ],
         },
 ```
 
-(`ErrorQueueDetailView.vue` is created in Task 8 — the dynamic `import()` means this compiles fine before that file exists, but visiting the detail route would 404 in dev until then. That's acceptable since Task 8 follows immediately after.)
+(`ErrorQueueDetailView.vue` is created in Task 8 — the dynamic `import()` means this compiles fine before that file exists at runtime, but this repo's `vue-tsc` DOES resolve dynamic import paths at typecheck time — a prior attempt at this plan found the typecheck step below fails without the file existing. Create a minimal placeholder now so this task's own typecheck passes, and let Task 8 replace its content entirely:
+
+```vue
+<template>
+  <div>
+    <h1>Error queue detail</h1>
+    <p>Detail view (Task 8)</p>
+  </div>
+</template>
+```
+
+at `src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueueDetailView.vue`. Remember to `git add` it along with everything else in this task's commit — don't leave it untracked.)
 
 - [ ] **Step 4: Add the nav link**
 
-Edit `src/FplBot/Services/WebApi/ClientApp/src/layouts/AdminLayout.vue`, update the `navLinks` array (line 23-27):
+Edit `src/FplBot/Services/WebApi/ClientApp/src/layouts/AdminLayout.vue`, update the `navLinks` array:
 
 ```typescript
 const navLinks = [
@@ -1237,7 +1181,7 @@ Expected: no errors
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorsSection.vue src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueuesView.vue src/FplBot/Services/WebApi/ClientApp/src/router.ts src/FplBot/Services/WebApi/ClientApp/src/layouts/AdminLayout.vue
+git add src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorsSection.vue src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueuesView.vue src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueueDetailView.vue src/FplBot/Services/WebApi/ClientApp/src/router.ts src/FplBot/Services/WebApi/ClientApp/src/layouts/AdminLayout.vue
 git commit -m "Add Errors tab list view, purge action, and navigation"
 ```
 
@@ -1246,14 +1190,14 @@ git commit -m "Add Errors tab list view, purge action, and navigation"
 ## Task 8: Frontend — error queue detail view (messages, body, retry/discard)
 
 **Files:**
-- Create: `src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueueDetailView.vue`
+- Modify (replacing the Task 7 placeholder): `src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueueDetailView.vue`
 
 **Interfaces:**
-- Consumes: `getErrorQueueMessages()`, `retryErrorMessage()`, `discardErrorMessage()` (from Task 6), route props `topic`/`subscription`/`messageType` (wired in Task 7).
+- Consumes: `getErrorQueueMessages()`, `retryErrorMessage()`, `discardErrorMessage()` (from Task 6), route prop `queue` (a route **param**, wired via `props: true` in Task 7 — not a query string).
 
-- [ ] **Step 1: Create the detail view**
+- [ ] **Step 1: Replace the placeholder with the real detail view**
 
-Create `src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueueDetailView.vue`:
+Overwrite `src/FplBot/Services/WebApi/ClientApp/src/views/admin/ErrorQueueDetailView.vue`:
 
 ```vue
 <script setup lang="ts">
@@ -1262,7 +1206,7 @@ import { getErrorQueueMessages, retryErrorMessage, discardErrorMessage } from ".
 import type { ErrorQueueMessage } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 
-const props = defineProps<{ topic: string; subscription: string; messageType: string }>();
+const props = defineProps<{ queue: string }>();
 
 const messages = ref<ErrorQueueMessage[]>([]);
 const loading = ref(true);
@@ -1274,7 +1218,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    messages.value = await getErrorQueueMessages(props.topic, props.subscription);
+    messages.value = await getErrorQueueMessages(props.queue);
   } catch (e) {
     error.value = describeAdminError(e);
   } finally {
@@ -1303,7 +1247,7 @@ async function retry(m: ErrorQueueMessage) {
   acting.value = m.messageId;
   error.value = "";
   try {
-    await retryErrorMessage(props.topic, props.subscription, m.messageId);
+    await retryErrorMessage(props.queue, m.messageId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -1317,7 +1261,7 @@ async function discard(m: ErrorQueueMessage) {
   acting.value = m.messageId;
   error.value = "";
   try {
-    await discardErrorMessage(props.topic, props.subscription, m.messageId);
+    await discardErrorMessage(props.queue, m.messageId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -1332,8 +1276,8 @@ onMounted(load);
 <template>
   <div>
     <router-link to="/admin/errors" class="btn small btn-secondary">&larr; Back to queues</router-link>
-    <h1>{{ messageType }}</h1>
-    <p class="lead">{{ messages.length }} message(s) in this queue. Check each message's source address below for which consumer actually faulted.</p>
+    <h1>{{ queue }}</h1>
+    <p class="lead" v-if="!loading">{{ messages.length }} message(s) in this queue.</p>
 
     <div class="card">
       <p v-if="error" class="alert alert-error">{{ error }}</p>
@@ -1345,7 +1289,7 @@ onMounted(load);
           <div class="message-header">
             <div>
               <div><b>{{ m.messageId }}</b></div>
-              <div class="meta">{{ new Date(m.enqueuedTime).toLocaleString() }} &middot; {{ m.sourceAddress }}</div>
+              <div class="meta">{{ new Date(m.enqueuedTime).toLocaleString() }}</div>
             </div>
             <div class="message-actions">
               <button class="btn small" :disabled="acting === m.messageId" @click="retry(m)">
@@ -1357,11 +1301,10 @@ onMounted(load);
             </div>
           </div>
 
-          <ul class="exceptions">
-            <li v-for="(ex, i) in m.exceptions" :key="i">
-              <b>{{ ex.exceptionType }}</b>: {{ ex.message }}
-            </li>
-          </ul>
+          <p class="exception">
+            <b>{{ m.exceptionType }}</b>: {{ m.exceptionMessage }}
+            <span v-if="m.consumerType" class="consumer"> (in {{ m.consumerType }})</span>
+          </p>
 
           <button class="btn small btn-secondary" @click="toggle(m.messageId)">
             {{ expanded.has(m.messageId) ? "Hide body" : "Show body" }}
@@ -1406,10 +1349,14 @@ onMounted(load);
   flex-shrink: 0;
 }
 
-.exceptions {
+.exception {
   font-size: 0.9rem;
   color: #b91c1c;
   margin: 0.5rem 0;
+}
+
+.consumer {
+  color: #6b7280;
 }
 
 .body {
@@ -1443,16 +1390,16 @@ Expected: no errors
 - [ ] **Step 3: Full solution build**
 
 Run: `dotnet build src/FplBot.slnx --no-incremental`
-Expected: builds with no warnings
+Expected: builds with no new warnings
 
 - [ ] **Step 4: Full test run**
 
-Run: `dotnet test src/FplBot.Tests --no-incremental`
-Expected: all tests pass, including every `AdminErrorQueue*`/`AdminErrorEndpoints` test from Tasks 1–5
+Run: `cd src/FplBot.Tests && dotnet build --no-incremental` then `./bin/Debug/net11.0/FplBot.Tests --filter-query "/*/*/AdminErrorQueue*/*" "/*/*/AdminErrorEndpointsTests/*"`
+Expected: all tests pass. (A full unfiltered run may show unrelated pre-existing Elasticsearch/Testcontainers flakiness in `SearchEndpointsTests`/`AdminSearchEndpointsTests` under constrained local Docker memory — that's environmental, not something this feature's tests should be judged against; the filtered run above is the one that matters here.)
 
 - [ ] **Step 5: Manual smoke check (dev server)**
 
-With the user's own `devenv.sh`/AppHost running (never start it yourself — see project conventions), open the admin UI, sign in, click the new "Errors" tab, and confirm it loads (likely empty, since nothing has faulted). This is a visual/UX check the automated tests above don't cover — flag to the user if you can't run it yourself.
+With the user's own `devenv.sh`/AppHost running (never start it yourself), open the admin UI, sign in, click the new "Errors" tab, and confirm it loads. This is a visual/UX check the automated tests above don't cover — flag to the user if you can't run it yourself.
 
 - [ ] **Step 6: Commit**
 
