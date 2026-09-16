@@ -136,7 +136,10 @@ async function removeGuild(guildId: string, guildName: string) {
             </thead>
             <tbody>
               <tr v-for="s in g.subscriptions" :key="s.channelId">
-                <td>{{ s.channelId }}</td>
+                <td>
+                  {{ s.channelId }}
+                  <span v-if="s.failureCount > 0" :title="`${s.failureCount} failed deliveries since ${s.failingSince}`">⚠️</span>
+                </td>
                 <td>{{ s.leagueId || "—" }}</td>
                 <td>{{ s.subscriptions.join(", ") || "—" }}</td>
                 <td class="row-actions">

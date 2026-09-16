@@ -35,6 +35,24 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetSubscriptions_IncludesFailureState()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+        var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince);
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1));
+        await fixture.GuildRepo.Save(guild);
+
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, fixture.GuildRepo);
+
+        var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
+        var dto = ok.Value!.Items.Single(g => g.GuildId == guild.Id).Subscriptions.Single();
+        Assert.Equal(2, dto.FailureCount);
+        Assert.Equal(failingSince, dto.FailingSince);
+    }
+
+    [Fact]
     public async Task GetSubscriptions_FiltersByGuildId()
     {
         var matching = await fixture.SeedGuildInstallation();

@@ -55,6 +55,8 @@ export interface ChannelSubscription {
   channelId: string;
   leagueId: number | null;
   subscriptions: EventSubscription[];
+  failureCount: number;
+  failingSince: string | null;
 }
 
 export interface TeamSummary {

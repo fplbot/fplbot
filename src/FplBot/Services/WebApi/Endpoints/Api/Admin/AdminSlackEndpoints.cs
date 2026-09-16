@@ -10,7 +10,7 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record ChannelSubscriptionDto(string TeamId, string ChannelId, int? LeagueId, IEnumerable<EventSubscription> Subscriptions);
+public record ChannelSubscriptionDto(string TeamId, string ChannelId, int? LeagueId, IEnumerable<EventSubscription> Subscriptions, int FailureCount, DateTimeOffset? FailingSince);
 
 public record TeamSummaryDto(string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
 
@@ -79,7 +79,8 @@ public static class AdminSlackEndpoints
     }
 
     private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel) =>
-        new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, ToEventSubscriptions(channel));
+        new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
+            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince);
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
