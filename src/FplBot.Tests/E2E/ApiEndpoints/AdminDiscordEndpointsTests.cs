@@ -50,6 +50,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var dto = ok.Value!.Items.Single(g => g.GuildId == guild.Id).Subscriptions.Single();
         Assert.Equal(2, dto.FailureCount);
         Assert.Equal(failingSince, dto.FailingSince);
+        Assert.Equal("50013", dto.LastFailureReason);
     }
 
     [Fact]
@@ -133,6 +134,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
         Assert.Equal(2, (int)channel.failureCount);
         Assert.Equal(failingSince, (DateTimeOffset?)channel.failingSince);
+        Assert.Equal("50013", (string?)channel.lastFailureReason);
     }
 
     [Fact]

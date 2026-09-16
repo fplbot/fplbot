@@ -25,6 +25,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         var sub = reloaded.GetChannel(channelId)!;
         Assert.Equal(2, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);
+        Assert.Equal("50013", sub.LastFailureReason);
     }
 
     [Fact]
@@ -44,6 +45,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         var sub = afterClear.GetChannel(channelId)!;
         Assert.Equal(0, sub.FailureCount);
         Assert.Null(sub.FailingSince);
+        Assert.Null(sub.LastFailureReason);
     }
 
     [Fact]
@@ -60,6 +62,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         var sub = reloaded.GetChannel(channelId)!;
         Assert.Equal(2, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);
+        Assert.Equal("not_in_channel", sub.LastFailureReason);
     }
 
     [Fact]
@@ -79,6 +82,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         var sub = afterClear.GetChannel(channelId)!;
         Assert.Equal(0, sub.FailureCount);
         Assert.Null(sub.FailingSince);
+        Assert.Null(sub.LastFailureReason);
     }
 
     [Fact]
@@ -91,5 +95,6 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         var sub = reloaded.GetChannel(channelId)!;
         Assert.Equal(0, sub.FailureCount);
         Assert.Null(sub.FailingSince);
+        Assert.Null(sub.LastFailureReason);
     }
 }

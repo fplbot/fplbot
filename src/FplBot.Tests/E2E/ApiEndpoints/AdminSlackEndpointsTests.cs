@@ -217,6 +217,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
         Assert.Equal(2, (int)channel.failureCount);
         Assert.Equal(failingSince, (DateTimeOffset?)channel.failingSince);
+        Assert.Equal("not_in_channel", (string?)channel.lastFailureReason);
     }
 
     [Fact]
