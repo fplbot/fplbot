@@ -76,6 +76,29 @@ public class DiscordApiExceptionTests
     }
 
     [Fact]
+    public async Task Failure_WithNonNumericCodeBody_StillPreservesMessage()
+    {
+        var client = BuildClient(HttpStatusCode.Forbidden, """{"message": "Missing Access", "code": "abc"}""");
+
+        var ex = await Assert.ThrowsAsync<DiscordApiException>(() => client.ChannelMessagePost("C1", "hi"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, ex.StatusCode);
+        Assert.Null(ex.ErrorCode);
+        Assert.Contains("Missing Access", ex.Message);
+    }
+
+    [Fact]
+    public async Task Failure_WithEmptyBody_ThrowsWithNullErrorCode()
+    {
+        var client = BuildClient(HttpStatusCode.InternalServerError, "");
+
+        var ex = await Assert.ThrowsAsync<DiscordApiException>(() => client.ChannelMessagePost("C1", "hi"));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
+        Assert.Null(ex.ErrorCode);
+    }
+
+    [Fact]
     public async Task IsCatchableAsHttpRequestException()
     {
         var client = BuildClient(HttpStatusCode.NotFound, """{"message": "Unknown Channel", "code": 10003}""");

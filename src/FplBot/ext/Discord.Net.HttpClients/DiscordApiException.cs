@@ -18,7 +18,7 @@ public class DiscordApiException(HttpStatusCode? statusCode, int? errorCode, str
             using var document = JsonDocument.Parse(responseBody);
             if (document.RootElement.ValueKind == JsonValueKind.Object)
             {
-                if (document.RootElement.TryGetProperty("code", out var codeElement) && codeElement.TryGetInt32(out var parsed))
+                if (document.RootElement.TryGetProperty("code", out var codeElement) && codeElement.ValueKind == JsonValueKind.Number && codeElement.TryGetInt32(out var parsed))
                 {
                     code = parsed;
                 }
