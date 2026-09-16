@@ -24,6 +24,7 @@ const navLinks = [
   { to: "/admin/slack", label: "Slack" },
   { to: "/admin/discord", label: "Discord" },
   { to: "/admin/search", label: "Search" },
+  { to: "/admin/errors", label: "Errors" },
 ];
 </script>
 
