@@ -178,6 +178,10 @@ async function submitDelete() {
             </span>
             <span v-else class="status">not currently failing</span>
           </dd>
+          <dt>Failure count</dt>
+          <dd>
+            <span class="status">{{ channel.failureCount }}</span>
+          </dd>
           <template v-if="purgeStatus">
             <dt>Automatic purge</dt>
             <dd>
