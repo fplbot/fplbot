@@ -1,6 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.EventPublishers.Helpers;
 using Fpl.EventPublishers.States;
 using FplBot.Domain;
 using FplBot.Tests.Helpers;
@@ -39,7 +40,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     [Fact]
     public async Task OnGameweekTransition_PostsNewEntriesToSlack()
     {
-        await TransitionGameweek();
+        await ApproachDeadline();
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(_slackChannel);
         Assert.Contains("New entry in", msg.Text);
@@ -52,7 +53,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
         var guild = await fixture.SeedGuildInstallation(_leagueId);
         var guildChannel = guild.ChannelSubscriptions.First().ChannelId;
 
-        await TransitionGameweek();
+        await ApproachDeadline();
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(guildChannel);
         Assert.Contains("New league entry", msg.Title);
@@ -64,7 +65,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     {
         StubLeague(WithNewEntries());
 
-        await TransitionGameweek();
+        await ApproachDeadline();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
@@ -76,7 +77,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
         var otherChannel = "#nofollow-" + Guid.NewGuid().ToString("N")[..8];
         await fixture.Subscribe(_teamId, otherChannel, FplEvent.PriceChanges);
 
-        await TransitionGameweek();
+        await ApproachDeadline();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(otherChannel, TimeSpan.FromMilliseconds(500)));
@@ -88,7 +89,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
         StubLeague(WithNewEntries(Enumerable.Range(1, 8)
             .Select(i => Entrant("Player", i.ToString(), $"Team {i}")).ToArray()));
 
-        await TransitionGameweek();
+        await ApproachDeadline();
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(_slackChannel);
         Assert.Contains("Player 5 (Team 5)", msg.Text);
@@ -99,9 +100,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     [Fact]
     public async Task OnFirstGameweek_PostsNothing()
     {
-        var monitor = BuildMonitor(GlobalSettingsClientBuilder.Returning(Preseason(), Gameweek1Current()));
-        await monitor.EveryOtherMinuteTick(CancellationToken.None);
-        await monitor.EveryOtherMinuteTick(CancellationToken.None);
+        await ApproachDeadline(gameweekId: 1);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
@@ -111,20 +110,29 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     public async Task OnLeaguesOwnFirstGameweek_PostsNothing()
     {
         var league = WithNewEntries(Entrant("John", "Korsnes", "Takk for meg"));
-        league.Properties!.StartEvent = 3;
+        league.Properties!.StartEvent = 5;
         StubLeague(league);
 
-        await TransitionGameweek();
+        await ApproachDeadline();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
     }
 
-    private async Task TransitionGameweek()
+    private async Task ApproachDeadline(int gameweekId = 5)
     {
-        var monitor = BuildMonitor(GlobalSettingsClientBuilder.Returning(BeforeTransition(), AfterTransition()));
-        await monitor.EveryOtherMinuteTick(CancellationToken.None);
-        await monitor.EveryOtherMinuteTick(CancellationToken.None);
+        var deadline = new DateTime(2026, 9, 18, 17, 30, 0, DateTimeKind.Utc);
+        var settings = new GlobalSettings
+        {
+            Gameweeks = [new Gameweek { Id = gameweekId, IsCurrent = false, IsNext = true, Deadline = deadline }]
+        };
+        var monitor = new NearDeadLineMonitor(
+            GlobalSettingsClientBuilder.Returning(settings),
+            new DateTimeUtils { NowUtcOverride = deadline.AddHours(-1) },
+            fixture.Services.GetRequiredService<IServiceScopeFactory>(),
+            A.Fake<ILogger<NearDeadLineMonitor>>());
+
+        await monitor.EveryMinuteTick();
     }
 
     private void StubLeague(ClassicLeague league) =>
@@ -149,49 +157,4 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
             EntryName = entryName,
             JoinedAt = DateTime.UtcNow.AddDays(-1)
         };
-
-    private GameweekLifecycleMonitor BuildMonitor(IGlobalSettingsClient gameweekClient) =>
-        new(gameweekClient,
-            A.Fake<ILogger<GameweekLifecycleMonitor>>(),
-            fixture.Services.GetRequiredService<IServiceScopeFactory>(),
-            A.Fake<IFixtureState>(),
-            A.Fake<ILineupState>());
-
-    private static GlobalSettings BeforeTransition() => new()
-    {
-        Gameweeks =
-        [
-            TestBuilder.PreviousGameweek(1),
-            TestBuilder.CurrentGameweek(2),
-            TestBuilder.NextGameweek(3)
-        ]
-    };
-
-    private static GlobalSettings AfterTransition() => new()
-    {
-        Gameweeks =
-        [
-            TestBuilder.OlderGameweek(1),
-            TestBuilder.PreviousGameweek(2),
-            TestBuilder.CurrentGameweek(3)
-        ]
-    };
-
-    private static GlobalSettings Preseason() => new()
-    {
-        Gameweeks =
-        [
-            new Gameweek { Id = 1, IsCurrent = false, IsNext = true },
-            new Gameweek { Id = 2 }
-        ]
-    };
-
-    private static GlobalSettings Gameweek1Current() => new()
-    {
-        Gameweeks =
-        [
-            TestBuilder.CurrentGameweek(1),
-            TestBuilder.NextGameweek(2)
-        ]
-    };
 }

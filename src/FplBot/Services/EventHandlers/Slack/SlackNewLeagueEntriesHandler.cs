@@ -12,11 +12,11 @@ public class SlackNewLeagueEntriesHandler(
     ILeagueClient leagueClient,
     IGlobalSettingsClient globalSettingsClient,
     ILogger<SlackNewLeagueEntriesHandler> logger)
-    : IConsumer<GameweekJustBegan>, IConsumer<ProcessNewLeagueEntriesForSlackChannel>
+    : IConsumer<OneHourToDeadline>, IConsumer<ProcessNewLeagueEntriesForSlackChannel>
 {
-    public async Task Consume(ConsumeContext<GameweekJustBegan> context)
+    public async Task Consume(ConsumeContext<OneHourToDeadline> context)
     {
-        var gameweekId = context.Message.NewGameweek.Id;
+        var gameweekId = context.Message.GameweekNearingDeadline.Id;
         foreach (var (teamId, channelId, leagueId) in await slackTeamRepo.GetChannelsFollowingALeague())
         {
             await context.Publish(new ProcessNewLeagueEntriesForSlackChannel(teamId, channelId, (int)leagueId.Value, gameweekId));
