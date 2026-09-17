@@ -13,6 +13,7 @@ namespace FplBot.EventHandlers.Slack;
 
 public class SlackNearDeadlineHandler(
     ISlackTeamRepository teamRepo,
+    ISlackWorkSpacePublisher publisher,
     ISlackClientBuilder builder,
     IGlobalSettingsClient globalSettingsClient,
     IFixtureClient fixtures,
@@ -51,52 +52,40 @@ public class SlackNearDeadlineHandler(
     public async Task Consume(ConsumeContext<PublishDeadlineNotificationToSlackWorkspace> context)
     {
         var message = context.Message;
-        string notification = $"⏳ Gameweek {message.Gameweek.Id} deadline in 24 hours!";
-
-        var installation = await teamRepo.GetInstallation(message.WorkspaceId);
         var channelId = message.ChannelId;
-        if (installation.Token is not null)
+        var notification = $"⏳ Gameweek {message.Gameweek.Id} deadline in 24 hours!";
+
+        var res = await publisher.PublishToWorkspaceWithResponse(message.WorkspaceId,
+            new ChatPostMessageRequest { Channel = channelId, Text = notification });
+
+        if (res is null)
         {
-            await PublishToTeam();
-        }
-        else
-        {
-            logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", message.WorkspaceId);
+            return;
         }
 
+        var gameweekFixtures = await fixtures.GetFixturesByGameweek(message.Gameweek.Id) ?? [];
+        var teams = (await globalSettingsClient.GetGlobalSettings())?.Teams ?? [];
+        var fixturesList = Formatter.FixturesForGameweek(message.Gameweek.Id, message.Gameweek.Name,
+            message.Gameweek.Deadline, gameweekFixtures, teams, tzOffset: await GetWorkspaceTzOffset());
 
-        async Task PublishToTeam()
+        await publisher.PublishToWorkspace(message.WorkspaceId, new ChatPostMessageRequest
         {
-            var slackClient = builder.Build(installation.Token);
-            var res = await SlackDelivery.Post(context, teamRepo, message.WorkspaceId, channelId, logger,
-                () => slackClient.ChatPostMessage(channelId, notification));
-            if (res is not null)
+            Channel = channelId,
+            thread_ts = res.ts,
+            Text = fixturesList,
+            unfurl_links = "false"
+        });
+
+        async Task<int> GetWorkspaceTzOffset()
+        {
+            var installation = await teamRepo.GetInstallation(message.WorkspaceId);
+            if (installation.Token is null)
             {
-                await PublishFixtures(slackClient, res.ts);
+                return 0;
             }
-        }
 
-        async Task PublishFixtures(ISlackClient slackClient, string ts)
-        {
-            var fixtures1 = await fixtures.GetFixturesByGameweek(message.Gameweek.Id) ?? [];
-            var teams = (await globalSettingsClient.GetGlobalSettings())?.Teams ?? [];
-            var users = await slackClient.UsersList();
-            var user = users.Members?.FirstOrDefault(u =>
-                u.Is_Admin); // could have selected app_install user here, if we had this stored
-            var userTzOffset = user?.Tz_Offset ?? 0;
-            var messageGameweekNearingDeadline = message.Gameweek;
-            var fixturesList = Formatter.FixturesForGameweek(messageGameweekNearingDeadline.Id,
-                messageGameweekNearingDeadline.Name, messageGameweekNearingDeadline.Deadline, fixtures1, teams,
-                tzOffset: userTzOffset);
-
-            await SlackDelivery.Post(context, teamRepo, message.WorkspaceId, channelId, logger,
-                () => slackClient.ChatPostMessage(new ChatPostMessageRequest
-                {
-                    Channel = channelId,
-                    thread_ts = ts,
-                    Text = fixturesList,
-                    unfurl_links = "false"
-                }));
+            var users = await builder.Build(installation.Token).UsersList();
+            return users.Members?.FirstOrDefault(u => u.Is_Admin)?.Tz_Offset ?? 0;
         }
     }
 }

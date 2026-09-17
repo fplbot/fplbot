@@ -1,6 +1,7 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.Domain;
+using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
@@ -12,7 +13,7 @@ using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 namespace FplBot.EventHandlers.Slack;
 
 public class SlackFixtureFulltimeHandler(
-    ISlackClientBuilder builder,
+    ISlackWorkSpacePublisher publisher,
     ISlackTeamRepository slackTeamRepo,
     ILogger<SlackFixtureFulltimeHandler> logger,
     IGlobalSettingsClient settingsClient,
@@ -49,23 +50,16 @@ public class SlackFixtureFulltimeHandler(
     public async Task Consume(ConsumeContext<PublishFulltimeMessageToSlackWorkspace> context)
     {
         var message = context.Message;
-        var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
-        if (installation.Token is not null)
+        var channelId = message.ChannelId;
+        var res = await publisher.PublishToWorkspaceWithResponse(message.WorkspaceId,
+            new ChatPostMessageRequest { Channel = channelId, Text = message.Title });
+
+        if (res is not null && !string.IsNullOrEmpty(message.ThreadMessage))
         {
-            var channelId = message.ChannelId;
-            var slackClient = builder.Build(installation.Token);
-            var res = await slackClient.ChatPostMessage(channelId, message.Title);
-            if(!string.IsNullOrEmpty(message.ThreadMessage) && res.Ok)
+            await publisher.PublishToWorkspace(message.WorkspaceId, new ChatPostMessageRequest
             {
-                await slackClient.ChatPostMessage(new ChatPostMessageRequest
-                {
-                    Channel = channelId, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
-                });
-            }
-        }
-        else
-        {
-            logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", message.WorkspaceId);
+                Channel = channelId, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
+            });
         }
     }
 }
