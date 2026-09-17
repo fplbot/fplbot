@@ -34,15 +34,15 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Follow_WhenBotCannotPostEmbeds_SavesSubscriptionAndWarns()
+    public async Task Follow_WithoutEmbedLinks_SavesSubscriptionWithoutWarning()
     {
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
         var (_, response) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
-            channelId: channelId, appPermissions: DiscordPermissions.PlainTextOnly);
+            channelId: channelId, appPermissions: DiscordPermissions.WithoutEmbedLinks);
 
-        Assert.Contains("Embed Links", response);
+        Assert.DoesNotContain("permission", response);
         await AppFixture.WaitUntil(async () =>
             (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
     }
@@ -91,16 +91,16 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AddSubscription_WhenBotCannotPostEmbeds_SavesSubscriptionAndWarns()
+    public async Task AddSubscription_WithoutEmbedLinks_SavesSubscriptionWithoutWarning()
     {
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
         var (_, response) = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
             subCommandName: "add", guildId: guild.Id, channelId: channelId,
-            appPermissions: DiscordPermissions.PlainTextOnly);
+            appPermissions: DiscordPermissions.WithoutEmbedLinks);
 
-        Assert.Contains("Embed Links", response);
+        Assert.DoesNotContain("permission", response);
         await AppFixture.WaitUntil(async () =>
             (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
     }
@@ -118,15 +118,16 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Help_WhenBotCannotPostEmbeds_Warns()
+    public async Task Help_WithoutEmbedLinks_HasNoWarning()
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (_, response) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
-            appPermissions: DiscordPermissions.PlainTextOnly);
+        var (token, _) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+            appPermissions: DiscordPermissions.WithoutEmbedLinks);
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Embed Links", response);
+        Assert.DoesNotContain("Send Messages", followup.Description);
     }
 
     [Fact]
@@ -150,7 +151,6 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var (token, _) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.DoesNotContain("Embed Links", followup.Description);
         Assert.DoesNotContain("Send Messages", followup.Description);
     }
 }

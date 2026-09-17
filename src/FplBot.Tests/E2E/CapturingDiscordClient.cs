@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
 using Discord.Net.HttpClients;
+using Discord.Net.HttpClients.Components;
 using FplBot.Tests.E2E.Discord;
 
 namespace FplBot.Tests.E2E;
@@ -30,17 +31,32 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
         return Task.CompletedTask;
     }
 
-    public Task ChannelMessagePost(string channelId, DiscordClient.RichEmbed embed)
+    public Task ChannelMessagePost(string channelId, ComponentRequest request)
     {
         ThrowIfFailing(channelId);
-        capture.Record(new DiscordCapturedMessage(channelId, null, embed.Title, embed.Description));
+        var (title, description) = HeadingAndBody(request);
+        capture.Record(new DiscordCapturedMessage(channelId, null, title, description));
         return Task.CompletedTask;
     }
 
-    public Task InteractionFollowupPost(string interactionToken, DiscordClient.RichEmbed embed)
+    public Task InteractionFollowupPost(string interactionToken, ComponentRequest request)
     {
-        capture.Record(new DiscordCapturedFollowup(interactionToken, embed.Title, embed.Description));
+        var (title, description) = HeadingAndBody(request);
+        capture.Record(new DiscordCapturedFollowup(interactionToken, title, description));
         return Task.CompletedTask;
+    }
+
+    private static (string? Heading, string? Body) HeadingAndBody(ComponentRequest request)
+    {
+        var texts = request.Components
+            .OfType<Container>()
+            .SelectMany(c => c.Components)
+            .OfType<TextDisplay>()
+            .Select(t => t.Content)
+            .ToList();
+
+        var heading = texts.ElementAtOrDefault(0)?.TrimStart('#').TrimStart();
+        return (heading, texts.ElementAtOrDefault(1));
     }
 
     public Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options) =>

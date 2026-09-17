@@ -7,7 +7,7 @@ public static class DiscordPermissions
     public const long EmbedLinks = 1L << 14;
 
     public const long All = ViewChannel | SendMessages | EmbedLinks;
-    public const long PlainTextOnly = ViewChannel | SendMessages;
+    public const long WithoutEmbedLinks = ViewChannel | SendMessages;
     public const long None = ViewChannel;
     public const long Unknown = 0;
 }

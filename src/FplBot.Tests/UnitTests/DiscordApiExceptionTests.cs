@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Discord.Net.HttpClients;
+using Discord.Net.HttpClients.Components;
 using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,7 +27,7 @@ public class DiscordApiExceptionTests
         var client = BuildClient(HttpStatusCode.NotFound, """{"message": "Unknown Channel", "code": 10003}""");
 
         var ex = await Assert.ThrowsAsync<DiscordApiException>(() =>
-            client.ChannelMessagePost("C1", new DiscordClient.RichEmbed("t", "d")));
+            client.ChannelMessagePost("C1", new ComponentRequest([new TextDisplay("d")])));
 
         Assert.Equal(10003, ex.ErrorCode);
     }
