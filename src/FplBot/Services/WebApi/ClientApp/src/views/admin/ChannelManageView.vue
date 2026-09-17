@@ -5,6 +5,8 @@ import { ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
 import type { EventSubscription } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import { describeFailureReason } from "../../api/deliveryFailures";
+import { formatDateTime } from "../../formatting";
 
 const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
@@ -26,6 +28,20 @@ const deleting = ref(false);
 
 const publishing = ref(false);
 const publishFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
+const purgeStatus = computed(() => {
+  const c = channel.value;
+  if (!c || !c.purgeEligibleAt || c.failureCount === 0) {
+    return null;
+  }
+  const at = new Date(c.purgeEligibleAt);
+  const attempts = c.failuresUntilPurge;
+  const condition = attempts > 0 ? ` if seeing ${attempts} more ${attempts === 1 ? "failure" : "failures"}` : "";
+  if (at.getTime() > Date.now()) {
+    return `Purging ${formatDateTime(c.purgeEligibleAt)}${condition}`;
+  }
+  return condition ? `Purging${condition}` : "Purging on the next failure";
+});
 
 async function load() {
   loading.value = true;
@@ -147,6 +163,37 @@ async function submitDelete() {
       <p class="channel-id">{{ channel.channel }}</p>
 
       <div class="card">
+        <h2>Status</h2>
+        <dl class="summary">
+          <dt>Channel visible via {{ adapter.apiLabel }}</dt>
+          <dd>
+            <span v-if="channel.channelStatus === true" class="status ok">&#10003; found</span>
+            <span v-else-if="channel.channelStatus === false" class="status bad">&#10007; not found via {{ adapter.apiLabel }}</span>
+            <span v-else class="status">unknown</span>
+          </dd>
+          <dt>Delivery</dt>
+          <dd>
+            <span v-if="channel.failureCount > 0" class="status bad">
+              &#9888; {{ channel.failureCount }} consecutive failed {{ channel.failureCount === 1 ? "delivery" : "deliveries" }} (since {{ formatDateTime(channel.failingSince) }})<template v-if="channel.lastFailureReason">&nbsp;&mdash; {{ describeFailureReason(channel.lastFailureReason) }}</template>
+            </span>
+            <span v-else class="status">not currently failing</span>
+          </dd>
+          <dt>Failure count</dt>
+          <dd>
+            <span :class="['status', { bad: channel.failureCount >= channel.purgeFailureLimit }]">
+              {{ channel.failureCount }} out of {{ channel.purgeFailureLimit }}
+            </span>
+          </dd>
+          <template v-if="purgeStatus">
+            <dt>Automatic purge</dt>
+            <dd>
+              <span class="status">{{ purgeStatus }}</span>
+            </dd>
+          </template>
+        </dl>
+      </div>
+
+      <div class="card">
         <h2>Subscribed events</h2>
         <p v-if="subscriptionsFeedback" :class="['alert', subscriptionsFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ subscriptionsFeedback.text }}
@@ -183,12 +230,13 @@ async function submitDelete() {
         </button>
       </div>
 
-      <div v-if="channel.leagueId" class="card">
+      <div class="card">
         <h2>Publish standings</h2>
         <p v-if="publishFeedback" :class="['alert', publishFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ publishFeedback.text }}
         </p>
-        <button class="btn small" :disabled="publishing" @click="submitPublish">
+        <p v-if="!channel.leagueId" class="hint">Not following a league, so there are no standings to publish.</p>
+        <button class="btn small" :disabled="publishing || !channel.leagueId" @click="submitPublish">
           {{ publishing ? "Publishing..." : "Publish standings" }}
         </button>
       </div>
@@ -224,6 +272,38 @@ async function submitDelete() {
 .card h2 {
   font-size: 1.1rem;
   margin-bottom: 1rem;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: 14rem 1fr;
+  row-gap: 0.5rem;
+}
+
+.summary dt {
+  font-weight: bold;
+}
+
+.summary dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+.hint {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.status {
+  font-size: 0.85rem;
+}
+
+.status.ok {
+  color: #16a34a;
+}
+
+.status.bad {
+  color: #dc2626;
 }
 
 .subscription-grid {

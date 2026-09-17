@@ -43,6 +43,9 @@ public static class AdminDiscordEndpoints
         group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
         group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/channel", MoveChannel);
 
+        group.MapGet("/discord/failures", GetFailureStats);
+        group.MapPost("/discord/failures/reset", ResetFailures);
+
         group.MapPost("/discord/broadcast", BroadcastToDiscord);
     }
 
@@ -112,7 +115,17 @@ public static class AdminDiscordEndpoints
         }
     }
 
-    internal static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, IGuildRepository repo)
+    internal static async Task<IResult> GetFailureStats(IGuildRepository repo) =>
+        TypedResults.Ok(await ChannelFailureAdmin.GetStats(repo, DateTimeOffset.UtcNow));
+
+    internal static async Task<IResult> ResetFailures(IGuildRepository repo, ILogger<Program> logger)
+    {
+        var cleared = await ChannelFailureAdmin.ResetAll(repo, logger);
+        logger.LogWarning("Admin reset delivery failure counters for {Cleared} Discord channel(s)", cleared);
+        return TypedResults.Ok(new { cleared });
+    }
+
+    internal static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, bool failingOnly, IGuildRepository repo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
@@ -129,6 +142,11 @@ public static class AdminDiscordEndpoints
                 g.GuildName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
+        if (failingOnly)
+        {
+            filtered = filtered.Where(g => g.Subscriptions.Any(c => c.FailureCount > 0)).ToList();
+        }
+
         var items = filtered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -139,7 +157,7 @@ public static class AdminDiscordEndpoints
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
         new(guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
-            ToEventSubscriptions(channel));
+            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason);
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
@@ -187,7 +205,13 @@ public static class AdminDiscordEndpoints
                 leagueId,
                 leagueName,
                 subscriptions = ToEventSubscriptions(channel),
-                channelStatus
+                channelStatus,
+                failureCount = channel.FailureCount,
+                failingSince = channel.FailingSince,
+                lastFailureReason = channel.LastFailureReason,
+                purgeEligibleAt = channel.FailingSince is { } since ? since + ChannelSubscription.MaxFailureAge : (DateTimeOffset?)null,
+                failuresUntilPurge = Math.Max(0, ChannelSubscription.MaxFailures - channel.FailureCount),
+                purgeFailureLimit = ChannelSubscription.MaxFailures
             });
         }
 

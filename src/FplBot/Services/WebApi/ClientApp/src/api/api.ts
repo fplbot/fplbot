@@ -1,6 +1,7 @@
 import type {
   AdminMe,
   Bookmarks,
+  ChannelFailureStats,
   ChannelFilter,
   DiscordSlashCommand,
   ErrorQueueJobAccepted,
@@ -84,8 +85,8 @@ export async function logout(): Promise<void> {
 
 // ---- Admin: Slack teams ----
 
-export function getTeams(query: string, page: number, pageSize: number): Promise<PagedResult<TeamSummary>> {
-  const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
+export function getTeams(query: string, page: number, pageSize: number, failingOnly = false): Promise<PagedResult<TeamSummary>> {
+  const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
   return request(`/api/admin/teams?${params.toString()}`);
 }
 
@@ -175,8 +176,8 @@ export function uninstallSlashCommands(): Promise<MessageResponse> {
   return postJson("/api/admin/discord/slashcommands/uninstall");
 }
 
-export function getDiscordServers(query: string, page: number, pageSize: number): Promise<PagedResult<GuildWithSubs>> {
-  const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize) });
+export function getDiscordServers(query: string, page: number, pageSize: number, failingOnly = false): Promise<PagedResult<GuildWithSubs>> {
+  const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
   return request(`/api/admin/discord/servers?${params.toString()}`);
 }
 
@@ -186,6 +187,22 @@ export function deleteDiscordSubscription(guildId: string, channelId: string): P
 
 export function deleteAllDiscordSubscriptionsForGuild(guildId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/guilds/${guildId}/subscriptions`, { method: "DELETE" });
+}
+
+export function getDiscordFailureStats(): Promise<ChannelFailureStats> {
+  return request(`/api/admin/discord/failures`);
+}
+
+export function resetDiscordFailures(): Promise<{ cleared: number }> {
+  return request(`/api/admin/discord/failures/reset`, { method: "POST" });
+}
+
+export function getSlackFailureStats(): Promise<ChannelFailureStats> {
+  return request(`/api/admin/slack/failures`);
+}
+
+export function resetSlackFailures(): Promise<{ cleared: number }> {
+  return request(`/api/admin/slack/failures/reset`, { method: "POST" });
 }
 
 export function deleteDiscordGuild(guildId: string): Promise<MessageResponse> {

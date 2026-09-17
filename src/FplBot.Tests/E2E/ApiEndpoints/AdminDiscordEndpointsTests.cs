@@ -25,7 +25,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation(12345, [EventSubscription.Standings]);
 
-        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, false, fixture.GuildRepo);
 
         var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
         var guild = Assert.Single(ok.Value!.Items, g => g.GuildId == installedGuild.Id);
@@ -35,12 +35,86 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetSubscriptions_IncludesFailureState()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+        var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince, "50013");
+        guild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1), "50013");
+        await fixture.GuildRepo.Save(guild);
+
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, false, fixture.GuildRepo);
+
+        var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
+        var dto = ok.Value!.Items.Single(g => g.GuildId == guild.Id).Subscriptions.Single();
+        Assert.Equal(2, dto.FailureCount);
+        Assert.Equal(failingSince, dto.FailingSince);
+        Assert.Equal("50013", dto.LastFailureReason);
+    }
+
+    [Fact]
+    public async Task GetSubscriptions_FailingOnly_ExcludesHealthyGuilds()
+    {
+        var failing = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var healthy = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        failing.GetChannel(failing.ChannelSubscriptions.First().ChannelId)!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "50013");
+        await fixture.GuildRepo.Save(failing);
+
+        var result = await AdminDiscordEndpoints.GetSubscriptions(null, 1, 25, true, fixture.GuildRepo);
+
+        var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
+        Assert.Equal(failing.Id, Assert.Single(ok.Value!.Items).GuildId);
+        Assert.DoesNotContain(ok.Value.Items, g => g.GuildId == healthy.Id);
+    }
+
+    [Fact]
+    public async Task GetFailureStats_CountsFailingChannelsAndGuilds()
+    {
+        var failing = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = failing.ChannelSubscriptions.First().ChannelId;
+        failing.GetChannel(channelId)!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "50013");
+        await fixture.GuildRepo.Save(failing);
+
+        var result = await AdminDiscordEndpoints.GetFailureStats(fixture.GuildRepo);
+
+        var ok = Assert.IsType<Ok<ChannelFailureStatsDto>>(result);
+        Assert.Equal(1, ok.Value!.ChannelsWithFailures);
+        Assert.Equal(1, ok.Value.InstallationsWithFailures);
+        Assert.Equal(0, ok.Value.ChannelsEligibleForPurge);
+    }
+
+    [Fact]
+    public async Task ResetFailures_ClearsCountersAcrossAllGuilds()
+    {
+        var first = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var second = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        foreach (var guild in new[] { first, second })
+        {
+            guild.GetChannel(guild.ChannelSubscriptions.First().ChannelId)!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "50013");
+            await fixture.GuildRepo.Save(guild);
+        }
+
+        await AdminDiscordEndpoints.ResetFailures(fixture.GuildRepo, NullLogger<Program>.Instance);
+
+        foreach (var guild in new[] { first, second })
+        {
+            var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+            var channel = reloaded.GetChannel(guild.ChannelSubscriptions.First().ChannelId)!;
+            Assert.Equal(0, channel.FailureCount);
+            Assert.Null(channel.FailingSince);
+            Assert.Null(channel.LastFailureReason);
+        }
+    }
+
+    [Fact]
     public async Task GetSubscriptions_FiltersByGuildId()
     {
         var matching = await fixture.SeedGuildInstallation();
         await fixture.SeedGuildInstallation();
 
-        var result = await AdminDiscordEndpoints.GetSubscriptions(matching.Id, 1, 25, fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.GetSubscriptions(matching.Id, 1, 25, false, fixture.GuildRepo);
 
         var ok = Assert.IsType<Ok<PagedResult<GuildWithSubsDto>>>(result);
         var guild = Assert.Single(ok.Value!.Items);
@@ -95,6 +169,30 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var ok = Assert.IsAssignableFrom<IValueHttpResult>(result);
         dynamic value = ok.Value!;
         Assert.Equal(installedGuild.Id, (string)value.guildId);
+    }
+
+    [Fact]
+    public async Task GetGuild_IncludesFailureState()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        var failingSince = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince, "50013");
+        installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1), "50013");
+        await fixture.GuildRepo.Save(installedGuild);
+
+        var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();
+        var result = await AdminDiscordEndpoints.GetGuild(installedGuild.Id, fixture.GuildRepo, A.Fake<ILeagueClient>(), discordClient, NullLogger<Program>.Instance);
+
+        var ok = Assert.IsAssignableFrom<IValueHttpResult>(result);
+        dynamic value = ok.Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Equal(2, (int)channel.failureCount);
+        Assert.Equal(failingSince, (DateTimeOffset?)channel.failingSince);
+        Assert.Equal("50013", (string?)channel.lastFailureReason);
+        Assert.Equal(failingSince + ChannelSubscription.MaxFailureAge, (DateTimeOffset?)channel.purgeEligibleAt);
+        Assert.Equal(ChannelSubscription.MaxFailures - 2, (int)channel.failuresUntilPurge);
+        Assert.Equal(ChannelSubscription.MaxFailures, (int)channel.purgeFailureLimit);
     }
 
     [Fact]

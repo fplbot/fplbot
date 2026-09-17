@@ -55,6 +55,9 @@ export interface ChannelSubscription {
   channelId: string;
   leagueId: number | null;
   subscriptions: EventSubscription[];
+  failureCount: number;
+  failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface TeamSummary {
@@ -70,6 +73,12 @@ export interface TeamDetailsChannel {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
+  failureCount: number;
+  failingSince: string | null;
+  lastFailureReason: string | null;
+  purgeEligibleAt: string | null;
+  failuresUntilPurge: number;
+  purgeFailureLimit: number;
 }
 
 export interface TeamDetails {
@@ -134,6 +143,9 @@ export interface GuildSubscription {
   channelId: string;
   leagueId: number | null;
   subscriptions: EventSubscription[];
+  failureCount: number;
+  failingSince: string | null;
+  lastFailureReason: string | null;
 }
 
 export interface GuildWithSubs {
@@ -148,6 +160,12 @@ export interface GuildDetailsChannel {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
+  failureCount: number;
+  failingSince: string | null;
+  lastFailureReason: string | null;
+  purgeEligibleAt: string | null;
+  failuresUntilPurge: number;
+  purgeFailureLimit: number;
 }
 
 export interface GuildDetails {
@@ -276,4 +294,10 @@ export interface ErrorQueueJobState {
   queue: string;
   status: "Queued" | "Running" | "Succeeded" | "Failed";
   message: string | null;
+}
+
+export interface ChannelFailureStats {
+  installationsWithFailures: number;
+  channelsWithFailures: number;
+  channelsEligibleForPurge: number;
 }

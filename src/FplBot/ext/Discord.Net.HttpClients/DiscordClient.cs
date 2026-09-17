@@ -19,7 +19,10 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         var res = await client.PostAsync($"api/v8/channels/{channelId}/messages",jsonContent);
         string responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
-        res.EnsureSuccessStatusCode();
+        if (!res.IsSuccessStatusCode)
+        {
+            throw DiscordApiException.From(res, responseBody);
+        }
     }
 
     public record RichEmbed(string Title, string Description, int? Color = null);
@@ -44,7 +47,10 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         var res = await client.PostAsync($"api/v8/channels/{channelId}/messages",jsonContent);
         string responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
-        res.EnsureSuccessStatusCode();
+        if (!res.IsSuccessStatusCode)
+        {
+            throw DiscordApiException.From(res, responseBody);
+        }
     }
 
     // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type

@@ -20,6 +20,12 @@ export interface EntityChannel {
   leagueName: string | null;
   subscriptions: EventSubscription[];
   channelStatus: boolean | null;
+  failureCount: number;
+  failingSince: string | null;
+  lastFailureReason: string | null;
+  purgeEligibleAt: string | null;
+  failuresUntilPurge: number;
+  purgeFailureLimit: number;
 }
 
 export interface EntityDetails {

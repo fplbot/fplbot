@@ -10,7 +10,7 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record ChannelSubscriptionDto(string TeamId, string ChannelId, int? LeagueId, IEnumerable<EventSubscription> Subscriptions);
+public record ChannelSubscriptionDto(string TeamId, string ChannelId, int? LeagueId, IEnumerable<EventSubscription> Subscriptions, int FailureCount, DateTimeOffset? FailingSince, string? LastFailureReason);
 
 public record TeamSummaryDto(string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
 
@@ -31,6 +31,9 @@ public static class AdminSlackEndpoints
         group.MapPut("/teams/{teamId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
         group.MapPut("/teams/{teamId}/channels/{channelId}/channel", MoveChannel);
         group.MapDelete("/teams/{teamId}/channels/{channelId}", DeleteChannelSubscription);
+        group.MapGet("/slack/failures", GetFailureStats);
+        group.MapPost("/slack/failures/reset", ResetFailures);
+
         group.MapPost("/slack/broadcast", BroadcastToSlack);
     }
 
@@ -49,7 +52,17 @@ public static class AdminSlackEndpoints
         }
     }
 
-    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, ISlackTeamRepository teamRepo)
+    internal static async Task<IResult> GetFailureStats(ISlackTeamRepository repo) =>
+        TypedResults.Ok(await ChannelFailureAdmin.GetStats(repo, DateTimeOffset.UtcNow));
+
+    internal static async Task<IResult> ResetFailures(ISlackTeamRepository repo, ILogger<Program> logger)
+    {
+        var cleared = await ChannelFailureAdmin.ResetAll(repo, logger);
+        logger.LogWarning("Admin reset delivery failure counters for {Cleared} Slack channel(s)", cleared);
+        return TypedResults.Ok(new { cleared });
+    }
+
+    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, bool failingOnly, ISlackTeamRepository teamRepo)
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
@@ -61,6 +74,11 @@ public static class AdminSlackEndpoints
             : installations.Where(i =>
                 i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 i.Id.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (failingOnly)
+        {
+            filtered = filtered.Where(i => i.ChannelSubscriptions.Any(c => c.FailureCount > 0)).ToList();
+        }
 
         var page_ = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var items = new List<TeamSummaryDto>();
@@ -79,12 +97,13 @@ public static class AdminSlackEndpoints
     }
 
     private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel) =>
-        new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null, ToEventSubscriptions(channel));
+        new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
+            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason);
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
 
-    private static async Task<IResult> GetTeam(
+    internal static async Task<IResult> GetTeam(
         string teamId,
         ISlackTeamRepository teamRepo,
         ILeagueClient leagueClient,
@@ -126,7 +145,13 @@ public static class AdminSlackEndpoints
                 leagueId,
                 leagueName,
                 subscriptions = ToEventSubscriptions(channel),
-                channelStatus
+                channelStatus,
+                failureCount = channel.FailureCount,
+                failingSince = channel.FailingSince,
+                lastFailureReason = channel.LastFailureReason,
+                purgeEligibleAt = channel.FailingSince is { } since ? since + ChannelSubscription.MaxFailureAge : (DateTimeOffset?)null,
+                failuresUntilPurge = Math.Max(0, ChannelSubscription.MaxFailures - channel.FailureCount),
+                purgeFailureLimit = ChannelSubscription.MaxFailures
             });
         }
 

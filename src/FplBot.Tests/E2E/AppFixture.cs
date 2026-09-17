@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -29,9 +30,6 @@ using Nest;
 using Serilog;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
-using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
-using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
-using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using StackExchange.Redis;
 using Testcontainers.Redis;
 
@@ -48,6 +46,8 @@ public class AppFixture : IAsyncLifetime
     private HttpClient _client = null!;
     private IServiceScope _managerScope = null!;
     private ConnectionMultiplexer _multiplexer = null!;
+    private CapturingSlackClient _capturingSlackClient = null!;
+    private CapturingDiscordClient _capturingDiscordClient = null!;
 
     public SlackMessageCapture SlackCapture { get; } = new();
 
@@ -64,6 +64,33 @@ public class AppFixture : IAsyncLifetime
     public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
     public IGuildRepository GuildRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildRepository>();
 
+    public void SlackChannelFails(string channelId, string slackError) =>
+        _capturingSlackClient.FailChannel(channelId, slackError);
+
+    public void RecoverSlackChannel(string channelId) => _capturingSlackClient.RecoverChannel(channelId);
+
+    public void SetSlackAppsUninstallResult(Slackbot.Net.SlackClients.Http.Models.Responses.Response response) =>
+        _capturingSlackClient.SetAppsUninstallResult(response);
+
+    public void SetSlackAppsUninstallThrows(Exception exception) => _capturingSlackClient.SetAppsUninstallThrows(exception);
+
+    public void DiscordChannelFails(string channelId, int discordErrorCode) =>
+        _capturingDiscordClient.FailChannel(channelId, discordErrorCode);
+
+    public void DiscordChannelFails(string channelId, HttpStatusCode status) =>
+        _capturingDiscordClient.FailChannel(channelId, status);
+
+    public void DiscordChannelFails(string channelId, Exception exception) =>
+        _capturingDiscordClient.FailChannel(channelId, exception);
+
+    public void RecoverDiscordChannel(string channelId) => _capturingDiscordClient.RecoverChannel(channelId);
+
+    public void ResetChannelOutcomes()
+    {
+        _capturingSlackClient.Reset();
+        _capturingDiscordClient.Reset();
+    }
+
     public virtual async ValueTask InitializeAsync()
     {
         await _redis.StartAsync();
@@ -72,10 +99,11 @@ public class AppFixture : IAsyncLifetime
         _multiplexer = await ConnectionMultiplexer.ConnectAsync(redisConnStr + ",allowAdmin=true");
         var redisUrl = $"redis://user:pass@{redisConnStr}";
 
-        SlackClient = BuildCapturingSlackClient();
-        var fakeSlackClient = SlackClient;
+        _capturingSlackClient = new CapturingSlackClient(SlackCapture);
+        SlackClient = _capturingSlackClient;
+        var slackClient = SlackClient;
         var fakeSlackClientBuilder = A.Fake<ISlackClientBuilder>();
-        A.CallTo(() => fakeSlackClientBuilder.Build(A<string>._)).Returns(fakeSlackClient);
+        A.CallTo(() => fakeSlackClientBuilder.Build(A<string>._)).Returns(slackClient);
 
         var globalSettings = JsonSerializer.Deserialize<GlobalSettings>(
             TestResources.Boostrap_Static_Json,
@@ -135,7 +163,8 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
 
         builder.Services.RemoveAll<IDiscordClient>();
-        builder.Services.AddSingleton(BuildCapturingDiscordClient());
+        _capturingDiscordClient = new CapturingDiscordClient(DiscordCapture);
+        builder.Services.AddSingleton<IDiscordClient>(_capturingDiscordClient);
 
         ConfigureSearchClient(builder.Services);
 
@@ -309,68 +338,6 @@ public class AppFixture : IAsyncLifetime
     {
         var server = _multiplexer.GetServer(_multiplexer.GetEndPoints().First());
         await server.FlushAllDatabasesAsync();
-    }
-
-    private ISlackClient BuildCapturingSlackClient()
-    {
-        var fakeSlackClient = A.Fake<ISlackClient>();
-
-        A.CallTo(() => fakeSlackClient.ChatPostMessage(A<ChatPostMessageRequest>._))
-            .ReturnsLazily(call =>
-            {
-                SlackCapture.Record(call.Arguments.Get<ChatPostMessageRequest>(0)!);
-                return Task.FromResult(new ChatPostMessageResponse
-                                       {
-                                           Ok = true,
-                                           ts = "ts123"
-                                       });
-            });
-
-        A.CallTo(() => fakeSlackClient.ChatPostMessage(A<string>._, A<string>._))
-            .ReturnsLazily(call =>
-            {
-                SlackCapture.Record(new ChatPostMessageRequest
-                                    {
-                                        Channel = call.Arguments.Get<string>(0),
-                                        Text = call.Arguments.Get<string>(1)
-                                    });
-                return Task.FromResult(new ChatPostMessageResponse
-                                       {
-                                           Ok = true,
-                                           ts = "ts123"
-                                       });
-            });
-
-        A.CallTo(() => fakeSlackClient.UsersList())
-            .Returns(Task.FromResult(new UsersListResponse
-                                     {
-                                         Ok = true,
-                                         Members = []
-                                     }));
-
-        return fakeSlackClient;
-    }
-
-    private IDiscordClient BuildCapturingDiscordClient()
-    {
-        var fakeDiscordClient = A.Fake<IDiscordClient>();
-
-        A.CallTo(() => fakeDiscordClient.ChannelMessagePost(A<string>._, A<string>._))
-            .ReturnsLazily(call =>
-            {
-                DiscordCapture.Record(new DiscordCapturedMessage(call.Arguments.Get<string>(0)!, call.Arguments.Get<string>(1), null, null));
-                return Task.CompletedTask;
-            });
-
-        A.CallTo(() => fakeDiscordClient.ChannelMessagePost(A<string>._, A<DiscordClient.RichEmbed>._))
-            .ReturnsLazily(call =>
-            {
-                var embed = call.Arguments.Get<DiscordClient.RichEmbed>(1)!;
-                DiscordCapture.Record(new DiscordCapturedMessage(call.Arguments.Get<string>(0)!, null, embed.Title, embed.Description));
-                return Task.CompletedTask;
-            });
-
-        return fakeDiscordClient;
     }
 
     public async Task Subscribe(string teamId, string channel, params FplEvent[] events)

@@ -6,7 +6,7 @@ using FplBot.Domain;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildRepository repo) : ISlashCommandHandler
+public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildRepository repo, ChannelDeliveryProbe probe) : ISlashCommandHandler
 {
     public string CommandName => "follow";
 
@@ -24,9 +24,19 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
         installation.Follow(context.ChannelId, new ClassicLeagueId(leagueId));
         await repo.Save(installation);
 
+        var leagueName = league.Properties?.Name;
+        var result = await probe.Probe(context.GuildId, context.ChannelId,
+            $"✅ Now following '{leagueName}' in this channel.");
+
+        if (!result.Delivered)
+        {
+            return RespondSavedButBlocked(
+                $"Following '{leagueName}'! {ChannelDeliveryProbe.Advice(result)}");
+        }
+
         return isNewChannel
-            ? Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. (Auto-subbed to all events) ")
-            : Respond($"Now following the '{$"{league.Properties?.Name}"}' FPL league. ");
+            ? Respond($"Now following the '{leagueName}' FPL league. (Auto-subbed to all events) ")
+            : Respond($"Now following the '{leagueName}' FPL league. ");
     }
 
     private static SlashCommandResponse Respond(string content, bool success = true)
@@ -36,4 +46,10 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
             Embeds = [success ? new("✅ Success", content) : new("⚠️ Error", content)]
         };
     }
+
+    private static SlashCommandResponse RespondSavedButBlocked(string content) =>
+        new ChannelMessageWithSourceEmbedResponse
+        {
+            Embeds = [new("⚠️ Saved, but I can't post here yet", content)]
+        };
 }

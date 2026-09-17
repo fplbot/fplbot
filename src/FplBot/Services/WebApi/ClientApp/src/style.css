@@ -99,6 +99,14 @@ a {
   font-size: 0.875rem;
 }
 
+.checkbox-field label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+  cursor: pointer;
+}
+
 .field input[type="text"],
 .field input[type="number"],
 .field select,
@@ -178,6 +186,34 @@ a {
 
 .admin-table tbody {
   background: white;
+}
+
+.admin-table td.row-actions {
+  display: table-cell;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.admin-table td.row-actions > * {
+  vertical-align: middle;
+}
+
+.admin-table td.row-actions > * + * {
+  margin-left: 0.5rem;
+}
+
+.admin-table tbody tr.failing,
+.admin-table tbody tr.failing td {
+  background: #fef9c3;
+}
+
+.admin-table tbody tr.failing td .icon-btn:not(.danger) {
+  background: transparent;
+  border-color: #d6c97a;
+}
+
+.admin-table tbody tr.failing td .icon-btn:not(.danger):hover {
+  background: #fdf0a8;
 }
 
 .btn.small {

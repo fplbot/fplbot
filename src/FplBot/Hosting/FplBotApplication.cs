@@ -106,8 +106,6 @@ public static class FplBotApplication
     private static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc, List<IFplBotService> active)
     {
         lc.ReadFrom.Configuration(ctx.Configuration)
-          .Enrich.WithCorrelationId()
-          .Enrich.WithCorrelationIdHeader()
           .WriteTo.Console(
               outputTemplate: "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}",
               theme: ConsoleTheme.None);

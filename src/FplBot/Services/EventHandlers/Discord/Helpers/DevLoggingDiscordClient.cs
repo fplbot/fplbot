@@ -1,3 +1,4 @@
+using System.Net;
 using FplBot.Discord;
 
 namespace Discord.Net.HttpClients;
