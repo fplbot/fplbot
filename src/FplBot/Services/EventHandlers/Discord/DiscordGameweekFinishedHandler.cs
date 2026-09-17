@@ -64,13 +64,13 @@ public class DiscordGameweekFinishedHandler(
             {
                 var sections = new List<RichSection>();
                 var intro = Formatter.FormatGameweekFinished(gw, league);
-                var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
-                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
+                var standings = Formatter.GetStandingsDiscord(league, gw, includeExternalLinks:false);
+                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw, includeExternalLinks:false, includeIntro:false);
                 var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
                 sections.AddRange([
                     new (null, intro),
-                    new ("ℹ️ Standings", standings),
-                    new ("ℹ️ Top 3", topThree ?? string.Empty)
+                    new ("ℹ️ Top 3", topThree ?? string.Empty),
+                    new ("ℹ️ Standings", standings)
                 ]);
 
                 if (worst is not null)
