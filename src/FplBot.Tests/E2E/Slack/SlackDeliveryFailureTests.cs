@@ -33,12 +33,14 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         await WaitForFailureCount(installation.Id, channelId, 1);
     }
 
-    [Fact]
-    public async Task DeadlineNotificationChannelScopedFailure_RecordsFailure()
+    [Theory]
+    [InlineData("channel_not_found")]
+    [InlineData("is_archived")]
+    public async Task DeadlineNotificationChannelScopedFailure_RecordsFailure(string slackError)
     {
         var installation = await fixture.SeedInstallation();
         var channelId = installation.ChannelSubscriptions.First().ChannelId;
-        fixture.SlackChannelFails(channelId, "is_archived");
+        fixture.SlackChannelFails(channelId, slackError);
 
         await fixture.Bus.Publish(
             new PublishDeadlineNotificationToSlackWorkspace(installation.Id, channelId,
