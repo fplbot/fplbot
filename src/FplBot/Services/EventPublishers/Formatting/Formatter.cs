@@ -35,7 +35,31 @@ public static class Formatter
         return sb.ToString();
     }
 
-    public static string? GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
+    public static string GetStandingsDiscord(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
+    {
+        var sb = new StringBuilder();
+
+        var sortedByRank = (league.Standings?.Entries ?? []).OrderBy(x => x.Rank);
+
+        var numPlayers = league.Standings?.Entries.Count ?? 0;
+
+        if (gameweek == null)
+        {
+            sb.Append("No current gameweek!");
+            return sb.ToString();
+        }
+
+        foreach (var player in sortedByRank)
+        {
+            var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
+            string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName ?? "";
+            sb.Append($"\n{player.Rank}. {entryOrLink} - {player.Total} {arrow}");
+        }
+
+        return sb.ToString();
+    }
+
+    public static string? GetTopThreeGameweekEntries(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true, bool includeIntro = true)
     {
         var topThree = (league.Standings?.Entries ?? [])
             .GroupBy(e => e.EventTotal)
@@ -50,7 +74,10 @@ public static class Formatter
 
         var sb = new StringBuilder();
 
-        sb.Append("Top three this gameweek was:\n");
+        if (includeIntro)
+        {
+            sb.Append("Top three this gameweek was:\n");
+        }
 
         for (var i = 0; i < topThree.Length; i++)
         {
@@ -472,9 +499,9 @@ public static class Formatter
         return bonusPointsOutput;
     }
 
-    public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)
+    public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league, bool? includeTitle = true)
     {
-        var introText = $"{gw.Name} is finished.";
+        var introText = includeTitle == true ? $"{gw.Name} is finished." : "";
         var globalAverage = (int)Math.Round(gw.AverageScore);
 
         var leagueAvgTxt = "";

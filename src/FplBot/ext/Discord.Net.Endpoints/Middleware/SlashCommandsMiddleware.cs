@@ -86,10 +86,10 @@ internal class SlashCommandsMiddleware
                 _logger.LogTrace($"Response:\n{channelMessageRes}");
                 return new { type = 4, data = channelMessageRes };
             }
-            if (handled is ChannelMessageWithSourceEmbedResponse channelMessageEmbedRes)
+            if (handled is ChannelMessageWithSourceComponentsResponse channelMessageComponentsRes)
             {
-                _logger.LogTrace($"Response:\n\n{JsonSerializer.Serialize(channelMessageEmbedRes,SerializerOptions)}\n\n");
-                return new { type = 4, data = channelMessageEmbedRes };
+                _logger.LogTrace($"Response:\n\n{JsonSerializer.Serialize(channelMessageComponentsRes,SerializerOptions)}\n\n");
+                return new { type = 4, data = channelMessageComponentsRes };
             }
             _logger.LogTrace($"Not yet ready to handle the slash command type {slashCommandType}. Unsupported in the Discord.Net Framework");
             return new {

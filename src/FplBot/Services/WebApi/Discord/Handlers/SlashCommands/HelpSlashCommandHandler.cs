@@ -1,4 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.EventHandlers.Discord;
 using Discord.Net.Endpoints.Middleware;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
@@ -13,7 +14,7 @@ public class HelpSlashCommandHandler(IPublishEndpoint publishEndpoint) : ISlashC
     {
         if (ChannelPermissions.Problem(context.AppPermissions) is { } problem)
         {
-            return new ChannelMessageWithSourceEmbedResponse { Embeds = [new("ℹ️ HELP", $"⚠️ {problem}")] };
+            return new ChannelMessageWithSourceComponentsResponse(DiscordCards.HeadingCard("ℹ️ HELP", $"⚠️ {problem}"));
         }
 
         await publishEndpoint.Publish(new ProcessDiscordHelpCommand(context.GuildId, context.ChannelId, context.InteractionToken));

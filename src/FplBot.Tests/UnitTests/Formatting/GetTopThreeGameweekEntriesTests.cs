@@ -77,4 +77,26 @@ public class GetTopThreeGameweekEntriesTests
                      "🥉 <https://fantasy.premierleague.com/entry/4/event/1|M> - 10\n" +
                      "🥉 <https://fantasy.premierleague.com/entry/5/event/1|J> - 10\n", message);
     }
+
+    [Fact]
+    public void WithoutIntro_OmitsTheLeadingLine()
+    {
+        var gameweek = new Gameweek { Id = 1 };
+        var league = new ClassicLeague
+        {
+            Standings = new ClassicLeagueStandings
+            {
+                Entries =
+                [
+                    new ClassicLeagueEntry { EventTotal = 90, Total = 100, Entry = 2, EntryName = "L" },
+                    new ClassicLeagueEntry { EventTotal = 50, Total = 90, Entry = 1, EntryName = "K" }
+                ]
+            }
+        };
+
+        var message = Formatter.GetTopThreeGameweekEntries(league, gameweek, includeExternalLinks: false, includeIntro: false);
+
+        Assert.Equal("🥇 L - 90\n" +
+                     "🥈 K - 50\n", message);
+    }
 }
