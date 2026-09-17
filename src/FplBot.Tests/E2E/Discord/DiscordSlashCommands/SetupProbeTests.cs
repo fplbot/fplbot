@@ -6,8 +6,6 @@ namespace FplBot.Tests.E2E.Discord.DiscordSlashCommands;
 [Collection("App")]
 public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
 {
-    private static readonly DateTimeOffset Day0 = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
-
     public async ValueTask InitializeAsync()
     {
         fixture.DiscordCapture.Reset();
@@ -22,28 +20,41 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Follow_WhenChannelBlocked_SavesSubscriptionAndWarns()
+    public async Task Follow_WhenBotCannotPost_SavesSubscriptionAndWarns()
     {
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        fixture.DiscordChannelFails(channelId, 50013);
 
-        var response = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id, channelId: channelId);
+        var response = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+            channelId: channelId, appPermissions: DiscordPermissions.None);
 
-        Assert.Contains("permission", response, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Send Messages", response);
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
-        Assert.NotNull(sub);
-        Assert.Equal(15263, (int)sub.FollowedLeagueId!.Value);
+        Assert.Equal(15263, (int)sub!.FollowedLeagueId!.Value);
     }
 
     [Fact]
-    public async Task Follow_WhenChannelBlocked_DoesNotCountTowardRemoval()
+    public async Task Follow_WhenBotCannotPostEmbeds_SavesSubscriptionAndWarns()
     {
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        fixture.DiscordChannelFails(channelId, 50013);
 
-        await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id, channelId: channelId);
+        var response = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+            channelId: channelId, appPermissions: DiscordPermissions.PlainTextOnly);
+
+        Assert.Contains("Embed Links", response);
+        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
+        Assert.Equal(15263, (int)sub!.FollowedLeagueId!.Value);
+    }
+
+    [Fact]
+    public async Task Follow_WhenBotCannotPost_DoesNotCountTowardRemoval()
+    {
+        var guild = await fixture.SeedGuildInstallation();
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+
+        await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+            channelId: channelId, appPermissions: DiscordPermissions.None);
 
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
         Assert.Equal(0, sub!.FailureCount);
@@ -51,67 +62,92 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Follow_WhenChannelWorks_PostsConfirmationToChannel()
+    public async Task Follow_WhenBotCanPost_PostsNothingToTheChannel()
     {
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
         await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id, channelId: channelId);
 
-        var posted = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
-        Assert.NotNull(posted);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(300)));
     }
 
     [Fact]
-    public async Task AddSubscription_WhenChannelBlocked_SavesSubscriptionAndWarns()
+    public async Task AddSubscription_WhenBotCannotPost_SavesSubscriptionAndWarns()
     {
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        fixture.DiscordChannelFails(channelId, 50001);
 
         var response = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
-            subCommandName: "add", guildId: guild.Id, channelId: channelId);
+            subCommandName: "add", guildId: guild.Id, channelId: channelId,
+            appPermissions: DiscordPermissions.None);
 
-        Assert.Contains("access", response, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Send Messages", response);
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
         Assert.True(sub!.IsSubscribedTo(FplEvent.PriceChanges));
     }
 
     [Fact]
-    public async Task Help_WhenChannelBlocked_Warns()
+    public async Task AddSubscription_WhenBotCannotPostEmbeds_SavesSubscriptionAndWarns()
     {
-        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
-        var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        fixture.DiscordChannelFails(channelId, 50013);
-
-        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
-
-        Assert.Contains("unable to post", response, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("permission", response, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task Help_WhenChannelWorks_HasNoWarning()
-    {
-        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
+        var response = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
+            subCommandName: "add", guildId: guild.Id, channelId: channelId,
+            appPermissions: DiscordPermissions.PlainTextOnly);
 
-        Assert.DoesNotContain("unable to post", response, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task Help_WhenChannelRecovers_ClearsCounters()
-    {
-        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
-        var channelId = guild.ChannelSubscriptions.First().ChannelId;
-        guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "50013");
-        await fixture.GuildRepo.Save(guild);
-
-        await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
-
+        Assert.Contains("Embed Links", response);
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
-        Assert.Equal(0, sub!.FailureCount);
+        Assert.True(sub!.IsSubscribedTo(FplEvent.PriceChanges));
+    }
+
+    [Fact]
+    public async Task Help_WhenBotCannotPost_Warns()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+            appPermissions: DiscordPermissions.None);
+
+        Assert.Contains("Send Messages", response);
+    }
+
+    [Fact]
+    public async Task Help_WhenBotCannotPostEmbeds_Warns()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+            appPermissions: DiscordPermissions.PlainTextOnly);
+
+        Assert.Contains("Embed Links", response);
+    }
+
+    [Fact]
+    public async Task Help_WhenPermissionsUnknown_SaysSoRatherThanAllClear()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+            appPermissions: DiscordPermissions.Unknown);
+
+        Assert.Contains("read my own permissions", response);
+    }
+
+    [Fact]
+    public async Task Help_WhenBotCanPost_HasNoWarning()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
+
+        Assert.DoesNotContain("Embed Links", response);
+        Assert.DoesNotContain("Send Messages", response);
     }
 }
