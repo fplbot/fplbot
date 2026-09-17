@@ -197,6 +197,35 @@ public class DiscordGuildRepository : IGuildRepository
     public Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId) =>
         ReadChannelSubscription(installationId, channelId);
 
+    public async Task<IEnumerable<(string InstallationId, string ChannelId, ClassicLeagueId LeagueId)>> GetChannelsFollowingALeague()
+    {
+        var guildIds = (await _db.SetMembersAsync(GuildIndexKey)).Select(g => g.ToString()).ToList();
+
+        var channelBatch = _db.CreateBatch();
+        var channelReads = guildIds.ToDictionary(g => g, g => channelBatch.SetMembersAsync(ToChannelSubIndexKey(g)));
+        channelBatch.Execute();
+        await Task.WhenAll(channelReads.Values);
+
+        var leagueBatch = _db.CreateBatch();
+        var leagueReads = new List<(string GuildId, string ChannelId, Task<RedisValue> Read)>();
+        foreach (var (guildId, channelRead) in channelReads)
+        {
+            foreach (var channelId in channelRead.Result.Select(c => c.ToString()))
+            {
+                leagueReads.Add((guildId, channelId,
+                    leagueBatch.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId), _leagueIdField)));
+            }
+        }
+
+        leagueBatch.Execute();
+        await Task.WhenAll(leagueReads.Select(r => r.Read));
+
+        return leagueReads
+            .Where(r => r.Read.Result.TryParse(out long _))
+            .Select(r => (r.GuildId, r.ChannelId, new ClassicLeagueId((long)r.Read.Result)))
+            .ToList();
+    }
+
     private async Task<IEnumerable<ChannelSubscription>> GetChannelSubscriptions(string guildId)
     {
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(guildId));

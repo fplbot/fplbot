@@ -119,7 +119,7 @@ public class AppFixture : IAsyncLifetime
         A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns(new List<Fixture>());
 
         var fakeLeagueClient = A.Fake<ILeagueClient>();
-        A.CallTo(() => fakeLeagueClient.GetClassicLeague(A<int>._, A<int>._, A<bool>._))
+        A.CallTo(() => fakeLeagueClient.GetClassicLeague(A<int>._, A<int>._, A<bool>._, A<int?>._))
             .Returns(new ClassicLeague
                      {
                          Properties = new ClassicLeagueProperties { StartEvent = 1 },

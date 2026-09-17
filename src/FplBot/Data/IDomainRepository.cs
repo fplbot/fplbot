@@ -11,6 +11,7 @@ public interface IDomainRepository
     Task Delete(Installation installation);
     Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents);
     Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId);
+    Task<IEnumerable<(string InstallationId, string ChannelId, ClassicLeagueId LeagueId)>> GetChannelsFollowingALeague();
     Task SaveChannelSubscription(string installationId, ChannelSubscription channel);
     Task DeleteChannelSubscription(string installationId, string channelId);
 }
