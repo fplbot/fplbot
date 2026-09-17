@@ -52,7 +52,7 @@ public static class WebApplicationBuilderExtensions
         // In dev, /success is served by the Vite dev server (not this backend), so send the
         // browser there after the OAuth callback. /error stays on the backend — it's still a
         // Razor Page shared with the admin login flow, not part of the Vue SPA.
-        var successUri = env.IsDevelopment() ? "http://localhost:5173/success" : "/success";
+        var successUri = env.IsLocal() ? "http://localhost:5173/success" : "/success";
         var errorUri = "/error";
 
         services.AddSlackbotDistribution(c =>
@@ -178,7 +178,7 @@ public static class WebApplicationBuilderExtensions
         {
             options.CustomizeProblemDetails = context =>
             {
-                if (!context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+                if (!context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsLocal())
                     return;
 
                 var exception = context.HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error;

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="All Services (Integration)" type="CompoundRunConfigurationType">
+    <toRun name="EventHandlers (Integration)" type="DotNetProject" />
+    <toRun name="EventPublishers (Integration)" type="DotNetProject" />
+    <toRun name="SearchIndexer (Integration)" type="DotNetProject" />
+    <toRun name="WebApi (Integration)" type="DotNetProject" />
+    <toRun name="SPA (Vite dev)" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>

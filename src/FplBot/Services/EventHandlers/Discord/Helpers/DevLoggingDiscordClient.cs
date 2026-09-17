@@ -18,6 +18,12 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
         logger.LogInformation("[DEV] Discord → channel:{ChannelId} | {Title}\n{Description}", channelId, embed.Title, embed.Description);
     }
 
+    public async Task InteractionFollowupPost(string interactionToken, DiscordClient.RichEmbed embed)
+    {
+        if (!env.IsDevelopment()) { await inner.InteractionFollowupPost(interactionToken, embed); return; }
+        logger.LogInformation("[DEV] Discord followup → interaction:{InteractionToken} | {Title}\n{Description}", interactionToken, embed.Title, embed.Description);
+    }
+
     public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options)
     {
         if (!env.IsDevelopment()) { await inner.ApplicationsCommandPost(name, description, guildId, options); return; }

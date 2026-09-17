@@ -14,11 +14,12 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var installedGuild = await fixture.SeedGuildInstallation();
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
             guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Added new subscription", response.EmbedDescription());
-        Assert.Contains("PriceChanges", response.EmbedDescription());
+        Assert.Contains("Added new subscription", followup.Description);
+        Assert.Contains("PriceChanges", followup.Description);
     }
 
     [Fact]
@@ -26,10 +27,11 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
             guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Already subscribing", response.EmbedDescription());
+        Assert.Contains("Already subscribing", followup.Description);
     }
 
     [Fact]
@@ -37,10 +39,11 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.InjuryUpdates), subCommandName: "add",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.InjuryUpdates), subCommandName: "add",
             guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Updated subscriptions", response.EmbedDescription());
-        Assert.Contains("InjuryUpdates", response.EmbedDescription());
+        Assert.Contains("Updated subscriptions", followup.Description);
+        Assert.Contains("InjuryUpdates", followup.Description);
     }
 }

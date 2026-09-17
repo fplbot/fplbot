@@ -1,12 +1,11 @@
 using Discord.Net.Endpoints.Hosting;
 using Discord.Net.Endpoints.Middleware;
-using FplBot.Data.Discord;
-using FplBot.Domain;
-using FplBot.Formatting;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashCommandHandler
+public class AddSubscriptionSlashCommandHandler(IPublishEndpoint publishEndpoint) : ISlashCommandHandler
 {
     public string CommandName => "subscriptions";
 
@@ -14,40 +13,20 @@ public class AddSubscriptionSlashCommandHandler(IGuildRepository repo) : ISlashC
 
     public async Task<SlashCommandResponse> Handle(SlashCommandContext context)
     {
-        var newEventSub = Enum.Parse<EventSubscription>(context.CommandInput!.Value);
-        var newFplEvent = ToFplEvent(newEventSub);
+        var problem = ChannelPermissions.Problem(context.AppPermissions);
 
-        var installation = await repo.GetInstallation(context.GuildId);
-        var existingChannel = installation.GetChannel(context.ChannelId);
+        await publishEndpoint.Publish(new ProcessAddSubscriptionCommand(
+            context.GuildId,
+            context.ChannelId,
+            problem is null ? context.InteractionToken : string.Empty,
+            context.CommandInput!.Value,
+            context.AppPermissions));
 
-        if (existingChannel == null)
-        {
-            installation.Subscribe(context.ChannelId, [newFplEvent]);
-            await repo.Save(installation);
-            var created = installation.GetChannel(context.ChannelId)!;
-            return RespondChecked(context, $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(created.Events.Current.Select(ToEventSubscription))}");
-        }
-
-        if (existingChannel.IsSubscribedTo(newFplEvent))
-        {
-            return Respond("⚠️", $"Already subscribing to {context.CommandInput.Value}");
-        }
-
-        installation.Subscribe(context.ChannelId, [newFplEvent]);
-        await repo.Save(installation);
-        return RespondChecked(context, $"Updated subscriptions:\n{Formatter.BulletPoints(existingChannel.Events.Current.Select(ToEventSubscription))}");
-    }
-
-    private static SlashCommandResponse RespondChecked(SlashCommandContext context, string description) =>
-        ChannelPermissions.Problem(context.AppPermissions) is { } problem
-            ? Respond("⚠️ Saved, but I can't post here yet", $"{problem}\n\n{description}")
-            : Respond("✅ Success!", description);
-
-    private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
-    private static EventSubscription ToEventSubscription(FplEvent e) => Enum.Parse<EventSubscription>(e.ToString());
-
-    private static ChannelMessageWithSourceEmbedResponse Respond(string title, string description)
-    {
-        return new ChannelMessageWithSourceEmbedResponse { Embeds = [new RichEmbed(title, description)] };
+        return problem is null
+            ? new DeferredResponse()
+            : new ChannelMessageWithSourceEmbedResponse
+              {
+                  Embeds = [new("⚠️ Saved, but I can't post here yet", problem)]
+              };
     }
 }

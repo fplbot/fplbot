@@ -4,9 +4,12 @@ namespace FplBot.Tests.E2E.Discord;
 
 public record DiscordCapturedMessage(string ChannelId, string? Text, string? Title, string? Description);
 
+public record DiscordCapturedFollowup(string InteractionToken, string? Title, string? Description);
+
 public class DiscordMessageCapture
 {
     private Channel<DiscordCapturedMessage> _channel = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedMessage>();
+    private Channel<DiscordCapturedFollowup> _followups = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedFollowup>();
 
     public void Record(DiscordCapturedMessage message) => _channel.Writer.TryWrite(message);
 
@@ -32,8 +35,27 @@ public class DiscordMessageCapture
         }
     }
 
+    public void Record(DiscordCapturedFollowup followup) => _followups.Writer.TryWrite(followup);
+
+    /// <summary>
+    /// Waits for the interaction followup posted against <paramref name="interactionToken"/>,
+    /// discarding followups belonging to other interactions. A followup carries no channel, so
+    /// the token is the only thing that ties it back to the test that triggered it.
+    /// </summary>
+    public async Task<DiscordCapturedFollowup> WaitForFollowupAsync(string interactionToken, TimeSpan? timeout = null)
+    {
+        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(15));
+        while (true)
+        {
+            var followup = await _followups.Reader.ReadAsync(cts.Token);
+            if (followup.InteractionToken == interactionToken)
+                return followup;
+        }
+    }
+
     public void Reset()
     {
         _channel = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedMessage>();
+        _followups = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedFollowup>();
     }
 }

@@ -1,136 +1,20 @@
-﻿using System.Text;
-using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using Fpl.Search.Models;
-using Fpl.Search.Searching;
-using FplBot.Data.Slack;
-using FplBot.Domain;
-using FplBot.Formatting;
-using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-public class FplSearchHandler(
-    ISearchService searchService,
-    IGlobalSettingsClient globalSettingsClient,
-    ISlackWorkSpacePublisher workSpacePublisher,
-    ISlackTeamRepository slackTeamRepo,
-    ILeagueClient leagueClient,
-    IEntryClient entryClient,
-    ILogger<FplSearchHandler> logger)
-    : HandleAppMentionBase
+public class FplSearchHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["search"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var term = ParseArguments(message);
-
-        Installation? installation = null;
-        try
-        {
-            installation = await slackTeamRepo.GetInstallation(eventMetadata.Team_Id);
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Unable to get team {teamId} during search.", eventMetadata.Team_Id);
-        }
-
-        var leagueId = installation?.GetChannel(message.Channel)?.FollowedLeagueId?.Value;
-
-        string? countryToBoost = await GetCountryToBoost(leagueId);
-
-        var searchMetaData = GetSearchMetaData(installation, leagueId, message);
-
-        var entriesTask = searchService.SearchForEntry(term ?? "", 0, 10, searchMetaData);
-        var leaguesTask = searchService.SearchForLeague(term ?? "", 0, 10, searchMetaData, countryToBoost);
-
-        var entries = await entriesTask;
-        var leagues = await leaguesTask;
-
-        var sb = new StringBuilder();
-        sb.Append("Matching teams:\n");
-
-        int? currentGameweek = null;
-        if (entries.Any() || leagues.Any())
-        {
-            try
-            {
-                var globalSettings = await globalSettingsClient.GetGlobalSettings();
-                var gameweeks = globalSettings!.Gameweeks;
-                currentGameweek = gameweeks.GetCurrentGameweek()?.Id;
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Unable to obtain current gameweek when creating search result links");
-            }
-        }
-
-        if (entries.Any())
-        {
-            sb.Append(Formatter.BulletPoints(entries.ExposedHits.Select(e => Formatter.FormatEntryItem(e, currentGameweek))));
-            if (entries.HitCountExceedingExposedOnes > 0)
-            {
-                sb.Append($"\n...and {entries.HitCountExceedingExposedOnes} more");
-            }
-        }
-        else
-        {
-            sb.Append("Found no matching teams :shrug:");
-        }
-
-        sb.Append("\n\nMatching leagues:\n");
-
-        if (leagues.Any())
-        {
-            sb.Append(Formatter.BulletPoints(leagues.ExposedHits.Select(e => Formatter.FormatLeagueItem(e, currentGameweek))));
-            if (leagues.HitCountExceedingExposedOnes > 0)
-            {
-                sb.Append($"\n...and {leagues.HitCountExceedingExposedOnes} more");
-            }
-        }
-        else
-        {
-            sb.Append("Found no matching leagues :shrug:");
-        }
-
-        await workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, sb.ToString());
-
-        return new EventHandledResponse(sb.ToString());
+        await publishEndpoint.Publish(new ProcessSearchCommand(eventMetadata.Team_Id, message.Channel, message.User, message.Text));
+        return new EventHandledResponse("OK");
     }
 
-    private static SearchMetaData GetSearchMetaData(Installation? installation, long? leagueId, AppMentionEvent message)
-    {
-        var metaData = new SearchMetaData
-        {
-            Team = installation?.Id, FollowingFplLeagueId = leagueId?.ToString(), Actor = message.User,
-            Client = QueryClient.Slack
-        };
-        return metaData;
-    }
-
-    private async Task<string?> GetCountryToBoost(long? leagueId)
-    {
-        string? countryToBoost = null;
-        if (leagueId != null)
-        {
-            var league = await leagueClient.GetClassicLeague((int)leagueId.Value);
-            var adminEntry = league?.Properties?.AdminEntry;
-
-            if (adminEntry != null)
-            {
-                var admin = await entryClient.Get(adminEntry.Value);
-                if (admin != null)
-                {
-                    countryToBoost = admin.PlayerRegionShortIso;
-                }
-            }
-        }
-
-        return countryToBoost;
-    }
-
-    public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{name}}", $"(:wrench: Beta) Search for teams or leagues. E.g. \"{CommandsFormatted} magnus carlsen\".");
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.Search.Trigger, SlackCommandCatalog.Search.Description);
 }

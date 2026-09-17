@@ -1,8 +1,10 @@
 ﻿using Fpl.Client.Abstractions;
 
-namespace FplBot.Services.WebApi.Slack.Helpers;
+using FplBot.Services.WebApi.Slack.Helpers;
 
-internal class GameweekHelper(IGlobalSettingsClient gameweekClient) : IGameweekHelper
+namespace FplBot.EventHandlers.Slack.Helpers;
+
+public class GameweekHelper(IGlobalSettingsClient gameweekClient) : IGameweekHelper
 {
     public async Task<int?> ExtractGameweekOrFallbackToCurrent(string messageText, string pattern)
     {
@@ -11,7 +13,7 @@ internal class GameweekHelper(IGlobalSettingsClient gameweekClient) : IGameweekH
     }
 }
 
-internal interface IGameweekHelper
+public interface IGameweekHelper
 {
     /// <summary>
     /// Extracts gameweek number from message text using pattern "some text here {gw}". E.g. "captains {gw}". Returns current gameweek if not found in text.

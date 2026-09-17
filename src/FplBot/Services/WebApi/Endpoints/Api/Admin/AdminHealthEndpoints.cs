@@ -16,7 +16,7 @@ public static class AdminHealthEndpoints
         // /debug only reports build/version info and can't see a broken Redis/Elasticsearch
         // connection — this is the endpoint that catches that, so it needs to be reachable
         // without an admin cookie while developing locally.
-        if (env.IsDevelopment())
+        if (env.IsLocal())
         {
             route.AllowAnonymous();
         }

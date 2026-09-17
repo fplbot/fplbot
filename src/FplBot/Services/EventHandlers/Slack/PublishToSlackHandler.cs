@@ -12,7 +12,7 @@ public class PublishToSlackHandler(ISlackWorkSpacePublisher publisher, IHostEnvi
     {
         var publish = context.Message;
         var publishMessage = publish.Message;
-        if (env.IsDevelopment())
+        if (env.IsLocal())
         {
             publishMessage = $"[{Environment.MachineName}]\n{publishMessage}";
         }
@@ -24,7 +24,7 @@ public class PublishToSlackHandler(ISlackWorkSpacePublisher publisher, IHostEnvi
     {
         var message = context.Message;
         var publishMessage = message.Message;
-        if (env.IsDevelopment())
+        if (env.IsLocal())
         {
             publishMessage = $"[{Environment.MachineName}]\n{publishMessage}";
         }

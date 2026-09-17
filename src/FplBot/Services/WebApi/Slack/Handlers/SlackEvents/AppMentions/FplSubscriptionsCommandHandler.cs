@@ -1,56 +1,20 @@
-using System.Text;
-using FplBot.Data.Slack;
-using FplBot.Formatting;
-using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-internal class FplSubscriptionsCommandHandler(
-    ISlackWorkSpacePublisher workspacePublisher,
-    ISlackTeamRepository teamRepo,
-    ILogger<FplSubscriptionsCommandHandler> logger)
-    : HandleAppMentionBase
+internal class FplSubscriptionsCommandHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["subscriptions"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent appMentioned)
     {
-        var subscriptionInfo = await GetCurrentSubscriptions(eventMetadata.Team_Id, appMentioned);
-        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, appMentioned.Channel, subscriptionInfo);
-        return new EventHandledResponse(subscriptionInfo);
+        await publishEndpoint.Publish(new ProcessSubscriptionsCommand(eventMetadata.Team_Id, appMentioned.Channel));
+        return new EventHandledResponse("OK");
     }
 
-    private async Task<string> GetCurrentSubscriptions(string teamId, AppMentionEvent appMentioned)
-    {
-        try
-        {
-            var installation = await teamRepo.GetInstallation(teamId);
-            var currentSubscriptions = installation.GetChannel(appMentioned.Channel)?.Events.Current ?? [];
-
-            if (currentSubscriptions.Count() < 1)
-            {
-                return "You are not subscribing to any fplbot updates :disappointed:";
-            }
-
-            var sb = new StringBuilder();
-
-            sb.Append("This channel will receive notifications for: \n");
-
-            sb.Append($"{Formatter.BulletPoints(currentSubscriptions)}");
-
-            return sb.ToString();
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e.Message, e);
-            return "Oops, could not get subscriptions.";
-        }
-    }
-
-    public override (string, string) GetHelpDescription()
-    {
-        return (CommandsFormatted, "List current subscriptions");
-    }
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.Subscriptions.Trigger, SlackCommandCatalog.Subscriptions.Description);
 }

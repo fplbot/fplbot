@@ -37,6 +37,7 @@ public static class FplBotApplication
     private static async Task RunAsWebApplication(string[] args, List<IFplBotService> active)
     {
         var builder = WebApplication.CreateBuilder(args);
+        AddLocalUserSecrets(builder.Configuration, builder.Environment);
         builder.Host.UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active));
         var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
         // Slack requires OAuth redirect_uris to be https — even for localhost. In dev, serve
@@ -44,7 +45,7 @@ public static class FplBotApplication
         // --trust`) — the cert is issued for CN=localhost, so bind that host specifically
         // rather than "+". In prod (Heroku/containers), TLS is terminated at the platform
         // router and the app must stay reachable on all interfaces, so keep "+" and http.
-        builder.WebHost.UseUrls(builder.Environment.IsDevelopment()
+        builder.WebHost.UseUrls(builder.Environment.IsLocal()
             ? $"https://localhost:{port}"
             : $"http://+:{port}");
 
@@ -62,6 +63,7 @@ public static class FplBotApplication
     private static async Task RunAsWorkerHost(string[] args, List<IFplBotService> active)
     {
         var host = Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((ctx, config) => AddLocalUserSecrets(config, ctx.HostingEnvironment))
             .UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active))
             .ConfigureServices((ctx, services) =>
             {
@@ -72,6 +74,14 @@ public static class FplBotApplication
             .Build();
 
         await host.RunAsync();
+    }
+
+    // Both host builders load user secrets in Development only. Integration is just as local, and
+    // needs the same real Slack/Discord credentials, so add them there too.
+    private static void AddLocalUserSecrets(IConfigurationBuilder config, IHostEnvironment env)
+    {
+        if (env.IsEnvironment(HostEnvironmentExtensions.Integration))
+            config.AddUserSecrets(typeof(FplBotApplication).Assembly, optional: true);
     }
 
     public static void ConfigureServices(
@@ -90,7 +100,7 @@ public static class FplBotApplication
             configureBus(x);
         });
 
-        if (env.IsDevelopment() && config.GetValue("OTEL_ENABLED", true))
+        if (env.IsLocal() && config.GetValue("OTEL_ENABLED", true))
             ConfigureOpenTelemetry(services, config, active);
 
         foreach (var svc in active)
@@ -110,7 +120,7 @@ public static class FplBotApplication
               outputTemplate: "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}",
               theme: ConsoleTheme.None);
 
-        if (ctx.HostingEnvironment.IsDevelopment())
+        if (ctx.HostingEnvironment.IsLocal())
         {
             Serilog.Debugging.SelfLog.Enable(msg => Console.Error.WriteLine($"[Serilog SelfLog] {msg}"));
             lc.WriteTo.OpenTelemetry(o =>
