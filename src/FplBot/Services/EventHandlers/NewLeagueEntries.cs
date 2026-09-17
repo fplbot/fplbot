@@ -1,7 +1,6 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
-using FplBot.Domain;
 
 namespace FplBot.EventHandlers;
 
@@ -9,7 +8,7 @@ public static class NewLeagueEntries
 {
     public record ChannelEntries(string InstallationId, string ChannelId, string LeagueName, IReadOnlyList<NewLeagueEntry> Entries, bool HasMore);
 
-    public static async Task<IReadOnlyList<ChannelEntries>> ResolveForSubscribedChannels(
+    public static async Task<IReadOnlyList<ChannelEntries>> ResolveForFollowedLeagues(
         IDomainRepository repository,
         ILeagueClient leagueClient,
         int gameweekId,
@@ -18,14 +17,8 @@ public static class NewLeagueEntries
         var resolved = new List<ChannelEntries>();
         var fetchedLeagues = new Dictionary<int, (string Name, IReadOnlyList<NewLeagueEntry> Entries, bool HasMore)?>();
 
-        foreach (var (installationId, channelId) in await repository.GetChannelsSubscribedTo(FplEvent.NewLeagueEntries))
+        foreach (var (installationId, channelId, followedLeagueId) in await repository.GetChannelsFollowingALeague())
         {
-            var subscription = await repository.GetChannelSubscription(installationId, channelId);
-            if (subscription?.FollowedLeagueId is not { } followedLeagueId)
-            {
-                continue;
-            }
-
             var leagueId = (int)followedLeagueId.Value;
             if (!fetchedLeagues.TryGetValue(leagueId, out var league))
             {

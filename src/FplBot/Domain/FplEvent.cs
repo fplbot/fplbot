@@ -17,6 +17,5 @@ public enum FplEvent
     Deadlines,
     Lineups,
     NewPlayers,
-    FixtureRemovedFromGameweek,
-    NewLeagueEntries
+    FixtureRemovedFromGameweek
 }

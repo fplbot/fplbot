@@ -2,7 +2,6 @@ using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.States;
-using FplBot.Data;
 using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +28,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
         StubLeague(WithNewEntries(Entrant("John", "Korsnes", "Takk for meg")));
 
         _teamId = await fixture.InstallSlackbot();
-        await fixture.Subscribe(_teamId, _slackChannel, FplEvent.NewLeagueEntries);
+        await fixture.Subscribe(_teamId, _slackChannel, FplEvent.PriceChanges);
         await fixture.AskSlackbot(_teamId, _slackChannel, $"<@UREFQD887> follow {_leagueId}");
         await fixture.SlackCapture.WaitForMessageAsync(_slackChannel);
         fixture.SlackCapture.Reset();
@@ -50,7 +49,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     [Fact]
     public async Task OnGameweekTransition_PostsNewEntriesToDiscord()
     {
-        var guild = await fixture.SeedGuildInstallation(_leagueId, [EventSubscription.NewLeagueEntries]);
+        var guild = await fixture.SeedGuildInstallation(_leagueId);
         var guildChannel = guild.ChannelSubscriptions.First().ChannelId;
 
         await TransitionGameweek();
@@ -72,13 +71,10 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     }
 
     [Fact]
-    public async Task WhenChannelNotSubscribed_PostsNothing()
+    public async Task WhenChannelFollowsNoLeague_PostsNothing()
     {
-        var otherChannel = "#unsubscribed-" + Guid.NewGuid().ToString("N")[..8];
+        var otherChannel = "#nofollow-" + Guid.NewGuid().ToString("N")[..8];
         await fixture.Subscribe(_teamId, otherChannel, FplEvent.PriceChanges);
-        await fixture.AskSlackbot(_teamId, otherChannel, $"<@UREFQD887> follow {_leagueId}");
-        await fixture.SlackCapture.WaitForMessageAsync(otherChannel);
-        fixture.SlackCapture.Reset();
 
         await TransitionGameweek();
 

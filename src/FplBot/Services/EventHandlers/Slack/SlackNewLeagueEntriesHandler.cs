@@ -15,7 +15,7 @@ public class SlackNewLeagueEntriesHandler(
 {
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
-        var resolved = await NewLeagueEntries.ResolveForSubscribedChannels(slackTeamRepo, leagueClient, context.Message.NewGameweek.Id, logger);
+        var resolved = await NewLeagueEntries.ResolveForFollowedLeagues(slackTeamRepo, leagueClient, context.Message.NewGameweek.Id, logger);
         logger.LogInformation("Handling new league entries for {Count} slack channels", resolved.Count);
 
         foreach (var channel in resolved)

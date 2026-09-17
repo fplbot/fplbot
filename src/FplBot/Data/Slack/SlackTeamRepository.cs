@@ -263,6 +263,35 @@ public class SlackTeamRepository : ISlackTeamRepository
     public Task<ChannelSubscription?> GetChannelSubscription(string installationId, string channelId) =>
         ReadChannelSubscription(installationId, channelId);
 
+    public async Task<IEnumerable<(string InstallationId, string ChannelId, ClassicLeagueId LeagueId)>> GetChannelsFollowingALeague()
+    {
+        var teamIds = (await _db.SetMembersAsync(TeamIndexKey)).Select(t => t.ToString()).ToList();
+
+        var channelBatch = _db.CreateBatch();
+        var channelReads = teamIds.ToDictionary(t => t, t => channelBatch.SetMembersAsync(ToChannelSubIndexKey(t)));
+        channelBatch.Execute();
+        await Task.WhenAll(channelReads.Values);
+
+        var leagueBatch = _db.CreateBatch();
+        var leagueReads = new List<(string TeamId, string ChannelId, Task<RedisValue> Read)>();
+        foreach (var (teamId, channelRead) in channelReads)
+        {
+            foreach (var channelId in channelRead.Result.Select(c => c.ToString()))
+            {
+                leagueReads.Add((teamId, channelId,
+                    leagueBatch.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId), _channelSubLeagueIdField)));
+            }
+        }
+
+        leagueBatch.Execute();
+        await Task.WhenAll(leagueReads.Select(r => r.Read));
+
+        return leagueReads
+            .Where(r => r.Read.Result.TryParse(out long _))
+            .Select(r => (r.TeamId, r.ChannelId, new ClassicLeagueId((long)r.Read.Result)))
+            .ToList();
+    }
+
     // Reads the exact set of channel ids this team has saved, then fetches each channel's hash by
     // its exact key. Deliberately avoids a KEYS pattern scan on "SlackChannelSub-{teamId}-*": that
     // glob also matches OTHER teams whose id happens to start with this team's id plus a dash

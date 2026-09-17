@@ -46,8 +46,7 @@ export type EventSubscription =
   | "Deadlines"
   | "Lineups"
   | "NewPlayers"
-  | "FixtureRemovedFromGameweek"
-  | "NewLeagueEntries";
+  | "FixtureRemovedFromGameweek";
 
 // A single Slack channel's subscription within a team (one team can now follow a league /
 // receive notifications in more than one channel — mirrors Discord's GuildSubscription).

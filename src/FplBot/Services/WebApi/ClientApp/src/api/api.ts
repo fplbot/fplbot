@@ -112,7 +112,7 @@ export function broadcastToSlack(message: string): Promise<MessageResponse> {
 export const ALL_EVENT_SUBSCRIPTIONS: EventSubscription[] = [
   "All", "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
   "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates", "Deadlines",
-  "Lineups", "NewPlayers", "FixtureRemovedFromGameweek", "NewLeagueEntries",
+  "Lineups", "NewPlayers", "FixtureRemovedFromGameweek",
 ];
 
 export function updateChannelSubscriptions(

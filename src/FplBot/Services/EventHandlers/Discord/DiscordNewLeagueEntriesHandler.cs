@@ -15,7 +15,7 @@ public class DiscordNewLeagueEntriesHandler(
 {
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
-        var resolved = await NewLeagueEntries.ResolveForSubscribedChannels(repo, leagueClient, context.Message.NewGameweek.Id, logger);
+        var resolved = await NewLeagueEntries.ResolveForFollowedLeagues(repo, leagueClient, context.Message.NewGameweek.Id, logger);
         logger.LogInformation("Handling new league entries for {Count} guild channels", resolved.Count);
 
         foreach (var channel in resolved)
