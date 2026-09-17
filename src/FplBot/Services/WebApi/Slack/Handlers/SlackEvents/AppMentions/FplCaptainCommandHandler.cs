@@ -1,59 +1,20 @@
-﻿using FplBot.Data.Slack;
-using FplBot.Formatting.Helpers;
-using FplBot.Services.WebApi.Slack.Abstractions;
-using FplBot.Services.WebApi.Slack.Helpers;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-internal class FplCaptainCommandHandler(
-    ICaptainsByGameWeek captainsByGameWeek,
-    IGameweekHelper gameweekHelper,
-    ISlackTeamRepository slackTeamsRepo,
-    ISlackWorkSpacePublisher workspacePublisher)
-    : HandleAppMentionBase
+internal class FplCaptainCommandHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["captains"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent incomingMessage)
     {
-        var isChartRequest = incomingMessage.Text.Contains("chart");
-
-        var gwPattern = $"{Commands.First()} {{gw}}";
-        if (isChartRequest)
-        {
-            gwPattern = $"{Commands.First()} chart {{gw}}|{Commands.First()} {{gw}} chart";
-        }
-        var gameWeek = await gameweekHelper.ExtractGameweekOrFallbackToCurrent(incomingMessage.Text, gwPattern);
-
-        if (!gameWeek.HasValue)
-        {
-            await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, "Invalid gameweek :grimacing:");
-            return new EventHandledResponse("Invalid gameweek");
-        }
-
-        var installation = await slackTeamsRepo.GetInstallation(eventMetadata.Team_Id);
-        var leagueId = installation.GetChannel(incomingMessage.Channel)?.FollowedLeagueId?.Value;
-
-        string outgoingMessage;
-        if (leagueId.HasValue)
-        {
-            var captainPicks = await captainsByGameWeek.GetEntryCaptainPicks(gameWeek.Value, (int)leagueId.Value);
-            outgoingMessage = isChartRequest
-                ? captainsByGameWeek.GetCaptainsChartByGameWeek(gameWeek.Value, captainPicks)
-                : captainsByGameWeek.GetCaptainsByGameWeek(gameWeek.Value, captainPicks);
-        }
-        else
-        {
-            outgoingMessage = "No league. Follow a league first via `@fplbot follow`";
-        }
-
-
-        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, incomingMessage.Channel, outgoingMessage);
-
-        return new EventHandledResponse(outgoingMessage);
+        await publishEndpoint.Publish(new ProcessCaptainsCommand(eventMetadata.Team_Id, incomingMessage.Channel, incomingMessage.Text));
+        return new EventHandledResponse("OK");
     }
 
-    public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} [chart] {{GW-number, or empty for current}}", "Display captain picks in the league. Add \"chart\" to visualize it in a chart.");
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.Captains.Trigger, SlackCommandCatalog.Captains.Description);
 }

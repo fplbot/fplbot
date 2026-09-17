@@ -1,43 +1,20 @@
-﻿using Fpl.Client.Abstractions;
-using FplBot.Formatting;
-using FplBot.Messaging.Contracts.Events.v1;
-using FplBot.Services.WebApi.Slack.Abstractions;
-using FplBot.Services.WebApi.Slack.Extensions;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-internal class FplPricesHandler(ISlackWorkSpacePublisher workSpacePublisher, IGlobalSettingsClient globalSettingsClient)
-    : HandleAppMentionBase
+internal class FplPricesHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["pricechanges"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var globalSettings = await globalSettingsClient.GetGlobalSettings();
-        var allPlayers = globalSettings!.Players;
-        var teams = globalSettings.Teams;
-
-        var priceChangedPlayers = allPlayers.Where(p => p.CostChangeEvent != 0 && p.IsRelevant())
-            .Select(p =>
-            {
-                var t = teams.First(t => t.Code == p.TeamCode);
-                return new PlayerWithPriceChange(p.Id, p.WebName ?? "", p.CostChangeEvent, p.NowCost, p.OwnershipPercentage, t.Id, t.ShortName ?? "");
-            });
-        if (priceChangedPlayers.Any())
-        {
-
-            var messageToSend = Formatter.FormatPriceChanged(priceChangedPlayers);
-            await workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
-        }
-        else
-        {
-            await workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, "No relevant price changes yet");
-        }
-
-        return new EventHandledResponse("Ok");
+        await publishEndpoint.Publish(new ProcessPriceChangesCommand(eventMetadata.Team_Id, message.Channel));
+        return new EventHandledResponse("OK");
     }
 
-    public override (string,string) GetHelpDescription() => (CommandsFormatted, "Displays players with recent price change");
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.PriceChanges.Trigger, SlackCommandCatalog.PriceChanges.Description);
 }

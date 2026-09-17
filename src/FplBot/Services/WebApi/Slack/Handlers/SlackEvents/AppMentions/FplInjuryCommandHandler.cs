@@ -1,46 +1,20 @@
-﻿using Fpl.Client.Abstractions;
-using Fpl.Client.Models;
-using FplBot.Formatting;
-using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-internal class FplInjuryCommandHandler(
-    ISlackWorkSpacePublisher workspacePublisher,
-    IGlobalSettingsClient globalSettingsClient)
-    : HandleAppMentionBase
+internal class FplInjuryCommandHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["injuries"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var globalSettings = await globalSettingsClient.GetGlobalSettings();
-
-        var injuredPlayers = FindInjuredPlayers(globalSettings?.Players ?? []);
-
-        var textToSend = Formatter.GetInjuredPlayers(injuredPlayers);
-
-        if (string.IsNullOrEmpty(textToSend))
-        {
-            return new EventHandledResponse("Not found");
-        }
-        await workspacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, textToSend);
-
-        return new EventHandledResponse(textToSend);
+        await publishEndpoint.Publish(new ProcessInjuriesCommand(eventMetadata.Team_Id, message.Channel));
+        return new EventHandledResponse("OK");
     }
 
-
-    private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)
-    {
-        return players.Where(p => p.OwnershipPercentage > 5 && IsInjured(p)).OrderByDescending(p => p.OwnershipPercentage);
-    }
-
-    private static bool IsInjured(Player player)
-    {
-        return (player.ChanceOfPlayingNextRound.HasValue && player.ChanceOfPlayingNextRound != 100);
-    }
-
-    public override (string,string) GetHelpDescription() => (CommandsFormatted, "See injured players owned by more than 5 %");
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.Injuries.Trigger, SlackCommandCatalog.Injuries.Description);
 }

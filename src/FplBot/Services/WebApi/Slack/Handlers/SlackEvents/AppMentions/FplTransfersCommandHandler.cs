@@ -1,45 +1,20 @@
-using FplBot.Data.Slack;
-using FplBot.Formatting;
-using FplBot.Services.WebApi.Slack.Abstractions;
-using FplBot.Services.WebApi.Slack.Helpers;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-internal class FplTransfersCommandHandler(
-    ISlackWorkSpacePublisher workSpacePublisher,
-    IGameweekHelper gameweekHelper,
-    ITransfersByGameWeek transfersByGameweek,
-    ISlackTeamRepository slackTeamRepo)
-    : HandleAppMentionBase
+internal class FplTransfersCommandHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["transfers"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var gameweek = await gameweekHelper.ExtractGameweekOrFallbackToCurrent(message.Text, $"{CommandsFormatted} {{gw}}");
-
-
-        var installation = await slackTeamRepo.GetInstallation(eventMetadata.Team_Id);
-        var leagueId = installation.GetChannel(message.Channel)?.FollowedLeagueId?.Value;
-        var messageToSend = "You don't follow any league yet. Use the `@fplbot follow` command first.";
-        if (leagueId.HasValue)
-        {
-            try
-            {
-                messageToSend =
-                    await transfersByGameweek.GetTransfersByGameweekTexts(gameweek ?? 1, (int)leagueId.Value);
-            }
-            catch (HttpRequestException e) when (e.Message.Contains("429"))
-            {
-                messageToSend = "It seems fetching transfers was a bit heavy for this league. Try again later. 🤷‍️";
-            }
-        }
-
-        await workSpacePublisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, messageToSend);
-        return new EventHandledResponse(messageToSend);
+        await publishEndpoint.Publish(new ProcessTransfersCommand(eventMetadata.Team_Id, message.Channel, message.Text));
+        return new EventHandledResponse("OK");
     }
 
-    public override (string,string) GetHelpDescription() => ($"{CommandsFormatted} {{GW-number, or empty for current}}", "Displays each team's transfers");
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.Transfers.Trigger, SlackCommandCatalog.Transfers.Description);
 }

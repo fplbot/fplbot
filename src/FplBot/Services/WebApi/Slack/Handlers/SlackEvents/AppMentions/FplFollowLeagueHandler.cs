@@ -1,77 +1,20 @@
-﻿using System.Text.RegularExpressions;
-using Fpl.Client.Abstractions;
-using FplBot.Data.Slack;
-using FplBot.Domain;
-using FplBot.Services.WebApi.Slack.Abstractions;
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
 namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-public class FplFollowLeagueHandler(
-    ISlackTeamRepository slackTeamRepository,
-    ILeagueClient leagueClient,
-    ISlackWorkSpacePublisher publisher,
-    ILogger<FplFollowLeagueHandler> logger)
-    : HandleAppMentionBase
+public class FplFollowLeagueHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
     public override string[] Commands => ["follow"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var newLeagueId = ParseArguments(message);
-
-        if (string.IsNullOrEmpty(newLeagueId))
-        {
-            var help = "No leagueId provided. Usage: `@fplbot follow 123`";
-            await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, help);
-            return new EventHandledResponse(help);
-        }
-
-        int theLeagueId;
-
-        var matches = new Regex(@"\d+").Matches(newLeagueId);
-        if (matches.Select(c => c.Value).Distinct().Count() == 1)
-        {
-            theLeagueId = int.Parse(matches.First().Value);
-        }
-        else
-        {
-            var res = $"Could not update league to id '{newLeagueId}'. Make sure it's a single valid number.";
-            await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, res);
-            return new EventHandledResponse(res);
-        }
-
-
-        var failure = $"Could not find league {newLeagueId} :/ Could you find it at https://fantasy.premierleague.com/leagues/{newLeagueId}/standings/c ?";
-        try
-        {
-            var league = await leagueClient.GetClassicLeague(theLeagueId);
-
-            if (league?.Properties != null)
-            {
-                var installation = await slackTeamRepository.GetInstallation(eventMetadata.Team_Id);
-                installation.Follow(message.Channel, new ClassicLeagueId(theLeagueId));
-                await slackTeamRepository.Save(installation);
-                var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in {ChannelName()}";
-                await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, success);
-                return new EventHandledResponse(success);
-                string ChannelName()
-                {
-                    return $"<#{message.Channel}>";
-                }
-            }
-            await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
-            return new EventHandledResponse(failure);
-        }
-        catch (HttpRequestException e)
-        {
-            logger.LogError(e.Message, e);
-            await publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, failure);
-            return new EventHandledResponse(failure);
-        }
-
+        await publishEndpoint.Publish(new ProcessFollowLeagueCommand(eventMetadata.Team_Id, message.Channel, message.Text));
+        return new EventHandledResponse("OK");
     }
 
-    public override (string, string) GetHelpDescription() => ($"{CommandsFormatted} {{new league id}}", "Set league to follow");
+    public override (string, string) GetHelpDescription() => (SlackCommandCatalog.Follow.Trigger, SlackCommandCatalog.Follow.Description);
 }

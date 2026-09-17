@@ -28,9 +28,9 @@ public static class SearchServiceCollectionExtensions
             return new ElasticClient(connectionSettings);
         });
 
-        services.AddScoped<ISearchService, SearchService>();
-        services.AddScoped<IIndexingClient, IndexingClient>();
-        services.AddScoped<ISearchAnalyticsService, SearchAnalyticsService>();
+        services.TryAddScoped<ISearchService, SearchService>();
+        services.TryAddScoped<IIndexingClient, IndexingClient>();
+        services.TryAddScoped<ISearchAnalyticsService, SearchAnalyticsService>();
         return services;
     }
 

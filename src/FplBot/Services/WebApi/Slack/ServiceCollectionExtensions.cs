@@ -3,7 +3,6 @@ using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
-using FplBot.Services.WebApi.Slack.Abstractions;
 using FplBot.Services.WebApi.Slack.Handlers.Reactors;
 using FplBot.Services.WebApi.Slack.Handlers.SlackEvents;
 using FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
@@ -30,8 +29,6 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
         services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
-        services.AddSingleton<IGameweekHelper, GameweekHelper>();
-        services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
         services.AddScoped<AdminUninstallSlackWorkspace>();
         services.AddSlackBotEvents<SlackbotNetInstallationBridge>()
             .AddShortcut<HelpEventHandler>()
