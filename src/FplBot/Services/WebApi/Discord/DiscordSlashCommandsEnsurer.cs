@@ -53,8 +53,7 @@ public class DiscordSlashCommandsEnsurer(IDiscordClient client, ILogger<DiscordS
         new("subscriptions", "Manage subscription", [
             OptionWithOptions("add", OptionWithChoices("event")),
             OptionWithOptions("remove", OptionWithChoices("event"))
-        ]),
-        new("ping", "Test whether fplbot can post in this channel", [])
+        ])
     ];
 
     public static IReadOnlyList<SlashCommandDefinitionSummary> GetDefinedCommandSummaries() =>

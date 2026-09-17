@@ -31,7 +31,7 @@ public static class InstallUrlEndpoints
         var redirectUri = new Uri(original, "/oauth/discord/authorize");
         return TypedResults.Ok(new
         {
-            redirectUri = $"https://discord.com/api/oauth2/authorize?client_id={discordOptions.Value.CLIENT_ID}&redirect_uri={redirectUri}&scope=bot%20applications.commands&permissions=309237844032&response_type=code"
+            redirectUri = $"https://discord.com/api/oauth2/authorize?client_id={discordOptions.Value.CLIENT_ID}&redirect_uri={redirectUri}&scope=bot%20applications.commands&permissions=309237861440&response_type=code"
         });
     }
 }

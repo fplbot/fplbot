@@ -91,6 +91,8 @@ public class AppFixture : IAsyncLifetime
         _capturingDiscordClient.Reset();
     }
 
+    public Task<HttpResponseMessage> Get(string path) => _client.GetAsync(path, TestContext.Current.CancellationToken);
+
     public virtual async ValueTask InitializeAsync()
     {
         await _redis.StartAsync();
@@ -129,7 +131,12 @@ public class AppFixture : IAsyncLifetime
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", true)
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["REDIS_URL"] = redisUrl, ["OTEL_ENABLED"] = "false" })
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["REDIS_URL"] = redisUrl,
+                ["OTEL_ENABLED"] = "false",
+                ["SKIP_DISCORD_SIGNATURE_VERIFICATION"] = "true"
+            })
             .Build();
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
@@ -246,7 +253,7 @@ public class AppFixture : IAsyncLifetime
     }
 
     public async Task<string> AskDiscord(string commandName, string? optionValue = null, string? subCommandName = null,
-        string? guildId = null, string? channelId = null)
+        string? guildId = null, string? channelId = null, long appPermissions = DiscordPermissions.All)
     {
         guildId ??= Guid.NewGuid().ToString("N");
         channelId ??= Guid.NewGuid().ToString("N");
@@ -277,6 +284,7 @@ public class AppFixture : IAsyncLifetime
                           ["type"] = 2,
                           ["guild_id"] = guildId,
                           ["channel_id"] = channelId,
+                          ["app_permissions"] = appPermissions.ToString(),
                           ["data"] = data
                       };
 

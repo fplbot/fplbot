@@ -6,7 +6,7 @@ using FplBot.Domain;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildRepository repo, ChannelDeliveryProbe probe) : ISlashCommandHandler
+public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildRepository repo) : ISlashCommandHandler
 {
     public string CommandName => "follow";
 
@@ -25,13 +25,9 @@ public class FollowSlashCommandHandler(ILeagueClient leagueClient, IGuildReposit
         await repo.Save(installation);
 
         var leagueName = league.Properties?.Name;
-        var result = await probe.Probe(context.GuildId, context.ChannelId,
-            $"✅ Now following '{leagueName}' in this channel.");
-
-        if (!result.Delivered)
+        if (ChannelPermissions.Problem(context.AppPermissions) is { } problem)
         {
-            return RespondSavedButBlocked(
-                $"Following '{leagueName}'! {ChannelDeliveryProbe.Advice(result)}");
+            return RespondSavedButBlocked($"Following '{leagueName}'! {problem}");
         }
 
         return isNewChannel

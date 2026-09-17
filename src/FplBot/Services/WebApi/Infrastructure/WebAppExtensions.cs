@@ -52,7 +52,7 @@ public static class WebAppExtensions
         app.Map("/oauth/authorize", a => a.UseSlackbotDistribution());
         app.Map("/events", a => a.UseSlackbot(enableAuth: !env.IsDevelopment()));
         app.Map("/oauth/discord/authorize", a => a.UseDiscordDistribution());
-        app.Map("/discord/events", a => a.UseDiscordbot(enableAuth: !env.IsDevelopment()));
+        app.Map("/discord/events", a => a.UseDiscordbot(enableAuth: !(env.IsDevelopment() && app.Configuration.GetValue("SKIP_DISCORD_SIGNATURE_VERIFICATION", false))));
         app.UseMinimalEndpoints(
             ("/debug", TestEndpoints.Map)
         );

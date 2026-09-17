@@ -7,7 +7,7 @@ using FplBot.Domain;
 
 namespace FplBot.Discord.Handlers.SlashCommands;
 
-public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client, ChannelDeliveryProbe probe) : ISlashCommandHandler
+public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client) : ISlashCommandHandler
 {
     public string CommandName => "help";
 
@@ -52,10 +52,9 @@ public class HelpSlashCommandHandler(IGuildRepository repo, ILeagueClient client
             content = "⚠️ Not subscribing to any events. Add one to get notifications!";
         }
 
-        var result = await probe.Probe(context.GuildId, context.ChannelId, "permission check: ✅");
-        if (!result.Delivered)
+        if (ChannelPermissions.Problem(context.AppPermissions) is { } problem)
         {
-            content = $"⚠️ I'm currently unable to post in this channel. {ChannelDeliveryProbe.ProblemAndFix(result)}\n{content}\n\n";
+            content = $"⚠️ {problem}\n{content}\n\n";
         }
 
         return Respond(content);

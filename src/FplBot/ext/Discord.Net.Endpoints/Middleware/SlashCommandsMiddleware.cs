@@ -29,6 +29,14 @@ internal class SlashCommandsMiddleware
         var data = docRootElement.GetProperty("data");
         var channelId = docRootElement.GetProperty("channel_id").GetString();
         var guildId = docRootElement.GetProperty("guild_id").GetString();
+        var appPermissions = docRootElement.TryGetProperty("app_permissions", out JsonElement appPerms)
+            ? appPerms.ValueKind switch
+              {
+                  JsonValueKind.String when long.TryParse(appPerms.GetString(), out var asText) => asText,
+                  JsonValueKind.Number when appPerms.TryGetInt64(out var asNumber) => asNumber,
+                  _ => 0
+              }
+            : 0;
         var commandName = data.GetProperty("name").GetString();
         _logger.LogInformation($"Handling slash command {commandName}");
         var slashCommandType = data.GetProperty("type").GetInt32();
@@ -67,7 +75,7 @@ internal class SlashCommandsMiddleware
 
         if (handler != null)
         {
-            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput);
+            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput, appPermissions);
             var handled = await handler.Handle(slashCommandContext);
             if (handled is ChannelMessageWithSourceResponse channelMessageRes)
             {
@@ -105,7 +113,7 @@ internal class SlashCommandsMiddleware
                                                                };
 }
 
-public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null);
+public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null, long AppPermissions = 0);
 public record SlashCommandInput(string Name, string Value, string SubCommandName);
 
 internal class Lowercase : JsonNamingPolicy
