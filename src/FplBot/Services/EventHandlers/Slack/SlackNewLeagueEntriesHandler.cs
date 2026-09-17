@@ -10,6 +10,7 @@ namespace FplBot.EventHandlers.Slack;
 public class SlackNewLeagueEntriesHandler(
     ISlackTeamRepository slackTeamRepo,
     ILeagueClient leagueClient,
+    IGlobalSettingsClient globalSettingsClient,
     ILogger<SlackNewLeagueEntriesHandler> logger)
     : IConsumer<GameweekJustBegan>, IConsumer<ProcessNewLeagueEntriesForSlackChannel>
 {
@@ -25,7 +26,7 @@ public class SlackNewLeagueEntriesHandler(
     public async Task Consume(ConsumeContext<ProcessNewLeagueEntriesForSlackChannel> context)
     {
         var message = context.Message;
-        var league = await NewLeagueEntries.Fetch(leagueClient, message.LeagueId, message.GameweekId, logger);
+        var league = await NewLeagueEntriesLookup.Fetch(leagueClient, globalSettingsClient, message.LeagueId, message.GameweekId, logger);
         if (league is null)
         {
             return;

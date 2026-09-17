@@ -129,7 +129,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 
     private void StubLeague(ClassicLeague league) =>
         A.CallTo(() => fixture.Services.GetRequiredService<ILeagueClient>()
-                .GetClassicLeague(_leagueId, A<int>._, A<bool>._))
+                .GetClassicLeague(_leagueId, A<int>._, A<bool>._, A<int?>._))
             .Returns(league);
 
     private ClassicLeague WithNewEntries(params NewLeagueEntry[] entries) =>

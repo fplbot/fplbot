@@ -10,6 +10,7 @@ namespace FplBot.EventHandlers.Discord;
 public class DiscordNewLeagueEntriesHandler(
     IGuildRepository repo,
     ILeagueClient leagueClient,
+    IGlobalSettingsClient globalSettingsClient,
     ILogger<DiscordNewLeagueEntriesHandler> logger)
     : IConsumer<GameweekJustBegan>, IConsumer<ProcessNewLeagueEntriesForGuildChannel>
 {
@@ -25,7 +26,7 @@ public class DiscordNewLeagueEntriesHandler(
     public async Task Consume(ConsumeContext<ProcessNewLeagueEntriesForGuildChannel> context)
     {
         var message = context.Message;
-        var league = await NewLeagueEntries.Fetch(leagueClient, message.LeagueId, message.GameweekId, logger);
+        var league = await NewLeagueEntriesLookup.Fetch(leagueClient, globalSettingsClient, message.LeagueId, message.GameweekId, logger);
         if (league is null)
         {
             return;

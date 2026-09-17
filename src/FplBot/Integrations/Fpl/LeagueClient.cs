@@ -6,14 +6,14 @@ namespace Fpl.Client;
 
 public class LeagueClient(HttpClient client, ICacheProvider cache) : ILeagueClient
 {
-    public async Task<ClassicLeague?> GetClassicLeague(int leagueId, int page = 1, bool tolerate404 = false)
+    public async Task<ClassicLeague?> GetClassicLeague(int leagueId, int page = 1, bool tolerate404 = false, int? phase = null)
     {
         try
         {
             return await cache.GetCachedOrFetch<ClassicLeague>(
-                $"/api/leagues-classic/{leagueId}/standings/?page_standings={page}",
+                $"/api/leagues-classic/{leagueId}/standings/?page_standings={page}{(phase is { } p ? $"&phase={p}" : "")}",
                 client.GetStringAsync,
-                TimeSpan.FromMinutes(5)); //max-age=300
+                TimeSpan.FromMinutes(30));
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {

@@ -3,13 +3,19 @@ using Fpl.Client.Models;
 
 namespace FplBot.EventHandlers;
 
-public static class NewLeagueEntries
+public static class NewLeagueEntriesLookup
 {
     public record LeagueEntries(string LeagueName, IReadOnlyList<NewLeagueEntry> Entries, bool HasMore);
 
-    public static async Task<LeagueEntries?> Fetch(ILeagueClient leagueClient, int leagueId, int gameweekId, ILogger logger)
+    public static async Task<LeagueEntries?> Fetch(
+        ILeagueClient leagueClient,
+        IGlobalSettingsClient globalSettingsClient,
+        int leagueId,
+        int gameweekId,
+        ILogger logger)
     {
-        var league = await leagueClient.GetClassicLeague(leagueId, tolerate404: true);
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var league = await leagueClient.GetClassicLeague(leagueId, tolerate404: true, phase: ToPhase(settings, gameweekId));
         if (league is null)
         {
             return null;
@@ -33,4 +39,14 @@ public static class NewLeagueEntries
             entries,
             newEntries?.HasNext ?? false);
     }
+
+    public static int? ToPhase(GlobalSettings? settings, int gameweekId)
+    {
+        var phase = settings?.Phases.FirstOrDefault(p =>
+            p.Id != OverallPhaseId && gameweekId >= p.StartEvent && gameweekId <= p.StopEvent);
+
+        return phase is null ? null : (int)phase.Id;
+    }
+
+    private const long OverallPhaseId = 1;
 }
