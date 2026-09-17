@@ -14,7 +14,7 @@ public class HelpSlashCommandHandler(IPublishEndpoint publishEndpoint) : ISlashC
     {
         if (ChannelPermissions.Problem(context.AppPermissions) is { } problem)
         {
-            return new ChannelMessageWithSourceComponentsResponse(DiscordCards.HeadingCard("ℹ️ HELP", $"⚠️ {problem}", null));
+            return new ChannelMessageWithSourceComponentsResponse(DiscordCards.HeadingCard("ℹ️ HELP", $"⚠️ {problem}"));
         }
 
         await publishEndpoint.Publish(new ProcessDiscordHelpCommand(context.GuildId, context.ChannelId, context.InteractionToken));

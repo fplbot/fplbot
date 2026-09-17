@@ -62,25 +62,23 @@ public class DiscordGameweekFinishedHandler(
         {
             if (league.Properties?.StartEvent is var startEvent && gameweekId >= startEvent)
             {
-                var messages = new List<RichMesssage>();
+                var sections = new List<RichSection>();
                 var intro = Formatter.FormatGameweekFinished(gw, league);
                 var standings = Formatter.GetStandings(league, gw, includeExternalLinks:false);
                 var topThree = Formatter.GetTopThreeGameweekEntries(league, gw,includeExternalLinks:false);
                 var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
-                messages.AddRange([
-                    new ("ℹ️ Gameweek finished!",intro),
+                sections.AddRange([
+                    new (null, intro),
                     new ("ℹ️ Standings", standings),
                     new ("ℹ️ Top 3", topThree ?? string.Empty)
                 ]);
 
                 if (worst is not null)
                 {
-                    messages.Add(new("ℹ️ Lantern beige", worst));
+                    sections.Add(new("ℹ️ Lantern beige", worst));
                 }
-                foreach (var richMessage in messages)
-                {
-                    await context.Publish(new PublishRichToGuildChannel(guildId, channelId, richMessage.Title, richMessage.Description));
-                }
+
+                await context.Publish(new PublishSectionsToGuildChannel(guildId, channelId, "ℹ️ Gameweek finished!", sections));
             }
         }
         else

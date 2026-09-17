@@ -56,7 +56,7 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
             .ToList();
 
         var heading = texts.ElementAtOrDefault(0)?.TrimStart('#').TrimStart();
-        return (heading, texts.ElementAtOrDefault(1));
+        return (heading, string.Join("\n", texts.Skip(1)));
     }
 
     public Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options) =>

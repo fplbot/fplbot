@@ -14,19 +14,15 @@ public class PublishToGuildHandler(
     :
         IConsumer<PublishToGuildChannel>,
         IConsumer<PublishRichToGuildChannel>,
+        IConsumer<PublishSectionsToGuildChannel>,
         IConsumer<RespondToDiscordInteraction>
 {
     public async Task Consume(ConsumeContext<RespondToDiscordInteraction> context)
     {
         var message = context.Message;
-        int? color = null;
-        if (env.IsLocal())
-        {
-            color = 14177041;
-        }
 
         await discordClient.InteractionFollowupPost(message.InteractionToken,
-            DiscordCards.HeadingCard(message.Title, message.Description, color));
+            DiscordCards.HeadingCard(message.Title, message.Description));
     }
 
     public async Task Consume(ConsumeContext<PublishToGuildChannel> context)
@@ -45,15 +41,19 @@ public class PublishToGuildHandler(
     public async Task Consume(ConsumeContext<PublishRichToGuildChannel> context)
     {
         var message = context.Message;
-        int? color = null;
-        if (env.IsLocal())
-        {
-            color = 14177041;
-        }
 
         await Post(context, message.GuildId, message.ChannelId,
             () => discordClient.ChannelMessagePost(message.ChannelId,
-                DiscordCards.HeadingCard(message.Title, message.Description, color)));
+                DiscordCards.HeadingCard(message.Title, message.Description)));
+    }
+
+    public async Task Consume(ConsumeContext<PublishSectionsToGuildChannel> context)
+    {
+        var message = context.Message;
+
+        await Post(context, message.GuildId, message.ChannelId,
+            () => discordClient.ChannelMessagePost(message.ChannelId,
+                DiscordCards.SectionedCard(message.Title, message.Sections)));
     }
 
     private async Task Post(ConsumeContext context, string guildId, string channelId, Func<Task> post)

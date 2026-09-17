@@ -25,6 +25,6 @@ public class FollowSlashCommandHandler(IPublishEndpoint publishEndpoint) : ISlas
         return problem is null
             ? new DeferredResponse()
             : new ChannelMessageWithSourceComponentsResponse(
-                DiscordCards.HeadingCard("⚠️ Saved, but I can't post here yet", problem, null));
+                DiscordCards.HeadingCard("⚠️ Saved, but I can't post here yet", problem));
     }
 }
