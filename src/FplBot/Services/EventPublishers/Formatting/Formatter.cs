@@ -144,6 +144,35 @@ public static class Formatter
         }
     }
 
+    public const int MaxListedNewLeagueEntries = 5;
+
+    public static string FormatNewLeagueEntries(string leagueName, IEnumerable<NewLeagueEntry> newEntries, bool hasMore = false)
+    {
+        var entries = newEntries.ToList();
+        var listed = entries.Take(MaxListedNewLeagueEntries).ToList();
+        var andThenSome = hasMore || entries.Count > listed.Count;
+
+        var header = entries.Count > 1 || andThenSome
+            ? $"🎉 New entries in {leagueName}!"
+            : $"🎉 New entry in {leagueName}!";
+
+        var body = BulletPoints<string>(listed.Select(Describe));
+        return andThenSome ? $"{header}\n{body}\n…along with a bunch more" : $"{header}\n{body}";
+
+        string Describe(NewLeagueEntry entry)
+        {
+            var playerName = $"{entry.PlayerFirstName} {entry.PlayerLastName}".Trim();
+            var entryName = entry.EntryName?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(playerName))
+            {
+                return entryName;
+            }
+
+            return string.IsNullOrEmpty(entryName) ? playerName : $"{playerName} ({entryName})";
+        }
+    }
+
     public static string FormatTransferredPlayers(IEnumerable<InternalPremiershipTransfer> transfers, bool includeheader = true)
     {
         var header = "";

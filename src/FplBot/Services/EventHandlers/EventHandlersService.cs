@@ -39,6 +39,7 @@ public class EventHandlersService : IFplBotService
         cfg.AddConsumer<DiscordInjuryUpdateHandler>();
         cfg.AddConsumer<DiscordLineupReadyHandler>();
         cfg.AddConsumer<DiscordNearDeadlineHandler>();
+        cfg.AddConsumer<DiscordNewLeagueEntriesHandler>();
         cfg.AddConsumer<DiscordNewPlayersHandler>();
         cfg.AddConsumer<DiscordPriceChangeHandler>();
         cfg.AddConsumer<PublishToGuildHandler>();
@@ -51,6 +52,7 @@ public class EventHandlersService : IFplBotService
         cfg.AddConsumer<SlackInjuryUpdateHandler>();
         cfg.AddConsumer<SlackLineupReadyHandler>();
         cfg.AddConsumer<SlackNearDeadlineHandler>();
+        cfg.AddConsumer<SlackNewLeagueEntriesHandler>();
         cfg.AddConsumer<SlackNewPlayerHandler>();
         cfg.AddConsumer<SlackPriceChangeHandler>();
         cfg.AddConsumer<PublishToSlackHandler>();

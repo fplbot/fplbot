@@ -9,7 +9,7 @@ internal static class DevSeeder
     private const string AllSubs =
         "All Standings Captains Transfers FixtureGoals FixtureAssists FixtureCards " +
         "FixturePenaltyMisses FixtureFullTime Taunts PriceChanges InjuryUpdates " +
-        "Deadlines Lineups NewPlayers FixtureRemovedFromGameweek";
+        "Deadlines Lineups NewPlayers FixtureRemovedFromGameweek NewLeagueEntries";
 
     public static Task SeedAsync(ResourceEndpointsAllocatedEvent evt, CancellationToken ct)
     {
