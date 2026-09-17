@@ -6,6 +6,7 @@ using MassTransit;
 using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Exceptions;
 using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
+using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack.Helpers;
 
@@ -43,52 +44,58 @@ public class SlackWorkSpacePublisher(
     public async Task PublishToWorkspace(string teamId, params ChatPostMessageRequest[] messages)
     {
         var installation = await repository.GetInstallation(teamId);
-        if (installation.Token is not null)
-        {
-            await PublishUsingToken(installation, messages);
-        }
-        else
+        if (installation.Token is null)
         {
             logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", teamId);
+            return;
         }
 
-    }
-
-    private async Task PublishUsingToken(Installation installation, params ChatPostMessageRequest[] messages)
-    {
-        var slackClient = builder.Build(installation.Token!);
         foreach (var message in messages)
         {
-            try
-            {
-                var res = await slackClient.ChatPostMessage(message);
+            await PublishUsingToken(installation, message);
+        }
+    }
 
-                if (res.Ok)
-                {
-                    await ClearFailures(installation, message.Channel);
-                }
-                else
-                {
-                    logger.LogWarning($"Could not post to {message.Channel}. {res.Error}");
-                    await RecordFailure(installation.Id, message.Channel, res.Error);
-                }
-            }
-            catch (WellKnownSlackApiException sae)
+    public async Task<ChatPostMessageResponse?> PublishToWorkspaceWithResponse(string teamId, ChatPostMessageRequest message)
+    {
+        var installation = await repository.GetInstallation(teamId);
+        if (installation.Token is null)
+        {
+            logger.LogWarning("Slack Workspace '{TeamId}' is missing a token. Not publishing. ", teamId);
+            return null;
+        }
+
+        return await PublishUsingToken(installation, message);
+    }
+
+    private async Task<ChatPostMessageResponse?> PublishUsingToken(Installation installation, ChatPostMessageRequest message)
+    {
+        var slackClient = builder.Build(installation.Token!);
+        try
+        {
+            var res = await slackClient.ChatPostMessage(message);
+
+            if (res.Ok)
             {
-                if (sae.Error == "account_inactive")
-                {
-                    logger.LogWarning(sae, "Inactive token!");
-                }
-                else
-                {
-                    logger.LogWarning(sae, $"Could not post to {message.Channel}. {sae.Error} {sae.ResponseContent}") ;
-                    await RecordFailure(installation.Id, message.Channel, sae.Error);
-                }
+                await ClearFailures(installation, message.Channel);
+                return res;
             }
-            catch (Exception e)
-            {
-                logger.LogWarning(e, e.Message);
-            }
+
+            logger.LogWarning("Could not post to {ChannelId}. {Error}", message.Channel, res.Error);
+            await RecordFailure(installation.Id, message.Channel, res.Error);
+            return null;
+        }
+        catch (WellKnownSlackApiException sae)
+        {
+            logger.LogWarning(sae, "Could not post to {ChannelId}. {Error} {ResponseContent}", message.Channel,
+                sae.Error, sae.ResponseContent);
+            await RecordFailure(installation.Id, message.Channel, sae.Error);
+            return null;
+        }
+        catch (Exception e)
+        {
+            logger.LogWarning(e, e.Message);
+            return null;
         }
     }
 
@@ -108,6 +115,7 @@ public class SlackWorkSpacePublisher(
     {
         if (slackError is null || DeliveryFailureClassifier.Classify(slackError) is not { } reason)
         {
+            logger.LogWarning("Delivery to Slack channel {ChannelId} failed, not counted", channelId);
             return;
         }
 

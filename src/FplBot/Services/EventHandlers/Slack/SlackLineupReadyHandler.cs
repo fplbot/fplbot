@@ -1,16 +1,17 @@
 using FplBot.Data.Slack;
 using FplBot.Domain;
+using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
-using Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http.Models.Requests.ChatPostMessage;
 
 namespace FplBot.EventHandlers.Slack;
 
 public class SlackLineupReadyHandler(
     ISlackTeamRepository slackTeamRepo,
-    ISlackClientBuilder builder,
+    ISlackWorkSpacePublisher publisher,
     ILogger<SlackLineupReadyHandler> logger)
     : IConsumer<LineupReady>, IConsumer<PublishLineupsToSlackWorkspace>
 {
@@ -29,14 +30,13 @@ public class SlackLineupReadyHandler(
     public async Task Consume(ConsumeContext<PublishLineupsToSlackWorkspace> context)
     {
         var message = context.Message;
-        var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
         var channelId = message.ChannelId;
-        var slackClient = builder.Build(installation.Token);
         var lineups = message.Lineups;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* 👇";
 
-        var res = await slackClient.ChatPostMessage(channelId, firstMessage);
-        if (res.Ok)
+        var res = await publisher.PublishToWorkspaceWithResponse(message.WorkspaceId,
+            new ChatPostMessageRequest { Channel = channelId, Text = firstMessage });
+        if (res is not null)
         {
             var formattedLineup = Formatter.FormatLineup(lineups);
             await context.Publish(new PublishSlackThreadMessage
