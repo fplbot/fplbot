@@ -113,7 +113,7 @@ public async Task Consume(ConsumeContext<ProcessNewLeagueEntriesForGuildChannel>
 ```
 
 Existing pairs follow this shape: `GameweekJustBegan` → `ProcessGameweekStartedForGuildChannel`,
-and `OneHourToDeadline` → `ProcessNewLeagueEntriesForGuildChannel` / `…ForSlackChannel`.
+`GameweekJustBegan` → `ProcessNewLeagueEntriesForGuildChannel` / `…ForSlackChannel`.
 
 Why it matters: a global handler doing the work processes every channel serially inside one
 message, so one slow or failing league stalls or kills the rest, and the whole fan-out retries

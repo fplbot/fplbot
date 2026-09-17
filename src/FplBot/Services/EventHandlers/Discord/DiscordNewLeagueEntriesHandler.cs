@@ -12,11 +12,11 @@ public class DiscordNewLeagueEntriesHandler(
     ILeagueClient leagueClient,
     IGlobalSettingsClient globalSettingsClient,
     ILogger<DiscordNewLeagueEntriesHandler> logger)
-    : IConsumer<OneHourToDeadline>, IConsumer<ProcessNewLeagueEntriesForGuildChannel>
+    : IConsumer<GameweekJustBegan>, IConsumer<ProcessNewLeagueEntriesForGuildChannel>
 {
-    public async Task Consume(ConsumeContext<OneHourToDeadline> context)
+    public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
-        var gameweekId = context.Message.GameweekNearingDeadline.Id;
+        var gameweekId = context.Message.NewGameweek.Id;
         foreach (var (guildId, channelId, leagueId) in await repo.GetChannelsFollowingALeague())
         {
             await context.Publish(new ProcessNewLeagueEntriesForGuildChannel(guildId, channelId, (int)leagueId.Value, gameweekId));
