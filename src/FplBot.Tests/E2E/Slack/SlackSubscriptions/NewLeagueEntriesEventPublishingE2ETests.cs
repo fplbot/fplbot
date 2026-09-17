@@ -19,7 +19,9 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 {
     private static readonly Faker Faker = new();
     private static readonly DateTime FirstJoin = new(2021, 11, 30, 11, 25, 6, DateTimeKind.Utc);
-    private static readonly DateTime SecondJoin = new(2021, 12, 1, 9, 0, 0, DateTimeKind.Utc);
+
+    // Sub-millisecond precision, just like the joined_time the FPL API reports.
+    private static readonly DateTime SecondJoin = new DateTime(2021, 12, 1, 9, 0, 0, DateTimeKind.Utc).AddTicks(9_562_530);
 
     private string _teamId = null!;
     private string _channel = null!;
@@ -78,6 +80,37 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
             fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+    }
+
+    [Fact]
+    public async Task OnEntryStillListedAsNewOnNextPoll_PostsOnlyOnce()
+    {
+        var action = BuildAction(LeagueWith(John()), LeagueWith(John(), Jane()), LeagueWith(John(), Jane()));
+
+        await action.Process(CancellationToken.None);
+        await action.Process(CancellationToken.None);
+        await action.Process(CancellationToken.None);
+
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        Assert.Contains("Jane Doe", msg.Text);
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+    }
+
+    [Fact]
+    public async Task OnEntryJoiningLeagueWithoutPendingEntries_PostsToSubscribedChannel()
+    {
+        // Nothing is pending when the league is first polled, so tracking starts at poll time —
+        // an entry joining after that (hence the future join time) is the one to notify about.
+        var joinedAfterFirstPoll = Jane();
+        joinedAfterFirstPoll.JoinedAt = DateTime.UtcNow.AddMinutes(1);
+        var action = BuildAction(LeagueWith(), LeagueWith(joinedAfterFirstPoll));
+
+        await action.Process(CancellationToken.None);
+        await action.Process(CancellationToken.None);
+
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(_channel);
+        Assert.Contains("Jane Doe", msg.Text);
     }
 
     [Fact]

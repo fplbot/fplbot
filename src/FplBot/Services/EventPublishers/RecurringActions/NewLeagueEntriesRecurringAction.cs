@@ -48,18 +48,16 @@ public class NewLeagueEntriesRecurringAction(
         {
             var league = await leagueClient.GetClassicLeague(leagueId, tolerate404: true);
             var entries = league?.NewEntries?.Entries ?? [];
-            if (!entries.Any())
-            {
-                continue;
-            }
-
-            var latestJoinTime = entries.Max(e => e.JoinedAt);
             var lastSeenJoinTime = await bookmarkProvider.GetLastSeenJoinTime(leagueId);
-            await bookmarkProvider.SetLastSeenJoinTime(leagueId, latestJoinTime);
 
             if (lastSeenJoinTime is null)
             {
+                // First time this league is polled: bookmark whatever has already joined (or, when
+                // nothing is pending, the time tracking started), so that the channel only gets
+                // notified about entries joining from now on.
                 logger.LogInformation("Init state for league {leagueId}", leagueId);
+                await bookmarkProvider.SetLastSeenJoinTime(leagueId,
+                    entries.Any() ? entries.Max(e => e.JoinedAt) : DateTime.UtcNow);
                 continue;
             }
 
@@ -68,6 +66,8 @@ public class NewLeagueEntriesRecurringAction(
             {
                 continue;
             }
+
+            await bookmarkProvider.SetLastSeenJoinTime(leagueId, newEntries.Max(e => e.JoinedAt));
 
             logger.LogInformation("Publishing {count} new entries in league {leagueId}", newEntries.Count, leagueId);
             using var scope = scopeFactory.CreateScope();
