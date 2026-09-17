@@ -31,17 +31,9 @@ public static class SlackDelivery
         }
         catch (WellKnownSlackApiException sae)
         {
-            if (sae.Error == "account_inactive")
-            {
-                logger.LogWarning(sae, "Inactive token!");
-            }
-            else
-            {
-                logger.LogWarning(sae, "Could not post to {ChannelId}. {Error} {ResponseContent}", channelId,
-                    sae.Error, sae.ResponseContent);
-                await RecordFailure(context, teamId, channelId, sae.Error, logger);
-            }
-
+            logger.LogWarning(sae, "Could not post to {ChannelId}. {Error} {ResponseContent}", channelId,
+                sae.Error, sae.ResponseContent);
+            await RecordFailure(context, teamId, channelId, sae.Error, logger);
             return null;
         }
         catch (Exception e)
