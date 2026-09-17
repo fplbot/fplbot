@@ -144,6 +144,22 @@ public static class Formatter
         }
     }
 
+    public static string FormatNewLeagueEntries(string leagueName, IEnumerable<NewLeagueEntrant> newEntrants)
+    {
+        var entrants = newEntrants.ToList();
+        if (entrants.Count == 1)
+        {
+            return $"🎉 {NameAndTeam(entrants.Single())} joined {leagueName}!";
+        }
+
+        return $"🎉 New entries in {leagueName}!\n{BulletPoints<string>(entrants.Select(NameAndTeam))}";
+
+        string NameAndTeam(NewLeagueEntrant e)
+        {
+            return string.IsNullOrWhiteSpace(e.PlayerName) ? e.EntryName : $"{e.PlayerName} ({e.EntryName})";
+        }
+    }
+
     public static string FormatTransferredPlayers(IEnumerable<InternalPremiershipTransfer> transfers, bool includeheader = true)
     {
         var header = "";

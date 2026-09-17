@@ -9,6 +9,6 @@ public class EventPublishersService : IFplBotService
 
     public void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env)
     {
-        services.AddFplWorkers();
+        services.AddFplWorkers(config);
     }
 }
