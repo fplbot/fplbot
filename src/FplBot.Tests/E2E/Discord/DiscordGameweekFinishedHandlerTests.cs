@@ -57,7 +57,7 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
         Assert.Contains("Gameweek finished", msg.Title);
         Assert.Contains("Standings", msg.Description);
-        Assert.Contains("Top 3", msg.Description);
+        Assert.Contains($"Gameweek {gameweekId}", msg.Description);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
     }

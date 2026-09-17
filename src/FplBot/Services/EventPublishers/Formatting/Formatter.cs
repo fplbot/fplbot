@@ -499,9 +499,9 @@ public static class Formatter
         return bonusPointsOutput;
     }
 
-    public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league)
+    public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league, bool? includeTitle = true)
     {
-        var introText = $"{gw.Name} is finished.";
+        var introText = includeTitle == true ? $"{gw.Name} is finished." : "";
         var globalAverage = (int)Math.Round(gw.AverageScore);
 
         var leagueAvgTxt = "";

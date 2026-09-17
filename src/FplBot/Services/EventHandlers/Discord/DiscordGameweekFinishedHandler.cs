@@ -63,14 +63,14 @@ public class DiscordGameweekFinishedHandler(
             if (league.Properties?.StartEvent is var startEvent && gameweekId >= startEvent)
             {
                 var sections = new List<RichSection>();
-                var intro = Formatter.FormatGameweekFinished(gw, league);
+                var intro = Formatter.FormatGameweekFinished(gw, league, includeTitle:false);
                 var standings = Formatter.GetStandingsDiscord(league, gw, includeExternalLinks:false);
                 var topThree = Formatter.GetTopThreeGameweekEntries(league, gw, includeExternalLinks:false, includeIntro:false);
                 var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
                 sections.AddRange([
                     new (null, intro),
-                    new ("ℹ️ Top 3", topThree ?? string.Empty),
-                    new ("ℹ️ Standings", standings)
+                    new ($"{gw.Name}", topThree ?? string.Empty),
+                    new ("Standings", standings)
                 ]);
 
                 if (worst is not null)
@@ -83,8 +83,8 @@ public class DiscordGameweekFinishedHandler(
         }
         else
         {
-            string msg = $"Standings are now generally ready, but you're subscribing to a non-classic or " +
-                         $"non-existing classic FPL league: '{leagueId}'";
+            var msg = $"Standings are now generally ready, but you're subscribing to a non-classic or " +
+                      $"non-existing classic FPL league: '{leagueId}'";
             await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "⚠️ Standings ready", msg));
         }
     }
