@@ -1,6 +1,7 @@
 using Fpl.Client.Abstractions;
 using FplBot.Data.Slack;
 using FplBot.Domain;
+using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -67,8 +68,9 @@ public class SlackNearDeadlineHandler(
         async Task PublishToTeam()
         {
             var slackClient = builder.Build(installation.Token);
-            var res = await slackClient.ChatPostMessage(channelId, notification);
-            if (res.Ok)
+            var res = await SlackDelivery.Post(context, teamRepo, message.WorkspaceId, channelId, logger,
+                () => slackClient.ChatPostMessage(channelId, notification));
+            if (res is not null)
             {
                 await PublishFixtures(slackClient, res.ts);
             }
@@ -87,13 +89,14 @@ public class SlackNearDeadlineHandler(
                 messageGameweekNearingDeadline.Name, messageGameweekNearingDeadline.Deadline, fixtures1, teams,
                 tzOffset: userTzOffset);
 
-            await slackClient.ChatPostMessage(new ChatPostMessageRequest
-            {
-                Channel = channelId,
-                thread_ts = ts,
-                Text = fixturesList,
-                unfurl_links = "false"
-            });
+            await SlackDelivery.Post(context, teamRepo, message.WorkspaceId, channelId, logger,
+                () => slackClient.ChatPostMessage(new ChatPostMessageRequest
+                {
+                    Channel = channelId,
+                    thread_ts = ts,
+                    Text = fixturesList,
+                    unfurl_links = "false"
+                }));
         }
     }
 }

@@ -34,6 +34,21 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task DeadlineNotificationChannelScopedFailure_RecordsFailure()
+    {
+        var installation = await fixture.SeedInstallation();
+        var channelId = installation.ChannelSubscriptions.First().ChannelId;
+        fixture.SlackChannelFails(channelId, "is_archived");
+
+        await fixture.Bus.Publish(
+            new PublishDeadlineNotificationToSlackWorkspace(installation.Id, channelId,
+                new GameweekNearingDeadline(1, "Gameweek 1", new DateTime(2021, 8, 15, 10, 0, 0, DateTimeKind.Utc))),
+            TestContext.Current.CancellationToken);
+
+        await WaitForFailureCount(installation.Id, channelId, 1);
+    }
+
+    [Fact]
     public async Task InstallLevelFailure_DoesNotRecordFailure()
     {
         var installation = await fixture.SeedInstallation();
