@@ -89,6 +89,37 @@ cfg.AddConsumer<MyHandler>();
 
 Forgetting this step means the consumer silently receives nothing — no error is thrown.
 
+### Fan-out: never do per-channel work in a global handler
+
+A consumer of a global FPL event (`GameweekJustBegan`, `FixtureEventsOccured`, …) may only
+*dispatch*. Any heavy lifting for a `ChannelSubscription` — fetching that channel's league,
+calling the FPL API, formatting its message — belongs in a second handler that consumes a
+per-channel command:
+
+```csharp
+// Global event handler: dispatch only, no I/O per channel
+public async Task Consume(ConsumeContext<GameweekJustBegan> context)
+{
+    foreach (var (guildId, channelId, leagueId) in await repo.GetChannelsFollowingALeague())
+        await context.Publish(new ProcessNewLeagueEntriesForGuildChannel(guildId, channelId, (int)leagueId.Value, gameweekId));
+}
+
+// Per-channel handler: the actual work, one message per channel
+public async Task Consume(ConsumeContext<ProcessNewLeagueEntriesForGuildChannel> context)
+{
+    var league = await NewLeagueEntries.Fetch(...);
+    ...
+}
+```
+
+Existing pairs follow this shape: `GameweekJustBegan` → `ProcessGameweekStartedForGuildChannel`,
+`ProcessNewLeagueEntriesForGuildChannel` / `…ForSlackChannel`.
+
+Why it matters: a global handler doing the work processes every channel serially inside one
+message, so one slow or failing league stalls or kills the rest, and the whole fan-out retries
+or is discarded as a unit. Splitting it gives each channel its own message, its own failure,
+and lets the broker spread the load.
+
 ### Publishing
 
 | Where | How |

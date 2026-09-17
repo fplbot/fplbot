@@ -11,17 +11,30 @@ public class SlackNewLeagueEntriesHandler(
     ISlackTeamRepository slackTeamRepo,
     ILeagueClient leagueClient,
     ILogger<SlackNewLeagueEntriesHandler> logger)
-    : IConsumer<GameweekJustBegan>
+    : IConsumer<GameweekJustBegan>, IConsumer<ProcessNewLeagueEntriesForSlackChannel>
 {
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
-        var resolved = await NewLeagueEntries.ResolveForFollowedLeagues(slackTeamRepo, leagueClient, context.Message.NewGameweek.Id, logger);
-        logger.LogInformation("Handling new league entries for {Count} slack channels", resolved.Count);
-
-        foreach (var channel in resolved)
+        var gameweekId = context.Message.NewGameweek.Id;
+        foreach (var (teamId, channelId, leagueId) in await slackTeamRepo.GetChannelsFollowingALeague())
         {
-            var formatted = Formatter.FormatNewLeagueEntries(channel.LeagueName, channel.Entries, channel.HasMore);
-            await context.Publish(new PublishToSlack(channel.InstallationId, channel.ChannelId, formatted));
+            await context.Publish(new ProcessNewLeagueEntriesForSlackChannel(teamId, channelId, (int)leagueId.Value, gameweekId));
         }
+    }
+
+    public async Task Consume(ConsumeContext<ProcessNewLeagueEntriesForSlackChannel> context)
+    {
+        var message = context.Message;
+        var league = await NewLeagueEntries.Fetch(leagueClient, message.LeagueId, message.GameweekId, logger);
+        if (league is null)
+        {
+            return;
+        }
+
+        logger.LogInformation("Posting {Count} new entries in league {LeagueId} to slack channel {ChannelId}",
+            league.Entries.Count, message.LeagueId, message.ChannelId);
+
+        var formatted = Formatter.FormatNewLeagueEntries(league.LeagueName, league.Entries, league.HasMore);
+        await context.Publish(new PublishToSlack(message.WorkspaceId, message.ChannelId, formatted));
     }
 }

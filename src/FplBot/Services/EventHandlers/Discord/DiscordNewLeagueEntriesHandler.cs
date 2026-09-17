@@ -11,18 +11,31 @@ public class DiscordNewLeagueEntriesHandler(
     IGuildRepository repo,
     ILeagueClient leagueClient,
     ILogger<DiscordNewLeagueEntriesHandler> logger)
-    : IConsumer<GameweekJustBegan>
+    : IConsumer<GameweekJustBegan>, IConsumer<ProcessNewLeagueEntriesForGuildChannel>
 {
     public async Task Consume(ConsumeContext<GameweekJustBegan> context)
     {
-        var resolved = await NewLeagueEntries.ResolveForFollowedLeagues(repo, leagueClient, context.Message.NewGameweek.Id, logger);
-        logger.LogInformation("Handling new league entries for {Count} guild channels", resolved.Count);
-
-        foreach (var channel in resolved)
+        var gameweekId = context.Message.NewGameweek.Id;
+        foreach (var (guildId, channelId, leagueId) in await repo.GetChannelsFollowingALeague())
         {
-            var title = channel.Entries.Count > 1 || channel.HasMore ? "🎉 New league entries" : "🎉 New league entry";
-            var formatted = Formatter.FormatNewLeagueEntries(channel.LeagueName, channel.Entries, channel.HasMore);
-            await context.Publish(new PublishRichToGuildChannel(channel.InstallationId, channel.ChannelId, title, formatted));
+            await context.Publish(new ProcessNewLeagueEntriesForGuildChannel(guildId, channelId, (int)leagueId.Value, gameweekId));
         }
+    }
+
+    public async Task Consume(ConsumeContext<ProcessNewLeagueEntriesForGuildChannel> context)
+    {
+        var message = context.Message;
+        var league = await NewLeagueEntries.Fetch(leagueClient, message.LeagueId, message.GameweekId, logger);
+        if (league is null)
+        {
+            return;
+        }
+
+        logger.LogInformation("Posting {Count} new entries in league {LeagueId} to guild channel {ChannelId}",
+            league.Entries.Count, message.LeagueId, message.ChannelId);
+
+        var title = league.Entries.Count > 1 || league.HasMore ? "🎉 New league entries" : "🎉 New league entry";
+        var formatted = Formatter.FormatNewLeagueEntries(league.LeagueName, league.Entries, league.HasMore);
+        await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, title, formatted));
     }
 }
