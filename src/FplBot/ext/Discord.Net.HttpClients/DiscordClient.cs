@@ -53,6 +53,33 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         }
     }
 
+    public async Task InteractionFollowupPost(string interactionToken, RichEmbed embed)
+    {
+        string serialized = JsonSerializer.Serialize((object)new
+                                                             {
+                                                                 embeds =  new []
+                                                                           {
+                                                                               new
+                                                                               {
+                                                                                   type = "rich",
+                                                                                   title = embed.Title,
+                                                                                   description = embed.Description,
+                                                                                   color = embed.Color ?? 3604540
+                                                                               }
+                                                                           }
+                                                             });
+        var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
+        logger.LogInformation(serialized);
+        var applicationId = options.Value.DiscordApplicationId;
+        var res = await client.PostAsync($"api/v8/webhooks/{applicationId}/{interactionToken}", jsonContent);
+        string responseBody = (await res.Content.ReadAsStringAsync());
+        logger.LogInformation(responseBody);
+        if (!res.IsSuccessStatusCode)
+        {
+            throw DiscordApiException.From(res, responseBody);
+        }
+    }
+
     // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
     public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options1)
     {

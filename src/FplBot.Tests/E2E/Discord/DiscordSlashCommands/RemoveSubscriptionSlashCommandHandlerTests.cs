@@ -14,10 +14,11 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var installedGuild = await fixture.SeedGuildInstallation();
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
             guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Did not find any subscription", response.EmbedDescription());
+        Assert.Contains("Did not find any subscription", followup.Description);
     }
 
     [Fact]
@@ -25,10 +26,11 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
             guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Removed subscription to this channel", response.EmbedDescription());
+        Assert.Contains("Removed subscription to this channel", followup.Description);
     }
 
     [Fact]
@@ -36,11 +38,12 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges, EventSubscription.InjuryUpdates]);
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
             guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains($"Unsubscribed from {EventSubscription.PriceChanges}", response.EmbedDescription());
-        Assert.Contains("InjuryUpdates", response.EmbedDescription());
+        Assert.Contains($"Unsubscribed from {EventSubscription.PriceChanges}", followup.Description);
+        Assert.Contains("InjuryUpdates", followup.Description);
     }
 
     [Fact]
@@ -48,9 +51,10 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.All]);
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
+        var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
             guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("No longer subscribing to all events", response.EmbedDescription());
+        Assert.Contains("No longer subscribing to all events", followup.Description);
     }
 }

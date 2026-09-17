@@ -6,7 +6,7 @@ using Testcontainers.Elasticsearch;
 
 namespace FplBot.Tests.E2E;
 
-public class SearchAppFixture : AppFixture
+public class SearchAppFixture() : AppFixture("search-app-fixture")
 {
     private readonly ElasticsearchContainer _elasticsearch =
         new ElasticsearchBuilder("docker.elastic.co/elasticsearch/elasticsearch:8.17.3")

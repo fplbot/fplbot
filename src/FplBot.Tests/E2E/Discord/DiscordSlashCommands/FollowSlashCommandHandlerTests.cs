@@ -36,9 +36,10 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
         var leagueId = NewLeagueId();
         SetLeagueNotFound(leagueId);
 
-        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString());
+        var (token, _) = await fixture.AskDiscord("follow", optionValue: leagueId.ToString());
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains($"Could not find a classic league of id '{leagueId}'", response.EmbedDescription());
+        Assert.Contains($"Could not find a classic league of id '{leagueId}'", followup.Description);
     }
 
     [Fact]
@@ -48,11 +49,12 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
         var leagueId = NewLeagueId();
         SetLeagueFound(leagueId, "Test League");
 
-        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(),
+        var (token, _) = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(),
             guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Now following the 'Test League' FPL league", response.EmbedDescription());
-        Assert.Contains("Auto-subbed to all events", response.EmbedDescription());
+        Assert.Contains("Now following the 'Test League' FPL league", followup.Description);
+        Assert.Contains("Auto-subbed to all events", followup.Description);
     }
 
     [Fact]
@@ -62,8 +64,9 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
         var leagueId = NewLeagueId();
         SetLeagueFound(leagueId, "Other League");
 
-        var response = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(), guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var (token, _) = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(), guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Now following the 'Other League' FPL league", response.EmbedDescription());
+        Assert.Contains("Now following the 'Other League' FPL league", followup.Description);
     }
 }

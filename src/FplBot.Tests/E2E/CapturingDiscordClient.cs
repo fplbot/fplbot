@@ -37,6 +37,12 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
         return Task.CompletedTask;
     }
 
+    public Task InteractionFollowupPost(string interactionToken, DiscordClient.RichEmbed embed)
+    {
+        capture.Record(new DiscordCapturedFollowup(interactionToken, embed.Title, embed.Description));
+        return Task.CompletedTask;
+    }
+
     public Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options) =>
         Task.CompletedTask;
 

@@ -35,7 +35,7 @@ public static class WebAppExtensions
 
         app.UseForwardedHeaders();
         app.UseMiddleware<BlockedIpMiddleware>();
-        if(!env.IsDevelopment())
+        if(!env.IsLocal())
             app.UseHttpsRedirection();
 
         var wwwrootProvider = new PhysicalFileProvider(

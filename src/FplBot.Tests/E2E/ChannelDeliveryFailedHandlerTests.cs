@@ -38,7 +38,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
             await Task.Delay(100, TestContext.Current.CancellationToken);
         }
 
-        await WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId) is null);
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId) is null);
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
             await Task.Delay(100, TestContext.Current.CancellationToken);
         }
 
-        await WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, failingChannel) is null);
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, failingChannel) is null);
 
         var healthy = await fixture.GuildRepo.GetChannelSubscription(guild.Id, healthyChannel);
         Assert.NotNull(healthy);
@@ -111,7 +111,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
             await Task.Delay(100, TestContext.Current.CancellationToken);
         }
 
-        await WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, removingChannel) is null);
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, removingChannel) is null);
 
         var surviving = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, survivingChannel), rounds);
         Assert.Equal(rounds, surviving.FailureCount);
@@ -144,7 +144,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
             await Task.Delay(100, TestContext.Current.CancellationToken);
         }
 
-        await WaitUntil(async () => await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId) is null);
+        await AppFixture.WaitUntil(async () => await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId) is null);
     }
 
     [Fact]
@@ -175,20 +175,5 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         }
 
         throw new TimeoutException($"Failure count never reached {expected}");
-    }
-
-    private static async Task WaitUntil(Func<Task<bool>> condition)
-    {
-        for (var i = 0; i < 100; i++)
-        {
-            if (await condition())
-            {
-                return;
-            }
-
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException("Condition never became true");
     }
 }

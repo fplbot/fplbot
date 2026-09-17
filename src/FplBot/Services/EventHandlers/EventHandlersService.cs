@@ -1,5 +1,6 @@
 using FplBot.EventHandlers;
 using FplBot.EventHandlers.Discord;
+using FplBot.EventHandlers.Discord.Commands;
 using FplBot.EventHandlers.Slack.Commands;
 using FplBot.EventHandlers.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
@@ -48,6 +49,10 @@ public class EventHandlersService : IFplBotService
         cfg.AddConsumer<DiscordNewPlayersHandler>();
         cfg.AddConsumer<DiscordPriceChangeHandler>();
         cfg.AddConsumer<PublishToGuildHandler>();
+        cfg.AddConsumer<FollowCommandHandler>();
+        cfg.AddConsumer<AddSubscriptionCommandHandler>();
+        cfg.AddConsumer<RemoveSubscriptionCommandHandler>();
+        cfg.AddConsumer<DiscordHelpCommandHandler>();
 
         cfg.AddConsumer<SlackFixtureEventsHandler>();
         cfg.AddConsumer<SlackFixtureFulltimeHandler>();

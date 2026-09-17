@@ -23,7 +23,7 @@ Each service implements `IFplBotService` and registers its own DI, consumers, an
 
 ```bash
 ./src/devenv.sh          # starts Redis + Azure Service Bus emulator via Aspire
-dotnet run --project src/FplBot  # runs all 4 services together (dev mode)
+dotnet run --project src/FplBot -- --services All  # runs all 4 services together
 ```
 
 All secrets have safe dev defaults in `appsettings.json`. No real credentials are needed to run locally — in Development, `DevLoggingSlackClient`/`DevLoggingDiscordClient` short-circuit outbound Slack/Discord calls into log lines instead of hitting the real APIs.
@@ -36,9 +36,8 @@ Discord detects and revokes tokens the moment they're pushed, regardless of inte
 
 If you need to exercise the real Discord API path (bypassing the dev-logging wrapper, or verifying
 real interaction webhooks), use [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets)
-instead — they live outside the repo in your user profile and are auto-loaded in Development by
-both `WebApplication.CreateBuilder` (WebApi) and `Host.CreateDefaultBuilder` (EventHandlers/
-EventPublishers/SearchIndexer), no code changes needed:
+instead — they live outside the repo in your user profile and are loaded in both Development and
+Integration, across all four services, no code changes needed:
 
 ```bash
 dotnet user-secrets set DISCORD_TOKEN "..." --project src/FplBot
@@ -47,6 +46,24 @@ dotnet user-secrets set DISCORD_CLIENT_SECRET "..." --project src/FplBot
 dotnet user-secrets set DISCORD_PUBLICKEY "..." --project src/FplBot
 dotnet user-secrets set DiscordAppId "..." --project src/FplBot
 ```
+
+In Development, `DevLoggingSlackClient`/`DevLoggingDiscordClient` short-circuit every outbound
+call into a log line — including Discord interaction followups, so a deferred slash command would
+sit on "thinking…" forever. Run the **Integration** environment to exercise the real APIs:
+
+```bash
+DOTNET_ENVIRONMENT=Integration dotnet run --project src/FplBot -- --services All
+```
+
+In Rider, use the **All Services (Integration)** run configuration (there's an `(Integration)`
+variant of each single-service config too, in `src/.idea/.../runConfigurations/`).
+
+Integration is local like Development — same user secrets, https on localhost, telemetry to the
+Aspire dashboard, `[MachineName]` prefix on outgoing messages — but every integration is live.
+Request signature verification is on, since real Slack and Discord sign their webhooks.
+
+In code: `env.IsLocal()` covers both Development and Integration and guards machine conveniences;
+plain `env.IsDevelopment()` is reserved for the branches that fake an outbound integration.
 
 All five values must come from the *same* Discord Application (Developer Portal → your app →
 Bot tab for the token, General Information tab for the rest) — they're tied together as one

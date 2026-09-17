@@ -14,9 +14,10 @@ public class HelpSlashCommandHandlerTests(AppFixture fixture)
     {
         var installedGuild = await fixture.SeedGuildInstallation();
 
-        var response = await fixture.AskDiscord("help", guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+        var (token, _) = await fixture.AskDiscord("help", guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Not subscribing to any events", response.EmbedDescription());
+        Assert.Contains("Not subscribing to any events", followup.Description);
     }
 
     [Fact]
@@ -24,10 +25,11 @@ public class HelpSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation();
 
-        var response = await fixture.AskDiscord("help", guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var (token, _) = await fixture.AskDiscord("help", guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("Not following any FPL leagues", response.EmbedDescription());
-        Assert.Contains("No subscriptions", response.EmbedDescription());
+        Assert.Contains("Not following any FPL leagues", followup.Description);
+        Assert.Contains("No subscriptions", followup.Description);
     }
 
     [Fact]
@@ -35,9 +37,10 @@ public class HelpSlashCommandHandlerTests(AppFixture fixture)
     {
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
-        var response = await fixture.AskDiscord("help", guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var (token, _) = await fixture.AskDiscord("help", guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.Contains("PriceChanges", response.EmbedDescription());
-        Assert.Contains("Not subscribing", response.EmbedDescription());
+        Assert.Contains("PriceChanges", followup.Description);
+        Assert.Contains("Not subscribing", followup.Description);
     }
 }

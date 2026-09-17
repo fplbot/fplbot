@@ -25,12 +25,12 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+        var (_, response) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
             channelId: channelId, appPermissions: DiscordPermissions.None);
 
         Assert.Contains("Send Messages", response);
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
-        Assert.Equal(15263, (int)sub!.FollowedLeagueId!.Value);
+        await AppFixture.WaitUntil(async () =>
+            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
     }
 
     [Fact]
@@ -39,12 +39,12 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+        var (_, response) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
             channelId: channelId, appPermissions: DiscordPermissions.PlainTextOnly);
 
         Assert.Contains("Embed Links", response);
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
-        Assert.Equal(15263, (int)sub!.FollowedLeagueId!.Value);
+        await AppFixture.WaitUntil(async () =>
+            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
     }
 
     [Fact]
@@ -55,6 +55,8 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
 
         await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
             channelId: channelId, appPermissions: DiscordPermissions.None);
+        await AppFixture.WaitUntil(async () =>
+            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
 
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
         Assert.Equal(0, sub!.FailureCount);
@@ -79,13 +81,13 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
+        var (_, response) = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
             subCommandName: "add", guildId: guild.Id, channelId: channelId,
             appPermissions: DiscordPermissions.None);
 
         Assert.Contains("Send Messages", response);
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
-        Assert.True(sub!.IsSubscribedTo(FplEvent.PriceChanges));
+        await AppFixture.WaitUntil(async () =>
+            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
     }
 
     [Fact]
@@ -94,13 +96,13 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
+        var (_, response) = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
             subCommandName: "add", guildId: guild.Id, channelId: channelId,
             appPermissions: DiscordPermissions.PlainTextOnly);
 
         Assert.Contains("Embed Links", response);
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
-        Assert.True(sub!.IsSubscribedTo(FplEvent.PriceChanges));
+        await AppFixture.WaitUntil(async () =>
+            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
     }
 
     [Fact]
@@ -109,7 +111,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+        var (_, response) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
             appPermissions: DiscordPermissions.None);
 
         Assert.Contains("Send Messages", response);
@@ -121,7 +123,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+        var (_, response) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
             appPermissions: DiscordPermissions.PlainTextOnly);
 
         Assert.Contains("Embed Links", response);
@@ -133,7 +135,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+        var (_, response) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
             appPermissions: DiscordPermissions.Unknown);
 
         Assert.Contains("read my own permissions", response);
@@ -145,9 +147,10 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
+        var (token, _) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
+        var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
-        Assert.DoesNotContain("Embed Links", response);
-        Assert.DoesNotContain("Send Messages", response);
+        Assert.DoesNotContain("Embed Links", followup.Description);
+        Assert.DoesNotContain("Send Messages", followup.Description);
     }
 }

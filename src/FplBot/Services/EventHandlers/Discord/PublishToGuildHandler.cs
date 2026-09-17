@@ -13,13 +13,27 @@ public class PublishToGuildHandler(
     IHostEnvironment env)
     :
         IConsumer<PublishToGuildChannel>,
-        IConsumer<PublishRichToGuildChannel>
+        IConsumer<PublishRichToGuildChannel>,
+        IConsumer<RespondToDiscordInteraction>
 {
+    public async Task Consume(ConsumeContext<RespondToDiscordInteraction> context)
+    {
+        var message = context.Message;
+        int? color = null;
+        if (env.IsLocal())
+        {
+            color = 14177041;
+        }
+
+        await discordClient.InteractionFollowupPost(message.InteractionToken,
+            new DiscordClient.RichEmbed(message.Title, message.Description, color));
+    }
+
     public async Task Consume(ConsumeContext<PublishToGuildChannel> context)
     {
         var message = context.Message;
         var publishMessage = message.Message;
-        if (env.IsDevelopment())
+        if (env.IsLocal())
         {
             publishMessage = $"[{Environment.MachineName}]\n{publishMessage}";
         }
@@ -32,7 +46,7 @@ public class PublishToGuildHandler(
     {
         var message = context.Message;
         int? color = null;
-        if (env.IsDevelopment())
+        if (env.IsLocal())
         {
             color = 14177041;
         }

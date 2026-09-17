@@ -4,7 +4,7 @@ internal class DiscordbotEventsBuilder(IServiceCollection services) : IDiscordbo
 {
     public IDiscordbotEventsBuilder AddSlashCommandHandler<T>() where T: class, ISlashCommandHandler
     {
-        services.AddSingleton<ISlashCommandHandler, T>();
+        services.AddScoped<ISlashCommandHandler, T>();
         return this;
     }
 }

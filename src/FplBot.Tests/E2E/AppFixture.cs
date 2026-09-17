@@ -37,10 +37,22 @@ namespace FplBot.Tests.E2E;
 
 public class AppFixture : IAsyncLifetime
 {
-    private readonly RedisContainer _redis = new RedisBuilder("redis:latest")
-        .WithReuse(true)
-        .WithLabel("reuse-id", "app-fixture")
-        .Build();
+    // One Redis per fixture type, never one shared across them: FlushRedisAsync wipes the whole
+    // server, and collections run in parallel, so a flush in one collection would otherwise
+    // delete state a test in another collection is still working with.
+    private readonly RedisContainer _redis;
+
+    public AppFixture() : this("app-fixture")
+    {
+    }
+
+    protected AppFixture(string redisReuseId)
+    {
+        _redis = new RedisBuilder("redis:latest")
+            .WithReuse(true)
+            .WithLabel("reuse-id", redisReuseId)
+            .Build();
+    }
 
     private WebApplication _app = null!;
     private HttpClient _client = null!;
@@ -252,11 +264,13 @@ public class AppFixture : IAsyncLifetime
         return teamId;
     }
 
-    public async Task<string> AskDiscord(string commandName, string? optionValue = null, string? subCommandName = null,
+    public async Task<(string Token, string ResponseBody)> AskDiscord(string commandName, string? optionValue = null, string? subCommandName = null,
         string? guildId = null, string? channelId = null, long appPermissions = DiscordPermissions.All)
     {
         guildId ??= Guid.NewGuid().ToString("N");
         channelId ??= Guid.NewGuid().ToString("N");
+        var interactionId = Guid.NewGuid().ToString("N");
+        var interactionToken = Guid.NewGuid().ToString("N");
 
         var data = new JsonObject
                    {
@@ -282,6 +296,8 @@ public class AppFixture : IAsyncLifetime
         var payload = new JsonObject
                       {
                           ["type"] = 2,
+                          ["id"] = interactionId,
+                          ["token"] = interactionToken,
                           ["guild_id"] = guildId,
                           ["channel_id"] = channelId,
                           ["app_permissions"] = appPermissions.ToString(),
@@ -291,7 +307,22 @@ public class AppFixture : IAsyncLifetime
         var response = await _client.PostAsync("/discord/events",
             new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json"));
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        return (interactionToken, await response.Content.ReadAsStringAsync());
+    }
+
+    public static async Task WaitUntil(Func<Task<bool>> condition)
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            if (await condition())
+            {
+                return;
+            }
+
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException("Condition never became true");
     }
 
     public async Task<Installation> SeedInstallation(Action<Installation>? configure = null)

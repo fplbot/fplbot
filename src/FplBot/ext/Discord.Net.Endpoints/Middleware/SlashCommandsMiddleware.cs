@@ -6,28 +6,28 @@ namespace Discord.Net.Endpoints.Middleware;
 
 internal class SlashCommandsMiddleware
 {
-    private readonly IEnumerable<ISlashCommandHandler> _handlers;
     private readonly ILogger<SlashCommandsMiddleware> _logger;
 
-    public SlashCommandsMiddleware(RequestDelegate next, IEnumerable<ISlashCommandHandler> handlers, ILogger<SlashCommandsMiddleware> logger)
+    public SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashCommandsMiddleware> logger)
     {
-        _handlers = handlers;
         _logger = logger;
     }
 
-    public async Task Invoke(HttpContext context)
+    public async Task Invoke(HttpContext context, IEnumerable<ISlashCommandHandler> handlers)
     {
         var slashCommand = context.Items[HttpItemKeys.SlashCommandsKey] as JsonDocument;
         context.Response.StatusCode = 200;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync<object>(await CreateJsonResponse(slashCommand!), SerializerOptions);
+        await context.Response.WriteAsJsonAsync<object>(await CreateJsonResponse(slashCommand!, handlers), SerializerOptions);
     }
 
-    private async Task<object> CreateJsonResponse(JsonDocument doc)
+    private async Task<object> CreateJsonResponse(JsonDocument doc, IEnumerable<ISlashCommandHandler> handlers)
     {
         JsonElement docRootElement = doc.RootElement;
         var data = docRootElement.GetProperty("data");
         var channelId = docRootElement.GetProperty("channel_id").GetString();
+        var interactionId = docRootElement.GetProperty("id").GetString();
+        var interactionToken = docRootElement.GetProperty("token").GetString();
         var guildId = docRootElement.GetProperty("guild_id").GetString();
         var appPermissions = docRootElement.TryGetProperty("app_permissions", out JsonElement appPerms)
             ? appPerms.ValueKind switch
@@ -66,17 +66,21 @@ internal class SlashCommandsMiddleware
         ISlashCommandHandler? handler = null;
         if (isSubCommand)
         {
-            handler = _handlers.FirstOrDefault(h => h.CommandName == commandName && h.SubCommandName == slashCommandInput!.SubCommandName);
+            handler = handlers.FirstOrDefault(h => h.CommandName == commandName && h.SubCommandName == slashCommandInput!.SubCommandName);
         }
         else
         {
-            handler = _handlers.FirstOrDefault(h => h.CommandName == commandName);
+            handler = handlers.FirstOrDefault(h => h.CommandName == commandName);
         }
 
         if (handler != null)
         {
-            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput, appPermissions);
+            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput, appPermissions, interactionId ?? string.Empty, interactionToken ?? string.Empty);
             var handled = await handler.Handle(slashCommandContext);
+            if (handled is DeferredResponse)
+            {
+                return new { type = 5 };
+            }
             if (handled is ChannelMessageWithSourceResponse channelMessageRes)
             {
                 _logger.LogTrace($"Response:\n{channelMessageRes}");
@@ -113,7 +117,7 @@ internal class SlashCommandsMiddleware
                                                                };
 }
 
-public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null, long AppPermissions = 0);
+public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null, long AppPermissions = 0, string InteractionId = "", string InteractionToken = "");
 public record SlashCommandInput(string Name, string Value, string SubCommandName);
 
 internal class Lowercase : JsonNamingPolicy

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WebApi (Integration)" type="DotNetProject" factoryName=".NET Project">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/FplBot/FplBot.csproj" />
+    <option name="PROGRAM_PARAMETERS" value="--services WebApi" />
+    <option name="ENV_VARIABLES" value="DOTNET_ENVIRONMENT=Integration" />
+    <method v="2">
+      <option name="Build" enabled="true" />
+    </method>
+  </configuration>
+</component>
