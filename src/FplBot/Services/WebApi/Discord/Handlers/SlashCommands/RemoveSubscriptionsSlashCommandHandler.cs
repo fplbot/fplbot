@@ -1,4 +1,5 @@
 using Discord.Net.Endpoints.Hosting;
+using FplBot.EventHandlers.Discord;
 using Discord.Net.Endpoints.Middleware;
 using FplBot.Messaging.Contracts.Commands.v1;
 using MassTransit;
@@ -24,9 +25,7 @@ public class RemoveSubscriptionSlashCommandHandler(IPublishEndpoint publishEndpo
 
         return problem is null
             ? new DeferredResponse()
-            : new ChannelMessageWithSourceEmbedResponse
-              {
-                  Embeds = [new("⚠️ Saved, but I can't post here yet", problem)]
-              };
+            : new ChannelMessageWithSourceComponentsResponse(
+                DiscordCards.HeadingCard("⚠️ Saved, but I can't post here yet", problem, null));
     }
 }

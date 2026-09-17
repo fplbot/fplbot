@@ -26,7 +26,7 @@ public class PublishToGuildHandler(
         }
 
         await discordClient.InteractionFollowupPost(message.InteractionToken,
-            new DiscordClient.RichEmbed(message.Title, message.Description, color));
+            DiscordCards.HeadingCard(message.Title, message.Description, color));
     }
 
     public async Task Consume(ConsumeContext<PublishToGuildChannel> context)
@@ -53,7 +53,7 @@ public class PublishToGuildHandler(
 
         await Post(context, message.GuildId, message.ChannelId,
             () => discordClient.ChannelMessagePost(message.ChannelId,
-                new DiscordClient.RichEmbed(message.Title, message.Description, color)));
+                DiscordCards.HeadingCard(message.Title, message.Description, color)));
     }
 
     private async Task Post(ConsumeContext context, string guildId, string channelId, Func<Task> post)

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Discord.Net.HttpClients.Components;
 using Microsoft.Extensions.Options;
 
 namespace Discord.Net.HttpClients;
@@ -16,7 +17,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
                                                              });
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
         logger.LogInformation(serialized);
-        var res = await client.PostAsync($"api/v8/channels/{channelId}/messages",jsonContent);
+        var res = await client.PostAsync($"api/v10/channels/{channelId}/messages",jsonContent);
         string responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
         if (!res.IsSuccessStatusCode)
@@ -25,53 +26,27 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         }
     }
 
-    public record RichEmbed(string Title, string Description, int? Color = null);
-
-    public async Task ChannelMessagePost(string channelId, RichEmbed embed)
+    public async Task ChannelMessagePost(string channelId, ComponentRequest request)
     {
-        string serialized = JsonSerializer.Serialize((object)new
-                                                             {
-                                                                 embeds =  new []
-                                                                           {
-                                                                               new
-                                                                               {
-                                                                                   type = "rich",
-                                                                                   title = embed.Title,
-                                                                                   description = embed.Description,
-                                                                                   color = embed.Color ?? 3604540
-                                                                               }
-                                                                           }
-                                                             });
-        var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
-        logger.LogInformation(serialized);
-        var res = await client.PostAsync($"api/v8/channels/{channelId}/messages",jsonContent);
-        string responseBody = (await res.Content.ReadAsStringAsync());
-        logger.LogInformation(responseBody);
-        if (!res.IsSuccessStatusCode)
-        {
-            throw DiscordApiException.From(res, responseBody);
-        }
+        await ComponentsPost($"api/v10/channels/{channelId}/messages", request);
     }
 
-    public async Task InteractionFollowupPost(string interactionToken, RichEmbed embed)
+    public async Task InteractionFollowupPost(string interactionToken, ComponentRequest request)
     {
-        string serialized = JsonSerializer.Serialize((object)new
-                                                             {
-                                                                 embeds =  new []
-                                                                           {
-                                                                               new
-                                                                               {
-                                                                                   type = "rich",
-                                                                                   title = embed.Title,
-                                                                                   description = embed.Description,
-                                                                                   color = embed.Color ?? 3604540
-                                                                               }
-                                                                           }
-                                                             });
-        var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
-        logger.LogInformation(serialized);
         var applicationId = options.Value.DiscordApplicationId;
-        var res = await client.PostAsync($"api/v8/webhooks/{applicationId}/{interactionToken}", jsonContent);
+        await ComponentsPost($"api/v10/webhooks/{applicationId}/{interactionToken}?with_components=true", request);
+    }
+
+    private async Task ComponentsPost(string requestUri, ComponentRequest request)
+    {
+        string serialized = JsonSerializer.Serialize((object)new
+                                                             {
+                                                                 flags = ComponentRequest.IsComponentsV2,
+                                                                 components = request.Components
+                                                             });
+        var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
+        logger.LogInformation(serialized);
+        var res = await client.PostAsync(requestUri, jsonContent);
         string responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
         if (!res.IsSuccessStatusCode)

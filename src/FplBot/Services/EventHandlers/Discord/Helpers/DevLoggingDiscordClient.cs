@@ -1,4 +1,5 @@
 using System.Net;
+using Discord.Net.HttpClients.Components;
 using FplBot.Discord;
 
 namespace Discord.Net.HttpClients;
@@ -12,17 +13,30 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
         logger.LogInformation("[DEV] Discord → channel:{ChannelId}\n{Text}", channelId, text);
     }
 
-    public async Task ChannelMessagePost(string channelId, DiscordClient.RichEmbed embed)
+    public async Task ChannelMessagePost(string channelId, ComponentRequest request)
     {
-        if (!env.IsDevelopment()) { await inner.ChannelMessagePost(channelId, embed); return; }
-        logger.LogInformation("[DEV] Discord → channel:{ChannelId} | {Title}\n{Description}", channelId, embed.Title, embed.Description);
+        if (!env.IsDevelopment()) { await inner.ChannelMessagePost(channelId, request); return; }
+        logger.LogInformation("[DEV] Discord → channel:{ChannelId}\n{Text}", channelId, Flatten(request));
     }
 
-    public async Task InteractionFollowupPost(string interactionToken, DiscordClient.RichEmbed embed)
+    public async Task InteractionFollowupPost(string interactionToken, ComponentRequest request)
     {
-        if (!env.IsDevelopment()) { await inner.InteractionFollowupPost(interactionToken, embed); return; }
-        logger.LogInformation("[DEV] Discord followup → interaction:{InteractionToken} | {Title}\n{Description}", interactionToken, embed.Title, embed.Description);
+        if (!env.IsDevelopment()) { await inner.InteractionFollowupPost(interactionToken, request); return; }
+        logger.LogInformation("[DEV] Discord followup → interaction:{InteractionToken}\n{Text}", interactionToken, Flatten(request));
     }
+
+    private static string Flatten(ComponentRequest request) =>
+        string.Join("\n", Texts(request.Components));
+
+    private static IEnumerable<string> Texts(IEnumerable<MessageComponent> components) =>
+        components.SelectMany(c => c switch
+        {
+            TextDisplay t => [t.Content],
+            Container container => Texts(container.Components),
+            Section section => Texts(section.Components),
+            ActionRow row => Texts(row.Components),
+            _ => Enumerable.Empty<string>()
+        });
 
     public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options)
     {
