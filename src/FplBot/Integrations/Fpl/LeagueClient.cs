@@ -13,7 +13,7 @@ public class LeagueClient(HttpClient client, ICacheProvider cache) : ILeagueClie
             return await cache.GetCachedOrFetch<ClassicLeague>(
                 $"/api/leagues-classic/{leagueId}/standings/?page_standings={page}",
                 client.GetStringAsync,
-                TimeSpan.FromMinutes(1));
+                TimeSpan.FromMinutes(5)); //max-age=300
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound && tolerate404)
         {
