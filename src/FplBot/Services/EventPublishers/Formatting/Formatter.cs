@@ -174,18 +174,20 @@ public static class Formatter
 
     public const int MaxListedNewLeagueEntries = 5;
 
-    public static string FormatNewLeagueEntries(string leagueName, IEnumerable<NewLeagueEntry> newEntries, bool hasMore = false)
+    public static string FormatNewLeagueEntries(string leagueName, IEnumerable<NewLeagueEntry> newEntries, bool hasMore = false, bool includeHeader = true)
     {
         var entries = newEntries.ToList();
         var listed = entries.Take(MaxListedNewLeagueEntries).ToList();
         var andThenSome = hasMore || entries.Count > listed.Count;
 
-        var header = entries.Count > 1 || andThenSome
-            ? $"🎉 New entries in {leagueName}!"
-            : $"🎉 New entry in {leagueName}!";
+        var header = includeHeader
+            ? entries.Count > 1 || andThenSome
+                ? $"🎉 New entries in {leagueName}!\n"
+                : $"🎉 New entry in {leagueName}!\n"
+            : "";
 
         var body = BulletPoints<string>(listed.Select(Describe));
-        return andThenSome ? $"{header}\n{body}\n…along with a bunch more" : $"{header}\n{body}";
+        return andThenSome ? $"{header}{body}\n…along with a bunch more" : $"{header}{body}";
 
         string Describe(NewLeagueEntry entry)
         {

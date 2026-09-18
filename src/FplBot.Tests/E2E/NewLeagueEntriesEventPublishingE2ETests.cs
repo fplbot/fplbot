@@ -55,8 +55,9 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
         await BeginGameweek();
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(guildChannel);
-        Assert.Contains("New league entry", msg.Title);
+        Assert.Contains("New entry in YOLO league!", msg.Title);
         Assert.Contains("John Korsnes (Takk for meg)", msg.Description);
+        Assert.DoesNotContain("YOLO league", msg.Description);
     }
 
     [Fact]

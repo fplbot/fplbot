@@ -50,6 +50,26 @@ public class NewLeagueEntriesFormattingTests
     }
 
     [Fact]
+    public void WithoutHeader_ListsEntriesOnly()
+    {
+        var formatted = Formatter.FormatNewLeagueEntries("YOLO league",
+            [Entrant("John", "Korsnes", "Takk for meg")], includeHeader: false);
+
+        Assert.DoesNotContain("YOLO league", formatted);
+        Assert.Equal("▪️ John Korsnes (Takk for meg)", formatted.Trim());
+    }
+
+    [Fact]
+    public void WithoutHeader_StillSaysBunchMore()
+    {
+        var formatted = Formatter.FormatNewLeagueEntries("YOLO league",
+            [Entrant("John", "Korsnes", "Takk for meg")], hasMore: true, includeHeader: false);
+
+        Assert.DoesNotContain("YOLO league", formatted);
+        Assert.Contains("…along with a bunch more", formatted);
+    }
+
+    [Fact]
     public void WhenPlayerNameMissing_FallsBackToEntryName()
     {
         var formatted = Formatter.FormatNewLeagueEntries("YOLO league", [Entrant(null, null, "Takk for meg")]);

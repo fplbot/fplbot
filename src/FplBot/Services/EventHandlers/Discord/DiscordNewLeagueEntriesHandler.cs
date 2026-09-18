@@ -35,8 +35,10 @@ public class DiscordNewLeagueEntriesHandler(
         logger.LogInformation("Posting {Count} new entries in league {LeagueId} to guild channel {ChannelId}",
             league.Entries.Count, message.LeagueId, message.ChannelId);
 
-        var title = league.Entries.Count > 1 || league.HasMore ? "🎉 New league entries" : "🎉 New league entry";
-        var formatted = Formatter.FormatNewLeagueEntries(league.LeagueName, league.Entries, league.HasMore);
+        var title = league.Entries.Count > 1 || league.HasMore
+            ? $"🎉 New entries in {league.LeagueName}!"
+            : $"🎉 New entry in {league.LeagueName}!";
+        var formatted = Formatter.FormatNewLeagueEntries(league.LeagueName, league.Entries, league.HasMore, includeHeader: false);
         await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, title, formatted));
     }
 }
