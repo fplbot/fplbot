@@ -58,7 +58,8 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
             await guildInstallationHandler.Install(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
-            ctx.Response.Redirect(SuccessRedirect(options.Value, ctx.Request.Query["state"].FirstOrDefault()));
+            var stateTheAppSent = ctx.Request.Query["state"].FirstOrDefault();
+            ctx.Response.Redirect(SuccessRedirect(options.Value, stateTheAppSent));
         }
         else
         {
@@ -68,6 +69,8 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         }
     }
 
+    // `state` is opaque to this library — only the app that sent it knows what it means, so only
+    // its resolver reads it. What comes back is a path on this site or nothing.
     internal static string SuccessRedirect(DiscordOAuthOptions options, string? state)
     {
         var target = options.ResolveSuccessRedirect?.Invoke(state);
