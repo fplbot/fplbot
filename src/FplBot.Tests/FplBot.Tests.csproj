@@ -19,7 +19,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
         <PackageReference Include="StackExchange.Redis" Version="3.3.0" />
         <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
-        <PackageReference Include="AlmostServiceBus.TestHost" Version="0.6.0" />
+        <PackageReference Include="AlmostServiceBus.TestHost" Version="0.6.1" />
     </ItemGroup>
 
     <ItemGroup Condition="Exists('appsettings.Local.json')">
