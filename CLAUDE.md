@@ -28,7 +28,9 @@ dotnet run --project src/FplBot -- --services All  # runs all 4 services togethe
 
 Seed data for local dev (Slack workspaces, Discord guilds, Elasticsearch docs) lives in
 `src/FplBot.AppHost/DevSeederLifecycleHook.cs` — it writes straight to Redis/ES on `aspire` startup.
-Add a workspace/guild there; it takes effect on the next devenv restart.
+Add a workspace/guild there; it takes effect on the next devenv restart. The AppHost shares
+FplBot's `fplbot-secrets` user-secrets store, so a real token for a seeded workspace goes in
+`dotnet user-secrets set DEV_SEED_SLACK_TOKEN "..." --project src/FplBot.AppHost` rather than the file.
 
 All secrets have safe dev defaults in `appsettings.json`. No real credentials are needed to run locally — in Development, `DevLoggingSlackClient`/`DevLoggingDiscordClient` short-circuit outbound Slack/Discord calls into log lines instead of hitting the real APIs.
 
