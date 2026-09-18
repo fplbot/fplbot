@@ -17,7 +17,8 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionFplBotSlackWebExtensions
 {
-    public static IServiceCollection AddFplBotSlackWebEndpoints(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection, IHostEnvironment env)
+    public static IServiceCollection AddFplBotSlackWebEndpoints(this IServiceCollection services, IConfiguration config, IConnectionMultiplexer redisConnection,
+        IHostEnvironment env)
     {
         services.Configure<RedisOptions>(config);
         services.TryAddSingleton(redisConnection);

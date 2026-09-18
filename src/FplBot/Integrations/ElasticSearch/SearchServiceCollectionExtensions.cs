@@ -60,5 +60,4 @@ public static class SearchServiceCollectionExtensions
         });
         return services;
     }
-
 }

@@ -22,7 +22,7 @@ public class CaptainsByGameWeek(
             var captain = entryCaptainPick.Captain;
             var viceCaptain = entryCaptainPick.ViceCaptain;
 
-            var entryLinkOrName = includeExternalLinks ?  entryCaptainPick.Entry.GetEntryLink(gameweek) : entryCaptainPick.Entry.EntryName;
+            var entryLinkOrName = includeExternalLinks ? entryCaptainPick.Entry.GetEntryLink(gameweek) : entryCaptainPick.Entry.EntryName;
             sb.Append($"*{entryLinkOrName}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
             if (entryCaptainPick.IsTripleCaptain)
             {
@@ -33,8 +33,6 @@ public class CaptainsByGameWeek(
         }
 
         return sb.ToString();
-
-
     }
 
     public string GetCaptainsChartByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks)
@@ -91,7 +89,7 @@ public class CaptainsByGameWeek(
             .MaterializeToArray();
 
         var sb = new StringBuilder();
-        if(includeHeader)
+        if (includeHeader)
             sb.Append("📊 *Captain stats*\n");
         foreach (var captainGroup in captainGroups)
         {
@@ -112,21 +110,14 @@ public class CaptainsByGameWeek(
         var entries = new List<GenericEntry>();
         if (league?.Standings?.Entries.Any() == true)
         {
-            entries = [.. league.Standings.Entries.OrderBy(x => x.Rank).ToList().Select(e => new GenericEntry
-            {
-                Entry = e.Entry,
-                EntryName = e.EntryName ?? ""
-
-            })];
+            entries =
+            [
+                .. league.Standings.Entries.OrderBy(x => x.Rank).ToList().Select(e => new GenericEntry { Entry = e.Entry, EntryName = e.EntryName ?? "" })
+            ];
         }
         else if (league?.NewEntries?.Entries != null)
         {
-            entries = [.. league.NewEntries.Entries.ToList().Select(e => new GenericEntry
-            {
-                Entry = e.Entry,
-                EntryName = e.EntryName ?? ""
-
-            })];
+            entries = [.. league.NewEntries.Entries.ToList().Select(e => new GenericEntry { Entry = e.Entry, EntryName = e.EntryName ?? "" })];
         }
 
         var allPlayers = players?.Players ?? [];

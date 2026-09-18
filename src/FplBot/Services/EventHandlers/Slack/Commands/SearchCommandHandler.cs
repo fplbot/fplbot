@@ -101,13 +101,7 @@ public class SearchCommandHandler(
 
     private static SearchMetaData GetSearchMetaData(Installation? installation, long? leagueId, string user)
     {
-        return new SearchMetaData
-        {
-            Team = installation?.Id,
-            FollowingFplLeagueId = leagueId?.ToString(),
-            Actor = user,
-            Client = QueryClient.Slack
-        };
+        return new SearchMetaData { Team = installation?.Id, FollowingFplLeagueId = leagueId?.ToString(), Actor = user, Client = QueryClient.Slack };
     }
 
     private async Task<string?> GetCountryToBoost(long? leagueId)

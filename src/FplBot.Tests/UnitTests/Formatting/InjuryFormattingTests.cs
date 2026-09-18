@@ -12,8 +12,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     public void IncreaseChanceOfPlaying(string fromNews, string toNews, string expected)
     {
         var change = Formatter.Change(new InjuredPlayerUpdate(
-
-            new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
+            new InjuredPlayer(1, "WebName", 13, new TeamDescription(1, "TEA", "Team United")),
             new InjuryStatus(
                 PlayerStatuses.Doubtful,
                 fromNews
@@ -30,8 +29,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     public void NoChanceInfoInNews()
     {
         var change = Formatter.Change(new InjuredPlayerUpdate(
-
-            new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
+            new InjuredPlayer(1, "WebName", 13, new TeamDescription(1, "TEA", "Team United")),
             new InjuryStatus(
                 PlayerStatuses.Doubtful,
                 "some string not containing percentage of playing"
@@ -54,8 +52,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     public void TestSuite(string fromStatus, string toStatus, string expected)
     {
         var change = Formatter.Change(new InjuredPlayerUpdate(
-
-            new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
+            new InjuredPlayer(1, "WebName", 13, new TeamDescription(1, "TEA", "Team United")),
             new InjuryStatus(
                 fromStatus,
                 "dontcare"
@@ -74,8 +71,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     public void AllKindsOfDoubtful(string? fromNews, string? toNews, string? expected)
     {
         var change = Formatter.Change(new InjuredPlayerUpdate(
-
-            new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
+            new InjuredPlayer(1, "WebName", 13, new TeamDescription(1, "TEA", "Team United")),
             new InjuryStatus(
                 PlayerStatuses.Doubtful,
                 fromNews
@@ -94,7 +90,6 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
         {
             Assert.Contains(expected, change);
         }
-
     }
 
     [Fact]
@@ -108,8 +103,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     public void ReportsCovid()
     {
         var change = Formatter.Change(new InjuredPlayerUpdate(
-
-            new InjuredPlayer(1,"WebName", 13, new TeamDescription(1, "TEA", "Team United")),
+            new InjuredPlayer(1, "WebName", 13, new TeamDescription(1, "TEA", "Team United")),
             new InjuryStatus(
                 "dontCareStatus",
                 "dontCareNews"
@@ -128,7 +122,7 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     {
         var formatted = Formatter.FormatInjuryStatusUpdates([
             Doubtful(),
-            Doubtful(75,25),
+            Doubtful(75, 25),
             Available()
         ]);
         helper.WriteLine(formatted);
@@ -138,9 +132,9 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     {
         return new InjuredPlayerUpdate
         (
-            new InjuredPlayer(1, $"Dougie Doubter {from}",13,new TeamDescription(1,"TEA", "TEAM UTD")),
-            new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - {from}% chance of playing"),
-            new InjuryStatus(PlayerStatuses.Doubtful,$"Knock - {to}% chance of playing")
+            new InjuredPlayer(1, $"Dougie Doubter {from}", 13, new TeamDescription(1, "TEA", "TEAM UTD")),
+            new InjuryStatus(PlayerStatuses.Doubtful, $"Knock - {from}% chance of playing"),
+            new InjuryStatus(PlayerStatuses.Doubtful, $"Knock - {to}% chance of playing")
         );
     }
 
@@ -148,9 +142,9 @@ public class InjuryFormattingTests(ITestOutputHelper helper)
     {
         return new InjuredPlayerUpdate
         (
-            new InjuredPlayer(2, "Able Availbleu",13, new TeamDescription(1,"TEA", "TEAM UTD")),
-            new InjuryStatus(PlayerStatuses.Doubtful,"Knock - 1337% chance of playing"),
-            new InjuryStatus(PlayerStatuses.Available,"")
+            new InjuredPlayer(2, "Able Availbleu", 13, new TeamDescription(1, "TEA", "TEAM UTD")),
+            new InjuryStatus(PlayerStatuses.Doubtful, "Knock - 1337% chance of playing"),
+            new InjuryStatus(PlayerStatuses.Available, "")
         );
     }
 }

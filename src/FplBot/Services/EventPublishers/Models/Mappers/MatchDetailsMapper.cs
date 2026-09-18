@@ -27,7 +27,7 @@ public class MatchDetailsMapper
 
             return null;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             logger?.Invoke(e);
             return null;

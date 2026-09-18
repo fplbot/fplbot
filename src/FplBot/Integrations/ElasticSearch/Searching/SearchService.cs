@@ -42,7 +42,8 @@ public class SearchService(
 
         logger.LogInformation("Entry search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.EntriesIndex, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.EntriesIndex, null, response.Total, response.Took,
+            metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
         return new SearchResult<EntryItem>([.. response.Hits.Select(h => h.Source)], response.Total, page, maxHits);
     }
@@ -72,7 +73,8 @@ public class SearchService(
 
         logger.LogInformation("League search for {query} returned {returned} of {hits} hits.", query, response.Hits.Count, response.Total);
 
-        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex, countryToBoost, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, _options.LeaguesIndex, countryToBoost, response.Total, response.Took,
+            metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
         return new SearchResult<LeagueItem>([.. response.Hits.Select(h => h.Source)], response.Total, page, maxHits);
     }
@@ -137,27 +139,22 @@ public class SearchService(
         if (!response.IsValid)
             throw new Exception(response.DebugInformation, response.OriginalException);
 
-        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, indexPattern, null, response.Total, response.Took, metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
+        await publishEndpoint.Publish(new IndexQuery(DateTime.UtcNow, query, page, indexPattern, null, response.Total, response.Took,
+            metaData?.Client.ToString(), metaData?.Team, metaData?.FollowingFplLeagueId, metaData?.Actor));
 
-        return new SearchResult<dynamic>([.. response.Hits.Select(h =>
-        {
-            if (h.Index == _options.EntriesIndex)
+        return new SearchResult<dynamic>([
+            .. response.Hits.Select(h =>
             {
-                return new SearchContainer
+                if (h.Index == _options.EntriesIndex)
                 {
-                    Type = "entry",
-                    Source = h.Source.As<EntryItem>()
-                };
-            }
+                    return new SearchContainer { Type = "entry", Source = h.Source.As<EntryItem>() };
+                }
 
-            if (h.Index == _options.LeaguesIndex)
-                return new SearchContainer
-                {
-                    Type = "league",
-                    Source = h.Source.As<LeagueItem>()
-                };
-            return new SearchContainer {Source = h.Source};
-        })], response.Total, page, maxHits);
+                if (h.Index == _options.LeaguesIndex)
+                    return new SearchContainer { Type = "league", Source = h.Source.As<LeagueItem>() };
+                return new SearchContainer { Source = h.Source };
+            })
+        ], response.Total, page, maxHits);
     }
 
     private string GetIndexPatternToSearch(SearchType searchType)

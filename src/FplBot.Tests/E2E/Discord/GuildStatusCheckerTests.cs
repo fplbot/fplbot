@@ -41,10 +41,7 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
 
     private GuildStatusChecker BuildChecker(HttpStatusCode statusCode, string guildId)
     {
-        var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, guildId))
-        {
-            BaseAddress = new Uri("https://discord.example/")
-        };
+        var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, guildId)) { BaseAddress = new Uri("https://discord.example/") };
         var discordClient = new DiscordClient(httpClient,
             Options.Create(new DiscordClientOptions { DiscordApplicationId = "test", DiscordAppToken = "test" }),
             A.Fake<ILogger<DiscordClient>>());
@@ -60,6 +57,7 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
             {
                 response.Content = new StringContent($$"""{"id":"{{guildId}}"}""", Encoding.UTF8, "application/json");
             }
+
             return Task.FromResult(response);
         }
     }

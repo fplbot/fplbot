@@ -58,7 +58,6 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
         }
 
         return HandleRequestResult.Fail("Verification of Discord request failed.");
-
     }
 
     private static readonly DateTime Seventies = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);

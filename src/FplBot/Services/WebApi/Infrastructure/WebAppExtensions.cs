@@ -35,15 +35,12 @@ public static class WebAppExtensions
 
         app.UseForwardedHeaders();
         app.UseMiddleware<BlockedIpMiddleware>();
-        if(!env.IsLocal())
+        if (!env.IsLocal())
             app.UseHttpsRedirection();
 
         var wwwrootProvider = new PhysicalFileProvider(
             Path.Combine(app.Environment.ContentRootPath, "Services", "WebApi", "wwwroot"));
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = wwwrootProvider
-        });
+        app.UseStaticFiles(new StaticFileOptions { FileProvider = wwwrootProvider });
         app.UseRouting();
         app.UseCors(CorsOriginValidator.CorsPolicyName);
         app.UseCookiePolicy();
@@ -61,7 +58,8 @@ public static class WebAppExtensions
             a.UseMiddleware<InstallDeclinedMiddleware>(cancelledPage);
             a.UseDiscordDistribution();
         });
-        app.Map("/discord/events", a => a.UseDiscordbot(enableAuth: !(env.IsDevelopment() && app.Configuration.GetValue("SKIP_DISCORD_SIGNATURE_VERIFICATION", false))));
+        app.Map("/discord/events",
+            a => a.UseDiscordbot(enableAuth: !(env.IsDevelopment() && app.Configuration.GetValue("SKIP_DISCORD_SIGNATURE_VERIFICATION", false))));
         app.UseMinimalEndpoints(
             ("/debug", TestEndpoints.Map)
         );

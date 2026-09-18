@@ -6,9 +6,10 @@ namespace FplBot.Tests.UnitTests.StringParsers;
 public class StringExtensionsTests
 {
     [Theory]
-    [InlineData("fixtureassists, bøler", new []{EventSubscription.FixtureAssists}, new []{"bøler"})]
-    [InlineData("fixtureassists, fixturegoals", new []{EventSubscription.FixtureAssists, EventSubscription.FixtureGoals}, null)]
-    [InlineData("fixtureassists, fixturegoals, all, cardss", new []{EventSubscription.FixtureAssists, EventSubscription.FixtureGoals, EventSubscription.All}, new []{"cardss"})]
+    [InlineData("fixtureassists, bøler", new[] { EventSubscription.FixtureAssists }, new[] { "bøler" })]
+    [InlineData("fixtureassists, fixturegoals", new[] { EventSubscription.FixtureAssists, EventSubscription.FixtureGoals }, null)]
+    [InlineData("fixtureassists, fixturegoals, all, cardss", new[] { EventSubscription.FixtureAssists, EventSubscription.FixtureGoals, EventSubscription.All },
+        new[] { "cardss" })]
     public void ParseSubscriptionString_ShouldWork(string input, EventSubscription[] expected, string[]? unableToParse)
     {
         // Act

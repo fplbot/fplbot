@@ -4,7 +4,6 @@ namespace FplBot.Tests.UnitTests.StringParsers;
 
 public class MessageHelperTests
 {
-
     [Fact]
     public void ExtractGameweekShouldExtractCorrectGameweek()
     {

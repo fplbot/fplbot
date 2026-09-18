@@ -6,10 +6,9 @@ namespace Fpl.EventPublishers.Models.Mappers;
 
 public static class PlayerChangesEventsExtractor
 {
-
     public static IEnumerable<PlayerWithPriceChange> GetPriceChanges(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
     {
-        if(players == null)
+        if (players == null)
             return [];
 
         if (after == null)
@@ -31,7 +30,7 @@ public static class PlayerChangesEventsExtractor
 
     public static IEnumerable<InjuredPlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
     {
-        if(players == null)
+        if (players == null)
             return [];
 
         if (after == null)
@@ -86,14 +85,16 @@ public static class PlayerChangesEventsExtractor
 
             if (fromTeam != null && toTeam != null)
             {
-                updates.Add(new InternalPremiershipTransfer(player.WebName ?? string.Empty, fromTeam.ShortName ?? string.Empty, toTeam.ShortName ?? string.Empty));
+                updates.Add(new InternalPremiershipTransfer(player.WebName ?? string.Empty, fromTeam.ShortName ?? string.Empty,
+                    toTeam.ShortName ?? string.Empty));
             }
-
         }
+
         return updates;
     }
 
-    private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
+    private static IEnumerable<PlayerUpdate> ComparePlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams,
+        IEqualityComparer<Player> changeComparer)
     {
         var playersWithChanges = after.Except(players, changeComparer).ToList();
         var updates = new List<PlayerUpdate>();
@@ -102,20 +103,15 @@ public static class PlayerChangesEventsExtractor
             var fromPlayer = players.FirstOrDefault(p => p.Id == player.Id);
             if (fromPlayer != null)
             {
-                updates.Add(new PlayerUpdate
-                {
-                    FromPlayer = fromPlayer,
-                    ToPlayer = player,
-                    Team = teams.FirstOrDefault(t => t.Code == player.TeamCode),
-                });
+                updates.Add(new PlayerUpdate { FromPlayer = fromPlayer, ToPlayer = player, Team = teams.FirstOrDefault(t => t.Code == player.TeamCode), });
             }
-
         }
 
         return updates;
     }
 
-    private static IEnumerable<InjuredPlayerUpdate> CompareInjuredPlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams, IEqualityComparer<Player> changeComparer)
+    private static IEnumerable<InjuredPlayerUpdate> CompareInjuredPlayers(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams,
+        IEqualityComparer<Player> changeComparer)
     {
         var playersWithChanges = after.Except(players, changeComparer).ToList();
         var updates = new List<InjuredPlayerUpdate>();
@@ -127,7 +123,8 @@ public static class PlayerChangesEventsExtractor
                 var team = teams.FirstOrDefault(t => t.Code == player.TeamCode);
                 updates.Add(new InjuredPlayerUpdate
                 (
-                    new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName ?? string.Empty, fromPlayer.OwnershipPercentage, new TeamDescription(team?.Id ?? 0, team?.ShortName ?? string.Empty, team?.Name ?? string.Empty)),
+                    new InjuredPlayer(fromPlayer.Id, fromPlayer.WebName ?? string.Empty, fromPlayer.OwnershipPercentage,
+                        new TeamDescription(team?.Id ?? 0, team?.ShortName ?? string.Empty, team?.Name ?? string.Empty)),
                     new InjuryStatus(fromPlayer.Status ?? string.Empty, fromPlayer.News ?? string.Empty),
                     new InjuryStatus(player.Status ?? string.Empty, player.News ?? string.Empty)
                 ));

@@ -136,6 +136,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             await DeleteChannelSubscription(teamId, channelId.ToString()!);
         }
+
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
         await _db.SetRemoveAsync(TeamIndexKey, teamId);
 
@@ -148,9 +149,10 @@ public class SlackTeamRepository : ISlackTeamRepository
         var tokens = new List<string>();
         foreach (var key in allTeamKeys)
         {
-            var token = await _db.HashGetAsync(key,_accessTokenField);
+            var token = await _db.HashGetAsync(key, _accessTokenField);
             tokens.Add(token.ToString() ?? string.Empty);
         }
+
         return tokens.Select(t => t.ToString());
     }
 
@@ -158,6 +160,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     {
         return await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), _accessTokenField);
     }
+
     private static string FromTeamIdToTeamKey(string teamId)
     {
         return $"TeamId-{teamId}";
@@ -221,6 +224,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             await _db.HashDeleteAsync(key,
                 [(RedisValue)_channelSubFailingSinceField, (RedisValue)_channelSubLastFailureReasonField]);
         }
+
         await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
         await UpdateEventIndex(teamId, channel.ChannelId, oldEvents, newEvents);
     }
@@ -321,8 +325,10 @@ public class SlackTeamRepository : ISlackTeamRepository
     private async Task<ChannelSubscription?> ReadChannelSubscription(string teamId, string channelId)
     {
         var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId),
-            [_channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField,
-             _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField]);
+        [
+            _channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField,
+            _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField
+        ]);
         if (!fetched[0].HasValue)
         {
             return null;

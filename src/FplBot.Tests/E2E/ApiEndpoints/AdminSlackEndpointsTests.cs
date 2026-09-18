@@ -27,6 +27,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         fixture.ResetChannelOutcomes();
         await fixture.FlushRedisAsync();
     }
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
@@ -66,7 +67,8 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     private async Task<IResult> ExecuteUninstall(string teamId)
     {
         using var scope = fixture.Services.CreateScope();
-        return await AdminSlackEndpoints.Uninstall(teamId, scope.ServiceProvider.GetRequiredService<AdminUninstallSlackWorkspace>(), NullLogger<Program>.Instance);
+        return await AdminSlackEndpoints.Uninstall(teamId, scope.ServiceProvider.GetRequiredService<AdminUninstallSlackWorkspace>(),
+            NullLogger<Program>.Instance);
     }
 
     private async Task<Installation?> WaitForInstallationToBeGone(string teamId, TimeSpan? timeout = null)
@@ -82,6 +84,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
             {
                 return null;
             }
+
             await Task.Delay(50, cts.Token);
         } while (!cts.IsCancellationRequested);
 
@@ -169,7 +172,8 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var repo = fixture.Services.GetRequiredService<ISlackTeamRepository>();
 
-        var result = await AdminSlackEndpoints.UpdateChannelSubscriptions(Guid.NewGuid().ToString("N"), "#fplbot", new UpdateChannelSubscriptionsRequest([]), repo);
+        var result = await AdminSlackEndpoints.UpdateChannelSubscriptions(Guid.NewGuid().ToString("N"), "#fplbot", new UpdateChannelSubscriptionsRequest([]),
+            repo);
 
         Assert.IsType<NotFound>(result);
     }

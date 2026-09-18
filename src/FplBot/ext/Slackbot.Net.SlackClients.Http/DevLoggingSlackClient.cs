@@ -33,25 +33,45 @@ public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISla
     public Task<ChatPostMessageResponse> ChatPostMessage(string channel, string text)
     {
         logger.LogInformation("[DEV] Slack → {Channel}\n\n{Text}\n", channel, text);
-        return Task.FromResult(new ChatPostMessageResponse { Ok = true, channel = channel, ts = "dev-fake-ts" });
+        return Task.FromResult(new ChatPostMessageResponse
+        {
+            Ok = true,
+            channel = channel,
+            ts = "dev-fake-ts"
+        });
     }
 
     public Task<ChatPostMessageResponse> ChatPostMessage(ChatPostMessageRequest postMessage)
     {
         logger.LogInformation("[DEV] Slack → {Channel}\n\n{Text}\n", postMessage.Channel, postMessage.Text);
-        return Task.FromResult(new ChatPostMessageResponse { Ok = true, channel = postMessage.Channel, ts = "dev-fake-ts" });
+        return Task.FromResult(new ChatPostMessageResponse
+        {
+            Ok = true,
+            channel = postMessage.Channel,
+            ts = "dev-fake-ts"
+        });
     }
 
     public Task<ChatPostMessageResponse> ChatPostEphemeralMessage(ChatPostEphemeralMessageRequest postMessage)
     {
         logger.LogInformation("[DEV] Slack ephemeral → {Channel}/{User}\n\n{Text}\n", postMessage.Channel, postMessage.User, postMessage.Text);
-        return Task.FromResult(new ChatPostMessageResponse { Ok = true, channel = postMessage.Channel, ts = "dev-fake-ts" });
+        return Task.FromResult(new ChatPostMessageResponse
+        {
+            Ok = true,
+            channel = postMessage.Channel,
+            ts = "dev-fake-ts"
+        });
     }
 
     public Task<ChatPostMessageResponse> ChatUpdate(ChatUpdateRequest postMessage)
     {
         logger.LogInformation("[DEV] Slack update → {Channel}/{Ts}\n\n{Text}\n", postMessage.channel, postMessage.ts, postMessage.text);
-        return Task.FromResult(new ChatPostMessageResponse { Ok = true, channel = postMessage.channel, ts = postMessage.ts });
+        return Task.FromResult(new ChatPostMessageResponse
+        {
+            Ok = true,
+            channel = postMessage.channel,
+            ts = postMessage.ts
+        });
     }
 
     public Task<Response> ReactionsAdd(string name, string channel, string timestamp)
@@ -107,9 +127,26 @@ public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISla
     // that resolve/validate a channel work against it without any real Slack credentials.
     private static readonly Conversation[] FakeChannels =
     [
-        new Conversation { Id = "C0DEV000001", Name = "dev-fplbot", Is_Channel = true, Is_General = false },
-        new Conversation { Id = "C0GENERAL001", Name = "general", Is_Channel = true, Is_General = true },
-        new Conversation { Id = "C0RANDOM0001", Name = "random", Is_Channel = true }
+        new Conversation
+        {
+            Id = "C0DEV000001",
+            Name = "dev-fplbot",
+            Is_Channel = true,
+            Is_General = false
+        },
+        new Conversation
+        {
+            Id = "C0GENERAL001",
+            Name = "general",
+            Is_Channel = true,
+            Is_General = true
+        },
+        new Conversation
+        {
+            Id = "C0RANDOM0001",
+            Name = "random",
+            Is_Channel = true
+        }
     ];
 
     public Task<ChatGetPermalinkResponse> ChatGetPermalink(string channel, string message_ts)
@@ -130,7 +167,13 @@ public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISla
             Ok = true,
             Members =
             [
-                new User { Id = "U0DEVUSER01", Name = "dev.user", Real_name = "Dev User", Is_Bot = false }
+                new User
+                {
+                    Id = "U0DEVUSER01",
+                    Name = "dev.user",
+                    Real_name = "Dev User",
+                    Is_Bot = false
+                }
             ]
         });
     }
@@ -160,7 +203,11 @@ public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISla
     public Task<ConversationsRepliesResponse> ConversationsReplies(string channel, string ts, int? limit = null, string? cursor = null)
     {
         logger.LogInformation("[DEV] Slack conversations.replies → {Channel}/{Ts} (fake, empty)", channel, ts);
-        return Task.FromResult(new ConversationsRepliesResponse { Ok = true, Messages = [] });
+        return Task.FromResult(new ConversationsRepliesResponse
+        {
+            Ok = true,
+            Messages = []
+        });
     }
 
     public Task<ConversationsHistoryResponse> ConversationsHistory(string channel, int? limit = null, string? cursor = null)
@@ -178,7 +225,11 @@ public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISla
     public Task<ConversationsOpenResponse> ConversationsOpen(string[] users)
     {
         logger.LogInformation("[DEV] Slack conversations.open → {Users} (fake)", string.Join(",", users));
-        return Task.FromResult(new ConversationsOpenResponse { Ok = true, channel = new Channel { id = "D0DEVDM0001" } });
+        return Task.FromResult(new ConversationsOpenResponse
+        {
+            Ok = true,
+            channel = new Channel { id = "D0DEVDM0001" }
+        });
     }
 
     public Task<UserProfileResponse> UserProfile(string user)

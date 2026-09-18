@@ -3,7 +3,10 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Formatting.FixtureStats;
 
-public class TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague, IEnumerable<GameweekEntry> gameweekEntries, Func<string, string>? entryNameToHandle = null)
+public class TauntData(
+    IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague,
+    IEnumerable<GameweekEntry> gameweekEntries,
+    Func<string, string>? entryNameToHandle = null)
 {
     public IEnumerable<TransfersByGameWeek.Transfer> TransfersForLeague { get; } = transfersForLeague;
     public IEnumerable<GameweekEntry> GameweekEntries { get; } = gameweekEntries;
@@ -50,9 +53,8 @@ public class TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLea
 
     private IEnumerable<string> EntriesThatHasPlayerInTeam(int playerId)
     {
-        return GameweekEntries == null ?
-            [] :
-            GameweekEntries.Where(x => x.Picks.Any(pick => pick.PlayerId == playerId)).Select(x => EntryNameToHandle(x.EntryName));
+        return GameweekEntries == null
+            ? []
+            : GameweekEntries.Where(x => x.Picks.Any(pick => pick.PlayerId == playerId)).Select(x => EntryNameToHandle(x.EntryName));
     }
-
 }

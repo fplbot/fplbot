@@ -36,6 +36,7 @@ public static class EnumarableExtensions
         {
             return string.Empty;
         }
+
         if (array.Length == 1)
         {
             return array.Single();

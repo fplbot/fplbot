@@ -11,7 +11,14 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record ChannelSubscriptionDto(string TeamId, string ChannelId, int? LeagueId, IEnumerable<EventSubscription> Subscriptions, int FailureCount, DateTimeOffset? FailingSince, string? LastFailureReason);
+public record ChannelSubscriptionDto(
+    string TeamId,
+    string ChannelId,
+    int? LeagueId,
+    IEnumerable<EventSubscription> Subscriptions,
+    int FailureCount,
+    DateTimeOffset? FailingSince,
+    string? LastFailureReason);
 
 public record TeamSummaryDto(string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
 
@@ -84,9 +91,12 @@ public static class AdminSlackEndpoints
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? installations
-            : [.. installations.Where(i =>
-                i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                i.Id.Contains(query, StringComparison.OrdinalIgnoreCase))];
+            :
+            [
+                .. installations.Where(i =>
+                    i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                    i.Id.Contains(query, StringComparison.OrdinalIgnoreCase))
+            ];
 
         if (failingOnly)
         {

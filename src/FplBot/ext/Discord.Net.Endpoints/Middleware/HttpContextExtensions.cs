@@ -9,6 +9,7 @@ internal static class HttpContextExtensions
         {
             return -1;
         }
+
         return int.Parse(ctxItem!.ToString()!);
     }
 

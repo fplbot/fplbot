@@ -5,7 +5,8 @@ namespace FplBot.Formatting.FixtureStats;
 
 public class GameweekEventsFormatter
 {
-    public static List<FixtureEventMessage> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType,bool> subscribesToStat, FormattingType formattingType, TauntData? tauntData = null)
+    public static List<FixtureEventMessage> FormatNewFixtureEvents(List<FixtureEvents> newFixtureEvents, Func<StatType, bool> subscribesToStat,
+        FormattingType formattingType, TauntData? tauntData = null)
     {
         var formattedStrings = new List<FixtureEventMessage>();
         var statFormatterFactory = new StatFormatterFactory(tauntData, formattingType);
@@ -28,7 +29,7 @@ public class GameweekEventsFormatter
 
     private static string GetScore(FixtureEvents fixtureEvent)
     {
-        var gameTime =fixtureEvent.FixtureScore.Minutes != 0 ?  $"({fixtureEvent.FixtureScore.Minutes}')" : "";
+        var gameTime = fixtureEvent.FixtureScore.Minutes != 0 ? $"({fixtureEvent.FixtureScore.Minutes}')" : "";
         return $"{fixtureEvent.FixtureScore.HomeTeam.Name} " +
                $"{fixtureEvent.FixtureScore.HomeTeamScore}-{fixtureEvent.FixtureScore.AwayTeamScore} " +
                $"{fixtureEvent.FixtureScore.AwayTeam.Name} " +

@@ -62,7 +62,7 @@ public static class FixtureDiffer
                 var count = newStat.Value;
                 while (count > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, false));
+                    diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, false));
                     count--;
                 }
 
@@ -81,7 +81,7 @@ public static class FixtureDiffer
             {
                 while (newStatsCount > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, false));
+                    diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, false));
                     newStatsCount--;
                 }
 
@@ -94,7 +94,7 @@ public static class FixtureDiffer
             {
                 while (removedStats > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, true));
+                    diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, true));
                     removedStats--;
                 }
             }
@@ -113,7 +113,7 @@ public static class FixtureDiffer
                     var oldStatCount = oldStat.Value;
                     while (oldStatCount > 0)
                     {
-                        diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, true));
+                        diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, true));
                         oldStatCount--;
                     }
                 }

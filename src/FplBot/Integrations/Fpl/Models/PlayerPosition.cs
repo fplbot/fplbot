@@ -1,5 +1,4 @@
-﻿
-namespace Fpl.Client.Models;
+﻿namespace Fpl.Client.Models;
 
 public enum FplPlayerPosition
 {

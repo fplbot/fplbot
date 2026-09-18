@@ -22,7 +22,7 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
             {
                 counter++;
                 logger.LogInformation("AccessCheck: {GuildId} ('{GuildName}') Guild #{Count} unknown to fplbot. "
-                                      , counter, guild.Id, guild.Name);
+                    , counter, guild.Id, guild.Name);
                 await guildRepo.Delete(guild);
                 logger.LogInformation("AccessCheck: {GuildId} ('{GuildName}') Guild deleted ❌", guild.Id, guild.Name);
             }

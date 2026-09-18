@@ -95,7 +95,7 @@ public static class Formatter
     public static string? GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
         var worst = (league.Standings?.Entries ?? []).MinBy(e => e.EventTotal);
-        var entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
+        var entryOrEntryLink = includeExternalLinks ? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
         return worst == null ? null : $"💩 {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
     }
 
@@ -162,6 +162,7 @@ public static class Formatter
         {
             header = "🆕 New players!";
         }
+
         var nameAndCost = newPlayers.Select(NameAndCost);
         return $"{header}\n{BulletPoints<string>(nameAndCost)}";
 
@@ -272,6 +273,7 @@ public static class Formatter
                 sb.Append($"• {gUpdate.Player.WebName} ({gUpdate.Player.Team.ShortName}). {gUpdate.Updated.News} {chance}\n");
             }
         }
+
         return sb.ToString();
     }
 
@@ -280,14 +282,14 @@ public static class Formatter
         return (update.Previous, update.Updated) switch
         {
             (null, null) => null,
-            (null,_) => null,
+            (null, _) => null,
             (_, null) => null,
-            (_,_) s when s.Previous == s.Updated => null,
-            (_,_) => (update.Previous.Status, update.Updated.Status) switch
+            (_, _) s when s.Previous == s.Updated => null,
+            (_, _) => (update.Previous.Status, update.Updated.Status) switch
             {
-                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
-                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
-                (PlayerStatuses.Doubtful,PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
+                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) > 0 => "📈️ Increased chance of playing",
+                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) when ChanceOfPlayingChange(update) < 0 => "📉️ Decreased chance of playing",
+                (PlayerStatuses.Doubtful, PlayerStatuses.Doubtful) when NewsAdded(update) => "ℹ️ News update",
                 (_, _) when update.Updated.News?.Contains("Self-isolating", StringComparison.InvariantCultureIgnoreCase) == true => "🦇 COVID-19 🦇",
                 (_, PlayerStatuses.Injured) => "🤕 Injured",
                 (_, PlayerStatuses.Doubtful) => "⚠️ Doubtful",
@@ -320,6 +322,7 @@ public static class Formatter
                 return toChance - fromChance;
             }
         }
+
         return null;
     }
 
@@ -348,8 +351,10 @@ public static class Formatter
             {
                 playersInSegment = playersInSegment.Reverse();
             }
+
             formattedOutput += $"{string.Join("  ", playersInSegment)}\n";
         }
+
         formattedOutput += "\n";
     }
 
@@ -360,7 +365,6 @@ public static class Formatter
 
     private static string PositionEmoji(string position)
     {
-
         return position switch
         {
             MatchPositionGoalie => "🧤",
@@ -400,6 +404,7 @@ public static class Formatter
             {
                 fullTimeReport += "\n"; // blank line between the bonus points and the defensive contributions
             }
+
             fullTimeReport += "\nDefensive contributions:\n";
             fullTimeReport += BulletPoints(defensiveContributionsOutput);
         }
@@ -411,9 +416,11 @@ public static class Formatter
             {
                 fullTimeReport += "\n"; // blank line between the previous section and the top performers
             }
+
             fullTimeReport += "\nTop performers:\n";
             fullTimeReport += BulletPoints(topPerformersOutput);
         }
+
         return fullTimeReport;
     }
 
@@ -459,11 +466,12 @@ public static class Formatter
         {
             if (points == 3)
             {
-                if(bonusGroup.Count() >= 3)
+                if (bonusGroup.Count() >= 3)
                 {
                     bonusPointsOutput.Add(BonusPointRank(3, bonusGroup.Select(p => p.Player)));
                     break;
                 }
+
                 pallenCount = bonusGroup.Count();
                 bonusPointsOutput.Add(BonusPointRank(3, bonusGroup.Select(p => p.Player)));
             }
@@ -496,6 +504,7 @@ public static class Formatter
             if (points == 0)
                 break;
         }
+
         return bonusPointsOutput;
     }
 
@@ -572,8 +581,8 @@ public static class Formatter
     public static string FormatLeagueItem(LeagueItem leagueItem, int? gameweek)
     {
         return GetLeagueLink(leagueItem.Id, leagueItem.Name ?? "") +
-               (leagueItem.AdminEntry.HasValue ?
-                   $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName ?? "", leagueItem.AdminCountry ?? ""), gameweek)})"
+               (leagueItem.AdminEntry.HasValue
+                   ? $" (admin: {GetEntryLink(leagueItem.AdminEntry.Value, FormatLeagueAdmin(leagueItem.AdminName ?? "", leagueItem.AdminCountry ?? ""), gameweek)})"
                    : null);
     }
 

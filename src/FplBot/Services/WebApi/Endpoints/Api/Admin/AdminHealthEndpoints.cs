@@ -24,11 +24,7 @@ public static class AdminHealthEndpoints
 
     internal static async Task<IResult> GetDependencyHealth(IConnectionMultiplexer redis, IElasticClient elasticClient)
     {
-        var dependencies = new[]
-        {
-            await CheckRedis(redis),
-            await CheckElasticsearch(elasticClient)
-        };
+        var dependencies = new[] { await CheckRedis(redis), await CheckElasticsearch(elasticClient) };
 
         var response = new DependencyHealthResponse(dependencies.All(d => d.Healthy), dependencies);
         if (response.Healthy)

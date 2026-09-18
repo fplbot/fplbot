@@ -6,7 +6,8 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.EventHandlers;
 
-public class AppInstalledHandler(IGuildRepository guildRepo,
+public class AppInstalledHandler(
+    IGuildRepository guildRepo,
     ISlackTeamRepository slackRepo,
     ISlackClientBuilder builder,
     IConfiguration config,

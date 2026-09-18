@@ -8,7 +8,8 @@ public static class FixtureFulltimeModelBuilder
     // Number of players listed under "Top performers". Players tied with the last one are kept as well.
     public const int TopPerformersCount = 5;
 
-    public static FinishedFixture CreateFinishedFixture(ICollection<Team> teams, ICollection<Player> players, Fixture n, ICollection<LiveItem>? liveItems = null)
+    public static FinishedFixture CreateFinishedFixture(ICollection<Team> teams, ICollection<Player> players, Fixture n,
+        ICollection<LiveItem>? liveItems = null)
     {
         return new FinishedFixture
         {
@@ -59,11 +60,7 @@ public static class FixtureFulltimeModelBuilder
                 if (player.TeamId != fixture.HomeTeamId && player.TeamId != fixture.AwayTeamId)
                     return null;
 
-                return new TopPerformer
-                {
-                    Player = player,
-                    Points = explain.Stats.Sum(s => s.Points)
-                };
+                return new TopPerformer { Player = player, Points = explain.Stats.Sum(s => s.Points) };
             }
         }
         catch
@@ -86,11 +83,7 @@ public static class FixtureFulltimeModelBuilder
 
             BonusPointsPlayer BpsFilter(FixtureStatValue bps)
             {
-                return new BonusPointsPlayer
-                {
-                    Player = players.First(p => p.Id == bps.Element),
-                    BonusPoints = bps.Value
-                };
+                return new BonusPointsPlayer { Player = players.First(p => p.Id == bps.Element), BonusPoints = bps.Value };
             }
         }
         catch
@@ -113,12 +106,15 @@ public static class FixtureFulltimeModelBuilder
             var home = stat.HomeStats ?? [];
             var away = stat.AwayStats ?? [];
 
-            return [.. home.Concat(away)
-                .Select(ToDefensiveContributionPlayer)
-                .Where(dc => dc != null && ReachedThreshold(dc!))
-                .Select(dc => dc!)
-                .OrderByDescending(dc => dc.Contributions)
-                .ThenBy(dc => dc.Player.WebName)];
+            return
+            [
+                .. home.Concat(away)
+                    .Select(ToDefensiveContributionPlayer)
+                    .Where(dc => dc != null && ReachedThreshold(dc!))
+                    .Select(dc => dc!)
+                    .OrderByDescending(dc => dc.Contributions)
+                    .ThenBy(dc => dc.Player.WebName)
+            ];
 
             DefensiveContributionPlayer? ToDefensiveContributionPlayer(FixtureStatValue value)
             {
@@ -126,11 +122,7 @@ public static class FixtureFulltimeModelBuilder
                 if (player == null)
                     return null;
 
-                return new DefensiveContributionPlayer
-                {
-                    Player = player,
-                    Contributions = value.Value
-                };
+                return new DefensiveContributionPlayer { Player = player, Contributions = value.Value };
             }
         }
         catch

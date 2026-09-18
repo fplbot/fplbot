@@ -7,7 +7,10 @@ namespace FplBot.Services.WebApi.Slack.Helpers;
 
 public static class GitHubReleaseService
 {
-    private class Release { public string? Body { get; set; }}
+    private class Release
+    {
+        public string? Body { get; set; }
+    }
 
     public static async Task<string> GetReleaseNotes(string majorMinorPatch)
     {
@@ -18,7 +21,8 @@ public static class GitHubReleaseService
             var requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
 
             var json = await httpClient.GetStringAsync(requestUri);
-            var res = JsonSerializer.Deserialize<Release>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
+            var res = JsonSerializer.Deserialize<Release>(json,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
             var resBody = res?.Body;
             var splitted = resBody?.Split("\n");
             var listed = splitted?.Select(s =>
@@ -57,8 +61,9 @@ public static class GitHubReleaseService
 
     private static readonly IEnumerable<string> _randomPool =
     [
-        "🤠","😻", "🙇‍♀️", "👑","💄", "🎉", "✨", "🎩", "♥️", "💥", "🧨", "⚽️", "🚨", "📣", "🥑", "🏂", "🥁", "🎯", "🎳", "🎲", "🎰", "🐢", "💧", "🌈", "🎖"
+        "🤠", "😻", "🙇‍♀️", "👑", "💄", "🎉", "✨", "🎩", "♥️", "💥", "🧨", "⚽️", "🚨", "📣", "🥑", "🏂", "🥁", "🎯", "🎳", "🎲", "🎰", "🐢", "💧", "🌈", "🎖"
     ];
+
     private static string GetRandomEmoji()
     {
         var random = new Random();

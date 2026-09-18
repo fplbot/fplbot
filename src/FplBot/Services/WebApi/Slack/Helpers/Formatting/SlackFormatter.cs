@@ -8,18 +8,9 @@ public static class SlackFormatter
 {
     public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams)
     {
-
         List<IBlock> playerCard =
         [
-            new SectionBlock
-            {
-                text = new Text
-                       {
-                           type = "mrkdwn",
-                           text = $"*{player.FirstName} {player.SecondName}*"
-                       }
-            }
-
+            new SectionBlock { text = new Text { type = "mrkdwn", text = $"*{player.FirstName} {player.SecondName}*" } }
         ];
 
 
@@ -31,10 +22,7 @@ public static class SlackFormatter
         playerCard.Add(new ImageBlock
         {
             image_url = imageUrl,
-            title = new Text
-            {
-                text = $"{player.SecondName}.png"
-            },
+            title = new Text { text = $"{player.SecondName}.png" },
             alt_text = $"{player.FirstName} {player.SecondName}"
         });
 
@@ -43,51 +31,21 @@ public static class SlackFormatter
 
         Text[] fields =
         [
-            new Text
-            {
-                type = "mrkdwn",
-                text = $"*Team*: {teamName}"
-            },
-            new Text
-            {
-                type = "mrkdwn",
-                text = $"*Points*: {player.TotalPoints}"
-            },
-            new Text
-            {
-                type = "mrkdwn",
-                text = $"*Cost*: {Formatter.FormatCurrency(player.NowCost)}"
-            },
-            new Text
-            {
-                type = "mrkdwn",
-                text = $"*Goals*: {player.GoalsScored}"
-            },
-            new Text
-            {
-                type = "mrkdwn",
-                text = $"*Assists*: {player.Assists}"
-            }
+            new Text { type = "mrkdwn", text = $"*Team*: {teamName}" },
+            new Text { type = "mrkdwn", text = $"*Points*: {player.TotalPoints}" },
+            new Text { type = "mrkdwn", text = $"*Cost*: {Formatter.FormatCurrency(player.NowCost)}" },
+            new Text { type = "mrkdwn", text = $"*Goals*: {player.GoalsScored}" },
+            new Text { type = "mrkdwn", text = $"*Assists*: {player.Assists}" }
         ];
 
-        playerCard.Add(new SectionBlock
-        {
-            fields = fields
-        });
+        playerCard.Add(new SectionBlock { fields = fields });
 
         playerCard.Add(new DividerBlock());
 
         var chanceOfPlaying = GetChanceOfPlayingWarningIfRelevant(player.ChanceOfPlayingNextRound, player.News);
         if (chanceOfPlaying != null)
         {
-            playerCard.Add(new SectionBlock
-            {
-                text = new Text
-                {
-                    type = "mrkdwn",
-                    text = chanceOfPlaying
-                }
-            });
+            playerCard.Add(new SectionBlock { text = new Text { type = "mrkdwn", text = chanceOfPlaying } });
         }
 
         return [.. playerCard];
@@ -106,8 +64,8 @@ public static class SlackFormatter
         {
             return null;
         }
+
         var text = news == "" ? $"Chance of playing next round: {chanceOfPlaying}%" : news;
         return $":warning: {text} \n";
     }
-
 }

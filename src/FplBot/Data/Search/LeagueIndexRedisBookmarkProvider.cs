@@ -15,7 +15,7 @@ public class LeagueIndexRedisBookmarkProvider(
     {
         var valid = (await _db.StringGetAsync(BookmarkKey)).TryParse(out int bookmark);
 
-        if(!valid)
+        if (!valid)
             logger.LogWarning($"Unable to parse {BookmarkKey} from db");
 
         return valid ? bookmark : 1;

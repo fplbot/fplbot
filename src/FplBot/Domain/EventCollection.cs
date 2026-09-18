@@ -6,7 +6,7 @@ public class EventCollection
 
     public IReadOnlyCollection<FplEvent> Current => _events;
 
-    private EventCollection(){ }
+    private EventCollection() { }
 
     public static EventCollection Empty()
     {
@@ -69,12 +69,10 @@ public class EventCollection
                     _events.Add(value);
                 }
             }
+
             return;
         }
 
         _events.Remove(fplEvent);
     }
-
-
-
 }

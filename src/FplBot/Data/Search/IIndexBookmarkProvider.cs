@@ -6,5 +6,10 @@ public interface IIndexBookmarkProvider
     Task SetBookmark(int bookmark);
 }
 
-public interface ILeagueIndexBookmarkProvider : IIndexBookmarkProvider { }
-public interface IEntryIndexBookmarkProvider : IIndexBookmarkProvider { }
+public interface ILeagueIndexBookmarkProvider : IIndexBookmarkProvider
+{
+}
+
+public interface IEntryIndexBookmarkProvider : IIndexBookmarkProvider
+{
+}

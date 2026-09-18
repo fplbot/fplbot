@@ -63,6 +63,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             var consumer = queue.Name[..^ErrorQueueSuffix.Length];
             result.Add(new ErrorQueueSummary(queue.Name, consumer, length));
         }
+
         return result;
     }
 

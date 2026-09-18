@@ -147,9 +147,12 @@ public static class AdminDiscordEndpoints
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? guildsWithSubs
-            : [.. guildsWithSubs.Where(g =>
-                g.GuildName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase))];
+            :
+            [
+                .. guildsWithSubs.Where(g =>
+                    g.GuildName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                    g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase))
+            ];
 
         if (failingOnly)
         {
@@ -259,12 +262,7 @@ public static class AdminDiscordEndpoints
             });
         }
 
-        return TypedResults.Ok(new
-        {
-            guildId = installation.Id,
-            guildName = installation.Name,
-            channels
-        });
+        return TypedResults.Ok(new { guildId = installation.Id, guildName = installation.Name, channels });
     }
 
     internal static async Task<IResult> PublishStandings(
@@ -413,6 +411,7 @@ public static class AdminDiscordEndpoints
             installation.RemoveChannel(channelId);
             await repo.Save(installation);
         }
+
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
     }
 
@@ -426,8 +425,10 @@ public static class AdminDiscordEndpoints
             {
                 installation.RemoveChannel(channel.ChannelId);
             }
+
             await repo.Save(installation);
         }
+
         return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
     }
 
@@ -443,6 +444,7 @@ public static class AdminDiscordEndpoints
         {
             await repo.Delete(installation);
         }
+
         return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
     }
 }

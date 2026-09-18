@@ -10,7 +10,7 @@ public class LiveEventsExtractorTests
     [Fact]
     public static void When_NoEntries_ReturnsEmptyList()
     {
-        AssertEmpty(null,null);
+        AssertEmpty(null, null);
         AssertEmpty([], null);
         AssertEmpty(null, []);
 
@@ -24,15 +24,9 @@ public class LiveEventsExtractorTests
     [Fact]
     public static void When_NewAwayGoal_ReturnsAwayTeamGoalEvent()
     {
-        var current = new List<Fixture>
-        {
-            TestBuilder.NoGoals(fixtureCode:1)
-        };
+        var current = new List<Fixture> { TestBuilder.NoGoals(fixtureCode: 1) };
 
-        var latest = new List<Fixture>
-        {
-            TestBuilder.AwayTeamGoal(fixtureCode:1, goals: 1, minutes: 72)
-        };
+        var latest = new List<Fixture> { TestBuilder.AwayTeamGoal(fixtureCode: 1, goals: 1, minutes: 72) };
 
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, [TestBuilder.Player()], [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
         var awayGoalEvent = events.First();
@@ -46,20 +40,14 @@ public class LiveEventsExtractorTests
     [Fact]
     public static void When_DifferentScorers_ReturnsCorrectScore()
     {
-        var current = new List<Fixture>
-        {
-            TestBuilder.NoGoals(fixtureCode:1)
-        };
+        var current = new List<Fixture> { TestBuilder.NoGoals(fixtureCode: 1) };
 
         var updatedFixture = TestBuilder.NoGoals(1);
         updatedFixture.AddAwayGoal();
         updatedFixture.AddAwayGoal();
         updatedFixture.AddAwayGoal();
 
-        var latest = new List<Fixture>
-        {
-            updatedFixture
-        };
+        var latest = new List<Fixture> { updatedFixture };
 
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, [TestBuilder.Player()], [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
         var awayGoalEvent = events.First();
@@ -70,15 +58,9 @@ public class LiveEventsExtractorTests
     [Fact]
     public static void When_NoStats_ReturnsEmpty()
     {
-        var current = new List<Fixture>
-        {
-            TestBuilder.NoGoals(fixtureCode:1)
-        };
+        var current = new List<Fixture> { TestBuilder.NoGoals(fixtureCode: 1) };
 
-        var latest = new List<Fixture>
-        {
-            TestBuilder.NoGoals(fixtureCode:1)
-        };
+        var latest = new List<Fixture> { TestBuilder.NoGoals(fixtureCode: 1) };
 
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, [TestBuilder.Player()], [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
         Assert.Empty(events);
@@ -87,18 +69,12 @@ public class LiveEventsExtractorTests
     [Fact]
     public static void When_OwnGoal_ReturnsCorrectScore()
     {
-        var current = new List<Fixture>
-        {
-            TestBuilder.NoGoals(fixtureCode:1)
-        };
+        var current = new List<Fixture> { TestBuilder.NoGoals(fixtureCode: 1) };
 
         var updatedFixture = TestBuilder.NoGoals(1);
         updatedFixture.AddAwayOwnGoal();
 
-        var latest = new List<Fixture>
-        {
-            updatedFixture
-        };
+        var latest = new List<Fixture> { updatedFixture };
 
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, [TestBuilder.Player()], [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
 
@@ -109,19 +85,13 @@ public class LiveEventsExtractorTests
     [Fact]
     public static void When_OwnGoalAndGoal_ReturnsCorrectScore()
     {
-        var current = new List<Fixture>
-        {
-            TestBuilder.NoGoals(fixtureCode:1)
-        };
+        var current = new List<Fixture> { TestBuilder.NoGoals(fixtureCode: 1) };
 
         var updatedFixture = TestBuilder.NoGoals(1);
         updatedFixture.AddHomeGoal();
         updatedFixture.AddAwayOwnGoal();
 
-        var latest = new List<Fixture>
-        {
-            updatedFixture
-        };
+        var latest = new List<Fixture> { updatedFixture };
 
         var events = LiveEventsExtractor.GetUpdatedFixtureEvents(latest, current, [TestBuilder.Player()], [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
 

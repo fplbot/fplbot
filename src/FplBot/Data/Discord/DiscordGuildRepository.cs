@@ -28,6 +28,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         {
             throw new KeyNotFoundException($"No Discord guild found for id '{teamId}'");
         }
+
         return installation;
     }
 
@@ -97,6 +98,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         {
             await DeleteChannelSubscription(installation.Id, channel.ChannelId);
         }
+
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(installation.Id));
         await _db.SetRemoveAsync(GuildIndexKey, installation.Id);
         await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.Id));
@@ -139,6 +141,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         {
             await _db.HashDeleteAsync(key, [_failingSinceField, _lastFailureReasonField]);
         }
+
         await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
         await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
     }
@@ -244,8 +247,10 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
     private async Task<ChannelSubscription?> ReadChannelSubscription(string guildId, string channelId)
     {
         var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId),
-            [_channelIdField, _leagueIdField, _subscriptionsField, _failureCountField, _failingSinceField,
-             _lastFailureReasonField]);
+        [
+            _channelIdField, _leagueIdField, _subscriptionsField, _failureCountField, _failingSinceField,
+            _lastFailureReasonField
+        ]);
         if (!fetched[0].HasValue)
         {
             return null;

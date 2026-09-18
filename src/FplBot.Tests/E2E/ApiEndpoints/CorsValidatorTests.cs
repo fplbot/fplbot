@@ -15,6 +15,6 @@ public class CorsValidatorTests
     public void ValidatesOrigins(string origin, bool expectedResult)
     {
         var isValid = CorsOriginValidator.ValidateOrigin(origin);
-        Assert.Equal(expectedResult,isValid);
+        Assert.Equal(expectedResult, isValid);
     }
 }

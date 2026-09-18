@@ -27,13 +27,13 @@ public class DateTimeUtilsTests(ITestOutputHelper helper)
     {
         var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
 
-        for(var i = 0; i < 60; i++)
+        for (var i = 0; i < 60; i++)
         {
             _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 25, 19, 0, i);
             var isTheMinute = _deadlineChecker.IsWithinMinutesToDate(60, deadline);
             if (!isTheMinute)
             {
-                helper.WriteLine($"Not true for {i} - {_deadlineChecker.NowUtcOverride-deadline}");
+                helper.WriteLine($"Not true for {i} - {_deadlineChecker.NowUtcOverride - deadline}");
             }
 
             Assert.True(isTheMinute);
@@ -86,7 +86,7 @@ public class DateTimeUtilsTests(ITestOutputHelper helper)
     {
         _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 24, 20, 0, 30);
         var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
-        Assert.True(_deadlineChecker.IsWithinMinutesToDate(60*24, deadline));
+        Assert.True(_deadlineChecker.IsWithinMinutesToDate(60 * 24, deadline));
     }
 
     [Fact]
@@ -94,6 +94,6 @@ public class DateTimeUtilsTests(ITestOutputHelper helper)
     {
         _deadlineChecker.NowUtcOverride = new DateTime(2005, 5, 24, 21, 0, 30);
         var deadline = new DateTime(2005, 5, 25, 20, 0, 0);
-        Assert.False(_deadlineChecker.IsWithinMinutesToDate(60*24, deadline));
+        Assert.False(_deadlineChecker.IsWithinMinutesToDate(60 * 24, deadline));
     }
 }

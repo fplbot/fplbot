@@ -31,7 +31,6 @@ public static class TestGoal
             new PlayerEvent(playerDetails1, teamDetails, IsRemoved: isRemoved),
 
             new PlayerEvent(playerDetails2, teamDetails, false)
-
         ];
 
         statMap.Add(type, playerEvents);

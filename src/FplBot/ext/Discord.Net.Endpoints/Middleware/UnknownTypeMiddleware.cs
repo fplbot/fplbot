@@ -1,6 +1,8 @@
 namespace Discord.Net.Endpoints.Middleware;
 
+#pragma warning disable CS9113
 internal class UnknownTypeMiddleware(RequestDelegate next, ILogger<UnknownTypeMiddleware> logger)
+#pragma warning restore CS9113
 {
     private readonly ILogger<UnknownTypeMiddleware> _logger = logger;
 
@@ -9,14 +11,7 @@ internal class UnknownTypeMiddleware(RequestDelegate next, ILogger<UnknownTypeMi
         var type = context.Items[HttpItemKeys.UnhandledKey];
         var payload = context.Items[HttpItemKeys.RawBody];
         _logger.LogWarning($"Not handling. Unsupported payload type `{type}`.\nPayload:\n{payload}");
-        var resp = new
-        {
-            type = 4,
-            data = new
-            {
-                content = "Received an event I cannot handle"
-            }
-        };
+        var resp = new { type = 4, data = new { content = "Received an event I cannot handle" } };
         context.Response.StatusCode = 200;
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(resp);

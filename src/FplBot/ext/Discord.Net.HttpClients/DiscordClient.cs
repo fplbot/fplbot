@@ -9,15 +9,13 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
     : IDiscordClient
 {
     public record ChannelMessage(string id);
+
     public async Task ChannelMessagePost(string channelId, string text)
     {
-        var serialized = JsonSerializer.Serialize((object)new
-                                                             {
-                                                                 content = text
-                                                             });
+        var serialized = JsonSerializer.Serialize((object)new { content = text });
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
         logger.LogInformation(serialized);
-        var res = await client.PostAsync($"api/v10/channels/{channelId}/messages",jsonContent);
+        var res = await client.PostAsync($"api/v10/channels/{channelId}/messages", jsonContent);
         var responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
         if (!res.IsSuccessStatusCode)
@@ -39,11 +37,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
 
     private async Task ComponentsPost(string requestUri, ComponentRequest request)
     {
-        var serialized = JsonSerializer.Serialize((object)new
-                                                             {
-                                                                 flags = ComponentRequest.IsComponentsV2,
-                                                                 components = request.Components
-                                                             });
+        var serialized = JsonSerializer.Serialize((object)new { flags = ComponentRequest.IsComponentsV2, components = request.Components });
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
         logger.LogInformation(serialized);
         var res = await client.PostAsync(requestUri, jsonContent);
@@ -58,36 +52,24 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
     // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
     public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options1)
     {
-        object value = new
-                       {
-                           name,
-                           description,
-                       };
+        object value = new { name, description, };
         if (options1 != null && options1.Any())
         {
             var allOptions = new List<object>();
             foreach (var option in options1)
             {
-                object singleOption = new {
-                                              type = option.Type,
-                                              name = option.Name,
-                                              description = option.Description,
-                                              required = option.Required
-                                          };
+                object singleOption = new { type = option.Type, name = option.Name, description = option.Description, required = option.Required };
 
                 if (option.Choices != null && option.Choices.Any())
                 {
-                    singleOption = new {
-                                           type = option.Type,
-                                           name = option.Name,
-                                           description = option.Description,
-                                           required = option.Required,
-                                           choices = option.Choices.Select(c => new
-                                               {
-                                                   name = c.Name,
-                                                   value = c.Value
-                                               }).ToArray()
-                                       };
+                    singleOption = new
+                    {
+                        type = option.Type,
+                        name = option.Name,
+                        description = option.Description,
+                        required = option.Required,
+                        choices = option.Choices.Select(c => new { name = c.Name, value = c.Value }).ToArray()
+                    };
                 }
 
                 if (option.Options != null && option.Options.Any())
@@ -95,48 +77,38 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
                     var subOptions = new List<object>();
                     foreach (var subOpt in option.Options)
                     {
-                        object singleSubOption = new {
-                                                         type = subOpt.Type,
-                                                         name = subOpt.Name,
-                                                         description = subOpt.Description,
-                                                         required = subOpt.Required
-                                                     };
+                        object singleSubOption = new { type = subOpt.Type, name = subOpt.Name, description = subOpt.Description, required = subOpt.Required };
 
                         if (subOpt.Choices != null && subOpt.Choices.Any())
                         {
-                            singleSubOption = new {
-                                                      type = subOpt.Type,
-                                                      name = subOpt.Name,
-                                                      description = subOpt.Description,
-                                                      required = subOpt.Required,
-                                                      choices = subOpt.Choices.Select(c => new
-                                                          {
-                                                              name = c.Name,
-                                                              value = c.Value
-                                                          }).ToArray()
-                                                  };
+                            singleSubOption = new
+                            {
+                                type = subOpt.Type,
+                                name = subOpt.Name,
+                                description = subOpt.Description,
+                                required = subOpt.Required,
+                                choices = subOpt.Choices.Select(c => new { name = c.Name, value = c.Value }).ToArray()
+                            };
                         }
 
                         logger.LogInformation(singleOption.ToString());
                         subOptions.Add(singleSubOption);
                     }
-                    singleOption = new {
-                                           type = option.Type,
-                                           name = option.Name,
-                                           description = option.Description,
-                                           required = option.Required,
-                                           options = subOptions.ToArray()
-                                       };
+
+                    singleOption = new
+                    {
+                        type = option.Type,
+                        name = option.Name,
+                        description = option.Description,
+                        required = option.Required,
+                        options = subOptions.ToArray()
+                    };
                 }
+
                 allOptions.Add(singleOption);
             }
 
-            value = new
-                    {
-                        name,
-                        description,
-                        options = allOptions
-                    };
+            value = new { name, description, options = allOptions };
         }
 
         var serialized = JsonSerializer.Serialize(value);
@@ -149,7 +121,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
             requestUri = $"api/v8/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands";
         }
 
-        var res = await client.PostAsync(requestUri,jsonContent);
+        var res = await client.PostAsync(requestUri, jsonContent);
         var responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogTrace(responseBody);
         res.EnsureSuccessStatusCode();
@@ -200,10 +172,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         return await res.Content.ReadFromJsonAsync<Guild>(SerializerOptions) ?? throw new InvalidOperationException("Failed to deserialize Guild response");
     }
 
-    private readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
-                                                               {
-                                                                   PropertyNamingPolicy = new Lowercase(),
-                                                               };
+    private readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web) { PropertyNamingPolicy = new Lowercase(), };
 }
 
 public record Guild(string Id);
@@ -215,6 +184,7 @@ public class ApplicationCommandOptions
     /// STRING	3
     /// INTEGER	4
     public int Type { get; set; }
+
     public string? Name { get; set; }
     public string? Description { get; set; }
     public bool Required { get; set; }

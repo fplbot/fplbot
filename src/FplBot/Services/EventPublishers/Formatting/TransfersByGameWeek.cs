@@ -92,10 +92,7 @@ public class TransfersByGameWeek(
         var league = await leagueTask;
         var settings = await settingsTask;
 
-        var sb = new List<TransfersMessage>
-        {
-            new($"Transfers made for gameweek {gw}:\n\n")
-        };
+        var sb = new List<TransfersMessage> { new($"Transfers made for gameweek {gw}:\n\n") };
 
         var didNoTransfers = new ConcurrentBag<ClassicLeagueEntry>();
 
@@ -112,13 +109,13 @@ public class TransfersByGameWeek(
                 }
                 else
                 {
-                    sb.Add(new (entryTransfers.Text));
+                    sb.Add(new(entryTransfers.Text));
                 }
             }));
 
         if (didNoTransfers.Count > 10)
         {
-            sb.Add(new ($"\nThe {didNoTransfers.Count} others saved their transfer 😴"));
+            sb.Add(new($"\nThe {didNoTransfers.Count} others saved their transfer 😴"));
         }
         else if (didNoTransfers.Count == 1)
         {
@@ -128,7 +125,8 @@ public class TransfersByGameWeek(
         }
         else if (didNoTransfers.Count > 0)
         {
-            var join = didNoTransfers.Select(x => {
+            var join = didNoTransfers.Select(x =>
+            {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
                 return namedWho ?? "";
             }).Join();
@@ -185,7 +183,8 @@ public class TransfersByGameWeek(
         }
         else if (didNoTransfers.Count > 0)
         {
-            var join = didNoTransfers.Select(x => {
+            var join = didNoTransfers.Select(x =>
+            {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
                 return namedWho ?? "";
             }).Join();
@@ -241,7 +240,8 @@ public class TransfersByGameWeek(
                 {
                     sb.Append($"   Made use of {transfers.Length} transfers. Final 11:\n");
                     var firstEleven = picks.Picks.OrderBy(p => p.TeamPosition).Take(11);
-                    var starters = firstEleven.Select(first11pick => players.SingleOrDefault(x => x.Id == first11pick.PlayerId)).Where(p => p != null).Select(p => p!).ToList();
+                    var starters = firstEleven.Select(first11pick => players.SingleOrDefault(x => x.Id == first11pick.PlayerId)).Where(p => p != null)
+                        .Select(p => p!).ToList();
                     foreach (var playerGroup in starters.GroupBy(p => p.Position))
                     {
                         var playersInPos = string.Join("  ", playerGroup.Select(p => p.WebName));
@@ -254,7 +254,8 @@ public class TransfersByGameWeek(
                 {
                     foreach (var entryTransfer in transfers)
                     {
-                        sb.Append($"   ▪️{entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) ➡️ {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
+                        sb.Append(
+                            $"   ▪️{entryTransfer.PlayerTransferredOut} ({Formatter.FormatCurrency(entryTransfer.SoldFor)}) ➡️ {entryTransfer.PlayerTransferredIn} ({Formatter.FormatCurrency(entryTransfer.BoughtFor)})\n");
                     }
                 }
             }
@@ -264,12 +265,7 @@ public class TransfersByGameWeek(
             }
         }
 
-        return new EntryTranfers
-        {
-            Entry = entry,
-            DidTransfer = hasTransfers,
-            Text = sb.ToString()
-        };
+        return new EntryTranfers { Entry = entry, DidTransfer = hasTransfers, Text = sb.ToString() };
     }
 
     private static string GetPlayerName(IEnumerable<Player> players, int playerId)

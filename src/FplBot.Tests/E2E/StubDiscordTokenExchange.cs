@@ -9,8 +9,5 @@ public class StubDiscordTokenExchange : HttpMessageHandler
         """{"access_token":"token","token_type":"Bearer","guild":{"id":"1","name":"Stub Guild"}}""";
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-        Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(TokenResponse, Encoding.UTF8, "application/json")
-        });
+        Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(TokenResponse, Encoding.UTF8, "application/json") });
 }

@@ -93,11 +93,7 @@ public class DiscordSlashCommandsEnsurer(IDiscordClient client, ILogger<DiscordS
             Name = name,
             Description = "Available events",
             Required = true,
-            Choices = [.. Enum.GetNames<EventSubscription>().Select(e => new ApplicationCommandChoices
-            {
-                Name = e,
-                Value = e
-            })]
+            Choices = [.. Enum.GetNames<EventSubscription>().Select(e => new ApplicationCommandChoices { Name = e, Value = e })]
         };
     }
 }

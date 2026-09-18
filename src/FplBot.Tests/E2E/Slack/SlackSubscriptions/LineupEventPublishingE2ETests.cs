@@ -106,11 +106,9 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
 
         var pulseFake = A.Fake<IPulseLiveClient>();
         A.CallTo(() => pulseFake.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code));
-        A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
-        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-        {
-            Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]
-        });
+        A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then
+            .Returns(TestBuilder.Lineup(testFixture2.Code));
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()] });
         return CreateLineupState(fixtureClient, pulseFake, globalSettingsClient);
     }
 
@@ -126,12 +124,11 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         ]);
 
         var pulseClient = A.Fake<IPulseLiveClient>();
-        A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.Code));
-        A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
-        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-        {
-            Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]
-        });
+        A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code)).Once().Then
+            .Returns(TestBuilder.Lineup(testFixture1.Code));
+        A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then
+            .Returns(TestBuilder.Lineup(testFixture2.Code));
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()] });
         return CreateLineupState(fixtureClient, pulseClient, globalSettingsClient);
     }
 

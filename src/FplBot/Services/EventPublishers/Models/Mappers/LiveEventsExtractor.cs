@@ -7,9 +7,10 @@ namespace Fpl.EventPublishers.Models.Mappers;
 
 public class LiveEventsExtractor
 {
-    public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Player> players, ICollection<Team> teams)
+    public static IEnumerable<FixtureEvents> GetUpdatedFixtureEvents(ICollection<Fixture> latestFixtures, ICollection<Fixture> current,
+        ICollection<Player> players, ICollection<Team> teams)
     {
-        if(latestFixtures == null)
+        if (latestFixtures == null)
             return [];
 
         if (current == null)
@@ -30,7 +31,7 @@ public class LiveEventsExtractor
                     var homeTeamGoals = goalScored?.HomeStats?.Sum(s => s.Value) ?? 0;
                     var awayTeamGoals = goalScored?.AwayStats?.Sum(s => s.Value) ?? 0;
 
-                    var owngoals= fixture.Stats.FirstOrDefault(c => c.Identifier == FplConstants.StatIdentifiers.OwnGoals);
+                    var owngoals = fixture.Stats.FirstOrDefault(c => c.Identifier == FplConstants.StatIdentifiers.OwnGoals);
                     var homeTeamOwnGoals = owngoals?.HomeStats?.Sum(s => s.Value) ?? 0;
                     var awayTeamOwnGoals = owngoals?.AwayStats?.Sum(s => s.Value) ?? 0;
 
@@ -40,7 +41,6 @@ public class LiveEventsExtractor
                     return new FixtureEvents
                     (
                         new FixtureScore(
-
                             new FixtureTeam(homeTeam!.Id, homeTeam.Name ?? string.Empty, homeTeam.ShortName ?? string.Empty),
                             new FixtureTeam(awayTeam!.Id, awayTeam.Name ?? string.Empty, awayTeam.ShortName ?? string.Empty),
                             fixture.Minutes,
@@ -50,6 +50,7 @@ public class LiveEventsExtractor
                         newFixtureStats
                     );
                 }
+
                 return null;
             }
 
@@ -57,9 +58,10 @@ public class LiveEventsExtractor
         }).WhereNotNull();
     }
 
-    public static IEnumerable<int> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams, ICollection<Player> players)
+    public static IEnumerable<int> GetProvisionalFinishedFixtures(ICollection<Fixture> latestFixtures, ICollection<Fixture> current, ICollection<Team> teams,
+        ICollection<Player> players)
     {
-        if(latestFixtures == null)
+        if (latestFixtures == null)
             return [];
 
         if (current == null)

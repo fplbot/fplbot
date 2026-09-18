@@ -144,15 +144,7 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
     // bootstrap-static.json, not TestBuilder's synthetic teams.
     private void SeedMatchingFinishedFixtureLookup(int fixtureId)
     {
-        _knownFinishedFixtures.Add(new Fixture
-        {
-            Id = fixtureId,
-            Event = 1,
-            HomeTeamId = 1,
-            AwayTeamId = 2,
-            HomeTeamScore = 1,
-            AwayTeamScore = 0
-        });
+        _knownFinishedFixtures.Add(new Fixture { Id = fixtureId, Event = 1, HomeTeamId = 1, AwayTeamId = 2, HomeTeamScore = 1, AwayTeamScore = 0 });
 
         var sharedFixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
         A.CallTo(() => sharedFixtureClient.GetFixtures()).ReturnsLazily(() => [.. _knownFinishedFixtures]);
@@ -166,11 +158,7 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
     private FixtureState CreateGoalScoredScenario()
     {
         var playerClient = GlobalSettingsClientBuilder.Returning(
-            new GlobalSettings
-            {
-                Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
-                Players = [TestBuilder.Player()]
-            });
+            new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()], Players = [TestBuilder.Player()] });
 
         var fixtureClient = A.Fake<IFixtureClient>();
         A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(
@@ -188,11 +176,7 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
     private FixtureState CreateSingleFinishedFixturesScenario(int fixtureId)
     {
         var playerClient = GlobalSettingsClientBuilder.Returning(
-            new GlobalSettings
-            {
-                Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
-                Players = [TestBuilder.Player(), TestBuilder.OtherPlayer()]
-            });
+            new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()], Players = [TestBuilder.Player(), TestBuilder.OtherPlayer()] });
 
         var fixtureClient = A.Fake<IFixtureClient>();
         A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(
@@ -210,11 +194,7 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
     private FixtureState CreateMultipleFinishedFixturesScenario(int fixtureId1, int fixtureId2)
     {
         var playerClient = GlobalSettingsClientBuilder.Returning(
-            new GlobalSettings
-            {
-                Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
-                Players = [TestBuilder.Player()]
-            });
+            new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()], Players = [TestBuilder.Player()] });
 
         var fixtureClient = A.Fake<IFixtureClient>();
         A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(

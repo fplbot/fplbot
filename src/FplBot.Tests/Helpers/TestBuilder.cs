@@ -172,7 +172,7 @@ public static class TestBuilder
     public static Fixture WithProvisionalBonus(this Fixture fixture, int playerId, int bpsValue)
     {
         fixture.FinishedProvisional = true;
-        fixture.Stats = [.. fixture.Stats, BpsSystem(playerId,bpsValue)];
+        fixture.Stats = [.. fixture.Stats, BpsSystem(playerId, bpsValue)];
         return fixture;
     }
 
@@ -202,8 +202,22 @@ public static class TestBuilder
             new FixtureStat
             {
                 Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
-                HomeStats = [new() { Element = homePlayerId, Value = homeContributions }],
-                AwayStats = [new() { Element = awayPlayerId, Value = awayContributions }]
+                HomeStats =
+                [
+                    new()
+                    {
+                        Element = homePlayerId,
+                        Value = homeContributions
+                    }
+                ],
+                AwayStats =
+                [
+                    new()
+                    {
+                        Element = awayPlayerId,
+                        Value = awayContributions
+                    }
+                ]
             },
         ];
         return fixture;
@@ -231,7 +245,11 @@ public static class TestBuilder
             Identifier = "bps",
             HomeStats =
             [
-                new FixtureStatValue {Element = playerId, Value = bps}
+                new FixtureStatValue
+                {
+                    Element = playerId,
+                    Value = bps
+                }
             ],
             AwayStats = []
         };
@@ -259,7 +277,11 @@ public static class TestBuilder
             Identifier = identifier,
             HomeStats =
             [
-                new FixtureStatValue { Element = playerId, Value = 1 }
+                new FixtureStatValue
+                {
+                    Element = playerId,
+                    Value = 1
+                }
             ],
             AwayStats = []
         };
@@ -354,15 +376,28 @@ public static class TestBuilder
         return new LiveItem
         {
             Id = playerId,
-            Explain = [.. fixtures.Select(f => new LiveItemExplain
-            {
-                Fixture = f.FixtureId,
-                Stats =
-                [
-                    new() { Identifier = "minutes", Points = 1, Value = 90 },
-                    new() { Identifier = "bonus", Points = f.Points - 1, Value = f.Points - 1 }
-                ]
-            })]
+            Explain =
+            [
+                .. fixtures.Select(f => new LiveItemExplain
+                {
+                    Fixture = f.FixtureId,
+                    Stats =
+                    [
+                        new()
+                        {
+                            Identifier = "minutes",
+                            Points = 1,
+                            Value = 90
+                        },
+                        new()
+                        {
+                            Identifier = "bonus",
+                            Points = f.Points - 1,
+                            Value = f.Points - 1
+                        }
+                    ]
+                })
+            ]
         };
     }
 
@@ -392,10 +427,7 @@ public static class TestBuilder
 
     public static Gameweek OlderGameweek(int id)
     {
-        return new Gameweek
-        {
-            Id = id
-        };
+        return new Gameweek { Id = id };
     }
 
     public static Gameweek CurrentGameweek(int id)
@@ -436,12 +468,32 @@ public static class TestBuilder
 
     public static MatchDetails Lineup(int fixtureCode)
     {
-        var player = new PulsePlayer { Id = 1, FirstName = "First", LastName = "Lasteson", Position = "Defender" };
-        var formation = new PulseFormation { Label = "4-4-2", Lineup = new List<int[]> { new[] { 1 } } };
+        var player = new PulsePlayer
+        {
+            Id = 1,
+            FirstName = "First",
+            LastName = "Lasteson",
+            Position = "Defender"
+        };
+        var formation = new PulseFormation
+        {
+            Label = "4-4-2",
+            Lineup = new List<int[]> { new[] { 1 } }
+        };
         return new MatchDetails
         {
-            HomeTeam = new TeamLineup { TeamId = 1, Players = [player], Formation = formation },
-            AwayTeam = new TeamLineup { TeamId = 2, Players = [player], Formation = formation }
+            HomeTeam = new TeamLineup
+            {
+                TeamId = 1,
+                Players = [player],
+                Formation = formation
+            },
+            AwayTeam = new TeamLineup
+            {
+                TeamId = 2,
+                Players = [player],
+                Formation = formation
+            }
         };
     }
 

@@ -4,9 +4,9 @@ namespace Discord.Net.Endpoints.Hosting;
 
 public static class ServiceCollectionExtensions
 {
-    public static IDiscordbotEventsBuilder AddDiscordBotEvents<T>(this IServiceCollection services) where T: class, IGuildInstallationHandler
+    public static IDiscordbotEventsBuilder AddDiscordBotEvents<T>(this IServiceCollection services) where T : class, IGuildInstallationHandler
     {
-        services.AddScoped<IGuildInstallationHandler,T>();
+        services.AddScoped<IGuildInstallationHandler, T>();
         return new DiscordbotEventsBuilder(services);
     }
 

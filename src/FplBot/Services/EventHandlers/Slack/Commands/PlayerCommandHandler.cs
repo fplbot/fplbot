@@ -33,11 +33,8 @@ public class PlayerCommandHandler(
             return;
         }
 
-        await workSpacePublisher.PublishToWorkspace(command.TeamId, new ChatPostMessageRequest
-        {
-            Channel = command.Channel,
-            Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
-        });
+        await workSpacePublisher.PublishToWorkspace(command.TeamId,
+            new ChatPostMessageRequest { Channel = command.Channel, Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams) });
     }
 
     private static Player? FindMostPopularMatchingPlayer(Player[] players, string name)

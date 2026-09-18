@@ -26,7 +26,8 @@ public class AddSubscriptionCommandHandler(IGuildRepository repo, ILogger<AddSub
                 installation.Subscribe(command.ChannelId, [newFplEvent]);
                 await repo.Save(installation);
                 var created = installation.GetChannel(command.ChannelId)!;
-                await RespondChecked(context, $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(created.Events.Current.Select(ToEventSubscription))}");
+                await RespondChecked(context,
+                    $"Added new subscription! Subscriptions:\n{Formatter.BulletPoints(created.Events.Current.Select(ToEventSubscription))}");
                 return;
             }
 

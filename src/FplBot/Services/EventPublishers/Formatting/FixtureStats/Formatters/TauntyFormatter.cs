@@ -16,6 +16,7 @@ internal class TauntyFormatter(IDescribeTaunts describer, TauntData tauntData, F
                 var multipleEmojis = String.Concat(Enumerable.Repeat(describer.EventEmoji, g.Count()));
                 message = string.Format(describer.EventDescriptionPlural, $"{g.Key.WebName}", g.Count(), multipleEmojis);
             }
+
             if (g.Any(g => g.IsRemoved))
             {
                 message = $"{StrikeThrough()}{message.TrimEnd()}{StrikeThrough()} (VAR? 🤷‍♀️)";
@@ -29,7 +30,6 @@ internal class TauntyFormatter(IDescribeTaunts describer, TauntData tauntData, F
             }
 
             return message;
-
         });
     }
 

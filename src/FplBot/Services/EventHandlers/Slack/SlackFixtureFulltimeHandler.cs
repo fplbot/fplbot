@@ -34,6 +34,7 @@ public class SlackFixtureFulltimeHandler(
             logger.LogWarning("Could not find fixture {FixtureId} in FPL API", message.FixtureId);
             return;
         }
+
         var liveItems = fplfixture.Event.HasValue
             ? await liveClient.GetLiveItems(fplfixture.Event.Value, isOngoingGameweek: true)
             : null;
@@ -56,10 +57,8 @@ public class SlackFixtureFulltimeHandler(
 
         if (res is not null && !string.IsNullOrEmpty(message.ThreadMessage))
         {
-            await publisher.PublishToWorkspace(message.WorkspaceId, new ChatPostMessageRequest
-            {
-                Channel = channelId, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false"
-            });
+            await publisher.PublishToWorkspace(message.WorkspaceId,
+                new ChatPostMessageRequest { Channel = channelId, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false" });
         }
     }
 }

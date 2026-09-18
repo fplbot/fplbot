@@ -33,7 +33,8 @@ public class SlackFixtureEventsHandler(
 
         foreach (var installationId in subscribedInstallationIds)
         {
-            await context.Publish(new PublishFixtureEventsToSlackWorkspace(installationId, message.FixtureEvents), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
+            await context.Publish(new PublishFixtureEventsToSlackWorkspace(installationId, message.FixtureEvents),
+                ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
         }
     }
 
@@ -60,7 +61,7 @@ public class SlackFixtureEventsHandler(
     private async Task DoSubHandling(string teamId, string? token, ChannelSubscription sub, List<FixtureEvents> fixtureEvents)
     {
         TauntData? tauntData = null;
-        if (sub.IsSubscribedTo(FplEvent.Taunts) && sub.FollowedLeagueId is {} leagueId)
+        if (sub.IsSubscribedTo(FplEvent.Taunts) && sub.FollowedLeagueId is { } leagueId)
         {
             var gws = await globalSettingsClient.GetGlobalSettings();
             var currentGw = gws?.Gameweeks.GetCurrentGameweek();
@@ -76,7 +77,8 @@ public class SlackFixtureEventsHandler(
             tauntData = new TauntData(transfers, entries, entryName => SlackHandleHelper.GetSlackHandleOrFallback(slackUsers, entryName));
         }
 
-        var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(fixtureEvents, statType => ChannelHasStat(sub, statType), FormattingType.Slack, tauntData);
+        var eventMessages =
+            GameweekEventsFormatter.FormatNewFixtureEvents(fixtureEvents, statType => ChannelHasStat(sub, statType), FormattingType.Slack, tauntData);
         var formattedStr = eventMessages.Select(evtMsg => $"{evtMsg.Title}\n{evtMsg.Details}");
         await publisher.PublishToWorkspace(teamId, sub.ChannelId, [.. formattedStr]);
     }
@@ -108,7 +110,6 @@ public class SlackFixtureEventsHandler(
             if (usersResponse.Ok)
                 return usersResponse.Members;
             return [];
-
         }
         catch (Exception e)
         {

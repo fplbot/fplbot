@@ -79,7 +79,7 @@ public static class WebApplicationBuilderExtensions
         services.AddIndexingServices(configuration, redisConn);
 
         var asbConnectionString = configuration["ASB_CONNECTIONSTRING"]
-            ?? throw new InvalidOperationException("Service bus connection string not configured. Set ASB_CONNECTIONSTRING.");
+                                  ?? throw new InvalidOperationException("Service bus connection string not configured. Set ASB_CONNECTIONSTRING.");
         services.AddSingleton(new ServiceBusAdministrationClient(asbConnectionString));
         services.AddSingleton(new ServiceBusClient(asbConnectionString));
         services.AddSingleton<AdminErrorQueueService>();

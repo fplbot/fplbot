@@ -22,11 +22,13 @@ public static class InstallUrlEndpoints
         var state = ToSiteRelativeState(returnTo);
         return TypedResults.Ok(new
         {
-            redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={options.Value.CLIENT_ID}&redirect_uri={redirectUri}{state}"
+            redirectUri =
+                $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={options.Value.CLIENT_ID}&redirect_uri={redirectUri}{state}"
         });
     }
 
-    internal static IResult InstallUrlDiscord(HttpContext httpContext, ILogger<Program> logger, IOptions<DiscordOAuthOptions> discordOptions, string? returnTo = null)
+    internal static IResult InstallUrlDiscord(HttpContext httpContext, ILogger<Program> logger, IOptions<DiscordOAuthOptions> discordOptions,
+        string? returnTo = null)
     {
         logger.LogInformation("Installing");
         var original = new Uri(httpContext.Request.GetDisplayUrl());
@@ -34,7 +36,8 @@ public static class InstallUrlEndpoints
         var state = ToSiteRelativeState(returnTo);
         return TypedResults.Ok(new
         {
-            redirectUri = $"https://discord.com/api/oauth2/authorize?client_id={discordOptions.Value.CLIENT_ID}&redirect_uri={redirectUri}&scope=bot%20applications.commands&permissions=309237861440&response_type=code{state}"
+            redirectUri =
+                $"https://discord.com/api/oauth2/authorize?client_id={discordOptions.Value.CLIENT_ID}&redirect_uri={redirectUri}&scope=bot%20applications.commands&permissions=309237861440&response_type=code{state}"
         });
     }
 

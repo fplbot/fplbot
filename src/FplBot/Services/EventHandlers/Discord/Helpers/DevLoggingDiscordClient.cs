@@ -9,19 +9,34 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
 {
     public async Task ChannelMessagePost(string channelId, string text)
     {
-        if (!env.IsDevelopment()) { await inner.ChannelMessagePost(channelId, text); return; }
+        if (!env.IsDevelopment())
+        {
+            await inner.ChannelMessagePost(channelId, text);
+            return;
+        }
+
         logger.LogInformation("[DEV] Discord → channel:{ChannelId}\n{Text}", channelId, text);
     }
 
     public async Task ChannelMessagePost(string channelId, ComponentRequest request)
     {
-        if (!env.IsDevelopment()) { await inner.ChannelMessagePost(channelId, request); return; }
+        if (!env.IsDevelopment())
+        {
+            await inner.ChannelMessagePost(channelId, request);
+            return;
+        }
+
         logger.LogInformation("[DEV] Discord → channel:{ChannelId}\n{Text}", channelId, Flatten(request));
     }
 
     public async Task InteractionFollowupPost(string interactionToken, ComponentRequest request)
     {
-        if (!env.IsDevelopment()) { await inner.InteractionFollowupPost(interactionToken, request); return; }
+        if (!env.IsDevelopment())
+        {
+            await inner.InteractionFollowupPost(interactionToken, request);
+            return;
+        }
+
         logger.LogInformation("[DEV] Discord followup → interaction:{InteractionToken}\n{Text}", interactionToken, Flatten(request));
     }
 
@@ -40,13 +55,23 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
 
     public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options)
     {
-        if (!env.IsDevelopment()) { await inner.ApplicationsCommandPost(name, description, guildId, options); return; }
+        if (!env.IsDevelopment())
+        {
+            await inner.ApplicationsCommandPost(name, description, guildId, options);
+            return;
+        }
+
         logger.LogInformation("[DEV] Discord applications.commands.post → guild:{GuildId} /{Name} (not calling real API)", guildId, name);
     }
 
     public async Task ApplicationsCommandForGuildDelete(string guildId, string commandId)
     {
-        if (!env.IsDevelopment()) { await inner.ApplicationsCommandForGuildDelete(guildId, commandId); return; }
+        if (!env.IsDevelopment())
+        {
+            await inner.ApplicationsCommandForGuildDelete(guildId, commandId);
+            return;
+        }
+
         logger.LogInformation("[DEV] Discord applications.commands.delete → guild:{GuildId}/{CommandId} (not calling real API)", guildId, commandId);
     }
 

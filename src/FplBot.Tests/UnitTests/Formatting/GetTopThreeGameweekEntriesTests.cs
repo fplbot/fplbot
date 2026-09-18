@@ -9,59 +9,19 @@ public class GetTopThreeGameweekEntriesTests
     public void GetTopThreeGameweekEntriesTests_ShoudReturnCorrectMessage()
     {
         // Arrange
-        var gameweek = new Gameweek
-        {
-            Name = "1",
-            Id = 1
-        };
+        var gameweek = new Gameweek { Name = "1", Id = 1 };
         var league = new ClassicLeague
         {
             Standings = new ClassicLeagueStandings
             {
                 Entries =
                 [
-                    new ClassicLeagueEntry
-                    {
-                        EventTotal = 50,
-                        Total = 1337,
-                        Entry = 1,
-                        EntryName = "K"
-                    },
-                    new ClassicLeagueEntry
-                    {
-                        EventTotal = 90,
-                        Total = 500,
-                        Entry = 2,
-                        EntryName = "L"
-                    },
-                    new ClassicLeagueEntry
-                    {
-                        EventTotal = 90,
-                        Total = 500,
-                        Entry = 3,
-                        EntryName = "La"
-                    },
-                    new ClassicLeagueEntry
-                    {
-                        EventTotal = 10,
-                        Total = 42,
-                        Entry = 4,
-                        EntryName = "M"
-                    },
-                    new ClassicLeagueEntry
-                    {
-                        EventTotal = 10,
-                        Total = 43,
-                        Entry = 5,
-                        EntryName = "J"
-                    },
-                    new ClassicLeagueEntry
-                    {
-                        EventTotal = 5,
-                        Total = 43,
-                        Entry = 6,
-                        EntryName = "X"
-                    }
+                    new ClassicLeagueEntry { EventTotal = 50, Total = 1337, Entry = 1, EntryName = "K" },
+                    new ClassicLeagueEntry { EventTotal = 90, Total = 500, Entry = 2, EntryName = "L" },
+                    new ClassicLeagueEntry { EventTotal = 90, Total = 500, Entry = 3, EntryName = "La" },
+                    new ClassicLeagueEntry { EventTotal = 10, Total = 42, Entry = 4, EntryName = "M" },
+                    new ClassicLeagueEntry { EventTotal = 10, Total = 43, Entry = 5, EntryName = "J" },
+                    new ClassicLeagueEntry { EventTotal = 5, Total = 43, Entry = 6, EntryName = "X" }
                 ]
             }
         };

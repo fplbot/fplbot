@@ -35,6 +35,7 @@ internal class HttpItemsManager(RequestDelegate next, ILogger<HttpItemsManager> 
             context.Items.Add(HttpItemKeys.UnhandledKey, -1);
             context.Items.Add(HttpItemKeys.RawBody, "nobody received here");
         }
+
         context.Request.Body.Position = 0;
 
         await next(context);

@@ -90,13 +90,13 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     private static PlayerUpdatesRecurringAction CreateTeamChangeScenario(TestPublishEndpoint messageSession)
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-            {
-                Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
-                Players =
+        {
+            Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
+            Players =
                 [
                     TestBuilder.Player().FromHomeTeam(), TestBuilder.OtherPlayer().FromAwayTeam()
                 ]
-            },
+        },
             new GlobalSettings
             {
                 Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
@@ -112,17 +112,17 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     private PlayerUpdatesRecurringAction CreateNewInjuryScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-            {
-                Teams =
+        {
+            Teams =
                 [
                     TestBuilder.HomeTeam(),
                     TestBuilder.AwayTeam()
                 ],
-                Players =
+            Players =
                 [
                     TestBuilder.Player().WithStatus(PlayerStatuses.Available)
                 ]
-            },
+        },
             new GlobalSettings
             {
                 Teams =
@@ -142,17 +142,17 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     private PlayerUpdatesRecurringAction CreateChangeInDoubtfulnessScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-            {
-                Teams =
+        {
+            Teams =
                 [
                     TestBuilder.HomeTeam(),
                     TestBuilder.AwayTeam()
                 ],
-                Players =
+            Players =
                 [
                     TestBuilder.Player().WithStatus(PlayerStatuses.Doubtful).WithNews("Knock - 75% chance of playing"),
                 ]
-            },
+        },
             new GlobalSettings
             {
                 Teams =
@@ -172,17 +172,17 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     private PlayerUpdatesRecurringAction CreateNewPlayerScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-            {
-                Teams =
+        {
+            Teams =
                 [
                     TestBuilder.HomeTeam(),
                     TestBuilder.AwayTeam()
                 ],
-                Players =
+            Players =
                 [
                     TestBuilder.Player().WithStatus(PlayerStatuses.Available)
                 ]
-            },
+        },
             new GlobalSettings
             {
                 Teams =
@@ -203,17 +203,17 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     private PlayerUpdatesRecurringAction CreatePriceIncreaseScenario()
     {
         var playerClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-            {
-                Teams =
+        {
+            Teams =
                 [
                     TestBuilder.HomeTeam(),
                     TestBuilder.AwayTeam()
                 ],
-                Players =
+            Players =
                 [
                     TestBuilder.Player()
                 ]
-            },
+        },
             new GlobalSettings
             {
                 Teams =

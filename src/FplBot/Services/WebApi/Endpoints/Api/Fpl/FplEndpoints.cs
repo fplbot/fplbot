@@ -72,7 +72,8 @@ public static class FplEndpoints
                         entry = entry.Entry,
                         playerName = entry.PlayerName,
                         captain = captainPick != null && playersById.TryGetValue(captainPick.PlayerId, out var cp) ? cp.WebName : null,
-                        viceCaptain = viceCaptainPick != null && playersById.TryGetValue(viceCaptainPick.PlayerId, out var vcp) ? vcp.WebName : null,
+                        viceCaptain =
+                            viceCaptainPick != null && playersById.TryGetValue(viceCaptainPick.PlayerId, out var vcp) ? vcp.WebName : null,
                         chip = chip?.Name,
                         transfers = transfers.Where(t => t.Event == currentGw.Id).Select(t => new
                         {

@@ -62,7 +62,9 @@ public class DiscordFixtureEventsHandler(
 
                 tauntData = new TauntData(transfers, entries);
             }
-            var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, statType => ChannelHasStat(sub, statType), FormattingType.Discord, tauntData);
+
+            var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(message.FixtureEvents, statType => ChannelHasStat(sub, statType),
+                FormattingType.Discord, tauntData);
             foreach (var eventMsg in eventMessages)
             {
                 await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details));

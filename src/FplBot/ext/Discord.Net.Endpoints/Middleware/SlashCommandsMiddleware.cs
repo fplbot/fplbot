@@ -4,7 +4,9 @@ using Discord.Net.Endpoints.Hosting;
 
 namespace Discord.Net.Endpoints.Middleware;
 
+#pragma warning disable CS9113
 internal class SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashCommandsMiddleware> logger)
+#pragma warning restore CS9113
 {
     private readonly ILogger<SlashCommandsMiddleware> _logger = logger;
 
@@ -26,11 +28,11 @@ internal class SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashComman
         var guildId = docRootElement.GetProperty("guild_id").GetString();
         var appPermissions = docRootElement.TryGetProperty("app_permissions", out var appPerms)
             ? appPerms.ValueKind switch
-              {
-                  JsonValueKind.String when long.TryParse(appPerms.GetString(), out var asText) => asText,
-                  JsonValueKind.Number when appPerms.TryGetInt64(out var asNumber) => asNumber,
-                  _ => 0
-              }
+            {
+                JsonValueKind.String when long.TryParse(appPerms.GetString(), out var asText) => asText,
+                JsonValueKind.Number when appPerms.TryGetInt64(out var asNumber) => asNumber,
+                _ => 0
+            }
             : 0;
         var commandName = data.GetProperty("name").GetString();
         _logger.LogInformation($"Handling slash command {commandName}");
@@ -49,7 +51,7 @@ internal class SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashComman
                 chosenOption = innerOpts.EnumerateArray().First(); // only supports single choice for simplicity
             }
 
-            var pre = isSubCommand?"subcommand":"";
+            var pre = isSubCommand ? "subcommand" : "";
             _logger.LogInformation($"Selected {pre}option: {chosenOption}");
 
             var valueElement = chosenOption.GetProperty("value");
@@ -70,49 +72,49 @@ internal class SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashComman
 
         if (handler != null)
         {
-            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput, appPermissions, interactionId ?? string.Empty, interactionToken ?? string.Empty);
+            SlashCommandContext slashCommandContext = new(guildId ?? string.Empty, channelId ?? string.Empty, slashCommandInput, appPermissions,
+                interactionId ?? string.Empty, interactionToken ?? string.Empty);
             var handled = await handler.Handle(slashCommandContext);
             if (handled is DeferredResponse)
             {
                 return new { type = 5 };
             }
+
             if (handled is ChannelMessageWithSourceResponse channelMessageRes)
             {
                 _logger.LogTrace($"Response:\n{channelMessageRes}");
                 return new { type = 4, data = channelMessageRes };
             }
+
             if (handled is ChannelMessageWithSourceComponentsResponse channelMessageComponentsRes)
             {
-                _logger.LogTrace($"Response:\n\n{JsonSerializer.Serialize(channelMessageComponentsRes,SerializerOptions)}\n\n");
+                _logger.LogTrace($"Response:\n\n{JsonSerializer.Serialize(channelMessageComponentsRes, SerializerOptions)}\n\n");
                 return new { type = 4, data = channelMessageComponentsRes };
             }
+
             _logger.LogTrace($"Not yet ready to handle the slash command type {slashCommandType}. Unsupported in the Discord.Net Framework");
-            return new {
-                type = 4,
-                data = new
-                {
-                    content = $"I'm not ready to handle this type ({handled.Type}) of command yet 🤷‍♂️"
-                }
-            };
+            return new { type = 4, data = new { content = $"I'm not ready to handle this type ({handled.Type}) of command yet 🤷‍♂️" } };
         }
+
         _logger.LogWarning("No handler registered for `{commandName}`", commandName);
-        return new {
-            type = 4,
-            data = new
-            {
-                content = "I'm not ready to handle this command yet 🤷‍♂️"
-            }
-        };
+        return new { type = 4, data = new { content = "I'm not ready to handle this command yet 🤷‍♂️" } };
     }
 
     private readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
-                                                               {
-                                                                   PropertyNamingPolicy = new Lowercase(),
-                                                                   DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                                                               };
+    {
+        PropertyNamingPolicy = new Lowercase(),
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 }
 
-public record SlashCommandContext(string GuildId, string ChannelId, SlashCommandInput? CommandInput = null, long AppPermissions = 0, string InteractionId = "", string InteractionToken = "");
+public record SlashCommandContext(
+    string GuildId,
+    string ChannelId,
+    SlashCommandInput? CommandInput = null,
+    long AppPermissions = 0,
+    string InteractionId = "",
+    string InteractionToken = "");
+
 public record SlashCommandInput(string Name, string Value, string SubCommandName);
 
 internal class Lowercase : JsonNamingPolicy

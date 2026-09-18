@@ -4,7 +4,7 @@ namespace FplBot.Formatting;
 
 public class GameweekEntry
 {
-    public GameweekEntry () { }
+    public GameweekEntry() { }
 
     public GameweekEntry(int entryId, string playerName, string realName, EntryPicks? entryPicks)
     {
