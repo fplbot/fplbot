@@ -4,14 +4,9 @@ using Discord.Net.Endpoints.Hosting;
 
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class SlashCommandsMiddleware
+internal class SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashCommandsMiddleware> logger)
 {
-    private readonly ILogger<SlashCommandsMiddleware> _logger;
-
-    public SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashCommandsMiddleware> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<SlashCommandsMiddleware> _logger = logger;
 
     public async Task Invoke(HttpContext context, IEnumerable<ISlashCommandHandler> handlers)
     {
@@ -23,13 +18,13 @@ internal class SlashCommandsMiddleware
 
     private async Task<object> CreateJsonResponse(JsonDocument doc, IEnumerable<ISlashCommandHandler> handlers)
     {
-        JsonElement docRootElement = doc.RootElement;
+        var docRootElement = doc.RootElement;
         var data = docRootElement.GetProperty("data");
         var channelId = docRootElement.GetProperty("channel_id").GetString();
         var interactionId = docRootElement.GetProperty("id").GetString();
         var interactionToken = docRootElement.GetProperty("token").GetString();
         var guildId = docRootElement.GetProperty("guild_id").GetString();
-        var appPermissions = docRootElement.TryGetProperty("app_permissions", out JsonElement appPerms)
+        var appPermissions = docRootElement.TryGetProperty("app_permissions", out var appPerms)
             ? appPerms.ValueKind switch
               {
                   JsonValueKind.String when long.TryParse(appPerms.GetString(), out var asText) => asText,
@@ -40,7 +35,7 @@ internal class SlashCommandsMiddleware
         var commandName = data.GetProperty("name").GetString();
         _logger.LogInformation($"Handling slash command {commandName}");
         var slashCommandType = data.GetProperty("type").GetInt32();
-        var hasOptions = data.TryGetProperty("options", out JsonElement opts);
+        var hasOptions = data.TryGetProperty("options", out var opts);
         SlashCommandInput? slashCommandInput = null;
         var isSubCommand = false;
         if (hasOptions)
@@ -48,18 +43,18 @@ internal class SlashCommandsMiddleware
             var array = opts.EnumerateArray();
             var chosenOption = array.First();
             var subCommandName = chosenOption.GetProperty("name").GetString();
-            isSubCommand = chosenOption.TryGetProperty("options", out JsonElement innerOpts);
+            isSubCommand = chosenOption.TryGetProperty("options", out var innerOpts);
             if (isSubCommand)
             {
                 chosenOption = innerOpts.EnumerateArray().First(); // only supports single choice for simplicity
             }
 
-            string pre = isSubCommand?"subcommand":"";
+            var pre = isSubCommand?"subcommand":"";
             _logger.LogInformation($"Selected {pre}option: {chosenOption}");
 
-            JsonElement valueElement = chosenOption.GetProperty("value");
-            JsonValueKind jsonValueKind = valueElement.ValueKind;
-            string value = jsonValueKind == JsonValueKind.Number ? valueElement.GetInt32().ToString() : (valueElement.GetString() ?? string.Empty);
+            var valueElement = chosenOption.GetProperty("value");
+            var jsonValueKind = valueElement.ValueKind;
+            var value = jsonValueKind == JsonValueKind.Number ? valueElement.GetInt32().ToString() : (valueElement.GetString() ?? string.Empty);
             slashCommandInput = new SlashCommandInput(subCommandName ?? string.Empty, value, subCommandName ?? string.Empty);
         }
 

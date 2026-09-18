@@ -25,7 +25,7 @@ public class PlayerCommandHandler(
         var name = MessageHelper.ExtractArgs(command.Text, "player {args}") ?? "";
 
         var allPlayers = players.OrderByDescending(player => player.OwnershipPercentage);
-        var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
+        var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer([.. allPlayers], name);
 
         if (mostPopularMatchingPlayer == null)
         {

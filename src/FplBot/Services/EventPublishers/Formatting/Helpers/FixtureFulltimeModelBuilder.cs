@@ -44,7 +44,7 @@ public static class FixtureFulltimeModelBuilder
                 return ranked;
 
             var cutoff = ranked[TopPerformersCount - 1].Points;
-            return ranked.Where(tp => tp.Points >= cutoff).ToList();
+            return [.. ranked.Where(tp => tp.Points >= cutoff)];
 
             TopPerformer? ToTopPerformer(LiveItem item)
             {
@@ -113,13 +113,12 @@ public static class FixtureFulltimeModelBuilder
             var home = stat.HomeStats ?? [];
             var away = stat.AwayStats ?? [];
 
-            return home.Concat(away)
+            return [.. home.Concat(away)
                 .Select(ToDefensiveContributionPlayer)
                 .Where(dc => dc != null && ReachedThreshold(dc!))
                 .Select(dc => dc!)
                 .OrderByDescending(dc => dc.Contributions)
-                .ThenBy(dc => dc.Player.WebName)
-                .ToList();
+                .ThenBy(dc => dc.Player.WebName)];
 
             DefensiveContributionPlayer? ToDefensiveContributionPlayer(FixtureStatValue value)
             {

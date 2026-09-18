@@ -2,13 +2,9 @@ using System.Text.Json;
 
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class PingMiddleware
+internal class PingMiddleware(RequestDelegate next, ILogger<PingMiddleware> logger)
 {
-    private readonly ILogger<PingMiddleware> _logger;
-    public PingMiddleware(RequestDelegate next, ILogger<PingMiddleware> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<PingMiddleware> _logger = logger;
 
     public async Task Invoke(HttpContext context)
     {

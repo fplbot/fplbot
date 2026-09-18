@@ -21,7 +21,7 @@ public class SlackPriceChangeHandler(
         var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.PriceChanges);
         foreach (var (teamId, channelId) in subscribedChannels)
         {
-            await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId: teamId, ChannelId: channelId, notification.PlayersWithPriceChanges.ToList()));
+            await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId: teamId, ChannelId: channelId, [.. notification.PlayersWithPriceChanges]));
         }
     }
 

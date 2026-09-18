@@ -64,14 +64,14 @@ public class DiscordGameweekStartedHandler(
             var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, leagueId!.Value);
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
-                string captainsByGameWeek = captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
+                var captainsByGameWeek = captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
                 messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
-                string captainsChartByGameWeek = captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
+                var captainsChartByGameWeek = captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
                 messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
             }
             else
             {
-                string captainsByGameWeek = captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
+                var captainsByGameWeek = captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
                 messages.Add(new RichMesssage("Captain stats:", captainsByGameWeek));
             }
 

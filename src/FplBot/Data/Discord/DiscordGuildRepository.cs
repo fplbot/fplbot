@@ -4,7 +4,7 @@ using StackExchange.Redis;
 
 namespace FplBot.Data.Discord;
 
-public class DiscordGuildRepository : IGuildRepository
+public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<DiscordGuildRepository> logger) : IGuildRepository
 {
     private const string GuildIndexKey = "GuildIndex";
     private const int MaxConcurrentGuildFetches = 64;
@@ -18,14 +18,8 @@ public class DiscordGuildRepository : IGuildRepository
     private readonly RedisValue _failingSinceField = "failingSince";
     private readonly RedisValue _lastFailureReasonField = "lastFailureReason";
 
-    private readonly IDatabase _db;
-    private readonly ILogger<DiscordGuildRepository> _logger;
-
-    public DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<DiscordGuildRepository> logger)
-    {
-        _db = redis.GetDatabase();
-        _logger = logger;
-    }
+    private readonly IDatabase _db = redis.GetDatabase();
+    private readonly ILogger<DiscordGuildRepository> _logger = logger;
 
     public async Task<Installation> GetInstallation(string teamId)
     {
@@ -127,7 +121,7 @@ public class DiscordGuildRepository : IGuildRepository
             hashEntries.Add(new HashEntry(_leagueIdField, (int)leagueId.Value));
         }
 
-        await _db.HashSetAsync(key, hashEntries.ToArray());
+        await _db.HashSetAsync(key, [.. hashEntries]);
         if (channel.FollowedLeagueId is null)
         {
             await _db.HashDeleteAsync(key, _leagueIdField);
@@ -166,7 +160,7 @@ public class DiscordGuildRepository : IGuildRepository
     // concrete event's index.
     private static IEnumerable<FplEvent> ExpandEvents(IEnumerable<FplEvent> events)
     {
-        var materialized = events as ICollection<FplEvent> ?? events.ToList();
+        var materialized = events as ICollection<FplEvent> ?? [.. events];
         return materialized.Contains(FplEvent.All)
             ? Enum.GetValues<FplEvent>().Where(e => e != FplEvent.All)
             : materialized;

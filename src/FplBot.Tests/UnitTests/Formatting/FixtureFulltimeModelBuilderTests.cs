@@ -241,7 +241,7 @@ public class FixtureFulltimeModelBuilderTests
         var fixture = TestBuilder.AwayTeamGoal(1, 1).FinishedProvisional();
 
         var withNull = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture);
-        var withEmpty = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, new List<LiveItem>());
+        var withEmpty = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, []);
 
         Assert.Empty(withNull.TopPerformers);
         Assert.Empty(withEmpty.TopPerformers);

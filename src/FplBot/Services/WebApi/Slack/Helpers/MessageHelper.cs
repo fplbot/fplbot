@@ -35,7 +35,7 @@ public static class MessageHelper
     /// <returns>Extracted arguments if found</returns>
     public static string? ExtractArgs(string messageText, string[] patterns)
     {
-        foreach (string pattern in patterns)
+        foreach (var pattern in patterns)
         {
             var match = FindMatch(messageText, $"{pattern.Replace("{args}", "(.+)?")}");
             if (match != null)

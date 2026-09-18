@@ -31,7 +31,7 @@ public class NearDeadlineEventPublishingE2ETests(AppFixture fixture) : IAsyncLif
     {
         var gameweek1 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021, 8, 15, 10, 0, 0) };
         var gameweek2 = new Gameweek { IsCurrent = false, IsNext = false, Deadline = new DateTime(2021, 8, 22, 10, 0, 0) };
-        var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
+        var globalSettings = new GlobalSettings { Gameweeks = [gameweek1, gameweek2] };
         var fakeSettingsClient = GlobalSettingsClientBuilder.Returning(globalSettings);
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 14, 10, 0, 0) };
         var handler = CreateMonitor(fakeSettingsClient, dateTimeUtils);
@@ -50,7 +50,7 @@ public class NearDeadlineEventPublishingE2ETests(AppFixture fixture) : IAsyncLif
     {
         var gameweek1 = new Gameweek { IsCurrent = true, IsNext = false, Deadline = new DateTime(2021, 8, 15, 10, 0, 0) };
         var gameweek2 = new Gameweek { IsCurrent = false, IsNext = true, Deadline = new DateTime(2021, 8, 22, 10, 0, 0) };
-        var globalSettings = new GlobalSettings { Gameweeks = new List<Gameweek> { gameweek1, gameweek2 } };
+        var globalSettings = new GlobalSettings { Gameweeks = [gameweek1, gameweek2] };
         var fakeSettingsClient = GlobalSettingsClientBuilder.Returning(globalSettings);
         var dateTimeUtils = new DateTimeUtils { NowUtcOverride = new DateTime(2021, 8, 21, 10, 0, 0) };
         var handler = CreateMonitor(fakeSettingsClient, dateTimeUtils);

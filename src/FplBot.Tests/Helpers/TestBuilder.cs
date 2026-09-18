@@ -33,14 +33,14 @@ public static class TestBuilder
                 new FixtureStat
                 {
                     Identifier = "goals_scored",
-                    HomeStats = new List<FixtureStatValue>(),
-                    AwayStats = new List<FixtureStatValue>()
+                    HomeStats = [],
+                    AwayStats = []
                 },
                 new FixtureStat
                 {
                     Identifier = "own_goals",
-                    HomeStats = new List<FixtureStatValue>(),
-                    AwayStats = new List<FixtureStatValue>()
+                    HomeStats = [],
+                    AwayStats = []
                 }
             ],
             PulseId = fixtureCode
@@ -86,12 +86,12 @@ public static class TestBuilder
                 AwayStats = [awayGoal]
             };
             var updatedStats = fixture.Stats.Append(goalScoredStats);
-            fixture.Stats = updatedStats.ToArray();
+            fixture.Stats = [.. updatedStats];
         }
         else
         {
             var updatedAwayStats = goalScoredStats.AwayStats.Append(awayGoal);
-            goalScoredStats.AwayStats = updatedAwayStats.ToArray();
+            goalScoredStats.AwayStats = [.. updatedAwayStats];
         }
 
         return fixture;
@@ -116,12 +116,12 @@ public static class TestBuilder
                 AwayStats = Array.Empty<FixtureStatValue>(),
             };
             var updatedStats = fixture.Stats.Append(goalScoredStats);
-            fixture.Stats = updatedStats.ToArray();
+            fixture.Stats = [.. updatedStats];
         }
         else
         {
             var updatedAwayStats = goalScoredStats.HomeStats.Append(homeGoal);
-            goalScoredStats.HomeStats = updatedAwayStats.ToArray();
+            goalScoredStats.HomeStats = [.. updatedAwayStats];
         }
 
         return fixture;
@@ -146,12 +146,12 @@ public static class TestBuilder
                 AwayStats = [awayOwnGoal]
             };
             var updatedStats = fixture.Stats.Append(ownGoalsStats);
-            fixture.Stats = updatedStats.ToArray();
+            fixture.Stats = [.. updatedStats];
         }
         else
         {
             var updatedAwayStats = ownGoalsStats.AwayStats.Append(awayOwnGoal);
-            ownGoalsStats.AwayStats = updatedAwayStats.ToArray();
+            ownGoalsStats.AwayStats = [.. updatedAwayStats];
         }
 
         return fixture;
@@ -172,47 +172,55 @@ public static class TestBuilder
     public static Fixture WithProvisionalBonus(this Fixture fixture, int playerId, int bpsValue)
     {
         fixture.FinishedProvisional = true;
-        fixture.Stats = fixture.Stats.Append(BpsSystem(playerId,bpsValue)).ToArray();
+        fixture.Stats = [.. fixture.Stats, BpsSystem(playerId,bpsValue)];
         return fixture;
     }
 
     public static Fixture WithYellowCard(this Fixture fixture)
     {
-        fixture.Stats = fixture.Stats.Append(Yellow(PlayerId)).ToArray();
+        fixture.Stats = [.. fixture.Stats, Yellow(PlayerId)];
         return fixture;
     }
 
     public static Fixture WithSaves(this Fixture fixture)
     {
-        fixture.Stats = fixture.Stats.Append(Saves(PlayerId)).ToArray();
+        fixture.Stats = [.. fixture.Stats, Saves(PlayerId)];
         return fixture;
     }
 
     public static Fixture WithBonus(this Fixture fixture)
     {
-        fixture.Stats = fixture.Stats.Append(Bonus(PlayerId)).ToArray();
+        fixture.Stats = [.. fixture.Stats, Bonus(PlayerId)];
         return fixture;
     }
 
     public static Fixture WithDefensiveContribution(this Fixture fixture, int homePlayerId, int homeContributions, int awayPlayerId, int awayContributions)
     {
-        fixture.Stats = fixture.Stats.Append(new FixtureStat
-        {
-            Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
-            HomeStats = new List<FixtureStatValue> { new() { Element = homePlayerId, Value = homeContributions } },
-            AwayStats = new List<FixtureStatValue> { new() { Element = awayPlayerId, Value = awayContributions } }
-        }).ToArray();
+        fixture.Stats =
+        [
+            .. fixture.Stats,
+            new FixtureStat
+            {
+                Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
+                HomeStats = [new() { Element = homePlayerId, Value = homeContributions }],
+                AwayStats = [new() { Element = awayPlayerId, Value = awayContributions }]
+            },
+        ];
         return fixture;
     }
 
     public static Fixture WithEmptyDefensiveContribution(this Fixture fixture)
     {
-        fixture.Stats = fixture.Stats.Append(new FixtureStat
-        {
-            Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
-            HomeStats = new List<FixtureStatValue>(),
-            AwayStats = new List<FixtureStatValue>()
-        }).ToArray();
+        fixture.Stats =
+        [
+            .. fixture.Stats,
+            new FixtureStat
+            {
+                Identifier = FplConstants.StatIdentifiers.DefensiveContribution,
+                HomeStats = [],
+                AwayStats = []
+            },
+        ];
         return fixture;
     }
 
@@ -221,11 +229,11 @@ public static class TestBuilder
         return new FixtureStat
         {
             Identifier = "bps",
-            HomeStats = new List<FixtureStatValue>
-            {
+            HomeStats =
+            [
                 new FixtureStatValue {Element = playerId, Value = bps}
-            },
-            AwayStats = new List<FixtureStatValue>()
+            ],
+            AwayStats = []
         };
     }
 
@@ -249,11 +257,11 @@ public static class TestBuilder
         return new FixtureStat
         {
             Identifier = identifier,
-            HomeStats = new List<FixtureStatValue>
-            {
+            HomeStats =
+            [
                 new FixtureStatValue { Element = playerId, Value = 1 }
-            },
-            AwayStats = new List<FixtureStatValue>()
+            ],
+            AwayStats = []
         };
     }
 
@@ -262,15 +270,15 @@ public static class TestBuilder
         return new FixtureStat
         {
             Identifier = "goals_scored",
-            HomeStats = new List<FixtureStatValue>(),
-            AwayStats = new List<FixtureStatValue>
-            {
+            HomeStats = [],
+            AwayStats =
+            [
                 new FixtureStatValue
                 {
                     Element = playerId,
                     Value = goals
                 }
-            }
+            ]
         };
     }
 
@@ -346,15 +354,15 @@ public static class TestBuilder
         return new LiveItem
         {
             Id = playerId,
-            Explain = fixtures.Select(f => new LiveItemExplain
+            Explain = [.. fixtures.Select(f => new LiveItemExplain
             {
                 Fixture = f.FixtureId,
-                Stats = new List<LiveItemExplainStat>
-                {
+                Stats =
+                [
                     new() { Identifier = "minutes", Points = 1, Value = 90 },
                     new() { Identifier = "bonus", Points = f.Points - 1, Value = f.Points - 1 }
-                }
-            }).ToList()
+                ]
+            })]
         };
     }
 

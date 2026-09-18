@@ -85,8 +85,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     [Fact]
     public async Task WhenManyJoined_ListsFiveAndSaysBunchMore()
     {
-        StubLeague(WithNewEntries(Enumerable.Range(1, 8)
-            .Select(i => Entrant("Player", i.ToString(), $"Team {i}")).ToArray()));
+        StubLeague(WithNewEntries([.. Enumerable.Range(1, 8).Select(i => Entrant("Player", i.ToString(), $"Team {i}"))]));
 
         await BeginGameweek();
 

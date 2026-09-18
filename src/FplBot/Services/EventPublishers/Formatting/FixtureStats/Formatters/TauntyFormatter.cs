@@ -35,14 +35,11 @@ internal class TauntyFormatter(IDescribeTaunts describer, TauntData tauntData, F
 
     private string StrikeThrough()
     {
-        switch (formattingType)
+        return formattingType switch
         {
-            case FormattingType.Slack:
-                return "~";
-            case FormattingType.Discord:
-                return "~~";
-            default:
-                return "ð";
-        }
+            FormattingType.Slack => "~",
+            FormattingType.Discord => "~~",
+            _ => "ð"
+        };
     }
 }

@@ -90,7 +90,7 @@ public static class SlackFormatter
             });
         }
 
-        return playerCard.ToArray();
+        return [.. playerCard];
     }
 
     private static bool ImageIsAvailable(string imageUrl)

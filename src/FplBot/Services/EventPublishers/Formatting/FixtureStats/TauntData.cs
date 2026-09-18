@@ -3,33 +3,21 @@ using FplBot.Messaging.Contracts.Events.v1;
 
 namespace FplBot.Formatting.FixtureStats;
 
-public class TauntData
+public class TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague, IEnumerable<GameweekEntry> gameweekEntries, Func<string, string>? entryNameToHandle = null)
 {
-    public IEnumerable<TransfersByGameWeek.Transfer> TransfersForLeague { get; }
-    public IEnumerable<GameweekEntry> GameweekEntries { get; }
-    public Func<string, string> EntryNameToHandle { get; }
-
-
-    public TauntData(IEnumerable<TransfersByGameWeek.Transfer> transfersForLeague, IEnumerable<GameweekEntry> gameweekEntries, Func<string, string>? entryNameToHandle = null)
-    {
-        TransfersForLeague = transfersForLeague;
-        GameweekEntries = gameweekEntries;
-        EntryNameToHandle = entryNameToHandle ?? (s => s);
-    }
+    public IEnumerable<TransfersByGameWeek.Transfer> TransfersForLeague { get; } = transfersForLeague;
+    public IEnumerable<GameweekEntry> GameweekEntries { get; } = gameweekEntries;
+    public Func<string, string> EntryNameToHandle { get; } = entryNameToHandle ?? (s => s);
 
     public string[] GetTauntibleEntries(PlayerDetails player, TauntType tauntType)
     {
-        switch (tauntType)
+        return tauntType switch
         {
-            case TauntType.HasPlayerInTeam:
-                return EntriesThatHasPlayerInTeam(player.Id).ToArray();
-            case TauntType.InTransfers:
-                return EntriesThatTransferredPlayerInThisGameweek(player.Id).ToArray();
-            case TauntType.OutTransfers:
-                return EntriesThatTransferredPlayerOutThisGameweek(player.Id).ToArray();
-            default:
-                return [];
-        }
+            TauntType.HasPlayerInTeam => [.. EntriesThatHasPlayerInTeam(player.Id)],
+            TauntType.InTransfers => [.. EntriesThatTransferredPlayerInThisGameweek(player.Id)],
+            TauntType.OutTransfers => [.. EntriesThatTransferredPlayerOutThisGameweek(player.Id)],
+            _ => []
+        };
     }
 
     /// One can transfer out a player and then transfer him back in again. Verify player is in picks.

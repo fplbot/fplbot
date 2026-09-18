@@ -19,9 +19,9 @@ internal class LineupState(
     ILogger<LineupState> logger)
     : ILineupState
 {
-    private readonly Dictionary<int, MatchDetails> _matchDetails = new();
+    private readonly Dictionary<int, MatchDetails> _matchDetails = [];
     private ICollection<Fixture> _currentFixtures = [];
-    private Dictionary<int, string?> _teamShortNames = new();
+    private Dictionary<int, string?> _teamShortNames = [];
 
     public async Task Reset(int gw)
     {

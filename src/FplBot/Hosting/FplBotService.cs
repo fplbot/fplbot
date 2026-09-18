@@ -21,9 +21,8 @@ public static class ArgsExtensions
         if (value.Equals("All", StringComparison.OrdinalIgnoreCase))
             return Enum.GetValues<FplBotService>();
 
-        return value
+        return [.. value
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(s => Enum.Parse<FplBotService>(s, ignoreCase: true))
-            .ToList();
+            .Select(s => Enum.Parse<FplBotService>(s, ignoreCase: true))];
     }
 }

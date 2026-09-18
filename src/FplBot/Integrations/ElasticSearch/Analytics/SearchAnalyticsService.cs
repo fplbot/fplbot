@@ -65,9 +65,7 @@ public class SearchAnalyticsService(IElasticClient elasticClient, IOptions<Searc
             return [];
         }
 
-        return termsAggregate.Buckets
-            .Select(b => new TermCount(b.Key, b.DocCount ?? 0))
-            .ToArray();
+        return [.. termsAggregate.Buckets.Select(b => new TermCount(b.Key, b.DocCount ?? 0))];
     }
 }
 

@@ -42,14 +42,14 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
         var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
         A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
         {
-            Gameweeks = new List<Gameweek> { new() { Id = gameweekId, Name = $"Gameweek {gameweekId}" } }
+            Gameweeks = [new() { Id = gameweekId, Name = $"Gameweek {gameweekId}" }]
         });
 
         var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
         A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._)).Returns(new ClassicLeague
         {
             Properties = new ClassicLeagueProperties { Name = "Test League", StartEvent = 1 },
-            Standings = new ClassicLeagueStandings { Entries = new List<ClassicLeagueEntry>(), HasNext = false }
+            Standings = new ClassicLeagueStandings { Entries = [], HasNext = false }
         });
 
         await fixture.Bus.Publish(new GameweekFinished(new FinishedGameweek(gameweekId)), TestContext.Current.CancellationToken);
@@ -86,14 +86,14 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
         var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
         A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
         {
-            Gameweeks = new List<Gameweek> { new() { Id = gameweekId, Name = $"Gameweek {gameweekId}" } }
+            Gameweeks = [new Gameweek { Id = gameweekId, Name = $"Gameweek {gameweekId}" } ]
         });
 
         var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
         A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._)).Returns(new ClassicLeague
         {
             Properties = new ClassicLeagueProperties { Name = "Test League", StartEvent = 1 },
-            Standings = new ClassicLeagueStandings { Entries = new List<ClassicLeagueEntry>(), HasNext = false }
+            Standings = new ClassicLeagueStandings { Entries = (List<ClassicLeagueEntry>)[], HasNext = false }
         });
 
         await fixture.Bus.Publish(new PublishStandingsToDiscordGuild(installedGuild.Id, channelId, leagueId, gameweekId), TestContext.Current.CancellationToken);

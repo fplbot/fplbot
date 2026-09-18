@@ -54,7 +54,7 @@ internal class SlackGameweekFinishedHandler(
                 {
                     messages.Add(worst);
                 }
-                await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
+                await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, [.. messages]);
             }
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)

@@ -11,14 +11,14 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
     public record ChannelMessage(string id);
     public async Task ChannelMessagePost(string channelId, string text)
     {
-        string serialized = JsonSerializer.Serialize((object)new
+        var serialized = JsonSerializer.Serialize((object)new
                                                              {
                                                                  content = text
                                                              });
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
         logger.LogInformation(serialized);
         var res = await client.PostAsync($"api/v10/channels/{channelId}/messages",jsonContent);
-        string responseBody = (await res.Content.ReadAsStringAsync());
+        var responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
         if (!res.IsSuccessStatusCode)
         {
@@ -39,7 +39,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
 
     private async Task ComponentsPost(string requestUri, ComponentRequest request)
     {
-        string serialized = JsonSerializer.Serialize((object)new
+        var serialized = JsonSerializer.Serialize((object)new
                                                              {
                                                                  flags = ComponentRequest.IsComponentsV2,
                                                                  components = request.Components
@@ -47,7 +47,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
         logger.LogInformation(serialized);
         var res = await client.PostAsync(requestUri, jsonContent);
-        string responseBody = (await res.Content.ReadAsStringAsync());
+        var responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogInformation(responseBody);
         if (!res.IsSuccessStatusCode)
         {
@@ -66,7 +66,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         if (options1 != null && options1.Any())
         {
             var allOptions = new List<object>();
-            foreach (ApplicationCommandOptions option in options1)
+            foreach (var option in options1)
             {
                 object singleOption = new {
                                               type = option.Type,
@@ -93,7 +93,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
                 if (option.Options != null && option.Options.Any())
                 {
                     var subOptions = new List<object>();
-                    foreach (ApplicationCommandOptions subOpt in option.Options)
+                    foreach (var subOpt in option.Options)
                     {
                         object singleSubOption = new {
                                                          type = subOpt.Type,
@@ -139,7 +139,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
                     };
         }
 
-        string serialized = JsonSerializer.Serialize(value);
+        var serialized = JsonSerializer.Serialize(value);
         logger.LogTrace($"Sending:\n{serialized}");
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
 
@@ -150,7 +150,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         }
 
         var res = await client.PostAsync(requestUri,jsonContent);
-        string responseBody = (await res.Content.ReadAsStringAsync());
+        var responseBody = (await res.Content.ReadAsStringAsync());
         logger.LogTrace(responseBody);
         res.EnsureSuccessStatusCode();
     }

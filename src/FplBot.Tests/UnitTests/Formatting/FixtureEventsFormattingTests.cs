@@ -96,7 +96,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
     [Fact]
     public void VAR_Slack()
     {
-        FormattingType formattingType = FormattingType.Slack;
+        var formattingType = FormattingType.Slack;
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
@@ -108,7 +108,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
     [Fact]
     public void VAR_Discord()
     {
-        FormattingType formattingType = FormattingType.Discord;
+        var formattingType = FormattingType.Discord;
         var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
@@ -286,7 +286,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
                     EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId,
                 }
             ],
-            [new GameweekEntry(2, "John Johnson", "FjolleTeamName", new EntryPicks { Picks = new List<Pick> { new Pick { PlayerId = TestBuilder.PlayerId } } })
+            [new GameweekEntry(2, "John Johnson", "FjolleTeamName", new EntryPicks { Picks = [new Pick { PlayerId = TestBuilder.PlayerId }] })
             ],
             entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
     }

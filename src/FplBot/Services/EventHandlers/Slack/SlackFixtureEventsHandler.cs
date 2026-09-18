@@ -78,7 +78,7 @@ public class SlackFixtureEventsHandler(
 
         var eventMessages = GameweekEventsFormatter.FormatNewFixtureEvents(fixtureEvents, statType => ChannelHasStat(sub, statType), FormattingType.Slack, tauntData);
         var formattedStr = eventMessages.Select(evtMsg => $"{evtMsg.Title}\n{evtMsg.Details}");
-        await publisher.PublishToWorkspace(teamId, sub.ChannelId, formattedStr.ToArray());
+        await publisher.PublishToWorkspace(teamId, sub.ChannelId, [.. formattedStr]);
     }
 
     private static bool ChannelHasStat(ChannelSubscription channel, StatType statType)

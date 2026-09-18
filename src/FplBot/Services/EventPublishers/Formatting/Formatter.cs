@@ -28,7 +28,7 @@ public static class Formatter
         foreach (var player in sortedByRank)
         {
             var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
-            string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName ?? "";
+            var entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName ?? "";
             sb.Append($"\n{player.Rank}. {entryOrLink} - {player.Total} {arrow}");
         }
 
@@ -52,7 +52,7 @@ public static class Formatter
         foreach (var player in sortedByRank)
         {
             var arrow = GetRankChangeEmoji(player, numPlayers, gameweek.Id);
-            string entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName ?? "";
+            var entryOrLink = includeExternalLinks ? player.GetEntryLink(gameweek.Id) : player.EntryName ?? "";
             sb.Append($"\n{player.Rank}. {entryOrLink} - {player.Total} {arrow}");
         }
 
@@ -84,7 +84,7 @@ public static class Formatter
             var group = topThree[i];
             foreach (var entry in group)
             {
-                string entryOrEntryLink = includeExternalLinks ? entry.GetEntryLink(gameweek.Id) : entry.EntryName ?? "";
+                var entryOrEntryLink = includeExternalLinks ? entry.GetEntryLink(gameweek.Id) : entry.EntryName ?? "";
                 sb.Append($"{RankEmoji(i)} {entryOrEntryLink} - {entry.EventTotal}\n");
             }
         }
@@ -95,7 +95,7 @@ public static class Formatter
     public static string? GetWorstGameweekEntry(ClassicLeague league, Gameweek gameweek, bool includeExternalLinks = true)
     {
         var worst = (league.Standings?.Entries ?? []).MinBy(e => e.EventTotal);
-        string? entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
+        var entryOrEntryLink = includeExternalLinks? worst?.GetEntryLink(gameweek.Id) : worst?.EntryName;
         return worst == null ? null : $"💩 {entryOrEntryLink} only got {worst.EventTotal} points. Wow.";
     }
 
@@ -433,7 +433,7 @@ public static class Formatter
             .Select(tp => $"{tp.Player.WebName} ({tp.Points}p)");
     }
 
-    static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)
+    private static string BonusPointRank(int bonusPoints, IEnumerable<Player> pall)
     {
         return $"{bonusPoints}p {string.Join(", ", pall.OrderBy(p => p.WebName).Select(p => p.WebName))}";
     }

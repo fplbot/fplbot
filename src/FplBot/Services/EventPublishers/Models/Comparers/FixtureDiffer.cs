@@ -76,7 +76,7 @@ public static class FixtureDiffer
             }
 
             // New stat for player is higher than old stat, so we add as new stat
-            int newStatsCount = newStat.Value - oldStat.Value;
+            var newStatsCount = newStat.Value - oldStat.Value;
             if (newStatsCount > 0)
             {
                 while (newStatsCount > 0)
@@ -89,7 +89,7 @@ public static class FixtureDiffer
             }
 
             // New stat for player is lower than old stat, so we add as removed stat
-            int removedStats = oldStat.Value - newStat.Value;
+            var removedStats = oldStat.Value - newStat.Value;
             if (newStat.Value < oldStat.Value)
             {
                 while (removedStats > 0)

@@ -28,7 +28,7 @@ public static class ServiceCollectionExtensions
             services.AddTransient<IDiscordClient>(sp => sp.GetRequiredService<DiscordClient>());
         }
 
-        IServiceCollection temp = services;
+        var temp = services;
         services.AddOptions<DiscordClientOptions>()
             .ValidateWithFluentValidation(new DiscordClientOptionsValidator())
             .ValidateOnStart();

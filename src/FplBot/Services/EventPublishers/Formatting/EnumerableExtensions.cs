@@ -17,7 +17,7 @@ public static class EnumarableExtensions
 
     public static T[] MaterializeToArray<T>(this IEnumerable<T> enumerable)
     {
-        return enumerable as T[] ?? enumerable.ToArray();
+        return enumerable as T[] ?? [.. enumerable];
     }
 
     public static string Join(

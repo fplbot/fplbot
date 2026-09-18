@@ -136,7 +136,7 @@ public class AppFixture : IAsyncLifetime
         var fakeGlobalSettings = GlobalSettingsClientBuilder.Returning(globalSettings);
 
         var fakeFixtureClient = A.Fake<IFixtureClient>();
-        A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns(new List<Fixture>());
+        A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns([]);
 
         var fakeLeagueClient = A.Fake<ILeagueClient>();
         A.CallTo(() => fakeLeagueClient.GetClassicLeague(A<int>._, A<int>._, A<bool>._, A<int?>._))
@@ -145,7 +145,7 @@ public class AppFixture : IAsyncLifetime
                          Properties = new ClassicLeagueProperties { StartEvent = 1 },
                          Standings = new ClassicLeagueStandings
                                      {
-                                         Entries = new List<ClassicLeagueEntry>()
+                                         Entries = []
                                      }
                      });
 
@@ -179,17 +179,17 @@ public class AppFixture : IAsyncLifetime
 
         builder.Services.AddHttpClient("Discord.Net.Endpoints.TokenExchange")
             .ConfigurePrimaryHttpMessageHandler(() => new StubDiscordTokenExchange());
-        builder.Services.AddSingleton<IGlobalSettingsClient>(fakeGlobalSettings);
+        builder.Services.AddSingleton(fakeGlobalSettings);
         builder.Services.AddSingleton(fakeFixtureClient);
         builder.Services.AddSingleton(fakeLeagueClient);
         builder.Services.AddSingleton(A.Fake<ITransfersClient>());
-        builder.Services.AddSingleton<IEntryClient>(A.Fake<IEntryClient>());
+        builder.Services.AddSingleton(A.Fake<IEntryClient>());
         builder.Services.AddSingleton(A.Fake<ILiveClient>());
         builder.Services.AddSingleton(A.Fake<IEntryHistoryClient>());
         builder.Services.AddSingleton(A.Fake<IEventStatusClient>());
 
         builder.Services.RemoveAll<ISlackClientBuilder>();
-        builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
+        builder.Services.AddSingleton(fakeSlackClientBuilder);
 
         builder.Services.RemoveAll<IDiscordClient>();
         _capturingDiscordClient = new CapturingDiscordClient(DiscordCapture);

@@ -10,21 +10,21 @@ public class FixtureDifferTests
     [Fact]
     public void NullFixtures_NoEvents()
     {
-        var events = FixtureDiffer.DiffFixtureStats(null!, null!, new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(null!, null!, []);
         Assert.Empty(events);
     }
 
     [Fact]
     public void NullNewFixture_NoEvents()
     {
-        var events = FixtureDiffer.DiffFixtureStats(new Fixture(), null!, new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(new Fixture(), null!, []);
         Assert.Empty(events);
     }
 
     [Fact]
     public void NullOldFixture_NoEvents()
     {
-        var events = FixtureDiffer.DiffFixtureStats(null!, new Fixture(), new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(null!, new Fixture(), []);
         Assert.Empty(events);
     }
 
@@ -32,7 +32,7 @@ public class FixtureDifferTests
     public void SameFixture_NoEvents()
     {
         var fixture = new Fixture();
-        var events = FixtureDiffer.DiffFixtureStats(fixture,fixture, new List<Player>());
+        var events = FixtureDiffer.DiffFixtureStats(fixture,fixture, []);
         Assert.Empty(events);
     }
 
@@ -41,7 +41,7 @@ public class FixtureDifferTests
     {
         var fixture = TestBuilder.NoGoals(fixtureCode:10);
         var fixtureWithGoal = TestBuilder.AwayTeamGoal(fixtureCode:10,goals:1);
-        var events = FixtureDiffer.DiffFixtureStats(newFixture:fixtureWithGoal,fixture, new List<Player> { TestBuilder.Player()});
+        var events = FixtureDiffer.DiffFixtureStats(newFixture:fixtureWithGoal,fixture, [TestBuilder.Player()]);
         Assert.NotEmpty(events);
         Assert.Single(events);
         Assert.Equal(StatType.GoalsScored, events.First().Key);
@@ -53,7 +53,7 @@ public class FixtureDifferTests
     {
         var fixtureWithGoal = TestBuilder.AwayTeamGoal(fixtureCode:10,goals:1);
         var fixtureGoalRemoved = TestBuilder.NoGoals(fixtureCode:10);
-        var events = FixtureDiffer.DiffFixtureStats(newFixture:fixtureGoalRemoved,fixtureWithGoal, new List<Player> { TestBuilder.Player()});
+        var events = FixtureDiffer.DiffFixtureStats(newFixture:fixtureGoalRemoved,fixtureWithGoal, [TestBuilder.Player()]);
         Assert.NotEmpty(events);
         Assert.Single(events);
         Assert.Equal(StatType.GoalsScored, events.First().Key);
@@ -68,7 +68,7 @@ public class FixtureDifferTests
         var initial = TestBuilder.NoGoals(fixtureCode:10);
         var withYellow = TestBuilder.NoGoals(fixtureCode:10).WithYellowCard();
 
-        var events = FixtureDiffer.DiffFixtureStats(newFixture:withYellow,initial, new List<Player> { TestBuilder.Player()});
+        var events = FixtureDiffer.DiffFixtureStats(newFixture:withYellow,initial, [TestBuilder.Player()]);
 
         Assert.Empty(events);
     }
@@ -79,7 +79,7 @@ public class FixtureDifferTests
         var initial = TestBuilder.NoGoals(fixtureCode:10);
         var withSaves = TestBuilder.NoGoals(fixtureCode:10).WithSaves();
 
-        var events = FixtureDiffer.DiffFixtureStats(newFixture:withSaves,initial, new List<Player> { TestBuilder.Player()});
+        var events = FixtureDiffer.DiffFixtureStats(newFixture:withSaves,initial, [TestBuilder.Player()]);
 
         Assert.Empty(events);
     }
@@ -90,7 +90,7 @@ public class FixtureDifferTests
         var initial = TestBuilder.NoGoals(fixtureCode:10);
         var withBonus = TestBuilder.NoGoals(fixtureCode:10).WithBonus();
 
-        var events = FixtureDiffer.DiffFixtureStats(newFixture:withBonus,initial, new List<Player> { TestBuilder.Player()});
+        var events = FixtureDiffer.DiffFixtureStats(newFixture:withBonus,initial, [TestBuilder.Player()]);
 
         Assert.Empty(events);
     }

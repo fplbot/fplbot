@@ -40,7 +40,7 @@ public class SearchCommandHandler(
 
         var leagueId = installation?.GetChannel(command.Channel)?.FollowedLeagueId?.Value;
 
-        string? countryToBoost = await GetCountryToBoost(leagueId);
+        var countryToBoost = await GetCountryToBoost(leagueId);
 
         var searchMetaData = GetSearchMetaData(installation, leagueId, command.User);
 

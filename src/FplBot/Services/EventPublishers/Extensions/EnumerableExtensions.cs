@@ -10,6 +10,6 @@ public static class EnumerableExtensions
 
     public static T[] MaterializeToArray<T>(this IEnumerable<T> enumerable)
     {
-        return enumerable as T[] ?? enumerable.ToArray();
+        return enumerable as T[] ?? [.. enumerable];
     }
 }

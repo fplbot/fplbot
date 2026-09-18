@@ -50,7 +50,7 @@ public class TransfersByGameWeek(
                 }
             }));
 
-            return playerTransfers.ToArray();
+            return [.. playerTransfers];
         }
         catch (HttpRequestException hre) when (LogWarning(hre, gw, leagueId))
         {
@@ -83,7 +83,7 @@ public class TransfersByGameWeek(
     {
         if (gw < 2)
         {
-            return new TransfersPayload(new List<TransfersMessage> { new("No transfers are made the first gameweek.") });
+            return new TransfersPayload([new TransfersMessage("No transfers are made the first gameweek.")]);
         }
 
         var leagueTask = leagueClient.GetClassicLeague(leagueId);
@@ -128,7 +128,7 @@ public class TransfersByGameWeek(
         }
         else if (didNoTransfers.Count > 0)
         {
-            string join = didNoTransfers.Select(x => {
+            var join = didNoTransfers.Select(x => {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
                 return namedWho ?? "";
             }).Join();
@@ -185,7 +185,7 @@ public class TransfersByGameWeek(
         }
         else if (didNoTransfers.Count > 0)
         {
-            string join = didNoTransfers.Select(x => {
+            var join = didNoTransfers.Select(x => {
                 var namedWho = includeExternalLinks ? x.GetEntryLink(gw) : x.EntryName;
                 return namedWho ?? "";
             }).Join();
@@ -222,7 +222,7 @@ public class TransfersByGameWeek(
                 var transferCost = picks.EventEntryHistory?.EventTransfersCost ?? 0;
                 var wildcardPlayed = picks.ActiveChip == FplConstants.ChipNames.Wildcard;
                 var freeHitPlayed = picks.ActiveChip == FplConstants.ChipNames.FreeHit;
-                string entryLinkOrName = includeExternaLinks ? entry.GetEntryLink(gameweek) : entry.EntryName ?? "";
+                var entryLinkOrName = includeExternaLinks ? entry.GetEntryLink(gameweek) : entry.EntryName ?? "";
                 if (wildcardPlayed)
                 {
                     sb.Append($"{entryLinkOrName} threw a WILDCAAAAARD 🔥🔥🔥\n");

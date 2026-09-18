@@ -27,14 +27,11 @@ internal class RegularFormatter(IDescribeEvents describer, FormattingType format
 
     private string StrikeThrough()
     {
-        switch (formattingType)
+        return formattingType switch
         {
-            case FormattingType.Slack:
-                return "~";
-            case FormattingType.Discord:
-                return "~~";
-            default:
-                return "ℹ️";
-        }
+            FormattingType.Slack => "~",
+            FormattingType.Discord => "~~",
+            _ => "ℹ️"
+        };
     }
 }

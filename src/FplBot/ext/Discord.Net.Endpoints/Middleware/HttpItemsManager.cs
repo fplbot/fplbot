@@ -15,10 +15,10 @@ internal class HttpItemsManager(RequestDelegate next, ILogger<HttpItemsManager> 
         {
             var jObject = JsonDocument.Parse(body);
             logger.LogTrace(body);
-            bool hasType = jObject.RootElement.TryGetProperty("type", out JsonElement typeValue);
+            var hasType = jObject.RootElement.TryGetProperty("type", out var typeValue);
             if (hasType)
             {
-                int typeValueAsInt = typeValue.GetInt32();
+                var typeValueAsInt = typeValue.GetInt32();
                 var kvp = typeValueAsInt switch
                 {
                     1 => new KeyValuePair<object, object?>(HttpItemKeys.PingKey, typeValueAsInt),

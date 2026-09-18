@@ -7,8 +7,8 @@ public static class MetaService
 {
     public static DebugInfo DebugInfo()
     {
-        Assembly? entryAssembly = Assembly.GetEntryAssembly();
-        string? informationalVersion = entryAssembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var entryAssembly = Assembly.GetEntryAssembly();
+        var informationalVersion = entryAssembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         var parts = informationalVersion?.Split('+');
         var majorMinorPatch = parts?[0] ?? "";
         var sha = parts?.Length > 1 ? parts[1] : "";

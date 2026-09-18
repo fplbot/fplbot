@@ -69,7 +69,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             _logger.LogError("Unable to parse events for team {team}: {unableToParse}", teamId, string.Join(", ", unableToParse));
         }
 
-        return subs.ToList();
+        return [.. subs];
     }
 
     public async Task Save(Installation installation)
@@ -202,7 +202,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             hashEntries.Add(new HashEntry(_channelSubLeagueIdField, (int)leagueId.Value));
         }
 
-        await _db.HashSetAsync(key, hashEntries.ToArray());
+        await _db.HashSetAsync(key, [.. hashEntries]);
         if (channel.FollowedLeagueId is null)
         {
             await _db.HashDeleteAsync(key, _channelSubLeagueIdField);
@@ -232,7 +232,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     // concrete event's index.
     private static IEnumerable<FplEvent> ExpandEvents(IEnumerable<FplEvent> events)
     {
-        var materialized = events as ICollection<FplEvent> ?? events.ToList();
+        var materialized = events as ICollection<FplEvent> ?? [.. events];
         return materialized.Contains(FplEvent.All)
             ? Enum.GetValues<FplEvent>().Where(e => e != FplEvent.All)
             : materialized;

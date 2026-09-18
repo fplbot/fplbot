@@ -1,12 +1,8 @@
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class UnknownTypeMiddleware
+internal class UnknownTypeMiddleware(RequestDelegate next, ILogger<UnknownTypeMiddleware> logger)
 {
-    private readonly ILogger<UnknownTypeMiddleware> _logger;
-    public UnknownTypeMiddleware(RequestDelegate next, ILogger<UnknownTypeMiddleware> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<UnknownTypeMiddleware> _logger = logger;
 
     public async Task Invoke(HttpContext context)
     {

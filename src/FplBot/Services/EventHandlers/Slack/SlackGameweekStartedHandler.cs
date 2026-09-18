@@ -119,6 +119,6 @@ internal class SlackGameweekStartedHandler(
             logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", teamId, leagueStarted);
         }
 
-        await publisher.PublishToWorkspace(teamId, sub.ChannelId, messages.ToArray());
+        await publisher.PublishToWorkspace(teamId, sub.ChannelId, [.. messages]);
     }
 }

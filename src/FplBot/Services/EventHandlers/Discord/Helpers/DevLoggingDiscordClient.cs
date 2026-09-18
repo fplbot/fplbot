@@ -35,7 +35,7 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
             Container container => Texts(container.Components),
             Section section => Texts(section.Components),
             ActionRow row => Texts(row.Components),
-            _ => Enumerable.Empty<string>()
+            _ => []
         });
 
     public async Task ApplicationsCommandPost(string name, string description, string? guildId, params ApplicationCommandOptions[] options)

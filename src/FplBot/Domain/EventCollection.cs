@@ -2,7 +2,7 @@ namespace FplBot.Domain;
 
 public class EventCollection
 {
-    private readonly HashSet<FplEvent> _events = new();
+    private readonly HashSet<FplEvent> _events = [];
 
     public IReadOnlyCollection<FplEvent> Current => _events;
 

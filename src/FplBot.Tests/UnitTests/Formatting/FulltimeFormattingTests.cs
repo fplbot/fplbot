@@ -176,7 +176,7 @@ public class FulltimeFormattingTests(ITestOutputHelper helper)
         Assert.Contains("▪️ 1p player-C\n\nTop performers:\n▪️ player-A (13p)", output);
     }
 
-    TopPerformer TopPerformer(string webName, int points)
+    private TopPerformer TopPerformer(string webName, int points)
     {
         return new TopPerformer
         {
@@ -197,7 +197,7 @@ public class FulltimeFormattingTests(ITestOutputHelper helper)
             ;
     }
 
-    DefensiveContributionPlayer DefensiveContributionPlayer(string webName, int contributions)
+    private DefensiveContributionPlayer DefensiveContributionPlayer(string webName, int contributions)
     {
         return new DefensiveContributionPlayer
         {
@@ -205,7 +205,7 @@ public class FulltimeFormattingTests(ITestOutputHelper helper)
             Contributions = contributions
         };
     }
-    BonusPointsPlayer BonusPointsPlayer(string webName, int bonusPoints)
+    private BonusPointsPlayer BonusPointsPlayer(string webName, int bonusPoints)
     {
         return new BonusPointsPlayer
         {

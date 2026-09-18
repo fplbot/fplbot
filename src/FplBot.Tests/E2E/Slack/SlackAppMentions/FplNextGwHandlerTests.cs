@@ -14,10 +14,10 @@ public class FplNextGwHandlerTests(AppFixture fixture)
     public async Task GetNextGameweekFixtures(string input)
     {
         var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
-        A.CallTo(() => fixtureClient.GetFixturesByGameweek(4)).Returns(new List<Fixture>
-        {
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(4)).Returns(
+        [
             new() { HomeTeamId = 1, AwayTeamId = 2, KickOffTime = new DateTime(2026, 9, 12, 14, 0, 0, DateTimeKind.Utc) }
-        });
+        ]);
 
         await fixture.AskSlackbot(input);
         var response = await fixture.SlackCapture.WaitForMessageAsync();
