@@ -1,4 +1,5 @@
 using AlmostServiceBus.Aspire.Hosting;
+using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -9,6 +10,9 @@ var elasticsearch = builder.AddElasticsearch("elasticsearch",
         password: builder.AddParameter("elasticsearch-password", "dev", secret: true), port: 9200)
     .WithEndpoint("internal", e => e.Port = 9300)
     .WithEnvironment("ES_JAVA_OPTS", "-Xms256m -Xmx256m");
+
+builder.Configuration.AddUserSecrets("fplbot-secrets");
+DevSeeder.SlackToken = builder.Configuration["DEV_SEED_SLACK_TOKEN"] ?? DevSeeder.SlackToken;
 
 builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(redis.Resource, DevSeeder.SeedAsync);
 builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(elasticsearch.Resource, DevSeeder.SeedElasticsearchAsync);
