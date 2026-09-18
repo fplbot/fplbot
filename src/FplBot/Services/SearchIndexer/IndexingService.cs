@@ -52,6 +52,7 @@ public class IndexingService(
             {
                 pageProgress(i);
             }
+
             shouldContinue = couldBeMore;
             iteration++;
         }

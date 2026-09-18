@@ -41,7 +41,7 @@ public class DiscordNewPlayersHandler(IGuildRepository repo, ILogger<DiscordNewP
         var message = context.Message;
         logger.LogInformation($"Handling {message.Transfers.Count()} new transfers");
         var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.NewPlayers);
-        var formatted = Formatter.FormatTransferredPlayers(message.Transfers, includeheader:false);
+        var formatted = Formatter.FormatTransferredPlayers(message.Transfers, includeheader: false);
 
         if (!string.IsNullOrEmpty(formatted))
         {

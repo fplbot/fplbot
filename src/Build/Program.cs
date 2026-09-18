@@ -4,10 +4,10 @@ using Bullseye;
 using SimpleExec;
 using StackExchange.Redis;
 
-const string TestApp  = "blank-fplbot-test";
-const string ProdApp  = "blank-fplbot";
+const string TestApp = "blank-fplbot-test";
+const string ProdApp = "blank-fplbot";
 
-var version     = Env("VERSION",     "1.0.0-local");
+var version = Env("VERSION", "1.0.0-local");
 var infoVersion = Env("INFOVERSION", version);
 
 var targets = new Targets();
@@ -264,10 +264,10 @@ ConfigurationOptions ParseRedisUrl(string redisUrl)
 
 Dictionary<string, string> ProcessServices() => new()
 {
-    ["web"]             = "WebApi",
-    ["eventpublisher"]  = "EventPublishers",
-    ["eventhandler"]    = "EventHandlers",
-    ["indexer"]         = "SearchIndexer",
+    ["web"] = "WebApi",
+    ["eventpublisher"] = "EventPublishers",
+    ["eventhandler"] = "EventHandlers",
+    ["indexer"] = "SearchIndexer",
 };
 
 static string Env(string name, string fallback) =>

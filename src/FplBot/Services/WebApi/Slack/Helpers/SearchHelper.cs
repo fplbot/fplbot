@@ -9,7 +9,7 @@ internal static class SearchHelper
 
     public static SearchResult<T>? Find<T>(IEnumerable<T> collection, string input, params Func<T, ISearchableProperty>[] searchProperties)
     {
-        var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new {Pri = idx, Prop = prop}).ToArray();
+        var searchPropertiesWithPri = searchProperties.Select((prop, idx) => new { Pri = idx, Prop = prop }).ToArray();
 
         var searchResultsForProps = new ConcurrentBag<SearchResultWithPri<T>>();
         Parallel.ForEach(searchPropertiesWithPri, x =>
@@ -100,6 +100,7 @@ internal static class SearchablePropertyExtensions
     {
         return new SearchableProperty(s);
     }
+
     public static ISearchableProperty Searchable(this string[] s)
     {
         return new SearchablePropertyCollection(s);

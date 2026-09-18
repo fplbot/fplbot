@@ -23,7 +23,8 @@ public class DiscordHelpCommandHandler(
         catch (Exception e)
         {
             logger.LogError(e, "Failed building help for guild {GuildId}", command.GuildId);
-            await context.Publish(new RespondToDiscordInteraction(command.InteractionToken, "⚠️ Error", "Something went wrong on my end. Try again in a moment."));
+            await context.Publish(new RespondToDiscordInteraction(command.InteractionToken, "⚠️ Error",
+                "Something went wrong on my end. Try again in a moment."));
         }
     }
 

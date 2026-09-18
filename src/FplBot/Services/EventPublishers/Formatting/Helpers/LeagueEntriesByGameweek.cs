@@ -40,10 +40,10 @@ public class LeagueEntriesByGameweek(
             return [];
         }
     }
+
     private bool LogWarning(HttpRequestException hre, int gw, int leagueId)
     {
         logger.LogWarning("Could not get entries in {GW} for {LeagueId}", gw, leagueId);
         return hre.StatusCode == HttpStatusCode.NotFound;
     }
-
 }

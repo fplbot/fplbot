@@ -34,10 +34,7 @@ public class LeagueIndexProvider(
             async (client, x) => (await client.GetClassicLeague(x, tolerate404: true))!);
         var items = batch
             .Where(x => x != null && x.Exists)
-            .Select(x => new LeagueItem
-            {
-                Id = x!.Properties!.Id, Name = x.Properties!.Name, AdminEntry = x.Properties!.AdminEntry
-            })
+            .Select(x => new LeagueItem { Id = x!.Properties!.Id, Name = x.Properties!.Name, AdminEntry = x.Properties!.AdminEntry })
             .ToArray();
 
         var adminsToFetch = items.Where(x => x.AdminEntry != null).Select(x => x.AdminEntry!.Value).Distinct()

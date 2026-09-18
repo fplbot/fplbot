@@ -15,11 +15,9 @@ internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logge
             if (content.First() is '{')
             {
                 return JsonSerializer.Deserialize<MatchDetails>(content,
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    });
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
             }
+
             throw new Exception("Response was not JSON:\n" + content);
         }
         catch (Exception e)

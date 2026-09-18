@@ -23,7 +23,10 @@ public class SearchEndpointsTests(SearchAppFixture elastic)
     {
         var options = new SearchOptions
         {
-            IndexUri = "unused", Username = "unused", Password = "unused", IndexingCron = "* * * * *",
+            IndexUri = "unused",
+            Username = "unused",
+            Password = "unused",
+            IndexingCron = "* * * * *",
             EntriesIndex = $"entries-{Guid.NewGuid():N}",
             LeaguesIndex = $"leagues-{Guid.NewGuid():N}",
             AnalyticsIndex = $"analytics-{Guid.NewGuid():N}"

@@ -7,7 +7,10 @@ namespace FplBot.Services.WebApi.Slack.Helpers;
 
 public static class GitHubReleaseService
 {
-    class Release { public string? Body { get; set; }}
+    private class Release
+    {
+        public string? Body { get; set; }
+    }
 
     public static async Task<string> GetReleaseNotes(string majorMinorPatch)
     {
@@ -15,11 +18,12 @@ public static class GitHubReleaseService
         httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("fplbot", $"{majorMinorPatch}"));
         try
         {
-            string requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
+            var requestUri = $"https://api.github.com/repos/fplbot/fplbot/releases/tags/{majorMinorPatch}";
 
             var json = await httpClient.GetStringAsync(requestUri);
-            var res = JsonSerializer.Deserialize<Release>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull});
-            string? resBody = res?.Body;
+            var res = JsonSerializer.Deserialize<Release>(json,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+            var resBody = res?.Body;
             var splitted = resBody?.Split("\n");
             var listed = splitted?.Select(s =>
             {
@@ -55,15 +59,15 @@ public static class GitHubReleaseService
         return emoji;
     }
 
-    private static readonly IEnumerable<string> _randomPool = new List<string>
-    {
-        "🤠","😻", "🙇‍♀️", "👑","💄", "🎉", "✨", "🎩", "♥️", "💥", "🧨", "⚽️", "🚨", "📣", "🥑", "🏂", "🥁", "🎯", "🎳", "🎲", "🎰", "🐢", "💧", "🌈", "🎖"
+    private static readonly IEnumerable<string> _randomPool =
+    [
+        "🤠", "😻", "🙇‍♀️", "👑", "💄", "🎉", "✨", "🎩", "♥️", "💥", "🧨", "⚽️", "🚨", "📣", "🥑", "🏂", "🥁", "🎯", "🎳", "🎲", "🎰", "🐢", "💧", "🌈", "🎖"
+    ];
 
-    };
     private static string GetRandomEmoji()
     {
         var random = new Random();
-        int next = random.Next(0, _randomPool.Count<string>());
+        var next = random.Next(0, _randomPool.Count<string>());
         return _randomPool.ToArray()[next];
     }
 }

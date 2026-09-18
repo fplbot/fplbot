@@ -36,5 +36,4 @@ public class DiscordOAuthOptions
     public string? CLIENT_SECRET { get; set; }
     public string SuccessRedirectUri { get; set; } = "/success";
     public string ErrorRedirectUri { get; set; } = "/error";
-
 }

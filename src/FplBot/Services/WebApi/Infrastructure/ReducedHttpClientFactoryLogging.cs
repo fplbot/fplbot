@@ -26,11 +26,13 @@ internal class ReducedLoggingHttpMessageHandlerBuilderFilter(ILoggerFactory logg
 
             var loggerName = !string.IsNullOrEmpty(builder.Name) ? builder.Name : "Default";
             var innerLogger = loggerFactory.CreateLogger($"System.Net.Http.HttpClient.{loggerName}.ClientHandler");
-            var toRemove = builder.AdditionalHandlers.Where(h => (h is LoggingHttpMessageHandler) || h is LoggingScopeHttpMessageHandler).Select(h => h).ToList();
+            var toRemove = builder.AdditionalHandlers.Where(h => (h is LoggingHttpMessageHandler) || h is LoggingScopeHttpMessageHandler).Select(h => h)
+                .ToList();
             foreach (var delegatingHandler in toRemove)
             {
                 builder.AdditionalHandlers.Remove(delegatingHandler);
             }
+
             builder.AdditionalHandlers.Add(new MinimalLoggingHandler(innerLogger));
         };
     }
@@ -74,9 +76,9 @@ public class MinimalLoggingHandler(ILogger logger) : DelegatingHandler
                 throw new InvalidOperationException("An uninitialized, or 'default', ValueStopwatch cannot be used to get elapsed time.");
             }
 
-            long end = Stopwatch.GetTimestamp();
-            long timestampDelta = end - _startTimestamp;
-            long ticks = (long)(TimestampToTicks * timestampDelta);
+            var end = Stopwatch.GetTimestamp();
+            var timestampDelta = end - _startTimestamp;
+            var ticks = (long)(TimestampToTicks * timestampDelta);
             return new TimeSpan(ticks);
         }
     }

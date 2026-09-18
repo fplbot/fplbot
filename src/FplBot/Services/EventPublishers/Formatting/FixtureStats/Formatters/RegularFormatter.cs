@@ -7,7 +7,7 @@ internal class RegularFormatter(IDescribeEvents describer, FormattingType format
 {
     public IEnumerable<string> Format(IEnumerable<PlayerEvent> events)
     {
-        return events.GroupBy(g => g.Player).Select( g =>
+        return events.GroupBy(g => g.Player).Select(g =>
         {
             var message = string.Format(describer.EventDescriptionSingular, $"{g.Key.WebName}", describer.EventEmoji);
             if (g.Count() > 1)
@@ -20,21 +20,18 @@ internal class RegularFormatter(IDescribeEvents describer, FormattingType format
             {
                 message = $"{StrikeThrough()}{message.TrimEnd()}{StrikeThrough()} (VAR? 🤷‍♀️)";
             }
-            return message;
 
+            return message;
         });
     }
 
     private string StrikeThrough()
     {
-        switch (formattingType)
+        return formattingType switch
         {
-            case FormattingType.Slack:
-                return "~";
-            case FormattingType.Discord:
-                return "~~";
-            default:
-                return "ℹ️";
-        }
+            FormattingType.Slack => "~",
+            FormattingType.Discord => "~~",
+            _ => "ℹ️"
+        };
     }
 }

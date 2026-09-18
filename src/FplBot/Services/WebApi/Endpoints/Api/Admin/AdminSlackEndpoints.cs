@@ -11,7 +11,14 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record ChannelSubscriptionDto(string TeamId, string ChannelId, int? LeagueId, IEnumerable<EventSubscription> Subscriptions, int FailureCount, DateTimeOffset? FailingSince, string? LastFailureReason);
+public record ChannelSubscriptionDto(
+    string TeamId,
+    string ChannelId,
+    int? LeagueId,
+    IEnumerable<EventSubscription> Subscriptions,
+    int FailureCount,
+    DateTimeOffset? FailingSince,
+    string? LastFailureReason);
 
 public record TeamSummaryDto(string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
 
@@ -84,13 +91,16 @@ public static class AdminSlackEndpoints
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? installations
-            : installations.Where(i =>
-                i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                i.Id.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            :
+            [
+                .. installations.Where(i =>
+                    i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                    i.Id.Contains(query, StringComparison.OrdinalIgnoreCase))
+            ];
 
         if (failingOnly)
         {
-            filtered = filtered.Where(i => i.ChannelSubscriptions.Any(c => c.FailureCount > 0)).ToList();
+            filtered = [.. filtered.Where(i => i.ChannelSubscriptions.Any(c => c.FailureCount > 0))];
         }
 
         var page_ = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -272,8 +282,8 @@ public static class AdminSlackEndpoints
         var wanted = request.Subscriptions.Select(ToFplEvent).ToHashSet();
         var current = installation.GetChannel(channelId)?.Events.Current.ToHashSet() ?? [];
 
-        installation.Unsubscribe(channelId, current.Except(wanted).ToArray());
-        installation.Subscribe(channelId, wanted.Except(current).ToArray());
+        installation.Unsubscribe(channelId, [.. current.Except(wanted)]);
+        installation.Subscribe(channelId, [.. wanted.Except(current)]);
 
         await teamRepo.Save(installation);
         return TypedResults.Ok(new { message = $"Updated subscriptions for {channelId}" });
@@ -353,19 +363,25 @@ public static class AdminSlackEndpoints
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
 
-        switch (installation.MoveChannel(channelId, request.NewChannelId))
+        var moveChannelOutcome = installation.MoveChannel(channelId, request.NewChannelId);
+        IResult result = moveChannelOutcome switch
         {
-            case MoveChannelOutcome.SourceNotFound:
-                return TypedResults.NotFound();
-            case MoveChannelOutcome.TargetAlreadySubscribed:
-                return TypedResults.Conflict(new { message = $"{request.NewChannelId} already has a subscription." });
+            MoveChannelOutcome.SourceNotFound => TypedResults.NotFound(),
+            MoveChannelOutcome.TargetAlreadySubscribed => TypedResults.Conflict(new { message = $"{request.NewChannelId} already has a subscription." }),
+            MoveChannelOutcome.Moved => TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" }),
+            _ => throw new ArgumentOutOfRangeException(nameof(moveChannelOutcome), moveChannelOutcome, null)
+        };
+
+        if (moveChannelOutcome is not MoveChannelOutcome.Moved)
+        {
+            return result;
         }
 
         await teamRepo.Save(installation);
 
         await publishEndpoint.Publish(new SlackChannelMoved(teamIdToUpper, channelId, request.NewChannelId));
 
-        return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
+        return result;
     }
 
     internal static async Task<IResult> DeleteChannelSubscription(

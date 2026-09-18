@@ -98,19 +98,17 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         var fixtureClient = A.Fake<IFixtureClient>();
         var testFixture1 = TestBuilder.NoGoals(1).NotStarted();
         var testFixture2 = TestBuilder.NoGoals(2).NotStarted();
-        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
-        {
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(
+        [
             testFixture1,
             testFixture2
-        });
+        ]);
 
         var pulseFake = A.Fake<IPulseLiveClient>();
         A.CallTo(() => pulseFake.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code));
-        A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
-        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-        {
-            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
-        });
+        A.CallTo(() => pulseFake.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then
+            .Returns(TestBuilder.Lineup(testFixture2.Code));
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()] });
         return CreateLineupState(fixtureClient, pulseFake, globalSettingsClient);
     }
 
@@ -119,39 +117,38 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         var fixtureClient = A.Fake<IFixtureClient>();
         var testFixture1 = TestBuilder.NoGoals(1).NotStarted();
         var testFixture2 = TestBuilder.NoGoals(2).NotStarted();
-        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
-        {
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(
+        [
             testFixture1,
             testFixture2
-        });
+        ]);
 
         var pulseClient = A.Fake<IPulseLiveClient>();
-        A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture1.Code));
-        A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then.Returns(TestBuilder.Lineup(testFixture2.Code));
-        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
-        {
-            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
-        });
+        A.CallTo(() => pulseClient.GetMatchDetails(testFixture1.Code)).Returns(TestBuilder.NoLineup(testFixture1.Code)).Once().Then
+            .Returns(TestBuilder.Lineup(testFixture1.Code));
+        A.CallTo(() => pulseClient.GetMatchDetails(testFixture2.Code)).Returns(TestBuilder.NoLineup(testFixture2.Code)).Once().Then
+            .Returns(TestBuilder.Lineup(testFixture2.Code));
+        var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()] });
         return CreateLineupState(fixtureClient, pulseClient, globalSettingsClient);
     }
 
     private LineupState CreateFixture2RemovedScenario()
     {
         var fixtureClient = A.Fake<IFixtureClient>();
-        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(new List<Fixture>
-        {
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(
+        [
             TestBuilder.NoGoals(1),
             TestBuilder.NoGoals(2)
-        }).Once().Then.Returns(new List<Fixture>
-        {
+        ]).Once().Then.Returns(
+        [
             TestBuilder.NoGoals(1)
-        });
+        ]);
 
         var pulseClient = A.Fake<IPulseLiveClient>();
         var globalSettingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
-            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() },
-            Players = new List<Player> { TestBuilder.Player().WithStatus(PlayerStatuses.Available) }
+            Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
+            Players = [TestBuilder.Player().WithStatus(PlayerStatuses.Available)]
         });
         return CreateLineupState(fixtureClient, pulseClient, globalSettingsClient);
     }

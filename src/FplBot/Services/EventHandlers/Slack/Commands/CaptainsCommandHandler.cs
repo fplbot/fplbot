@@ -24,6 +24,7 @@ public class CaptainsCommandHandler(
         {
             gwPattern = "captains chart {gw}|captains {gw} chart";
         }
+
         var gameWeek = await gameweekHelper.ExtractGameweekOrFallbackToCurrent(command.Text, gwPattern);
 
         if (!gameWeek.HasValue)

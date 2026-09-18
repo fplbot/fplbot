@@ -11,7 +11,8 @@ public class UnknownAppMentionCommandHandler(IPublishEndpoint publishEndpoint) :
     public async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent slackEvent)
     {
         var mentionTextStripped = Regex.Replace(slackEvent.Text, "<@(\\w+)>", "$1");
-        await publishEndpoint.Publish(new ProcessUnknownAppMention(eventMetadata.Team_Id, slackEvent.Channel, slackEvent.User, slackEvent.Ts, mentionTextStripped));
+        await publishEndpoint.Publish(new ProcessUnknownAppMention(eventMetadata.Team_Id, slackEvent.Channel, slackEvent.User, slackEvent.Ts,
+            mentionTextStripped));
         return new EventHandledResponse("OK");
     }
 }

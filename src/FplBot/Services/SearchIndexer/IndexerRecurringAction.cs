@@ -15,7 +15,7 @@ public class IndexerRecurringAction(
 
     public async Task Process(CancellationToken stoppingToken)
     {
-        using (logger.BeginScope(new Dictionary<string, object> {["CorrelationId"] = Guid.NewGuid()}))
+        using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = Guid.NewGuid() }))
         {
             if (!_options.ShouldIndexEntries && !_options.ShouldIndexLeagues)
             {

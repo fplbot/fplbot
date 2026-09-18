@@ -59,16 +59,16 @@ public class PlayerUpdatesRecurringAction(
             var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             if (priceChanges.Any())
-                await publish.Publish(new PlayersPriceChanged(priceChanges.ToList()));
+                await publish.Publish(new PlayersPriceChanged([.. priceChanges]));
 
             if (injuryUpdates.Any())
                 await publish.Publish(new InjuryUpdateOccured(injuryUpdates));
 
             if (newPlayers.Any())
-                await publish.Publish(new NewPlayersRegistered(newPlayers.ToList()));
+                await publish.Publish(new NewPlayersRegistered([.. newPlayers]));
 
             if (transfers.Any())
-                await publish.Publish(new PremiershipPlayerTransferred(transfers.ToList()));
+                await publish.Publish(new PremiershipPlayerTransferred([.. transfers]));
         }
     }
 

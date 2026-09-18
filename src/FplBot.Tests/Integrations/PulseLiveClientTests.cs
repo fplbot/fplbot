@@ -30,7 +30,8 @@ public class PulseLiveClientTests
     {
         var httpClient = new HttpClient();
         httpClient.BaseAddress = new Uri("https://sdp-prem-prod.premier-league-prod.pulselive.com");
-        httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
+        httpClient.DefaultRequestHeaders.Add("User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
         httpClient.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
         httpClient.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com");
         return new PulseLiveClient(httpClient, new LoggerFactory().CreateLogger<PulseLiveClient>());

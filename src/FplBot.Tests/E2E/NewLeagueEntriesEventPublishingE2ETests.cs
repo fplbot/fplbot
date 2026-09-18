@@ -55,8 +55,9 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
         await BeginGameweek();
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(guildChannel);
-        Assert.Contains("New league entry", msg.Title);
+        Assert.Contains("New entry in YOLO league!", msg.Title);
         Assert.Contains("John Korsnes (Takk for meg)", msg.Description);
+        Assert.DoesNotContain("YOLO league", msg.Description);
     }
 
     [Fact]
@@ -85,8 +86,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     [Fact]
     public async Task WhenManyJoined_ListsFiveAndSaysBunchMore()
     {
-        StubLeague(WithNewEntries(Enumerable.Range(1, 8)
-            .Select(i => Entrant("Player", i.ToString(), $"Team {i}")).ToArray()));
+        StubLeague(WithNewEntries([.. Enumerable.Range(1, 8).Select(i => Entrant("Player", i.ToString(), $"Team {i}"))]));
 
         await BeginGameweek();
 

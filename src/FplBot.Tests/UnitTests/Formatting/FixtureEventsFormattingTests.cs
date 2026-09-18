@@ -24,17 +24,18 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
 
 
         // Act
-        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true,FormattingType.Slack, CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
+        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, FormattingType.Slack,
+            CreateTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
         foreach (var formatttedEvent in formattedEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
+
         // Assert
         var formattedEvent = formattedEvents.First();
         var regex = new Regex("\\{0\\}.*");
         CustomAssert.AnyOfContains(GoalDescriber.GoalJokes.Select(x => regex.Replace(x, string.Empty)), formattedEvent.Details);
         Assert.Contains(expectedTauntName, formattedEvent.Details);
-
     }
 
     [Theory]
@@ -49,11 +50,13 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
 
 
         // Act
-        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true,FormattingType.Slack, CreateMultipleTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
+        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, FormattingType.Slack,
+            CreateMultipleTransferOutForGoalScorerContext(slackUserRealName, slackUserHandle, entryName));
         foreach (var formatttedEvent in formattedEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
+
         // Assert
         Assert.Single(formattedEvents);
 
@@ -65,18 +68,21 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
     [Fact]
     public void RegularGoalScored()
     {
-        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, FormattingType.Slack, CreateNoTransfersForGoalScorer());
+        var formattedEvents =
+            GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(), subscribes => true, FormattingType.Slack, CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
+
         Assert.Contains("PlayerWebname scored a goal", formattedEvents.First().Details);
     }
 
     [Fact]
     public void RedCardMultipleTransfersIn()
     {
-        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateRedCardEvent(), subscribes => true, FormattingType.Slack, CreateMultipleTransferInForRedCardedPlayer());
+        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateRedCardEvent(), subscribes => true, FormattingType.Slack,
+            CreateMultipleTransferInForRedCardedPlayer());
         foreach (var formatttedEvent in formattedEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
@@ -96,35 +102,42 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
     [Fact]
     public void VAR_Slack()
     {
-        FormattingType formattingType = FormattingType.Slack;
-        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
+        var formattingType = FormattingType.Slack;
+        var formattedEvents =
+            GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed: true), subscribes => true, formattingType,
+                CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title} {formatttedEvent.Details}");
         }
+
         Assert.Contains("~PlayerWebname scored a goal! ⚽️~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
     }
 
     [Fact]
     public void VAR_Discord()
     {
-        FormattingType formattingType = FormattingType.Discord;
-        var formattedEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed:true), subscribes => true, formattingType, CreateNoTransfersForGoalScorer());
+        var formattingType = FormattingType.Discord;
+        var formattedEvents =
+            GameweekEventsFormatter.FormatNewFixtureEvents(CreateGoalEvent(removed: true), subscribes => true, formattingType,
+                CreateNoTransfersForGoalScorer());
         foreach (var formatttedEvent in formattedEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title} {string.Join("\n", formatttedEvent.Details)}");
         }
+
         Assert.Contains("~~PlayerWebname scored a goal! ⚽️~~ (VAR? 🤷‍♀️)", formattedEvents.First().Details);
     }
 
     [Fact]
     public void Formatting_ShouldNotFormat_ForIrrelevantStats()
     {
-        var disordEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateIrrelevantEvents(), subscribes => true,  FormattingType.Discord);
+        var disordEvents = GameweekEventsFormatter.FormatNewFixtureEvents(CreateIrrelevantEvents(), subscribes => true, FormattingType.Discord);
         foreach (var formatttedEvent in disordEvents)
         {
             helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
         }
+
         Assert.Single(disordEvents);
         Assert.Contains("scored a goal", disordEvents.First().Details);
 
@@ -134,13 +147,14 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
         {
             helper.WriteLine($"{formatttedEvent.Title}\n {string.Join("\n", formatttedEvent.Details)}");
         }
+
         Assert.Single(slackEvents);
         Assert.Contains("scored a goal", slackEvents.First().Details);
     }
 
     private List<FixtureEvents> CreateIrrelevantEvents()
     {
-        var fixture = TestBuilder.AwayTeamGoal(1,1);
+        var fixture = TestBuilder.AwayTeamGoal(1, 1);
         return
         [
             new FixtureEvents
@@ -157,21 +171,10 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
                 ),
                 new Dictionary<StatType, List<PlayerEvent>>
                 {
-                    {
-                        StatType.YellowCards,
-                        [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)]
-                    },
-                    {
-                        StatType.Bonus, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)]
-                    },
-                    {
-                        StatType.Saves, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)]
-                    },
-                    {
-                        StatType.GoalsScored,
-                        [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)]
-                    },
-
+                    { StatType.YellowCards, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)] },
+                    { StatType.Bonus, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)] },
+                    { StatType.Saves, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)] },
+                    { StatType.GoalsScored, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: false)] },
                 }
             )
         ];
@@ -179,7 +182,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
 
     private List<FixtureEvents> CreateGoalEvent(bool removed = false)
     {
-        var fixture = TestBuilder.AwayTeamGoal(1,1);
+        var fixture = TestBuilder.AwayTeamGoal(1, 1);
         return
         [
             new FixtureEvents
@@ -196,10 +199,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
                 ),
                 new Dictionary<StatType, List<PlayerEvent>>
                 {
-                    {
-                        StatType.GoalsScored,
-                        [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: removed)]
-                    }
+                    { StatType.GoalsScored, [new PlayerEvent(TestBuilder.PlayerDetails(), TeamType.Home, IsRemoved: removed)] }
                 }
             )
         ];
@@ -221,12 +221,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
                     1,
                     0
                 ),
-                new Dictionary<StatType, List<PlayerEvent>>
-                {
-                    {
-                        StatType.RedCards, [new(TestBuilder.PlayerDetails(), TeamType.Home, false)]
-                    }
-                }
+                new Dictionary<StatType, List<PlayerEvent>> { { StatType.RedCards, [new(TestBuilder.PlayerDetails(), TeamType.Home, false)] } }
             )
         ];
     }
@@ -239,10 +234,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
         ];
         return new TauntData(
             [
-                new TransfersByGameWeek.Transfer
-                {
-                    EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId
-                }
+                new TransfersByGameWeek.Transfer { EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId }
             ],
             [],
             entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
@@ -256,14 +248,8 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
         ];
         return new TauntData(
             [
-                new TransfersByGameWeek.Transfer
-                {
-                    EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId
-                },
-                new TransfersByGameWeek.Transfer
-                {
-                    EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId,
-                }
+                new TransfersByGameWeek.Transfer { EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId },
+                new TransfersByGameWeek.Transfer { EntryId = 2, EntryName = entryName, PlayerTransferredOut = TestBuilder.PlayerId, }
             ],
             [],
             entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
@@ -277,16 +263,11 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
         ];
         return new TauntData(
             [
-                new TransfersByGameWeek.Transfer
-                {
-                    EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId
-                },
-                new TransfersByGameWeek.Transfer
-                {
-                    EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId,
-                }
+                new TransfersByGameWeek.Transfer { EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId },
+                new TransfersByGameWeek.Transfer { EntryId = 2, EntryName = "John Johnsen", PlayerTransferredIn = TestBuilder.PlayerId, }
             ],
-            [new GameweekEntry(2, "John Johnson", "FjolleTeamName", new EntryPicks { Picks = new List<Pick> { new Pick { PlayerId = TestBuilder.PlayerId } } })
+            [
+                new GameweekEntry(2, "John Johnson", "FjolleTeamName", new EntryPicks { Picks = [new Pick { PlayerId = TestBuilder.PlayerId }] })
             ],
             entry => SlackHandleHelper.GetSlackHandleOrFallback(users, entry));
     }
@@ -295,7 +276,7 @@ public class FixtureEventsFormattingTests(ITestOutputHelper helper)
     {
         User[] users =
         [
-            new User {Real_name = "dontCare dontCaresen", Name = "dontCareName"}
+            new User { Real_name = "dontCare dontCaresen", Name = "dontCareName" }
         ];
         return new TauntData(
             [],

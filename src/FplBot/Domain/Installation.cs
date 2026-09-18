@@ -7,7 +7,7 @@ public class Installation
     public string? Token { get; private set; }
     public bool PendingRemoval { get; private set; }
 
-    private readonly List<ChannelSubscription> _channelSubscriptions = new();
+    private readonly List<ChannelSubscription> _channelSubscriptions = [];
     public IReadOnlyCollection<ChannelSubscription> ChannelSubscriptions => _channelSubscriptions;
 
     private Installation(string id, string name, string? token)

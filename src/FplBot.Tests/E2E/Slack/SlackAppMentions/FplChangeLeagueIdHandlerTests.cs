@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.E2E.Slack.SlackAppMentions;
 
-
 [Collection("App")]
 public class FplChangeLeagueIdHandlerTests(AppFixture fixture)
 {
@@ -43,7 +42,8 @@ public class FplChangeLeagueIdHandlerTests(AppFixture fixture)
     {
         await fixture.AskSlackbot("<@UREFQD887> follow abc");
         var response = await fixture.SlackCapture.WaitForMessageAsync();
-        Assert.Contains("Could not update league to id 'abc'. Make sure it's a single valid number.", response.Text, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains("Could not update league to id 'abc'. Make sure it's a single valid number.", response.Text,
+            StringComparison.InvariantCultureIgnoreCase);
     }
 
     [Fact]
@@ -54,7 +54,8 @@ public class FplChangeLeagueIdHandlerTests(AppFixture fixture)
 
         await fixture.AskSlackbot($"<@UREFQD887> follow {leagueId}");
         var response = await fixture.SlackCapture.WaitForMessageAsync();
-        Assert.Contains($"Could not find league {leagueId} :/ Could you find it at https://fantasy.premierleague.com/leagues/{leagueId}/standings/c ?", response.Text, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains($"Could not find league {leagueId} :/ Could you find it at https://fantasy.premierleague.com/leagues/{leagueId}/standings/c ?",
+            response.Text, StringComparison.InvariantCultureIgnoreCase);
     }
 
     [Fact]
@@ -73,7 +74,8 @@ public class FplChangeLeagueIdHandlerTests(AppFixture fixture)
 
         await fixture.AskSlackbot($"<@UREFQD887> follow {leagueId}");
         var response = await fixture.SlackCapture.WaitForMessageAsync();
-        Assert.Contains($"Could not find league {leagueId} :/ Could you find it at https://fantasy.premierleague.com/leagues/{leagueId}/standings/c ?", response.Text, StringComparison.InvariantCultureIgnoreCase);
+        Assert.Contains($"Could not find league {leagueId} :/ Could you find it at https://fantasy.premierleague.com/leagues/{leagueId}/standings/c ?",
+            response.Text, StringComparison.InvariantCultureIgnoreCase);
     }
 
     [Fact]

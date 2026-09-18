@@ -68,13 +68,8 @@ public class SlackNearDeadlineHandler(
         var fixturesList = Formatter.FixturesForGameweek(message.Gameweek.Id, message.Gameweek.Name,
             message.Gameweek.Deadline, gameweekFixtures, teams, tzOffset: await GetWorkspaceTzOffset());
 
-        await publisher.PublishToWorkspace(message.WorkspaceId, new ChatPostMessageRequest
-        {
-            Channel = channelId,
-            thread_ts = res.ts,
-            Text = fixturesList,
-            unfurl_links = "false"
-        });
+        await publisher.PublishToWorkspace(message.WorkspaceId,
+            new ChatPostMessageRequest { Channel = channelId, thread_ts = res.ts, Text = fixturesList, unfurl_links = "false" });
 
         async Task<int> GetWorkspaceTzOffset()
         {

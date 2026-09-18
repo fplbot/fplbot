@@ -2,7 +2,6 @@ namespace Fpl.EventPublishers.Extensions;
 
 public static class EnumerableExtensions
 {
-
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable) where T : class
     {
         return enumerable.Where(x => x != null).Select(x => x!);
@@ -10,6 +9,6 @@ public static class EnumerableExtensions
 
     public static T[] MaterializeToArray<T>(this IEnumerable<T> enumerable)
     {
-        return enumerable as T[] ?? enumerable.ToArray();
+        return enumerable as T[] ?? [.. enumerable];
     }
 }

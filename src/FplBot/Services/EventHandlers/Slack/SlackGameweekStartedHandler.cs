@@ -52,13 +52,13 @@ internal class SlackGameweekStartedHandler(
         ClassicLeague? league = null;
         if (sub.FollowedLeagueId is not null)
         {
-            league = await leagueClient.GetClassicLeague((int)sub.FollowedLeagueId.Value, tolerate404:true);
+            league = await leagueClient.GetClassicLeague((int)sub.FollowedLeagueId.Value, tolerate404: true);
         }
 
         var leagueExists = league != null;
         var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
 
-        if(leagueExists && leagueStarted)
+        if (leagueExists && leagueStarted)
         {
             if (sub.IsSubscribedTo(FplEvent.Captains) || sub.IsSubscribedTo(FplEvent.Transfers))
             {
@@ -66,7 +66,7 @@ internal class SlackGameweekStartedHandler(
             }
         }
 
-        if (league is {Standings: {} standings} && leagueStarted && sub.IsSubscribedTo(FplEvent.Captains))
+        if (league is { Standings: { } standings } && leagueStarted && sub.IsSubscribedTo(FplEvent.Captains))
         {
             var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, (int)sub.FollowedLeagueId!.Value);
             if (standings.Entries.Count < MemberCountForLargeLeague)
@@ -78,11 +78,11 @@ internal class SlackGameweekStartedHandler(
             {
                 messages.Add(captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks));
             }
-
         }
-        else if (sub.FollowedLeagueId is {} && !leagueExists && sub.IsSubscribedTo(FplEvent.Captains))
+        else if (sub.FollowedLeagueId is { } && !leagueExists && sub.IsSubscribedTo(FplEvent.Captains))
         {
-            messages.Add($"⚠️ You're subscribing to captains notifications, but following a league ({sub.FollowedLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future.");
+            messages.Add(
+                $"⚠️ You're subscribing to captains notifications, but following a league ({sub.FollowedLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future.");
         }
         else
         {
@@ -102,23 +102,23 @@ internal class SlackGameweekStartedHandler(
                     var externalLink = $"See https://www.fplbot.app/leagues/{sub.FollowedLeagueId!.Value} for all transfers";
                     messages.Add(externalLink);
                 }
-
             }
-            catch(HttpRequestException hre) when(hre.StatusCode == HttpStatusCode.TooManyRequests) // fallback
+            catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.TooManyRequests) // fallback
             {
                 var externalLink = $"See https://www.fplbot.app/leagues/{sub.FollowedLeagueId!.Value} for all transfers";
                 messages.Add(externalLink);
             }
         }
-        else if (sub.FollowedLeagueId is {} && !leagueExists && sub.IsSubscribedTo(FplEvent.Transfers))
+        else if (sub.FollowedLeagueId is { } && !leagueExists && sub.IsSubscribedTo(FplEvent.Transfers))
         {
-            messages.Add($"⚠️ You're subscribing to transfers notifications, but following a league ({sub.FollowedLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future.");
+            messages.Add(
+                $"⚠️ You're subscribing to transfers notifications, but following a league ({sub.FollowedLeagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future.");
         }
         else
         {
             logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", teamId, leagueStarted);
         }
 
-        await publisher.PublishToWorkspace(teamId, sub.ChannelId, messages.ToArray());
+        await publisher.PublishToWorkspace(teamId, sub.ChannelId, [.. messages]);
     }
 }

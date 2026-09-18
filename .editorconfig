@@ -98,6 +98,7 @@ csharp_prefer_simple_default_expression = true:suggestion
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_prefer_index_operator = true:suggestion
 csharp_style_prefer_range_operator = true:suggestion
+csharp_style_prefer_switch_expression = true:warning
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
 
@@ -106,6 +107,24 @@ csharp_style_namespace_declarations = file_scoped:warning
 
 # C# 12
 csharp_style_prefer_primary_constructors = true:warning
+
+#### ReSharper / Rider formatting ####
+
+# Keep array, collection and object initializers on one line when they fit
+max_line_length = 160
+resharper_csharp_wrap_array_initializer_style = chop_if_long
+resharper_csharp_wrap_object_and_collection_initializer_style = chop_always
+resharper_csharp_max_array_initializer_elements_on_line = 1000
+resharper_csharp_max_initializer_elements_on_line = 1000
+resharper_csharp_align_multiline_array_and_object_initializer = false
+
+# Attributes always on their own line
+resharper_csharp_place_accessorholder_attribute_on_same_line = false
+resharper_csharp_place_field_attribute_on_same_line = false
+resharper_csharp_place_method_attribute_on_same_line = false
+resharper_csharp_place_simple_accessor_attribute_on_same_line = false
+resharper_csharp_place_complex_accessor_attribute_on_same_line = false
+resharper_csharp_place_type_attribute_on_same_line = false
 
 #### C# Formatting Rules ####
 

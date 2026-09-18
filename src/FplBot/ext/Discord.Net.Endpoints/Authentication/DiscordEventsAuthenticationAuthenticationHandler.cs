@@ -25,10 +25,10 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        IHeaderDictionary headers = Request.Headers;
+        var headers = Request.Headers;
 
-        string? timestamp = headers[TimestampHeaderName].FirstOrDefault();
-        string? signature = headers[SignatureHeaderName].FirstOrDefault();
+        var timestamp = headers[TimestampHeaderName].FirstOrDefault();
+        var signature = headers[SignatureHeaderName].FirstOrDefault();
 
         if (timestamp == null)
         {
@@ -40,7 +40,7 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
             return HandleRequestResult.Fail($"Missing header {SignatureHeaderName}");
         }
 
-        bool isNumber = long.TryParse(timestamp, out long timestampAsLong);
+        var isNumber = long.TryParse(timestamp, out var timestampAsLong);
 
         if (!isNumber)
         {
@@ -49,7 +49,7 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
 
         Request.EnableBuffering();
         using var reader = new StreamReader(Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
-        string body = await reader.ReadToEndAsync();
+        var body = await reader.ReadToEndAsync();
         Request.Body.Position = 0;
 
         if (IsValidDiscordSignature(signature, timestampAsLong, body))
@@ -58,7 +58,6 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
         }
 
         return HandleRequestResult.Fail("Verification of Discord request failed.");
-
     }
 
     private static readonly DateTime Seventies = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
@@ -90,7 +89,7 @@ internal class DiscordEventsAuthenticationAuthenticationHandler : Authentication
         var length = hex.Length;
         var bytes = new byte[length / 2];
 
-        for (int i = 0; i < length; i += 2)
+        for (var i = 0; i < length; i += 2)
             bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
 
         return bytes;

@@ -127,10 +127,7 @@ public class DiscordApiExceptionTests
 
     private static DiscordClient BuildClient(HttpStatusCode statusCode, string body)
     {
-        var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, body))
-        {
-            BaseAddress = new Uri("https://discord.example/")
-        };
+        var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, body)) { BaseAddress = new Uri("https://discord.example/") };
         return new DiscordClient(httpClient,
             Options.Create(new DiscordClientOptions { DiscordApplicationId = "test", DiscordAppToken = "test" }),
             A.Fake<ILogger<DiscordClient>>());
@@ -139,9 +136,6 @@ public class DiscordApiExceptionTests
     private class StubHttpMessageHandler(HttpStatusCode statusCode, string body) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(new HttpResponseMessage(statusCode)
-            {
-                Content = new StringContent(body, Encoding.UTF8, "application/json")
-            });
+            Task.FromResult(new HttpResponseMessage(statusCode) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
     }
 }

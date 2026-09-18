@@ -22,10 +22,7 @@ public class NewLeagueEntriesWindowTests
     [Fact]
     public void DeadlineWithoutAKind_IsReadAsUtc_NotLocal()
     {
-        var settings = new GlobalSettings
-        {
-            Gameweeks = [new Gameweek { Id = 4, Deadline = new DateTime(2026, 9, 12, 12, 30, 0, DateTimeKind.Unspecified) }]
-        };
+        var settings = new GlobalSettings { Gameweeks = [new Gameweek { Id = 4, Deadline = new DateTime(2026, 9, 12, 12, 30, 0, DateTimeKind.Unspecified) }] };
 
         var deadline = NewLeagueEntriesLookup.PreviousDeadline(settings, 5);
 

@@ -63,6 +63,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             var consumer = queue.Name[..^ErrorQueueSuffix.Length];
             result.Add(new ErrorQueueSummary(queue.Name, consumer, length));
         }
+
         return result;
     }
 
@@ -78,7 +79,7 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
     {
         await using var receiver = client.CreateReceiver(queue);
         var peeked = await receiver.PeekMessagesAsync(maxMessages, cancellationToken: ct);
-        return peeked.Select(ToErrorQueueMessage).ToList();
+        return [.. peeked.Select(ToErrorQueueMessage)];
     }
 
     private static ErrorQueueMessage ToErrorQueueMessage(ServiceBusReceivedMessage message)

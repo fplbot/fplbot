@@ -25,7 +25,7 @@ public class PlayerCommandHandler(
         var name = MessageHelper.ExtractArgs(command.Text, "player {args}") ?? "";
 
         var allPlayers = players.OrderByDescending(player => player.OwnershipPercentage);
-        var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer(allPlayers.ToArray(), name);
+        var mostPopularMatchingPlayer = FindMostPopularMatchingPlayer([.. allPlayers], name);
 
         if (mostPopularMatchingPlayer == null)
         {
@@ -33,11 +33,8 @@ public class PlayerCommandHandler(
             return;
         }
 
-        await workSpacePublisher.PublishToWorkspace(command.TeamId, new ChatPostMessageRequest
-        {
-            Channel = command.Channel,
-            Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams)
-        });
+        await workSpacePublisher.PublishToWorkspace(command.TeamId,
+            new ChatPostMessageRequest { Channel = command.Channel, Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams) });
     }
 
     private static Player? FindMostPopularMatchingPlayer(Player[] players, string name)

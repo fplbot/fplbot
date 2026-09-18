@@ -22,8 +22,13 @@ public class AdminSearchEndpointsTests(SearchAppFixture elastic)
         var analyticsIndex = $"analytics-{Guid.NewGuid():N}";
         var options = Options.Create(new SearchOptions
         {
-            IndexUri = "unused", Username = "unused", Password = "unused", IndexingCron = "* * * * *",
-            EntriesIndex = "unused", LeaguesIndex = "unused", AnalyticsIndex = analyticsIndex
+            IndexUri = "unused",
+            Username = "unused",
+            Password = "unused",
+            IndexingCron = "* * * * *",
+            EntriesIndex = "unused",
+            LeaguesIndex = "unused",
+            AnalyticsIndex = analyticsIndex
         });
         return (new SearchAnalyticsService(elastic.ElasticClient, options), analyticsIndex);
     }

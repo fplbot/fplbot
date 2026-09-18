@@ -2,11 +2,11 @@ namespace FplBot.Domain;
 
 public class EventCollection
 {
-    private readonly HashSet<FplEvent> _events = new();
+    private readonly HashSet<FplEvent> _events = [];
 
     public IReadOnlyCollection<FplEvent> Current => _events;
 
-    private EventCollection(){ }
+    private EventCollection() { }
 
     public static EventCollection Empty()
     {
@@ -69,12 +69,10 @@ public class EventCollection
                     _events.Add(value);
                 }
             }
+
             return;
         }
 
         _events.Remove(fplEvent);
     }
-
-
-
 }

@@ -37,10 +37,10 @@ internal class NearDeadLineMonitor(
             using var scope = scopeFactory.CreateScope();
             var publish = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
             if (dateTimeUtils.IsWithinMinutesToDate(60, next.Deadline))
-                await publish.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
+                await publish.Publish(new OneHourToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "", next.Deadline)));
 
-            if (dateTimeUtils.IsWithinMinutesToDate(24*60, next.Deadline))
-                await publish.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "",next.Deadline)));
+            if (dateTimeUtils.IsWithinMinutesToDate(24 * 60, next.Deadline))
+                await publish.Publish(new TwentyFourHoursToDeadline(new GameweekNearingDeadline(next.Id, next.Name ?? "", next.Deadline)));
         }
         else
         {

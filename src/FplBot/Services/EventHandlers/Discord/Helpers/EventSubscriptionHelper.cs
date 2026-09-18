@@ -12,7 +12,7 @@ public static class EventSubscriptionHelper
 
     public static bool ContainsSubscriptionFor(this IEnumerable<EventSubscription> eventSubscriptions, EventSubscription eventSubscription)
     {
-        var events = eventSubscriptions as EventSubscription[] ?? eventSubscriptions.ToArray();
+        var events = eventSubscriptions as EventSubscription[] ?? [.. eventSubscriptions];
 
         return events.Contains(EventSubscription.All) || events.Contains(eventSubscription);
     }
@@ -36,5 +36,4 @@ public static class EventSubscriptionHelper
             _ => null
         };
     }
-
 }

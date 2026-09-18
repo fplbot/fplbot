@@ -8,7 +8,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDiscordHttpClient(this IServiceCollection services, Action<DiscordClientOptions> optionsConfig)
     {
         services.Configure(optionsConfig);
-        services.AddHttpClient<DiscordClient>((s,c) =>
+        services.AddHttpClient<DiscordClient>((s, c) =>
         {
             var token = s.GetRequiredService<IOptions<DiscordClientOptions>>().Value.DiscordAppToken;
             c.BaseAddress = new Uri("https://discord.com/");

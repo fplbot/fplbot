@@ -7,7 +7,7 @@ public static class EventSubscriptionExtensions
     public static bool ContainsSubscriptionFor(this IEnumerable<EventSubscription> eventSubscriptions,
         EventSubscription eventSubscription)
     {
-        var events = eventSubscriptions as EventSubscription[] ?? eventSubscriptions.ToArray();
+        var events = eventSubscriptions as EventSubscription[] ?? [.. eventSubscriptions];
 
         return events.Contains(EventSubscription.All) || events.Contains(eventSubscription);
     }

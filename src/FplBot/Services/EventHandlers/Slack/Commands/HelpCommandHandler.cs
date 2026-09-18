@@ -48,10 +48,7 @@ public class HelpCommandHandler(
         var handlerHelp = SlackCommandCatalog.All
             .Aggregate("\n*Available commands:*", (current, c) => current + $"\n• `@fplbot {c.Trigger}` : _{c.Description}_");
 
-        await publisher.PublishToWorkspace(command.TeamId, new ChatPostMessageRequest
-        {
-            Channel = command.Channel, Text = handlerHelp, Link_Names = false
-        });
+        await publisher.PublishToWorkspace(command.TeamId, new ChatPostMessageRequest { Channel = command.Channel, Text = handlerHelp, Link_Names = false });
     }
 
     // Back-compat as we currently have a mix of display names (#name) and channel_ids (C12351)

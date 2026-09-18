@@ -27,47 +27,47 @@ internal static class DevSeeder
     {
         try
         {
-        Console.WriteLine("[DevSeeder] Starting background seed...");
+            Console.WriteLine("[DevSeeder] Starting background seed...");
 
-        var options = new ConfigurationOptions
-        {
-            EndPoints = { "localhost:6379" },
-            Password = "devpassword",
-            Ssl = true,
-            SslClientAuthenticationOptions = _ => new SslClientAuthenticationOptions
+            var options = new ConfigurationOptions
             {
-                TargetHost = "localhost",
-                RemoteCertificateValidationCallback = (_, _, _, _) => true,
-            },
-            AbortOnConnectFail = false,
-        };
+                EndPoints = { "localhost:6379" },
+                Password = "devpassword",
+                Ssl = true,
+                SslClientAuthenticationOptions = _ => new SslClientAuthenticationOptions
+                {
+                    TargetHost = "localhost",
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true,
+                },
+                AbortOnConnectFail = false,
+            };
 
-        IConnectionMultiplexer? mux = null;
-        for (var attempt = 0; attempt < 10; attempt++)
-        {
-            try
+            IConnectionMultiplexer? mux = null;
+            for (var attempt = 0; attempt < 10; attempt++)
             {
-                mux = await ConnectionMultiplexer.ConnectAsync(options);
-                break;
+                try
+                {
+                    mux = await ConnectionMultiplexer.ConnectAsync(options);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DevSeeder] Attempt {attempt} failed: {ex.Message}");
+                    await Task.Delay(500, ct);
+                }
             }
-            catch (Exception ex)
+
+            if (mux == null)
             {
-                Console.WriteLine($"[DevSeeder] Attempt {attempt} failed: {ex.Message}");
-                await Task.Delay(500, ct);
+                Console.WriteLine("[DevSeeder] Could not connect to Redis after 10 attempts, skipping seed.");
+                return;
             }
-        }
 
-        if (mux == null)
-        {
-            Console.WriteLine("[DevSeeder] Could not connect to Redis after 10 attempts, skipping seed.");
-            return;
-        }
+            var db = mux.GetDatabase();
+            await SeedSlack(db);
+            await SeedDiscord(db);
 
-        var db = mux.GetDatabase();
-        await SeedSlack(db);
-        await SeedDiscord(db);
-
-        Console.WriteLine("[DevSeeder] Seeded fake Slack workspace and Discord guild into Redis.");
+            Console.WriteLine("[DevSeeder] Seeded fake Slack workspace and Discord guild into Redis.");
         }
         catch (Exception ex)
         {

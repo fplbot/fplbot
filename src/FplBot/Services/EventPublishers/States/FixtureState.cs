@@ -47,7 +47,7 @@ internal class FixtureState(
             using var publishScope = scopeFactory.CreateScope();
             var publisher = publishScope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
             if (fixtureEvents.Any())
-                await publisher.Publish(new FixtureEventsOccured(fixtureEvents.ToList()), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
+                await publisher.Publish(new FixtureEventsOccured([.. fixtureEvents]), ctx => ctx.TimeToLive = TimeSpan.FromMinutes(30));
             foreach (var fixture in finishedFixtures)
                 await publisher.Publish(new FixtureFinished(fixture));
         }

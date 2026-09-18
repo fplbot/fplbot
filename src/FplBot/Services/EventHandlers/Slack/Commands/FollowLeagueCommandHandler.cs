@@ -36,7 +36,8 @@ public class FollowLeagueCommandHandler(
         }
         else
         {
-            await publisher.PublishToWorkspace(command.TeamId, command.Channel, $"Could not update league to id '{newLeagueId}'. Make sure it's a single valid number.");
+            await publisher.PublishToWorkspace(command.TeamId, command.Channel,
+                $"Could not update league to id '{newLeagueId}'. Make sure it's a single valid number.");
             return;
         }
 
@@ -54,6 +55,7 @@ public class FollowLeagueCommandHandler(
                 await publisher.PublishToWorkspace(command.TeamId, command.Channel, success);
                 return;
             }
+
             await publisher.PublishToWorkspace(command.TeamId, command.Channel, failure);
         }
         catch (HttpRequestException e)

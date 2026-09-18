@@ -8,7 +8,8 @@ public static class AuthenticationBuilderExtensions
     public static AuthenticationBuilder AddDiscordbotEvents(this AuthenticationBuilder builder, Action<DiscordEventsAuthenticationOptions> optionsAction)
     {
         builder.Services.Configure(optionsAction);
-        return builder.AddScheme<DiscordEventsAuthenticationOptions, DiscordEventsAuthenticationAuthenticationHandler>(DiscordEventsAuthenticationConstants.AuthenticationScheme, optionsAction);
+        return builder.AddScheme<DiscordEventsAuthenticationOptions, DiscordEventsAuthenticationAuthenticationHandler>(
+            DiscordEventsAuthenticationConstants.AuthenticationScheme, optionsAction);
     }
 }
 

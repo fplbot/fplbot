@@ -31,6 +31,7 @@ public class DiscordFixtureFulltimeHandler(
             _logger.LogWarning("Could not find fixture {FixtureId} in FPL API", message.FixtureId);
             return;
         }
+
         var liveItems = fplfixture.Event.HasValue
             ? await liveClient.GetLiveItems(fplfixture.Event.Value, isOngoingGameweek: true)
             : null;

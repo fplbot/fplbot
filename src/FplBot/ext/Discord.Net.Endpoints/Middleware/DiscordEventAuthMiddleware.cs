@@ -7,7 +7,7 @@ internal class DiscordEventAuthMiddleware(RequestDelegate next)
 {
     public async Task Invoke(HttpContext ctx, ILogger<DiscordEventAuthMiddleware> logger)
     {
-        bool success = false;
+        var success = false;
         try
         {
             var res = await ctx.AuthenticateAsync(DiscordEventsAuthenticationConstants.AuthenticationScheme);

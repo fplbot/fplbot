@@ -48,22 +48,12 @@ public class AdminErrorQueueJobRunner(IServiceScopeFactory scopeFactory, ILogger
                 using var scope = scopeFactory.CreateScope();
                 var service = scope.ServiceProvider.GetRequiredService<AdminErrorQueueService>();
                 var message = await work(service, CancellationToken.None);
-                Update(job.Id, j => j with
-                {
-                    Status = ErrorQueueJobStatus.Succeeded,
-                    Message = message,
-                    CompletedAt = DateTimeOffset.UtcNow
-                });
+                Update(job.Id, j => j with { Status = ErrorQueueJobStatus.Succeeded, Message = message, CompletedAt = DateTimeOffset.UtcNow });
             }
             catch (Exception e)
             {
                 logger.LogError(e, "Error queue job {Kind} on {Queue} failed", kind, queue);
-                Update(job.Id, j => j with
-                {
-                    Status = ErrorQueueJobStatus.Failed,
-                    Message = e.Message,
-                    CompletedAt = DateTimeOffset.UtcNow
-                });
+                Update(job.Id, j => j with { Status = ErrorQueueJobStatus.Failed, Message = e.Message, CompletedAt = DateTimeOffset.UtcNow });
             }
         });
 

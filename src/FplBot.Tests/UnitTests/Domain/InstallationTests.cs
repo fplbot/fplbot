@@ -253,11 +253,11 @@ public class InstallationTests
         var subscription = Assert.Single(installation.ChannelSubscriptions);
         foreach (var @event in Enum.GetValues<FplEvent>())
         {
-            if(@event == FplEvent.Captains)
+            if (@event == FplEvent.Captains)
             {
                 Assert.False(subscription.IsSubscribedTo(@event));
             }
-            else if(@event == FplEvent.All)
+            else if (@event == FplEvent.All)
             {
                 Assert.False(subscription.IsSubscribedTo(@event));
             }

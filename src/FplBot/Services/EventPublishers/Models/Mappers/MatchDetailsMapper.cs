@@ -27,7 +27,7 @@ public class MatchDetailsMapper
 
             return null;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             logger?.Invoke(e);
             return null;
@@ -43,7 +43,7 @@ public class MatchDetailsMapper
             p.Add(new FormationSegment
             (
                 playersInSegment.First().MatchPosition,
-                playersInSegment.Select(i => new SegmentPlayer(i.DisplayName, i.IsCaptain)).ToList()
+                [.. playersInSegment.Select(i => new SegmentPlayer(i.DisplayName, i.IsCaptain))]
             ));
         }
 

@@ -4,7 +4,6 @@ using FplBot.Domain;
 using FplBot.EventHandlers.Slack.Helpers;
 using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
-
 using FplBot.Services.WebApi.Slack.Helpers;
 using MassTransit;
 

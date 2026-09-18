@@ -18,6 +18,4 @@ public static class ClassicLeagueEntryExtensions
     {
         return Formatter.GetEntryTransferLink(entry.Entry);
     }
-
-
 }

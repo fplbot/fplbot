@@ -10,7 +10,6 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
 {
     public void Configure(HttpClientFactoryOptions options)
     {
-
     }
 
     public void Configure(string? name, HttpClientFactoryOptions options)
@@ -19,11 +18,7 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
         {
             options.HttpClientActions.Add(SetupFplClient);
             options.HttpMessageHandlerBuilderActions.Add(b =>
-                b.PrimaryHandler = new HttpClientHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip,
-                    SslProtocols = SslProtocols.Tls12
-                });
+                b.PrimaryHandler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip, SslProtocols = SslProtocols.Tls12 });
         }
     }
 
@@ -43,6 +38,7 @@ public class FplClientOptionsConfigurator : IConfigureNamedOptions<HttpClientFac
     {
         client.BaseAddress = new Uri("https://fantasy.premierleague.com");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
+        client.DefaultRequestHeaders.Add("User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
     }
 }

@@ -147,13 +147,16 @@ public static class AdminDiscordEndpoints
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? guildsWithSubs
-            : guildsWithSubs.Where(g =>
-                g.GuildName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            :
+            [
+                .. guildsWithSubs.Where(g =>
+                    g.GuildName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                    g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase))
+            ];
 
         if (failingOnly)
         {
-            filtered = filtered.Where(g => g.Subscriptions.Any(c => c.FailureCount > 0)).ToList();
+            filtered = [.. filtered.Where(g => g.Subscriptions.Any(c => c.FailureCount > 0))];
         }
 
         var items = filtered
@@ -259,12 +262,7 @@ public static class AdminDiscordEndpoints
             });
         }
 
-        return TypedResults.Ok(new
-        {
-            guildId = installation.Id,
-            guildName = installation.Name,
-            channels
-        });
+        return TypedResults.Ok(new { guildId = installation.Id, guildName = installation.Name, channels });
     }
 
     internal static async Task<IResult> PublishStandings(
@@ -304,8 +302,8 @@ public static class AdminDiscordEndpoints
         var wanted = request.Subscriptions.Select(ToFplEvent).ToHashSet();
         var current = installation.GetChannel(channelId)?.Events.Current.ToHashSet() ?? [];
 
-        installation.Unsubscribe(channelId, current.Except(wanted).ToArray());
-        installation.Subscribe(channelId, wanted.Except(current).ToArray());
+        installation.Unsubscribe(channelId, [.. current.Except(wanted)]);
+        installation.Subscribe(channelId, [.. wanted.Except(current)]);
 
         await repo.Save(installation);
         return TypedResults.Ok(new { message = $"Updated subscriptions for {channelId}" });
@@ -384,19 +382,25 @@ public static class AdminDiscordEndpoints
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
-        switch (installation.MoveChannel(channelId, request.NewChannelId))
+        var moveChannelOutcome = installation.MoveChannel(channelId, request.NewChannelId);
+        IResult result = moveChannelOutcome switch
         {
-            case MoveChannelOutcome.SourceNotFound:
-                return TypedResults.NotFound();
-            case MoveChannelOutcome.TargetAlreadySubscribed:
-                return TypedResults.Conflict(new { message = $"{request.NewChannelId} already has a subscription." });
+            MoveChannelOutcome.SourceNotFound => TypedResults.NotFound(),
+            MoveChannelOutcome.TargetAlreadySubscribed => TypedResults.Conflict(new { message = $"{request.NewChannelId} already has a subscription." }),
+            MoveChannelOutcome.Moved => TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" }),
+            _ => throw new ArgumentOutOfRangeException(nameof(moveChannelOutcome), moveChannelOutcome, null)
+        };
+
+        if (moveChannelOutcome is not MoveChannelOutcome.Moved)
+        {
+            return result;
         }
 
         await repo.Save(installation);
 
         await publishEndpoint.Publish(new DiscordChannelMoved(guildId, channelId, request.NewChannelId));
 
-        return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
+        return result;
     }
 
     internal static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
@@ -407,6 +411,7 @@ public static class AdminDiscordEndpoints
             installation.RemoveChannel(channelId);
             await repo.Save(installation);
         }
+
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
     }
 
@@ -420,8 +425,10 @@ public static class AdminDiscordEndpoints
             {
                 installation.RemoveChannel(channel.ChannelId);
             }
+
             await repo.Save(installation);
         }
+
         return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
     }
 
@@ -437,6 +444,7 @@ public static class AdminDiscordEndpoints
         {
             await repo.Delete(installation);
         }
+
         return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
     }
 }

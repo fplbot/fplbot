@@ -67,12 +67,9 @@ public class DiscordFixtureFulltimeHandlerTests(AppFixture fixture) : IAsyncLife
         var fplFixture = TestBuilder.NoGoals(fixtureCode).FinishedProvisional();
 
         var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
-        A.CallTo(() => fixtureClient.GetFixtures()).Returns(new List<Fixture> { fplFixture });
+        A.CallTo(() => fixtureClient.GetFixtures()).Returns([fplFixture]);
 
         var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
-        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
-        {
-            Teams = new List<Team> { TestBuilder.HomeTeam(), TestBuilder.AwayTeam() }
-        });
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings { Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()] });
     }
 }

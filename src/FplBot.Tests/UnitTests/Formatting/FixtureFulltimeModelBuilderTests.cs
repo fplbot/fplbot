@@ -71,11 +71,7 @@ public class FixtureFulltimeModelBuilderTests
     [InlineData(FplPlayerPosition.NotSet, 30, false)]
     public void ReachedThreshold_FollowsPositionRules(FplPlayerPosition position, int contributions, bool expected)
     {
-        var dc = new DefensiveContributionPlayer
-        {
-            Player = new Player { Position = position },
-            Contributions = contributions
-        };
+        var dc = new DefensiveContributionPlayer { Player = new Player { Position = position }, Contributions = contributions };
 
         Assert.Equal(expected, FixtureFulltimeModelBuilder.ReachedThreshold(dc));
     }
@@ -131,8 +127,7 @@ public class FixtureFulltimeModelBuilderTests
         var fixture = TestBuilder.AwayTeamGoal(1, 1).FinishedProvisional();
         var liveItems = new[]
         {
-            TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 8)),
-            TestBuilder.LiveItem(TestBuilder.OtherPlayerId, (fixture.Id, 12))
+            TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 8)), TestBuilder.LiveItem(TestBuilder.OtherPlayerId, (fixture.Id, 12))
         };
 
         var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, liveItems);
@@ -172,11 +167,7 @@ public class FixtureFulltimeModelBuilderTests
     public void UnknownPlayerInLiveItems_IsSkipped()
     {
         var fixture = TestBuilder.AwayTeamGoal(1, 1).FinishedProvisional();
-        var liveItems = new[]
-        {
-            TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 8)),
-            TestBuilder.LiveItem(999999, (fixture.Id, 12))
-        };
+        var liveItems = new[] { TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 8)), TestBuilder.LiveItem(999999, (fixture.Id, 12)) };
 
         var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, liveItems);
 
@@ -193,8 +184,7 @@ public class FixtureFulltimeModelBuilderTests
             TestBuilder.OtherPlayer().WithPosition(FplPlayerPosition.Midfielder).WithTeamId(99));
         var liveItems = new[]
         {
-            TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 8)),
-            TestBuilder.LiveItem(TestBuilder.OtherPlayerId, (fixture.Id, 12))
+            TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 8)), TestBuilder.LiveItem(TestBuilder.OtherPlayerId, (fixture.Id, 12))
         };
 
         var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, players, fixture, liveItems);
@@ -207,11 +197,7 @@ public class FixtureFulltimeModelBuilderTests
     public void PlayersWithoutPoints_AreExcluded()
     {
         var fixture = TestBuilder.AwayTeamGoal(1, 1).FinishedProvisional();
-        var liveItems = new[]
-        {
-            TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 0)),
-            TestBuilder.LiveItem(TestBuilder.OtherPlayerId, (fixture.Id, 2))
-        };
+        var liveItems = new[] { TestBuilder.LiveItem(TestBuilder.PlayerId, (fixture.Id, 0)), TestBuilder.LiveItem(TestBuilder.OtherPlayerId, (fixture.Id, 2)) };
 
         var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, liveItems);
 
@@ -241,7 +227,7 @@ public class FixtureFulltimeModelBuilderTests
         var fixture = TestBuilder.AwayTeamGoal(1, 1).FinishedProvisional();
 
         var withNull = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture);
-        var withEmpty = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, new List<LiveItem>());
+        var withEmpty = FixtureFulltimeModelBuilder.CreateFinishedFixture(Teams, PlayersWithTeams(), fixture, []);
 
         Assert.Empty(withNull.TopPerformers);
         Assert.Empty(withEmpty.TopPerformers);

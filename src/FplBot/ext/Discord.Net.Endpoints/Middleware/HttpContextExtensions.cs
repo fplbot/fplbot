@@ -4,11 +4,12 @@ internal static class HttpContextExtensions
 {
     public static int GetDiscordType(this HttpContext ctx)
     {
-        object? ctxItem = ctx.Items[HttpItemKeys.TypeKey];
+        var ctxItem = ctx.Items[HttpItemKeys.TypeKey];
         if (ctxItem == null)
         {
             return -1;
         }
+
         return int.Parse(ctxItem!.ToString()!);
     }
 

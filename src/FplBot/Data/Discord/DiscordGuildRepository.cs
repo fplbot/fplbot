@@ -4,7 +4,7 @@ using StackExchange.Redis;
 
 namespace FplBot.Data.Discord;
 
-public class DiscordGuildRepository : IGuildRepository
+public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<DiscordGuildRepository> logger) : IGuildRepository
 {
     private const string GuildIndexKey = "GuildIndex";
     private const int MaxConcurrentGuildFetches = 64;
@@ -18,14 +18,8 @@ public class DiscordGuildRepository : IGuildRepository
     private readonly RedisValue _failingSinceField = "failingSince";
     private readonly RedisValue _lastFailureReasonField = "lastFailureReason";
 
-    private readonly IDatabase _db;
-    private readonly ILogger<DiscordGuildRepository> _logger;
-
-    public DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<DiscordGuildRepository> logger)
-    {
-        _db = redis.GetDatabase();
-        _logger = logger;
-    }
+    private readonly IDatabase _db = redis.GetDatabase();
+    private readonly ILogger<DiscordGuildRepository> _logger = logger;
 
     public async Task<Installation> GetInstallation(string teamId)
     {
@@ -34,6 +28,7 @@ public class DiscordGuildRepository : IGuildRepository
         {
             throw new KeyNotFoundException($"No Discord guild found for id '{teamId}'");
         }
+
         return installation;
     }
 
@@ -103,6 +98,7 @@ public class DiscordGuildRepository : IGuildRepository
         {
             await DeleteChannelSubscription(installation.Id, channel.ChannelId);
         }
+
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(installation.Id));
         await _db.SetRemoveAsync(GuildIndexKey, installation.Id);
         await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.Id));
@@ -127,7 +123,7 @@ public class DiscordGuildRepository : IGuildRepository
             hashEntries.Add(new HashEntry(_leagueIdField, (int)leagueId.Value));
         }
 
-        await _db.HashSetAsync(key, hashEntries.ToArray());
+        await _db.HashSetAsync(key, [.. hashEntries]);
         if (channel.FollowedLeagueId is null)
         {
             await _db.HashDeleteAsync(key, _leagueIdField);
@@ -145,6 +141,7 @@ public class DiscordGuildRepository : IGuildRepository
         {
             await _db.HashDeleteAsync(key, [_failingSinceField, _lastFailureReasonField]);
         }
+
         await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
         await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
     }
@@ -166,7 +163,7 @@ public class DiscordGuildRepository : IGuildRepository
     // concrete event's index.
     private static IEnumerable<FplEvent> ExpandEvents(IEnumerable<FplEvent> events)
     {
-        var materialized = events as ICollection<FplEvent> ?? events.ToList();
+        var materialized = events as ICollection<FplEvent> ?? [.. events];
         return materialized.Contains(FplEvent.All)
             ? Enum.GetValues<FplEvent>().Where(e => e != FplEvent.All)
             : materialized;
@@ -250,8 +247,10 @@ public class DiscordGuildRepository : IGuildRepository
     private async Task<ChannelSubscription?> ReadChannelSubscription(string guildId, string channelId)
     {
         var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId),
-            [_channelIdField, _leagueIdField, _subscriptionsField, _failureCountField, _failingSinceField,
-             _lastFailureReasonField]);
+        [
+            _channelIdField, _leagueIdField, _subscriptionsField, _failureCountField, _failingSinceField,
+            _lastFailureReasonField
+        ]);
         if (!fetched[0].HasValue)
         {
             return null;

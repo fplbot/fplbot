@@ -39,7 +39,8 @@ public class DiscordGameweekStartedHandler(
         var team = installation?.GetChannel(message.ChannelId);
         if (team is null)
         {
-            logger.LogWarning("No subscription found for guild {GuildId} channel {ChannelId}. Skipping gameweek-started notifications", message.GuildId, message.ChannelId);
+            logger.LogWarning("No subscription found for guild {GuildId} channel {ChannelId}. Skipping gameweek-started notifications", message.GuildId,
+                message.ChannelId);
             return;
         }
 
@@ -49,14 +50,14 @@ public class DiscordGameweekStartedHandler(
         ClassicLeague? league = null;
         if (leagueId.HasValue)
         {
-            league = await leagueClient.GetClassicLeague(leagueId.Value, tolerate404:true);
+            league = await leagueClient.GetClassicLeague(leagueId.Value, tolerate404: true);
         }
 
         var leagueExists = league != null;
         var leagueStarted = league?.Properties?.StartEvent is var startEvent && newGameweek >= startEvent;
 
         if (leagueExists && leagueStarted && (team.IsSubscribedTo(FplEvent.Captains) ||
-                                          team.IsSubscribedTo(FplEvent.Transfers)))
+                                              team.IsSubscribedTo(FplEvent.Transfers)))
             messages.Add(new RichMesssage($"Gameweek {message.GameweekId}!", ""));
 
         if (leagueExists && leagueStarted && team.IsSubscribedTo(FplEvent.Captains))
@@ -64,21 +65,21 @@ public class DiscordGameweekStartedHandler(
             var captainPicks = await captainsByGameweek.GetEntryCaptainPicks(newGameweek, leagueId!.Value);
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
-                string captainsByGameWeek = captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks:false);
+                var captainsByGameWeek = captainsByGameweek.GetCaptainsByGameWeek(newGameweek, captainPicks, includeExternalLinks: false);
                 messages.Add(new RichMesssage("Captains:", captainsByGameWeek));
-                string captainsChartByGameWeek = captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
+                var captainsChartByGameWeek = captainsByGameweek.GetCaptainsChartByGameWeek(newGameweek, captainPicks);
                 messages.Add(new RichMesssage("Chart", captainsChartByGameWeek));
             }
             else
             {
-                string captainsByGameWeek = captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader:false);
+                var captainsByGameWeek = captainsByGameweek.GetCaptainsStatsByGameWeek(captainPicks, includeHeader: false);
                 messages.Add(new RichMesssage("Captain stats:", captainsByGameWeek));
             }
-
         }
         else if (leagueId.HasValue && !leagueExists && team.IsSubscribedTo(FplEvent.Captains))
         {
-            messages.Add(new RichMesssage("⚠️Warning!",$"️ You're subscribing to captains notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future."));
+            messages.Add(new RichMesssage("⚠️Warning!",
+                $"️ You're subscribing to captains notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to captains to avoid this message in the future."));
         }
         else
         {
@@ -89,7 +90,7 @@ public class DiscordGameweekStartedHandler(
         {
             if (league!.Standings?.Entries.Count < MemberCountForLargeLeague)
             {
-                var transfersByGameweekTexts = await transfersByGameweek.GetTransferMessages(newGameweek, leagueId!.Value, includeExternalLinks:false);
+                var transfersByGameweekTexts = await transfersByGameweek.GetTransferMessages(newGameweek, leagueId!.Value, includeExternalLinks: false);
                 // Discord max limit is 2000 chars, so chunking by 4 managers
                 if (transfersByGameweekTexts.GetTotalCharCount() > 2000)
                 {
@@ -114,7 +115,8 @@ public class DiscordGameweekStartedHandler(
         }
         else if (leagueId.HasValue && !leagueExists && team.IsSubscribedTo(FplEvent.Transfers))
         {
-            messages.Add(new RichMesssage("⚠️Warning!", $"⚠️ You're subscribing to transfers notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future."));
+            messages.Add(new RichMesssage("⚠️Warning!",
+                $"⚠️ You're subscribing to transfers notifications, but following a league ({leagueId.Value}) that does not exist. Update to a valid classic league, or unsubscribe to transfers to avoid this message in the future."));
         }
         else
         {

@@ -19,9 +19,9 @@ internal class LineupState(
     ILogger<LineupState> logger)
     : ILineupState
 {
-    private readonly Dictionary<int, MatchDetails> _matchDetails = new();
+    private readonly Dictionary<int, MatchDetails> _matchDetails = [];
     private ICollection<Fixture> _currentFixtures = [];
-    private Dictionary<int, string?> _teamShortNames = new();
+    private Dictionary<int, string?> _teamShortNames = [];
 
     public async Task Reset(int gw)
     {
@@ -83,7 +83,7 @@ internal class LineupState(
         var updatedEvent = updatedFixtures.First().Event;
         if (updatedEvent != currentEvent)
         {
-            logger.LogWarning("Checking fixtures for different gameweek. {Current} vs {Updated}. Aborting.", currentEvent, updatedEvent );
+            logger.LogWarning("Checking fixtures for different gameweek. {Current} vs {Updated}. Aborting.", currentEvent, updatedEvent);
             return;
         }
 
@@ -99,8 +99,8 @@ internal class LineupState(
                     var homeTeam = teams.First(t => t.Id == currentFixture.HomeTeamId);
                     var awayTeam = teams.First(t => t.Id == currentFixture.AwayTeamId);
                     var removedFixture = new RemovedFixture(currentFixture.Id,
-                        new (homeTeam.Id, homeTeam.Name ?? string.Empty, homeTeam.ShortName ?? string.Empty),
-                        new (awayTeam.Id, awayTeam.Name ?? string.Empty, awayTeam.ShortName ?? string.Empty));
+                        new(homeTeam.Id, homeTeam.Name ?? string.Empty, homeTeam.ShortName ?? string.Empty),
+                        new(awayTeam.Id, awayTeam.Name ?? string.Empty, awayTeam.ShortName ?? string.Empty));
                     await PublishAsync(new FixtureRemovedFromGameweek(gw, removedFixture));
                 }
                 else
@@ -129,8 +129,9 @@ internal class LineupState(
                     if (lineupsConfirmed)
                     {
                         var homeAbbr = _teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?") ?? "?";
-                    var awayAbbr = _teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
-                    var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, fixture.Code, homeAbbr, awayAbbr, e => logger.LogError(e, e.Message));
+                        var awayAbbr = _teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
+                        var lineups = MatchDetailsMapper.TryMapToLineup(updatedMatchDetails, fixture.Code, homeAbbr, awayAbbr,
+                            e => logger.LogError(e, e.Message));
 
                         if (lineups != null)
                         {
@@ -139,10 +140,7 @@ internal class LineupState(
                         else
                         {
                             logger.LogWarning("FAILED TO PUBLISH LINEUPS FOR {PulseId}", new { fixture.Code });
-                            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                            {
-                                WriteIndented = true
-                            };
+                            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true };
                             logger.LogWarning(JsonSerializer.Serialize(updatedMatchDetails, options));
                         }
                     }
@@ -188,11 +186,13 @@ internal class LineupState(
 
     public void LogState()
     {
-        StringBuilder logstring = new ($"Debug. \nCurrent state has ({_matchDetails.Keys.Count} fixtures):");
+        StringBuilder logstring = new($"Debug. \nCurrent state has ({_matchDetails.Keys.Count} fixtures):");
         foreach (var key in _matchDetails.Keys)
         {
-            logstring.Append($"\n{key} - Lineups: {_matchDetails[key].HomeTeam?.TeamId}-{_matchDetails[key].AwayTeam?.TeamId} {_matchDetails[key].HasLineUps()}");
+            logstring.Append(
+                $"\n{key} - Lineups: {_matchDetails[key].HomeTeam?.TeamId}-{_matchDetails[key].AwayTeam?.TeamId} {_matchDetails[key].HasLineUps()}");
         }
+
         logger.LogInformation(logstring.ToString());
     }
 }

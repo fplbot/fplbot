@@ -57,9 +57,7 @@ public class DiscordSlashCommandsEnsurer(IDiscordClient client, ILogger<DiscordS
     ];
 
     public static IReadOnlyList<SlashCommandDefinitionSummary> GetDefinedCommandSummaries() =>
-        GetDefinedCommands()
-            .Select(c => new SlashCommandDefinitionSummary(c.Name, c.Description, Summarize(c.Options)))
-            .ToList();
+        [.. GetDefinedCommands().Select(c => new SlashCommandDefinitionSummary(c.Name, c.Description, Summarize(c.Options)))];
 
     private static string Summarize(ApplicationCommandOptions[] options)
     {
@@ -95,11 +93,7 @@ public class DiscordSlashCommandsEnsurer(IDiscordClient client, ILogger<DiscordS
             Name = name,
             Description = "Available events",
             Required = true,
-            Choices = Enum.GetNames<EventSubscription>().Select(e => new ApplicationCommandChoices
-            {
-                Name = e,
-                Value = e
-            }).ToArray()
+            Choices = [.. Enum.GetNames<EventSubscription>().Select(e => new ApplicationCommandChoices { Name = e, Value = e })]
         };
     }
 }

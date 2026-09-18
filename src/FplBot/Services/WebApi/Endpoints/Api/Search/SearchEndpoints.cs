@@ -21,10 +21,7 @@ public static class SearchEndpoints
 
     internal static async Task<IResult> GetEntries(string query, int page, HttpContext httpContext, ISearchService searchService)
     {
-        var metaData = new SearchMetaData
-        {
-            Client = QueryClient.Web, Actor = httpContext.Connection.RemoteIpAddress?.ToString()
-        };
+        var metaData = new SearchMetaData { Client = QueryClient.Web, Actor = httpContext.Connection.RemoteIpAddress?.ToString() };
 
         var searchResult = await searchService.SearchForEntry(query, page, 10, metaData);
 
@@ -38,10 +35,7 @@ public static class SearchEndpoints
 
     internal static async Task<IResult> GetLeagues(string query, int page, string countryToBoost, HttpContext httpContext, ISearchService searchService)
     {
-        var metaData = new SearchMetaData
-        {
-            Client = QueryClient.Web, Actor = httpContext.Connection.RemoteIpAddress?.ToString()
-        };
+        var metaData = new SearchMetaData { Client = QueryClient.Web, Actor = httpContext.Connection.RemoteIpAddress?.ToString() };
 
         var searchResult = await searchService.SearchForLeague(query, page, 10, metaData, countryToBoost);
 
@@ -55,10 +49,7 @@ public static class SearchEndpoints
 
     internal static async Task<IResult> GetAny(string query, int page, HttpContext httpContext, ISearchService searchService, SearchType type = SearchType.All)
     {
-        var metaData = new SearchMetaData
-        {
-            Client = QueryClient.Web, Actor = httpContext.Connection.RemoteIpAddress?.ToString()
-        };
+        var metaData = new SearchMetaData { Client = QueryClient.Web, Actor = httpContext.Connection.RemoteIpAddress?.ToString() };
 
         var searchResult = await searchService.SearchAny(query, page, 10, metaData, type);
 

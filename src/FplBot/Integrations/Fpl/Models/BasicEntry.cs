@@ -62,5 +62,6 @@ public class BasicEntry
 
     [JsonPropertyName("detail")]
     public string? Detail { get; set; }
+
     public bool Exists => Detail != "Not found.";
 }

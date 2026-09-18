@@ -33,7 +33,7 @@ public class TeamMarkedForRemovalHandler(
             return;
         }
 
-        if(installation.Token is not { Length: > 0 })
+        if (installation.Token is not { Length: > 0 })
         {
             logger.LogWarning("TeamMarkedForRemoval for {TeamId} but team has no access token. Just deleting without telling Slack.", context.Message.TeamId);
             await repository.Delete(installation);

@@ -116,9 +116,9 @@ public static class FplBotApplication
     private static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc, List<IFplBotService> active)
     {
         lc.ReadFrom.Configuration(ctx.Configuration)
-          .WriteTo.Console(
-              outputTemplate: "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}",
-              theme: ConsoleTheme.None);
+            .WriteTo.Console(
+                outputTemplate: "[{Level:u3}][{CorrelationId}][{Properties}] {SourceContext} {Message:lj}{NewLine}{Exception}",
+                theme: ConsoleTheme.None);
 
         if (ctx.HostingEnvironment.IsLocal())
         {
@@ -127,10 +127,7 @@ public static class FplBotApplication
             {
                 o.Endpoint = ctx.Configuration["OTLP_DASHBOARD_ENDPOINT"];
                 o.Protocol = OtlpProtocol.Grpc;
-                o.ResourceAttributes = new Dictionary<string, object>
-                {
-                    ["service.name"] = GetOtelServiceName(active)
-                };
+                o.ResourceAttributes = new Dictionary<string, object> { ["service.name"] = GetOtelServiceName(active) };
             });
         }
     }

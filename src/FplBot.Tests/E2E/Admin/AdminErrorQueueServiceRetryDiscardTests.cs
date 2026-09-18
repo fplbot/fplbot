@@ -140,6 +140,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
                 return match;
             await Task.Delay(250, TestContext.Current.CancellationToken);
         }
+
         throw new TimeoutException("No peekable message matching this test's key appeared in time.");
     }
 
@@ -152,6 +153,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
                 return false;
             await Task.Delay(250, TestContext.Current.CancellationToken);
         }
+
         return true;
     }
 
@@ -163,6 +165,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
                 return true;
             await Task.Delay(250, TestContext.Current.CancellationToken);
         }
+
         return false;
     }
 }

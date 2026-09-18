@@ -27,7 +27,7 @@ public class RemoveSubscriptionCommandHandler(IGuildRepository repo, ILogger<Rem
             var events = existingChannel.Events.Current;
             var wasSubscribedToAll = events.Count() == 1 && events.First() == FplEvent.All;
 
-            bool isLastSub = events.Count() == 1 && events.First() == ToFplEvent(eventSub);
+            var isLastSub = events.Count() == 1 && events.First() == ToFplEvent(eventSub);
             if (existingChannel.FollowedLeagueId == null && (isLastSub || eventSub == EventSubscription.All))
             {
                 installation.RemoveChannel(command.ChannelId);

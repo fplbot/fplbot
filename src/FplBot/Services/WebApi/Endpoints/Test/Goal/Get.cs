@@ -21,7 +21,7 @@ public static class TestGoal
         FixtureTeam home = new(1, "HOM", "HomeTeam");
         FixtureTeam away = new(2, "AWA", "Away");
         FixtureScore fixtureScore = new(home, away, 35, 0, 1);
-        Dictionary<StatType, List<PlayerEvent>> statMap = new();
+        Dictionary<StatType, List<PlayerEvent>> statMap = [];
         PlayerDetails playerDetails1 = new(1, "Testerson");
         PlayerDetails playerDetails2 = new(2, Environment.MachineName);
         var teamDetails = TeamType.Home;
@@ -31,7 +31,6 @@ public static class TestGoal
             new PlayerEvent(playerDetails1, teamDetails, IsRemoved: isRemoved),
 
             new PlayerEvent(playerDetails2, teamDetails, false)
-
         ];
 
         statMap.Add(type, playerEvents);

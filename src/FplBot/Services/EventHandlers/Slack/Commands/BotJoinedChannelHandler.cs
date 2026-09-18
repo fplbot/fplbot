@@ -48,7 +48,8 @@ public class BotJoinedChannelHandler(
             }
             catch (HttpRequestException e) when (e.Message.Contains("404"))
             {
-                return $"I'm currently following no valid league here. The invalid leagueid is `{leagueId.Value}`. Use `@fplbot follow` to set up a new valid leagueid.";
+                return
+                    $"I'm currently following no valid league here. The invalid leagueid is `{leagueId.Value}`. Use `@fplbot follow` to set up a new valid leagueid.";
             }
         }
 
@@ -59,7 +60,8 @@ public class BotJoinedChannelHandler(
         }
 
         var channelNames = string.Join(", ", otherChannels.Select(c => ChannelName(c.ChannelId)));
-        return $"I'm not set up in this channel yet, but I'm already active in {channelNames}. Use `@fplbot follow` in this channel too if you want notifications here as well.";
+        return
+            $"I'm not set up in this channel yet, but I'm already active in {channelNames}. Use `@fplbot follow` in this channel too if you want notifications here as well.";
     }
 
     // Back-compat as we currently have a mix of:

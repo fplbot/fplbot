@@ -11,7 +11,8 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
 
-    public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildInstallationHandler guildInstallationHandler, IHttpClientFactory httpClientFactory, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
+    public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider,
+        IGuildInstallationHandler guildInstallationHandler, IHttpClientFactory httpClientFactory, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
     {
         var error = ctx.Request.Query["error"].FirstOrDefault();
         if (!string.IsNullOrEmpty(error))
@@ -27,7 +28,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         var code = ctx.Request.Query["code"].FirstOrDefault();
         var guildId = ctx.Request.Query["guild_id"].FirstOrDefault();
 
-        if(string.IsNullOrEmpty(code))
+        if (string.IsNullOrEmpty(code))
         {
             logger.LogWarning("No code received");
             ctx.Response.Redirect(ErrorRedirect(options.Value.ErrorRedirectUri, "no_code", ctx.Request.Query["state"].FirstOrDefault()));
@@ -35,13 +36,13 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         }
 
         var httpClient = httpClientFactory.CreateClient(Hosting.ServiceCollectionExtensions.TokenExchangeHttpClient);
-        var parameters = new List<KeyValuePair<string,string>>
+        var parameters = new List<KeyValuePair<string, string>>
         {
-            new ("code", code),
-            new ("client_id", options.Value.CLIENT_ID ?? string.Empty),
-            new ("client_secret", options.Value.CLIENT_SECRET ?? string.Empty),
-            new ("grant_type", "authorization_code"),
-            new ("redirect_uri", redirectUri.ToString())
+            new("code", code),
+            new("client_id", options.Value.CLIENT_ID ?? string.Empty),
+            new("client_secret", options.Value.CLIENT_SECRET ?? string.Empty),
+            new("grant_type", "authorization_code"),
+            new("redirect_uri", redirectUri.ToString())
         };
 
         var formUrlEncodedContent = new FormUrlEncodedContent(parameters);

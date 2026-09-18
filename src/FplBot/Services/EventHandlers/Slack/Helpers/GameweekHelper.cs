@@ -1,5 +1,4 @@
 ﻿using Fpl.Client.Abstractions;
-
 using FplBot.Services.WebApi.Slack.Helpers;
 
 namespace FplBot.EventHandlers.Slack.Helpers;

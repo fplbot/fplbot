@@ -35,6 +35,7 @@ public static class SlackHandleHelper
         {
             return false;
         }
+
         return string.Equals(s1, s2, StringComparison.CurrentCultureIgnoreCase);
     }
 

@@ -21,7 +21,7 @@ public class DiscordFixtureRemovedHandlerTests(AppFixture fixture) : IAsyncLifet
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
         await fixture.Bus.Publish(new FixtureRemovedFromGameweek(5,
-            new RemovedFixture(1, new RemovedTeam(1, "Home Team", "HOM"), new RemovedTeam(2, "Away Team", "AWY"))),
+                new RemovedFixture(1, new RemovedTeam(1, "Home Team", "HOM"), new RemovedTeam(2, "Away Team", "AWY"))),
             TestContext.Current.CancellationToken);
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
@@ -35,7 +35,7 @@ public class DiscordFixtureRemovedHandlerTests(AppFixture fixture) : IAsyncLifet
         await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
         await fixture.Bus.Publish(new FixtureRemovedFromGameweek(5,
-            new RemovedFixture(1, new RemovedTeam(1, "Home Team", "HOM"), new RemovedTeam(2, "Away Team", "AWY"))),
+                new RemovedFixture(1, new RemovedTeam(1, "Home Team", "HOM"), new RemovedTeam(2, "Away Team", "AWY"))),
             TestContext.Current.CancellationToken);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>

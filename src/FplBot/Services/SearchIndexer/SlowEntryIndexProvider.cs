@@ -28,7 +28,8 @@ public class SlowEntryIndexProvider(
 
     public async Task<(EntryItem[], bool)> GetBatchToIndex(int i, int batchSize)
     {
-        var entryBatch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => entryClient.Get(n, tolerate404: true)).ToArray(), _logger);
+        var entryBatch = await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => entryClient.Get(n, tolerate404: true)).ToArray(),
+            _logger);
         var items = entryBatch
             .Where(x => x != null && x.Exists)
             .Select(y => new EntryItem { Id = y!.Id, TeamName = y.TeamName, RealName = y.PlayerFullName, Country = y.PlayerRegionShortIso }).ToArray();
@@ -39,7 +40,9 @@ public class SlowEntryIndexProvider(
         }
         else
         {
-            var historyBatch = (await ClientHelper.PolledRequests(() => Enumerable.Range(i, batchSize).Select(n => entryHistoryClient.GetHistory(n, tolerate404: true)).ToArray(), _logger))
+            var historyBatch =
+                (await ClientHelper.PolledRequests(
+                    () => Enumerable.Range(i, batchSize).Select(n => entryHistoryClient.GetHistory(n, tolerate404: true)).ToArray(), _logger))
                 .Where(x => x.HasValue)
                 .Select(x => x!.Value)
                 .ToArray();
@@ -107,6 +110,8 @@ public class SlowEntryIndexProvider(
 
     private static string ToEntryThumbprint(EntryHistory entryHistory)
     {
-        return entryHistory.SeasonHistory.Any() ? string.Join(";", entryHistory.SeasonHistory.Take(2).Select(x => $"{x.SeasonName}:{x.Rank}").ToArray()) : string.Empty;
+        return entryHistory.SeasonHistory.Any()
+            ? string.Join(";", entryHistory.SeasonHistory.Take(2).Select(x => $"{x.SeasonName}:{x.Rank}").ToArray())
+            : string.Empty;
     }
 }

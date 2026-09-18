@@ -62,7 +62,7 @@ public static class FixtureDiffer
                 var count = newStat.Value;
                 while (count > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, false));
+                    diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, false));
                     count--;
                 }
 
@@ -76,12 +76,12 @@ public static class FixtureDiffer
             }
 
             // New stat for player is higher than old stat, so we add as new stat
-            int newStatsCount = newStat.Value - oldStat.Value;
+            var newStatsCount = newStat.Value - oldStat.Value;
             if (newStatsCount > 0)
             {
                 while (newStatsCount > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, false));
+                    diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, false));
                     newStatsCount--;
                 }
 
@@ -89,12 +89,12 @@ public static class FixtureDiffer
             }
 
             // New stat for player is lower than old stat, so we add as removed stat
-            int removedStats = oldStat.Value - newStat.Value;
+            var removedStats = oldStat.Value - newStat.Value;
             if (newStat.Value < oldStat.Value)
             {
                 while (removedStats > 0)
                 {
-                    diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, true));
+                    diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, true));
                     removedStats--;
                 }
             }
@@ -113,7 +113,7 @@ public static class FixtureDiffer
                     var oldStatCount = oldStat.Value;
                     while (oldStatCount > 0)
                     {
-                        diffs.Add(new PlayerEvent(new (player.Id, player.WebName ?? string.Empty), teamType, true));
+                        diffs.Add(new PlayerEvent(new(player.Id, player.WebName ?? string.Empty), teamType, true));
                         oldStatCount--;
                     }
                 }

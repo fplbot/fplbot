@@ -129,25 +129,19 @@ public class AppFixture : IAsyncLifetime
 
         var globalSettings = JsonSerializer.Deserialize<GlobalSettings>(
             TestResources.Boostrap_Static_Json,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web)
-            {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            });
+            new JsonSerializerOptions(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
         var fakeGlobalSettings = GlobalSettingsClientBuilder.Returning(globalSettings);
 
         var fakeFixtureClient = A.Fake<IFixtureClient>();
-        A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns(new List<Fixture>());
+        A.CallTo(() => fakeFixtureClient.GetFixtures()).Returns([]);
 
         var fakeLeagueClient = A.Fake<ILeagueClient>();
         A.CallTo(() => fakeLeagueClient.GetClassicLeague(A<int>._, A<int>._, A<bool>._, A<int?>._))
             .Returns(new ClassicLeague
-                     {
-                         Properties = new ClassicLeagueProperties { StartEvent = 1 },
-                         Standings = new ClassicLeagueStandings
-                                     {
-                                         Entries = new List<ClassicLeagueEntry>()
-                                     }
-                     });
+            {
+                Properties = new ClassicLeagueProperties { StartEvent = 1 },
+                Standings = new ClassicLeagueStandings { Entries = [] }
+            });
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", true)
@@ -164,11 +158,7 @@ public class AppFixture : IAsyncLifetime
         builder.Host.UseSerilog((_, lc) => lc.WriteTo.Console().WriteTo.Sink(LogCapture), preserveStaticLogger: true);
         builder.Configuration.AddConfiguration(config);
 
-        var active = new List<IFplBotService>
-                     {
-                         new WebApiService(),
-                         new EventHandlersService()
-                     };
+        var active = new List<IFplBotService> { new WebApiService(), new EventHandlersService() };
         FplBotApplication.ConfigureServices(builder.Services, config, _multiplexer, builder.Environment, active,
             cfg => cfg.UsingInMemory((ctx, c) => c.ConfigureEndpoints(ctx)));
 
@@ -179,17 +169,17 @@ public class AppFixture : IAsyncLifetime
 
         builder.Services.AddHttpClient("Discord.Net.Endpoints.TokenExchange")
             .ConfigurePrimaryHttpMessageHandler(() => new StubDiscordTokenExchange());
-        builder.Services.AddSingleton<IGlobalSettingsClient>(fakeGlobalSettings);
+        builder.Services.AddSingleton(fakeGlobalSettings);
         builder.Services.AddSingleton(fakeFixtureClient);
         builder.Services.AddSingleton(fakeLeagueClient);
         builder.Services.AddSingleton(A.Fake<ITransfersClient>());
-        builder.Services.AddSingleton<IEntryClient>(A.Fake<IEntryClient>());
+        builder.Services.AddSingleton(A.Fake<IEntryClient>());
         builder.Services.AddSingleton(A.Fake<ILiveClient>());
         builder.Services.AddSingleton(A.Fake<IEntryHistoryClient>());
         builder.Services.AddSingleton(A.Fake<IEventStatusClient>());
 
         builder.Services.RemoveAll<ISlackClientBuilder>();
-        builder.Services.AddSingleton<ISlackClientBuilder>(fakeSlackClientBuilder);
+        builder.Services.AddSingleton(fakeSlackClientBuilder);
 
         builder.Services.RemoveAll<IDiscordClient>();
         _capturingDiscordClient = new CapturingDiscordClient(DiscordCapture);
@@ -219,27 +209,24 @@ public class AppFixture : IAsyncLifetime
     public async Task AskSlackbot(string teamId, string channelId, string input)
     {
         var payload = new
-                      {
-                          token = "test",
-                          team_id = teamId,
-                          api_app_id = "test",
-                          type = "event_callback",
-                          event_id = Guid.NewGuid().ToString(),
-                          event_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                          authed_users = new[]
-                                         {
-                                             "U0BOT"
-                                         },
-                          @event = new
-                                   {
-                                       type = "app_mention",
-                                       text = input,
-                                       user = "U12345",
-                                       channel = channelId,
-                                       ts = "1234567890.123456",
-                                       event_ts = "1234567890.123456"
-                                   }
-                      };
+        {
+            token = "test",
+            team_id = teamId,
+            api_app_id = "test",
+            type = "event_callback",
+            event_id = Guid.NewGuid().ToString(),
+            event_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            authed_users = new[] { "U0BOT" },
+            @event = new
+            {
+                type = "app_mention",
+                text = input,
+                user = "U12345",
+                channel = channelId,
+                ts = "1234567890.123456",
+                event_ts = "1234567890.123456"
+            }
+        };
 
         var response = await _client.PostAsJsonAsync("/events", payload);
         response.EnsureSuccessStatusCode();
@@ -282,37 +269,26 @@ public class AppFixture : IAsyncLifetime
         var interactionId = Guid.NewGuid().ToString("N");
         var interactionToken = Guid.NewGuid().ToString("N");
 
-        var data = new JsonObject
-                   {
-                       ["name"] = commandName,
-                       ["type"] = 1
-                   };
+        var data = new JsonObject { ["name"] = commandName, ["type"] = 1 };
         if (optionValue != null)
         {
-            var innerOption = new JsonObject
-                              {
-                                  ["name"] = "value",
-                                  ["value"] = optionValue
-                              };
-            data["options"] = subCommandName != null
-                ? new JsonArray(new JsonObject
-                                {
-                                    ["name"] = subCommandName,
-                                    ["options"] = new JsonArray(innerOption)
-                                })
-                : new JsonArray(innerOption);
+            var innerOption = new JsonObject { ["name"] = "value", ["value"] = optionValue };
+            JsonArray options = subCommandName != null
+                ? [new JsonObject { ["name"] = subCommandName, ["options"] = new JsonArray(innerOption) }]
+                : [innerOption];
+            data["options"] = options;
         }
 
         var payload = new JsonObject
-                      {
-                          ["type"] = 2,
-                          ["id"] = interactionId,
-                          ["token"] = interactionToken,
-                          ["guild_id"] = guildId,
-                          ["channel_id"] = channelId,
-                          ["app_permissions"] = appPermissions.ToString(),
-                          ["data"] = data
-                      };
+        {
+            ["type"] = 2,
+            ["id"] = interactionId,
+            ["token"] = interactionToken,
+            ["guild_id"] = guildId,
+            ["channel_id"] = channelId,
+            ["app_permissions"] = appPermissions.ToString(),
+            ["data"] = data
+        };
 
         var response = await _client.PostAsync("/discord/events",
             new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json"));
@@ -343,10 +319,7 @@ public class AppFixture : IAsyncLifetime
 
         // A real, currently-valid FPL league — some handlers (e.g. captains) call the live
         // FPL API with this id, so it can't be random garbage that 404s.
-        var channels = new[]
-                       {
-                           ChannelSubscription.Load(channelId, new ClassicLeagueId(15263), [])
-                       };
+        var channels = new[] { ChannelSubscription.Load(channelId, new ClassicLeagueId(15263), []) };
         var installation = Installation.Load(teamId, "Test Team " + teamId, token, channels);
 
         configure?.Invoke(installation);

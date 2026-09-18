@@ -30,6 +30,7 @@ public class DiscordGameweekFinishedHandler(
             {
                 continue;
             }
+
             await context.Publish(new PublishGameweekFinishedToGuild(guildId, channelId, leagueId, message.FinishedGameweek.Id));
         }
     }
@@ -57,20 +58,20 @@ public class DiscordGameweekFinishedHandler(
         var settings = await settingsClient.GetGlobalSettings();
         var gameweeks = settings?.Gameweeks ?? [];
         var gw = gameweeks.SingleOrDefault(g => g.Id == gameweekId);
-        var league = await leagueClient.GetClassicLeague(leagueId, tolerate404:true);
+        var league = await leagueClient.GetClassicLeague(leagueId, tolerate404: true);
         if (league != null && gw != null)
         {
             if (league.Properties?.StartEvent is var startEvent && gameweekId >= startEvent)
             {
                 var sections = new List<RichSection>();
-                var intro = Formatter.FormatGameweekFinished(gw, league, includeTitle:false);
-                var standings = Formatter.GetStandingsDiscord(league, gw, includeExternalLinks:false);
-                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw, includeExternalLinks:false, includeIntro:false);
-                var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks:false);
+                var intro = Formatter.FormatGameweekFinished(gw, league, includeTitle: false);
+                var standings = Formatter.GetStandingsDiscord(league, gw, includeExternalLinks: false);
+                var topThree = Formatter.GetTopThreeGameweekEntries(league, gw, includeExternalLinks: false, includeIntro: false);
+                var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw, includeExternalLinks: false);
                 sections.AddRange([
-                    new (null, intro),
-                    new ($"{gw.Name}", topThree ?? string.Empty),
-                    new ("Standings", standings)
+                    new(null, intro),
+                    new($"{gw.Name}", topThree ?? string.Empty),
+                    new("Standings", standings)
                 ]);
 
                 if (worst is not null)

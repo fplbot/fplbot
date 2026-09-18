@@ -26,7 +26,8 @@ internal class SlackGameweekFinishedHandler(
             var channel = await teamsRepo.GetChannelSubscription(teamId, channelId);
             if (channel is not null && channel.FollowedLeagueId is not null)
             {
-                await context.Publish(new PublishStandingsToSlackWorkspace(teamId, channelId, (int)channel.FollowedLeagueId.Value, notification.FinishedGameweek.Id));
+                await context.Publish(new PublishStandingsToSlackWorkspace(teamId, channelId, (int)channel.FollowedLeagueId.Value,
+                    notification.FinishedGameweek.Id));
             }
         }
     }
@@ -49,17 +50,19 @@ internal class SlackGameweekFinishedHandler(
                 var topThree = Formatter.GetTopThreeGameweekEntries(league, gw);
                 var worst = league.Standings?.HasNext == true ? null : Formatter.GetWorstGameweekEntry(league, gw);
 
-                var messages = new List<string> { intro, standings, topThree ?? string.Empty};
+                var messages = new List<string> { intro, standings, topThree ?? string.Empty };
                 if (worst is not null)
                 {
                     messages.Add(worst);
                 }
-                await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, messages.ToArray());
+
+                await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, [.. messages]);
             }
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
-            await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
+            await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel,
+                $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
         }
     }
 }

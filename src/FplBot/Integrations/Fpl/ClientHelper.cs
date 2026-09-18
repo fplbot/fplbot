@@ -20,6 +20,7 @@ public static class ClientHelper
                 await Task.Delay(2000 * j);
             }
         }
+
         throw new Exception($"Unable to run requests after {retries} retries");
     }
 }

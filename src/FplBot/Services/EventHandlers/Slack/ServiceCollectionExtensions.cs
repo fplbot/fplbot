@@ -24,5 +24,4 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
         return services;
     }
-
 }
