@@ -14,14 +14,15 @@ public static class InstallUrlEndpoints
         group.MapGet("/install-url-discord", InstallUrlDiscord);
     }
 
-    private static IResult InstallUrl(HttpContext httpContext, ILogger<Program> logger, IOptions<OAuthOptions> options)
+    internal static IResult InstallUrl(HttpContext httpContext, ILogger<Program> logger, IOptions<OAuthOptions> options, string? returnTo = null)
     {
         logger.LogInformation("Installing");
         var original = new Uri(httpContext.Request.GetDisplayUrl());
         var redirectUri = new Uri(original, "/oauth/authorize");
+        var state = ToSiteRelativeState(returnTo);
         return TypedResults.Ok(new
         {
-            redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={options.Value.CLIENT_ID}&redirect_uri={redirectUri}"
+            redirectUri = $"https://slack.com/oauth/v2/authorize?&user_scope=&scope=app_mentions:read,chat:write,chat:write.customize,chat:write.public,users.profile:read,users:read,users:read.email,groups:read,channels:read&client_id={options.Value.CLIENT_ID}&redirect_uri={redirectUri}{state}"
         });
     }
 
@@ -37,10 +38,15 @@ public static class InstallUrlEndpoints
         });
     }
 
-    // Only a path on this site survives into `state` — an absolute or protocol-relative url
-    // would turn the OAuth callback into an open redirect.
+    // Only a path on this site survives into `state`. It is validated again where it comes back,
+    // since that is the half a third party can reach — this just avoids minting a state that
+    // could never be honoured.
     private static string ToSiteRelativeState(string? returnTo) =>
-        string.IsNullOrEmpty(returnTo) || returnTo[0] != '/' || returnTo.StartsWith("//")
-            ? string.Empty
-            : $"&state={WebUtility.UrlEncode(returnTo)}";
+        IsSiteRelativePath(returnTo) ? $"&state={WebUtility.UrlEncode(returnTo)}" : string.Empty;
+
+    private static bool IsSiteRelativePath(string? path) =>
+        !string.IsNullOrEmpty(path)
+        && path[0] == '/'
+        && (path.Length == 1 || (path[1] != '/' && path[1] != '\\'))
+        && !path.Any(char.IsControl);
 }

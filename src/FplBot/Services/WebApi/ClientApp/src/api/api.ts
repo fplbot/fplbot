@@ -268,8 +268,9 @@ export function moveGuildChannel(guildId: string, channelId: string, newChannelI
 
 // ---- OAuth (public site install buttons) ----
 
-export async function redirectToSlackInstall(): Promise<void> {
-  const res = await fetch("/api/oauth/install-url");
+export async function redirectToSlackInstall(returnTo?: string): Promise<void> {
+  const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
+  const res = await fetch(`/api/oauth/install-url${query}`);
   const data: InstallUrlResponse = await res.json();
   window.location.href = data.redirectUri;
 }

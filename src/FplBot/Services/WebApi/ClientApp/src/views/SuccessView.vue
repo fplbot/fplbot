@@ -8,10 +8,22 @@ const route = useRoute();
 const router = useRouter();
 
 // fplbot's own `state` is the page the install was started from, so it comes back here as a
-// site-relative path. It is only ever fed to the router, never to a browser navigation.
+// site-relative path. Whoever sent us here controls it, so it is validated before use and only
+// ever fed to the router, never to a browser navigation.
+function isSiteRelativePath(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.startsWith("/\\") &&
+    // eslint-disable-next-line no-control-regex
+    !/[\u0000-\u001f\u007f]/.test(value)
+  );
+}
+
 onMounted(() => {
   const state = route.query.state;
-  if (typeof state === "string" && state.startsWith("/") && !state.startsWith("//")) {
+  if (isSiteRelativePath(state)) {
     router.replace(state);
   }
 });

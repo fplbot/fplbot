@@ -98,7 +98,7 @@ async function removeSub(teamId: string, channelId: string) {
     <h1>Slack workspaces</h1>
     <p class="lead">{{ totalCount }} workspace(s) with fplbot installed.</p>
 
-    <button class="btn install-cta" @click="redirectToSlackInstall">Install new workspace&hellip;</button>
+    <button class="btn install-cta" @click="redirectToSlackInstall('/admin/slack')">Install new workspace&hellip;</button>
 
     <p v-if="failureStats" class="lead delivery-health">
       <template v-if="failureStats.channelsWithFailures > 0">
