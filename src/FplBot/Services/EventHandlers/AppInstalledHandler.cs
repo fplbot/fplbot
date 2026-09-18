@@ -43,7 +43,7 @@ public class AppInstalledHandler(IGuildRepository guildRepo,
         var prefix = envName == "Production" ? "" : $"{envName}: ";
         var message = $"{prefix}{fullMsg}";
 
-        if (env.IsDevelopment())
+        if (env.IsLocal())
         {
             logger.LogInformation("[DEV] Slack → #fplbot-notifications\n{Message}", message);
             return;
