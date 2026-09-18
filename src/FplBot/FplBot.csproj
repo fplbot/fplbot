@@ -17,7 +17,7 @@
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
 
     <!-- Data / Redis -->
-    <PackageReference Include="StackExchange.Redis" Version="3.2.15" />
+    <PackageReference Include="StackExchange.Redis" Version="3.3.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.12" />
 
