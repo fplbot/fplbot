@@ -49,8 +49,8 @@
     <!-- Tracing -->
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.19.0" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.19.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
 
     <!-- Misc -->
     <PackageReference Include="MinimalHttpLogger" Version="3.0.1" />
