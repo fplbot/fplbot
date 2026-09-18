@@ -397,18 +397,18 @@ async function submitDelete() {
             </select>
             <p class="hint">Channels listed live from {{ adapter.apiLabel }}; the subscription is stored by channel id.</p>
           </div>
-          <div v-else class="field">
-            <label for="new-channel-id">Move to</label>
-            <input id="new-channel-id" v-model="newChannelId" type="text" placeholder="Channel id" />
-            <p class="hint">
-              <template v-if="channelListError">{{ channelListError }}</template>
-              <template v-else-if="availableChannels.length > 0">No other channel to move to in this {{ adapter.entityNoun }}.</template>
-              <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
-              Enter a channel id manually.
-            </p>
-          </div>
+          <p v-else class="hint">
+            <template v-if="channelListError">{{ channelListError }}</template>
+            <template v-else-if="availableChannels.length > 0">No other channel to move to in this {{ adapter.entityNoun }}.</template>
+            <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
+          </p>
         </template>
-        <button class="btn small" :disabled="movingChannel || !newChannelId || newChannelId === channel.channel" @click="submitMoveChannel">
+        <button
+          v-if="moveOptions.length > 1"
+          class="btn small"
+          :disabled="movingChannel || !newChannelId || newChannelId === channel.channel"
+          @click="submitMoveChannel"
+        >
           {{ movingChannel ? "Moving..." : "Move subscription" }}
         </button>
       </div>
