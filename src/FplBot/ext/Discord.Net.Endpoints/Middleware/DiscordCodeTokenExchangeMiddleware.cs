@@ -11,7 +11,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
 
-    public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildInstallationHandler guildInstallationHandler, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
+    public async Task Invoke(HttpContext ctx, IOptions<DiscordOAuthOptions> options, IServiceProvider provider, IGuildInstallationHandler guildInstallationHandler, IHttpClientFactory httpClientFactory, ILogger<DiscordCodeTokenExchangeMiddleware> logger)
     {
         var error = ctx.Request.Query["error"].FirstOrDefault();
         if (!string.IsNullOrEmpty(error))
@@ -36,7 +36,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             return;
         }
 
-        var httpClient = new HttpClient();
+        var httpClient = httpClientFactory.CreateClient(Hosting.ServiceCollectionExtensions.TokenExchangeHttpClient);
         var parameters = new List<KeyValuePair<string,string>>
         {
             new ("code", code),
@@ -50,7 +50,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         var requestContent = await formUrlEncodedContent.ReadAsStringAsync();
         var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/x-www-form-urlencoded");
 
-        var response = await httpClient.PostAsync("https://discord.com/api/oauth2/token", httpContent);
+        var response = await httpClient.PostAsync("oauth2/token", httpContent);
         var jsonResponse = await response.Content.ReadAsStringAsync();
         if (response.IsSuccessStatusCode)
         {

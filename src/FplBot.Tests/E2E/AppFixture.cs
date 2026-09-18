@@ -177,6 +177,8 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddStackExchangeRedisCache(o =>
             o.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(_multiplexer));
 
+        builder.Services.AddHttpClient("Discord.Net.Endpoints.TokenExchange")
+            .ConfigurePrimaryHttpMessageHandler(() => new StubDiscordTokenExchange());
         builder.Services.AddSingleton<IGlobalSettingsClient>(fakeGlobalSettings);
         builder.Services.AddSingleton(fakeFixtureClient);
         builder.Services.AddSingleton(fakeLeagueClient);
