@@ -11,13 +11,6 @@ internal static class DevSeeder
         "FixturePenaltyMisses FixtureFullTime Taunts PriceChanges InjuryUpdates " +
         "Deadlines Lineups NewPlayers FixtureRemovedFromGameweek";
 
-    private static readonly string[] ConcreteEvents =
-    [
-        "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
-        "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates",
-        "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek"
-    ];
-
     public static Task SeedAsync(ResourceEndpointsAllocatedEvent evt, CancellationToken ct)
     {
         _ = Task.Run(() => SeedInBackgroundAsync(ct), CancellationToken.None);
@@ -113,45 +106,38 @@ internal static class DevSeeder
             new HashEntry("subscriptions", subscriptions)
         ]);
         await db.SetAddAsync($"SlackChannelSubIndex-{teamId}", channelId);
-        await db.SetAddAsync("TeamIndex", teamId);
-        await SeedEventIndex(db, "SlackEventIndex", teamId, channelId, subscriptions);
 
         Console.WriteLine($"[DevSeeder] Inserted Slack workspace {teamKey} (league {leagueId}, channel {channelId}).");
     }
 
     private static async Task SeedDiscord(IDatabase db)
     {
-        await SeedDiscordGuild(db, "111222333444555666", "Dev Discord Guild", "999888777666555444", 12345, AllSubs);
-        await SeedDiscordGuild(db, "1546966580007542937", "fplbotdev-throwaway-discord", "1546966580976549940", 12345, AllSubs);
-    }
-
-    private static async Task SeedDiscordGuild(IDatabase db, string guildId, string name, string channelId, int leagueId, string subscriptions)
-    {
-        await db.HashSetAsync($"Guild-{guildId}", [
-            new HashEntry("name", name)
+        await db.HashSetAsync("Guild-111222333444555666", [
+            new HashEntry("name", "Dev Discord Guild")
         ]);
-        await db.SetAddAsync("GuildIndex", guildId);
+        Console.WriteLine("[DevSeeder] Inserted Discord guild Guild-111222333444555666.");
 
-        await db.HashSetAsync($"GuildSubs-{guildId}-Channel-{channelId}", [
-            new HashEntry("guildid", guildId),
-            new HashEntry("channelid", channelId),
-            new HashEntry("leagueid", leagueId.ToString()),
-            new HashEntry("subs", subscriptions)
+        await db.HashSetAsync("GuildSubs-111222333444555666-Channel-999888777666555444", [
+            new HashEntry("guildid", "111222333444555666"),
+            new HashEntry("channelid", "999888777666555444"),
+            new HashEntry("leagueid", "12345"),
+            new HashEntry("subs", AllSubs)
         ]);
-        await db.SetAddAsync($"GuildChannelSubIndex-{guildId}", channelId);
-        await SeedEventIndex(db, "GuildEventIndex", guildId, channelId, subscriptions);
+        Console.WriteLine("[DevSeeder] Inserted Discord subscription GuildSubs-111222333444555666-Channel-999888777666555444 (league 12345).");
 
-        Console.WriteLine($"[DevSeeder] Inserted Discord guild Guild-{guildId} (league {leagueId}, channel {channelId}).");
-    }
+        await db.HashSetAsync("Guild-1546966580007542937", [
+            new HashEntry("name", "fplbotdev-throwaway-discord")
+        ]);
+        Console.WriteLine("[DevSeeder] Inserted Discord guild Guild-1546966580007542937.");
 
-    private static async Task SeedEventIndex(IDatabase db, string indexPrefix, string installationId, string channelId, string subscriptions)
-    {
-        var subscribed = subscriptions.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var events = subscribed.Contains("All") ? ConcreteEvents : subscribed;
-        foreach (var fplEvent in events)
-        {
-            await db.SetAddAsync($"{indexPrefix}-{fplEvent}", $"{installationId}:{channelId}");
-        }
+        await db.HashSetAsync("GuildSubs-1546966580007542937-Channel-1546966580976549940", [
+            new HashEntry("guildid", "1546966580007542937"),
+            new HashEntry("channelid", "1546966580976549940"),
+            new HashEntry("leagueid", "12345"),
+            new HashEntry("subs", AllSubs)
+        ]);
+        await db.SetAddAsync("GuildChannelSubIndex-1546966580007542937", "1546966580976549940");
+        Console.WriteLine("[DevSeeder] Inserted Discord subscription GuildSubs-1546966580007542937-Channel-1546966580976549940 (league 12345).");
     }
 
     // Must match search.EntriesIndex / search.LeaguesIndex in appsettings.json.

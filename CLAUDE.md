@@ -26,6 +26,10 @@ Each service implements `IFplBotService` and registers its own DI, consumers, an
 dotnet run --project src/FplBot -- --services All  # runs all 4 services together
 ```
 
+Seed data for local dev (Slack workspaces, Discord guilds, Elasticsearch docs) lives in
+`src/FplBot.AppHost/DevSeederLifecycleHook.cs` — it writes straight to Redis/ES on `aspire` startup.
+Add a workspace/guild there; it takes effect on the next devenv restart.
+
 All secrets have safe dev defaults in `appsettings.json`. No real credentials are needed to run locally — in Development, `DevLoggingSlackClient`/`DevLoggingDiscordClient` short-circuit outbound Slack/Discord calls into log lines instead of hitting the real APIs.
 
 ### Testing against a real Discord app
