@@ -53,7 +53,7 @@ public static class WebApplicationBuilderExtensions
         // browser there after the OAuth callback. /error stays on the backend — it's still a
         // Razor Page shared with the admin login flow, not part of the Vue SPA.
         var successUri = env.IsLocal() ? "http://localhost:5173/success" : "/success";
-        var errorUri = "/error";
+        var installFailedUri = env.IsLocal() ? "http://localhost:5173/install-cancelled" : "/install-cancelled";
 
         services.AddSlackbotDistribution(c =>
         {
@@ -70,7 +70,7 @@ public static class WebApplicationBuilderExtensions
             c.CLIENT_ID = configuration["DISCORD_CLIENT_ID"];
             c.CLIENT_SECRET = configuration["DISCORD_CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=discord";
-            c.ErrorRedirectUri = errorUri;
+            c.ErrorRedirectUri = installFailedUri;
         });
 
         services.Configure<AnalyticsOptions>(configuration);

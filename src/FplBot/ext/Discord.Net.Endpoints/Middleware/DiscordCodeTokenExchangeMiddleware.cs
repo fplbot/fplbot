@@ -18,8 +18,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         {
             var description = ctx.Request.Query["error_description"];
             logger.LogWarning($"Error received from Discord:{error}:{description}. Redirecting to error page.");
-            var location = $"{options.Value.ErrorRedirectUri}?details={WebUtility.UrlEncode(error)}";
-            ctx.Response.Redirect((location));
+            ctx.Response.Redirect(ErrorRedirect(options.Value.ErrorRedirectUri, error, ctx.Request.Query["state"].FirstOrDefault()));
             return;
         }
 
@@ -31,8 +30,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         if(string.IsNullOrEmpty(code))
         {
             logger.LogWarning("No code received");
-            var location = $"{options.Value.ErrorRedirectUri}?details=no_code";
-            ctx.Response.Redirect(location);
+            ctx.Response.Redirect(ErrorRedirect(options.Value.ErrorRedirectUri, "no_code", ctx.Request.Query["state"].FirstOrDefault()));
             return;
         }
 
@@ -52,6 +50,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 
         var response = await httpClient.PostAsync("oauth2/token", httpContent);
         var jsonResponse = await response.Content.ReadAsStringAsync();
+        var stateTheAppSent = ctx.Request.Query["state"].FirstOrDefault();
         if (response.IsSuccessStatusCode)
         {
             var jsonDoc = JsonDocument.Parse(jsonResponse).RootElement;
@@ -59,15 +58,26 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
             await guildInstallationHandler.Install(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
-            var stateTheAppSent = ctx.Request.Query["state"].FirstOrDefault();
             ctx.Response.Redirect(SuccessRedirect(options.Value.SuccessRedirectUri, stateTheAppSent));
         }
         else
         {
             logger.LogError($"Token exchange failed ({response.StatusCode})! Response: \n{jsonResponse}");
-            var location = $"{options.Value.ErrorRedirectUri}?details=token_exchange_failed";
-            ctx.Response.Redirect(location);
+            ctx.Response.Redirect(ErrorRedirect(options.Value.ErrorRedirectUri, "token_exchange_failed", stateTheAppSent));
         }
+    }
+
+    // An install that does not complete carries `state` back too, so the app can put the user
+    // where they started rather than stranding them on a generic page.
+    internal static string ErrorRedirect(string errorRedirectUri, string? details, string? state)
+    {
+        var query = new Dictionary<string, string?> { ["details"] = details };
+        if (!string.IsNullOrEmpty(state))
+        {
+            query["state"] = state;
+        }
+
+        return QueryHelpers.AddQueryString(errorRedirectUri, query);
     }
 
     // `state` is opaque to this library — only the app that sent it knows what it means, so it
