@@ -71,7 +71,6 @@ public static class WebApplicationBuilderExtensions
             c.CLIENT_SECRET = configuration["DISCORD_CLIENT_SECRET"];
             c.SuccessRedirectUri = $"{successUri}?type=discord";
             c.ErrorRedirectUri = errorUri;
-            c.ResolveSuccessRedirect = state => state;
         });
 
         services.Configure<AnalyticsOptions>(configuration);

@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
 
 const route = useRoute();
+const router = useRouter();
+
+// fplbot's own `state` is the page the install was started from, so it comes back here as a
+// site-relative path. It is only ever fed to the router, never to a browser navigation.
+onMounted(() => {
+  const state = route.query.state;
+  if (typeof state === "string" && state.startsWith("/") && !state.startsWith("//")) {
+    router.replace(state);
+  }
+});
+
 const type = computed(() => {
   const t = route.query.type;
   if (t === "slack" || t === "discord") return t;

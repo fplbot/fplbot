@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Discord.Net.Endpoints.Hosting;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 
 namespace Discord.Net.Endpoints.Middleware;
@@ -59,7 +60,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
             await guildInstallationHandler.Install(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
             var stateTheAppSent = ctx.Request.Query["state"].FirstOrDefault();
-            ctx.Response.Redirect(SuccessRedirect(options.Value, stateTheAppSent));
+            ctx.Response.Redirect(SuccessRedirect(options.Value.SuccessRedirectUri, stateTheAppSent));
         }
         else
         {
@@ -69,25 +70,10 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         }
     }
 
-    // `state` is opaque to this library — only the app that sent it knows what it means, so only
-    // its resolver reads it. What comes back is a path on this site or nothing.
-    internal static string SuccessRedirect(DiscordOAuthOptions options, string? state)
-    {
-        var target = options.ResolveSuccessRedirect?.Invoke(state);
-        if (!IsLocalPath(target))
-        {
-            return options.SuccessRedirectUri;
-        }
-
-        return Uri.TryCreate(options.SuccessRedirectUri, UriKind.Absolute, out var absoluteSuccess)
-               && (absoluteSuccess.Scheme == Uri.UriSchemeHttp || absoluteSuccess.Scheme == Uri.UriSchemeHttps)
-            ? new Uri(absoluteSuccess, target!).ToString()
-            : target!;
-    }
-
-    private static bool IsLocalPath(string? path) =>
-        !string.IsNullOrEmpty(path)
-        && path[0] == '/'
-        && (path.Length == 1 || (path[1] != '/' && path[1] != '\\'))
-        && !path.Any(char.IsControl);
+    // `state` is opaque to this library — only the app that sent it knows what it means, so it
+    // rides back to the app's own success page untouched rather than being interpreted here.
+    internal static string SuccessRedirect(string successRedirectUri, string? state) =>
+        string.IsNullOrEmpty(state)
+            ? successRedirectUri
+            : QueryHelpers.AddQueryString(successRedirectUri, "state", state);
 }
