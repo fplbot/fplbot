@@ -6,6 +6,8 @@ using StackExchange.Redis;
 
 internal static class DevSeeder
 {
+    public static string SlackToken { get; set; } = "xoxb-dev-fake-token-throwaway";
+
     private const string AllSubs =
         "All Standings Captains Transfers FixtureGoals FixtureAssists FixtureCards " +
         "FixturePenaltyMisses FixtureFullTime Taunts PriceChanges InjuryUpdates " +
@@ -80,7 +82,7 @@ internal static class DevSeeder
         await SeedSlackWorkspace(db, "DEV-SLACK", "Dev Slack Workspace", "xoxb-dev-fake-token", "C0DEV000001", 12345, AllSubs);
         await SeedSlackWorkspace(db, "DEV-SLACK-2", "Dev Slack Workspace 2", "xoxb-dev-fake-token-2", "C0DEV000002", 23456, "Standings Captains Transfers");
         await SeedSlackWorkspace(db, "DEV-SLACK-3", "Dev Slack Workspace 3", "xoxb-dev-fake-token-3", "C0DEV000003", 34567, "PriceChanges InjuryUpdates Deadlines");
-        await SeedSlackWorkspace(db, "T0C2TLMHKDK", "fplbotdev-throwaway-slack", "xoxb-dev-fake-token-throwaway", "C0C2YFF57HQ", 12345, AllSubs);
+        await SeedSlackWorkspace(db, "T0C2TLMHKDK", "fplbotdev-throwaway-slack", SlackToken, "C0C2YFF57HQ", 555, AllSubs);
 
         // No channel subscriptions at all — a bare install to exercise the "no channels" path in the admin UI.
         await db.HashSetAsync("TeamId-DEV-SLACK-BARE", [

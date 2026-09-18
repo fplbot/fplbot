@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Aspire.AppHost.Sdk" Version="13.5.4" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AspireUseCliBundle>true</AspireUseCliBundle>
     <NoWarn>$(NoWarn);NU1903;NU1904</NoWarn>
+    <UserSecretsId>17a08a62-253e-44c9-8678-ad2178916c8d</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.5.4" />

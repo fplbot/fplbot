@@ -10,6 +10,8 @@ var elasticsearch = builder.AddElasticsearch("elasticsearch",
     .WithEndpoint("internal", e => e.Port = 9300)
     .WithEnvironment("ES_JAVA_OPTS", "-Xms256m -Xmx256m");
 
+DevSeeder.SlackToken = builder.Configuration["DEV_SEED_SLACK_TOKEN"] ?? DevSeeder.SlackToken;
+
 builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(redis.Resource, DevSeeder.SeedAsync);
 builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(elasticsearch.Resource, DevSeeder.SeedElasticsearchAsync);
 
