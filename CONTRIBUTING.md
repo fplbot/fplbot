@@ -58,6 +58,9 @@ dotnet run --project src/FplBot --launch-profile Integration          # Integrat
 dotnet run --project src/FplBot --launch-profile Integration -- --services WebApi
 ```
 
+`dotnet watch --project src/FplBot` works too, hot reload included — handy when iterating on
+handlers, since the recurring jobs keep ticking through the reloaded code.
+
 `--launch-profile` belongs to `dotnet run` and goes before `--`; everything after `--` is passed to
 the app. Setting `DOTNET_ENVIRONMENT` yourself overrides the profile.
 
@@ -69,6 +72,12 @@ not in the repo (`wwwroot/.gitignore` excludes `/index.html` and `/assets`), so 
 backend has nothing to serve at `/`.
 
 **Option 1 — Vite dev server** (what you want while changing frontend code; gives HMR):
+
+```shell
+./src/run.sh          # backend + Vite together, stops both on Ctrl-C
+```
+
+or the two halves separately, if you want them in their own terminals:
 
 ```shell
 cd src/FplBot/Services/WebApi/ClientApp
