@@ -128,6 +128,11 @@ public class DiscordGuildRepository : IGuildRepository
         }
 
         await _db.HashSetAsync(key, hashEntries.ToArray());
+        if (channel.FollowedLeagueId is null)
+        {
+            await _db.HashDeleteAsync(key, _leagueIdField);
+        }
+
         if (channel.FailingSince is { } failingSince)
         {
             await _db.HashSetAsync(key,

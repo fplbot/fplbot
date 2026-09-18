@@ -9,6 +9,9 @@ namespace FplBot.Tests.E2E;
 public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordClient
 {
     private readonly ConcurrentDictionary<string, Exception> _failing = new();
+    private IEnumerable<DiscordClient.Channel> _guildChannels = [];
+
+    public void SetGuildChannels(params DiscordClient.Channel[] channels) => _guildChannels = channels;
 
     public void FailChannel(string channelId, int errorCode) =>
         _failing[channelId] = new DiscordApiException(
@@ -22,7 +25,11 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
 
     public void RecoverChannel(string channelId) => _failing.TryRemove(channelId, out _);
 
-    public void Reset() => _failing.Clear();
+    public void Reset()
+    {
+        _failing.Clear();
+        _guildChannels = [];
+    }
 
     public Task ChannelMessagePost(string channelId, string text)
     {
@@ -68,7 +75,7 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
         Task.FromResult(Enumerable.Empty<DiscordClient.ApplicationsCommand>());
 
     public Task<IEnumerable<DiscordClient.Channel>> GuildChannelsGet(string guildId) =>
-        Task.FromResult(Enumerable.Empty<DiscordClient.Channel>());
+        Task.FromResult(_guildChannels);
 
     private void ThrowIfFailing(string channelId)
     {

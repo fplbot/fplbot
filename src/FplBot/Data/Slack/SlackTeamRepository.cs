@@ -203,6 +203,11 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
 
         await _db.HashSetAsync(key, hashEntries.ToArray());
+        if (channel.FollowedLeagueId is null)
+        {
+            await _db.HashDeleteAsync(key, _channelSubLeagueIdField);
+        }
+
         if (channel.FailingSince is { } failingSince)
         {
             await _db.HashSetAsync(key,

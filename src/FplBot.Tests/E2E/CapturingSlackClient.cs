@@ -27,6 +27,9 @@ public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
 {
     private readonly ConcurrentDictionary<string, string> _failing = new();
     private Func<Task<Response>> _appsUninstallOutcome = DefaultAppsUninstallOutcome;
+    private Conversation[] _channels = [];
+
+    public void SetChannels(params Conversation[] channels) => _channels = channels;
 
     private static Func<Task<Response>> DefaultAppsUninstallOutcome => () => Task.FromResult(new Response { Ok = true });
 
@@ -41,6 +44,7 @@ public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
     public void Reset()
     {
         _failing.Clear();
+        _channels = [];
         _appsUninstallOutcome = DefaultAppsUninstallOutcome;
     }
 
@@ -62,7 +66,7 @@ public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
         Task.FromResult(new UsersListResponse { Ok = true, Members = [] });
 
     public Task<ConversationsListResponse> ConversationsListPublicChannels(int? limit = null, string? cursor = null) =>
-        Task.FromResult(new ConversationsListResponse { Ok = true, Channels = [] });
+        Task.FromResult(new ConversationsListResponse { Ok = true, Channels = _channels });
 
     public Task<UserProfileResponse> UserProfile(string user) =>
         Task.FromResult(new UserProfileResponse { Ok = true, Profile = new GetUserProfile() });

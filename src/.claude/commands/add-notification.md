@@ -1,12 +1,13 @@
 # Add a new FPL event notification
 
-This skill adds a new notification type that gets broadcast to subscribed Slack workspaces and Discord guilds when an FPL event occurs.
+This skill adds a notification type that gets broadcast to subscribed Slack workspaces and Discord guilds when an FPL event occurs.
 
 ## What you need to know first
 
-- All events flow through MassTransit (Azure Service Bus). The publisher detects something in the FPL API and publishes an event; separate consumers for Slack and Discord receive it and post messages.
-- `EventSubscription` enum (in `FplBot/Data/Slack/EventSubscription.cs`) controls whether a team/guild receives the notification. It's used by both platforms despite the `Slack` namespace.
+- All events flow through MassTransit (Azure Service Bus). A publisher detects something in the FPL API and publishes an event; separate Slack and Discord consumers receive it and post messages.
+- Two enums control subscriptions and must stay value-for-value identical, because they are converted by name: `Domain/FplEvent.cs` (domain-facing, used by repositories and handlers) and `Data/EventSubscription.cs` (user-facing, drives the Discord slash-command choices and Slack subscribe parsing).
 - Every consumer **must** be manually registered in `EventHandlersService.ConfigureMassTransit()` or it silently receives nothing.
+- Handlers use primary constructors and are named `Discord<Name>Handler` / `Slack<Name>Handler` — the platform prefix avoids name clashes, so no `using` aliases.
 
 ## Steps
 
@@ -21,9 +22,19 @@ namespace FplBot.Messaging.Contracts.Events.v1;
 public record YourEvent(int GameweekId, string SomeData);
 ```
 
-### 2. Add an EventSubscription value
+### 2. Add the subscription value to both enums
 
-Open `FplBot/Data/Slack/EventSubscription.cs` and add your new value to the enum.
+`FplBot/Domain/FplEvent.cs`:
+
+```csharp
+public enum FplEvent
+{
+    // ... existing values ...
+    YourNewType,
+}
+```
+
+`FplBot/Data/EventSubscription.cs` — same name, same position:
 
 ```csharp
 public enum EventSubscription
@@ -39,10 +50,9 @@ Find the appropriate publisher in `FplBot/Services/EventPublishers/`. Most event
 - A `RecurringAction` class (polling on a cron schedule)
 - A `State` class (`FixtureState`, `LineupState`, `NearDeadLineMonitor`, `MatchDayStatusMonitor`)
 
-In a singleton, always use `IServiceScopeFactory` to resolve `IPublishEndpoint`:
+In a singleton, always use `IServiceScopeFactory` to resolve `IPublishEndpoint` — never inject `IPublishEndpoint` into a singleton, and never use `IBus`:
 
 ```csharp
-// In a singleton state class
 using var scope = _scopeFactory.CreateScope();
 await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
     .Publish(new YourEvent(gameweekId, someData));
@@ -50,124 +60,97 @@ await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
 
 ### 4. Create the Discord handler
 
-Create `FplBot/Services/EventHandlers/Discord/YourEventHandler.cs`:
+Create `FplBot/Services/EventHandlers/Discord/DiscordYourEventHandler.cs`:
 
 ```csharp
 using FplBot.Data.Discord;
+using FplBot.Domain;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
 namespace FplBot.EventHandlers.Discord;
 
-public class YourEventHandler : IConsumer<YourEvent>
+public class DiscordYourEventHandler(IGuildRepository repo, ILogger<DiscordYourEventHandler> logger)
+    : IConsumer<YourEvent>
 {
-    private readonly IGuildRepository _repo;
-    private readonly ILogger<YourEventHandler> _logger;
-
-    public YourEventHandler(IGuildRepository repo, ILogger<YourEventHandler> logger)
-    {
-        _repo = repo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<YourEvent> context)
     {
         var message = context.Message;
-        var guildSubs = await _repo.GetAllGuildSubscriptions();
-        var formatted = FormatMessage(message);
+        var formatted = Formatter.FormatYourEvent(message);
 
-        foreach (var guild in guildSubs)
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.YourNewType);
+        foreach (var (guildId, channelId) in subscribedChannels)
         {
-            if (guild.Subscriptions.ContainsSubscriptionFor(EventSubscription.YourNewType) 
-                && !string.IsNullOrEmpty(formatted))
-            {
-                await context.Publish(new PublishRichToGuildChannel(
-                    guild.GuildId, guild.ChannelId,
-                    "🔔 Your Title", formatted));
-            }
+            await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "🔔 Your Title", formatted));
         }
     }
-
-    private string FormatMessage(YourEvent e) => $"Something happened in GW{e.GameweekId}: {e.SomeData}";
 }
 ```
 
+`GetChannelsSubscribedTo` does the filtering — there is no "fetch all installations, then check `HasRegisteredFor`" API.
+
 ### 5. Create the Slack handler
 
-Create `FplBot/Services/EventHandlers/Slack/YourEventHandler.cs`. The pattern mirrors the Discord handler but uses `ISlackTeamRepository` and publishes `PublishToSlack`:
+Create `FplBot/Services/EventHandlers/Slack/SlackYourEventHandler.cs`. Same shape, with `ISlackTeamRepository` and `PublishToSlack`:
 
 ```csharp
 using FplBot.Data.Slack;
+using FplBot.Domain;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 
 namespace FplBot.EventHandlers.Slack;
 
-internal class YourEventHandler : IConsumer<YourEvent>
+public class SlackYourEventHandler(ISlackTeamRepository slackTeamRepo, ILogger<SlackYourEventHandler> logger)
+    : IConsumer<YourEvent>
 {
-    private readonly ISlackTeamRepository _teamRepo;
-    private readonly ILogger<YourEventHandler> _logger;
-
-    public YourEventHandler(ISlackTeamRepository teamRepo, ILogger<YourEventHandler> logger)
-    {
-        _teamRepo = teamRepo;
-        _logger = logger;
-    }
-
     public async Task Consume(ConsumeContext<YourEvent> context)
     {
         var message = context.Message;
-        var teams = await _teamRepo.GetAllTeams();
-        var formatted = $"Something happened in GW{message.GameweekId}: {message.SomeData}";
+        var formatted = Formatter.FormatYourEvent(message);
 
-        foreach (var team in teams)
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.YourNewType);
+        foreach (var (teamId, channelId) in subscribedChannels)
         {
-            if (team.HasRegisteredFor(EventSubscription.YourNewType) && !string.IsNullOrEmpty(formatted))
-            {
-                await context.Publish(new PublishToSlack(team.TeamId!, team.FplBotSlackChannel!, formatted));
-            }
+            await context.Publish(new PublishToSlack(teamId, channelId, formatted));
         }
     }
 }
 ```
 
+Never post to Slack with `ISlackClientBuilder` from a handler — go through `PublishToSlack` (or `ISlackWorkSpacePublisher`), which owns delivery-failure accounting.
+
 ### 6. Register both consumers — CRITICAL
 
-Open `FplBot/Services/EventHandlers/EventHandlersService.cs` and add both consumers to `ConfigureMassTransit`:
+Open `FplBot/Services/EventHandlers/EventHandlersService.cs` and add both to `ConfigureMassTransit`:
 
 ```csharp
-public void ConfigureMassTransit(IBusRegistrationConfigurator cfg)
-{
-    // ... existing registrations ...
-    cfg.AddConsumer<DiscordYourEventHandler>();  // add using alias at top if names clash
-    cfg.AddConsumer<SlackYourEventHandler>();
-}
+cfg.AddConsumer<DiscordYourEventHandler>();
+cfg.AddConsumer<SlackYourEventHandler>();
 ```
 
-If the Discord and Slack handler class names are identical, add `using` aliases at the top of the file (follow the existing pattern):
+### 7. Fan-out: don't do per-channel work here
 
-```csharp
-using DiscordYourEventHandler = FplBot.EventHandlers.Discord.YourEventHandler;
-using SlackYourEventHandler = FplBot.EventHandlers.Slack.YourEventHandler;
-```
+The handlers above only format once and dispatch — that's fine. If your notification needs per-channel data (that channel's followed league, a per-channel FPL call), it must not happen in this loop. Publish a per-channel command instead and do the work in a second consumer, as `GameweekJustBegan` → `ProcessNewLeagueEntriesForGuildChannel` does. One message per channel isolates a slow or failing league from the rest of the fan-out.
 
-### 7. Add formatter and tests (if needed)
+### 8. Formatter
 
-If the message formatting is non-trivial, extract it to `FplBot/Formatting/` and add unit tests in `FplBot.Tests/Formatting/`. Look at existing formatters (e.g. `Formatting/FixtureStats/`) for the pattern.
+If formatting is non-trivial, put it in `FplBot/Services/EventPublishers/Formatting/` (namespace `FplBot.Formatting`). Builders stay `static` and synchronous, taking already-fetched data as parameters — do the `await` in the handler, not the builder.
 
-### 8. Update subscription UI (if opt-in)
+### 9. Tests — required, not optional
 
-If the new event type should be user-configurable (most are):
-- Discord: update the subscribe/unsubscribe slash command handler in `Services/WebApi/Discord/`
-- Slack: update the subscription management in `Services/WebApi/Slack/`
+- Add an **E2E test** in `FplBot.Tests/E2E/` that drives the publisher (the `RecurringAction` / state class), not a hand-constructed event, and asserts the Slack/Discord message that comes out. Use `AppFixture`, set state up via its real flows (`InstallSlackbot()`, `Subscribe(...)`, `AskSlackbot(...)`), and assert on outcomes — no `A.CallTo()` assertions on internals.
+- Add a formatter unit test in `FplBot.Tests/UnitTests/Formatting/` only if the formatting is worth pinning down in isolation.
 
 ## Verify
 
 ```bash
-dotnet build src/FplBot
-dotnet test src
+dotnet build --no-incremental src/FplBot/FplBot.csproj
+dotnet run --project src/Build -- test
 ```
 
-Check that a consumer for your event type shows up in the MassTransit endpoint list at startup (look for your handler class name in the logs).
+Check that a consumer for your event type shows up in the MassTransit endpoint list at startup.

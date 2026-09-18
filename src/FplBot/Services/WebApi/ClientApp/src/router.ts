@@ -26,6 +26,11 @@ const router = createRouter({
       component: () => import("./views/SuccessView.vue"),
     },
     {
+      path: "/install-cancelled",
+      name: "install-cancelled",
+      component: () => import("./views/InstallCancelledView.vue"),
+    },
+    {
       path: "/error",
       name: "error",
       component: () => import("./views/ErrorView.vue"),

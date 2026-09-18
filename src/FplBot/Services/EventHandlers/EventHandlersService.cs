@@ -36,6 +36,7 @@ public class EventHandlersService : IFplBotService
         cfg.AddConsumer<TeamMarkedForRemovalHandler>();
         cfg.AddConsumer<SlackChannelDeliveryFailedHandler>();
         cfg.AddConsumer<DiscordChannelDeliveryFailedHandler>();
+        cfg.AddConsumer<ChannelMovedHandler>();
         cfg.AddConsumer<BroadcastHandler>();
         cfg.AddConsumer<DiscordFixtureEventsHandler>();
         cfg.AddConsumer<DiscordFixtureFulltimeHandler>();

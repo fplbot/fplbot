@@ -7,6 +7,7 @@ import {
   deleteDiscordGuild,
   getDiscordFailureStats,
   resetDiscordFailures,
+  redirectToDiscordInstall,
 } from "../../api/api";
 import type { GuildWithSubs } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
@@ -120,6 +121,8 @@ async function removeGuild(guildId: string, guildName: string) {
     <h1>Discord servers</h1>
     <p class="lead">{{ totalCount }} server(s) with fplbot installed.</p>
 
+    <button class="btn install-cta" @click="redirectToDiscordInstall('/admin/discord/servers')">Install new server&hellip;</button>
+
     <p v-if="failureStats" class="lead delivery-health">
       <template v-if="failureStats.channelsWithFailures > 0">
         &#9888; {{ failureStats.channelsWithFailures }} channel(s) across {{ failureStats.installationsWithFailures }} server(s) are failing delivery,
@@ -232,6 +235,15 @@ async function removeGuild(guildId: string, guildName: string) {
 </template>
 
 <style scoped>
+.install-cta {
+  display: block;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 .lead {
   color: #6b7280;
   margin-bottom: 1rem;

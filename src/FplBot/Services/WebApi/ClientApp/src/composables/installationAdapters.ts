@@ -3,19 +3,28 @@ import {
   uninstallTeam,
   updateChannelSubscriptions,
   moveChannel,
+  followLeague,
+  unfollowLeague,
+  addChannelSubscription,
+  getAvailableChannels,
   deleteChannelSubscription,
   publishStandings,
   getGuild,
   deleteDiscordGuild,
   updateGuildChannelSubscriptions,
   moveGuildChannel,
+  followGuildLeague,
+  unfollowGuildLeague,
+  addGuildChannelSubscription,
+  getAvailableGuildChannels,
   deleteDiscordSubscription,
   publishStandingsToGuild,
 } from "../api/api";
-import type { EventSubscription, MessageResponse } from "../api/types";
+import type { AvailableChannel, EventSubscription, MessageResponse } from "../api/types";
 
 export interface EntityChannel {
   channel: string;
+  channelName: string | null;
   leagueId: number | null;
   leagueName: string | null;
   subscriptions: EventSubscription[];
@@ -43,6 +52,9 @@ export interface EntityDetails {
 // only supports a hard delete) expressed here instead of duplicated across two views.
 export interface InstallationAdapter {
   apiLabel: string;
+  entityNoun: string;
+  channelNotVisibleHint: string;
+  notListedButDeliveringHint?: string;
   listRoute: string;
   backLinkLabel: string;
   detailsRouteName: string;
@@ -52,6 +64,10 @@ export interface InstallationAdapter {
   getDetails(id: string): Promise<EntityDetails | null>;
   updateChannelSubscriptions(id: string, channelId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
   moveChannel(id: string, channelId: string, newChannelId: string): Promise<MessageResponse>;
+  getAvailableChannels(id: string): Promise<AvailableChannel[]>;
+  addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
+  followLeague(id: string, channelId: string, leagueId: number): Promise<MessageResponse>;
+  unfollowLeague(id: string, channelId: string): Promise<MessageResponse>;
   deleteChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
   publishStandings(id: string, channelId: string): Promise<{ published: boolean; message: string }>;
   uninstall?(id: string): Promise<MessageResponse>;
@@ -60,6 +76,10 @@ export interface InstallationAdapter {
 
 export const slackInstallationAdapter: InstallationAdapter = {
   apiLabel: "Slack API",
+  entityNoun: "workspace",
+  channelNotVisibleHint:
+    "conversations.list only returns public channels, so a private channel the bot posts in looks like this and is fine. Otherwise the channel was archived or deleted, or the bot was removed from the workspace.",
+  notListedButDeliveringHint: "likely a private channel",
   listRoute: "/admin/slack",
   backLinkLabel: "Back to workspaces",
   detailsRouteName: "admin-team-details",
@@ -73,6 +93,10 @@ export const slackInstallationAdapter: InstallationAdapter = {
   },
   updateChannelSubscriptions,
   moveChannel,
+  followLeague,
+  unfollowLeague,
+  addChannelSubscription,
+  getAvailableChannels,
   deleteChannelSubscription,
   publishStandings,
   uninstall: uninstallTeam,
@@ -80,6 +104,9 @@ export const slackInstallationAdapter: InstallationAdapter = {
 
 export const discordInstallationAdapter: InstallationAdapter = {
   apiLabel: "Discord API",
+  entityNoun: "server",
+  channelNotVisibleHint:
+    "The bot did not get this channel back from the guild channel list — the channel was deleted, or the bot lost the permission to view it.",
   listRoute: "/admin/discord/servers",
   backLinkLabel: "Back to guilds",
   detailsRouteName: "admin-guild-details",
@@ -93,6 +120,10 @@ export const discordInstallationAdapter: InstallationAdapter = {
   },
   updateChannelSubscriptions: updateGuildChannelSubscriptions,
   moveChannel: moveGuildChannel,
+  getAvailableChannels: getAvailableGuildChannels,
+  followLeague: followGuildLeague,
+  unfollowLeague: unfollowGuildLeague,
+  addChannelSubscription: addGuildChannelSubscription,
   deleteChannelSubscription: deleteDiscordSubscription,
   publishStandings: publishStandingsToGuild,
   deleteEntity: deleteDiscordGuild,

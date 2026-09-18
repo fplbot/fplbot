@@ -59,6 +59,12 @@ public class ChannelSubscription
         }
     }
 
+    public void Unfollow()
+    {
+        FollowedLeagueId = null;
+        Events.Remove(FplEvents.RequiringALeague);
+    }
+
     public void Subscribe(FplEvent fplEvent)
     {
         Events.Add(fplEvent);

@@ -153,33 +153,75 @@ await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new S
 
 ### Error handling
 
-Faulted messages are globally discarded (`DiscardFaultedMessages()`). There is no dead-letter queue. Messages have a 2-hour TTL on Azure Service Bus.
+Faulted messages land in MassTransit's per-consumer `_error` queue. Inspect and act on them from
+the admin Errors dashboard (`Services/WebApi/Endpoints/Api/Admin/AdminErrorEndpoints.cs`), which
+exposes list / retry / retry-all / discard / purge per queue.
+
+Messages have a 2-hour TTL on Azure Service Bus, so anything older than that is gone regardless.
+
+## Domain
+
+`FplBot/Domain/` holds the platform-agnostic model shared by Slack and Discord:
+
+| Type | Role |
+|---|---|
+| `Installation` | one Slack workspace / Discord guild, with its channel subscriptions |
+| `ChannelSubscription` | one channel: which `FplEvent`s it gets, which league it follows |
+| `EventCollection` | the set of `FplEvent`s a channel subscribes to |
+| `ClassicLeagueId` | validated league id value type |
+| `FplEvent` | enum of subscribable event types |
+
+Domain types have **private constructors and named static factories** — never public constructors
+or object initializers. Loading from storage uses a `FromStorage` factory; mappers must not call
+behaviour methods like `Install`/`Follow`/`Subscribe` to rebuild state.
+
+`FplBot/ApplicationServices/` composes domain calls for a given trigger context (e.g.
+`AdminUninstallSlackWorkspace`). Application services never publish to the bus — the caller does.
+Distinct trigger contexts get distinct named classes, not a flag on a shared one.
+
+A second enum `Data/EventSubscription.cs` carries the **same values under the same names**. It is
+the user-facing list: the Discord slash-command choices are generated from
+`Enum.GetNames<EventSubscription>()`, and the Slack/Discord subscribe commands parse user input into
+it. The two are converted by name (`Enum.Parse<FplEvent>(e.ToString())`), so the enums must stay
+value-for-value identical — **adding a notification means adding the value to both**. It also backs
+the `StatType` → subscription mapping helpers under `Services/EventHandlers/*/Helpers/`.
+
+Everything past the command boundary — repositories, `ChannelSubscription`, event handlers — uses
+`Domain/FplEvent.cs`.
 
 ## Data access
 
 **Redis only** (no SQL, no ORM). Direct `IDatabase` operations via `StackExchange.Redis`.
 
-Key repositories:
-- `Data/Slack/SlackTeamRepository.cs` — Slack workspace subscriptions
-- `Data/Discord/DiscordGuildRepository.cs` — Discord guild subscriptions
-- `Data/Slack/EventSubscription.cs` — enum of all subscribable event types (used by both Slack and Discord)
+Both platforms implement the same `Data/IDomainRepository.cs`:
+- `Data/Slack/SlackTeamRepository.cs` (`ISlackTeamRepository`) — Slack workspaces
+- `Data/Discord/DiscordGuildRepository.cs` (`IGuildRepository`) — Discord guilds
+
+`ISlackTeamRepository` and `IGuildRepository` add no members of their own; they exist so DI can tell
+the two instances apart. To find who should receive a notification, use
+`GetChannelsSubscribedTo(params FplEvent[])`, which returns `(InstallationId, ChannelId)` pairs —
+there is no "get everything, then filter in the handler" API.
 
 Redis key convention: `{EntityType}-{id}` (e.g. `TeamId-T12345`, `GuildSubs-{guildId}-Channel-{channelId}`).
 
 ## Adding a new notification
 
-See `.claude/commands/add-notification.md` for the full recipe. Summary:
+See `src/.claude/commands/add-notification.md` for the full recipe. Summary:
 1. Define event record in `Messaging/Events/v1/`
-2. Add `EventSubscription` enum value
+2. Add the value to both `Domain/FplEvent.cs` and `Data/EventSubscription.cs`
 3. Add publishing in a `RecurringAction` or `State` class
-4. Create Discord handler (`Services/EventHandlers/Discord/`)
-5. Create Slack handler (`Services/EventHandlers/Slack/`)
+4. Create Discord handler (`Services/EventHandlers/Discord/Discord<Name>Handler.cs`)
+5. Create Slack handler (`Services/EventHandlers/Slack/Slack<Name>Handler.cs`)
 6. Register both consumers in `EventHandlersService.ConfigureMassTransit()`
-7. Add formatter + tests if needed
+7. Add an E2E test (`FplBot.Tests/E2E/`), plus a formatter unit test if the formatting is non-trivial
 
 ## Adding a command handler
 
-See `.claude/commands/add-command-handler.md`.
+Chat commands are two-stage since #459: the WebApi mention/interaction handler only publishes a
+`Process<Name>Command`, and a consumer in `Services/EventHandlers/{Slack,Discord}/Commands/` does
+the work and posts the reply.
+
+See `src/.claude/commands/add-command-handler.md`.
 
 ## Testing
 
@@ -190,9 +232,19 @@ dotnet run --project src/Build -- test
 dotnet test src
 ```
 
-- Unit tests: inject fakes via `FplBot.Tests/Helpers/Factory.cs`
-- Integration tests: real Redis via `Testcontainers.Redis`
-- E2E tests: `FplBot.Tests/E2E/` — spin up an in-memory bus
+Full rules: the `write-test` skill (`.claude/skills/write-test/SKILL.md`). In short:
+
+- Test from the highest possible entry point. Default to an E2E test in `FplBot.Tests/E2E/` via
+  `AppFixture` — real test host, real Redis and Azure Service Bus emulator via Testcontainers.
+- Set up state through the real flows `AppFixture` exposes (`InstallSlackbot()`, `Subscribe(...)`,
+  `AskSlackbot(...)`), not by seeding repositories directly.
+- Mock only the external integrations: FPL APIs, Slack, Discord. Use real infra for everything we
+  already run in Docker.
+- Assert on outcomes, never on internals — no `A.CallTo()` assertions on internal logic in E2E tests.
+- `FplBot.Tests/UnitTests/` is for helpers, formatters and static methods only. If the unit depends
+  on another component, move the test up to E2E instead.
+- Any feature change gets a test: E2E for consumers / recurring jobs / state machines, an
+  `E2E/ApiEndpoints/` test for HTTP-facing endpoint handlers.
 
 ## Key file locations
 
@@ -201,10 +253,15 @@ Hosting/FplBotApplication.cs          — service wiring, MassTransit config
 Hosting/IFplBotService.cs             — service plugin interface
 Services/EventHandlers/EventHandlersService.cs — consumer registrations
 Services/EventPublishers/             — recurring jobs, state machines
-Services/WebApi/                      — HTTP endpoints
+Services/EventPublishers/Formatting/  — message formatters (namespace FplBot.Formatting)
+Services/EventHandlers/*/Commands/    — chat command consumers (the work half)
+Services/WebApi/                      — HTTP endpoints, incl. the mention/interaction handlers
 Messaging/Events/v1/                  — event contracts
 Messaging/Commands/v1/                — command contracts
-Data/Slack/EventSubscription.cs       — subscription enum (Slack + Discord)
+Domain/                               — Installation, ChannelSubscription, FplEvent
+ApplicationServices/                  — trigger-context composition over Domain
+Data/IDomainRepository.cs             — the repository contract both platforms implement
+Domain/FplEvent.cs                    — subscription enum (Slack + Discord)
 FplBot.csproj                         — single project file, all packages here
 Build/Program.cs                      — Bullseye build targets
 Dockerfile                            — multi-stage build
@@ -219,6 +276,6 @@ src/devenv.sh                         — local dev startup
 | Entry | A single user's FPL team |
 | Classic league | A group of entries competing on total points |
 | Deadline | Transfer cutoff before a gameweek |
-| EventSubscription | Opt-in notification category (goals, injuries, deadlines, etc.) |
+| FplEvent | Opt-in notification category (goals, injuries, deadlines, etc.) |
 | BPS | Bonus Points System — determines who gets bonus points per fixture |
 | Chip | Special one-use boost (Triple Captain, Wildcard, Free Hit, Bench Boost) |

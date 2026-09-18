@@ -269,14 +269,69 @@ public class InstallationTests
     }
 
     [Fact]
+    public void Unfollow_ClearsTheLeagueAndKeepsEventsThatDoNotNeedOne()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Follow("C1", new ClassicLeagueId(42));
+        installation.Subscribe("C1", [FplEvent.PriceChanges, FplEvent.Deadlines]);
+
+        installation.Unfollow("C1");
+
+        var subscription = installation.GetChannel("C1")!;
+        Assert.Null(subscription.FollowedLeagueId);
+        Assert.True(subscription.IsSubscribedTo(FplEvent.PriceChanges));
+        Assert.True(subscription.IsSubscribedTo(FplEvent.Deadlines));
+    }
+
+    [Fact]
+    public void Unfollow_RemovesEveryEventThatNeedsALeague()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Follow("C1", new ClassicLeagueId(42));
+        installation.Subscribe("C1", [FplEvent.Standings, FplEvent.Captains, FplEvent.Transfers, FplEvent.Taunts, FplEvent.Lineups]);
+
+        installation.Unfollow("C1");
+
+        var subscription = installation.GetChannel("C1")!;
+        Assert.All(FplEvents.RequiringALeague, e => Assert.False(subscription.IsSubscribedTo(e)));
+        Assert.True(subscription.IsSubscribedTo(FplEvent.Lineups));
+    }
+
+    [Fact]
+    public void Unfollow_OnAnAllSubscribedChannel_ExpandsAllIntoTheEventsThatDoNotNeedALeague()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Follow("C1", new ClassicLeagueId(42));
+
+        installation.Unfollow("C1");
+
+        var subscription = installation.GetChannel("C1")!;
+        Assert.All(FplEvents.RequiringALeague, e => Assert.False(subscription.IsSubscribedTo(e)));
+        Assert.True(subscription.IsSubscribedTo(FplEvent.PriceChanges));
+        Assert.True(subscription.IsSubscribedTo(FplEvent.Deadlines));
+        Assert.DoesNotContain(FplEvent.All, subscription.Events.Current);
+    }
+
+    [Fact]
+    public void Unfollow_OnUnknownChannel_DoesNothing()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+
+        installation.Unfollow("C1");
+
+        Assert.Empty(installation.ChannelSubscriptions);
+    }
+
+    [Fact]
     public void MoveChannel_MovesLeagueAndEventsToTheNewChannelId()
     {
         var installation = Installation.Install("T1", "Team One", "token");
         installation.Follow("C1", new ClassicLeagueId(42));
         installation.Subscribe("C1", [FplEvent.Deadlines]);
 
-        installation.MoveChannel("C1", "C2");
+        var outcome = installation.MoveChannel("C1", "C2");
 
+        Assert.Equal(MoveChannelOutcome.Moved, outcome);
         var subscription = Assert.Single(installation.ChannelSubscriptions);
         Assert.Equal("C2", subscription.ChannelId);
         Assert.Equal(new ClassicLeagueId(42), subscription.FollowedLeagueId);
@@ -299,9 +354,36 @@ public class InstallationTests
     {
         var installation = Installation.Install("T1", "Team One", "token");
 
-        installation.MoveChannel("C1", "C2");
+        var outcome = installation.MoveChannel("C1", "C2");
 
+        Assert.Equal(MoveChannelOutcome.SourceNotFound, outcome);
         Assert.Empty(installation.ChannelSubscriptions);
+    }
+
+    [Fact]
+    public void MoveChannel_OntoAChannelThatAlreadyHasASubscription_IsRefused()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Follow("C1", new ClassicLeagueId(42));
+        installation.Follow("C2", new ClassicLeagueId(99));
+
+        var outcome = installation.MoveChannel("C1", "C2");
+
+        Assert.Equal(MoveChannelOutcome.TargetAlreadySubscribed, outcome);
+        Assert.Equal(new ClassicLeagueId(42), installation.GetChannel("C1")!.FollowedLeagueId);
+        Assert.Equal(new ClassicLeagueId(99), installation.GetChannel("C2")!.FollowedLeagueId);
+    }
+
+    [Fact]
+    public void MoveChannel_OntoItself_IsRefused()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+
+        var outcome = installation.MoveChannel("C1", "C1");
+
+        Assert.Equal(MoveChannelOutcome.TargetAlreadySubscribed, outcome);
+        Assert.NotNull(installation.GetChannel("C1"));
     }
 
     [Fact]

@@ -1,10 +1,20 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
+import { isSiteRelativePath } from "../oauthState";
 
 const route = useRoute();
+const router = useRouter();
+
+onMounted(() => {
+  const state = route.query.state;
+  if (isSiteRelativePath(state)) {
+    router.replace(state);
+  }
+});
+
 const type = computed(() => {
   const t = route.query.type;
   if (t === "slack" || t === "discord") return t;
