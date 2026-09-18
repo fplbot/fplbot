@@ -11,6 +11,13 @@ internal static class DevSeeder
         "FixturePenaltyMisses FixtureFullTime Taunts PriceChanges InjuryUpdates " +
         "Deadlines Lineups NewPlayers FixtureRemovedFromGameweek";
 
+    private static readonly string[] ConcreteEvents =
+    [
+        "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
+        "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates",
+        "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek"
+    ];
+
     public static Task SeedAsync(ResourceEndpointsAllocatedEvent evt, CancellationToken ct)
     {
         _ = Task.Run(() => SeedInBackgroundAsync(ct), CancellationToken.None);
@@ -80,6 +87,7 @@ internal static class DevSeeder
         await SeedSlackWorkspace(db, "DEV-SLACK", "Dev Slack Workspace", "xoxb-dev-fake-token", "C0DEV000001", 12345, AllSubs);
         await SeedSlackWorkspace(db, "DEV-SLACK-2", "Dev Slack Workspace 2", "xoxb-dev-fake-token-2", "C0DEV000002", 23456, "Standings Captains Transfers");
         await SeedSlackWorkspace(db, "DEV-SLACK-3", "Dev Slack Workspace 3", "xoxb-dev-fake-token-3", "C0DEV000003", 34567, "PriceChanges InjuryUpdates Deadlines");
+        await SeedSlackWorkspace(db, "T0C2TLMHKDK", "fplbotdev-throwaway-slack", "xoxb-dev-fake-token-throwaway", "C0C2YFF57HQ", 12345, AllSubs);
 
         // No channel subscriptions at all — a bare install to exercise the "no channels" path in the admin UI.
         await db.HashSetAsync("TeamId-DEV-SLACK-BARE", [
@@ -105,24 +113,45 @@ internal static class DevSeeder
             new HashEntry("subscriptions", subscriptions)
         ]);
         await db.SetAddAsync($"SlackChannelSubIndex-{teamId}", channelId);
+        await db.SetAddAsync("TeamIndex", teamId);
+        await SeedEventIndex(db, "SlackEventIndex", teamId, channelId, subscriptions);
 
         Console.WriteLine($"[DevSeeder] Inserted Slack workspace {teamKey} (league {leagueId}, channel {channelId}).");
     }
 
     private static async Task SeedDiscord(IDatabase db)
     {
-        await db.HashSetAsync("Guild-111222333444555666", [
-            new HashEntry("name", "Dev Discord Guild")
-        ]);
-        Console.WriteLine("[DevSeeder] Inserted Discord guild Guild-111222333444555666.");
+        await SeedDiscordGuild(db, "111222333444555666", "Dev Discord Guild", "999888777666555444", 12345, AllSubs);
+        await SeedDiscordGuild(db, "1546966580007542937", "fplbotdev-throwaway-discord", "1546966580976549940", 12345, AllSubs);
+    }
 
-        await db.HashSetAsync("GuildSubs-111222333444555666-Channel-999888777666555444", [
-            new HashEntry("guildid", "111222333444555666"),
-            new HashEntry("channelid", "999888777666555444"),
-            new HashEntry("leagueid", "12345"),
-            new HashEntry("subs", AllSubs)
+    private static async Task SeedDiscordGuild(IDatabase db, string guildId, string name, string channelId, int leagueId, string subscriptions)
+    {
+        await db.HashSetAsync($"Guild-{guildId}", [
+            new HashEntry("name", name)
         ]);
-        Console.WriteLine("[DevSeeder] Inserted Discord subscription GuildSubs-111222333444555666-Channel-999888777666555444 (league 12345).");
+        await db.SetAddAsync("GuildIndex", guildId);
+
+        await db.HashSetAsync($"GuildSubs-{guildId}-Channel-{channelId}", [
+            new HashEntry("guildid", guildId),
+            new HashEntry("channelid", channelId),
+            new HashEntry("leagueid", leagueId.ToString()),
+            new HashEntry("subs", subscriptions)
+        ]);
+        await db.SetAddAsync($"GuildChannelSubIndex-{guildId}", channelId);
+        await SeedEventIndex(db, "GuildEventIndex", guildId, channelId, subscriptions);
+
+        Console.WriteLine($"[DevSeeder] Inserted Discord guild Guild-{guildId} (league {leagueId}, channel {channelId}).");
+    }
+
+    private static async Task SeedEventIndex(IDatabase db, string indexPrefix, string installationId, string channelId, string subscriptions)
+    {
+        var subscribed = subscriptions.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var events = subscribed.Contains("All") ? ConcreteEvents : subscribed;
+        foreach (var fplEvent in events)
+        {
+            await db.SetAddAsync($"{indexPrefix}-{fplEvent}", $"{installationId}:{channelId}");
+        }
     }
 
     // Must match search.EntriesIndex / search.LeaguesIndex in appsettings.json.
