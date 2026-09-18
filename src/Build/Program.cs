@@ -98,6 +98,7 @@ async Task BuildClientApp()
 {
     var clientAppDir = Path.Combine("src", "FplBot", "Services", "WebApi", "ClientApp");
     await Command.RunAsync("npm", "ci", clientAppDir);
+    await Command.RunAsync("npm", "run typecheck", clientAppDir);
     await Command.RunAsync("npm", "run build", clientAppDir);
 }
 

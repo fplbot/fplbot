@@ -120,11 +120,14 @@ There is no code generation — no OpenAPI/Swagger document, no NSwag, no `codeg
 TypeScript types in `ClientApp/src/api/types.ts` are written by hand to mirror the JSON shapes the
 `/api/**` endpoints accept and return, so **changing a backend DTO means editing that file too**.
 
-Nothing enforces it. `client-build` runs `npm ci` + `npm run build` without type-checking, and the
-`ci` target is `test` + `client-build`, so a drifted type won't fail the build — or be reported
-anywhere. `npm run typecheck` (`vue-tsc --noEmit`) is currently broken too: `vue-tsc` can't resolve
-`tsc` from the pinned `typescript` version and dies with `ERR_PACKAGE_PATH_NOT_EXPORTED`. Until that
-is fixed, TypeScript errors in the ClientApp ship silently, so treat `types.ts` edits with care.
+`client-build` runs `npm run typecheck` (`vue-tsc --noEmit`) between `npm ci` and `npm run build`,
+so a drifted type fails the build — locally and in CI, since the `ci` target is `test` +
+`client-build`. `vite build` itself never type-checks; the explicit step is what catches this.
+
+TypeScript is pinned to 6.x on purpose. `vue-tsc` resolves `typescript/lib/tsc.js`, which
+TypeScript 7 (the native rewrite) no longer exposes through its package `exports` — on 7.x the
+typecheck dies with `ERR_PACKAGE_PATH_NOT_EXPORTED`. Don't take a Renovate bump to `typescript@7`
+until `vue-tsc` supports it.
 
 ### Rider run configurations
 
