@@ -21,7 +21,7 @@ public class PlayerUpdatesRecurringAction(
 
     public async Task Process(CancellationToken stoppingToken)
     {
-        using var activity = FplBotDiagnostics.ActivitySource.StartActivity(nameof(PlayerUpdatesRecurringAction));
+        using var activity = FplBotDiagnostics.For(FplBotService.EventPublishers).StartActivity(nameof(PlayerUpdatesRecurringAction));
         using var scope = logger.BeginCorrelationScope();
         try
         {

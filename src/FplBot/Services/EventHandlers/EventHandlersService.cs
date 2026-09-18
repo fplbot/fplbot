@@ -13,11 +13,11 @@ using StackExchange.Redis;
 
 namespace FplBot.Services.EventHandlers;
 
-public class EventHandlersService : IFplBotService
+public class EventHandlersService : WorkerFplBotService
 {
-    public FplBotService ServiceType => FplBotService.EventHandlers;
+    public override FplBotService ServiceType => FplBotService.EventHandlers;
 
-    public void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env)
+    public override void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env)
     {
         services.AddDiscordServices(config, env);
         services.AddSlackServices(config, env);
@@ -29,7 +29,7 @@ public class EventHandlersService : IFplBotService
         services.AddSearching(config.GetSection("Search"));
     }
 
-    public void ConfigureMassTransit(IBusRegistrationConfigurator cfg)
+    public override void AddConsumers(IBusRegistrationConfigurator cfg)
     {
         cfg.AddConsumer<AppInstalledHandler>();
         cfg.AddConsumer<SlackWorkspaceUninstalledHandler>();

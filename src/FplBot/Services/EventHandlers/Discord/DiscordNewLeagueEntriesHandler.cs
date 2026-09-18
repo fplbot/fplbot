@@ -39,6 +39,6 @@ public class DiscordNewLeagueEntriesHandler(
             ? $"🎉 New entries in {league.LeagueName}!"
             : $"🎉 New entry in {league.LeagueName}!";
         var formatted = Formatter.FormatNewLeagueEntries(league.LeagueName, league.Entries, league.HasMore, includeHeader: false);
-        await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, title, formatted));
+        await context.Publish(new PublishRichToGuildChannel(message.TeamId, message.ChannelId, title, formatted));
     }
 }

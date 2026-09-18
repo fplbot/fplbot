@@ -16,6 +16,8 @@ Single `FplBot.csproj` (monolith) deployed as **four independent Docker containe
 | `SearchIndexer` | Syncs FPL player/league data to Elasticsearch |
 
 Entry point: `Program.cs` → `FplBotApplication.RunAsync(args, services)` in `Hosting/FplBotApplication.cs`.
+Omitting `--services` runs all four — the flag only narrows, which is what the Dockerfile/Heroku
+process types do.
 
 Each service implements `IFplBotService` and registers its own DI, consumers, and middleware.
 
@@ -23,7 +25,8 @@ Each service implements `IFplBotService` and registers its own DI, consumers, an
 
 ```bash
 ./src/devenv.sh          # starts Redis + Azure Service Bus emulator via Aspire
-dotnet run --project src/FplBot -- --services All  # runs all 4 services together
+dotnet run --project src/FplBot                       # all 4 services, Development
+dotnet run --project src/FplBot -- --services WebApi  # or just one
 ```
 
 Seed data for local dev (Slack workspaces, Discord guilds, Elasticsearch docs) lives in
@@ -55,18 +58,38 @@ dotnet user-secrets set DiscordAppId "..." --project src/FplBot
 
 In Development, `DevLoggingSlackClient`/`DevLoggingDiscordClient` short-circuit every outbound
 call into a log line — including Discord interaction followups, so a deferred slash command would
-sit on "thinking…" forever. Run the **Integration** environment to exercise the real APIs:
+sit on "thinking…" forever. This happens whether or not real credentials are configured; user
+secrets alone do not make Development hit the real APIs. Run the **Integration** environment to exercise the real APIs:
 
 ```bash
-DOTNET_ENVIRONMENT=Integration dotnet run --project src/FplBot -- --services All
+dotnet run --project src/FplBot --launch-profile Integration
 ```
 
-In Rider, use the **All Services (Integration)** run configuration (there's an `(Integration)`
-variant of each single-service config too, in `src/.idea/.../runConfigurations/`).
+Profiles live in `src/FplBot/Properties/launchSettings.json`: `Default` sets
+`DOTNET_ENVIRONMENT=Development` and is what a bare `dotnet run` picks; `Integration` sets
+`DOTNET_ENVIRONMENT=Integration`. The Rider configs don't use the profiles — they set `--services`
+and `DOTNET_ENVIRONMENT` directly.
 
-Integration is local like Development — same user secrets, https on localhost, telemetry to the
-Aspire dashboard, `[MachineName]` prefix on outgoing messages — but every integration is live.
-Request signature verification is on, since real Slack and Discord sign their webhooks.
+In Rider, use the **All Services (Integration)** run configuration. Configs live in
+`src/.idea/.idea.FplBot/.idea/runConfigurations/`: one per service (`WebApi`, `EventHandlers`,
+`EventPublishers`, `SearchIndexer`), an `(Integration)` twin of each, the `All Services` /
+`All Services (Integration)` compounds, and `WebApi + Vite` — the compounds also start
+`SPA (Vite dev)`. Each .NET config sets `--services <Service>` and `DOTNET_ENVIRONMENT`.
+
+Integration is local like Development — same `appsettings.json`, same user secrets, https on
+localhost, telemetry to the Aspire dashboard, `[MachineName]` prefix on outgoing messages — but
+every integration is live. There is no `appsettings.Integration.json`, so any key not overridden in
+user secrets stays at its placeholder.
+
+Request signature verification differs by environment:
+
+| | Development | Integration |
+|---|---|---|
+| Slack `/events` | off | on |
+| Discord interactions | on, unless `SKIP_DISCORD_SIGNATURE_VERIFICATION=true` | on |
+
+Receiving real webhooks also needs a public URL (ngrok) onto `https://localhost:1337`, registered
+in the Slack/Discord app dashboard.
 
 In code: `env.IsLocal()` covers both Development and Integration and guards machine conveniences;
 plain `env.IsDevelopment()` is reserved for the branches that fake an outbound integration.

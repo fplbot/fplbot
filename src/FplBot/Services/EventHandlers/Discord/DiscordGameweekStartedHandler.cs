@@ -35,11 +35,11 @@ public class DiscordGameweekStartedHandler(
         var message = context.Message;
         var newGameweek = message.GameweekId;
 
-        var installation = await repo.FindInstallationByTeamId(message.GuildId);
+        var installation = await repo.FindInstallationByTeamId(message.TeamId);
         var team = installation?.GetChannel(message.ChannelId);
         if (team is null)
         {
-            logger.LogWarning("No subscription found for guild {GuildId} channel {ChannelId}. Skipping gameweek-started notifications", message.GuildId,
+            logger.LogWarning("No subscription found for guild {GuildId} channel {ChannelId}. Skipping gameweek-started notifications", message.TeamId,
                 message.ChannelId);
             return;
         }

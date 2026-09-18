@@ -1,6 +1,7 @@
 using FplBot.Config;
 using FplBot.Data.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
+using FplBot.Integrations.Slack;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 

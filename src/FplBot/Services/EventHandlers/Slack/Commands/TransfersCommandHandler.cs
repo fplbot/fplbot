@@ -20,7 +20,7 @@ public class TransfersCommandHandler(
         var gameweek = await gameweekHelper.ExtractGameweekOrFallbackToCurrent(command.Text, "transfers {gw}");
 
         var installation = await slackTeamRepo.GetInstallation(command.TeamId);
-        var leagueId = installation.GetChannel(command.Channel)?.FollowedLeagueId?.Value;
+        var leagueId = installation.GetChannel(command.ChannelId)?.FollowedLeagueId?.Value;
         var messageToSend = "You don't follow any league yet. Use the `@fplbot follow` command first.";
         if (leagueId.HasValue)
         {
@@ -35,6 +35,6 @@ public class TransfersCommandHandler(
             }
         }
 
-        await workSpacePublisher.PublishToWorkspace(command.TeamId, command.Channel, messageToSend);
+        await workSpacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, messageToSend);
     }
 }

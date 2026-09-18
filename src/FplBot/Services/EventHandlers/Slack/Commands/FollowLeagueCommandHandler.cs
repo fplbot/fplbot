@@ -23,7 +23,7 @@ public class FollowLeagueCommandHandler(
 
         if (string.IsNullOrEmpty(newLeagueId))
         {
-            await publisher.PublishToWorkspace(command.TeamId, command.Channel, "No leagueId provided. Usage: `@fplbot follow 123`");
+            await publisher.PublishToWorkspace(command.TeamId, command.ChannelId, "No leagueId provided. Usage: `@fplbot follow 123`");
             return;
         }
 
@@ -36,7 +36,7 @@ public class FollowLeagueCommandHandler(
         }
         else
         {
-            await publisher.PublishToWorkspace(command.TeamId, command.Channel,
+            await publisher.PublishToWorkspace(command.TeamId, command.ChannelId,
                 $"Could not update league to id '{newLeagueId}'. Make sure it's a single valid number.");
             return;
         }
@@ -49,19 +49,19 @@ public class FollowLeagueCommandHandler(
             if (league?.Properties != null)
             {
                 var installation = await slackTeamRepository.GetInstallation(command.TeamId);
-                installation.Follow(command.Channel, new ClassicLeagueId(theLeagueId));
+                installation.Follow(command.ChannelId, new ClassicLeagueId(theLeagueId));
                 await slackTeamRepository.Save(installation);
-                var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in <#{command.Channel}>";
-                await publisher.PublishToWorkspace(command.TeamId, command.Channel, success);
+                var success = $"Thanks! You're now following the '{league.Properties.Name}' league (leagueId: {theLeagueId}) in <#{command.ChannelId}>";
+                await publisher.PublishToWorkspace(command.TeamId, command.ChannelId, success);
                 return;
             }
 
-            await publisher.PublishToWorkspace(command.TeamId, command.Channel, failure);
+            await publisher.PublishToWorkspace(command.TeamId, command.ChannelId, failure);
         }
         catch (HttpRequestException e)
         {
             logger.LogError(e.Message, e);
-            await publisher.PublishToWorkspace(command.TeamId, command.Channel, failure);
+            await publisher.PublishToWorkspace(command.TeamId, command.ChannelId, failure);
         }
     }
 }

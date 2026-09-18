@@ -29,12 +29,12 @@ public class PlayerCommandHandler(
 
         if (mostPopularMatchingPlayer == null)
         {
-            await workSpacePublisher.PublishToWorkspace(command.TeamId, command.Channel, $"Couldn't find {name}");
+            await workSpacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, $"Couldn't find {name}");
             return;
         }
 
         await workSpacePublisher.PublishToWorkspace(command.TeamId,
-            new ChatPostMessageRequest { Channel = command.Channel, Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams) });
+            new ChatPostMessageRequest { Channel = command.ChannelId, Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams) });
     }
 
     private static Player? FindMostPopularMatchingPlayer(Player[] players, string name)

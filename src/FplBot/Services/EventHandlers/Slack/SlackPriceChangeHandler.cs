@@ -21,7 +21,7 @@ public class SlackPriceChangeHandler(
         var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.PriceChanges);
         foreach (var (teamId, channelId) in subscribedChannels)
         {
-            await context.Publish(new PublishPriceChangesToSlackWorkspace(WorkspaceId: teamId, ChannelId: channelId,
+            await context.Publish(new PublishPriceChangesToSlackWorkspace(TeamId: teamId, ChannelId: channelId,
                 [.. notification.PlayersWithPriceChanges]));
         }
     }
@@ -29,12 +29,12 @@ public class SlackPriceChangeHandler(
     public async Task Consume(ConsumeContext<PublishPriceChangesToSlackWorkspace> context)
     {
         var message = context.Message;
-        logger.LogInformation($"Publish price changes to {message.WorkspaceId}");
+        logger.LogInformation($"Publish price changes to {message.TeamId}");
         var filtered = message.PlayersWithPriceChanges.Where(c => c.IsRelevant()).ToList();
         if (filtered.Count != 0)
         {
             var formatted = Formatter.FormatPriceChanged(filtered);
-            await publisher.PublishToWorkspace(message.WorkspaceId, message.ChannelId, formatted);
+            await publisher.PublishToWorkspace(message.TeamId, message.ChannelId, formatted);
         }
         else
         {

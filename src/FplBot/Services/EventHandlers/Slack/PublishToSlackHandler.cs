@@ -18,7 +18,7 @@ public class PublishToSlackHandler(ISlackWorkSpacePublisher publisher, IHostEnvi
         }
 
         await publisher.PublishToWorkspace(publish.TeamId,
-            new ChatPostMessageRequest { Channel = publish.Channel, Text = publishMessage, unfurl_links = "false" });
+            new ChatPostMessageRequest { Channel = publish.ChannelId, Text = publishMessage, unfurl_links = "false" });
     }
 
     public async Task Consume(ConsumeContext<PublishSlackThreadMessage> context)
@@ -31,6 +31,6 @@ public class PublishToSlackHandler(ISlackWorkSpacePublisher publisher, IHostEnvi
         }
 
         await publisher.PublishToWorkspace(message.TeamId,
-            new ChatPostMessageRequest { Channel = message.Channel, thread_ts = message.Timestamp, Text = publishMessage, unfurl_links = "false" });
+            new ChatPostMessageRequest { Channel = message.ChannelId, thread_ts = message.Timestamp, Text = publishMessage, unfurl_links = "false" });
     }
 }

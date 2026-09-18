@@ -3,6 +3,7 @@ using Discord.Net.HttpClients;
 using FplBot.Config;
 using FplBot.Data.Discord;
 using FplBot.Discord.Handlers.SlashCommands;
+using FplBot.Integrations.Discord;
 using FplBot.Services.WebApi.Discord.Handlers.Reactors;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
@@ -43,9 +44,21 @@ public static class ServiceCollectionExtensions
             .AddSlashCommandHandler<FollowSlashCommandHandler>()
             .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()
             .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>();
+        services.AddTeamContextToSlashCommandHandlers();
         services.AddOptions<DiscordClientOptions>()
             .ValidateWithFluentValidation(new DiscordClientOptionsValidator())
             .ValidateOnStart();
         return services;
+    }
+
+    private static void AddTeamContextToSlashCommandHandlers(this IServiceCollection services)
+    {
+        foreach (var registration in services.Where(d => d.ServiceType == typeof(ISlashCommandHandler)).ToList())
+        {
+            services.Remove(registration);
+            services.AddScoped<ISlashCommandHandler>(sp => new TeamContextSlashCommandHandler(
+                (ISlashCommandHandler)ActivatorUtilities.CreateInstance(sp, registration.ImplementationType!),
+                sp.GetRequiredService<ILogger<TeamContextSlashCommandHandler>>()));
+        }
     }
 }

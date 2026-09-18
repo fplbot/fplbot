@@ -12,6 +12,11 @@ namespace FplBot.WebApi.Infrastructure;
 
 public static class WebAppExtensions
 {
+    public const string SlackEventsPath = "/events";
+    public const string DiscordEventsPath = "/discord/events";
+
+    public static readonly string[] WebhookPaths = [SlackEventsPath, DiscordEventsPath];
+
     public static void UseWebApp(this WebApplication app)
     {
         var env = app.Environment;
@@ -52,13 +57,13 @@ public static class WebAppExtensions
             a.UseMiddleware<InstallDeclinedMiddleware>(cancelledPage);
             a.UseSlackbotDistribution();
         });
-        app.Map("/events", a => a.UseSlackbot(enableAuth: !env.IsDevelopment()));
+        app.Map(SlackEventsPath, a => a.UseSlackbot(enableAuth: !env.IsDevelopment()));
         app.Map("/oauth/discord/authorize", a =>
         {
             a.UseMiddleware<InstallDeclinedMiddleware>(cancelledPage);
             a.UseDiscordDistribution();
         });
-        app.Map("/discord/events",
+        app.Map(DiscordEventsPath,
             a => a.UseDiscordbot(enableAuth: !(env.IsDevelopment() && app.Configuration.GetValue("SKIP_DISCORD_SIGNATURE_VERIFICATION", false))));
         app.UseMinimalEndpoints(
             ("/debug", TestEndpoints.Map)

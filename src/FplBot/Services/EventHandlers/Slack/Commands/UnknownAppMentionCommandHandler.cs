@@ -10,7 +10,7 @@ public class UnknownAppMentionCommandHandler : IConsumer<ProcessUnknownAppMentio
     {
         var command = context.Message;
         await context.Publish(new UnknownAppMentionReceived(command.TeamId, command.User, command.Text));
-        await context.Publish(new PublishSlackThreadMessage(command.TeamId, command.Channel, command.Ts,
+        await context.Publish(new PublishSlackThreadMessage(command.TeamId, command.ChannelId, command.Ts,
             "🤷‍♀️ Ok, that clearly did not work. Maybe try the `help` command to see my available commands?"));
     }
 }

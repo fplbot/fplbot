@@ -55,7 +55,7 @@ public class SlackNearDeadlineHandler(
         var channelId = message.ChannelId;
         var notification = $"⏳ Gameweek {message.Gameweek.Id} deadline in 24 hours!";
 
-        var res = await publisher.PublishToWorkspaceWithResponse(message.WorkspaceId,
+        var res = await publisher.PublishToWorkspaceWithResponse(message.TeamId,
             new ChatPostMessageRequest { Channel = channelId, Text = notification });
 
         if (res is null)
@@ -68,12 +68,12 @@ public class SlackNearDeadlineHandler(
         var fixturesList = Formatter.FixturesForGameweek(message.Gameweek.Id, message.Gameweek.Name,
             message.Gameweek.Deadline, gameweekFixtures, teams, tzOffset: await GetWorkspaceTzOffset());
 
-        await publisher.PublishToWorkspace(message.WorkspaceId,
+        await publisher.PublishToWorkspace(message.TeamId,
             new ChatPostMessageRequest { Channel = channelId, thread_ts = res.ts, Text = fixturesList, unfurl_links = "false" });
 
         async Task<int> GetWorkspaceTzOffset()
         {
-            var installation = await teamRepo.GetInstallation(message.WorkspaceId);
+            var installation = await teamRepo.GetInstallation(message.TeamId);
             if (installation.Token is null)
             {
                 return 0;

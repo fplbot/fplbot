@@ -1,3 +1,4 @@
+using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Models.Requests.AssistantThreadsSetStatus;
 using Slackbot.Net.SlackClients.Http.Models.Requests.AssistantThreadsSetSuggestedPrompts;
 using Slackbot.Net.SlackClients.Http.Models.Requests.AssistantThreadsSetTitle;
@@ -17,7 +18,7 @@ using Slackbot.Net.SlackClients.Http.Models.Responses.UserProfile;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UsersList;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ViewPublish;
 
-namespace Slackbot.Net.SlackClients.Http;
+namespace FplBot.Integrations.Slack;
 
 /// <summary>
 /// Stands in for a real ISlackClient in dev environments so nothing ever reaches the real

@@ -30,9 +30,9 @@ public class BotJoinedChannelHandler(
         }
 
         var introMessage = ":wave: Hi, I'm fplbot. Type `@fplbot help` to see what I can do.";
-        var setupMessage = await DescribeSetup(installation, command.Channel);
+        var setupMessage = await DescribeSetup(installation, command.ChannelId);
 
-        await publisher.PublishToWorkspace(command.TeamId, command.Channel, introMessage, setupMessage);
+        await publisher.PublishToWorkspace(command.TeamId, command.ChannelId, introMessage, setupMessage);
     }
 
     private async Task<string> DescribeSetup(Installation installation, string joinedChannel)

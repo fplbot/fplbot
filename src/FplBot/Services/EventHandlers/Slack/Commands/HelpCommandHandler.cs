@@ -20,7 +20,7 @@ public class HelpCommandHandler(
     {
         var command = context.Message;
         var installation = await teamRepo.GetInstallation(command.TeamId);
-        var channel = installation.GetChannel(command.Channel);
+        var channel = installation.GetChannel(command.ChannelId);
         var text = "*HELP:*\n";
         if (channel?.FollowedLeagueId is not null)
         {
@@ -43,12 +43,12 @@ public class HelpCommandHandler(
         if (channel is not null && channel.Events.Current.Any())
             text += $"Active subscriptions:\n{Formatter.BulletPoints(channel.Events.Current)}\n";
 
-        await publisher.PublishToWorkspace(command.TeamId, command.Channel, text);
+        await publisher.PublishToWorkspace(command.TeamId, command.ChannelId, text);
 
         var handlerHelp = SlackCommandCatalog.All
             .Aggregate("\n*Available commands:*", (current, c) => current + $"\n• `@fplbot {c.Trigger}` : _{c.Description}_");
 
-        await publisher.PublishToWorkspace(command.TeamId, new ChatPostMessageRequest { Channel = command.Channel, Text = handlerHelp, Link_Names = false });
+        await publisher.PublishToWorkspace(command.TeamId, new ChatPostMessageRequest { Channel = command.ChannelId, Text = handlerHelp, Link_Names = false });
     }
 
     // Back-compat as we currently have a mix of display names (#name) and channel_ids (C12351)

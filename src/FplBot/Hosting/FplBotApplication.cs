@@ -1,4 +1,6 @@
 using System.Net.Security;
+using Discord.Net.Endpoints;
+using FplBot.WebApi.Infrastructure;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.EventPublishers;
 using FplBot.Services.SearchIndexer;
@@ -27,58 +29,21 @@ public static class FplBotApplication
 
     public static async Task RunAsync(string[] args, IReadOnlyList<FplBotService> activeServices)
     {
-        var active = AllServices.Where(s => activeServices.Contains(s.ServiceType)).ToList();
-        if (active.Any(s => s.ServiceType == FplBotService.WebApi))
-            await RunAsWebApplication(args, active);
-        else
-            await RunAsWorkerHost(args, active);
+        var selectedServices = AllServices.Where(s => activeServices.Contains(s.ServiceType)).ToList();
+        var hostOwner = selectedServices.FirstOrDefault(s => s.ServiceType == FplBotService.WebApi) ?? selectedServices[0];
+        await hostOwner.RunHostAsync(args, selectedServices);
     }
 
-    private static async Task RunAsWebApplication(string[] args, List<IFplBotService> active)
+    internal static void LogStartup(IHost host, List<IFplBotService> active)
     {
-        var builder = WebApplication.CreateBuilder(args);
-        AddLocalUserSecrets(builder.Configuration, builder.Environment);
-        builder.Host.UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active));
-        var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
-        // Slack requires OAuth redirect_uris to be https — even for localhost. In dev, serve
-        // https on localhost using the trusted ASP.NET Core dev cert (`dotnet dev-certs https
-        // --trust`) — the cert is issued for CN=localhost, so bind that host specifically
-        // rather than "+". In prod (Heroku/containers), TLS is terminated at the platform
-        // router and the app must stay reachable on all interfaces, so keep "+" and http.
-        builder.WebHost.UseUrls(builder.Environment.IsLocal()
-            ? $"https://localhost:{port}"
-            : $"http://+:{port}");
-
-        var redisConn = BuildRedisConnection(builder.Configuration);
-        ConfigureServices(builder.Services, builder.Configuration, redisConn, builder.Environment, active,
-            cfg => ConfigureAzureServiceBus(cfg, builder.Configuration));
-
-        var app = builder.Build();
-        foreach (var svc in active)
-            svc.ConfigureApp(app);
-
-        await app.RunAsync();
-    }
-
-    private static async Task RunAsWorkerHost(string[] args, List<IFplBotService> active)
-    {
-        var host = Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((ctx, config) => AddLocalUserSecrets(config, ctx.HostingEnvironment))
-            .UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active))
-            .ConfigureServices((ctx, services) =>
-            {
-                var redisConn = BuildRedisConnection(ctx.Configuration);
-                ConfigureServices(services, ctx.Configuration, redisConn, ctx.HostingEnvironment, active,
-                    cfg => ConfigureAzureServiceBus(cfg, ctx.Configuration));
-            })
-            .Build();
-
-        await host.RunAsync();
+        host.Services.GetRequiredService<ILoggerFactory>()
+            .CreateLogger(typeof(FplBotApplication))
+            .LogInformation("Starting services: {ServiceName}", string.Join(",", active.Select(s => s.ServiceType)));
     }
 
     // Both host builders load user secrets in Development only. Integration is just as local, and
     // needs the same real Slack/Discord credentials, so add them there too.
-    private static void AddLocalUserSecrets(IConfigurationBuilder config, IHostEnvironment env)
+    internal static void AddLocalUserSecrets(IConfigurationBuilder config, IHostEnvironment env)
     {
         if (env.IsEnvironment(HostEnvironmentExtensions.Integration))
             config.AddUserSecrets(typeof(FplBotApplication).Assembly, optional: true);
@@ -95,13 +60,25 @@ public static class FplBotApplication
         ConfigureCommon(services, config, redisConn);
         services.AddMassTransit(x =>
         {
+            Dictionary<Type, FplBotService> consumerOwners = [];
             foreach (var svc in active)
-                svc.ConfigureMassTransit(x);
+            {
+                var before = x.Count;
+                svc.AddConsumers(x);
+                foreach (var descriptor in x.Skip(before).Where(d => typeof(IConsumer).IsAssignableFrom(d.ServiceType)))
+                    consumerOwners[descriptor.ServiceType] = svc.ServiceType;
+            }
+
+            x.AddConfigureEndpointsCallback((_, _, cfg) =>
+                cfg.ConnectConsumerConfigurationObserver(new ConsumerActivityObserver(consumerOwners)));
+
             configureBus(x);
         });
 
         if (env.IsLocal() && config.GetValue("OTEL_ENABLED", true))
+        {
             ConfigureOpenTelemetry(services, config, active);
+        }
 
         foreach (var svc in active)
             svc.Configure(services, config, redisConn, env);
@@ -113,7 +90,8 @@ public static class FplBotApplication
     public static string GetOtelServiceName(IEnumerable<IFplBotService> active) =>
         string.Join("+", active.Select(s => s.ServiceType));
 
-    private static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc, List<IFplBotService> active)
+
+    internal static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc, List<IFplBotService> active)
     {
         lc.ReadFrom.Configuration(ctx.Configuration)
             .WriteTo.Console(
@@ -138,20 +116,30 @@ public static class FplBotApplication
     // already reports the same setup with a readable name, so the raw HTTP calls are just noise.
     private const int LocalServiceBusEmulatorPort = 6000;
 
-    private static void ConfigureOpenTelemetry(IServiceCollection services, IConfiguration config, List<IFplBotService> active)
+    private static void ConfigureOpenTelemetry(IServiceCollection services, IConfiguration config, List<IFplBotService> fplServices)
     {
         services.AddOpenTelemetry()
-            .ConfigureResource(r => r.AddService(GetOtelServiceName(active)))
+            .ConfigureResource(r => r.AddService(GetOtelServiceName(fplServices)))
             .WithTracing(tracing => tracing
                 // MassTransit's own "Configure Topology" spans are per-queue startup wiring, not
                 // application behavior — they flood the dashboard with dozens of near-identical,
                 // attribute-less traces on every dev restart.
                 .SetSampler(new DropByNameSampler("Configure Topology"))
-                .AddAspNetCoreInstrumentation()
+                .AddAspNetCoreInstrumentation(o => o.EnrichWithHttpResponse = (activity, response) =>
+                {
+                    // Webhook paths are app.Map() middleware, not routed endpoints, so routing
+                    // resolves them to the SPA catch-all and names every one of them
+                    // "POST {*path:nonfile}". Rename to the mounted path. Only these two — naming
+                    // any unrouted request by its raw path would mint a span name per 404.
+                    var request = response.HttpContext.Request;
+                    if (WebAppExtensions.WebhookPaths.Contains(request.Path.Value))
+                        activity.DisplayName = $"{request.Method} {request.Path.Value}";
+                })
                 .AddHttpClientInstrumentation(o => o.FilterHttpRequestMessage =
                     req => req.RequestUri?.Port != LocalServiceBusEmulatorPort)
                 .AddSource(DiagnosticHeaders.DefaultListenerName)
-                .AddSource(FplBotDiagnostics.ActivitySourceName)
+                .AddSource(DiscordDiagnostics.ActivitySourceName)
+                .AddSource([.. fplServices.Select(svc => FplBotDiagnostics.SourceNameFor(svc.ServiceType))])
                 .AddOtlpExporter(o =>
                 {
                     o.Endpoint = new Uri(config["OTLP_DASHBOARD_ENDPOINT"]!);
@@ -176,7 +164,7 @@ public static class FplBotApplication
         services.AddFplApiClient(config);
     }
 
-    private static void ConfigureAzureServiceBus(IBusRegistrationConfigurator cfg, IConfiguration config)
+    internal static void ConfigureAzureServiceBus(IBusRegistrationConfigurator cfg, IConfiguration config)
     {
         cfg.UsingAzureServiceBus((ctx, bus) =>
         {
@@ -190,7 +178,7 @@ public static class FplBotApplication
         });
     }
 
-    private static ConnectionMultiplexer BuildRedisConnection(IConfiguration config)
+    internal static ConnectionMultiplexer BuildRedisConnection(IConfiguration config)
     {
         var connectionString = config["REDIS_URL"];
         if (connectionString == null)

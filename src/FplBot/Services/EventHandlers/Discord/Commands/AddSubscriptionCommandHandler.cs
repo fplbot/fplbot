@@ -18,7 +18,7 @@ public class AddSubscriptionCommandHandler(IGuildRepository repo, ILogger<AddSub
             var newEventSub = Enum.Parse<EventSubscription>(command.Subscription);
             var newFplEvent = ToFplEvent(newEventSub);
 
-            var installation = await repo.GetInstallation(command.GuildId);
+            var installation = await repo.GetInstallation(command.TeamId);
             var existingChannel = installation.GetChannel(command.ChannelId);
 
             if (existingChannel == null)
@@ -43,7 +43,7 @@ public class AddSubscriptionCommandHandler(IGuildRepository repo, ILogger<AddSub
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Failed adding subscription {Subscription} for guild {GuildId}", command.Subscription, command.GuildId);
+            logger.LogError(e, "Failed adding subscription {Subscription} for guild {GuildId}", command.Subscription, command.TeamId);
             await Respond(context, "⚠️ Error", "Something went wrong on my end. Try again in a moment.");
         }
     }

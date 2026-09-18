@@ -22,7 +22,7 @@ public class DiscordHelpCommandHandler(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Failed building help for guild {GuildId}", command.GuildId);
+            logger.LogError(e, "Failed building help for guild {GuildId}", command.TeamId);
             await context.Publish(new RespondToDiscordInteraction(command.InteractionToken, "⚠️ Error",
                 "Something went wrong on my end. Try again in a moment."));
         }
@@ -30,7 +30,7 @@ public class DiscordHelpCommandHandler(
 
     private async Task<string> BuildContent(ProcessDiscordHelpCommand command)
     {
-        var installation = await repo.GetInstallation(command.GuildId);
+        var installation = await repo.GetInstallation(command.TeamId);
         var sub = installation.GetChannel(command.ChannelId);
         if (sub == null)
         {

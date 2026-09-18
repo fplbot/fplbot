@@ -19,7 +19,7 @@ public class SubscribeCommandHandler(
     {
         var command = context.Message;
         var subscriptionInfo = await GetAndUpdateSubscriptionInfo(command);
-        await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, subscriptionInfo);
+        await workspacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, subscriptionInfo);
     }
 
     private async Task<string> GetAndUpdateSubscriptionInfo(ProcessSubscribeCommand command)
@@ -43,16 +43,16 @@ public class SubscribeCommandHandler(
 
             if (command.Text.Contains("unsubscribe"))
             {
-                installation.Unsubscribe(command.Channel, fplEvents);
+                installation.Unsubscribe(command.ChannelId, fplEvents);
             }
             else
             {
-                installation.Subscribe(command.Channel, fplEvents);
+                installation.Subscribe(command.ChannelId, fplEvents);
             }
 
             await teamRepo.Save(installation);
 
-            var channel = installation.GetChannel(command.Channel);
+            var channel = installation.GetChannel(command.ChannelId);
             var newSubscriptions = ToEventSubscriptions(channel?.Events.Current ?? []);
             return FormatSubscriptionMessage(newSubscriptions, unableToParse);
         }

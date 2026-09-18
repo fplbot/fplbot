@@ -12,7 +12,7 @@ public class DiscordChannelDeliveryFailedHandler(
     {
         var message = context.Message;
         var removed = await StaleChannelSubscriptions.RecordFailure(
-            repository, message.GuildId, message.ChannelId, message.Reason, message.OccuredAt);
+            repository, message.TeamId, message.ChannelId, message.Reason, message.OccuredAt);
 
         if (removed is null)
         {
@@ -21,9 +21,9 @@ public class DiscordChannelDeliveryFailedHandler(
 
         logger.LogWarning(
             "Removed stale subscription for guild {GuildId} channel {ChannelId}: {Reason} after {FailureCount} failures since {FailingSince}",
-            message.GuildId, message.ChannelId, message.Reason, removed.FailureCount, removed.FailingSince);
+            message.TeamId, message.ChannelId, message.Reason, removed.FailureCount, removed.FailingSince);
 
         await context.Publish(new DiscordChannelSubscriptionRemoved(
-            message.GuildId, message.ChannelId, message.Reason, removed.FailureCount, removed.FailingSince!.Value));
+            message.TeamId, message.ChannelId, message.Reason, removed.FailureCount, removed.FailingSince!.Value));
     }
 }

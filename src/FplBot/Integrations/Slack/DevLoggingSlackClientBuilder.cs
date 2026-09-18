@@ -1,4 +1,6 @@
-namespace Slackbot.Net.SlackClients.Http;
+using Slackbot.Net.SlackClients.Http;
+
+namespace FplBot.Integrations.Slack;
 
 /// <summary>
 /// The single integration point for building an ISlackClient. Only registered in

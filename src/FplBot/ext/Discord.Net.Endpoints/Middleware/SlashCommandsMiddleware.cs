@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Discord.Net.Endpoints.Hosting;
@@ -34,6 +35,10 @@ internal class SlashCommandsMiddleware(RequestDelegate next, ILogger<SlashComman
                 _ => 0
             }
             : 0;
+        using var logScope = _logger.AddInteractionContext(guildId, channelId);
+        Activity.Current?.SetTag(DiscordDiagnostics.GuildIdTag, guildId);
+        Activity.Current?.SetTag(DiscordDiagnostics.ChannelIdTag, channelId);
+
         var commandName = data.GetProperty("name").GetString();
         _logger.LogInformation($"Handling slash command {commandName}");
         var slashCommandType = data.GetProperty("type").GetInt32();

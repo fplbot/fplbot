@@ -42,8 +42,8 @@ public class DiscordFixtureEventsHandler(
     public async Task Consume(ConsumeContext<PublishFixtureEventsToGuild> context)
     {
         var message = context.Message;
-        logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.GuildId} and {message.ChannelId}");
-        var installation = await repo.FindInstallationByTeamId(message.GuildId);
+        logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.TeamId} and {message.ChannelId}");
+        var installation = await repo.FindInstallationByTeamId(message.TeamId);
         var sub = installation?.GetChannel(message.ChannelId);
         if (sub != null)
         {
@@ -67,12 +67,12 @@ public class DiscordFixtureEventsHandler(
                 FormattingType.Discord, tauntData);
             foreach (var eventMsg in eventMessages)
             {
-                await context.Publish(new PublishRichToGuildChannel(message.GuildId, message.ChannelId, eventMsg.Title, eventMsg.Details));
+                await context.Publish(new PublishRichToGuildChannel(message.TeamId, message.ChannelId, eventMsg.Title, eventMsg.Details));
             }
         }
         else
         {
-            logger.LogInformation($"Guild {message.GuildId} in channel {message.ChannelId} not subbing to fixture events. Not sending");
+            logger.LogInformation($"Guild {message.TeamId} in channel {message.ChannelId} not subbing to fixture events. Not sending");
         }
     }
 

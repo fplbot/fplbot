@@ -6,6 +6,8 @@ public static class IAppBuilderExtensions
 {
     public static IApplicationBuilder UseDiscordbot(this IApplicationBuilder app, bool enableAuth = true)
     {
+        app.UseMiddleware<DiscordActivityMiddleware>();
+
         if (enableAuth)
             app.UseMiddleware<DiscordEventAuthMiddleware>();
 
