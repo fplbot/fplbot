@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { InstallationAdapter, EntityDetails } from "../../composables/installationAdapters";
 import type { AvailableChannel } from "../../api/types";
+import ChannelPicker from "../../components/ChannelPicker.vue";
+import type { ChannelPickerOption } from "../../components/ChannelPicker.vue";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
@@ -26,66 +28,14 @@ const newChannelId = ref("");
 const adding = ref(false);
 const addFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
-const channelFilter = ref("");
-
-const allAddOptions = computed(() => {
+const addOptions = computed<ChannelPickerOption[]>(() => {
   const taken = new Set((details.value?.channels ?? []).map((c) => c.channel));
   return availableChannels.value.map((c) => ({
     value: c.id,
     label: `${formatChannelName(c.name)} (${c.id})`,
+    group: taken.has(c.id) ? "Already subscribed" : "Not subscribed",
     disabled: taken.has(c.id),
-  }));
-});
-
-const addOptions = computed(() => {
-  const needle = channelFilter.value.trim().toLowerCase().replace(/^#/, "");
-  if (!needle) return allAddOptions.value;
-  return allAddOptions.value.filter((o) => o.label.toLowerCase().includes(needle));
-});
-
-const subscribedOptions = computed(() => addOptions.value.filter((o) => o.disabled));
-const unsubscribedOptions = computed(() => addOptions.value.filter((o) => !o.disabled));
-
-const pickerOpen = ref(false);
-const highlightedValue = ref("");
-const selectedLabel = ref("");
-
-function openPicker() {
-  if (newChannelId.value) channelFilter.value = "";
-  pickerOpen.value = true;
-  highlightedValue.value = unsubscribedOptions.value[0]?.value ?? "";
-}
-
-function closePicker() {
-  pickerOpen.value = false;
-  if (newChannelId.value) channelFilter.value = selectedLabel.value;
-}
-
-function choose(value: string, label: string) {
-  newChannelId.value = value;
-  selectedLabel.value = label;
-  channelFilter.value = label;
-  pickerOpen.value = false;
-}
-
-function moveHighlight(delta: number) {
-  pickerOpen.value = true;
-  const options = unsubscribedOptions.value;
-  if (options.length === 0) return;
-  const current = options.findIndex((o) => o.value === highlightedValue.value);
-  const next = Math.min(Math.max(current + delta, 0), options.length - 1);
-  highlightedValue.value = options[current === -1 ? 0 : next].value;
-}
-
-function chooseHighlighted() {
-  const option = unsubscribedOptions.value.find((o) => o.value === highlightedValue.value);
-  if (option) choose(option.value, option.label);
-}
-
-watch(channelFilter, (filter) => {
-  if (newChannelId.value && filter !== selectedLabel.value && pickerOpen.value) {
-    newChannelId.value = "";
-  }
+  })).sort((a, b) => Number(!!b.disabled) - Number(!!a.disabled));
 });
 
 async function load() {
@@ -275,61 +225,17 @@ async function submitDanger() {
           </p>
           <div v-if="loadingChannelList" class="spinner"></div>
           <template v-else>
-            <div v-if="allAddOptions.length > 0" class="field combobox">
-              <label for="add-channel-id">Channel</label>
-              <input
-                id="add-channel-id"
-                v-model="channelFilter"
-                type="text"
-                autocomplete="off"
-                role="combobox"
-                aria-controls="add-channel-list"
-                :aria-expanded="pickerOpen"
-                placeholder="Select a channel&hellip;"
-                @focus="openPicker"
-                @input="pickerOpen = true"
-                @keydown.down.prevent="moveHighlight(1)"
-                @keydown.up.prevent="moveHighlight(-1)"
-                @keydown.enter.prevent="chooseHighlighted"
-                @keydown.esc="closePicker"
-                @blur="closePicker"
-              />
-              <div class="picker-anchor">
-              <ul v-if="pickerOpen" id="add-channel-list" class="picker" role="listbox">
-                <template v-if="subscribedOptions.length > 0">
-                  <li class="picker-group">Already subscribed</li>
-                  <li v-for="o in subscribedOptions" :key="o.value" class="picker-option taken" role="option">
-                    {{ o.label }}
-                  </li>
-                </template>
-                <template v-if="unsubscribedOptions.length > 0">
-                  <li class="picker-group">Not subscribed</li>
-                  <li
-                    v-for="o in unsubscribedOptions"
-                    :key="o.value"
-                    :class="['picker-option', { highlighted: o.value === highlightedValue }]"
-                    role="option"
-                    :aria-selected="o.value === newChannelId"
-                    @mousedown.prevent="choose(o.value, o.label)"
-                    @mouseenter="highlightedValue = o.value"
-                  >
-                    {{ o.label }}
-                  </li>
-                </template>
-                <li v-if="addOptions.length === 0" class="picker-empty">No channel matches &ldquo;{{ channelFilter }}&rdquo;</li>
-              </ul>
-              </div>
-              <p class="no-subs">
-                <template v-if="newChannelId">Selected {{ selectedLabel }}</template>
-                <template v-else-if="channelFilter">{{ addOptions.length }} of {{ allAddOptions.length }} channels</template>
-                <template v-else>{{ allAddOptions.length }} channels &mdash; start typing to filter</template>
-              </p>
-            </div>
+            <ChannelPicker
+              v-if="addOptions.length > 0"
+              id="add-channel-id"
+              v-model="newChannelId"
+              :options="addOptions"
+            />
             <p v-else class="no-subs">
               <template v-if="channelListError">{{ channelListError }}</template>
               <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
             </p>
-            <template v-if="allAddOptions.length > 0">
+            <template v-if="addOptions.length > 0">
               <button class="btn small" :disabled="adding || !newChannelId" @click="addChannelSub">
                 {{ adding ? "Adding..." : "Add subscription" }}
               </button>
@@ -364,61 +270,13 @@ async function submitDanger() {
 </template>
 
 <style scoped>
-.picker-anchor {
-  position: relative;
-}
 
-.picker {
-  position: absolute;
-  z-index: 10;
-  top: 0;
-  left: 0;
-  right: 0;
-  max-height: 16rem;
-  overflow-y: auto;
-  margin: 0.25rem 0 0;
-  padding: 0;
-  list-style: none;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
-}
 
-.picker-group {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #6b7280;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-}
 
-.picker-group:first-child {
-  border-top: none;
-}
 
-.picker-option {
-  padding: 0.4rem 0.75rem;
-  cursor: pointer;
-}
 
-.picker-option.highlighted {
-  background: #eef2ff;
-}
 
-.picker-option.taken {
-  color: #9ca3af;
-  cursor: not-allowed;
-}
 
-.picker-empty {
-  padding: 0.5rem 0.75rem;
-  color: #6b7280;
-  font-style: italic;
-}
 
 .add-channel {
   margin-top: 1.5rem;

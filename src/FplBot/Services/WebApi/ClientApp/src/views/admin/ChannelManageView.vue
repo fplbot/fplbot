@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import { ALL_EVENT_SUBSCRIPTIONS, getLeague } from "../../api/api";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
 import type { AvailableChannel, EventSubscription } from "../../api/types";
+import ChannelPicker from "../../components/ChannelPicker.vue";
+import type { ChannelPickerOption } from "../../components/ChannelPicker.vue";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
@@ -31,26 +33,28 @@ const subscribedChannelIds = computed(
   () => new Set((details.value?.channels ?? []).map((c) => c.channel))
 );
 
-const moveOptions = computed(() => {
+const moveOptions = computed<ChannelPickerOption[]>(() => {
   const options = availableChannels.value.map((c) => {
     const isCurrent = c.id === props.channelId;
     const taken = !isCurrent && subscribedChannelIds.value.has(c.id);
-    const suffix = isCurrent ? " — current" : taken ? " — already subscribed" : "";
     return {
       value: c.id,
-      label: `${formatChannelName(c.name)} (${c.id})${suffix}`,
-      disabled: taken,
+      label: `${formatChannelName(c.name)} (${c.id})`,
+      group: isCurrent ? "Current" : taken ? "Already subscribed" : "Move to",
+      disabled: isCurrent || taken,
     };
   });
   if (!options.some((o) => o.value === props.channelId)) {
     const name = channel.value?.channelName;
     options.unshift({
       value: props.channelId,
-      label: `${name ? `${formatChannelName(name)} ` : ""}${props.channelId} — current`,
-      disabled: false,
+      label: `${name ? `${formatChannelName(name)} ` : ""}${props.channelId}`,
+      group: "Current",
+      disabled: true,
     });
   }
-  return options;
+  const rank = (o: ChannelPickerOption) => (o.group === "Current" ? 0 : o.group === "Already subscribed" ? 1 : 2);
+  return options.sort((a, b) => rank(a) - rank(b));
 });
 
 const leagueIdInput = ref<number | null>(null);
@@ -390,25 +394,25 @@ async function submitDelete() {
         </p>
         <div v-if="loadingChannelList" class="spinner"></div>
         <template v-else>
-          <div v-if="moveOptions.length > 1" class="field">
-            <label for="new-channel-id">Move to</label>
-            <select id="new-channel-id" v-model="newChannelId">
-              <option v-for="o in moveOptions" :key="o.value" :value="o.value" :disabled="o.disabled">{{ o.label }}</option>
-            </select>
-            <p class="hint">Channels listed live from {{ adapter.apiLabel }}; the subscription is stored by channel id.</p>
-          </div>
-          <div v-else class="field">
-            <label for="new-channel-id">Move to</label>
-            <input id="new-channel-id" v-model="newChannelId" type="text" placeholder="Channel id" />
-            <p class="hint">
-              <template v-if="channelListError">{{ channelListError }}</template>
-              <template v-else-if="availableChannels.length > 0">No other channel to move to in this {{ adapter.entityNoun }}.</template>
-              <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
-              Enter a channel id manually.
-            </p>
-          </div>
+          <ChannelPicker
+            v-if="moveOptions.length > 1"
+            id="new-channel-id"
+            v-model="newChannelId"
+            label="Move to"
+            :options="moveOptions"
+          />
+          <p v-else class="hint">
+            <template v-if="channelListError">{{ channelListError }}</template>
+            <template v-else-if="availableChannels.length > 0">No other channel to move to in this {{ adapter.entityNoun }}.</template>
+            <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
+          </p>
         </template>
-        <button class="btn small" :disabled="movingChannel || !newChannelId || newChannelId === channel.channel" @click="submitMoveChannel">
+        <button
+          v-if="moveOptions.length > 1"
+          class="btn small"
+          :disabled="movingChannel || !newChannelId || newChannelId === channel.channel"
+          @click="submitMoveChannel"
+        >
           {{ movingChannel ? "Moving..." : "Move subscription" }}
         </button>
       </div>
