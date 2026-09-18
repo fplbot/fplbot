@@ -1,58 +1,71 @@
 # Add a new chat command handler
 
-This skill adds a new slash/mention command that users can invoke directly in Slack or Discord (e.g. `@fplbot injuries`, `/fplbot captains`).
+This skill adds a slash/mention command users invoke directly in Slack or Discord (e.g. `@fplbot injuries`, `/fplbot captains`).
+
+## The shape
+
+Commands are **two-stage** since #459, and both stages are required:
+
+1. **WebApi** — the mention/slash handler parses the incoming payload and does nothing but publish a `Process<Name>Command` via `IPublishEndpoint`. No FPL calls, no repository work, no posting.
+2. **EventHandlers** — an `IConsumer<Process<Name>Command>` in `Services/EventHandlers/{Slack,Discord}/Commands/` does the work and posts the reply.
+
+This keeps the webhook response fast (Slack and Discord both time out in ~3s) and puts the work on the bus where it retries and is visible in the error queues.
+
+---
 
 ## Slack mention commands (`@fplbot <command>`)
 
-### 1. Create the handler
+### 1. Define the command contract
 
-Create `FplBot/Services/WebApi/Slack/Handlers/SlackEvents/FplYourCommandHandler.cs`:
+`FplBot/Messaging/Commands/v1/ProcessYourCommand.cs`:
 
 ```csharp
-using FplBot.WebApi.Slack.Abstractions;
+namespace FplBot.Messaging.Contracts.Commands.v1;
+
+public record ProcessYourCommand(string TeamId, string Channel);
+```
+
+### 2. Add the help entry
+
+Add a `CommandHelp` to `FplBot/ApplicationServices/Slack/SlackCommandCatalog.cs` and include it in `All`:
+
+```csharp
+public static readonly CommandHelp YourCommand = new("yourcommand", "Short description of what this does");
+```
+
+### 3. Create the WebApi mention handler
+
+`FplBot/Services/WebApi/Slack/Handlers/SlackEvents/AppMentions/FplYourCommandHandler.cs`:
+
+```csharp
+using FplBot.ApplicationServices.Slack;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Models.Events;
 
-namespace FplBot.WebApi.Slack.Handlers.SlackEvents;
+namespace FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 
-internal class FplYourCommandHandler : HandleAppMentionBase
+internal class FplYourCommandHandler(IPublishEndpoint publishEndpoint) : HandleAppMentionBase
 {
-    private readonly ISlackWorkSpacePublisher _publisher;
-    // inject other dependencies (FPL clients, repos) as needed
-
-    public FplYourCommandHandler(ISlackWorkSpacePublisher publisher)
-    {
-        _publisher = publisher;
-    }
-
-    // Keywords that trigger this handler (user types: @fplbot yourcommand)
     public override string[] Commands => ["yourcommand"];
 
     public override async Task<EventHandledResponse> Handle(EventMetaData eventMetadata, AppMentionEvent message)
     {
-        var text = BuildResponseText(message.Text);
-
-        if (string.IsNullOrEmpty(text))
-            return new EventHandledResponse("Nothing found");
-
-        await _publisher.PublishToWorkspace(eventMetadata.Team_Id, message.Channel, text);
-        return new EventHandledResponse(text);
+        await publishEndpoint.Publish(new ProcessYourCommand(eventMetadata.Team_Id, message.Channel));
+        return new EventHandledResponse("OK");
     }
 
-    private string BuildResponseText(string rawMessage)
-    {
-        // Parse arguments from rawMessage if needed
-        return "Your response here";
-    }
-
-    // Shown in the @fplbot help output
-    public override (string, string) GetHelpDescription() => (CommandsFormatted, "Short description of what this does");
+    public override (string, string) GetHelpDescription() =>
+        (SlackCommandCatalog.YourCommand.Trigger, SlackCommandCatalog.YourCommand.Description);
 }
 ```
 
-### 2. Register the handler
+If the command takes arguments, parse them out of `message.Text` here and put them on the record.
 
-Open `FplBot/Services/WebApi/Slack/ServiceCollectionExtensions.cs` and add a line inside `AddFplBotSlackWebEndpoints`:
+### 4. Register the mention handler
+
+In `FplBot/Services/WebApi/Slack/ServiceCollectionExtensions.cs`, inside `AddFplBotSlackWebEndpoints`:
 
 ```csharp
 .AddAppMentionHandler<FplYourCommandHandler>()
@@ -60,37 +73,77 @@ Open `FplBot/Services/WebApi/Slack/ServiceCollectionExtensions.cs` and add a lin
 
 Place it before `.AddNoOpAppMentionHandler<UnknownAppMentionCommandHandler>()`.
 
-### 3. Add tests
+### 5. Create the consumer that does the work
 
-Create `FplBot.Tests/FplYourCommandHandlerTests.cs`. Look at `FplBot.Tests/FplInjuryCommandHandlerTests.cs` or `FplPlayerCommandHandlerTests.cs` for the pattern — inject fakes via `Factory.cs`.
+`FplBot/Services/EventHandlers/Slack/Commands/YourCommandHandler.cs`:
+
+```csharp
+using FplBot.Formatting;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
+
+namespace FplBot.EventHandlers.Slack.Commands;
+
+public class YourCommandHandler(
+    ISlackWorkSpacePublisher workspacePublisher,
+    IGlobalSettingsClient globalSettingsClient)
+    : IConsumer<ProcessYourCommand>
+{
+    public async Task Consume(ConsumeContext<ProcessYourCommand> context)
+    {
+        var command = context.Message;
+        var settings = await globalSettingsClient.GetGlobalSettings();
+
+        var textToSend = Formatter.FormatYourThing(settings);
+        if (string.IsNullOrEmpty(textToSend))
+            return;
+
+        await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, textToSend);
+    }
+}
+```
+
+Always post through `ISlackWorkSpacePublisher` — never `ISlackClientBuilder.Build(token).ChatPostMessage(...)`. The publisher owns delivery-failure accounting, so a direct post leaves a dead channel with no way to self-heal. Non-posting client calls (`UsersList`, `ConversationsMembers`) may still use `ISlackClientBuilder`.
+
+### 6. Register the consumer — CRITICAL
+
+In `FplBot/Services/EventHandlers/EventHandlersService.cs`:
+
+```csharp
+cfg.AddConsumer<YourCommandHandler>();
+```
+
+Forgetting this means the command silently does nothing — no error.
 
 ---
 
 ## Discord slash commands
 
-Discord commands are registered differently — they're registered as application commands via the Discord API.
+Same two stages, different plumbing.
 
-Look at `FplBot/Services/WebApi/Discord/` for the existing slash command setup:
-- `DiscordSlashCommandsEnsurer.cs` — registers commands with Discord
-- Endpoint handlers parse the incoming interaction payload
+1. Add the command (and any subcommand/options) to `FplBot/Services/WebApi/Discord/DiscordSlashCommandsEnsurer.cs`, which registers application commands with Discord at startup.
+2. Add an `ISlashCommandHandler` in `Services/WebApi/Discord/Handlers/SlashCommands/` that publishes a `Process<Name>Command` and returns a `DeferredResponse`. Pass `context.InteractionToken` on the command so the consumer can send the followup, and check `ChannelPermissions.Problem(context.AppPermissions)` before deferring.
+3. Add the consumer in `Services/EventHandlers/Discord/Commands/`, responding via `PublishRichToGuildChannel` / the interaction followup.
+4. Register the consumer in `EventHandlersService.ConfigureMassTransit()`.
 
-For a new Discord command:
-1. Add the command definition in `DiscordSlashCommandsEnsurer.cs`
-2. Add a handler in the Discord interactions endpoint that matches the command name
-3. Respond via `IPublishEndpoint` publishing a `PublishToGuildChannel` command (goes through MassTransit)
+Exercising the real interaction followup needs the **Integration** environment — in Development `DevLoggingDiscordClient` swallows it and the command sits on "thinking…" forever.
 
 ---
 
 ## Tips
 
-- **Argument parsing**: Extract text from `message.Text` in Slack (the raw mention text). Use simple string splitting for keyword-based args.
-- **Fuzzy matching**: For player name searches, look at `FplPlayerCommandHandler` which uses Levenshtein distance via `Fastenshtein`.
-- **Thread replies**: Publish `PublishSlackThreadMessage` instead of `PublishToWorkspace` to reply in a thread.
-- **Formatting**: Extract complex formatting logic to `FplBot/Formatting/` and test it separately — formatters are pure functions and easy to unit test.
+- **Argument parsing** belongs in the WebApi handler; the command record carries already-parsed values.
+- **Fuzzy matching**: `FplPlayerCommandHandler` / `PlayerCommandHandler` use Levenshtein distance via `Fastenshtein`.
+- **Thread replies**: publish `PublishSlackThreadMessage` instead of `PublishToSlack`.
+- **Formatting** goes in `Services/EventPublishers/Formatting/` (namespace `FplBot.Formatting`); builders stay static and synchronous, fed already-fetched data.
+
+## Tests — required, not optional
+
+Add an **E2E test** in `FplBot.Tests/E2E/` that drives the command from the real entry point — `fixture.AskSlackbot(teamId, channel, "<@UREFQD887> yourcommand")` — and asserts the message that comes back out of the capturing Slack/Discord client. Set state up via `InstallSlackbot()` / `Subscribe(...)`, assert on outcomes, and don't use `A.CallTo()` assertions on internals.
 
 ## Verify
 
 ```bash
-dotnet build src/FplBot
-dotnet test src
+dotnet build --no-incremental src/FplBot/FplBot.csproj
+dotnet run --project src/Build -- test
 ```
