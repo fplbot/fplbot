@@ -127,6 +127,13 @@
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
+      "description": "Pin TypeScript to major 6 — vue-tsc resolves typescript/lib/tsc.js, which TypeScript 7 (the native rewrite) no longer exposes through its package exports, so `npm run typecheck` in client-build dies with ERR_PACKAGE_PATH_NOT_EXPORTED on 7.x. Lift once vue-tsc supports TypeScript 7",
+      "matchPackageNames": [
+        "typescript"
+      ],
+      "allowedVersions": "<7"
+    },
+    {
       "description": "Never automerge major bumps for any package",
       "matchUpdateTypes": ["major"],
       "automerge": false
