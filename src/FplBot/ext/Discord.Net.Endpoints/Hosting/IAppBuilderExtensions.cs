@@ -36,4 +36,13 @@ public class DiscordOAuthOptions
     public string? CLIENT_SECRET { get; set; }
     public string SuccessRedirectUri { get; set; } = "/success";
     public string ErrorRedirectUri { get; set; } = "/error";
+
+    /// <summary>
+    ///     Turns the OAuth <c>state</c> this app sent into the path to land on after a successful
+    ///     install. <c>state</c> is opaque and means whatever the app decided it means — a return
+    ///     path, an encoded payload, a CSRF nonce — so only the app can read it. Return a
+    ///     site-relative path to redirect there, or null to use
+    ///     <see cref="SuccessRedirectUri" />, which is also the default when no resolver is set.
+    /// </summary>
+    public Func<string?, string?>? ResolveSuccessRedirect { get; set; }
 }

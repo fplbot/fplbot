@@ -58,7 +58,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
             await guildInstallationHandler.Install(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
-            ctx.Response.Redirect(ResolveSuccessRedirect(options.Value.SuccessRedirectUri, ctx.Request.Query["state"].FirstOrDefault()));
+            ctx.Response.Redirect(SuccessRedirect(options.Value, ctx.Request.Query["state"].FirstOrDefault()));
         }
         else
         {
@@ -68,19 +68,23 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
         }
     }
 
-    // An OAuth `state` holding a site-relative path sends the browser there instead of the
-    // configured success page, resolved against that page's origin so it stays on the same
-    // site. Anything else — absolute urls, protocol-relative "//host" — falls back.
-    internal static string ResolveSuccessRedirect(string successRedirectUri, string? state)
+    internal static string SuccessRedirect(DiscordOAuthOptions options, string? state)
     {
-        if (string.IsNullOrEmpty(state) || state[0] != '/' || state.StartsWith("//"))
+        var target = options.ResolveSuccessRedirect?.Invoke(state);
+        if (!IsLocalPath(target))
         {
-            return successRedirectUri;
+            return options.SuccessRedirectUri;
         }
 
-        return Uri.TryCreate(successRedirectUri, UriKind.Absolute, out var absoluteSuccess)
+        return Uri.TryCreate(options.SuccessRedirectUri, UriKind.Absolute, out var absoluteSuccess)
                && (absoluteSuccess.Scheme == Uri.UriSchemeHttp || absoluteSuccess.Scheme == Uri.UriSchemeHttps)
-            ? new Uri(absoluteSuccess, state).ToString()
-            : state;
+            ? new Uri(absoluteSuccess, target!).ToString()
+            : target!;
     }
+
+    private static bool IsLocalPath(string? path) =>
+        !string.IsNullOrEmpty(path)
+        && path[0] == '/'
+        && (path.Length == 1 || (path[1] != '/' && path[1] != '\\'))
+        && !path.Any(char.IsControl);
 }
