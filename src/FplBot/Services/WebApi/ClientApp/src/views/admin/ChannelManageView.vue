@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import { ALL_EVENT_SUBSCRIPTIONS } from "../../api/api";
+import { ALL_EVENT_SUBSCRIPTIONS, getLeague } from "../../api/api";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
-import type { EventSubscription } from "../../api/types";
+import type { AvailableChannel, EventSubscription } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
-import { formatDateTime } from "../../formatting";
+import { formatDateTime, formatChannelName } from "../../formatting";
 
 const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
@@ -20,9 +20,68 @@ const selectedSubscriptions = ref<Set<EventSubscription>>(new Set());
 const savingSubscriptions = ref(false);
 const subscriptionsFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
-const newChannelId = ref("");
+const newChannelId = ref(props.channelId);
 const movingChannel = ref(false);
 const moveFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+const availableChannels = ref<AvailableChannel[]>([]);
+const channelListError = ref("");
+const loadingChannelList = ref(true);
+
+const subscribedChannelIds = computed(
+  () => new Set((details.value?.channels ?? []).map((c) => c.channel))
+);
+
+const moveOptions = computed(() => {
+  const options = availableChannels.value.map((c) => {
+    const isCurrent = c.id === props.channelId;
+    const taken = !isCurrent && subscribedChannelIds.value.has(c.id);
+    const suffix = isCurrent ? " — current" : taken ? " — already subscribed" : "";
+    return {
+      value: c.id,
+      label: `${formatChannelName(c.name)} (${c.id})${suffix}`,
+      disabled: taken,
+    };
+  });
+  if (!options.some((o) => o.value === props.channelId)) {
+    const name = channel.value?.channelName;
+    options.unshift({
+      value: props.channelId,
+      label: `${name ? `${formatChannelName(name)} ` : ""}${props.channelId} — current`,
+      disabled: false,
+    });
+  }
+  return options;
+});
+
+const leagueIdInput = ref<number | null>(null);
+const savingLeague = ref(false);
+const leagueFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+const leaguePreview = ref<{ state: "looking" | "found" | "missing" | "failed"; name?: string; admin?: string } | null>(null);
+let leagueLookupTimer: ReturnType<typeof setTimeout> | undefined;
+let leagueLookupToken = 0;
+
+watch(leagueIdInput, (id) => {
+  clearTimeout(leagueLookupTimer);
+  leagueLookupToken++;
+  if (id == null || id <= 0 || id === channel.value?.leagueId) {
+    leaguePreview.value = null;
+    return;
+  }
+  leaguePreview.value = { state: "looking" };
+  const token = leagueLookupToken;
+  leagueLookupTimer = setTimeout(async () => {
+    try {
+      const league = await getLeague(id);
+      if (token !== leagueLookupToken) return;
+      leaguePreview.value = league
+        ? { state: "found", name: league.leagueName, admin: league.leagueAdmin }
+        : { state: "missing" };
+    } catch {
+      if (token !== leagueLookupToken) return;
+      leaguePreview.value = { state: "failed" };
+    }
+  }, 400);
+});
 
 const deleting = ref(false);
 
@@ -60,7 +119,7 @@ async function load() {
     }
     channel.value = found;
     selectedSubscriptions.value = new Set(found.subscriptions);
-    newChannelId.value = found.channel;
+    leagueIdInput.value = found.leagueId;
   } catch (e) {
     loadError.value = describeAdminError(e);
   } finally {
@@ -68,7 +127,32 @@ async function load() {
   }
 }
 
+async function loadAvailableChannels() {
+  loadingChannelList.value = true;
+  channelListError.value = "";
+  try {
+    availableChannels.value = await props.adapter.getAvailableChannels(props.entityId);
+  } catch (e) {
+    availableChannels.value = [];
+    channelListError.value = describeAdminError(e);
+  } finally {
+    loadingChannelList.value = false;
+  }
+}
+
 onMounted(load);
+onMounted(loadAvailableChannels);
+
+watch(
+  () => props.channelId,
+  async (id) => {
+    newChannelId.value = id;
+    subscriptionsFeedback.value = null;
+    publishFeedback.value = null;
+    leagueFeedback.value = null;
+    await Promise.all([load(), loadAvailableChannels()]);
+  }
+);
 
 const allSubscriptions = computed(() => ALL_EVENT_SUBSCRIPTIONS);
 
@@ -106,9 +190,42 @@ async function saveSubscriptions() {
   }
 }
 
+async function submitLeague() {
+  if (leagueIdInput.value == null) return;
+  savingLeague.value = true;
+  leagueFeedback.value = null;
+  try {
+    const res = await props.adapter.followLeague(props.entityId, props.channelId, leagueIdInput.value);
+    leagueFeedback.value = { type: "success", text: res.message };
+    await load();
+  } catch (e) {
+    leagueFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    savingLeague.value = false;
+  }
+}
+
+async function submitUnfollowLeague() {
+  if (!confirm("Stop following a league in this channel? League-specific notifications will stop.")) return;
+  savingLeague.value = true;
+  leagueFeedback.value = null;
+  try {
+    const res = await props.adapter.unfollowLeague(props.entityId, props.channelId);
+    leagueFeedback.value = { type: "success", text: res.message };
+    await load();
+  } catch (e) {
+    leagueFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    savingLeague.value = false;
+  }
+}
+
 async function submitMoveChannel() {
   if (!newChannelId.value || newChannelId.value === props.channelId) return;
-  if (!confirm(`Move this subscription from ${props.channelId} to ${newChannelId.value}?`)) return;
+  const target = availableChannels.value.find((c) => c.id === newChannelId.value);
+  const describedTarget = target ? `${formatChannelName(target.name)} (${target.id})` : newChannelId.value;
+
+  if (!confirm(`Move this subscription from ${props.channelId} to ${describedTarget}?`)) return;
   movingChannel.value = true;
   moveFeedback.value = null;
   try {
@@ -160,7 +277,11 @@ async function submitDelete() {
 
     <template v-else-if="channel">
       <h1>Manage channel</h1>
-      <p class="channel-id">{{ channel.channel }}</p>
+      <p class="channel-name">Channel: <span v-if="channel.channelName">{{ formatChannelName(channel.channelName) }}</span><span v-else class="unavailable">name unavailable</span></p>
+      <p class="channel-id">
+        {{ channel.channel }}
+        <span class="lookup-note">(name looked up live via {{ adapter.apiLabel }}, not stored)</span>
+      </p>
 
       <div class="card">
         <h2>Status</h2>
@@ -168,8 +289,12 @@ async function submitDelete() {
           <dt>Channel visible via {{ adapter.apiLabel }}</dt>
           <dd>
             <span v-if="channel.channelStatus === true" class="status ok">&#10003; found</span>
-            <span v-else-if="channel.channelStatus === false" class="status bad">&#10007; not found via {{ adapter.apiLabel }}</span>
-            <span v-else class="status">unknown</span>
+            <span v-else-if="channel.channelStatus === false" class="status bad" :title="adapter.channelNotVisibleHint">
+              &#10007; not listed by {{ adapter.apiLabel }}<template
+                v-if="channel.failureCount === 0 && adapter.notListedButDeliveringHint"
+              > &mdash; {{ adapter.notListedButDeliveringHint }}</template>
+            </span>
+            <span v-else class="status">? unknown &mdash; couldn't reach {{ adapter.apiLabel }}</span>
           </dd>
           <dt>Delivery</dt>
           <dd>
@@ -191,6 +316,48 @@ async function submitDelete() {
             </dd>
           </template>
         </dl>
+      </div>
+
+      <div class="card">
+        <h2>Followed league</h2>
+        <p v-if="leagueFeedback" :class="['alert', leagueFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
+          {{ leagueFeedback.text }}
+        </p>
+        <dl class="summary">
+          <dt>Currently</dt>
+          <dd>
+            <template v-if="channel.leagueId">{{ channel.leagueName || "Unknown league" }} ({{ channel.leagueId }})</template>
+            <span v-else class="status">no league followed</span>
+          </dd>
+        </dl>
+        <div class="field">
+          <label for="league-id">League id</label>
+          <input id="league-id" v-model.number="leagueIdInput" type="number" min="1" placeholder="e.g. 579157" />
+          <p v-if="leaguePreview" class="hint">
+            <template v-if="leaguePreview.state === 'looking'">Looking up&hellip;</template>
+            <template v-else-if="leaguePreview.state === 'found'">
+              About to follow <strong>{{ leaguePreview.name || "unnamed league" }}</strong
+              ><template v-if="leaguePreview.admin"> &mdash; admin {{ leaguePreview.admin }}</template>
+            </template>
+            <span v-else-if="leaguePreview.state === 'missing'" class="status bad">No classic league with that id</span>
+            <span v-else class="status">Couldn't reach the FPL API to check this id</span>
+          </p>
+        </div>
+        <button
+          class="btn small"
+          :disabled="savingLeague || leagueIdInput == null || leagueIdInput === channel.leagueId || leaguePreview?.state === 'missing'"
+          @click="submitLeague"
+        >
+          {{ savingLeague ? "Saving..." : "Save league" }}
+        </button>
+        <button
+          v-if="channel.leagueId"
+          class="btn small danger"
+          :disabled="savingLeague"
+          @click="submitUnfollowLeague"
+        >
+          Stop following
+        </button>
       </div>
 
       <div class="card">
@@ -221,11 +388,27 @@ async function submitDelete() {
         <p v-if="moveFeedback" :class="['alert', moveFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ moveFeedback.text }}
         </p>
-        <div class="field">
-          <label for="new-channel-id">Channel</label>
-          <input id="new-channel-id" v-model="newChannelId" type="text" />
-        </div>
-        <button class="btn small" :disabled="movingChannel || newChannelId === channel.channel" @click="submitMoveChannel">
+        <div v-if="loadingChannelList" class="spinner"></div>
+        <template v-else>
+          <div v-if="moveOptions.length > 1" class="field">
+            <label for="new-channel-id">Move to</label>
+            <select id="new-channel-id" v-model="newChannelId">
+              <option v-for="o in moveOptions" :key="o.value" :value="o.value" :disabled="o.disabled">{{ o.label }}</option>
+            </select>
+            <p class="hint">Channels listed live from {{ adapter.apiLabel }}; the subscription is stored by channel id.</p>
+          </div>
+          <div v-else class="field">
+            <label for="new-channel-id">Move to</label>
+            <input id="new-channel-id" v-model="newChannelId" type="text" placeholder="Channel id" />
+            <p class="hint">
+              <template v-if="channelListError">{{ channelListError }}</template>
+              <template v-else-if="availableChannels.length > 0">No other channel to move to in this {{ adapter.entityNoun }}.</template>
+              <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
+              Enter a channel id manually.
+            </p>
+          </div>
+        </template>
+        <button class="btn small" :disabled="movingChannel || !newChannelId || newChannelId === channel.channel" @click="submitMoveChannel">
           {{ movingChannel ? "Moving..." : "Move subscription" }}
         </button>
       </div>
@@ -260,9 +443,24 @@ async function submitDelete() {
   color: var(--fpl-purple);
 }
 
+.channel-name {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.channel-name .unavailable {
+  color: #6b7280;
+  font-weight: normal;
+}
+
 .channel-id {
   color: #6b7280;
   margin-bottom: 1.5rem;
+}
+
+.lookup-note {
+  font-size: 0.8rem;
 }
 
 .card {
@@ -270,7 +468,8 @@ async function submitDelete() {
 }
 
 .card h2 {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
+  font-weight: 600;
   margin-bottom: 1rem;
 }
 

@@ -58,7 +58,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             var guild_name = guild.GetProperty("name").GetString();
             logger.LogInformation($"Oauth response! ok:{jsonResponse}");
             await guildInstallationHandler.Install(new Guild(guildId ?? string.Empty, guild_name ?? string.Empty));
-            ctx.Response.Redirect(options.Value.SuccessRedirectUri);
+            ctx.Response.Redirect(ResolveSuccessRedirect(options.Value.SuccessRedirectUri, ctx.Request.Query["state"].FirstOrDefault()));
         }
         else
         {
@@ -66,5 +66,21 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
             var location = $"{options.Value.ErrorRedirectUri}?details=token_exchange_failed";
             ctx.Response.Redirect(location);
         }
+    }
+
+    // An OAuth `state` holding a site-relative path sends the browser there instead of the
+    // configured success page, resolved against that page's origin so it stays on the same
+    // site. Anything else — absolute urls, protocol-relative "//host" — falls back.
+    internal static string ResolveSuccessRedirect(string successRedirectUri, string? state)
+    {
+        if (string.IsNullOrEmpty(state) || state[0] != '/' || state.StartsWith("//"))
+        {
+            return successRedirectUri;
+        }
+
+        return Uri.TryCreate(successRedirectUri, UriKind.Absolute, out var absoluteSuccess)
+               && (absoluteSuccess.Scheme == Uri.UriSchemeHttp || absoluteSuccess.Scheme == Uri.UriSchemeHttps)
+            ? new Uri(absoluteSuccess, state).ToString()
+            : state;
     }
 }

@@ -1,6 +1,9 @@
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Data;
 using FplBot.Domain;
+using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -16,6 +19,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         fixture.DiscordCapture.Reset();
+        fixture.ResetChannelOutcomes();
         await fixture.FlushRedisAsync();
     }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -172,6 +176,158 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task FollowLeague_SetsTheFollowedLeague()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        var leagueClient = A.Fake<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(999, A<int>._, A<bool>._, A<int?>._))
+            .Returns(new ClassicLeague { Properties = new ClassicLeagueProperties { Name = "New League" } });
+
+        var result = await AdminDiscordEndpoints.FollowLeague(
+            installedGuild.Id, channelId, new FollowGuildLeagueRequest(999), fixture.GuildRepo, leagueClient);
+
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        Assert.Equal(999, (int)updated!.GetChannel(channelId)!.FollowedLeagueId!.Value);
+    }
+
+    [Fact]
+    public async Task FollowLeague_UnknownLeague_IsRejectedAndLeavesTheChannelUnchanged()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(123, [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        var leagueClient = A.Fake<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(A<int>._, A<int>._, A<bool>._, A<int?>._)).Returns(Task.FromResult<ClassicLeague?>(null));
+
+        var result = await AdminDiscordEndpoints.FollowLeague(
+            installedGuild.Id, channelId, new FollowGuildLeagueRequest(404404), fixture.GuildRepo, leagueClient);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        Assert.Equal(123, (int)updated!.GetChannel(channelId)!.FollowedLeagueId!.Value);
+    }
+
+    [Fact]
+    public async Task UnfollowLeague_ClearsTheLeagueInRedis()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(123, [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var result = await AdminDiscordEndpoints.UnfollowLeague(installedGuild.Id, channelId, fixture.GuildRepo);
+
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        Assert.Null(updated!.GetChannel(channelId)!.FollowedLeagueId);
+    }
+
+    [Fact]
+    public async Task AddChannel_SubscribesTheChannelToAllEvents()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+
+        var result = await AdminDiscordEndpoints.AddChannel(
+            installedGuild.Id, new AddGuildChannelRequest("222222222222222222"), fixture.GuildRepo);
+
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        Assert.True(updated!.GetChannel("222222222222222222")!.IsSubscribedTo(FplEvent.PriceChanges));
+    }
+
+    [Fact]
+    public async Task AddChannel_AlreadySubscribed_ReturnsConflict()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var result = await AdminDiscordEndpoints.AddChannel(
+            installedGuild.Id, new AddGuildChannelRequest(channelId), fixture.GuildRepo);
+
+        Assert.Equal(StatusCodes.Status409Conflict, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task MoveChannel_PublishesDiscordChannelMoved()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(123, [EventSubscription.Standings]);
+        var oldChannelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        var publisher = new TestPublishEndpoint();
+
+        await AdminDiscordEndpoints.MoveChannel(installedGuild.Id, oldChannelId, new MoveGuildChannelRequest("222222222222222222"), fixture.GuildRepo, publisher);
+
+        var moved = Assert.Single(publisher.PublishedMessages.Containing<DiscordChannelMoved>()).Message as DiscordChannelMoved;
+        Assert.Equal(installedGuild.Id, moved!.GuildId);
+        Assert.Equal(oldChannelId, moved.OldChannelId);
+        Assert.Equal("222222222222222222", moved.NewChannelId);
+    }
+
+    [Fact]
+    public async Task MoveChannel_TargetAlreadySubscribed_ReturnsConflictAndDoesNotPublish()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(123, [EventSubscription.Standings]);
+        var oldChannelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        installedGuild.Subscribe("222222222222222222", [FplEvent.Standings]);
+        await fixture.GuildRepo.Save(installedGuild);
+        var publisher = new TestPublishEndpoint();
+
+        var result = await AdminDiscordEndpoints.MoveChannel(installedGuild.Id, oldChannelId, new MoveGuildChannelRequest("222222222222222222"), fixture.GuildRepo, publisher);
+
+        Assert.Equal(StatusCodes.Status409Conflict, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+        Assert.Empty(publisher.PublishedMessages.Containing<DiscordChannelMoved>());
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        Assert.NotNull(updated!.GetChannel(oldChannelId));
+    }
+
+    [Fact]
+    public async Task GetAvailableChannels_ListsTextChannelsOnly()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        fixture.SetDiscordGuildChannels(
+            new global::Discord.Net.HttpClients.DiscordClient.Channel(3, "zulu", 0),
+            new global::Discord.Net.HttpClients.DiscordClient.Channel(1, "alpha", 0),
+            new global::Discord.Net.HttpClients.DiscordClient.Channel(2, "a-category", 4),
+            new global::Discord.Net.HttpClients.DiscordClient.Channel(4, "voice-chat", 2));
+        var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();
+
+        var result = await AdminDiscordEndpoints.GetAvailableChannels(installedGuild.Id, fixture.GuildRepo, discordClient, NullLogger<Program>.Instance);
+
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
+        var channels = ((IEnumerable<ChannelDto>)value).ToList();
+        Assert.Equal(["alpha", "zulu"], channels.Select(c => c.Name));
+        Assert.Equal("1", channels[0].Id);
+    }
+
+    [Fact]
+    public async Task GetGuild_ResolvesChannelNameFromDiscord()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings], channelId: "893932860162064999");
+        fixture.SetDiscordGuildChannels(new global::Discord.Net.HttpClients.DiscordClient.Channel(893932860162064999, "fplbot", 0));
+        var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();
+
+        var result = await AdminDiscordEndpoints.GetGuild(installedGuild.Id, fixture.GuildRepo, A.Fake<ILeagueClient>(), discordClient, NullLogger<Program>.Instance);
+
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Equal("fplbot", (string?)channel.channelName);
+        Assert.True((bool?)channel.channelStatus);
+    }
+
+    [Fact]
+    public async Task GetGuild_ChannelUnknownToDiscord_HasNoChannelName()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings], channelId: "893932860162064999");
+        fixture.SetDiscordGuildChannels(new global::Discord.Net.HttpClients.DiscordClient.Channel(111111111111111111, "other", 0));
+        var discordClient = fixture.Services.GetRequiredService<global::Discord.Net.HttpClients.IDiscordClient>();
+
+        var result = await AdminDiscordEndpoints.GetGuild(installedGuild.Id, fixture.GuildRepo, A.Fake<ILeagueClient>(), discordClient, NullLogger<Program>.Instance);
+
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Null((string?)channel.channelName);
+        Assert.False((bool?)channel.channelStatus);
+    }
+
+    [Fact]
     public async Task GetGuild_IncludesFailureState()
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
@@ -252,7 +408,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(leagueId: 123, subscriptions: [EventSubscription.Standings]);
         var oldChannelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var result = await AdminDiscordEndpoints.MoveChannel(installedGuild.Id, oldChannelId, new MoveGuildChannelRequest("new-channel"), fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.MoveChannel(installedGuild.Id, oldChannelId, new MoveGuildChannelRequest("new-channel"), fixture.GuildRepo, new TestPublishEndpoint());
 
         Assert.IsAssignableFrom<IValueHttpResult>(result);
         var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
@@ -265,7 +421,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation();
 
-        var result = await AdminDiscordEndpoints.MoveChannel(installedGuild.Id, "missing-channel", new MoveGuildChannelRequest("new-channel"), fixture.GuildRepo);
+        var result = await AdminDiscordEndpoints.MoveChannel(installedGuild.Id, "missing-channel", new MoveGuildChannelRequest("new-channel"), fixture.GuildRepo, new TestPublishEndpoint());
 
         Assert.IsType<NotFound>(result);
     }

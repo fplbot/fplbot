@@ -57,6 +57,11 @@ public class Installation
         _channelSubscriptions.Add(ChannelSubscription.Follow(channelId, leagueId));
     }
 
+    public void Unfollow(string channelId)
+    {
+        FindChannel(channelId)?.Unfollow();
+    }
+
     public void Subscribe(string channelId, FplEvent[] fplEvents)
     {
         var existing = FindChannel(channelId);
@@ -89,13 +94,16 @@ public class Installation
         _channelSubscriptions.Remove(existing);
     }
 
-    public void MoveChannel(string oldChannelId, string newChannelId)
+    public MoveChannelOutcome MoveChannel(string oldChannelId, string newChannelId)
     {
         var existing = FindChannel(oldChannelId);
-        if (existing is null) return;
+        if (existing is null) return MoveChannelOutcome.SourceNotFound;
+
+        if (FindChannel(newChannelId) is not null) return MoveChannelOutcome.TargetAlreadySubscribed;
 
         _channelSubscriptions.Remove(existing);
         _channelSubscriptions.Add(ChannelSubscription.Load(newChannelId, existing.FollowedLeagueId, existing.Events.Current));
+        return MoveChannelOutcome.Moved;
     }
 
     private ChannelSubscription? FindChannel(string channelId) =>

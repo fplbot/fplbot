@@ -1,5 +1,6 @@
 import type {
   AdminMe,
+  AvailableChannel,
   Bookmarks,
   ChannelFailureStats,
   ChannelFilter,
@@ -13,6 +14,7 @@ import type {
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
+  LeagueSummary,
   MessageResponse,
   PagedResult,
   SearchAnalyticsResult,
@@ -123,6 +125,22 @@ export function updateChannelSubscriptions(
   return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/subscriptions`, { subscriptions }, "PUT");
 }
 
+export function getAvailableChannels(teamId: string): Promise<AvailableChannel[]> {
+  return request(`/api/admin/teams/${teamId}/available-channels`);
+}
+
+export function followLeague(teamId: string, channelId: string, leagueId: number): Promise<MessageResponse> {
+  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/league`, { leagueId }, "PUT");
+}
+
+export function addChannelSubscription(teamId: string, channelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/teams/${teamId}/channels`, { channelId });
+}
+
+export function unfollowLeague(teamId: string, channelId: string): Promise<MessageResponse> {
+  return request(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/league`, { method: "DELETE" });
+}
+
 export function moveChannel(teamId: string, channelId: string, newChannelId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/channel`, { newChannelId }, "PUT");
 }
@@ -228,6 +246,22 @@ export function updateGuildChannelSubscriptions(
   return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/subscriptions`, { subscriptions }, "PUT");
 }
 
+export function getAvailableGuildChannels(guildId: string): Promise<AvailableChannel[]> {
+  return request(`/api/admin/discord/guilds/${guildId}/available-channels`);
+}
+
+export function followGuildLeague(guildId: string, channelId: string, leagueId: number): Promise<MessageResponse> {
+  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/league`, { leagueId }, "PUT");
+}
+
+export function addGuildChannelSubscription(guildId: string, channelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/discord/guilds/${guildId}/channels`, { channelId });
+}
+
+export function unfollowGuildLeague(guildId: string, channelId: string): Promise<MessageResponse> {
+  return request(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/league`, { method: "DELETE" });
+}
+
 export function moveGuildChannel(guildId: string, channelId: string, newChannelId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/channel`, { newChannelId }, "PUT");
 }
@@ -240,8 +274,9 @@ export async function redirectToSlackInstall(): Promise<void> {
   window.location.href = data.redirectUri;
 }
 
-export async function redirectToDiscordInstall(): Promise<void> {
-  const res = await fetch("/api/oauth/install-url-discord");
+export async function redirectToDiscordInstall(returnTo?: string): Promise<void> {
+  const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
+  const res = await fetch(`/api/oauth/install-url-discord${query}`);
   const data: InstallUrlResponse = await res.json();
   window.location.href = data.redirectUri;
 }
@@ -263,6 +298,18 @@ export async function searchAny(
 }
 
 // ---- League details (public site) ----
+
+export async function getLeague(leagueId: number): Promise<LeagueSummary | null> {
+  const res = await fetch(`/api/fpl/leagues/${leagueId}`);
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`League request failed with status ${res.status}`);
+  }
+  return res.json();
+}
+
 
 export async function getLeagueDetails(leagueId: number): Promise<LeagueDetails | null> {
   const res = await fetch(`/api/fpl/leagues/${leagueId}/details`);

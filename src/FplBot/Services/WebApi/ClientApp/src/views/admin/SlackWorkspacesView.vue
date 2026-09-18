@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { getTeams, uninstallTeam, deleteChannelSubscription, getSlackFailureStats, resetSlackFailures } from "../../api/api";
+import { getTeams, uninstallTeam, deleteChannelSubscription, getSlackFailureStats, resetSlackFailures, redirectToSlackInstall } from "../../api/api";
 import type { TeamSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { useAdminListQuery } from "../../composables/useAdminListQuery";
@@ -97,6 +97,8 @@ async function removeSub(teamId: string, channelId: string) {
   <div>
     <h1>Slack workspaces</h1>
     <p class="lead">{{ totalCount }} workspace(s) with fplbot installed.</p>
+
+    <button class="btn install-cta" @click="redirectToSlackInstall">Install new workspace&hellip;</button>
 
     <p v-if="failureStats" class="lead delivery-health">
       <template v-if="failureStats.channelsWithFailures > 0">
@@ -199,6 +201,15 @@ async function removeSub(teamId: string, channelId: string) {
 </template>
 
 <style scoped>
+.install-cta {
+  display: block;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 .lead {
   color: #6b7280;
   margin-bottom: 1rem;

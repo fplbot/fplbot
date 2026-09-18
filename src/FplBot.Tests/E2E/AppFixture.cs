@@ -63,6 +63,8 @@ public class AppFixture : IAsyncLifetime
 
     public SlackMessageCapture SlackCapture { get; } = new();
 
+    public LogCapture LogCapture { get; } = new();
+
     public DiscordMessageCapture DiscordCapture { get; } = new();
 
     public ISlackClient SlackClient { get; private set; } = null!;
@@ -80,6 +82,12 @@ public class AppFixture : IAsyncLifetime
         _capturingSlackClient.FailChannel(channelId, slackError);
 
     public void RecoverSlackChannel(string channelId) => _capturingSlackClient.RecoverChannel(channelId);
+
+    public void SetSlackChannels(params Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsList.Conversation[] channels) =>
+        _capturingSlackClient.SetChannels(channels);
+
+    public void SetDiscordGuildChannels(params global::Discord.Net.HttpClients.DiscordClient.Channel[] channels) =>
+        _capturingDiscordClient.SetGuildChannels(channels);
 
     public void SetSlackAppsUninstallResult(Slackbot.Net.SlackClients.Http.Models.Responses.Response response) =>
         _capturingSlackClient.SetAppsUninstallResult(response);
@@ -153,7 +161,7 @@ public class AppFixture : IAsyncLifetime
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseTestServer();
-        builder.Host.UseSerilog((_, lc) => lc.WriteTo.Console());
+        builder.Host.UseSerilog((_, lc) => lc.WriteTo.Console().WriteTo.Sink(LogCapture), preserveStaticLogger: true);
         builder.Configuration.AddConfiguration(config);
 
         var active = new List<IFplBotService>
@@ -346,10 +354,10 @@ public class AppFixture : IAsyncLifetime
     }
 
     public async Task<Installation> SeedGuildInstallation(int? leagueId = null,
-        IEnumerable<EventSubscription>? subscriptions = null)
+        IEnumerable<EventSubscription>? subscriptions = null, string? channelId = null)
     {
         var guildId = Guid.NewGuid().ToString("N");
-        var channelId = Guid.NewGuid().ToString("N");
+        channelId ??= Guid.NewGuid().ToString("N");
         var events = (subscriptions ?? []).Select(s => Enum.Parse<FplEvent>(s.ToString()));
         var channel = ChannelSubscription.Load(channelId, leagueId is { } id ? new ClassicLeagueId(id) : null, events);
         var installation = Installation.Load(guildId, "Test Guild " + guildId, token: null, [channel]);

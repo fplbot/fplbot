@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { InstallationAdapter, EntityDetails } from "../../composables/installationAdapters";
+import type { AvailableChannel } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
-import { formatDateTime } from "../../formatting";
+import { formatDateTime, formatChannelName } from "../../formatting";
 
 const props = defineProps<{ entityId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
@@ -17,6 +18,75 @@ const dangerBusy = ref(false);
 const dangerFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
 const deleting = ref<string | null>(null);
+
+const availableChannels = ref<AvailableChannel[]>([]);
+const loadingChannelList = ref(true);
+const channelListError = ref("");
+const newChannelId = ref("");
+const adding = ref(false);
+const addFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
+const channelFilter = ref("");
+
+const allAddOptions = computed(() => {
+  const taken = new Set((details.value?.channels ?? []).map((c) => c.channel));
+  return availableChannels.value.map((c) => ({
+    value: c.id,
+    label: `${formatChannelName(c.name)} (${c.id})`,
+    disabled: taken.has(c.id),
+  }));
+});
+
+const addOptions = computed(() => {
+  const needle = channelFilter.value.trim().toLowerCase().replace(/^#/, "");
+  if (!needle) return allAddOptions.value;
+  return allAddOptions.value.filter((o) => o.label.toLowerCase().includes(needle));
+});
+
+const subscribedOptions = computed(() => addOptions.value.filter((o) => o.disabled));
+const unsubscribedOptions = computed(() => addOptions.value.filter((o) => !o.disabled));
+
+const pickerOpen = ref(false);
+const highlightedValue = ref("");
+const selectedLabel = ref("");
+
+function openPicker() {
+  if (newChannelId.value) channelFilter.value = "";
+  pickerOpen.value = true;
+  highlightedValue.value = unsubscribedOptions.value[0]?.value ?? "";
+}
+
+function closePicker() {
+  pickerOpen.value = false;
+  if (newChannelId.value) channelFilter.value = selectedLabel.value;
+}
+
+function choose(value: string, label: string) {
+  newChannelId.value = value;
+  selectedLabel.value = label;
+  channelFilter.value = label;
+  pickerOpen.value = false;
+}
+
+function moveHighlight(delta: number) {
+  pickerOpen.value = true;
+  const options = unsubscribedOptions.value;
+  if (options.length === 0) return;
+  const current = options.findIndex((o) => o.value === highlightedValue.value);
+  const next = Math.min(Math.max(current + delta, 0), options.length - 1);
+  highlightedValue.value = options[current === -1 ? 0 : next].value;
+}
+
+function chooseHighlighted() {
+  const option = unsubscribedOptions.value.find((o) => o.value === highlightedValue.value);
+  if (option) choose(option.value, option.label);
+}
+
+watch(channelFilter, (filter) => {
+  if (newChannelId.value && filter !== selectedLabel.value && pickerOpen.value) {
+    newChannelId.value = "";
+  }
+});
 
 async function load() {
   loading.value = true;
@@ -35,7 +105,37 @@ async function load() {
   }
 }
 
+async function loadAvailableChannels() {
+  loadingChannelList.value = true;
+  channelListError.value = "";
+  try {
+    availableChannels.value = await props.adapter.getAvailableChannels(props.entityId);
+  } catch (e) {
+    availableChannels.value = [];
+    channelListError.value = describeAdminError(e);
+  } finally {
+    loadingChannelList.value = false;
+  }
+}
+
+async function addChannelSub() {
+  if (!newChannelId.value) return;
+  adding.value = true;
+  addFeedback.value = null;
+  try {
+    const res = await props.adapter.addChannelSubscription(props.entityId, newChannelId.value);
+    addFeedback.value = { type: "success", text: res.message };
+    newChannelId.value = "";
+    await load();
+  } catch (e) {
+    addFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    adding.value = false;
+  }
+}
+
 onMounted(load);
+onMounted(loadAvailableChannels);
 
 async function removeChannelSub(channelId: string) {
   if (!confirm(`Delete the subscription for channel ${channelId}?`)) return;
@@ -103,19 +203,40 @@ async function submitDanger() {
               <th>Channel</th>
               <th>League</th>
               <th>Subscriptions</th>
-              <th>Status</th>
+              <th>Channel visible</th>
               <th>Delivery</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="c in details.channels" :key="c.channel" :class="{ failing: c.failureCount > 0 }">
-              <td>{{ c.channel }}</td>
+              <td>
+                <div class="channel-name">
+                  <template v-if="c.channelName">{{ formatChannelName(c.channelName) }}</template>
+                  <span v-else class="unavailable">name unavailable</span>
+                </div>
+                <div class="channel-id">{{ c.channel }}</div>
+              </td>
               <td>{{ c.leagueName || "Unknown" }} ({{ c.leagueId || "not set" }})</td>
               <td>{{ c.subscriptions.join(", ") || "none" }}</td>
               <td>
-                <span v-if="c.channelStatus === true" class="status ok">&#10003; found</span>
-                <span v-else-if="c.channelStatus === false" class="status bad">&#10007; not found via {{ adapter.apiLabel }}</span>
+                <span
+                  v-if="c.channelStatus === true"
+                  class="status ok"
+                  :title="`${adapter.apiLabel} listed this channel, so it exists and the bot can see it.`"
+                >&#10003; yes</span>
+                <span
+                  v-else-if="c.channelStatus === false"
+                  class="status bad"
+                  :title="adapter.channelNotVisibleHint"
+                >&#10007; not listed by {{ adapter.apiLabel }}<template
+                  v-if="c.failureCount === 0 && adapter.notListedButDeliveringHint"
+                > &mdash; {{ adapter.notListedButDeliveringHint }}</template></span>
+                <span
+                  v-else
+                  class="status"
+                  :title="`The call to ${adapter.apiLabel} failed, so we could not check. This says nothing about the channel itself — the subscription may well be fine.`"
+                >? unknown &mdash; couldn't reach {{ adapter.apiLabel }}</span>
               </td>
               <td>
                 <span v-if="c.failureCount > 0" class="status bad" :title="`Failing since ${formatDateTime(c.failingSince)}`">
@@ -146,6 +267,78 @@ async function submitDanger() {
           </tbody>
         </table>
         <p v-else class="no-subs">No channel subscriptions.</p>
+
+        <div class="add-channel">
+          <h3>Add a channel</h3>
+          <p v-if="addFeedback" :class="['alert', addFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
+            {{ addFeedback.text }}
+          </p>
+          <div v-if="loadingChannelList" class="spinner"></div>
+          <template v-else>
+            <div v-if="allAddOptions.length > 0" class="field combobox">
+              <label for="add-channel-id">Channel</label>
+              <input
+                id="add-channel-id"
+                v-model="channelFilter"
+                type="text"
+                autocomplete="off"
+                role="combobox"
+                aria-controls="add-channel-list"
+                :aria-expanded="pickerOpen"
+                placeholder="Select a channel&hellip;"
+                @focus="openPicker"
+                @input="pickerOpen = true"
+                @keydown.down.prevent="moveHighlight(1)"
+                @keydown.up.prevent="moveHighlight(-1)"
+                @keydown.enter.prevent="chooseHighlighted"
+                @keydown.esc="closePicker"
+                @blur="closePicker"
+              />
+              <div class="picker-anchor">
+              <ul v-if="pickerOpen" id="add-channel-list" class="picker" role="listbox">
+                <template v-if="subscribedOptions.length > 0">
+                  <li class="picker-group">Already subscribed</li>
+                  <li v-for="o in subscribedOptions" :key="o.value" class="picker-option taken" role="option">
+                    {{ o.label }}
+                  </li>
+                </template>
+                <template v-if="unsubscribedOptions.length > 0">
+                  <li class="picker-group">Not subscribed</li>
+                  <li
+                    v-for="o in unsubscribedOptions"
+                    :key="o.value"
+                    :class="['picker-option', { highlighted: o.value === highlightedValue }]"
+                    role="option"
+                    :aria-selected="o.value === newChannelId"
+                    @mousedown.prevent="choose(o.value, o.label)"
+                    @mouseenter="highlightedValue = o.value"
+                  >
+                    {{ o.label }}
+                  </li>
+                </template>
+                <li v-if="addOptions.length === 0" class="picker-empty">No channel matches &ldquo;{{ channelFilter }}&rdquo;</li>
+              </ul>
+              </div>
+              <p class="no-subs">
+                <template v-if="newChannelId">Selected {{ selectedLabel }}</template>
+                <template v-else-if="channelFilter">{{ addOptions.length }} of {{ allAddOptions.length }} channels</template>
+                <template v-else>{{ allAddOptions.length }} channels &mdash; start typing to filter</template>
+              </p>
+            </div>
+            <p v-else class="no-subs">
+              <template v-if="channelListError">{{ channelListError }}</template>
+              <template v-else>No channels came back from {{ adapter.apiLabel }}.</template>
+            </p>
+            <template v-if="allAddOptions.length > 0">
+              <button class="btn small" :disabled="adding || !newChannelId" @click="addChannelSub">
+                {{ adding ? "Adding..." : "Add subscription" }}
+              </button>
+              <p class="no-subs">
+                Starts subscribed to all events. Pick a league and narrow the events from the channel page.
+              </p>
+            </template>
+          </template>
+        </div>
       </div>
 
       <div class="card danger-zone">
@@ -171,6 +364,74 @@ async function submitDanger() {
 </template>
 
 <style scoped>
+.picker-anchor {
+  position: relative;
+}
+
+.picker {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.picker-group {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.picker-group:first-child {
+  border-top: none;
+}
+
+.picker-option {
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+
+.picker-option.highlighted {
+  background: #eef2ff;
+}
+
+.picker-option.taken {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.picker-empty {
+  padding: 0.5rem 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.add-channel {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.add-channel h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
 .back-link {
   display: inline-block;
   margin-bottom: 1rem;
@@ -189,8 +450,25 @@ async function submitDanger() {
 }
 
 .card h2 {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
+  font-weight: 600;
   margin-bottom: 1rem;
+}
+
+.channel-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.channel-name .unavailable {
+  color: #6b7280;
+  font-weight: normal;
+  font-style: italic;
+}
+
+.channel-id {
+  color: #6b7280;
+  font-size: 0.8rem;
 }
 
 .no-subs {

@@ -67,8 +67,14 @@ export interface TeamSummary {
   pendingRemoval: boolean;
 }
 
+export interface AvailableChannel {
+  id: string;
+  name: string;
+}
+
 export interface TeamDetailsChannel {
   channel: string;
+  channelName: string | null;
   leagueId: number | null;
   leagueName: string | null;
   subscriptions: EventSubscription[];
@@ -156,6 +162,7 @@ export interface GuildWithSubs {
 
 export interface GuildDetailsChannel {
   channel: string;
+  channelName: string | null;
   leagueId: number | null;
   leagueName: string | null;
   subscriptions: EventSubscription[];
@@ -252,6 +259,11 @@ export interface EntrySummary {
   viceCaptain?: string;
   chip?: string;
   transfers: Transfer[];
+}
+
+export interface LeagueSummary {
+  leagueName?: string;
+  leagueAdmin?: string;
 }
 
 export interface LeagueDetails {

@@ -5,6 +5,7 @@ using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.EventHandlers.Slack;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
 using Slackbot.Net.SlackClients.Http;
 
@@ -20,16 +21,28 @@ public record UpdateChannelSubscriptionsRequest(IEnumerable<EventSubscription> S
 
 public record MoveChannelRequest(string NewChannelId);
 
+public record AddChannelRequest(string ChannelId);
+
+public record FollowLeagueRequest(int LeagueId);
+
+public record ChannelDto(string Id, string Name);
+
 public static class AdminSlackEndpoints
 {
+    private const int MaxChannelPages = 25;
+
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/teams", GetTeams);
         group.MapGet("/teams/{teamId}", GetTeam);
+        group.MapGet("/teams/{teamId}/available-channels", GetAvailableChannels);
+        group.MapPost("/teams/{teamId}/channels", AddChannel);
         group.MapPost("/teams/{teamId}/uninstall", Uninstall);
         group.MapPost("/teams/{teamId}/channels/{channelId}/publish-standings", PublishStandings);
         group.MapPut("/teams/{teamId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
         group.MapPut("/teams/{teamId}/channels/{channelId}/channel", MoveChannel);
+        group.MapPut("/teams/{teamId}/channels/{channelId}/league", FollowLeague);
+        group.MapDelete("/teams/{teamId}/channels/{channelId}/league", UnfollowLeague);
         group.MapDelete("/teams/{teamId}/channels/{channelId}", DeleteChannelSubscription);
         group.MapGet("/slack/failures", GetFailureStats);
         group.MapPost("/slack/failures/reset", ResetFailures);
@@ -103,6 +116,55 @@ public static class AdminSlackEndpoints
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
 
+    internal static async Task<IResult> GetAvailableChannels(
+        string teamId,
+        ISlackTeamRepository teamRepo,
+        ISlackClientBuilder slackClientBuilder,
+        ILogger<Program> logger)
+    {
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+
+        var slackChannels = await ListChannels(installation, slackClientBuilder, logger, MaxChannelPages);
+        if (slackChannels is null)
+        {
+            return TypedResults.Problem(
+                title: "Failed to list channels from Slack",
+                detail: "The Slack conversations.list call failed. Enter a channel id manually instead.",
+                statusCode: StatusCodes.Status502BadGateway);
+        }
+
+        return TypedResults.Ok(slackChannels.Select(c => new ChannelDto(c.Id, c.Name)).OrderBy(c => c.Name));
+    }
+
+    private static async Task<IReadOnlyCollection<(string Id, string Name)>?> ListChannels(
+        Installation installation,
+        ISlackClientBuilder slackClientBuilder,
+        ILogger logger,
+        int maxPages)
+    {
+        try
+        {
+            var slackClient = slackClientBuilder.Build(token: installation.Token);
+            var channels = new List<(string Id, string Name)>();
+            string? cursor = null;
+            for (var page = 0; page < maxPages; page++)
+            {
+                var conversations = await slackClient.ConversationsListPublicChannels(500, cursor);
+                channels.AddRange(conversations.Channels.Select(c => (c.Id, c.Name)));
+                cursor = conversations.Response_Metadata?.Next_Cursor;
+                if (string.IsNullOrEmpty(cursor)) break;
+            }
+
+            return channels;
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+            return null;
+        }
+    }
+
     internal static async Task<IResult> GetTeam(
         string teamId,
         ISlackTeamRepository teamRepo,
@@ -113,17 +175,7 @@ public static class AdminSlackEndpoints
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
 
-        IEnumerable<(string Id, string Name)>? slackChannels = null;
-        try
-        {
-            var slackClient = slackClientBuilder.Build(token: installation.Token);
-            var conversations = await slackClient.ConversationsListPublicChannels(500);
-            slackChannels = conversations.Channels.Select(c => (c.Id, c.Name));
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, e.Message);
-        }
+        var slackChannels = await ListChannels(installation, slackClientBuilder, logger, maxPages: 1);
 
         var channels = new List<object>();
         foreach (var channel in installation.ChannelSubscriptions)
@@ -137,11 +189,14 @@ public static class AdminSlackEndpoints
                 leagueName = league?.Properties?.Name;
             }
 
-            var channelStatus = slackChannels?.Any(c => channel.ChannelId == $"#{c.Name}" || channel.ChannelId == c.Id);
+            var match = slackChannels?.FirstOrDefault(c => channel.ChannelId == $"#{c.Name}" || channel.ChannelId == c.Id);
+            var channelStatus = slackChannels is null ? (bool?)null : match?.Name is not null;
+            var channelName = match?.Name;
 
             channels.Add(new
             {
                 channel = channel.ChannelId,
+                channelName,
                 leagueId,
                 leagueName,
                 subscriptions = ToEventSubscriptions(channel),
@@ -224,20 +279,91 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new { message = $"Updated subscriptions for {channelId}" });
     }
 
+    internal static async Task<IResult> FollowLeague(
+        string teamId,
+        string channelId,
+        FollowLeagueRequest request,
+        ISlackTeamRepository teamRepo,
+        ILeagueClient leagueClient)
+    {
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+        if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
+
+        var league = await leagueClient.GetClassicLeague(request.LeagueId, tolerate404: true);
+        if (league == null)
+        {
+            return TypedResults.BadRequest(new { message = $"Could not find a classic league with id '{request.LeagueId}'." });
+        }
+
+        installation.Follow(channelId, new ClassicLeagueId(request.LeagueId));
+        await teamRepo.Save(installation);
+
+        var leagueName = league.Properties?.Name;
+        return TypedResults.Ok(new { message = $"{channelId} now follows '{leagueName}' ({request.LeagueId})", leagueName });
+    }
+
+    internal static async Task<IResult> UnfollowLeague(
+        string teamId,
+        string channelId,
+        ISlackTeamRepository teamRepo)
+    {
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+        if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
+
+        installation.Unfollow(channelId);
+        await teamRepo.Save(installation);
+
+        return TypedResults.Ok(new { message = $"{channelId} no longer follows a league" });
+    }
+
+    internal static async Task<IResult> AddChannel(
+        string teamId,
+        AddChannelRequest request,
+        ISlackTeamRepository teamRepo)
+    {
+        var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
+        if (installation == null) return TypedResults.NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.ChannelId))
+        {
+            return TypedResults.BadRequest(new { message = "A channel id is required." });
+        }
+
+        if (installation.GetChannel(request.ChannelId) is not null)
+        {
+            return TypedResults.Conflict(new { message = $"{request.ChannelId} already has a subscription." });
+        }
+
+        installation.Subscribe(request.ChannelId, [FplEvent.All]);
+        await teamRepo.Save(installation);
+
+        return TypedResults.Ok(new { message = $"Subscribed {request.ChannelId} to all events" });
+    }
+
     internal static async Task<IResult> MoveChannel(
         string teamId,
         string channelId,
         MoveChannelRequest request,
-        ISlackTeamRepository teamRepo)
+        ISlackTeamRepository teamRepo,
+        IPublishEndpoint publishEndpoint)
     {
         var teamIdToUpper = teamId.ToUpper();
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
 
-        if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
+        switch (installation.MoveChannel(channelId, request.NewChannelId))
+        {
+            case MoveChannelOutcome.SourceNotFound:
+                return TypedResults.NotFound();
+            case MoveChannelOutcome.TargetAlreadySubscribed:
+                return TypedResults.Conflict(new { message = $"{request.NewChannelId} already has a subscription." });
+        }
 
-        installation.MoveChannel(channelId, request.NewChannelId);
         await teamRepo.Save(installation);
+
+        await publishEndpoint.Publish(new SlackChannelMoved(teamIdToUpper, channelId, request.NewChannelId));
 
         return TypedResults.Ok(new { message = $"Moved subscription from {channelId} to {request.NewChannelId}" });
     }

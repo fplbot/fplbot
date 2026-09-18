@@ -20,6 +20,24 @@ public class InstallUrlEndpointsTests(AppFixture fixture)
         Assert.True((permissions & EmbedLinks) != 0, "all but the deadline notifications are rich embeds");
     }
 
+    [Theory]
+    [InlineData("/admin/discord/servers", "/admin/discord/servers")]
+    [InlineData("https://evil.example/pwn", null)]
+    [InlineData("//evil.example/pwn", null)]
+    [InlineData(null, null)]
+    public async Task DiscordInstallUrl_CarriesOnlyASiteRelativeReturnPathAsState(string? returnTo, string? expectedState)
+    {
+        var query = returnTo is null ? "" : $"?returnTo={Uri.EscapeDataString(returnTo)}";
+        var response = await fixture.Get($"/api/oauth/install-url-discord{query}");
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var redirectUri = JsonDocument.Parse(body).RootElement.GetProperty("redirectUri").GetString()!;
+        var state = QueryHelpers.ParseQuery(new Uri(redirectUri).Query).TryGetValue("state", out var s) ? s.ToString() : null;
+
+        Assert.Equal(expectedState, state);
+    }
+
     private async Task<long> RequestedDiscordPermissions()
     {
         var response = await fixture.Get("/api/oauth/install-url-discord");

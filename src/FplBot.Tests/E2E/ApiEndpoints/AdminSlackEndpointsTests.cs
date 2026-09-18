@@ -1,15 +1,19 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.ApplicationServices.Slack;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Domain;
+using FplBot.Messaging.Contracts.Events.v1;
+using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Admin;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Slackbot.Net.SlackClients.Http.Exceptions;
+using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsList;
 using Response = Slackbot.Net.SlackClients.Http.Models.Responses.Response;
 
 namespace FplBot.Tests.E2E.ApiEndpoints;
@@ -179,7 +183,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         installation.Follow("#old-channel", new ClassicLeagueId(123));
         await repo.Save(installation);
 
-        var result = await AdminSlackEndpoints.MoveChannel(teamId, "#old-channel", new MoveChannelRequest("#new-channel"), repo);
+        var result = await AdminSlackEndpoints.MoveChannel(teamId, "#old-channel", new MoveChannelRequest("#new-channel"), repo, new TestPublishEndpoint());
 
         Assert.IsAssignableFrom<IValueHttpResult>(result);
         var updated = await repo.GetInstallation(teamId);
@@ -193,9 +197,163 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var teamId = await fixture.InstallSlackbot();
         var repo = fixture.Services.GetRequiredService<ISlackTeamRepository>();
 
-        var result = await AdminSlackEndpoints.MoveChannel(teamId, "#missing", new MoveChannelRequest("#new-channel"), repo);
+        var result = await AdminSlackEndpoints.MoveChannel(teamId, "#missing", new MoveChannelRequest("#new-channel"), repo, new TestPublishEndpoint());
 
         Assert.IsType<NotFound>(result);
+    }
+
+    [Fact]
+    public async Task FollowLeague_SetsTheFollowedLeague()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+        var leagueClient = A.Fake<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(999, A<int>._, A<bool>._, A<int?>._))
+            .Returns(new ClassicLeague { Properties = new ClassicLeagueProperties { Name = "New League" } });
+
+        var result = await AdminSlackEndpoints.FollowLeague(
+            teamId, "#fplbot", new FollowLeagueRequest(999), fixture.SlackRepo, leagueClient);
+
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
+        var updated = await fixture.SlackRepo.GetInstallation(teamId);
+        Assert.Equal(999, (int)updated.GetChannel("#fplbot")!.FollowedLeagueId!.Value);
+    }
+
+    [Fact]
+    public async Task FollowLeague_UnknownLeague_IsRejectedAndLeavesTheChannelUnchanged()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+        var leagueClient = A.Fake<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(A<int>._, A<int>._, A<bool>._, A<int?>._)).Returns(Task.FromResult<ClassicLeague?>(null));
+
+        var result = await AdminSlackEndpoints.FollowLeague(
+            teamId, "#fplbot", new FollowLeagueRequest(404404), fixture.SlackRepo, leagueClient);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+        var updated = await fixture.SlackRepo.GetInstallation(teamId);
+        Assert.Null(updated.GetChannel("#fplbot")!.FollowedLeagueId);
+    }
+
+    [Fact]
+    public async Task UnfollowLeague_ClearsTheLeagueInRedis()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+        var leagueClient = A.Fake<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(999, A<int>._, A<bool>._, A<int?>._))
+            .Returns(new ClassicLeague { Properties = new ClassicLeagueProperties { Name = "New League" } });
+        await AdminSlackEndpoints.FollowLeague(teamId, "#fplbot", new FollowLeagueRequest(999), fixture.SlackRepo, leagueClient);
+
+        var result = await AdminSlackEndpoints.UnfollowLeague(teamId, "#fplbot", fixture.SlackRepo);
+
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
+        var updated = await fixture.SlackRepo.GetInstallation(teamId);
+        Assert.Null(updated.GetChannel("#fplbot")!.FollowedLeagueId);
+    }
+
+    [Fact]
+    public async Task AddChannel_SubscribesTheChannelToAllEvents()
+    {
+        var teamId = await fixture.InstallSlackbot();
+
+        var result = await AdminSlackEndpoints.AddChannel(teamId, new AddChannelRequest("C0NEW00001"), fixture.SlackRepo);
+
+        Assert.IsAssignableFrom<IValueHttpResult>(result);
+        var updated = await fixture.SlackRepo.GetInstallation(teamId);
+        Assert.True(updated.GetChannel("C0NEW00001")!.IsSubscribedTo(FplEvent.PriceChanges));
+    }
+
+    [Fact]
+    public async Task AddChannel_AlreadySubscribed_ReturnsConflict()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#fplbot", FplEvent.Standings);
+
+        var result = await AdminSlackEndpoints.AddChannel(teamId, new AddChannelRequest("#fplbot"), fixture.SlackRepo);
+
+        Assert.Equal(StatusCodes.Status409Conflict, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task MoveChannel_PublishesSlackChannelMoved()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#old-channel", FplEvent.Standings);
+        var publisher = new TestPublishEndpoint();
+
+        await AdminSlackEndpoints.MoveChannel(teamId, "#old-channel", new MoveChannelRequest("C0NEW00001"), fixture.SlackRepo, publisher);
+
+        var moved = Assert.Single(publisher.PublishedMessages.Containing<SlackChannelMoved>()).Message as SlackChannelMoved;
+        Assert.Equal(teamId, moved!.TeamId);
+        Assert.Equal("#old-channel", moved.OldChannelId);
+        Assert.Equal("C0NEW00001", moved.NewChannelId);
+    }
+
+    [Fact]
+    public async Task MoveChannel_TargetAlreadySubscribed_ReturnsConflictAndDoesNotPublish()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "#old-channel", FplEvent.Standings);
+        await fixture.Subscribe(teamId, "#taken", FplEvent.Standings);
+        var publisher = new TestPublishEndpoint();
+
+        var result = await AdminSlackEndpoints.MoveChannel(teamId, "#old-channel", new MoveChannelRequest("#taken"), fixture.SlackRepo, publisher);
+
+        Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
+        Assert.Equal(StatusCodes.Status409Conflict, ((IStatusCodeHttpResult)result).StatusCode);
+        Assert.Empty(publisher.PublishedMessages.Containing<SlackChannelMoved>());
+        var updated = await fixture.SlackRepo.GetInstallation(teamId);
+        Assert.NotNull(updated.GetChannel("#old-channel"));
+    }
+
+    [Fact]
+    public async Task GetAvailableChannels_ListsChannelsFromSlack()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        fixture.SetSlackChannels(
+            new Conversation { Id = "C0ZULU00001", Name = "zulu", Is_Channel = true },
+            new Conversation { Id = "C0ALPHA0001", Name = "alpha", Is_Channel = true });
+
+        var slackClientBuilder = fixture.Services.GetRequiredService<Slackbot.Net.SlackClients.Http.ISlackClientBuilder>();
+        var result = await AdminSlackEndpoints.GetAvailableChannels(teamId, fixture.SlackRepo, slackClientBuilder, NullLogger<Program>.Instance);
+
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
+        var channels = ((IEnumerable<ChannelDto>)value).ToList();
+        Assert.Equal(["alpha", "zulu"], channels.Select(c => c.Name));
+        Assert.Equal("C0ALPHA0001", channels[0].Id);
+    }
+
+    [Fact]
+    public async Task GetTeam_ResolvesChannelNameFromSlack()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
+        fixture.SetSlackChannels(new Conversation { Id = "C0FPLBOT01", Name = "fplbot", Is_Channel = true });
+
+        var slackClientBuilder = fixture.Services.GetRequiredService<Slackbot.Net.SlackClients.Http.ISlackClientBuilder>();
+        var result = await AdminSlackEndpoints.GetTeam(teamId, fixture.SlackRepo, A.Fake<ILeagueClient>(), slackClientBuilder, NullLogger<Program>.Instance);
+
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Equal("fplbot", (string?)channel.channelName);
+        Assert.True((bool?)channel.channelStatus);
+    }
+
+    [Fact]
+    public async Task GetTeam_ChannelUnknownToSlack_HasNoChannelName()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "C0GONE0001", FplEvent.Standings);
+        fixture.SetSlackChannels(new Conversation { Id = "C0FPLBOT01", Name = "fplbot", Is_Channel = true });
+
+        var slackClientBuilder = fixture.Services.GetRequiredService<Slackbot.Net.SlackClients.Http.ISlackClientBuilder>();
+        var result = await AdminSlackEndpoints.GetTeam(teamId, fixture.SlackRepo, A.Fake<ILeagueClient>(), slackClientBuilder, NullLogger<Program>.Instance);
+
+        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
+        dynamic channel = Assert.Single((IEnumerable<object>)value.channels);
+        Assert.Null((string?)channel.channelName);
+        Assert.False((bool?)channel.channelStatus);
     }
 
     [Fact]
