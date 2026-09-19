@@ -136,12 +136,14 @@ async function submitDanger() {
 
     <template v-else-if="details">
       <h1>{{ details.name }}</h1>
-      <p class="entity-id">
-        {{ details.externalId }}
-        <a v-if="isDev" :href="adapter.appUrl(details.externalId)" target="_blank" rel="noopener" class="app-link">
+      <p class="entity-id">{{ details.externalId }}</p>
+
+      <div v-if="isDev" class="alert alert-warning dev-callout">
+        <span><strong>NB!</strong> {{ adapter.devCallout }}</span>
+        <a :href="adapter.appUrl(details.externalId)" target="_blank" rel="noopener" class="btn small btn-secondary">
           Open in {{ adapter.platformName }}
         </a>
-      </p>
+      </div>
 
       <div v-if="adapter.showOverview" class="card">
         <h2>Overview</h2>
@@ -313,10 +315,6 @@ async function submitDanger() {
   font-size: 0.9rem;
   text-decoration: none;
   color: var(--fpl-purple);
-}
-
-.app-link {
-  margin-left: 0.5rem;
 }
 
 .entity-id {
