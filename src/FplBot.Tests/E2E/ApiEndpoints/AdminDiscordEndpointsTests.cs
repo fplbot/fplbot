@@ -164,6 +164,19 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         response.EnsureSuccessStatusCode();
         Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id));
+        Assert.True(fixture.DiscordCapture.LeftGuild(installedGuild.Id));
+    }
+
+    [Fact]
+    public async Task DeleteGuild_WhenTheBotIsAlreadyGone_StillRemovesGuild()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        fixture.DiscordChannelFails(installedGuild.Id, HttpStatusCode.NotFound);
+
+        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id}");
+
+        response.EnsureSuccessStatusCode();
+        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id));
     }
 
     [Fact]

@@ -105,7 +105,7 @@ async function submitDanger() {
   const confirmMessage =
     props.adapter.danger === "uninstall"
       ? `Uninstall fplbot from ${label}? This cannot be undone.`
-      : `Delete ${label}? This forgets all of fplbot's tracked data for this server — it does not remove the bot from Discord.`;
+      : `Delete ${label}? This forgets all of fplbot's tracked data for this server and removes the bot from it.`;
   if (!confirm(confirmMessage)) return;
 
   dangerBusy.value = true;

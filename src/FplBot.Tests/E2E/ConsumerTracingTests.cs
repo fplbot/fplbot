@@ -23,12 +23,12 @@ public class ConsumerTracingTests(AppFixture fixture)
         ActivitySource.AddActivityListener(listener);
 
         await fixture.AskSlackbot("<@UREFQD887> player haaland");
-        await fixture.SlackCapture.WaitForMessageAsync();
 
-        (string, string)[] snapshot;
-        lock (started) snapshot = [.. started];
-
-        Assert.Contains(snapshot, s => s.Item1 == FplBotDiagnostics.SourceNameFor(FplBotService.EventHandlers));
+        await AppFixture.WaitUntil(() =>
+        {
+            lock (started)
+                return Task.FromResult(started.Any(s => s.Source == FplBotDiagnostics.SourceNameFor(FplBotService.EventHandlers)));
+        }, "No span was started under the EventHandlers source");
     }
 
     [Fact]

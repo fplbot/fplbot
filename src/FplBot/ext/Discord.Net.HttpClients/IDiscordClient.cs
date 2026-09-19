@@ -11,4 +11,5 @@ public interface IDiscordClient
     Task ApplicationsCommandForGuildDelete(string guildId, string commandId);
     Task<IEnumerable<DiscordClient.ApplicationsCommand>> ApplicationsCommandForGuildGet(string guildId);
     Task<IEnumerable<DiscordClient.Channel>> GuildChannelsGet(string guildId);
+    Task GuildLeave(string guildId);
 }
