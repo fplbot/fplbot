@@ -89,20 +89,20 @@ internal static class DevSeeder
         Console.WriteLine($"[DevSeeder] Slack token for T0C2TLMHKDK: {SlackToken[..Math.Min(12, SlackToken.Length)]}... (set DEV_SEED_SLACK_TOKEN in FplBot.AppHost user secrets for a real one)");
 
         await SeedSlackWorkspace(db, "DEV-SLACK", "Dev Slack Workspace", "xoxb-dev-fake-token", "C0DEV000001", 12345, AllSubs,
-            "5eed0000000000000000000000000001", "5eed0000000000000000000000001001");
+            "5eedcafe000000000000000000000001", "5eedbeef000000000000000000000001");
         await SeedSlackWorkspace(db, "DEV-SLACK-2", "Dev Slack Workspace 2", "xoxb-dev-fake-token-2", "C0DEV000002", 23456, "Standings Captains Transfers",
-            "5eed0000000000000000000000000002", "5eed0000000000000000000000001002");
+            "5eedcafe000000000000000000000002", "5eedbeef000000000000000000000002");
         await SeedSlackWorkspace(db, "DEV-SLACK-3", "Dev Slack Workspace 3", "xoxb-dev-fake-token-3", "C0DEV000003", 34567, "PriceChanges InjuryUpdates Deadlines",
-            "5eed0000000000000000000000000003", "5eed0000000000000000000000001003");
+            "5eedcafe000000000000000000000003", "5eedbeef000000000000000000000003");
         await SeedSlackWorkspace(db, "T0C2TLMHKDK", "fplbotdev-throwaway-slack", SlackToken, "C0C2YFF57HQ", 555, AllSubs,
-            "5eed0000000000000000000000000004", "5eed0000000000000000000000001004");
+            "5eedcafe000000000000000000000004", "5eedbeef000000000000000000000004");
 
         // No channel subscriptions at all — a bare install to exercise the "no channels" path in the admin UI.
         await db.HashSetAsync("TeamId-DEV-SLACK-BARE", [
             new HashEntry("accessToken", "xoxb-dev-fake-token-bare"),
             new HashEntry("teamName", "Dev Slack Workspace (bare install)")
         ]);
-        await SeedInstallationId(db, "slack", "TeamId-DEV-SLACK-BARE", "DEV-SLACK-BARE", "5eed0000000000000000000000000005");
+        await SeedInstallationId(db, "slack", "TeamId-DEV-SLACK-BARE", "DEV-SLACK-BARE", "5eedcafe000000000000000000000005");
         Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK-BARE (no channel subscriptions).");
     }
 
@@ -137,7 +137,7 @@ internal static class DevSeeder
             new HashEntry("name", "Dev Discord Guild")
         ]);
         await db.SetAddAsync("GuildIndex", "111222333444555666");
-        await SeedInstallationId(db, "discord", "Guild-111222333444555666", "111222333444555666", "5eed0000000000000000000000000006");
+        await SeedInstallationId(db, "discord", "Guild-111222333444555666", "111222333444555666", "5eedcafe000000000000000000000006");
         Console.WriteLine("[DevSeeder] Inserted Discord guild Guild-111222333444555666.");
 
         await db.HashSetAsync("GuildSubs-111222333444555666-Channel-999888777666555444", [
@@ -147,7 +147,7 @@ internal static class DevSeeder
             new HashEntry("subs", AllSubs)
         ]);
         await db.SetAddAsync("GuildChannelSubIndex-111222333444555666", "999888777666555444");
-        await SeedSubscriptionId(db, "discord", "GuildSubs-111222333444555666-Channel-999888777666555444", "111222333444555666", "999888777666555444", "5eed0000000000000000000000001005");
+        await SeedSubscriptionId(db, "discord", "GuildSubs-111222333444555666-Channel-999888777666555444", "111222333444555666", "999888777666555444", "5eedbeef000000000000000000000006");
         await SeedEventIndex(db, "GuildEventIndex", "111222333444555666", "999888777666555444", AllSubs);
         Console.WriteLine("[DevSeeder] Inserted Discord subscription GuildSubs-111222333444555666-Channel-999888777666555444 (league 12345).");
 
@@ -155,7 +155,7 @@ internal static class DevSeeder
             new HashEntry("name", "fplbotdev-throwaway-discord")
         ]);
         await db.SetAddAsync("GuildIndex", "1546966580007542937");
-        await SeedInstallationId(db, "discord", "Guild-1546966580007542937", "1546966580007542937", "5eed0000000000000000000000000007");
+        await SeedInstallationId(db, "discord", "Guild-1546966580007542937", "1546966580007542937", "5eedcafe000000000000000000000007");
         Console.WriteLine("[DevSeeder] Inserted Discord guild Guild-1546966580007542937.");
 
         await db.HashSetAsync("GuildSubs-1546966580007542937-Channel-1546966580976549940", [
@@ -165,7 +165,7 @@ internal static class DevSeeder
             new HashEntry("subs", AllSubs)
         ]);
         await db.SetAddAsync("GuildChannelSubIndex-1546966580007542937", "1546966580976549940");
-        await SeedSubscriptionId(db, "discord", "GuildSubs-1546966580007542937-Channel-1546966580976549940", "1546966580007542937", "1546966580976549940", "5eed0000000000000000000000001006");
+        await SeedSubscriptionId(db, "discord", "GuildSubs-1546966580007542937-Channel-1546966580976549940", "1546966580007542937", "1546966580976549940", "5eedbeef000000000000000000000007");
         await SeedEventIndex(db, "GuildEventIndex", "1546966580007542937", "1546966580976549940", AllSubs);
         Console.WriteLine("[DevSeeder] Inserted Discord subscription GuildSubs-1546966580007542937-Channel-1546966580976549940 (league 12345).");
     }
