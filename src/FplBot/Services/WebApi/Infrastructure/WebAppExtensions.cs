@@ -43,6 +43,13 @@ public static class WebAppExtensions
         if (!env.IsLocal())
             app.UseHttpsRedirection();
 
+        if (env.IsLocal())
+        {
+            app.MapWhen(
+                c => c.Request.Path.StartsWithSegments("/assets") || c.Request.Path == "/index.html",
+                vite => vite.Run(RedirectToViteDevServer));
+        }
+
         var wwwrootProvider = new PhysicalFileProvider(
             Path.Combine(app.Environment.ContentRootPath, "Services", "WebApi", "wwwroot"));
         app.UseStaticFiles(new StaticFileOptions { FileProvider = wwwrootProvider });
@@ -104,11 +111,23 @@ public static class WebAppExtensions
                 return;
             }
 
+            if (env.IsLocal())
+            {
+                await ViteDevServerPage.Write(context);
+                return;
+            }
+
             context.Response.ContentType = "text/html";
             var file = wwwrootProvider.GetFileInfo("index.html");
             await using var stream = file.CreateReadStream();
             await stream.CopyToAsync(context.Response.Body);
         });
+    }
+
+    private static Task RedirectToViteDevServer(HttpContext context)
+    {
+        context.Response.Redirect($"{ViteDevServerPage.Url}{context.Request.Path}{context.Request.QueryString}");
+        return Task.CompletedTask;
     }
 
     private static void UseMinimalEndpoints(this WebApplication app, params (string BaseRoute, Action<WebApplication, string> RouteToEndpoint)[] mappings)
