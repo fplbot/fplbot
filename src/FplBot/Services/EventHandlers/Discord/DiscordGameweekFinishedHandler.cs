@@ -38,19 +38,19 @@ public class DiscordGameweekFinishedHandler(
     public async Task Consume(ConsumeContext<PublishGameweekFinishedToGuild> context)
     {
         var message = context.Message;
-        var installation = await repo.FindInstallationByTeamId(message.GuildId);
+        var installation = await repo.FindInstallationByTeamId(message.TeamId);
         var sub = installation?.GetChannel(message.ChannelId);
 
         if (sub != null && message.LeagueId.HasValue && sub.IsSubscribedTo(FplEvent.Standings))
         {
-            await PublishStandings(context, message.GuildId, message.ChannelId, message.LeagueId.Value, message.GameweekId);
+            await PublishStandings(context, message.TeamId, message.ChannelId, message.LeagueId.Value, message.GameweekId);
         }
     }
 
     public async Task Consume(ConsumeContext<PublishStandingsToDiscordGuild> context)
     {
         var message = context.Message;
-        await PublishStandings(context, message.GuildId, message.ChannelId, message.LeagueId, message.GameweekId);
+        await PublishStandings(context, message.TeamId, message.ChannelId, message.LeagueId, message.GameweekId);
     }
 
     private async Task PublishStandings(ConsumeContext context, string guildId, string channelId, int leagueId, int gameweekId)

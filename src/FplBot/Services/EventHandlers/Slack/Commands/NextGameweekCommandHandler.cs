@@ -36,6 +36,6 @@ public class NextGameweekCommandHandler(
 
         var textToSend = Formatter.FixturesForGameweek(nextGw.Id, nextGw.Name ?? "", nextGw.Deadline, fixtures, teams, userTzOffset);
 
-        await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, textToSend);
+        await workspacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, textToSend);
     }
 }

@@ -49,8 +49,8 @@ public class SlackFixtureEventsHandler(
     public async Task Consume(ConsumeContext<PublishFixtureEventsToSlackWorkspace> context)
     {
         var message = context.Message;
-        logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.WorkspaceId}");
-        var installation = await slackTeamRepo.GetInstallation(message.WorkspaceId);
+        logger.LogInformation($"Publishing {message.FixtureEvents.Count} fixture events to {message.TeamId}");
+        var installation = await slackTeamRepo.GetInstallation(message.TeamId);
 
         foreach (var sub in installation.ChannelSubscriptions)
         {

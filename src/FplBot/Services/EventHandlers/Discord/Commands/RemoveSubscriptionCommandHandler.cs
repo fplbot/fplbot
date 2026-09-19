@@ -14,7 +14,7 @@ public class RemoveSubscriptionCommandHandler(IGuildRepository repo, ILogger<Rem
         var command = context.Message;
         try
         {
-            var installation = await repo.GetInstallation(command.GuildId);
+            var installation = await repo.GetInstallation(command.TeamId);
             var existingChannel = installation.GetChannel(command.ChannelId);
 
             if (existingChannel == null || !existingChannel.Events.Current.Any())
@@ -52,7 +52,7 @@ public class RemoveSubscriptionCommandHandler(IGuildRepository repo, ILogger<Rem
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Failed removing subscription {Subscription} for guild {GuildId}", command.Subscription, command.GuildId);
+            logger.LogError(e, "Failed removing subscription {Subscription} for guild {GuildId}", command.Subscription, command.TeamId);
             await Respond(context, "⚠️ Error", "Something went wrong on my end. Try again in a moment.");
         }
     }

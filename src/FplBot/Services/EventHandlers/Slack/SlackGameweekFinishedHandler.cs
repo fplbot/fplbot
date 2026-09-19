@@ -56,12 +56,12 @@ internal class SlackGameweekFinishedHandler(
                     messages.Add(worst);
                 }
 
-                await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel, [.. messages]);
+                await publisher.PublishToWorkspace(message.TeamId, message.ChannelId, [.. messages]);
             }
         }
         catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
-            await publisher.PublishToWorkspace(message.WorkspaceId, message.Channel,
+            await publisher.PublishToWorkspace(message.TeamId, message.ChannelId,
                 $"League standings are now generally ready, but I could not seem to find a classic league with id `{message.LeagueId}`. Are you sure it's a valid classic league id?");
         }
     }

@@ -52,12 +52,12 @@ public class SlackFixtureFulltimeHandler(
     {
         var message = context.Message;
         var channelId = message.ChannelId;
-        var res = await publisher.PublishToWorkspaceWithResponse(message.WorkspaceId,
+        var res = await publisher.PublishToWorkspaceWithResponse(message.TeamId,
             new ChatPostMessageRequest { Channel = channelId, Text = message.Title });
 
         if (res is not null && !string.IsNullOrEmpty(message.ThreadMessage))
         {
-            await publisher.PublishToWorkspace(message.WorkspaceId,
+            await publisher.PublishToWorkspace(message.TeamId,
                 new ChatPostMessageRequest { Channel = channelId, thread_ts = res.ts, Text = message.ThreadMessage, unfurl_links = "false" });
         }
     }

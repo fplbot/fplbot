@@ -36,6 +36,6 @@ public class SlackNewLeagueEntriesHandler(
             league.Entries.Count, message.LeagueId, message.ChannelId);
 
         var formatted = Formatter.FormatNewLeagueEntries(league.LeagueName, league.Entries, league.HasMore);
-        await context.Publish(new PublishToSlack(message.WorkspaceId, message.ChannelId, formatted));
+        await context.Publish(new PublishToSlack(message.TeamId, message.ChannelId, formatted));
     }
 }

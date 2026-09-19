@@ -1,8 +1,8 @@
-using System.Net;
+using Discord.Net.HttpClients;
 using Discord.Net.HttpClients.Components;
 using FplBot.Discord;
 
-namespace Discord.Net.HttpClients;
+namespace FplBot.Integrations.Discord;
 
 public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, ILogger<DevLoggingDiscordClient> logger)
     : IDiscordClient

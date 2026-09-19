@@ -5,16 +5,16 @@ using StackExchange.Redis;
 
 namespace FplBot.Services.SearchIndexer;
 
-public class SearchIndexerService : IFplBotService
+public class SearchIndexerService : WorkerFplBotService
 {
-    public FplBotService ServiceType => FplBotService.SearchIndexer;
+    public override FplBotService ServiceType => FplBotService.SearchIndexer;
 
-    public void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env)
+    public override void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env)
     {
         services.AddRecurringIndexer(config, redis);
     }
 
-    public void ConfigureMassTransit(IBusRegistrationConfigurator cfg)
+    public override void AddConsumers(IBusRegistrationConfigurator cfg)
     {
         cfg.AddConsumer<IndexQueryCommandHandler>();
     }

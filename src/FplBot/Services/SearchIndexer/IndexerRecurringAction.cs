@@ -15,6 +15,7 @@ public class IndexerRecurringAction(
 
     public async Task Process(CancellationToken stoppingToken)
     {
+        using var activity = FplBotDiagnostics.For(FplBotService.SearchIndexer).StartActivity(nameof(IndexerRecurringAction));
         using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = Guid.NewGuid() }))
         {
             if (!_options.ShouldIndexEntries && !_options.ShouldIndexLeagues)

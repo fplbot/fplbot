@@ -38,7 +38,7 @@ public class SearchCommandHandler(
             logger.LogError(e, "Unable to get team {teamId} during search.", command.TeamId);
         }
 
-        var leagueId = installation?.GetChannel(command.Channel)?.FollowedLeagueId?.Value;
+        var leagueId = installation?.GetChannel(command.ChannelId)?.FollowedLeagueId?.Value;
 
         var countryToBoost = await GetCountryToBoost(leagueId);
 
@@ -96,7 +96,7 @@ public class SearchCommandHandler(
             sb.Append("Found no matching leagues :shrug:");
         }
 
-        await workSpacePublisher.PublishToWorkspace(command.TeamId, command.Channel, sb.ToString());
+        await workSpacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, sb.ToString());
     }
 
     private static SearchMetaData GetSearchMetaData(Installation? installation, long? leagueId, string user)

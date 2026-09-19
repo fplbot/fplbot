@@ -31,6 +31,6 @@ public class PriceChangesCommandHandler(
             ? Formatter.FormatPriceChanged(priceChangedPlayers)
             : "No relevant price changes yet";
 
-        await workSpacePublisher.PublishToWorkspace(command.TeamId, command.Channel, messageToSend);
+        await workSpacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, messageToSend);
     }
 }

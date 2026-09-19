@@ -9,6 +9,7 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
 {
     public async Task Process(CancellationToken stoppingToken)
     {
+        using var activity = FplBotDiagnostics.For(FplBotService.WebApi).StartActivity(nameof(GuildStatusChecker));
         var installations = await guildRepo.GetAllInstallations();
         var counter = 0;
         foreach (var guild in installations)

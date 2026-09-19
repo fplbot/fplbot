@@ -259,7 +259,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
             publisher);
 
         var moved = Assert.Single(publisher.PublishedMessages.Containing<DiscordChannelMoved>()).Message as DiscordChannelMoved;
-        Assert.Equal(installedGuild.Id, moved!.GuildId);
+        Assert.Equal(installedGuild.Id, moved!.TeamId);
         Assert.Equal(oldChannelId, moved.OldChannelId);
         Assert.Equal("222222222222222222", moved.NewChannelId);
     }

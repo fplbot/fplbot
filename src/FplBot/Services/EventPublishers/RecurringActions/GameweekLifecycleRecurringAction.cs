@@ -13,7 +13,7 @@ internal class GameweekLifecycleRecurringAction(
 {
     public async Task Process(CancellationToken token)
     {
-        using var activity = FplBotDiagnostics.ActivitySource.StartActivity(nameof(GameweekLifecycleRecurringAction));
+        using var activity = FplBotDiagnostics.For(FplBotService.EventPublishers).StartActivity(nameof(GameweekLifecycleRecurringAction));
         using var scope = logger.BeginCorrelationScope();
         logger.LogInformation($"Running {nameof(GameweekLifecycleRecurringAction)}");
         await monitor.EveryOtherMinuteTick(token);

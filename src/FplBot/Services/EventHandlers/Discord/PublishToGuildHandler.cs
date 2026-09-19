@@ -34,7 +34,7 @@ public class PublishToGuildHandler(
             publishMessage = $"[{Environment.MachineName}]\n{publishMessage}";
         }
 
-        await Post(context, message.GuildId, message.ChannelId,
+        await Post(context, message.TeamId, message.ChannelId,
             () => discordClient.ChannelMessagePost(message.ChannelId, publishMessage));
     }
 
@@ -42,7 +42,7 @@ public class PublishToGuildHandler(
     {
         var message = context.Message;
 
-        await Post(context, message.GuildId, message.ChannelId,
+        await Post(context, message.TeamId, message.ChannelId,
             () => discordClient.ChannelMessagePost(message.ChannelId,
                 DiscordCards.HeadingCard(message.Title, message.Description)));
     }
@@ -51,7 +51,7 @@ public class PublishToGuildHandler(
     {
         var message = context.Message;
 
-        await Post(context, message.GuildId, message.ChannelId,
+        await Post(context, message.TeamId, message.ChannelId,
             () => discordClient.ChannelMessagePost(message.ChannelId,
                 DiscordCards.SectionedCard(message.Title, message.Sections)));
     }

@@ -26,21 +26,203 @@ Start the local infrastructure (Redis + service bus emulator) via the Aspire App
 ./src/devenv.sh
 ```
 
-Then run the app:
+Then run the app. With no `--services` flag it runs all four services in one process:
 
 ```shell
 dotnet run --project src/FplBot
 ```
 
-**Dev credentials are included.** `src/FplBot/appsettings.json` ships with working credentials for a private dev Slack workspace and Discord server — clone and run, no setup required.
+Pass the flag to narrow it down — `--services WebApi`, `--services WebApi,EventHandlers`, or
+`--services All` — which is how the deployed containers each run a single role.
+
+**No credentials needed.** `src/FplBot/appsettings.json` ships with safe placeholders, and in the
+`Development` environment every outbound Slack/Discord call is faked (see below). Clone and run.
 
 When using the Aspire AppHost, `REDIS_URL` and `ASB_CONNECTIONSTRING` are injected automatically.
+The AppHost also seeds fake Slack workspaces and Discord guilds into Redis on startup
+(`src/FplBot.AppHost/DevSeederLifecycleHook.cs`), so there's data to work against immediately.
 
-To see the bot in action, join the dev environments:
-- **Slack**: [FplBot Dev workspace](#) _(ask a maintainer for the invite link)_
-- **Discord**: [FplBot Dev server](#) _(ask a maintainer for the invite link)_
+### Launch profiles (`dotnet run`)
 
-If you want to test against your own Slack/Discord apps instead, add an `appsettings.Local.json` (gitignored) in `src/FplBot/` with the values below, or set equivalent environment variables.
+`src/FplBot/Properties/launchSettings.json` holds two profiles. `dotnet run` picks the first unless
+you name another, which is why the bare command above lands in `Development`:
+
+| Profile | `DOTNET_ENVIRONMENT` | Outbound Slack/Discord |
+|---|---|---|
+| `Default` | `Development` | faked — logged, never sent |
+| `Integration` | `Integration` | live |
+
+```shell
+dotnet run --project src/FplBot                                       # Development
+dotnet run --project src/FplBot --launch-profile Integration          # Integration
+dotnet run --project src/FplBot --launch-profile Integration -- --services WebApi
+```
+
+`dotnet watch --project src/FplBot` works too, hot reload included — handy when iterating on
+handlers, since the recurring jobs keep ticking through the reloaded code.
+
+`--launch-profile` belongs to `dotnet run` and goes before `--`; everything after `--` is passed to
+the app. Setting `DOTNET_ENVIRONMENT` yourself overrides the profile.
+
+### Frontend (ClientApp)
+
+The admin UI and public pages are a Vue 3 + Vite app in
+`src/FplBot/Services/WebApi/ClientApp`. **You need one of the two options below** — the built SPA is
+not in the repo (`wwwroot/.gitignore` excludes `/index.html` and `/assets`), so on a fresh clone the
+backend has nothing to serve at `/`.
+
+**Option 1 — Vite dev server** (what you want while changing frontend code; gives HMR):
+
+```shell
+./src/run.sh          # backend + Vite together, stops both on Ctrl-C
+```
+
+or the two halves separately, if you want them in their own terminals:
+
+```shell
+cd src/FplBot/Services/WebApi/ClientApp
+npm ci
+npm run dev
+```
+
+Then browse **http://localhost:5173**, not the backend port. Vite proxies everything to the backend
+on `https://localhost:1337`, so the app must be running too. This is also the flow the OAuth
+redirects assume locally — on success they send you to `http://localhost:5173`.
+
+**Option 2 — build once into `wwwroot`** (fine if you're only touching backend code):
+
+```shell
+dotnet run --project src/Build -- client-build
+```
+
+That runs `npm ci` + `npm run build`, emitting `index.html` and `assets/` into
+`src/FplBot/Services/WebApi/wwwroot`, which the backend serves as static files. Then browse the
+backend directly at **https://localhost:1337**. Re-run it after pulling frontend changes.
+
+#### How local differs from production
+
+In production there is no Vite and no Node — the runtime image is just
+`mcr.microsoft.com/dotnet/aspnet` with the published backend copied in. The SPA is built at
+image-build time (`BuildImage` in `src/Build/Program.cs` runs `client-build` before
+`docker build`), so `index.html` and `assets/` ship inside the image and the WebApi container
+serves them as static files from the same origin as the API.
+
+| | builds the SPA | serves it | origin |
+|---|---|---|---|
+| local, frontend work | `npm run dev` (in memory, never written to disk) | Vite on `:5173`, proxying to `:1337` | two origins |
+| local, backend work | `client-build` → `wwwroot` | the backend on `:1337` | one origin |
+| production | `docker-build` → `wwwroot` → image | the WebApi container | one origin |
+
+That two-origin split is the only real deviation, and the backend compensates for it explicitly:
+
+```csharp
+var successUri = env.IsLocal() ? "http://localhost:5173/success" : "/success";
+```
+
+OAuth has to redirect to Vite's origin locally, but can use a relative path in production. If you
+hit an OAuth flow that lands on the wrong port locally, that branch is why. The Vite proxy
+(`vite.config.ts`) exists for the same reason and has no production counterpart.
+
+#### API types are hand-maintained
+
+There is no code generation — no OpenAPI/Swagger document, no NSwag, no `codegen` script. The
+TypeScript types in `ClientApp/src/api/types.ts` are written by hand to mirror the JSON shapes the
+`/api/**` endpoints accept and return, so **changing a backend DTO means editing that file too**.
+
+`client-build` runs `npm run typecheck` (`vue-tsc --noEmit`) between `npm ci` and `npm run build`,
+so a drifted type fails the build — locally and in CI, since the `ci` target is `test` +
+`client-build`. `vite build` itself never type-checks; the explicit step is what catches this.
+
+TypeScript is pinned to 6.x on purpose. `vue-tsc` resolves `typescript/lib/tsc.js`, which
+TypeScript 7 (the native rewrite) no longer exposes through its package `exports` — on 7.x the
+typecheck dies with `ERR_PACKAGE_PATH_NOT_EXPORTED`. Don't take a Renovate bump to `typescript@7`
+until `vue-tsc` supports it.
+
+### Rider run configurations
+
+They live in `src/.idea/.idea.FplBot/.idea/runConfigurations/` and do not use the launch profiles —
+each sets `--services <Service>` and `DOTNET_ENVIRONMENT` directly, and every service has an
+`(Integration)` twin:
+
+| Configuration | Runs | Environment |
+|---|---|---|
+| `WebApi` / `EventHandlers` / `EventPublishers` / `SearchIndexer` | that one service | `Development` |
+| `WebApi (Integration)` / … | that one service | `Integration` |
+| `All Services` | all four + `SPA (Vite dev)` | `Development` |
+| `All Services (Integration)` | all four + `SPA (Vite dev)` | `Integration` |
+| `WebApi + Vite` | WebApi + `SPA (Vite dev)` | `Development` |
+| `SPA (Vite dev)` | `npm run dev` in `ClientApp` (see Frontend above) | — |
+
+Outside Rider, the equivalent is the `Integration` profile above.
+
+### Development is mock-based
+
+In `Development`, `DevLoggingSlackClient` and `DevLoggingDiscordClient` stand in for the real
+clients: writes become log lines with a canned success response, reads return static fake data
+(fake installed slash commands, the seeded channel `C0DEV000001` in Slack's channel list) so the
+admin UI works end to end against the Redis seed.
+
+This happens **regardless of whether real credentials are configured** — setting user secrets does
+not make `Development` talk to the real APIs. Use `Integration` for that.
+
+Consequences worth knowing:
+
+- A deferred Discord slash command never gets its followup, so it sits on "thinking…" forever.
+- Slack request signature verification on `/events` is **off** in `Development`, on in `Integration`.
+- Discord interaction signature verification is **on everywhere**; in `Development` only, it can be
+  disabled with `SKIP_DISCORD_SIGNATURE_VERIFICATION=true`.
+
+In code: `env.IsLocal()` covers both `Development` and `Integration` and guards machine
+conveniences (https on localhost, Aspire telemetry, `[MachineName]` message prefix). Plain
+`env.IsDevelopment()` is reserved for the branches that fake an outbound integration.
+
+### Integration: testing against real Slack/Discord
+
+`Integration` is local in every other respect — same `appsettings.json`, same user secrets, https
+on localhost, telemetry to the Aspire dashboard — but every integration is live. There is no
+`appsettings.Integration.json`, so any key you don't override stays at its placeholder value.
+
+Supply real credentials with [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets),
+never `appsettings.json` — see [Credentials](#credentials).
+
+```shell
+dotnet user-secrets set DISCORD_TOKEN "..." --project src/FplBot
+dotnet user-secrets set DISCORD_CLIENT_ID "..." --project src/FplBot
+dotnet user-secrets set DISCORD_CLIENT_SECRET "..." --project src/FplBot
+dotnet user-secrets set DISCORD_PUBLICKEY "..." --project src/FplBot
+dotnet user-secrets set DiscordAppId "..." --project src/FplBot
+
+dotnet run --project src/FplBot --launch-profile Integration
+```
+
+All five Discord values must come from the *same* Discord Application (Developer Portal → your app
+→ Bot tab for the token, General Information for the rest). Mixing values from different apps fails
+in confusing ways: wrong bot invited, signature verification failures. Creating the Application is a
+one-time manual step at discord.com/developers/applications — there's no API for it.
+
+Real Slack and Discord sign their webhooks, so to receive events you also need a public URL
+(ngrok) pointed at `https://localhost:1337` and registered in the app's dashboard.
+
+`src/FplBot` and `src/FplBot.AppHost` share the `fplbot-secrets` user-secrets store, so both
+`--project` targets write to the same file. A real bot token for a *seeded* dev workspace goes in
+the AppHost's view of it:
+
+```shell
+dotnet user-secrets set DEV_SEED_SLACK_TOKEN "..." --project src/FplBot.AppHost
+```
+
+Note that the AppHost runs as `Production`; it picks up user secrets only because of the explicit
+`AddUserSecrets("fplbot-secrets")` call in its `Program.cs`.
+
+### Credentials
+
+Never put a real token in `appsettings.json`, not even for a throwaway app. GitHub's secret
+scanning partnership with Slack and Discord detects and revokes committed tokens the moment they're
+pushed, regardless of intent. User secrets live outside the repo in your user profile and are loaded
+in both `Development` and `Integration`, across all four services, with no code changes.
+
+If a placeholder in `appsettings.json` ever needs changing, that's a config change like any other —
+but the value itself must stay a placeholder.
 
 ### Configuration reference
 
@@ -60,10 +242,7 @@ If you want to test against your own Slack/Discord apps instead, add an `appsett
 | `DiscordAppId` | Discord application ID |
 | `fpl.Login` | FPL API login email |
 | `fpl.Password` | FPL API password |
-
-### Rotating dev credentials
-
-If a token is compromised: regenerate it in the Slack/Discord dashboard, update `src/FplBot/appsettings.json`, and commit. Takes ~5 minutes.
+| `SKIP_DISCORD_SIGNATURE_VERIFICATION` | `Development` only: accept unsigned Discord interactions |
 
 ## Running tests
 

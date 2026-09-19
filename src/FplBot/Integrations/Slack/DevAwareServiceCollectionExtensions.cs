@@ -1,6 +1,7 @@
+using Slackbot.Net.SlackClients.Http;
 using Slackbot.Net.SlackClients.Http.Extensions;
 
-namespace Slackbot.Net.SlackClients.Http;
+namespace FplBot.Integrations.Slack;
 
 public static class DevAwareServiceCollectionExtensions
 {

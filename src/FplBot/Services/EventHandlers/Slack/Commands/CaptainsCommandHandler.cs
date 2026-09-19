@@ -29,12 +29,12 @@ public class CaptainsCommandHandler(
 
         if (!gameWeek.HasValue)
         {
-            await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, "Invalid gameweek :grimacing:");
+            await workspacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, "Invalid gameweek :grimacing:");
             return;
         }
 
         var installation = await slackTeamsRepo.GetInstallation(command.TeamId);
-        var leagueId = installation.GetChannel(command.Channel)?.FollowedLeagueId?.Value;
+        var leagueId = installation.GetChannel(command.ChannelId)?.FollowedLeagueId?.Value;
 
         string outgoingMessage;
         if (leagueId.HasValue)
@@ -49,6 +49,6 @@ public class CaptainsCommandHandler(
             outgoingMessage = "No league. Follow a league first via `@fplbot follow`";
         }
 
-        await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, outgoingMessage);
+        await workspacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, outgoingMessage);
     }
 }

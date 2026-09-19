@@ -26,7 +26,7 @@ public class FollowCommandHandler(
                 return;
             }
 
-            var installation = await repo.GetInstallation(command.GuildId);
+            var installation = await repo.GetInstallation(command.TeamId);
             var isNewChannel = installation.GetChannel(command.ChannelId) is null;
 
             installation.Follow(command.ChannelId, new ClassicLeagueId(command.LeagueId));
@@ -45,7 +45,7 @@ public class FollowCommandHandler(
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Failed following league {LeagueId} for guild {GuildId}", command.LeagueId, command.GuildId);
+            logger.LogError(e, "Failed following league {LeagueId} for guild {GuildId}", command.LeagueId, command.TeamId);
             await Respond(context, "⚠️ Error", "Something went wrong on my end. Try again in a moment.");
         }
     }

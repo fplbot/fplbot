@@ -20,7 +20,7 @@ public class ChannelMovedHandler(ILogger<ChannelMovedHandler> logger)
         var message = context.Message;
         logger.LogInformation(
             "Discord guild {GuildId} moved subscription from channel {OldChannelId} to {NewChannelId}",
-            message.GuildId, message.OldChannelId, message.NewChannelId);
+            message.TeamId, message.OldChannelId, message.NewChannelId);
         return Task.CompletedTask;
     }
 }

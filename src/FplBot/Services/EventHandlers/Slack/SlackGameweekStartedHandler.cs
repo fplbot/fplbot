@@ -39,7 +39,7 @@ internal class SlackGameweekStartedHandler(
         var message = context.Message;
         var newGameweek = message.GameweekId;
 
-        var installation = await teamsRepo.GetInstallation(message.WorkspaceId);
+        var installation = await teamsRepo.GetInstallation(message.TeamId);
         foreach (var sub in installation.ChannelSubscriptions)
         {
             await DoSubHandling(installation.Id, sub, newGameweek);

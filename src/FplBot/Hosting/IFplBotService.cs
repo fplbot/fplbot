@@ -6,7 +6,8 @@ namespace FplBot.Hosting;
 public interface IFplBotService
 {
     FplBotService ServiceType { get; }
+    Task RunHostAsync(string[] args, List<IFplBotService> allActive);
     void Configure(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redis, IHostEnvironment env);
-    void ConfigureMassTransit(IBusRegistrationConfigurator cfg) { }
-    void ConfigureApp(WebApplication app) { }
+    void AddConsumers(IBusRegistrationConfigurator cfg);
+    void ConfigureApp(WebApplication app);
 }

@@ -26,7 +26,7 @@ public class InjuriesCommandHandler(
             return;
         }
 
-        await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, textToSend);
+        await workspacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, textToSend);
     }
 
     private static IEnumerable<Player> FindInjuredPlayers(IEnumerable<Player> players)

@@ -45,10 +45,10 @@ onMounted(() => {
         <div id="add-to-slack" class="install-section">
           <p class="install-label">Install fplbot</p>
           <div class="install-buttons">
-            <button class="btn install-btn" @click="redirectToSlackInstall">
+            <button class="btn install-btn" @click="redirectToSlackInstall()">
               Add to Slack
             </button>
-            <button class="btn install-btn discord" @click="redirectToDiscordInstall">
+            <button class="btn install-btn discord" @click="redirectToDiscordInstall()">
               Add to Discord
             </button>
           </div>

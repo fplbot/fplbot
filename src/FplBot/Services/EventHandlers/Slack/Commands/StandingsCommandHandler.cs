@@ -15,10 +15,10 @@ public class StandingsCommandHandler(IGlobalSettingsClient globalSettingsClient,
         var installation = await teamRepo.GetInstallation(command.TeamId);
         var settings = await globalSettingsClient.GetGlobalSettings();
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
-        var channel = installation.GetChannel(command.Channel);
+        var channel = installation.GetChannel(command.ChannelId);
         if (channel?.FollowedLeagueId is { } leagueId)
         {
-            await context.Publish(new PublishStandingsToSlackWorkspace(installation.Id, command.Channel, (int)leagueId.Value, gameweek!.Id));
+            await context.Publish(new PublishStandingsToSlackWorkspace(installation.Id, command.ChannelId, (int)leagueId.Value, gameweek!.Id));
         }
     }
 }

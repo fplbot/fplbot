@@ -3,11 +3,13 @@ using FplBot.ApplicationServices.Slack;
 using FplBot.Data.Slack;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
+using FplBot.Integrations.Slack;
 using FplBot.Services.WebApi.Slack.Handlers.Reactors;
 using FplBot.Services.WebApi.Slack.Handlers.SlackEvents;
 using FplBot.Services.WebApi.Slack.Handlers.SlackEvents.AppMentions;
 using FplBot.Services.WebApi.Slack.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Slackbot.Net.Endpoints.Abstractions;
 using Slackbot.Net.Endpoints.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using StackExchange.Redis;
@@ -47,7 +49,19 @@ public static class ServiceCollectionFplBotSlackWebExtensions
             .AddAppMentionHandler<FplSearchHandler>()
             .AddMemberJoinedChannelHandler<FplBotJoinedChannelHandler>()
             .AddNoOpAppMentionHandler<UnknownAppMentionCommandHandler>();
+        services.AddTeamContextToAppMentionHandlers();
 
         return services;
+    }
+
+    private static void AddTeamContextToAppMentionHandlers(this IServiceCollection services)
+    {
+        foreach (var registration in services.Where(d => d.ServiceType == typeof(IHandleAppMentions)).ToList())
+        {
+            services.Remove(registration);
+            services.AddScoped<IHandleAppMentions>(sp => new TeamContextAppMentionHandler(
+                (IHandleAppMentions)ActivatorUtilities.CreateInstance(sp, registration.ImplementationType!),
+                sp.GetRequiredService<ILogger<TeamContextAppMentionHandler>>()));
+        }
     }
 }

@@ -34,14 +34,14 @@ public class SlackLineupReadyHandler(
         var lineups = message.Lineups;
         var firstMessage = $"*Lineups {lineups.HomeTeamLineup.TeamName}-{lineups.AwayTeamLineup.TeamName} ready* 👇";
 
-        var res = await publisher.PublishToWorkspaceWithResponse(message.WorkspaceId,
+        var res = await publisher.PublishToWorkspaceWithResponse(message.TeamId,
             new ChatPostMessageRequest { Channel = channelId, Text = firstMessage });
         if (res is not null)
         {
             var formattedLineup = Formatter.FormatLineup(lineups);
             await context.Publish(new PublishSlackThreadMessage
             (
-                message.WorkspaceId,
+                message.TeamId,
                 channelId,
                 res.ts,
                 formattedLineup

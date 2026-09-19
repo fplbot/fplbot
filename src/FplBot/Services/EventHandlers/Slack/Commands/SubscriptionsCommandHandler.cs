@@ -17,7 +17,7 @@ public class SubscriptionsCommandHandler(
     {
         var command = context.Message;
         var subscriptionInfo = await GetCurrentSubscriptions(command);
-        await workspacePublisher.PublishToWorkspace(command.TeamId, command.Channel, subscriptionInfo);
+        await workspacePublisher.PublishToWorkspace(command.TeamId, command.ChannelId, subscriptionInfo);
     }
 
     private async Task<string> GetCurrentSubscriptions(ProcessSubscriptionsCommand command)
@@ -25,7 +25,7 @@ public class SubscriptionsCommandHandler(
         try
         {
             var installation = await teamRepo.GetInstallation(command.TeamId);
-            var currentSubscriptions = installation.GetChannel(command.Channel)?.Events.Current ?? [];
+            var currentSubscriptions = installation.GetChannel(command.ChannelId)?.Events.Current ?? [];
 
             if (currentSubscriptions.Count() < 1)
             {
