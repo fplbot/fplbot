@@ -89,6 +89,7 @@ public static class WebAppExtensions
         AdminSlackEndpoints.Map(admin);
         AdminSearchEndpoints.Map(admin);
         AdminDiscordEndpoints.Map(admin);
+        AdminSubscriptionEndpoints.Map(admin);
         AdminHealthEndpoints.Map(admin, env);
         AdminErrorEndpoints.Map(admin);
 

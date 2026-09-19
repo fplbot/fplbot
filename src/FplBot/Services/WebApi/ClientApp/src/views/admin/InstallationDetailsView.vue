@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { InstallationAdapter, EntityDetails } from "../../composables/installationAdapters";
 import type { AvailableChannel } from "../../api/types";
+import { deleteChannelSubscription } from "../../api/api";
 import ChannelPicker from "../../components/ChannelPicker.vue";
 import type { ChannelPickerOption } from "../../components/ChannelPicker.vue";
 import { describeAdminError } from "../../composables/useAdminAuth";
@@ -91,7 +92,7 @@ async function removeChannelSub(subscriptionId: string, channelId: string) {
   if (!confirm(`Delete the subscription for channel ${channelId}?`)) return;
   deleting.value = subscriptionId;
   try {
-    await props.adapter.deleteChannelSubscription(subscriptionId);
+    await deleteChannelSubscription(subscriptionId);
     await load();
   } catch (e) {
     loadError.value = describeAdminError(e);
@@ -199,7 +200,7 @@ async function submitDanger() {
                   class="btn small icon-btn"
                   title="Manage channel"
                   aria-label="Manage channel"
-                  :to="{ name: adapter.manageRouteName, params: { entityId: entityId, subscriptionId: c.id } }"
+                  :to="{ name: adapter.manageRouteName, params: { subscriptionId: c.id } }"
                 >
                   ✏️
                 </router-link>

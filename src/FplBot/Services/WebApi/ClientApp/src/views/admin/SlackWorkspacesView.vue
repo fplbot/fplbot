@@ -172,7 +172,7 @@ async function removeSub(subscriptionId: string) {
                     class="btn small icon-btn"
                     title="Manage channel"
                     aria-label="Manage channel"
-                    :to="{ name: 'admin-team-channel-manage', params: { entityId: t.id, subscriptionId: s.id } }"
+                    :to="{ name: 'admin-subscription-manage', params: { subscriptionId: s.id } }"
                   >
                     ✏️
                   </router-link>

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import {
   getDiscordServers,
-  deleteDiscordSubscription,
+  deleteChannelSubscription,
   deleteAllDiscordSubscriptionsForGuild,
   deleteDiscordGuild,
   getDiscordFailureStats,
@@ -76,7 +76,7 @@ async function removeSub(subscriptionId: string) {
   deleting.value = key;
   error.value = "";
   try {
-    await deleteDiscordSubscription(subscriptionId);
+    await deleteChannelSubscription(subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -206,7 +206,7 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
                     class="btn small icon-btn"
                     title="Manage channel"
                     aria-label="Manage channel"
-                    :to="{ name: 'admin-guild-channel-manage', params: { entityId: g.id, subscriptionId: s.id } }"
+                    :to="{ name: 'admin-subscription-manage', params: { subscriptionId: s.id } }"
                   >
                     ✏️
                   </router-link>

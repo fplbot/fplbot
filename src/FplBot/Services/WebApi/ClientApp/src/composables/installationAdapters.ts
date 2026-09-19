@@ -1,26 +1,12 @@
 import {
   getTeam,
   uninstallTeam,
-  updateChannelSubscriptions,
-  moveChannel,
-  followLeague,
-  unfollowLeague,
   addChannelSubscription,
   getAvailableChannels,
-  deleteChannelSubscription,
-  publishStandings,
   getGuild,
   deleteDiscordGuild,
-  updateGuildChannelSubscriptions,
-  moveGuildChannel,
-  followGuildLeague,
-  unfollowGuildLeague,
   addGuildChannelSubscription,
   getAvailableGuildChannels,
-  deleteDiscordSubscription,
-  getSlackSubscriptionInstallation,
-  getDiscordSubscriptionInstallation,
-  publishStandingsToGuild,
 } from "../api/api";
 import type { AvailableChannel, EventSubscription, MessageResponse } from "../api/types";
 
@@ -66,15 +52,8 @@ export interface InstallationAdapter {
   showOverview: boolean;
   danger: "uninstall" | "delete";
   getDetails(id: string): Promise<EntityDetails | null>;
-  getSubscriptionInstallation(subscriptionId: string): Promise<{ installationId: string }>;
-  updateChannelSubscriptions(subscriptionId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
-  moveChannel(subscriptionId: string, newChannelId: string): Promise<MessageResponse>;
   getAvailableChannels(id: string): Promise<AvailableChannel[]>;
   addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
-  followLeague(subscriptionId: string, leagueId: number): Promise<MessageResponse>;
-  unfollowLeague(subscriptionId: string): Promise<MessageResponse>;
-  deleteChannelSubscription(subscriptionId: string): Promise<MessageResponse>;
-  publishStandings(subscriptionId: string): Promise<{ published: boolean; message: string }>;
   uninstall?(id: string): Promise<MessageResponse>;
   deleteEntity?(id: string): Promise<MessageResponse>;
 }
@@ -88,7 +67,7 @@ export const slackInstallationAdapter: InstallationAdapter = {
   listRoute: "/admin/slack",
   backLinkLabel: "Back to workspaces",
   detailsRouteName: "admin-team-details",
-  manageRouteName: "admin-team-channel-manage",
+  manageRouteName: "admin-subscription-manage",
   showOverview: true,
   danger: "uninstall",
   async getDetails(id) {
@@ -96,16 +75,9 @@ export const slackInstallationAdapter: InstallationAdapter = {
     if (data == null) return null;
     return { id: data.id, externalId: data.teamId, name: data.teamName, token: data.token, pendingRemoval: data.pendingRemoval, channels: data.channels };
   },
-  updateChannelSubscriptions,
-  moveChannel,
-  followLeague,
-  unfollowLeague,
   addChannelSubscription,
   getAvailableChannels,
-  deleteChannelSubscription,
-  publishStandings,
   uninstall: uninstallTeam,
-  getSubscriptionInstallation: getSlackSubscriptionInstallation,
 };
 
 export const discordInstallationAdapter: InstallationAdapter = {
@@ -116,7 +88,7 @@ export const discordInstallationAdapter: InstallationAdapter = {
   listRoute: "/admin/discord/servers",
   backLinkLabel: "Back to guilds",
   detailsRouteName: "admin-guild-details",
-  manageRouteName: "admin-guild-channel-manage",
+  manageRouteName: "admin-subscription-manage",
   showOverview: false,
   danger: "delete",
   async getDetails(id) {
@@ -124,14 +96,7 @@ export const discordInstallationAdapter: InstallationAdapter = {
     if (data == null) return null;
     return { id: data.id, externalId: data.guildId, name: data.guildName, channels: data.channels };
   },
-  updateChannelSubscriptions: updateGuildChannelSubscriptions,
-  moveChannel: moveGuildChannel,
   getAvailableChannels: getAvailableGuildChannels,
-  followLeague: followGuildLeague,
-  unfollowLeague: unfollowGuildLeague,
   addChannelSubscription: addGuildChannelSubscription,
-  deleteChannelSubscription: deleteDiscordSubscription,
-  publishStandings: publishStandingsToGuild,
   deleteEntity: deleteDiscordGuild,
-  getSubscriptionInstallation: getDiscordSubscriptionInstallation,
 };

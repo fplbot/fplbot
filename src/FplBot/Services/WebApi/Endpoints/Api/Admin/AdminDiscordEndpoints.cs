@@ -17,14 +17,6 @@ public record GuildWithSubsDto(string Id, string GuildId, string GuildName, IEnu
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
-public record UpdateGuildChannelSubscriptionsRequest(IEnumerable<EventSubscription> Subscriptions);
-
-public record MoveGuildChannelRequest(string NewChannelId);
-
-public record AddGuildChannelRequest(string ChannelId);
-
-public record FollowGuildLeagueRequest(int LeagueId);
-
 public static class AdminDiscordEndpoints
 {
     // Slash commands are only ever managed for this one hardcoded test guild today —
@@ -41,7 +33,7 @@ public static class AdminDiscordEndpoints
         var installation = await repo.FindInstallationByTeamId(resolved.GuildId);
         return installation is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(new { installationId = installation.Id.Value });
+            : TypedResults.Ok(new { installationId = installation.Id.Value, platform = nameof(ChatPlatform.Discord) });
     }
 
     private static async Task<string?> ResolveGuildId(IIdentityResolver resolver, string installationId) =>
@@ -65,19 +57,12 @@ public static class AdminDiscordEndpoints
         group.MapPost("/discord/slashcommands/uninstall", UninstallSlashCommands);
 
         group.MapGet("/discord/servers", GetSubscriptions);
-        group.MapGet("/discord/subscriptions/{subscriptionId}", GetSubscriptionInstallation);
-        group.MapDelete("/discord/subscriptions/{subscriptionId}", DeleteSubscription);
         group.MapDelete("/discord/guilds/{installationId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{installationId}", DeleteGuild);
 
         group.MapGet("/discord/guilds/{installationId}", GetGuild);
         group.MapGet("/discord/guilds/{installationId}/available-channels", GetAvailableChannels);
         group.MapPost("/discord/guilds/{installationId}/channels", AddChannel);
-        group.MapPost("/discord/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
-        group.MapPut("/discord/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
-        group.MapPut("/discord/subscriptions/{subscriptionId}/channel", MoveChannel);
-        group.MapPut("/discord/subscriptions/{subscriptionId}/league", FollowLeague);
-        group.MapDelete("/discord/subscriptions/{subscriptionId}/league", UnfollowLeague);
 
         group.MapGet("/discord/failures", GetFailureStats);
         group.MapPost("/discord/failures/reset", ResetFailures);
@@ -328,7 +313,7 @@ public static class AdminDiscordEndpoints
 
     internal static async Task<IResult> UpdateChannelSubscriptions(
         string subscriptionId,
-        UpdateGuildChannelSubscriptionsRequest request,
+        UpdateChannelSubscriptionsRequest request,
         IIdentityResolver resolver,
         IGuildRepository repo)
     {
@@ -350,7 +335,7 @@ public static class AdminDiscordEndpoints
 
     internal static async Task<IResult> FollowLeague(
         string subscriptionId,
-        FollowGuildLeagueRequest request,
+        FollowLeagueRequest request,
         IIdentityResolver resolver,
         IGuildRepository repo,
         ILeagueClient leagueClient)
@@ -395,7 +380,7 @@ public static class AdminDiscordEndpoints
 
     internal static async Task<IResult> AddChannel(
         string installationId,
-        AddGuildChannelRequest request,
+        AddChannelRequest request,
         IIdentityResolver resolver,
         IGuildRepository repo)
     {
@@ -422,7 +407,7 @@ public static class AdminDiscordEndpoints
 
     internal static async Task<IResult> MoveChannel(
         string subscriptionId,
-        MoveGuildChannelRequest request,
+        MoveChannelRequest request,
         IIdentityResolver resolver,
         IGuildRepository repo,
         IPublishEndpoint publishEndpoint)

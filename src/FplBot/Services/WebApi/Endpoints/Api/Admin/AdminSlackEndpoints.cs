@@ -52,7 +52,7 @@ public static class AdminSlackEndpoints
         var installation = await teamRepo.FindInstallationByTeamId(resolved.TeamId.ToUpper());
         return installation is null
             ? TypedResults.NotFound()
-            : TypedResults.Ok(new { installationId = installation.Id.Value });
+            : TypedResults.Ok(new { installationId = installation.Id.Value, platform = nameof(ChatPlatform.Slack) });
     }
 
     private static async Task<string?> ResolveTeamId(IIdentityResolver resolver, string installationId) =>
@@ -68,18 +68,11 @@ public static class AdminSlackEndpoints
 
     public static void Map(RouteGroupBuilder group)
     {
-        group.MapGet("/slack/subscriptions/{subscriptionId}", GetSubscriptionInstallation);
         group.MapGet("/teams", GetTeams);
         group.MapGet("/teams/{installationId}", GetTeam);
         group.MapGet("/teams/{installationId}/available-channels", GetAvailableChannels);
         group.MapPost("/teams/{installationId}/channels", AddChannel);
         group.MapPost("/teams/{installationId}/uninstall", Uninstall);
-        group.MapPost("/slack/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
-        group.MapPut("/slack/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
-        group.MapPut("/slack/subscriptions/{subscriptionId}/channel", MoveChannel);
-        group.MapPut("/slack/subscriptions/{subscriptionId}/league", FollowLeague);
-        group.MapDelete("/slack/subscriptions/{subscriptionId}/league", UnfollowLeague);
-        group.MapDelete("/slack/subscriptions/{subscriptionId}", DeleteChannelSubscription);
         group.MapGet("/slack/failures", GetFailureStats);
         group.MapPost("/slack/failures/reset", ResetFailures);
 
