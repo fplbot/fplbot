@@ -53,6 +53,7 @@ export interface InstallationAdapter {
   showOverview: boolean;
   danger: "uninstall" | "delete";
   appUrl(externalId: string): string;
+  channelUrl(externalId: string, channelId: string): string;
   getDetails(id: string): Promise<EntityDetails | null>;
   getAvailableChannels(id: string): Promise<AvailableChannel[]>;
   addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
@@ -74,6 +75,7 @@ export const slackInstallationAdapter: InstallationAdapter = {
   showOverview: true,
   danger: "uninstall",
   appUrl: (externalId) => `https://app.slack.com/client/${externalId}`,
+  channelUrl: (externalId, channelId) => `https://app.slack.com/client/${externalId}/${channelId}`,
   async getDetails(id) {
     const data = await getTeam(id);
     if (data == null) return null;
@@ -97,6 +99,7 @@ export const discordInstallationAdapter: InstallationAdapter = {
   showOverview: false,
   danger: "delete",
   appUrl: (externalId) => `https://discord.com/channels/${externalId}`,
+  channelUrl: (externalId, channelId) => `https://discord.com/channels/${externalId}/${channelId}`,
   async getDetails(id) {
     const data = await getGuild(id);
     if (data == null) return null;

@@ -174,7 +174,15 @@ async function submitDanger() {
                   <template v-if="c.channelName">{{ formatChannelName(c.channelName) }}</template>
                   <span v-else class="unavailable">name unavailable</span>
                 </div>
-                <div class="channel-id">{{ c.channel }}</div>
+                <div class="channel-id">
+                  <a
+                    v-if="isDev && !c.channel.startsWith('#')"
+                    :href="adapter.channelUrl(details.externalId, c.channel)"
+                    target="_blank"
+                    rel="noopener"
+                  >{{ c.channel }}</a>
+                  <template v-else>{{ c.channel }}</template>
+                </div>
               </td>
               <td>{{ c.leagueName || "Unknown" }} ({{ c.leagueId || "not set" }})</td>
               <td>{{ c.subscriptions.join(", ") || "none" }}</td>

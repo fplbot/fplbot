@@ -29,6 +29,9 @@ const adapter = ref<InstallationAdapter | null>(null);
 // The URL names only the subscription; the installation it belongs to is looked up, since the
 // page still renders the workspace around it.
 const entityId = ref("");
+
+// Only useful against the throwaway dev workspace/guild, so it stays out of the deployed admin.
+const isDev = import.meta.env.DEV;
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -308,7 +311,13 @@ async function submitDelete() {
       <h1>Manage channel</h1>
       <p class="channel-name">Channel: <span v-if="channel.channelName">{{ formatChannelName(channel.channelName) }}</span><span v-else class="unavailable">name unavailable</span></p>
       <p class="channel-id">
-        {{ channel.channel }}
+        <a
+          v-if="isDev && details && !channel.channel.startsWith('#')"
+          :href="adapter.channelUrl(details.externalId, channel.channel)"
+          target="_blank"
+          rel="noopener"
+        >{{ channel.channel }}</a>
+        <template v-else>{{ channel.channel }}</template>
         <span class="lookup-note">(name looked up live via {{ adapter.apiLabel }}, not stored)</span>
       </p>
 
