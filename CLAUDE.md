@@ -271,7 +271,10 @@ Full rules: the `write-test` skill (`.claude/skills/write-test/SKILL.md`). In sh
   already run in Docker.
 - Assert on outcomes, never on internals — no `A.CallTo()` assertions on internal logic in E2E tests.
 - `FplBot.Tests/UnitTests/` is for helpers, formatters and static methods only. If the unit depends
-  on another component, move the test up to E2E instead.
+  on another component, move the test up to E2E instead. Needing a stub or fake to construct the
+  subject — an `HttpMessageHandler`, an `A.Fake<T>()` — is the signal it does not belong there:
+  clients, repositories and consumers are covered through the flow that uses them, with the stub
+  registered once in `AppFixture`.
 - Any feature change gets a test: E2E for consumers / recurring jobs / state machines, an
   `E2E/ApiEndpoints/` test for HTTP-facing endpoint handlers.
 

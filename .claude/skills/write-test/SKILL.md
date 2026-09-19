@@ -46,11 +46,19 @@ This skill is the source of truth for test rules in this repo.
 
 - If the unit has a dependency on another component, move the test to an E2E test and test from a
   higher level instead.
+- **The construction is the test:** if getting the subject built means handing it a stub or fake —
+  a `HttpMessageHandler`, an `A.Fake<T>()`, an in-memory double — it is not a unit test, it is a
+  test of an internal with its collaborators blanked out. Delete it and cover the behaviour through
+  the flow that uses it. This is non-negotiable and applies no matter how small the class is: an
+  API client, a repository and a consumer are never unit-tested, however tempting the seam looks.
+  Stubs belong in `AppFixture` — registered once, for the whole suite — not in a test's own setup.
 
 OK to unit-test:
 - Helpers, formatters, standalone components with few dependencies, or static methods.
 - Things that are hard to test from a higher level, or that we're absolutely sure need to be
   pinned down in isolation.
+
+A good unit test constructs its subject with nothing but plain values, or calls a static method.
 
 ## Every feature change gets a test
 
