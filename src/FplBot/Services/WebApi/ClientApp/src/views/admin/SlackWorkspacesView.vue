@@ -66,10 +66,10 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
 async function submitUninstall(team: TeamSummary) {
   if (!confirm(`Uninstall fplbot from ${team.teamName}? This cannot be undone.`)) return;
-  uninstalling.value = team.teamId;
+  uninstalling.value = team.id;
   error.value = "";
   try {
-    await uninstallTeam(team.teamId);
+    await uninstallTeam(team.id);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -135,18 +135,18 @@ async function removeSub(installationId: string, subscriptionId: string) {
         <AdminPager v-if="teams.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
 
         <div class="team-list">
-        <div v-for="t in teams" :key="t.teamId" class="team">
+        <div v-for="t in teams" :key="t.id" class="team">
           <div class="team-header">
             <h3>{{ t.teamName }} <span class="team-id">({{ t.teamId }})</span></h3>
             <div class="team-actions">
               <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
-              <router-link :to="`/admin/teams/${t.teamId}`" class="btn small btn-secondary">Edit</router-link>
+              <router-link :to="`/admin/teams/${t.id}`" class="btn small btn-secondary">Edit</router-link>
               <button
                 class="btn small danger"
-                :disabled="t.pendingRemoval || uninstalling === t.teamId"
+                :disabled="t.pendingRemoval || uninstalling === t.id"
                 @click="submitUninstall(t)"
               >
-                {{ uninstalling === t.teamId ? "Uninstalling..." : "Uninstall" }}
+                {{ uninstalling === t.id ? "Uninstalling..." : "Uninstall" }}
               </button>
             </div>
           </div>
@@ -160,7 +160,7 @@ async function removeSub(installationId: string, subscriptionId: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in t.subscriptions" :key="s.channelId" :class="{ failing: s.failureCount > 0 }">
+              <tr v-for="s in t.subscriptions" :key="s.id" :class="{ failing: s.failureCount > 0 }">
                 <td>
                   {{ s.channelId }}
                   <span v-if="s.failureCount > 0" :title="failureSummary(s)">⚠️</span>

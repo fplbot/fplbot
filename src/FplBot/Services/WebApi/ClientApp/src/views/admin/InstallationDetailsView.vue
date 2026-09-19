@@ -101,7 +101,7 @@ async function removeChannelSub(subscriptionId: string, channelId: string) {
 }
 
 async function submitDanger() {
-  const label = details.value?.name || props.entityId;
+  const label = details.value?.name || details.value?.externalId || props.entityId;
   const confirmMessage =
     props.adapter.danger === "uninstall"
       ? `Uninstall fplbot from ${label}? This cannot be undone.`

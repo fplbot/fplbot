@@ -85,13 +85,13 @@ async function removeSub(installationId: string, subscriptionId: string) {
   }
 }
 
-async function removeAllSubs(guildId: string, guildName: string) {
+async function removeAllSubs(installationId: string, guildId: string, guildName: string) {
   if (!confirm(`Delete all channel subscriptions for ${guildName} (${guildId})? The guild stays listed as installed.`)) return;
-  const key = `guild-subs-${guildId}`;
+  const key = `guild-subs-${installationId}`;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteAllDiscordSubscriptionsForGuild(guildId);
+    await deleteAllDiscordSubscriptionsForGuild(installationId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -100,13 +100,13 @@ async function removeAllSubs(guildId: string, guildName: string) {
   }
 }
 
-async function removeGuild(guildId: string, guildName: string) {
+async function removeGuild(installationId: string, guildId: string, guildName: string) {
   if (!confirm(`Delete ${guildName} (${guildId})? This forgets all of fplbot's tracked data for this server — it does not remove the bot from Discord.`)) return;
-  const key = `guild-${guildId}`;
+  const key = `guild-${installationId}`;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteDiscordGuild(guildId);
+    await deleteDiscordGuild(installationId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -158,7 +158,7 @@ async function removeGuild(guildId: string, guildName: string) {
         <AdminPager v-if="guilds.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
 
         <div class="guild-list">
-        <div v-for="g in guilds" :key="g.guildId" class="guild">
+        <div v-for="g in guilds" :key="g.id" class="guild">
           <div class="guild-header">
             <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
             <div class="guild-actions">
@@ -170,14 +170,14 @@ async function removeGuild(guildId: string, guildName: string) {
                   v-if="g.subscriptions.length > 0"
                   class="btn small danger"
                   :disabled="deleting === `guild-subs-${g.id}`"
-                  @click="removeAllSubs(g.id, g.guildName)"
+                  @click="removeAllSubs(g.id, g.guildId, g.guildName)"
                 >
                   Delete all subs
                 </button>
                 <button
                   class="btn small danger"
                   :disabled="deleting === `guild-${g.id}`"
-                  @click="removeGuild(g.id, g.guildName)"
+                  @click="removeGuild(g.id, g.guildId, g.guildName)"
                 >
                   Delete guild
                 </button>
@@ -194,7 +194,7 @@ async function removeGuild(guildId: string, guildName: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in g.subscriptions" :key="s.channelId" :class="{ failing: s.failureCount > 0 }">
+              <tr v-for="s in g.subscriptions" :key="s.id" :class="{ failing: s.failureCount > 0 }">
                 <td>
                   {{ s.channelId }}
                   <span v-if="s.failureCount > 0" :title="failureSummary(s)">⚠️</span>
