@@ -337,6 +337,19 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetGuild_IncludesTheIdsTheAdminUiLinksWith()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var subscription = installedGuild.ChannelSubscriptions.First();
+
+        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
+
+        Assert.Equal(installedGuild.Id.Value, guild.GetProperty("id").GetString());
+        var channel = Assert.Single(guild.GetProperty("channels").EnumerateArray());
+        Assert.Equal(subscription.Id.Value, channel.GetProperty("id").GetString());
+    }
+
+    [Fact]
     public async Task GetGuild_IncludesFailureState()
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);

@@ -337,6 +337,20 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetTeam_IncludesTheIdsTheAdminUiLinksWith()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
+        var installation = await fixture.SlackRepo.GetInstallation(teamId);
+
+        var team = await fixture.GetJson<JsonElement>($"/api/admin/teams/{await InstallationId(teamId)}");
+
+        Assert.Equal(installation.Id.Value, team.GetProperty("id").GetString());
+        var channel = Assert.Single(team.GetProperty("channels").EnumerateArray());
+        Assert.Equal(installation.GetChannel("C0FPLBOT01")!.Id.Value, channel.GetProperty("id").GetString());
+    }
+
+    [Fact]
     public async Task GetTeam_IncludesFailureState()
     {
         var teamId = await fixture.InstallSlackbot();

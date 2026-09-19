@@ -265,6 +265,7 @@ public static class AdminDiscordEndpoints
 
             channels.Add(new
             {
+                id = channel.Id.Value,
                 channel = channel.ChannelId,
                 channelName,
                 leagueId,
@@ -280,7 +281,7 @@ public static class AdminDiscordEndpoints
             });
         }
 
-        return TypedResults.Ok(new { guildId = installation.ExternalId, guildName = installation.Name, channels });
+        return TypedResults.Ok(new { id = installation.Id.Value, guildId = installation.ExternalId, guildName = installation.Name, channels });
     }
 
     internal static async Task<IResult> PublishStandings(
