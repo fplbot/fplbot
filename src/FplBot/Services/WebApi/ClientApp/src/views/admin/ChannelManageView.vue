@@ -314,12 +314,22 @@ async function submitDelete() {
         <a
           v-if="isDev && details && !channel.channel.startsWith('#')"
           :href="adapter.channelUrl(details.externalId, channel.channel)"
-          target="_blank"
-          rel="noopener"
+          class="external"
         >{{ channel.channel }}</a>
         <template v-else>{{ channel.channel }}</template>
         <span class="lookup-note">(name looked up live via {{ adapter.apiLabel }}, not stored)</span>
       </p>
+
+      <div v-if="isDev && details" class="alert alert-warning dev-callout">
+        <span><strong>NB!</strong> {{ adapter.devCallout }}</span>
+        <a
+          v-if="!channel.channel.startsWith('#')"
+          :href="adapter.channelUrl(details.externalId, channel.channel)"
+          class="btn small btn-secondary external"
+        >
+          Open channel in {{ adapter.platformName }}
+        </a>
+      </div>
 
       <div class="card">
         <h2>Status</h2>

@@ -178,6 +178,13 @@ a {
   gap: 0.75rem;
 }
 
+/* Marks a link that leaves the admin for Slack/Discord. */
+.external::after {
+  content: " \2197";
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
