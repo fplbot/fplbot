@@ -28,7 +28,7 @@ public class InstallUrlEndpointsTests(AppFixture fixture)
     [InlineData(null, null)]
     public async Task SlackInstallUrl_CarriesOnlyASiteRelativeReturnPathAsState(string? returnTo, string? expectedState)
     {
-        Assert.Equal(expectedState, await StateOn("/api/oauth/install-url", returnTo));
+        Assert.Equal(expectedState, await StateOn("/api/oauth/install-url/slack", returnTo));
     }
 
     [Theory]
@@ -39,7 +39,7 @@ public class InstallUrlEndpointsTests(AppFixture fixture)
     [InlineData(null, null)]
     public async Task DiscordInstallUrl_CarriesOnlyASiteRelativeReturnPathAsState(string? returnTo, string? expectedState)
     {
-        Assert.Equal(expectedState, await StateOn("/api/oauth/install-url-discord", returnTo));
+        Assert.Equal(expectedState, await StateOn("/api/oauth/install-url/discord", returnTo));
     }
 
     private async Task<string?> StateOn(string path, string? returnTo)
@@ -55,7 +55,7 @@ public class InstallUrlEndpointsTests(AppFixture fixture)
 
     private async Task<long> RequestedDiscordPermissions()
     {
-        var response = await fixture.Get("/api/oauth/install-url-discord");
+        var response = await fixture.Get("/api/oauth/install-url/discord");
         response.EnsureSuccessStatusCode();
 
         var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
