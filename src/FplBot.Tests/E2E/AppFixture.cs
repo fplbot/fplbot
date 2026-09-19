@@ -160,7 +160,11 @@ public class AppFixture : IAsyncLifetime
 
         var active = new List<IFplBotService> { new WebApiService(), new EventHandlersService() };
         FplBotApplication.ConfigureServices(builder.Services, config, _multiplexer, builder.Environment, active,
-            cfg => cfg.UsingInMemory((ctx, c) => c.ConfigureEndpoints(ctx)));
+            cfg => cfg.UsingInMemory((ctx, c) =>
+            {
+                c.ConnectConsumeObserver(BusActivity);
+                c.ConfigureEndpoints(ctx);
+            }));
 
         builder.Services.AddSingleton<IConnectionMultiplexer>(_multiplexer);
         builder.Services.AddSingleton(_multiplexer);
@@ -294,6 +298,26 @@ public class AppFixture : IAsyncLifetime
             new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json"));
         response.EnsureSuccessStatusCode();
         return (interactionToken, await response.Content.ReadAsStringAsync());
+    }
+
+    public BusActivity BusActivity { get; } = new();
+
+    // Waits until every consumer the bus handed a message to has finished and nothing new has
+    // started. A test asserting that no message was posted can then read the capture directly:
+    // if the handlers are done and the capture is empty, nothing is going to arrive later.
+    public async Task WaitUntilBusIdle()
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline)
+        {
+            var before = BusActivity.Snapshot();
+            await Task.Delay(5);
+            var after = BusActivity.Snapshot();
+            if (after.InFlight == 0 && after.Consumed == before.Consumed)
+                return;
+        }
+
+        throw new TimeoutException("The bus never went idle.");
     }
 
     public static async Task WaitUntil(Func<Task<bool>> condition)

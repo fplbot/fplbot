@@ -37,8 +37,8 @@ public class DiscordNewPlayersHandlerTests(AppFixture fixture) : IAsyncLifetime
             new NewPlayer(1, "Haaland", 145, 11, "MCI")
         ]), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class DiscordNewPlayersHandlerTests(AppFixture fixture) : IAsyncLifetime
             new InternalPremiershipTransfer("Haaland", "Dortmund", "Man City")
         ]), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 }

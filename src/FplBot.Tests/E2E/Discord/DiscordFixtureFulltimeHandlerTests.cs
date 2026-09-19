@@ -58,8 +58,8 @@ public class DiscordFixtureFulltimeHandlerTests(AppFixture fixture) : IAsyncLife
 
         await fixture.Bus.Publish(new FixtureFinished(fixtureCode), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 
     private void SetUpFixture(int fixtureCode)

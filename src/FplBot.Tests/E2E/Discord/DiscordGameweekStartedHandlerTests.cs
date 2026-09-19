@@ -36,7 +36,7 @@ public class DiscordGameweekStartedHandlerTests(AppFixture fixture) : IAsyncLife
         await fixture.Bus.Publish(new ProcessGameweekStartedForGuildChannel(installedGuild.Id, channelId, 5),
             TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
     }
 }

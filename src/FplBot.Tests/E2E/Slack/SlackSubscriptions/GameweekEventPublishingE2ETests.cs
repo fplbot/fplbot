@@ -41,8 +41,8 @@ public class GameweekEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetim
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_channel));
     }
 
     [Fact]
@@ -84,8 +84,8 @@ public class GameweekEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetim
         await action.EveryOtherMinuteTick(CancellationToken.None);
         await action.EveryOtherMinuteTick(CancellationToken.None);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_channel));
     }
 
     [Fact]

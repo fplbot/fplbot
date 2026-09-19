@@ -48,7 +48,7 @@ public class DiscordNearDeadlineHandlerTests(AppFixture fixture) : IAsyncLifetim
         await fixture.Bus.Publish(new OneHourToDeadline(new GameweekNearingDeadline(5, "Gameweek 5", DateTime.UtcNow)),
             TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 }

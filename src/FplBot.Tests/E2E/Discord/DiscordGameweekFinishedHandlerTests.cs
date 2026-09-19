@@ -73,8 +73,8 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
         Assert.Contains("Gameweek finished", msg.Title);
         Assert.Contains("Standings", msg.Description);
         Assert.Contains($"Gameweek {gameweekId}", msg.Description);
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
 
         await fixture.Bus.Publish(new GameweekFinished(new FinishedGameweek(7)), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
     }
 
     [Fact]

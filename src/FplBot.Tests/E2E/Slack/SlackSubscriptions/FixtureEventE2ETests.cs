@@ -32,8 +32,8 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
 
         await state.Reset(1);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_channel));
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
         await state.Reset(1);
         await state.Refresh(1);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_channel));
     }
 
     [Fact]
@@ -113,8 +113,8 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
         var msg = await fixture.SlackCapture.WaitForMessageAsync(_channel);
         Assert.Contains("PlayerWebname", msg.Text);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(otherChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(otherChannel));
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
         var msg = await fixture.SlackCapture.WaitForMessageAsync(_channel);
         Assert.Contains("FT:", msg.Text);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(otherChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(otherChannel));
     }
 
     // SlackFixtureFulltimeHandler looks the finished fixture back up via the shared IFixtureClient

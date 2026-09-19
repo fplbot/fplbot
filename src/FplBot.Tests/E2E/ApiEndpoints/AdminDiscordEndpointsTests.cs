@@ -381,8 +381,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
         Assert.False((bool)value.published);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
     }
 
     [Fact]

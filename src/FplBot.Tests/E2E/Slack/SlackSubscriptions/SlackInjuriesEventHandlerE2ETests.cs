@@ -50,8 +50,8 @@ public class SlackInjuriesEventHandlerE2ETests(AppFixture fixture, ITestOutputHe
                 new InjuryStatus("d", "Knee injury"))
         ]), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage());
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class SlackInjuriesEventHandlerE2ETests(AppFixture fixture, ITestOutputHe
         Assert.Equal("#injuries", msg.Channel);
 
         // No second message should arrive
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage());
     }
 }

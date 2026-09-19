@@ -38,7 +38,7 @@ public class DiscordFixtureRemovedHandlerTests(AppFixture fixture) : IAsyncLifet
                 new RemovedFixture(1, new RemovedTeam(1, "Home Team", "HOM"), new RemovedTeam(2, "Away Team", "AWY"))),
             TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 }
