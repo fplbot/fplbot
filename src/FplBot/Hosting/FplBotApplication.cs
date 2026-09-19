@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Net.Security;
+using Fpl.EventPublishers.RecurringActions;
 using Discord.Net.Endpoints;
 using FplBot.WebApi.Infrastructure;
 using FplBot.Services.EventHandlers;
@@ -65,6 +67,8 @@ public static class FplBotApplication
         ConfigureCommon(services, config, redisConn);
         services.AddMassTransit(x =>
         {
+            x.DisableUsageTelemetry();
+
             Dictionary<Type, FplBotService> consumerOwners = [];
             foreach (var svc in active)
             {
@@ -126,10 +130,18 @@ public static class FplBotApplication
         services.AddOpenTelemetry()
             .ConfigureResource(r => r.AddService(GetOtelServiceName(fplServices)))
             .WithTracing(tracing => tracing
-                // MassTransit's own "Configure Topology" spans are per-queue startup wiring, not
-                // application behavior — they flood the dashboard with dozens of near-identical,
-                // attribute-less traces on every dev restart.
-                .SetSampler(new DropByNameSampler("Configure Topology"))
+                .SetSampler(new FplBotSampler(
+                    // MassTransit's own "Configure Topology" spans are per-queue startup wiring, not
+                    // application behavior — they flood the dashboard with dozens of near-identical,
+                    // attribute-less traces on every dev restart.
+                    dropped: ["Configure Topology"],
+                    exportedOnlyWhenPublishing:
+                    [
+                        nameof(NearDeadlineRecurringAction),
+                        nameof(PlayerUpdatesRecurringAction),
+                        nameof(GameweekLifecycleRecurringAction),
+                        nameof(GuildStatusChecker)
+                    ]))
                 .AddAspNetCoreInstrumentation(o => o.EnrichWithHttpResponse = (activity, response) =>
                 {
                     // Webhook paths are app.Map() middleware, not routed endpoints, so routing
@@ -152,12 +164,49 @@ public static class FplBotApplication
                 }));
     }
 
-    private sealed class DropByNameSampler(params string[] excludedNames) : Sampler
+    private sealed class FplBotSampler(string[] dropped, string[] exportedOnlyWhenPublishing) : Sampler
     {
-        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters) =>
-            excludedNames.Contains(samplingParameters.Name)
-                ? new SamplingResult(SamplingDecision.Drop)
-                : new SamplingResult(SamplingDecision.RecordAndSample);
+        private static readonly SamplingResult Drop = new(SamplingDecision.Drop);
+        private static readonly SamplingResult Export = new(SamplingDecision.RecordAndSample);
+        private static readonly SamplingResult ExportOnlyIfPromoted = new(SamplingDecision.RecordOnly);
+
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+        {
+            if (dropped.Contains(samplingParameters.Name))
+                return Drop;
+
+            if (exportedOnlyWhenPublishing.Contains(samplingParameters.Name))
+                return ExportOnlyIfPromoted;
+
+            var unpublishedTick = NearestUnpublishedTick();
+            if (unpublishedTick is null)
+                return Export;
+
+            if (samplingParameters.Kind != ActivityKind.Producer)
+                return Drop;
+
+            Promote(unpublishedTick);
+            return Export;
+        }
+
+        private Activity? NearestUnpublishedTick()
+        {
+            for (var ancestor = Activity.Current; ancestor is not null; ancestor = ancestor.Parent)
+                if (!ancestor.Recorded && exportedOnlyWhenPublishing.Contains(ancestor.OperationName))
+                    return ancestor;
+
+            return null;
+        }
+
+        private static void Promote(Activity tick)
+        {
+            for (var ancestor = Activity.Current; ancestor is not null; ancestor = ancestor.Parent)
+            {
+                ancestor.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                if (ancestor == tick)
+                    return;
+            }
+        }
     }
 
     private static void ConfigureCommon(IServiceCollection services, IConfiguration config, ConnectionMultiplexer redisConn)
