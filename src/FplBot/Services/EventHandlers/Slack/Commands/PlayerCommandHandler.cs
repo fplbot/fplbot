@@ -12,7 +12,8 @@ namespace FplBot.EventHandlers.Slack.Commands;
 
 public class PlayerCommandHandler(
     ISlackWorkSpacePublisher workSpacePublisher,
-    IGlobalSettingsClient globalSettingsClient)
+    IGlobalSettingsClient globalSettingsClient,
+    IPlayerImageClient playerImageClient)
     : IConsumer<ProcessPlayerCommand>
 {
     public async Task Consume(ConsumeContext<ProcessPlayerCommand> context)
@@ -33,8 +34,10 @@ public class PlayerCommandHandler(
             return;
         }
 
+        var imageUrl = await playerImageClient.GetPlayerImageUrl(mostPopularMatchingPlayer.Code);
+
         await workSpacePublisher.PublishToWorkspace(command.TeamId,
-            new ChatPostMessageRequest { Channel = command.ChannelId, Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams) });
+            new ChatPostMessageRequest { Channel = command.ChannelId, Blocks = SlackFormatter.GetPlayerCard(mostPopularMatchingPlayer, teams, imageUrl) });
     }
 
     private static Player? FindMostPopularMatchingPlayer(Player[] players, string name)

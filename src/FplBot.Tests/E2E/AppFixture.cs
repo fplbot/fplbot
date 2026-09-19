@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Discord.Net.HttpClients;
 using FakeItEasy;
+using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search;
@@ -173,6 +174,8 @@ public class AppFixture : IAsyncLifetime
 
         builder.Services.AddHttpClient("Discord.Net.Endpoints.TokenExchange")
             .ConfigurePrimaryHttpMessageHandler(() => new StubDiscordTokenExchange());
+        builder.Services.AddHttpClient<IPlayerImageClient, PlayerImageClient>()
+            .ConfigurePrimaryHttpMessageHandler(() => new StubPlayerImages());
         builder.Services.AddSingleton(fakeGlobalSettings);
         builder.Services.AddSingleton(fakeFixtureClient);
         builder.Services.AddSingleton(fakeLeagueClient);

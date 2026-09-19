@@ -6,18 +6,13 @@ namespace FplBot.Services.WebApi.Slack.Helpers.Formatting;
 
 public static class SlackFormatter
 {
-    public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams)
+    public static IBlock[] GetPlayerCard(Player player, ICollection<Team> teams, string imageUrl)
     {
         List<IBlock> playerCard =
         [
             new SectionBlock { text = new Text { type = "mrkdwn", text = $"*{player.FirstName} {player.SecondName}*" } }
         ];
 
-
-        var imageUrl = $"https://platform-static-files.s3.amazonaws.com/premierleague/photos/players/110x140/p{player.Code}.png";
-
-        if (!ImageIsAvailable(imageUrl))
-            imageUrl = "https://user-images.githubusercontent.com/206726/73577018-207e4100-447c-11ea-98e3-9cc598c56519.png";
 
         playerCard.Add(new ImageBlock
         {
@@ -49,13 +44,6 @@ public static class SlackFormatter
         }
 
         return [.. playerCard];
-    }
-
-    private static bool ImageIsAvailable(string imageUrl)
-    {
-        var httpClient = new HttpClient();
-        var req = new HttpRequestMessage(HttpMethod.Head, imageUrl);
-        return httpClient.SendAsync(req).GetAwaiter().GetResult().IsSuccessStatusCode;
     }
 
     private static string? GetChanceOfPlayingWarningIfRelevant(int? chanceOfPlaying, string? news)
