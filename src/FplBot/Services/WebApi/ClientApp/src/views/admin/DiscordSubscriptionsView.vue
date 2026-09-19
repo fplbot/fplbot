@@ -281,6 +281,14 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
   padding: 1rem;
 }
 
+/* The throwaway install is a REAL workspace/server, unlike the other dev seeds - make it
+   obvious at a glance which row you are about to act on. */
+.guild.throwaway {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  border-left-width: 4px;
+}
+
 .guild-header {
   display: flex;
   align-items: center;
