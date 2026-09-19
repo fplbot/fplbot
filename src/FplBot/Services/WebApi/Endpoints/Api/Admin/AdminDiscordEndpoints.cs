@@ -29,6 +29,21 @@ public static class AdminDiscordEndpoints
 {
     // Slash commands are only ever managed for this one hardcoded test guild today —
     // carried over unchanged from Pages/Admin/Discord/Slashcommands.cshtml.cs.
+    // A subscription id is enough to address a subscription, but the admin UI still needs its
+    // installation to render the guild around it.
+    internal static async Task<IResult> GetSubscriptionInstallation(
+        string subscriptionId,
+        IIdentityResolver resolver,
+        IGuildRepository repo)
+    {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+
+        var installation = await repo.FindInstallationByTeamId(resolved.GuildId);
+        return installation is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(new { installationId = installation.Id.Value });
+    }
+
     private static async Task<string?> ResolveGuildId(IIdentityResolver resolver, string installationId) =>
         await resolver.ResolveInstallation(new InstallationId(installationId)) is { Platform: ChatPlatform.Discord } installation
             ? installation.ExternalId
@@ -50,18 +65,19 @@ public static class AdminDiscordEndpoints
         group.MapPost("/discord/slashcommands/uninstall", UninstallSlashCommands);
 
         group.MapGet("/discord/servers", GetSubscriptions);
-        group.MapDelete("/discord/servers/{installationId}/{subscriptionId}", DeleteSubscription);
+        group.MapGet("/discord/subscriptions/{subscriptionId}", GetSubscriptionInstallation);
+        group.MapDelete("/discord/subscriptions/{subscriptionId}", DeleteSubscription);
         group.MapDelete("/discord/guilds/{installationId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{installationId}", DeleteGuild);
 
         group.MapGet("/discord/guilds/{installationId}", GetGuild);
         group.MapGet("/discord/guilds/{installationId}/available-channels", GetAvailableChannels);
         group.MapPost("/discord/guilds/{installationId}/channels", AddChannel);
-        group.MapPost("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
-        group.MapPut("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
-        group.MapPut("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/channel", MoveChannel);
-        group.MapPut("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/league", FollowLeague);
-        group.MapDelete("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/league", UnfollowLeague);
+        group.MapPost("/discord/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
+        group.MapPut("/discord/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
+        group.MapPut("/discord/subscriptions/{subscriptionId}/channel", MoveChannel);
+        group.MapPut("/discord/subscriptions/{subscriptionId}/league", FollowLeague);
+        group.MapDelete("/discord/subscriptions/{subscriptionId}/league", UnfollowLeague);
 
         group.MapGet("/discord/failures", GetFailureStats);
         group.MapPost("/discord/failures/reset", ResetFailures);
@@ -283,7 +299,6 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> PublishStandings(
-        string installationId,
         string subscriptionId,
         IIdentityResolver resolver,
         IGuildRepository repo,
@@ -312,7 +327,6 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(
-        string installationId,
         string subscriptionId,
         UpdateGuildChannelSubscriptionsRequest request,
         IIdentityResolver resolver,
@@ -335,7 +349,6 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> FollowLeague(
-        string installationId,
         string subscriptionId,
         FollowGuildLeagueRequest request,
         IIdentityResolver resolver,
@@ -363,7 +376,6 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> UnfollowLeague(
-        string installationId,
         string subscriptionId,
         IIdentityResolver resolver,
         IGuildRepository repo)
@@ -409,7 +421,6 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> MoveChannel(
-        string installationId,
         string subscriptionId,
         MoveGuildChannelRequest request,
         IIdentityResolver resolver,
@@ -443,7 +454,7 @@ public static class AdminDiscordEndpoints
         return result;
     }
 
-    internal static async Task<IResult> DeleteSubscription(string installationId, string subscriptionId, IIdentityResolver resolver, IGuildRepository repo)
+    internal static async Task<IResult> DeleteSubscription(string subscriptionId, IIdentityResolver resolver, IGuildRepository repo)
     {
         if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
         var (guildId, channelId) = resolved;

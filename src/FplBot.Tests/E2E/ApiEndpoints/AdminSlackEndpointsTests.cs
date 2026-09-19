@@ -108,7 +108,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.Subscribe("T1", "C0FPLBOT01", FplEvent.Standings);
 
         var response = await fixture.Post(
-            $"/api/admin/teams/{await InstallationId("T1")}/subscriptions/{await SubscriptionId("T1", "C0FPLBOT01")}/publish-standings");
+            $"/api/admin/slack/subscriptions/{await SubscriptionId("T1", "C0FPLBOT01")}/publish-standings");
 
         var value = await AppFixture.ReadJson<JsonElement>(response);
         Assert.False(value.GetProperty("published").GetBoolean());
@@ -123,7 +123,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var teamId = await fixture.InstallSlackbot();
         await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings, FplEvent.Captains);
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/subscriptions",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/subscriptions",
             new UpdateChannelSubscriptionsRequest([EventSubscription.Captains, EventSubscription.Deadlines]));
 
         response.EnsureSuccessStatusCode();
@@ -138,7 +138,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     public async Task UpdateChannelSubscriptions_TeamNotFound_ReturnsNotFound()
     {
         var response = await fixture.Put(
-            $"/api/admin/teams/{Guid.NewGuid():N}/subscriptions/{Guid.NewGuid():N}/subscriptions",
+            $"/api/admin/slack/subscriptions/{Guid.NewGuid():N}/subscriptions",
             new UpdateChannelSubscriptionsRequest([]));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -152,7 +152,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         installation.Follow("C0OLD000001", new ClassicLeagueId(123));
         await fixture.SlackRepo.Save(installation);
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
             new MoveChannelRequest("C0NEW000002"));
 
         response.EnsureSuccessStatusCode();
@@ -168,7 +168,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.Subscribe(teamId, "C0OLD000001", FplEvent.Standings);
         var before = (await fixture.SlackRepo.GetInstallation(teamId)).GetChannel("C0OLD000001")!;
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
             new MoveChannelRequest("C0NEW000002"));
 
         response.EnsureSuccessStatusCode();
@@ -190,7 +190,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         installation.GetChannel("C0OLD000001")!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "channel_not_found");
         await fixture.SlackRepo.Save(installation);
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
             new MoveChannelRequest("C0NEW000002"));
 
         response.EnsureSuccessStatusCode();
@@ -204,7 +204,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var teamId = await fixture.InstallSlackbot();
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{Guid.NewGuid():N}/channel",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{Guid.NewGuid():N}/channel",
             new MoveChannelRequest("C0NEW000002"));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -217,7 +217,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.Subscribe(teamId, "C0OLD000001", FplEvent.Standings);
         await fixture.Subscribe(teamId, "C0TAKEN0001", FplEvent.Standings);
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0OLD000001")}/channel",
             new MoveChannelRequest("C0TAKEN0001"));
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -232,7 +232,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
         LeagueExists(999, "New League");
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league",
             new FollowLeagueRequest(999));
 
         response.EnsureSuccessStatusCode();
@@ -247,7 +247,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
         LeagueDoesNotExist(404404);
 
-        var response = await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league",
+        var response = await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league",
             new FollowLeagueRequest(404404));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -261,9 +261,9 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var teamId = await fixture.InstallSlackbot();
         await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
         LeagueExists(999, "New League");
-        await fixture.Put($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league", new FollowLeagueRequest(999));
+        await fixture.Put($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league", new FollowLeagueRequest(999));
 
-        var response = await fixture.Delete($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league");
+        var response = await fixture.Delete($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}/league");
 
         response.EnsureSuccessStatusCode();
         var updated = await fixture.SlackRepo.GetInstallation(teamId);
@@ -416,7 +416,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var teamId = await fixture.InstallSlackbot();
         await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
 
-        var response = await fixture.Delete($"/api/admin/teams/{await InstallationId(teamId)}/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}");
+        var response = await fixture.Delete($"/api/admin/slack/subscriptions/{await SubscriptionId(teamId, "C0FPLBOT01")}");
 
         response.EnsureSuccessStatusCode();
         var remaining = await fixture.SlackRepo.GetInstallation(teamId);

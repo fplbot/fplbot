@@ -10,7 +10,11 @@ import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
 
-const props = defineProps<{ entityId: string; subscriptionId: string; adapter: InstallationAdapter }>();
+const props = defineProps<{ subscriptionId: string; adapter: InstallationAdapter }>();
+
+// The URL names only the subscription; the installation it belongs to is looked up, since the
+// page still renders the workspace around it.
+const entityId = ref("");
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -111,7 +115,9 @@ async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    const data = await props.adapter.getDetails(props.entityId);
+    const { installationId } = await props.adapter.getSubscriptionInstallation(props.subscriptionId);
+    entityId.value = installationId;
+    const data = await props.adapter.getDetails(installationId);
     if (data == null) {
       router.replace(props.adapter.listRoute);
       return;
@@ -119,7 +125,7 @@ async function load() {
     details.value = data;
     const found = data.channels.find((c) => c.id === props.subscriptionId);
     if (!found) {
-      router.replace({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
+      router.replace({ name: props.adapter.detailsRouteName, params: { entityId: entityId.value } });
       return;
     }
     channel.value = found;
@@ -137,7 +143,7 @@ async function loadAvailableChannels() {
   loadingChannelList.value = true;
   channelListError.value = "";
   try {
-    availableChannels.value = await props.adapter.getAvailableChannels(props.entityId);
+    availableChannels.value = await props.adapter.getAvailableChannels(entityId.value);
   } catch (e) {
     availableChannels.value = [];
     channelListError.value = describeAdminError(e);
@@ -146,8 +152,10 @@ async function loadAvailableChannels() {
   }
 }
 
-onMounted(load);
-onMounted(loadAvailableChannels);
+onMounted(async () => {
+  await load();
+  await loadAvailableChannels();
+});
 
 watch(
   () => props.subscriptionId,
@@ -155,7 +163,8 @@ watch(
     subscriptionsFeedback.value = null;
     publishFeedback.value = null;
     leagueFeedback.value = null;
-    await Promise.all([load(), loadAvailableChannels()]);
+    await load();
+    await loadAvailableChannels();
   }
 );
 
@@ -185,7 +194,7 @@ async function saveSubscriptions() {
   savingSubscriptions.value = true;
   subscriptionsFeedback.value = null;
   try {
-    const res = await props.adapter.updateChannelSubscriptions(props.entityId, props.subscriptionId, [...selectedSubscriptions.value]);
+    const res = await props.adapter.updateChannelSubscriptions(props.subscriptionId, [...selectedSubscriptions.value]);
     subscriptionsFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -200,7 +209,7 @@ async function submitLeague() {
   savingLeague.value = true;
   leagueFeedback.value = null;
   try {
-    const res = await props.adapter.followLeague(props.entityId, props.subscriptionId, leagueIdInput.value);
+    const res = await props.adapter.followLeague(props.subscriptionId, leagueIdInput.value);
     leagueFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -215,7 +224,7 @@ async function submitUnfollowLeague() {
   savingLeague.value = true;
   leagueFeedback.value = null;
   try {
-    const res = await props.adapter.unfollowLeague(props.entityId, props.subscriptionId);
+    const res = await props.adapter.unfollowLeague(props.subscriptionId);
     leagueFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -234,7 +243,7 @@ async function submitMoveChannel() {
   movingChannel.value = true;
   moveFeedback.value = null;
   try {
-    const res = await props.adapter.moveChannel(props.entityId, props.subscriptionId, newChannelId.value);
+    const res = await props.adapter.moveChannel(props.subscriptionId, newChannelId.value);
     moveFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -248,7 +257,7 @@ async function submitPublish() {
   publishing.value = true;
   publishFeedback.value = null;
   try {
-    const res = await props.adapter.publishStandings(props.entityId, props.subscriptionId);
+    const res = await props.adapter.publishStandings(props.subscriptionId);
     publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
   } catch (e) {
     publishFeedback.value = { type: "error", text: describeAdminError(e) };
@@ -261,8 +270,8 @@ async function submitDelete() {
   if (!confirm(`Delete the subscription for channel ${channel.value?.channel}? This cannot be undone.`)) return;
   deleting.value = true;
   try {
-    await props.adapter.deleteChannelSubscription(props.entityId, props.subscriptionId);
-    router.push({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
+    await props.adapter.deleteChannelSubscription(props.subscriptionId);
+    router.push({ name: props.adapter.detailsRouteName, params: { entityId: entityId.value } });
   } catch (e) {
     loadError.value = describeAdminError(e);
   } finally {

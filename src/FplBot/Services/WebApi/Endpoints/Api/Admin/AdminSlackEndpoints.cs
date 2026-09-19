@@ -40,6 +40,21 @@ public static class AdminSlackEndpoints
 {
     private const int MaxChannelPages = 25;
 
+    // A subscription id is enough to address a subscription, but the admin UI still needs its
+    // installation to render the workspace around it.
+    internal static async Task<IResult> GetSubscriptionInstallation(
+        string subscriptionId,
+        IIdentityResolver resolver,
+        ISlackTeamRepository teamRepo)
+    {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+
+        var installation = await teamRepo.FindInstallationByTeamId(resolved.TeamId.ToUpper());
+        return installation is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(new { installationId = installation.Id.Value });
+    }
+
     private static async Task<string?> ResolveTeamId(IIdentityResolver resolver, string installationId) =>
         await resolver.ResolveInstallation(new InstallationId(installationId)) is { Platform: ChatPlatform.Slack } installation
             ? installation.ExternalId
@@ -53,17 +68,18 @@ public static class AdminSlackEndpoints
 
     public static void Map(RouteGroupBuilder group)
     {
+        group.MapGet("/slack/subscriptions/{subscriptionId}", GetSubscriptionInstallation);
         group.MapGet("/teams", GetTeams);
         group.MapGet("/teams/{installationId}", GetTeam);
         group.MapGet("/teams/{installationId}/available-channels", GetAvailableChannels);
         group.MapPost("/teams/{installationId}/channels", AddChannel);
         group.MapPost("/teams/{installationId}/uninstall", Uninstall);
-        group.MapPost("/teams/{installationId}/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
-        group.MapPut("/teams/{installationId}/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
-        group.MapPut("/teams/{installationId}/subscriptions/{subscriptionId}/channel", MoveChannel);
-        group.MapPut("/teams/{installationId}/subscriptions/{subscriptionId}/league", FollowLeague);
-        group.MapDelete("/teams/{installationId}/subscriptions/{subscriptionId}/league", UnfollowLeague);
-        group.MapDelete("/teams/{installationId}/subscriptions/{subscriptionId}", DeleteChannelSubscription);
+        group.MapPost("/slack/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
+        group.MapPut("/slack/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
+        group.MapPut("/slack/subscriptions/{subscriptionId}/channel", MoveChannel);
+        group.MapPut("/slack/subscriptions/{subscriptionId}/league", FollowLeague);
+        group.MapDelete("/slack/subscriptions/{subscriptionId}/league", UnfollowLeague);
+        group.MapDelete("/slack/subscriptions/{subscriptionId}", DeleteChannelSubscription);
         group.MapGet("/slack/failures", GetFailureStats);
         group.MapPost("/slack/failures/reset", ResetFailures);
 
@@ -267,7 +283,6 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> PublishStandings(
-        string installationId,
         string subscriptionId,
         IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
@@ -298,7 +313,6 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(
-        string installationId,
         string subscriptionId,
         UpdateChannelSubscriptionsRequest request,
         IIdentityResolver resolver,
@@ -322,7 +336,6 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> FollowLeague(
-        string installationId,
         string subscriptionId,
         FollowLeagueRequest request,
         IIdentityResolver resolver,
@@ -350,7 +363,6 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> UnfollowLeague(
-        string installationId,
         string subscriptionId,
         IIdentityResolver resolver,
         ISlackTeamRepository teamRepo)
@@ -396,7 +408,6 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> MoveChannel(
-        string installationId,
         string subscriptionId,
         MoveChannelRequest request,
         IIdentityResolver resolver,
@@ -432,7 +443,6 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> DeleteChannelSubscription(
-        string installationId,
         string subscriptionId,
         IIdentityResolver resolver,
         ISlackTeamRepository teamRepo)

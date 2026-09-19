@@ -71,12 +71,12 @@ void loadFailureStats();
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
-async function removeSub(installationId: string, subscriptionId: string) {
-  const key = `${installationId}-${subscriptionId}`;
+async function removeSub(subscriptionId: string) {
+  const key = subscriptionId;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteDiscordSubscription(installationId, subscriptionId);
+    await deleteDiscordSubscription(subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -214,8 +214,8 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
                     class="btn small danger icon-btn"
                     title="Delete channel subscription"
                     aria-label="Delete channel subscription"
-                    :disabled="deleting === `${g.id}-${s.id}`"
-                    @click="removeSub(g.id, s.id)"
+                    :disabled="deleting === s.id"
+                    @click="removeSub(s.id)"
                   >
                     ❌
                   </button>

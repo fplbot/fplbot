@@ -18,6 +18,8 @@ import {
   addGuildChannelSubscription,
   getAvailableGuildChannels,
   deleteDiscordSubscription,
+  getSlackSubscriptionInstallation,
+  getDiscordSubscriptionInstallation,
   publishStandingsToGuild,
 } from "../api/api";
 import type { AvailableChannel, EventSubscription, MessageResponse } from "../api/types";
@@ -64,14 +66,15 @@ export interface InstallationAdapter {
   showOverview: boolean;
   danger: "uninstall" | "delete";
   getDetails(id: string): Promise<EntityDetails | null>;
-  updateChannelSubscriptions(id: string, subscriptionId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
-  moveChannel(id: string, subscriptionId: string, newChannelId: string): Promise<MessageResponse>;
+  getSubscriptionInstallation(subscriptionId: string): Promise<{ installationId: string }>;
+  updateChannelSubscriptions(subscriptionId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
+  moveChannel(subscriptionId: string, newChannelId: string): Promise<MessageResponse>;
   getAvailableChannels(id: string): Promise<AvailableChannel[]>;
   addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
-  followLeague(id: string, subscriptionId: string, leagueId: number): Promise<MessageResponse>;
-  unfollowLeague(id: string, subscriptionId: string): Promise<MessageResponse>;
-  deleteChannelSubscription(id: string, subscriptionId: string): Promise<MessageResponse>;
-  publishStandings(id: string, subscriptionId: string): Promise<{ published: boolean; message: string }>;
+  followLeague(subscriptionId: string, leagueId: number): Promise<MessageResponse>;
+  unfollowLeague(subscriptionId: string): Promise<MessageResponse>;
+  deleteChannelSubscription(subscriptionId: string): Promise<MessageResponse>;
+  publishStandings(subscriptionId: string): Promise<{ published: boolean; message: string }>;
   uninstall?(id: string): Promise<MessageResponse>;
   deleteEntity?(id: string): Promise<MessageResponse>;
 }
@@ -102,6 +105,7 @@ export const slackInstallationAdapter: InstallationAdapter = {
   deleteChannelSubscription,
   publishStandings,
   uninstall: uninstallTeam,
+  getSubscriptionInstallation: getSlackSubscriptionInstallation,
 };
 
 export const discordInstallationAdapter: InstallationAdapter = {
@@ -129,4 +133,5 @@ export const discordInstallationAdapter: InstallationAdapter = {
   deleteChannelSubscription: deleteDiscordSubscription,
   publishStandings: publishStandingsToGuild,
   deleteEntity: deleteDiscordGuild,
+  getSubscriptionInstallation: getDiscordSubscriptionInstallation,
 };

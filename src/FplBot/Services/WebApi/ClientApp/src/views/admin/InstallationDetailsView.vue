@@ -91,7 +91,7 @@ async function removeChannelSub(subscriptionId: string, channelId: string) {
   if (!confirm(`Delete the subscription for channel ${channelId}?`)) return;
   deleting.value = subscriptionId;
   try {
-    await props.adapter.deleteChannelSubscription(props.entityId, subscriptionId);
+    await props.adapter.deleteChannelSubscription(subscriptionId);
     await load();
   } catch (e) {
     loadError.value = describeAdminError(e);

@@ -78,12 +78,12 @@ async function submitUninstall(team: TeamSummary) {
   }
 }
 
-async function removeSub(installationId: string, subscriptionId: string) {
-  const key = `${installationId}-${subscriptionId}`;
+async function removeSub(subscriptionId: string) {
+  const key = subscriptionId;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteChannelSubscription(installationId, subscriptionId);
+    await deleteChannelSubscription(subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -180,8 +180,8 @@ async function removeSub(installationId: string, subscriptionId: string) {
                     class="btn small danger icon-btn"
                     title="Delete channel subscription"
                     aria-label="Delete channel subscription"
-                    :disabled="deleting === `${t.id}-${s.id}`"
-                    @click="removeSub(t.id, s.id)"
+                    :disabled="deleting === s.id"
+                    @click="removeSub(s.id)"
                   >
                     ❌
                   </button>
