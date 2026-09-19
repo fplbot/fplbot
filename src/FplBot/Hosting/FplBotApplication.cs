@@ -101,6 +101,13 @@ public static class FplBotApplication
         string.Join("+", active.Select(s => s.ServiceType));
 
 
+    // The one place logging is turned on. A host that wants no logging - the test host - simply does
+    // not call these, and nothing else has to know.
+    public static void WireUpLogging(WebApplicationBuilder builder, List<IFplBotService> active) =>
+        builder.Host.UseSerilog((ctx, lc) => ConfigureSerilog(ctx, lc, active));
+
+    public static void UseLogging(WebApplication app) => app.UseSerilogRequestLogging();
+
     internal static void ConfigureSerilog(HostBuilderContext ctx, LoggerConfiguration lc, List<IFplBotService> active)
     {
         lc.ReadFrom.Configuration(ctx.Configuration)

@@ -28,10 +28,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Nest;
-using Serilog;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
 using StackExchange.Redis;
@@ -67,7 +67,6 @@ public class AppFixture : IAsyncLifetime
 
     public SlackMessageCapture SlackCapture { get; } = new();
 
-    public LogCapture LogCapture { get; } = new();
 
     public DiscordMessageCapture DiscordCapture { get; } = new();
 
@@ -194,7 +193,9 @@ public class AppFixture : IAsyncLifetime
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseTestServer();
-        builder.Host.UseSerilog((_, lc) => lc.WriteTo.Console().WriteTo.Sink(LogCapture), preserveStaticLogger: true);
+        // A passing test run should be silent, and nothing asserts on log output. Serilog stays wired up
+        // with no sinks because the request-logging middleware resolves its DiagnosticContext; add a
+        // WriteTo.Console() here locally when a failure needs the log narrative.
         builder.Configuration.AddConfiguration(config);
 
         var active = new List<IFplBotService> { new WebApiService(), new EventHandlersService() };
@@ -237,6 +238,11 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddSingleton<IDiscordClient>(_capturingDiscordClient);
 
         ConfigureSearchClient(builder.Services);
+
+        // FplBotApplication.WireUpLogging is deliberately not called: a passing test run is silent, and
+        // nothing asserts on log output. Call it here locally when a failure needs the log narrative.
+        builder.Logging.ClearProviders();
+        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.None);
 
         _app = builder.Build();
         _app.Use(async (ctx, next) =>

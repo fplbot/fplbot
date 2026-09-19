@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Testcontainers.Redis;
 
@@ -83,6 +84,8 @@ public class ServiceCompositionTests(ServiceCompositionFixture fixture) : IClass
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.None);
         builder.Configuration.AddConfiguration(fixture.Configuration);
 
         List<IFplBotService> alone = [Create(serviceType)];
