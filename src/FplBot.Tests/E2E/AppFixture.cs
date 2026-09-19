@@ -305,6 +305,8 @@ public class AppFixture : IAsyncLifetime
     // Waits until every consumer the bus handed a message to has finished and nothing new has
     // started. A test asserting that no message was posted can then read the capture directly:
     // if the handlers are done and the capture is empty, nothing is going to arrive later.
+    public long ConsumedSoFar => BusActivity.Snapshot().Consumed;
+
     public async Task WaitUntilBusIdle()
     {
         var deadline = DateTime.UtcNow.AddSeconds(15);
@@ -320,19 +322,29 @@ public class AppFixture : IAsyncLifetime
         throw new TimeoutException("The bus never went idle.");
     }
 
-    public static async Task WaitUntil(Func<Task<bool>> condition)
+    // Publishing returns once the message is on the transport, so an immediate idle check can see a
+    // bus that hasn't picked the message up yet. Pass ConsumedSoFar from before the publish and the
+    // wait only counts the bus as idle once something has actually been consumed since then.
+    public async Task WaitUntilBusIdle(long consumedBefore)
     {
-        for (var i = 0; i < 100; i++)
+        await WaitUntil(() => Task.FromResult(ConsumedSoFar > consumedBefore), "The bus never consumed the message");
+        await WaitUntilBusIdle();
+    }
+
+    public static async Task WaitUntil(Func<Task<bool>> condition, string what = "Condition never became true")
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        do
         {
             if (await condition())
             {
                 return;
             }
 
-            await Task.Delay(100);
-        }
+            await Task.Delay(2);
+        } while (DateTime.UtcNow < deadline);
 
-        throw new TimeoutException("Condition never became true");
+        throw new TimeoutException(what);
     }
 
     public async Task<Installation> SeedInstallation(Action<Installation>? configure = null)

@@ -71,22 +71,18 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
             NullLogger<Program>.Instance);
     }
 
-    private async Task<Installation?> WaitForInstallationToBeGone(string teamId, TimeSpan? timeout = null)
+    private async Task<Installation?> WaitForInstallationToBeGone(string teamId)
     {
         var repository = fixture.Services.GetRequiredService<ISlackTeamRepository>();
-        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(5));
 
-        Installation? installation;
-        do
+        Installation? installation = null;
+        try
         {
-            installation = await repository.FindInstallationByTeamId(teamId);
-            if (installation is null)
-            {
-                return null;
-            }
-
-            await Task.Delay(50, cts.Token);
-        } while (!cts.IsCancellationRequested);
+            await AppFixture.WaitUntil(async () => (installation = await repository.FindInstallationByTeamId(teamId)) is null);
+        }
+        catch (TimeoutException)
+        {
+        }
 
         return installation;
     }

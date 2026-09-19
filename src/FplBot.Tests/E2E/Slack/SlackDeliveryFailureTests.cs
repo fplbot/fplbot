@@ -57,9 +57,10 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         var channelId = installation.ChannelSubscriptions.First().ChannelId;
         fixture.SlackChannelFails(channelId, "account_inactive");
 
+        var consumedBefore = fixture.ConsumedSoFar;
         await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
             TestContext.Current.CancellationToken);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await fixture.WaitUntilBusIdle(consumedBefore);
 
         var sub = await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId);
         Assert.NotNull(sub);
@@ -73,9 +74,10 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         var channelId = installation.ChannelSubscriptions.First().ChannelId;
         fixture.SlackChannelFails(channelId, "ratelimited");
 
+        var consumedBefore = fixture.ConsumedSoFar;
         await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
             TestContext.Current.CancellationToken);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await fixture.WaitUntilBusIdle(consumedBefore);
 
         var sub = await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId);
         Assert.NotNull(sub);
@@ -84,17 +86,8 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
 
     private async Task WaitForFailureCount(string teamId, string channelId, int expected)
     {
-        for (var i = 0; i < 100; i++)
-        {
-            var sub = await fixture.SlackRepo.GetChannelSubscription(teamId, channelId);
-            if (sub is not null && sub.FailureCount == expected)
-            {
-                return;
-            }
-
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Failure count never reached {expected}");
+        await AppFixture.WaitUntil(
+            async () => await fixture.SlackRepo.GetChannelSubscription(teamId, channelId) is { } sub && sub.FailureCount == expected,
+            $"Failure count never reached {expected}");
     }
 }
