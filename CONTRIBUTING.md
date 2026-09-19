@@ -198,6 +198,10 @@ Use the existing dev apps against them — `@fplbotdevelop` on Slack and the dev
 application, both linked under [Dev (local)](#dev-local) — rather than registering your own.
 Ask a maintainer for their credentials and put them in user secrets as below.
 
+Always install from the **Install fplbot** buttons on the app's own front page — the Vue app on
+https://localhost:5173 — or from the admin pages. Never from an install link in Slack's or
+Discord's own dashboards: only our own flow completes the install and stores the token.
+
 #### Slack
 
 ```shell
@@ -206,10 +210,6 @@ dotnet user-secrets set CLIENT_SECRET "..." --project src/FplBot
 dotnet user-secrets set CLIENT_SIGNING_SECRET "..." --project src/FplBot
 dotnet user-secrets set SlackAppId "..." --project src/FplBot
 ```
-
-Install the app into the workspace through the bot's own OAuth flow —
-`https://localhost:1337/oauth/authorize` — rather than Slack's own install button, so the
-workspace and its token land in Redis the way production installs do.
 
 #### Discord
 
