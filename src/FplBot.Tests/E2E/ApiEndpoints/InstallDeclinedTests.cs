@@ -8,7 +8,7 @@ public class InstallDeclinedTests(AppFixture fixture)
     private const string CancelledPage = "http://localhost:5173/install-cancelled";
 
     [Theory]
-    [InlineData("/oauth/authorize")]
+    [InlineData("/oauth/slack/authorize")]
     [InlineData("/oauth/discord/authorize")]
     public async Task DecliningTheConsentScreen_LandsOnTheCancelledPage(string callback)
     {
@@ -19,7 +19,7 @@ public class InstallDeclinedTests(AppFixture fixture)
     }
 
     [Theory]
-    [InlineData("/oauth/authorize")]
+    [InlineData("/oauth/slack/authorize")]
     [InlineData("/oauth/discord/authorize")]
     public async Task DecliningKeepsTheStateTheInstallStartedWith(string callback)
     {

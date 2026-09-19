@@ -10,15 +10,15 @@ public static class InstallUrlEndpoints
 {
     public static void Map(RouteGroupBuilder group)
     {
-        group.MapGet("/install-url", InstallUrl);
-        group.MapGet("/install-url-discord", InstallUrlDiscord);
+        group.MapGet("/install-url/slack", InstallUrl);
+        group.MapGet("/install-url/discord", InstallUrlDiscord);
     }
 
     internal static IResult InstallUrl(HttpContext httpContext, ILogger<Program> logger, IOptions<OAuthOptions> options, string? returnTo = null)
     {
         logger.LogInformation("Installing");
         var original = new Uri(httpContext.Request.GetDisplayUrl());
-        var redirectUri = new Uri(original, "/oauth/authorize");
+        var redirectUri = new Uri(original, "/oauth/slack/authorize");
         var state = ToSiteRelativeState(returnTo);
         return TypedResults.Ok(new
         {

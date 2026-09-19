@@ -270,14 +270,14 @@ export function moveGuildChannel(guildId: string, channelId: string, newChannelI
 
 export async function redirectToSlackInstall(returnTo?: string): Promise<void> {
   const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
-  const res = await fetch(`/api/oauth/install-url${query}`);
+  const res = await fetch(`/api/oauth/install-url/slack${query}`);
   const data: InstallUrlResponse = await res.json();
   window.location.href = data.redirectUri;
 }
 
 export async function redirectToDiscordInstall(returnTo?: string): Promise<void> {
   const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
-  const res = await fetch(`/api/oauth/install-url-discord${query}`);
+  const res = await fetch(`/api/oauth/install-url/discord${query}`);
   const data: InstallUrlResponse = await res.json();
   window.location.href = data.redirectUri;
 }

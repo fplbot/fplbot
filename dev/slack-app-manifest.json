@@ -11,7 +11,7 @@
   },
   "oauth_config": {
     "redirect_urls": [
-      "https://localhost:1337/oauth/authorize"
+      "https://localhost:1337/oauth/slack/authorize"
     ],
     "scopes": {
       "bot": [

@@ -59,7 +59,7 @@ public static class WebAppExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         var cancelledPage = env.IsLocal() ? "http://localhost:5173/install-cancelled" : "/install-cancelled";
-        app.Map("/oauth/authorize", a =>
+        app.Map("/oauth/slack/authorize", a =>
         {
             a.UseMiddleware<InstallDeclinedMiddleware>(cancelledPage);
             a.UseSlackbotDistribution();
