@@ -133,7 +133,7 @@ onMounted(load);
               <div class="meta">{{ formatDateTime(m.enqueuedTime) }}</div>
               <div v-if="m.traceId" class="meta">
                 trace
-                <a v-if="m.traceUrl" :href="m.traceUrl" target="_blank" rel="noopener"><code>{{ m.traceId }}</code></a>
+                <a v-if="m.traceUrl" class="trace-link" :href="m.traceUrl" target="_blank" rel="noopener"><code>{{ m.traceId }}</code> ↗</a>
                 <code v-else class="trace-id" title="Copy trace id" @click="copyTraceId(m.traceId)">{{ m.traceId }}</code>
                 <span v-if="copied === m.traceId" class="copied">copied</span>
               </div>
@@ -167,6 +167,15 @@ onMounted(load);
 .lead {
   color: #6b7280;
   margin-bottom: 1rem;
+}
+
+.trace-link {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.trace-link:hover {
+  color: #1d4ed8;
 }
 
 .trace-id {
