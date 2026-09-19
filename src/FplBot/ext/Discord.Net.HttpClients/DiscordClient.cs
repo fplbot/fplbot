@@ -115,10 +115,10 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         logger.LogTrace($"Sending:\n{serialized}");
         var jsonContent = new StringContent(serialized, Encoding.UTF8, "application/json");
 
-        var requestUri = $"api/v8/applications/{options.Value.DiscordApplicationId}/commands";
+        var requestUri = $"api/v10/applications/{options.Value.DiscordApplicationId}/commands";
         if (!string.IsNullOrEmpty(guildId))
         {
-            requestUri = $"api/v8/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands";
+            requestUri = $"api/v10/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands";
         }
 
         var res = await client.PostAsync(requestUri, jsonContent);
@@ -130,14 +130,14 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
     public async Task ApplicationsCommandDelete(string commandId)
     {
         var res = await client.DeleteAsync(
-            $"api/v8/applications/{options.Value.DiscordApplicationId}/commands/{commandId}");
+            $"api/v10/applications/{options.Value.DiscordApplicationId}/commands/{commandId}");
         res.EnsureSuccessStatusCode();
     }
 
     public async Task ApplicationsCommandForGuildDelete(string guildId, string commandId)
     {
         var res = await client.DeleteAsync(
-            $"api/v8/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands/{commandId}");
+            $"api/v10/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands/{commandId}");
         res.EnsureSuccessStatusCode();
     }
 
@@ -150,7 +150,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
     public async Task<IEnumerable<ApplicationsCommand>> ApplicationsCommandForGuildGet(string guildId)
     {
         var res = await client.GetFromJsonAsync<IEnumerable<ApplicationsCommand>>(
-            $"api/v8/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands",
+            $"api/v10/applications/{options.Value.DiscordApplicationId}/guilds/{guildId}/commands",
             SerializerOptions);
         return res ?? [];
     }
@@ -160,14 +160,14 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
 
     public async Task<IEnumerable<Channel>> GuildChannelsGet(string guildId)
     {
-        var res = await client.GetAsync($"/api/v8/guilds/{guildId}/channels");
+        var res = await client.GetAsync($"/api/v10/guilds/{guildId}/channels");
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions) ?? [];
     }
 
     public async Task<Guild> GuildGet(string guildId)
     {
-        var res = await client.GetAsync($"/api/v8/guilds/{guildId}");
+        var res = await client.GetAsync($"/api/v10/guilds/{guildId}");
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<Guild>(SerializerOptions) ?? throw new InvalidOperationException("Failed to deserialize Guild response");
     }

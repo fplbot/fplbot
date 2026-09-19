@@ -20,7 +20,6 @@ public class PublishToGuildHandler(
     public async Task Consume(ConsumeContext<RespondToDiscordInteraction> context)
     {
         var message = context.Message;
-
         await discordClient.InteractionFollowupPost(message.InteractionToken,
             DiscordCards.HeadingCard(message.Title, message.Description));
     }

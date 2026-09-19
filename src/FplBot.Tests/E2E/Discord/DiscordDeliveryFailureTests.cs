@@ -40,7 +40,6 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         fixture.DiscordChannelFails(channelId, HttpStatusCode.TooManyRequests);
 
         await PublishPriceChange();
-        await Task.Delay(1000, TestContext.Current.CancellationToken);
 
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
         Assert.NotNull(sub);
@@ -55,7 +54,7 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         fixture.DiscordChannelFails(channelId, 10004);
 
         await PublishPriceChange();
-        await Task.Delay(1000, TestContext.Current.CancellationToken);
+
 
         var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
         Assert.NotNull(sub);
@@ -79,7 +78,7 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
                 return;
             }
 
-            await Task.Delay(100);
+            await Task.Delay(50);
         }
 
         throw new TimeoutException($"Failure count never reached {expected}");

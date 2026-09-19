@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Discord.Net.HttpClients;
 using FakeItEasy;
+using Microsoft.Extensions.DependencyInjection;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using FplBot.Core.RecurringActions;
@@ -44,7 +45,7 @@ public class RecurringActionTracingTests
     {
         var guildRepo = A.Fake<IGuildRepository>();
         A.CallTo(() => guildRepo.GetAllInstallations()).Returns([]);
-        var action = new GuildStatusChecker(guildRepo, DiscordClientThatIsNeverCalled(), NullLogger<GuildStatusChecker>.Instance);
+        var action = new GuildStatusChecker(guildRepo, DiscordClientThatIsNeverCalled(), A.Fake<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
 
         var started = await CaptureSpans(() => action.Process(CancellationToken.None));
 

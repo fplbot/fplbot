@@ -154,7 +154,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
 
         await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, "no-such-channel", "50001", Day0),
             TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
         Assert.Single(reloaded.ChannelSubscriptions);

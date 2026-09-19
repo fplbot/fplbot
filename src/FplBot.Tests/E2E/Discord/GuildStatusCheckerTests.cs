@@ -4,6 +4,7 @@ using Discord.Net.HttpClients;
 using FakeItEasy;
 using FplBot.Data;
 using FplBot.WebApi.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -45,7 +46,7 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
         var discordClient = new DiscordClient(httpClient,
             Options.Create(new DiscordClientOptions { DiscordApplicationId = "test", DiscordAppToken = "test" }),
             A.Fake<ILogger<DiscordClient>>());
-        return new GuildStatusChecker(fixture.GuildRepo, discordClient, A.Fake<ILogger<GuildStatusChecker>>());
+        return new GuildStatusChecker(fixture.GuildRepo, discordClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<GuildStatusChecker>>());
     }
 
     private class StubHttpMessageHandler(HttpStatusCode statusCode, string guildId) : HttpMessageHandler

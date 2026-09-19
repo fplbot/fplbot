@@ -2,10 +2,12 @@ using System.Net;
 using CronBackgroundServices;
 using Discord.Net.HttpClients;
 using FplBot.Data.Discord;
+using FplBot.Messaging.Contracts.Events.v1;
+using MassTransit;
 
 namespace FplBot.WebApi.Infrastructure;
 
-public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discordClient, ILogger<GuildStatusChecker> logger) : IRecurringAction
+public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discordClient, IServiceScopeFactory scopeFactory, ILogger<GuildStatusChecker> logger) : IRecurringAction
 {
     public async Task Process(CancellationToken stoppingToken)
     {
@@ -24,7 +26,13 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
                 counter++;
                 logger.LogInformation("AccessCheck: {GuildId} ('{GuildName}') Guild #{Count} unknown to fplbot. "
                     , counter, guild.Id, guild.Name);
+                guild.Uninstall();
                 await guildRepo.Delete(guild);
+                using (var scope = scopeFactory.CreateScope())
+                {
+                    await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()
+                        .Publish(new BotRemovedFromGuild(guild.Id, guild.Name), stoppingToken);
+                }
                 logger.LogInformation("AccessCheck: {GuildId} ('{GuildName}') Guild deleted ❌", guild.Id, guild.Name);
             }
             catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.Forbidden)

@@ -59,7 +59,7 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
 
         await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
             TestContext.Current.CancellationToken);
-        await Task.Delay(1000, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         var sub = await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId);
         Assert.NotNull(sub);
@@ -75,7 +75,7 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
 
         await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
             TestContext.Current.CancellationToken);
-        await Task.Delay(1000, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         var sub = await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId);
         Assert.NotNull(sub);
