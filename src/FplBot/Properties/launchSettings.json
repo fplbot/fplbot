@@ -2,12 +2,16 @@
   "profiles": {
     "Default": {
       "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5173/admin",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
     "Integration": {
       "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5173/admin",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Integration"
       }
