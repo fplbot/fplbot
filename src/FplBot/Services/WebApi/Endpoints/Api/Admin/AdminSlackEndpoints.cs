@@ -82,10 +82,10 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetTeams(string? query, int page, int pageSize, bool failingOnly, ISlackTeamRepository teamRepo)
+    internal static async Task<IResult> GetTeams(string? query, int? page, int? pageSize, bool? failingOnly, ISlackTeamRepository teamRepo)
     {
-        page = page <= 0 ? 1 : page;
-        pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
+        var pageNumber = page is > 0 ? page.Value : 1;
+        var size = pageSize is > 0 ? Math.Min(pageSize.Value, 100) : 25;
 
         var installations = (await teamRepo.GetAllInstallations()).ToList();
 
@@ -98,19 +98,19 @@ public static class AdminSlackEndpoints
                     i.Id.Contains(query, StringComparison.OrdinalIgnoreCase))
             ];
 
-        if (failingOnly)
+        if (failingOnly is true)
         {
             filtered = [.. filtered.Where(i => i.ChannelSubscriptions.Any(c => c.FailureCount > 0))];
         }
 
-        var page_ = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var page_ = filtered.Skip((pageNumber - 1) * size).Take(size).ToList();
         var items = new List<TeamSummaryDto>();
         foreach (var installation in page_)
         {
             items.Add(await ToDto(installation, teamRepo));
         }
 
-        return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, page, pageSize, filtered.Count));
+        return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, pageNumber, size, filtered.Count));
     }
 
     private static async Task<TeamSummaryDto> ToDto(Installation installation, ISlackTeamRepository teamRepo)

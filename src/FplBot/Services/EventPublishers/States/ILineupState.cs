@@ -1,6 +1,6 @@
 namespace Fpl.EventPublishers.States;
 
-internal interface ILineupState
+public interface ILineupState
 {
     Task Reset(int gameweek);
     Task Refresh(int gameweek);

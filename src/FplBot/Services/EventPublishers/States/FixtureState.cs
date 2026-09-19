@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-internal class FixtureState(
+public class FixtureState(
     IFixtureClient fixtureClient,
     IGlobalSettingsClient settingsClient,
     IServiceScopeFactory scopeFactory,

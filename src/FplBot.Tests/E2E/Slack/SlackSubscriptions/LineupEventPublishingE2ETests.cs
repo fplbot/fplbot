@@ -7,6 +7,7 @@ using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
@@ -154,5 +155,5 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     }
 
     private LineupState CreateLineupState(IFixtureClient fixtureClient, IPulseLiveClient pulseClient, IGlobalSettingsClient globalSettingsClient) =>
-        new(fixtureClient, pulseClient, globalSettingsClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<LineupState>>());
+        new(fixtureClient, pulseClient, globalSettingsClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<LineupState>.Instance);
 }

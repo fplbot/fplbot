@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Fpl.PulseLive;
 
-internal class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
+public class PulseLiveClient(HttpClient client, ILogger<PulseLiveClient> logger) : IPulseLiveClient
 {
     public async Task<MatchDetails?> GetMatchDetails(int pulseId)
     {

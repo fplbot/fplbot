@@ -6,7 +6,7 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-internal class GameweekLifecycleMonitor(
+public class GameweekLifecycleMonitor(
     IGlobalSettingsClient gwClient,
     ILogger<GameweekLifecycleMonitor> logger,
     IServiceScopeFactory scopeFactory,

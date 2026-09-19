@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace Fpl.EventPublishers.States;
 
-internal class NearDeadLineMonitor(
+public class NearDeadLineMonitor(
     IGlobalSettingsClient globalSettingsClient,
     DateTimeUtils dateTimeUtils,
     IServiceScopeFactory scopeFactory,

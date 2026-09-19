@@ -7,6 +7,7 @@ using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
@@ -63,5 +64,5 @@ public class NearDeadlineEventPublishingE2ETests(AppFixture fixture) : IAsyncLif
     }
 
     private NearDeadLineMonitor CreateMonitor(IGlobalSettingsClient settingsClient, DateTimeUtils dateTimeUtils) =>
-        new(settingsClient, dateTimeUtils, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<NearDeadLineMonitor>>());
+        new(settingsClient, dateTimeUtils, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<NearDeadLineMonitor>.Instance);
 }

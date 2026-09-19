@@ -6,6 +6,7 @@ using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
@@ -153,7 +154,7 @@ public class FixtureEventE2ETests(AppFixture fixture) : IAsyncLifetime
     private readonly List<Fixture> _knownFinishedFixtures = [];
 
     private FixtureState CreateFixtureState(IFixtureClient fixtureClient, IGlobalSettingsClient settingsClient) =>
-        new(fixtureClient, settingsClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<FixtureState>>());
+        new(fixtureClient, settingsClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<FixtureState>.Instance);
 
     private FixtureState CreateGoalScoredScenario()
     {

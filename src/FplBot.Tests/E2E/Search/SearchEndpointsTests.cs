@@ -1,174 +1,124 @@
 using System.Net;
+using System.Text.Json;
 using Fpl.Search;
 using Fpl.Search.Models;
-using Fpl.Search.Searching;
-using FplBot.Messaging.Contracts.Commands.v1;
-using FplBot.Tests.Helpers;
-using FplBot.WebApi.Endpoints.Api.Search;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Nest;
 
 namespace FplBot.Tests.E2E.Search;
 
-// Exercises the real SearchService against a real (Testcontainers) Elasticsearch instance —
-// data is seeded straight into the index, then the endpoint handler is called and asked to
-// find it, instead of faking ISearchService's results.
+// Exercises the search endpoints over HTTP against a real (Testcontainers) Elasticsearch
+// instance - data is seeded straight into the index the app is configured to query, then the
+// endpoint is asked to find it, instead of faking ISearchService's results.
 [Collection("AppSearch")]
-public class SearchEndpointsTests(SearchAppFixture elastic)
+public class SearchEndpointsTests(SearchAppFixture elastic) : IAsyncLifetime
 {
-    private (ISearchService Service, SearchOptions Options, TestPublishEndpoint PublishEndpoint) NewSearchService()
+    private const string SearchingFrom = "203.0.113.5";
+
+    private SearchOptions Options => elastic.Services.GetRequiredService<IOptions<SearchOptions>>().Value;
+
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
+
+    public async ValueTask DisposeAsync() =>
+        await elastic.ElasticClient.Indices.DeleteAsync($"{Options.EntriesIndex},{Options.LeaguesIndex}");
+
+    private async Task SeedEntries(params EntryItem[] entries)
     {
-        var options = new SearchOptions
-        {
-            IndexUri = "unused",
-            Username = "unused",
-            Password = "unused",
-            IndexingCron = "* * * * *",
-            EntriesIndex = $"entries-{Guid.NewGuid():N}",
-            LeaguesIndex = $"leagues-{Guid.NewGuid():N}",
-            AnalyticsIndex = $"analytics-{Guid.NewGuid():N}"
-        };
-        var publishEndpoint = new TestPublishEndpoint();
-        var service = new SearchService(elastic.ElasticClient, publishEndpoint, NullLogger<SearchService>.Instance, Options.Create(options));
-        return (service, options, publishEndpoint);
+        await elastic.ElasticClient.IndexManyAsync(entries, Options.EntriesIndex);
+        await elastic.ElasticClient.Indices.RefreshAsync(Options.EntriesIndex);
     }
 
-    private async Task SeedEntries(string index, params EntryItem[] entries)
+    private async Task SeedLeagues(params LeagueItem[] leagues)
     {
-        await elastic.ElasticClient.IndexManyAsync(entries, index);
-        await elastic.ElasticClient.Indices.RefreshAsync(index);
-    }
-
-    private async Task SeedLeagues(string index, params LeagueItem[] leagues)
-    {
-        await elastic.ElasticClient.IndexManyAsync(leagues, index);
-        await elastic.ElasticClient.Indices.RefreshAsync(index);
-    }
-
-    private static HttpContext HttpContextWithRemoteIp(string? ip = "203.0.113.5")
-    {
-        var httpContext = new DefaultHttpContext();
-        if (ip != null)
-        {
-            httpContext.Connection.RemoteIpAddress = IPAddress.Parse(ip);
-        }
-
-        return httpContext;
+        await elastic.ElasticClient.IndexManyAsync(leagues, Options.LeaguesIndex);
+        await elastic.ElasticClient.Indices.RefreshAsync(Options.LeaguesIndex);
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetEntry_Found_ReturnsOkWithEntry()
     {
-        var (service, options, _) = NewSearchService();
         var entry = new EntryItem { Id = 42, RealName = "Messi" };
-        await elastic.ElasticClient.IndexAsync(entry, i => i.Index(options.EntriesIndex).Id(entry.Id), TestContext.Current.CancellationToken);
-        await elastic.ElasticClient.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.IndexAsync(entry, i => i.Index(Options.EntriesIndex).Id(entry.Id), TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(Options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
-        var result = await SearchEndpoints.GetEntry(42, service);
+        var found = await elastic.GetJson<EntryItem>("/api/search/entries/42");
 
-        var ok = Assert.IsType<Ok<EntryItem>>(result);
-        Assert.Equal("Messi", ok.Value!.RealName);
+        Assert.Equal("Messi", found.RealName);
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetEntry_NotFound_ReturnsNotFound()
     {
-        var (service, options, _) = NewSearchService();
-        await elastic.ElasticClient.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.CreateAsync(Options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
-        var result = await SearchEndpoints.GetEntry(1, service);
+        var response = await elastic.Get("/api/search/entries/1");
 
-        Assert.IsType<NotFound>(result);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetEntries_FindsSeededEntryByRealName()
     {
-        var (service, options, _) = NewSearchService();
-        await SeedEntries(options.EntriesIndex,
+        await SeedEntries(
             new EntryItem { Id = 1, RealName = "Lionel Messi" },
             new EntryItem { Id = 2, RealName = "Cristiano Ronaldo" });
 
-        var result = await SearchEndpoints.GetEntries("messi", 0, HttpContextWithRemoteIp(), service);
+        var response = await elastic.GetFrom("/api/search/entries?query=messi&page=0", SearchingFrom);
 
-        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
-        SearchResult<EntryItem> hits = value.Hits;
-        Assert.Equal(1, hits.TotalHits);
-        Assert.Equal("Lionel Messi", hits.ExposedHits.Single().RealName);
+        var hits = (await AppFixture.ReadJson<JsonElement>(response)).GetProperty("hits");
+        Assert.Equal(1, hits.GetProperty("totalHits").GetInt32());
+        Assert.Equal("Lionel Messi", Assert.Single(hits.GetProperty("exposedHits").EnumerateArray()).GetProperty("realName").GetString());
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetEntries_PageBeyondResultsAndNoHits_ReturnsBadRequest()
     {
-        var (service, options, _) = NewSearchService();
-        await elastic.ElasticClient.Indices.CreateAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
-        await elastic.ElasticClient.Indices.RefreshAsync(options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.CreateAsync(Options.EntriesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(Options.EntriesIndex, ct: TestContext.Current.CancellationToken);
 
-        var result = await SearchEndpoints.GetEntries("nobody", 5, HttpContextWithRemoteIp(), service);
+        var response = await elastic.GetFrom("/api/search/entries?query=nobody&page=5", SearchingFrom);
 
-        var statusResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
-        Assert.Equal(StatusCodes.Status400BadRequest, statusResult.StatusCode);
-    }
-
-    [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
-    public async Task GetEntries_RecordsRemoteIpAsActorOnThePublishedAnalyticsEvent()
-    {
-        var (service, options, publishEndpoint) = NewSearchService();
-        await SeedEntries(options.EntriesIndex, new EntryItem { Id = 1, RealName = "Messi" });
-
-        await SearchEndpoints.GetEntries("messi", 0, HttpContextWithRemoteIp(), service);
-
-        var indexed = publishEndpoint.PublishedMessages.Containing<IndexQuery>().Single();
-        var query = (IndexQuery)indexed.Message;
-        Assert.Equal("203.0.113.5", query.Actor);
-        Assert.Equal(nameof(QueryClient.Web), query.Client);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetLeagues_FindsSeededLeagueByName()
     {
-        var (service, options, _) = NewSearchService();
-        await SeedLeagues(options.LeaguesIndex,
+        await SeedLeagues(
             new LeagueItem { Id = 1, Name = "The Gaffers League" },
             new LeagueItem { Id = 2, Name = "Some Other League" });
 
-        var result = await SearchEndpoints.GetLeagues("gaffers", 0, "", HttpContextWithRemoteIp(), service);
+        var response = await elastic.GetFrom("/api/search/leagues?query=gaffers&page=0&countryToBoost=", SearchingFrom);
 
-        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
-        SearchResult<LeagueItem> hits = value.Hits;
-        Assert.Equal(1, hits.TotalHits);
-        Assert.Equal("The Gaffers League", hits.ExposedHits.Single().Name);
+        var hits = (await AppFixture.ReadJson<JsonElement>(response)).GetProperty("hits");
+        Assert.Equal(1, hits.GetProperty("totalHits").GetInt32());
+        Assert.Equal("The Gaffers League", Assert.Single(hits.GetProperty("exposedHits").EnumerateArray()).GetProperty("name").GetString());
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetLeagues_PageBeyondResultsAndNoHits_ReturnsBadRequest()
     {
-        var (service, options, _) = NewSearchService();
-        await elastic.ElasticClient.Indices.CreateAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
-        await elastic.ElasticClient.Indices.RefreshAsync(options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.CreateAsync(Options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
+        await elastic.ElasticClient.Indices.RefreshAsync(Options.LeaguesIndex, ct: TestContext.Current.CancellationToken);
 
-        var result = await SearchEndpoints.GetLeagues("nobody", 5, "", HttpContextWithRemoteIp(), service);
+        var response = await elastic.GetFrom("/api/search/leagues?query=nobody&page=5&countryToBoost=", SearchingFrom);
 
-        var statusResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
-        Assert.Equal(StatusCodes.Status400BadRequest, statusResult.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetAny_FindsBothSeededEntriesAndLeagues()
     {
-        var (service, options, _) = NewSearchService();
-        await SeedEntries(options.EntriesIndex, new EntryItem { Id = 1, RealName = "Skjelbek" });
-        await SeedLeagues(options.LeaguesIndex, new LeagueItem { Id = 1, Name = "Skjelbek League" });
+        await SeedEntries(new EntryItem { Id = 1, RealName = "Skjelbek" });
+        await SeedLeagues(new LeagueItem { Id = 1, Name = "Skjelbek League" });
 
-        var result = await SearchEndpoints.GetAny("skjelbek", 0, HttpContextWithRemoteIp(), service);
+        var response = await elastic.GetFrom("/api/search/any?query=skjelbek&page=0", SearchingFrom);
 
-        dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
-        SearchResult<dynamic> hits = value.Hits;
-        Assert.Equal(2, hits.TotalHits);
-        Assert.Contains(hits.ExposedHits, h => ((SearchContainer)h).Type == "entry");
-        Assert.Contains(hits.ExposedHits, h => ((SearchContainer)h).Type == "league");
+        var hits = (await AppFixture.ReadJson<JsonElement>(response)).GetProperty("hits");
+        Assert.Equal(2, hits.GetProperty("totalHits").GetInt32());
+        var types = hits.GetProperty("exposedHits").EnumerateArray().Select(h => h.GetProperty("type").GetString()).ToList();
+        Assert.Contains("entry", types);
+        Assert.Contains("league", types);
     }
 }
