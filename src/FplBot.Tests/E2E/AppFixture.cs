@@ -9,6 +9,7 @@ using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search;
+using Fpl.Search.Indexing;
 using Fpl.Search.Models;
 using FplBot.Data;
 using FplBot.Data.Discord;
@@ -21,6 +22,8 @@ using FplBot.Tests.E2E.Discord;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using FplBot.Tests.Helpers;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -112,7 +115,42 @@ public class AppFixture : IAsyncLifetime
         _capturingDiscordClient.Reset();
     }
 
+    private static readonly JsonSerializerOptions HttpJson =
+        new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+
+    private const string RemoteIpHeader = "X-Test-Remote-Ip";
+
     public Task<HttpResponseMessage> Get(string path) => _client.GetAsync(path, TestContext.Current.CancellationToken);
+
+    public async Task<HttpResponseMessage> GetFrom(string path, string remoteIp)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Add(RemoteIpHeader, remoteIp);
+        return await _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
+    public Task<HttpResponseMessage> Post(string path, object? body = null) =>
+        _client.PostAsync(path, AsJson(body), TestContext.Current.CancellationToken);
+
+    public Task<HttpResponseMessage> Put(string path, object? body = null) =>
+        _client.PutAsync(path, AsJson(body), TestContext.Current.CancellationToken);
+
+    public Task<HttpResponseMessage> Delete(string path) => _client.DeleteAsync(path, TestContext.Current.CancellationToken);
+
+    public async Task<T> GetJson<T>(string path)
+    {
+        var response = await Get(path);
+        response.EnsureSuccessStatusCode();
+        return await ReadJson<T>(response);
+    }
+
+    public static async Task<T> ReadJson<T>(HttpResponseMessage response) =>
+        (await JsonSerializer.DeserializeAsync<T>(
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken), HttpJson,
+            TestContext.Current.CancellationToken))!;
+
+    private static StringContent AsJson(object? body) =>
+        new(JsonSerializer.Serialize(body ?? new { }, HttpJson), Encoding.UTF8, "application/json");
 
     public virtual async ValueTask InitializeAsync()
     {
@@ -172,9 +210,15 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddStackExchangeRedisCache(o =>
             o.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(_multiplexer));
 
+        builder.Services.AddAuthentication()
+            .AddScheme<AuthenticationSchemeOptions, TestAdminAuthHandler>(TestAdminAuthHandler.SchemeName, _ => { });
+        builder.Services.AddOptions<AuthorizationOptions>().PostConfigure(o =>
+            o.AddPolicy("IsAdmin", b => b
+                .AddAuthenticationSchemes(TestAdminAuthHandler.SchemeName)
+                .RequireAuthenticatedUser()));
         builder.Services.AddHttpClient("Discord.Net.Endpoints.TokenExchange")
             .ConfigurePrimaryHttpMessageHandler(() => new StubDiscordTokenExchange());
-        builder.Services.AddHttpClient<IPlayerImageClient, PlayerImageClient>()
+        builder.Services.AddHttpClient(nameof(IPlayerImageClient))
             .ConfigurePrimaryHttpMessageHandler(() => new StubPlayerImages());
         builder.Services.AddSingleton(fakeGlobalSettings);
         builder.Services.AddSingleton(fakeFixtureClient);
@@ -195,6 +239,15 @@ public class AppFixture : IAsyncLifetime
         ConfigureSearchClient(builder.Services);
 
         _app = builder.Build();
+        _app.Use(async (ctx, next) =>
+        {
+            if (ctx.Request.Headers.TryGetValue(RemoteIpHeader, out var ip) && IPAddress.TryParse(ip, out var parsed))
+            {
+                ctx.Connection.RemoteIpAddress = parsed;
+            }
+
+            await next();
+        });
         foreach (var svc in active)
         {
             svc.ConfigureApp(_app);
@@ -392,8 +445,14 @@ public class AppFixture : IAsyncLifetime
 
     // No-op here: only the search-focused subclass (SearchAppFixture) needs a real
     // Elasticsearch-backed IElasticClient; every other AppFixture consumer doesn't touch search.
+    public IndexedQueryCapture IndexedQueries { get; } = new();
+
     protected virtual void ConfigureSearchClient(IServiceCollection services)
     {
+        services.RemoveAll<IElasticClient>();
+        services.AddSingleton(A.Fake<IElasticClient>());
+        services.RemoveAll<IIndexingClient>();
+        services.AddSingleton<IIndexingClient>(IndexedQueries);
     }
 
     public async Task FlushRedisAsync()

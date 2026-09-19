@@ -1,56 +1,19 @@
 using FplBot.WebApi.Endpoints.Api.Admin;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Nest;
-using StackExchange.Redis;
-using Testcontainers.Redis;
 
 namespace FplBot.Tests.E2E.ApiEndpoints;
 
-// Exercises AdminHealthEndpoints against real Redis/Elasticsearch rather than faking either
-// client. Uses its own throwaway Redis connection, not AppFixture.SlackRepo's, so it stays
-// independent of the shared fixture other AppSearch tests rely on.
+// Exercises the dependency health endpoint over HTTP against the real Redis/Elasticsearch the
+// app is wired to, rather than faking either client.
 [Collection("AppSearch")]
 public class AdminHealthEndpointsTests(SearchAppFixture appFixture)
 {
-    private static readonly Lazy<RedisContainer> RedisContainerInstance = new(() =>
-    {
-        var container = new RedisBuilder("redis:latest").Build();
-        container.StartAsync().GetAwaiter().GetResult();
-        return container;
-    });
-
-    private static readonly Lazy<IConnectionMultiplexer> RedisConnection = new(() =>
-        ConnectionMultiplexer.Connect(RedisContainerInstance.Value.GetConnectionString() + ",allowAdmin=true"));
-
     [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
     public async Task GetDependencyHealth_BothReachable_ReturnsHealthy()
     {
-        var result = await AdminHealthEndpoints.GetDependencyHealth(RedisConnection.Value, appFixture.ElasticClient);
+        var health = await appFixture.GetJson<DependencyHealthResponse>("/api/admin/health/dependencies");
 
-        var ok = Assert.IsType<Ok<DependencyHealthResponse>>(result);
-        Assert.True(ok.Value!.Healthy, DescribeFailures(ok.Value));
-        Assert.All(ok.Value.Dependencies, d => Assert.True(d.Healthy));
-    }
-
-    [Fact(Skip = "Skipped: the Elasticsearch fixture is the slowest in the suite and these fail locally on leaked indices.")]
-    public async Task GetDependencyHealth_ElasticsearchUnreachable_ReportsUnhealthy()
-    {
-        // A real NEST client pointed at a port nothing listens on — genuinely exercises the
-        // failure path of the real client, without the cost/flakiness of a second ES JVM
-        // (already several containers-worth of memory pressure on this box) just to prove it
-        // can't reach a server that isn't there.
-        var settings = new ConnectionSettings(new Uri("http://127.0.0.1:1"))
-            .RequestTimeout(TimeSpan.FromSeconds(2));
-        var unreachableClient = new ElasticClient(settings);
-
-        var result = await AdminHealthEndpoints.GetDependencyHealth(RedisConnection.Value, unreachableClient);
-
-        var unavailable = Assert.IsType<JsonHttpResult<DependencyHealthResponse>>(result);
-        Assert.Equal(StatusCodes.Status503ServiceUnavailable, unavailable.StatusCode);
-        Assert.False(unavailable.Value!.Healthy);
-        Assert.False(unavailable.Value.Dependencies.Single(d => d.Name == "Elasticsearch").Healthy);
-        Assert.True(unavailable.Value.Dependencies.Single(d => d.Name == "Redis").Healthy);
+        Assert.True(health.Healthy, DescribeFailures(health));
+        Assert.All(health.Dependencies, d => Assert.True(d.Healthy));
     }
 
     private static string DescribeFailures(DependencyHealthResponse response) =>

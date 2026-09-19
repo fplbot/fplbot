@@ -31,6 +31,7 @@ public class EventHandlersService : WorkerFplBotService
 
     public override void AddConsumers(IBusRegistrationConfigurator cfg)
     {
+        cfg.AddConsumer<IndexQueryCommandHandler>();
         cfg.AddConsumer<AppInstalledHandler>();
         cfg.AddConsumer<SlackWorkspaceUninstalledHandler>();
         cfg.AddConsumer<TeamMarkedForRemovalHandler>();

@@ -8,6 +8,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
@@ -106,7 +107,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
                 ]
             });
 
-        return new PlayerUpdatesRecurringAction(settingsClient, new TestScopeFactory(messageSession), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
+        return new PlayerUpdatesRecurringAction(settingsClient, new TestScopeFactory(messageSession), NullLogger<PlayerUpdatesRecurringAction>.Instance);
     }
 
     private PlayerUpdatesRecurringAction CreateNewInjuryScenario()
@@ -231,5 +232,5 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     }
 
     private PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>
-        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<PlayerUpdatesRecurringAction>>());
+        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<PlayerUpdatesRecurringAction>.Instance);
 }

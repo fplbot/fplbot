@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Discord.Net.Endpoints.Middleware;
 
-internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
+public class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 {
     private readonly RequestDelegate _next = next;
 
@@ -83,7 +83,7 @@ internal class DiscordCodeTokenExchangeMiddleware(RequestDelegate next)
 
     // `state` is opaque to this library — only the app that sent it knows what it means, so it
     // rides back to the app's own success page untouched rather than being interpreted here.
-    internal static string SuccessRedirect(string successRedirectUri, string? state) =>
+    public static string SuccessRedirect(string successRedirectUri, string? state) =>
         string.IsNullOrEmpty(state)
             ? successRedirectUri
             : QueryHelpers.AddQueryString(successRedirectUri, "state", state);

@@ -134,10 +134,10 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetSubscriptions(string? query, int page, int pageSize, bool failingOnly, IGuildRepository repo)
+    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, IGuildRepository repo)
     {
-        page = page <= 0 ? 1 : page;
-        pageSize = pageSize <= 0 ? 25 : Math.Min(pageSize, 100);
+        var pageNumber = page is > 0 ? page.Value : 1;
+        var size = pageSize is > 0 ? Math.Min(pageSize.Value, 100) : 25;
 
         var installations = (await repo.GetAllInstallations()).ToList();
 
@@ -154,17 +154,17 @@ public static class AdminDiscordEndpoints
                     g.GuildId.Contains(query, StringComparison.OrdinalIgnoreCase))
             ];
 
-        if (failingOnly)
+        if (failingOnly is true)
         {
             filtered = [.. filtered.Where(g => g.Subscriptions.Any(c => c.FailureCount > 0))];
         }
 
         var items = filtered
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((pageNumber - 1) * size)
+            .Take(size)
             .ToList();
 
-        return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, page, pageSize, filtered.Count));
+        return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, pageNumber, size, filtered.Count));
     }
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>

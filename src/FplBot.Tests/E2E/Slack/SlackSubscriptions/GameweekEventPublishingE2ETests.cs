@@ -6,6 +6,7 @@ using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
@@ -103,7 +104,7 @@ public class GameweekEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetim
 
     private GameweekLifecycleMonitor BuildMonitor(IGlobalSettingsClient gameweekClient) =>
         new(gameweekClient,
-            A.Fake<ILogger<GameweekLifecycleMonitor>>(),
+            NullLogger<GameweekLifecycleMonitor>.Instance,
             fixture.Services.GetRequiredService<IServiceScopeFactory>(),
             A.Fake<IFixtureState>(),
             A.Fake<ILineupState>());

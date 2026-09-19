@@ -5,6 +5,7 @@ using Discord.Net.HttpClients.Components;
 using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.UnitTests;
 
@@ -130,7 +131,7 @@ public class DiscordApiExceptionTests
         var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, body)) { BaseAddress = new Uri("https://discord.example/") };
         return new DiscordClient(httpClient,
             Options.Create(new DiscordClientOptions { DiscordApplicationId = "test", DiscordAppToken = "test" }),
-            A.Fake<ILogger<DiscordClient>>());
+            NullLogger<DiscordClient>.Instance);
     }
 
     private class StubHttpMessageHandler(HttpStatusCode statusCode, string body) : HttpMessageHandler

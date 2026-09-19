@@ -7,6 +7,7 @@ using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.Services.WebApi.Discord.Handlers.Reactors;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Discord;
 
@@ -20,7 +21,7 @@ public class DiscordNetInstallationBridgeTests(AppFixture fixture) : IAsyncLifet
     public async ValueTask InitializeAsync()
     {
         await fixture.FlushRedisAsync();
-        _sut = new DiscordNetInstallationBridge(Repo, _publishEndpoint, A.Fake<ILogger<DiscordNetInstallationBridge>>());
+        _sut = new DiscordNetInstallationBridge(Repo, _publishEndpoint, NullLogger<DiscordNetInstallationBridge>.Instance);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

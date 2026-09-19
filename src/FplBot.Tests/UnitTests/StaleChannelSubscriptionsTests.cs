@@ -3,6 +3,7 @@ using FplBot.Data;
 using FplBot.Domain;
 using FplBot.EventHandlers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.UnitTests;
 
@@ -16,6 +17,6 @@ public class StaleChannelSubscriptionsTests
         A.CallTo(() => repository.GetChannelSubscription("G1", "C1")).Returns(subscription);
         A.CallTo(() => repository.SaveChannelSubscription("G1", subscription)).Throws(new TimeoutException("redis down"));
 
-        await StaleChannelSubscriptions.ClearFailures(repository, "G1", "C1", A.Fake<ILogger>());
+        await StaleChannelSubscriptions.ClearFailures(repository, "G1", "C1", NullLogger.Instance);
     }
 }

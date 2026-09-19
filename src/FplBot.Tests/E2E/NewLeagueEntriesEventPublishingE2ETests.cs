@@ -6,6 +6,7 @@ using FplBot.Domain;
 using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E;
 
@@ -149,7 +150,7 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     {
         var monitor = new GameweekLifecycleMonitor(
             GlobalSettingsClientBuilder.Returning(Before(gameweekId), After(gameweekId)),
-            A.Fake<ILogger<GameweekLifecycleMonitor>>(),
+            NullLogger<GameweekLifecycleMonitor>.Instance,
             fixture.Services.GetRequiredService<IServiceScopeFactory>(),
             A.Fake<IFixtureState>(),
             A.Fake<ILineupState>());

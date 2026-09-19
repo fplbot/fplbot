@@ -7,6 +7,7 @@ using FplBot.WebApi.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Discord;
 
@@ -45,8 +46,8 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
         var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, guildId)) { BaseAddress = new Uri("https://discord.example/") };
         var discordClient = new DiscordClient(httpClient,
             Options.Create(new DiscordClientOptions { DiscordApplicationId = "test", DiscordAppToken = "test" }),
-            A.Fake<ILogger<DiscordClient>>());
-        return new GuildStatusChecker(fixture.GuildRepo, discordClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), A.Fake<ILogger<GuildStatusChecker>>());
+            NullLogger<DiscordClient>.Instance);
+        return new GuildStatusChecker(fixture.GuildRepo, discordClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
     }
 
     private class StubHttpMessageHandler(HttpStatusCode statusCode, string guildId) : HttpMessageHandler

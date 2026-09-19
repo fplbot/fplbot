@@ -7,6 +7,7 @@ using FplBot.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Slackbot.Net.Abstractions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FplBot.Tests.E2E.Slack;
 
@@ -20,7 +21,7 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
     public async ValueTask InitializeAsync()
     {
         await fixture.FlushRedisAsync();
-        _sut = new SlackbotNetInstallationBridge(Repo, _publishEndpoint, A.Fake<ILogger<SlackbotNetInstallationBridge>>());
+        _sut = new SlackbotNetInstallationBridge(Repo, _publishEndpoint, NullLogger<SlackbotNetInstallationBridge>.Instance);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
