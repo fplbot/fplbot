@@ -205,25 +205,28 @@ public class SlackTeamRepository : ISlackTeamRepository
             hashEntries.Add(new HashEntry(_channelSubLeagueIdField, (int)leagueId.Value));
         }
 
-        await _db.HashSetAsync(key, [.. hashEntries]);
-        if (channel.FollowedLeagueId is null)
-        {
-            await _db.HashDeleteAsync(key, _channelSubLeagueIdField);
-        }
-
         if (channel.FailingSince is { } failingSince)
         {
-            await _db.HashSetAsync(key,
-            [
-                new HashEntry(_channelSubFailingSinceField, failingSince.ToUnixTimeMilliseconds()),
-                new HashEntry(_channelSubLastFailureReasonField, channel.LastFailureReason)
-            ]);
+            hashEntries.Add(new HashEntry(_channelSubFailingSinceField, failingSince.ToUnixTimeMilliseconds()));
+            hashEntries.Add(new HashEntry(_channelSubLastFailureReasonField, channel.LastFailureReason));
         }
-        else
+
+        // One transaction, so a concurrent reader sees the subscription as it was or as it now is,
+        // never a failure counted with no date on it yet.
+        var transaction = _db.CreateTransaction();
+        _ = transaction.HashSetAsync(key, [.. hashEntries]);
+        if (channel.FollowedLeagueId is null)
         {
-            await _db.HashDeleteAsync(key,
+            _ = transaction.HashDeleteAsync(key, _channelSubLeagueIdField);
+        }
+
+        if (channel.FailingSince is null)
+        {
+            _ = transaction.HashDeleteAsync(key,
                 [(RedisValue)_channelSubFailingSinceField, (RedisValue)_channelSubLastFailureReasonField]);
         }
+
+        await transaction.ExecuteAsync();
 
         await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
         await UpdateEventIndex(teamId, channel.ChannelId, oldEvents, newEvents);

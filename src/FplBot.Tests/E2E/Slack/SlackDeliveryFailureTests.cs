@@ -87,8 +87,7 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
     private async Task WaitForFailureCount(string teamId, string channelId, int expected)
     {
         await AppFixture.WaitUntil(
-            async () => await fixture.SlackRepo.GetChannelSubscription(teamId, channelId) is { } sub
-                        && sub.FailureCount == expected && (expected == 0 || sub.FailingSince is not null),
+            async () => await fixture.SlackRepo.GetChannelSubscription(teamId, channelId) is { } sub && sub.FailureCount == expected,
             $"Failure count never reached {expected}");
     }
 }

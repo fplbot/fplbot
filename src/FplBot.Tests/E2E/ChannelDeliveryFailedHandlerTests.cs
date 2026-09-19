@@ -166,17 +166,45 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         Assert.Single(reloaded.ChannelSubscriptions);
     }
 
+    [Fact]
+    public async Task RecordedFailure_IsNeverVisibleHalfWritten()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+
+        using var reading = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        var halfWritten = 0;
+        var reader = Task.Run(async () =>
+        {
+            while (!reading.IsCancellationRequested)
+            {
+                if (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId) is { FailureCount: > 0, FailingSince: null })
+                {
+                    Interlocked.Increment(ref halfWritten);
+                }
+            }
+        }, reading.Token);
+
+        for (var i = 0; i < 20; i++)
+        {
+            var consumedBefore = fixture.ConsumedSoFar;
+            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelId, "50001", Day0),
+                TestContext.Current.CancellationToken);
+            await fixture.WaitUntilBusIdle(consumedBefore);
+        }
+
+        await reading.CancelAsync();
+        await reader;
+
+        Assert.Equal(0, halfWritten);
+    }
+
     private static async Task<ChannelSubscription> WaitForFailureCount(
         Func<Task<ChannelSubscription?>> read, int expected)
     {
         ChannelSubscription? sub = null;
-        await AppFixture.WaitUntil(async () => (sub = await read()) is { } s && HasRecorded(s, expected),
+        await AppFixture.WaitUntil(async () => (sub = await read()) is { } s && s.FailureCount == expected,
             $"Failure count never reached {expected}");
         return sub!;
     }
-
-    // A failure is two Redis writes - the count, then failingSince - so a read between them sees a
-    // counted failure with no date on it. The test wants the state the handler finished writing.
-    private static bool HasRecorded(ChannelSubscription sub, int expected) =>
-        sub.FailureCount == expected && (expected == 0 || sub.FailingSince is not null);
 }

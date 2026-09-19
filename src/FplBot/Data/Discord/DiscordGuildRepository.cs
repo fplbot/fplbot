@@ -123,24 +123,27 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
             hashEntries.Add(new HashEntry(_leagueIdField, (int)leagueId.Value));
         }
 
-        await _db.HashSetAsync(key, [.. hashEntries]);
-        if (channel.FollowedLeagueId is null)
-        {
-            await _db.HashDeleteAsync(key, _leagueIdField);
-        }
-
         if (channel.FailingSince is { } failingSince)
         {
-            await _db.HashSetAsync(key,
-            [
-                new HashEntry(_failingSinceField, failingSince.ToUnixTimeMilliseconds()),
-                new HashEntry(_lastFailureReasonField, channel.LastFailureReason)
-            ]);
+            hashEntries.Add(new HashEntry(_failingSinceField, failingSince.ToUnixTimeMilliseconds()));
+            hashEntries.Add(new HashEntry(_lastFailureReasonField, channel.LastFailureReason));
         }
-        else
+
+        // One transaction, so a concurrent reader sees the subscription as it was or as it now is,
+        // never a failure counted with no date on it yet.
+        var transaction = _db.CreateTransaction();
+        _ = transaction.HashSetAsync(key, [.. hashEntries]);
+        if (channel.FollowedLeagueId is null)
         {
-            await _db.HashDeleteAsync(key, [_failingSinceField, _lastFailureReasonField]);
+            _ = transaction.HashDeleteAsync(key, _leagueIdField);
         }
+
+        if (channel.FailingSince is null)
+        {
+            _ = transaction.HashDeleteAsync(key, [_failingSinceField, _lastFailureReasonField]);
+        }
+
+        await transaction.ExecuteAsync();
 
         await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
         await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
