@@ -71,7 +71,8 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
     internal static async Task WaitForFailureCount(AppFixture fixture, string guildId, string channelId, int expected)
     {
         await AppFixture.WaitUntil(
-            async () => await fixture.GuildRepo.GetChannelSubscription(guildId, channelId) is { } sub && sub.FailureCount == expected,
+            async () => await fixture.GuildRepo.GetChannelSubscription(guildId, channelId) is { } sub
+                        && sub.FailureCount == expected && (expected == 0 || sub.FailingSince is not null),
             $"Failure count never reached {expected}");
     }
 }

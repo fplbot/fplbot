@@ -324,10 +324,11 @@ public class AppFixture : IAsyncLifetime
 
     // Publishing returns once the message is on the transport, so an immediate idle check can see a
     // bus that hasn't picked the message up yet. Pass ConsumedSoFar from before the publish and the
-    // wait only counts the bus as idle once something has actually been consumed since then.
-    public async Task WaitUntilBusIdle(long consumedBefore)
+    // wait only counts the bus as idle once every published message has been consumed.
+    public async Task WaitUntilBusIdle(long consumedBefore, int published = 1)
     {
-        await WaitUntil(() => Task.FromResult(ConsumedSoFar > consumedBefore), "The bus never consumed the message");
+        await WaitUntil(() => Task.FromResult(ConsumedSoFar >= consumedBefore + published),
+            $"The bus never consumed {published} message(s)");
         await WaitUntilBusIdle();
     }
 
