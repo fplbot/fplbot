@@ -2,7 +2,7 @@ using Fpl.Client.Abstractions;
 
 namespace Fpl.Client;
 
-public class PlayerImageClient(HttpClient httpClient) : IPlayerImageClient
+internal class PlayerImageClient(HttpClient httpClient) : IPlayerImageClient
 {
     private const string FallbackImageUrl =
         "https://user-images.githubusercontent.com/206726/73577018-207e4100-447c-11ea-98e3-9cc598c56519.png";
