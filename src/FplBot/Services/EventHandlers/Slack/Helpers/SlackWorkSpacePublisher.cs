@@ -24,7 +24,7 @@ public class SlackWorkSpacePublisher(
         {
             foreach (var channel in installation.ChannelSubscriptions)
             {
-                await PublishToWorkspace(installation.Id, channel.ChannelId, msg);
+                await PublishToWorkspace(installation.ExternalId, channel.ChannelId, msg);
             }
         }
     }
@@ -82,14 +82,14 @@ public class SlackWorkSpacePublisher(
             }
 
             logger.LogWarning("Could not post to {ChannelId}. {Error}", message.Channel, res.Error);
-            await RecordFailure(installation.Id, message.Channel, res.Error);
+            await RecordFailure(installation.ExternalId, message.Channel, res.Error);
             return null;
         }
         catch (WellKnownSlackApiException sae)
         {
             logger.LogWarning(sae, "Could not post to {ChannelId}. {Error} {ResponseContent}", message.Channel,
                 sae.Error, sae.ResponseContent);
-            await RecordFailure(installation.Id, message.Channel, sae.Error);
+            await RecordFailure(installation.ExternalId, message.Channel, sae.Error);
             return null;
         }
         catch (Exception e)
@@ -108,7 +108,7 @@ public class SlackWorkSpacePublisher(
         }
 
         subscription.ClearDeliveryFailures();
-        await repository.SaveChannelSubscription(installation.Id, subscription);
+        await repository.SaveChannelSubscription(installation.ExternalId, subscription);
     }
 
     private async Task RecordFailure(string teamId, string channelId, string? slackError)

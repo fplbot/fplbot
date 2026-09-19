@@ -25,12 +25,12 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (_, response) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+        var (_, response) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.ExternalId,
             channelId: channelId, appPermissions: DiscordPermissions.None);
 
         Assert.Contains("Send Messages", response);
         await AppFixture.WaitUntil(async () =>
-            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
+            (await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId))?.FollowedLeagueId?.Value == 15263);
     }
 
     [Fact]
@@ -39,13 +39,13 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (token, _) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+        var (token, _) = await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.ExternalId,
             channelId: channelId, appPermissions: DiscordPermissions.WithoutEmbedLinks);
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.DoesNotContain("permission", followup.Description);
         await AppFixture.WaitUntil(async () =>
-            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
+            (await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId))?.FollowedLeagueId?.Value == 15263);
     }
 
     [Fact]
@@ -54,12 +54,12 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id,
+        await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.ExternalId,
             channelId: channelId, appPermissions: DiscordPermissions.None);
         await AppFixture.WaitUntil(async () =>
-            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.FollowedLeagueId?.Value == 15263);
+            (await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId))?.FollowedLeagueId?.Value == 15263);
 
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
+        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId);
         Assert.Equal(0, sub!.FailureCount);
         Assert.Null(sub.FailingSince);
     }
@@ -70,7 +70,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation();
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id, channelId: channelId);
+        await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.ExternalId, channelId: channelId);
 
         await fixture.WaitUntilBusIdle();
         Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
@@ -83,12 +83,12 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
         var (_, response) = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
-            subCommandName: "add", guildId: guild.Id, channelId: channelId,
+            subCommandName: "add", guildId: guild.ExternalId, channelId: channelId,
             appPermissions: DiscordPermissions.None);
 
         Assert.Contains("Send Messages", response);
         await AppFixture.WaitUntil(async () =>
-            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
+            (await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
     }
 
     [Fact]
@@ -98,13 +98,13 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: "PriceChanges",
-            subCommandName: "add", guildId: guild.Id, channelId: channelId,
+            subCommandName: "add", guildId: guild.ExternalId, channelId: channelId,
             appPermissions: DiscordPermissions.WithoutEmbedLinks);
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.DoesNotContain("permission", followup.Description);
         await AppFixture.WaitUntil(async () =>
-            (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
+            (await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId))?.IsSubscribedTo(FplEvent.PriceChanges) == true);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (_, response) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+        var (_, response) = await fixture.AskDiscord("help", guildId: guild.ExternalId, channelId: channelId,
             appPermissions: DiscordPermissions.None);
 
         Assert.Contains("Send Messages", response);
@@ -125,7 +125,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (token, _) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+        var (token, _) = await fixture.AskDiscord("help", guildId: guild.ExternalId, channelId: channelId,
             appPermissions: DiscordPermissions.WithoutEmbedLinks);
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
@@ -138,7 +138,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (_, response) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId,
+        var (_, response) = await fixture.AskDiscord("help", guildId: guild.ExternalId, channelId: channelId,
             appPermissions: DiscordPermissions.Unknown);
 
         Assert.Contains("read my own permissions", response);
@@ -150,7 +150,7 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var (token, _) = await fixture.AskDiscord("help", guildId: guild.Id, channelId: channelId);
+        var (token, _) = await fixture.AskDiscord("help", guildId: guild.ExternalId, channelId: channelId);
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.DoesNotContain("Send Messages", followup.Description);

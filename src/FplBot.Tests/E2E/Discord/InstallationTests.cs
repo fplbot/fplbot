@@ -85,7 +85,7 @@ public class DiscordNetInstallationBridgeTests(AppFixture fixture) : IAsyncLifet
         var installation = await fixture.SeedGuildInstallation(leagueId: 12345, subscriptions: [EventSubscription.Standings]);
         var channel = installation.ChannelSubscriptions.Single();
 
-        var result = await Repo.GetChannelSubscription(installation.Id, channel.ChannelId);
+        var result = await Repo.GetChannelSubscription(installation.ExternalId, channel.ChannelId);
 
         Assert.NotNull(result);
         Assert.Equal(channel.FollowedLeagueId, result!.FollowedLeagueId);
@@ -97,7 +97,7 @@ public class DiscordNetInstallationBridgeTests(AppFixture fixture) : IAsyncLifet
     {
         var installation = await fixture.SeedGuildInstallation(leagueId: 12345);
 
-        var result = await Repo.GetChannelSubscription(installation.Id, "does-not-exist");
+        var result = await Repo.GetChannelSubscription(installation.ExternalId, "does-not-exist");
 
         Assert.Null(result);
     }

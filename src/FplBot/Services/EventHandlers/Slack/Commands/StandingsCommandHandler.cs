@@ -18,7 +18,7 @@ public class StandingsCommandHandler(IGlobalSettingsClient globalSettingsClient,
         var channel = installation.GetChannel(command.ChannelId);
         if (channel?.FollowedLeagueId is { } leagueId)
         {
-            await context.Publish(new PublishStandingsToSlackWorkspace(installation.Id, command.ChannelId, (int)leagueId.Value, gameweek!.Id));
+            await context.Publish(new PublishStandingsToSlackWorkspace(installation.ExternalId, command.ChannelId, (int)leagueId.Value, gameweek!.Id));
         }
     }
 }

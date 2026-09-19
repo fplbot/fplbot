@@ -16,7 +16,7 @@ public class DiscordNetInstallationBridge(
     {
         var existing = await repository.FindInstallationByTeamId(guild.Id);
         var installation = existing is not null
-            ? Installation.Reinstall(guild.Id, guild.Name, existing.ChannelSubscriptions)
+            ? Installation.Reinstall(existing.Id, guild.Id, guild.Name, existing.ChannelSubscriptions)
             : Installation.Install(guild.Id, guild.Name);
         await repository.Save(installation);
         await publisher.Publish(new AppInstalled(guild.Id, guild.Name, ChatPlatform.Discord));
@@ -34,6 +34,6 @@ public class DiscordNetInstallationBridge(
         }
 
         await repository.Delete(installation);
-        await publisher.Publish(new AppUninstalled(installation.Id, installation.Name));
+        await publisher.Publish(new AppUninstalled(installation.ExternalId, installation.Name));
     }
 }

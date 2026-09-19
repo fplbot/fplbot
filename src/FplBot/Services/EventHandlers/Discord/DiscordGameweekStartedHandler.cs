@@ -83,7 +83,7 @@ public class DiscordGameweekStartedHandler(
         }
         else
         {
-            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation!.Id, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation!.ExternalId, leagueStarted);
         }
 
         if (leagueExists && leagueStarted && team.IsSubscribedTo(FplEvent.Transfers))
@@ -120,12 +120,12 @@ public class DiscordGameweekStartedHandler(
         }
         else
         {
-            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation!.Id, leagueStarted);
+            logger.LogInformation("Bypassing team {team} notifications. League started: {leagueStarted}", installation!.ExternalId, leagueStarted);
         }
 
         foreach (var richMessage in messages)
         {
-            await context.Publish(new PublishRichToGuildChannel(installation!.Id, message.ChannelId, richMessage.Title, richMessage.Description));
+            await context.Publish(new PublishRichToGuildChannel(installation!.ExternalId, message.ChannelId, richMessage.Title, richMessage.Description));
         }
     }
 }

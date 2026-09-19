@@ -15,7 +15,7 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var installedGuild = await fixture.SeedGuildInstallation();
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
-            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+            guildId: installedGuild.ExternalId, channelId: Guid.NewGuid().ToString("N"));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Did not find any subscription", followup.Description);
@@ -27,7 +27,7 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
-            guildId: seeded.Id, channelId: ChannelOf(seeded));
+            guildId: seeded.ExternalId, channelId: ChannelOf(seeded));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Removed subscription to this channel", followup.Description);
@@ -39,7 +39,7 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges, EventSubscription.InjuryUpdates]);
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
-            guildId: seeded.Id, channelId: ChannelOf(seeded));
+            guildId: seeded.ExternalId, channelId: ChannelOf(seeded));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains($"Unsubscribed from {EventSubscription.PriceChanges}", followup.Description);
@@ -52,7 +52,7 @@ public class RemoveSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.All]);
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "remove",
-            guildId: seeded.Id, channelId: ChannelOf(seeded));
+            guildId: seeded.ExternalId, channelId: ChannelOf(seeded));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("No longer subscribing to all events", followup.Description);

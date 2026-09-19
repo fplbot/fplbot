@@ -8,7 +8,7 @@ public class InstallationTests
     public void Install_CreatesInstallationWithEmptySubs()
     {
         var installation = Installation.Install("T1", "Team One", "token");
-        Assert.Equal("T1", installation.Id);
+        Assert.Equal("T1", installation.ExternalId);
         Assert.Equal("Team One", installation.Name);
         Assert.Empty(installation.ChannelSubscriptions);
     }
@@ -17,7 +17,7 @@ public class InstallationTests
     public void Install_TokenLess_CreatesInstallationWithoutToken()
     {
         var installation = Installation.Install("G1", "Guild One");
-        Assert.Equal("G1", installation.Id);
+        Assert.Equal("G1", installation.ExternalId);
         Assert.Equal("Guild One", installation.Name);
         Assert.Null(installation.Token);
     }
@@ -25,11 +25,11 @@ public class InstallationTests
     [Fact]
     public void Reinstall_TokenLess_PreservesExistingChannelsWithoutToken()
     {
-        var existingChannel = ChannelSubscription.Load("C1", new ClassicLeagueId(42), [FplEvent.Standings]);
+        var existingChannel = ChannelSubscription.Load(SubscriptionId.New(), "C1", new ClassicLeagueId(42), [FplEvent.Standings]);
 
-        var installation = Installation.Reinstall("G1", "Guild One", [existingChannel]);
+        var installation = Installation.Reinstall(InstallationId.New(), "G1", "Guild One", [existingChannel]);
 
-        Assert.Equal("G1", installation.Id);
+        Assert.Equal("G1", installation.ExternalId);
         Assert.Equal("Guild One", installation.Name);
         Assert.Null(installation.Token);
         var channel = Assert.Single(installation.ChannelSubscriptions);
@@ -347,6 +347,34 @@ public class InstallationTests
         installation.MoveChannel("C1", "C2");
 
         Assert.Null(installation.GetChannel("C1"));
+    }
+
+    [Fact]
+    public void MoveChannel_KeepsTheSubscriptionIdentity()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+        var idBefore = installation.GetChannel("C1")!.Id;
+
+        installation.MoveChannel("C1", "C2");
+
+        Assert.Equal(idBefore, installation.GetChannel("C2")!.Id);
+    }
+
+    [Fact]
+    public void MoveChannel_KeepsDeliveryFailureState()
+    {
+        var installation = Installation.Install("T1", "Team One", "token");
+        installation.Subscribe("C1", [FplEvent.Standings]);
+        var failingSince = new DateTimeOffset(2026, 9, 1, 12, 0, 0, TimeSpan.Zero);
+        installation.GetChannel("C1")!.RecordDeliveryFailure(failingSince, "channel_not_found");
+
+        installation.MoveChannel("C1", "C2");
+
+        var moved = installation.GetChannel("C2")!;
+        Assert.Equal(1, moved.FailureCount);
+        Assert.Equal(failingSince, moved.FailingSince);
+        Assert.Equal("channel_not_found", moved.LastFailureReason);
     }
 
     [Fact]

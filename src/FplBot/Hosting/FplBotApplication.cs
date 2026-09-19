@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Security;
 using Fpl.EventPublishers.RecurringActions;
+using FplBot.Data;
 using Discord.Net.Endpoints;
 using FplBot.WebApi.Infrastructure;
 using FplBot.Services.EventHandlers;
@@ -213,6 +214,7 @@ public static class FplBotApplication
     {
         services.AddSingleton<IConnectionMultiplexer>(redisConn);
         services.AddSingleton(redisConn);
+        services.AddSingleton<IIdentityResolver, IdentityResolver>();
         services.AddStackExchangeRedisCache(o => o.ConnectionMultiplexerFactory = () => Task.FromResult<IConnectionMultiplexer>(redisConn));
         services.AddReducedHttpClientFactoryLogging();
         services.AddFplApiClient(config);

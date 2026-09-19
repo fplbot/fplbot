@@ -21,22 +21,22 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
     public async Task GuildNoLongerReachable_DeletesGuildAndItsSubscriptions()
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
-        var sut = BuildChecker(HttpStatusCode.NotFound, installedGuild.Id);
+        var sut = BuildChecker(HttpStatusCode.NotFound, installedGuild.ExternalId);
 
         await sut.Process(CancellationToken.None);
 
-        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id));
+        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId));
     }
 
     [Fact]
     public async Task GuildStillReachable_KeepsGuildAndSubscriptions()
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
-        var sut = BuildChecker(HttpStatusCode.OK, installedGuild.Id);
+        var sut = BuildChecker(HttpStatusCode.OK, installedGuild.ExternalId);
 
         await sut.Process(CancellationToken.None);
 
-        var remaining = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var remaining = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.NotNull(remaining);
         Assert.NotEmpty(remaining.ChannelSubscriptions);
     }

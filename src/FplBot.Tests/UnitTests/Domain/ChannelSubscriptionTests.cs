@@ -108,7 +108,7 @@ public class ChannelSubscriptionTests
     [Fact]
     public void Load_RestoresFailureState()
     {
-        var sub = ChannelSubscription.Load("C123", null, [FplEvent.FixtureGoals], failureCount: 4, failingSince: Day0);
+        var sub = ChannelSubscription.Load(SubscriptionId.New(), "C123", null, [FplEvent.FixtureGoals], failureCount: 4, failingSince: Day0);
 
         Assert.Equal(4, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);

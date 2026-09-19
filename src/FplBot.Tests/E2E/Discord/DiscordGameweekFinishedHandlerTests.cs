@@ -126,7 +126,7 @@ public class DiscordGameweekFinishedHandlerTests(AppFixture fixture) : IAsyncLif
             }
         });
 
-        await fixture.Bus.Publish(new PublishStandingsToDiscordGuild(installedGuild.Id, channelId, leagueId, gameweekId),
+        await fixture.Bus.Publish(new PublishStandingsToDiscordGuild(installedGuild.ExternalId, channelId, leagueId, gameweekId),
             TestContext.Current.CancellationToken);
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);

@@ -161,6 +161,44 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task MoveChannel_KeepsTheSubscriptionAddressableByItsId()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "C0OLD000001", FplEvent.Standings);
+        var before = (await fixture.SlackRepo.GetInstallation(teamId)).GetChannel("C0OLD000001")!;
+
+        var response = await fixture.Put($"/api/admin/teams/{teamId}/channels/C0OLD000001/channel",
+            new MoveChannelRequest("C0NEW000002"));
+
+        response.EnsureSuccessStatusCode();
+        var after = (await fixture.SlackRepo.GetInstallation(teamId)).GetChannel("C0NEW000002")!;
+        Assert.Equal(before.Id, after.Id);
+
+        var resolved = await fixture.Services.GetRequiredService<IIdentityResolver>().ResolveSubscription(before.Id);
+        Assert.NotNull(resolved);
+        Assert.Equal(teamId, resolved.InstallationExternalId);
+        Assert.Equal("C0NEW000002", resolved.ChannelId);
+    }
+
+    [Fact]
+    public async Task MoveChannel_KeepsDeliveryFailureState()
+    {
+        var teamId = await fixture.InstallSlackbot();
+        await fixture.Subscribe(teamId, "C0OLD000001", FplEvent.Standings);
+        var installation = await fixture.SlackRepo.GetInstallation(teamId);
+        installation.GetChannel("C0OLD000001")!.RecordDeliveryFailure(DateTimeOffset.UtcNow, "channel_not_found");
+        await fixture.SlackRepo.Save(installation);
+
+        var response = await fixture.Put($"/api/admin/teams/{teamId}/channels/C0OLD000001/channel",
+            new MoveChannelRequest("C0NEW000002"));
+
+        response.EnsureSuccessStatusCode();
+        var moved = (await fixture.SlackRepo.GetInstallation(teamId)).GetChannel("C0NEW000002")!;
+        Assert.Equal(1, moved.FailureCount);
+        Assert.Equal("channel_not_found", moved.LastFailureReason);
+    }
+
+    [Fact]
     public async Task MoveChannel_ChannelNotFound_ReturnsNotFound()
     {
         var teamId = await fixture.InstallSlackbot();

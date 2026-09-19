@@ -95,7 +95,7 @@ public static class AdminSlackEndpoints
             [
                 .. installations.Where(i =>
                     i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    i.Id.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    i.ExternalId.Contains(query, StringComparison.OrdinalIgnoreCase))
             ];
 
         if (failingOnly is true)
@@ -115,8 +115,8 @@ public static class AdminSlackEndpoints
 
     private static async Task<TeamSummaryDto> ToDto(Installation installation, ISlackTeamRepository teamRepo)
     {
-        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.Id, c)).ToList();
-        return new(installation.Id, installation.Name, channels, installation.PendingRemoval);
+        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.ExternalId, c)).ToList();
+        return new(installation.ExternalId, installation.Name, channels, installation.PendingRemoval);
     }
 
     private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel) =>
@@ -222,7 +222,7 @@ public static class AdminSlackEndpoints
 
         return TypedResults.Ok(new
         {
-            teamId = installation.Id,
+            teamId = installation.ExternalId,
             teamName = installation.Name,
             token = installation.Token,
             pendingRemoval = installation.PendingRemoval,
@@ -264,7 +264,7 @@ public static class AdminSlackEndpoints
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
 
         var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.ExternalId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
 
         return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
     }

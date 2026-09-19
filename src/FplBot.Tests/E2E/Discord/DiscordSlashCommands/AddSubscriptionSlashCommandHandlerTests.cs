@@ -15,7 +15,7 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var installedGuild = await fixture.SeedGuildInstallation();
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
-            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+            guildId: installedGuild.ExternalId, channelId: Guid.NewGuid().ToString("N"));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Added new subscription", followup.Description);
@@ -28,7 +28,7 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.PriceChanges), subCommandName: "add",
-            guildId: seeded.Id, channelId: ChannelOf(seeded));
+            guildId: seeded.ExternalId, channelId: ChannelOf(seeded));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Already subscribing", followup.Description);
@@ -40,7 +40,7 @@ public class AddSubscriptionSlashCommandHandlerTests(AppFixture fixture)
         var seeded = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
         var (token, _) = await fixture.AskDiscord("subscriptions", optionValue: nameof(EventSubscription.InjuryUpdates), subCommandName: "add",
-            guildId: seeded.Id, channelId: ChannelOf(seeded));
+            guildId: seeded.ExternalId, channelId: ChannelOf(seeded));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Updated subscriptions", followup.Description);

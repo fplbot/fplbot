@@ -10,7 +10,7 @@ public static class ChannelFailureAdmin
     public static async Task<ChannelFailureStatsDto> GetStats(IDomainRepository repo, DateTimeOffset now)
     {
         var failing = (await repo.GetAllInstallations())
-            .SelectMany(i => i.ChannelSubscriptions.Select(c => (InstallationId: i.Id, Channel: c)))
+            .SelectMany(i => i.ChannelSubscriptions.Select(c => (InstallationId: i.ExternalId, Channel: c)))
             .Where(x => x.Channel.FailureCount > 0)
             .ToList();
 
@@ -27,7 +27,7 @@ public static class ChannelFailureAdmin
         {
             foreach (var channelId in installation.ChannelSubscriptions.Where(c => c.FailureCount > 0).Select(c => c.ChannelId))
             {
-                if (await StaleChannelSubscriptions.ClearFailures(repo, installation.Id, channelId, logger))
+                if (await StaleChannelSubscriptions.ClearFailures(repo, installation.ExternalId, channelId, logger))
                 {
                     cleared++;
                 }

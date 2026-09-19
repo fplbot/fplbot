@@ -142,7 +142,7 @@ public static class AdminDiscordEndpoints
         var installations = (await repo.GetAllInstallations()).ToList();
 
         var guildsWithSubs = installations
-            .Select(i => new GuildWithSubsDto(i.Id, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.Id, c))))
+            .Select(i => new GuildWithSubsDto(i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c))))
             .ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
@@ -262,7 +262,7 @@ public static class AdminDiscordEndpoints
             });
         }
 
-        return TypedResults.Ok(new { guildId = installation.Id, guildName = installation.Name, channels });
+        return TypedResults.Ok(new { guildId = installation.ExternalId, guildName = installation.Name, channels });
     }
 
     internal static async Task<IResult> PublishStandings(
@@ -285,7 +285,7 @@ public static class AdminDiscordEndpoints
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
 
         var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToDiscordGuild(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        await endpoint.Send(new PublishStandingsToDiscordGuild(installation.ExternalId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
 
         return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
     }

@@ -12,7 +12,7 @@ public class StaleChannelSubscriptionsTests
     [Fact]
     public async Task ClearFailures_WhenSaveThrows_DoesNotPropagate()
     {
-        var subscription = ChannelSubscription.Load("C1", null, [], failureCount: 1);
+        var subscription = ChannelSubscription.Load(SubscriptionId.New(), "C1", null, [], failureCount: 1);
         var repository = A.Fake<IDomainRepository>();
         A.CallTo(() => repository.GetChannelSubscription("G1", "C1")).Returns(subscription);
         A.CallTo(() => repository.SaveChannelSubscription("G1", subscription)).Throws(new TimeoutException("redis down"));

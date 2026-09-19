@@ -294,7 +294,7 @@ public class AppFixture : IAsyncLifetime
 
     public async Task AskSlackbot(Installation installation, string input, string channelId)
     {
-        await AskSlackbot(installation.Id, channelId, input);
+        await AskSlackbot(installation.ExternalId, channelId, input);
     }
 
     public async Task AskSlackbot(string input)
@@ -412,8 +412,8 @@ public class AppFixture : IAsyncLifetime
 
         // A real, currently-valid FPL league — some handlers (e.g. captains) call the live
         // FPL API with this id, so it can't be random garbage that 404s.
-        var channels = new[] { ChannelSubscription.Load(channelId, new ClassicLeagueId(15263), []) };
-        var installation = Installation.Load(teamId, "Test Team " + teamId, token, channels);
+        var channels = new[] { ChannelSubscription.Load(SubscriptionId.New(), channelId, new ClassicLeagueId(15263), []) };
+        var installation = Installation.Load(InstallationId.New(), teamId, "Test Team " + teamId, token, channels);
 
         configure?.Invoke(installation);
 
@@ -427,8 +427,8 @@ public class AppFixture : IAsyncLifetime
         var guildId = Guid.NewGuid().ToString("N");
         channelId ??= Guid.NewGuid().ToString("N");
         var events = (subscriptions ?? []).Select(s => Enum.Parse<FplEvent>(s.ToString()));
-        var channel = ChannelSubscription.Load(channelId, leagueId is { } id ? new ClassicLeagueId(id) : null, events);
-        var installation = Installation.Load(guildId, "Test Guild " + guildId, token: null, [channel]);
+        var channel = ChannelSubscription.Load(SubscriptionId.New(), channelId, leagueId is { } id ? new ClassicLeagueId(id) : null, events);
+        var installation = Installation.Load(InstallationId.New(), guildId, "Test Guild " + guildId, token: null, [channel]);
 
         await Services.GetRequiredService<IGuildRepository>().Save(installation);
         return installation;

@@ -29,13 +29,13 @@ public class DeliveryRecoveryTests(AppFixture fixture) : IAsyncLifetime
         var channelId = installation.ChannelSubscriptions.First().ChannelId;
 
         fixture.SlackChannelFails(channelId, "channel_not_found");
-        await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "one"), TestContext.Current.CancellationToken);
-        await WaitForFailureCount(() => fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId), 1);
+        await fixture.Bus.Publish(new PublishToSlack(installation.ExternalId, channelId, "one"), TestContext.Current.CancellationToken);
+        await WaitForFailureCount(() => fixture.SlackRepo.GetChannelSubscription(installation.ExternalId, channelId), 1);
 
         fixture.RecoverSlackChannel(channelId);
-        await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "two"), TestContext.Current.CancellationToken);
+        await fixture.Bus.Publish(new PublishToSlack(installation.ExternalId, channelId, "two"), TestContext.Current.CancellationToken);
 
-        await WaitForFailureCount(() => fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId), 0);
+        await WaitForFailureCount(() => fixture.SlackRepo.GetChannelSubscription(installation.ExternalId, channelId), 0);
     }
 
     [Fact]
@@ -45,13 +45,13 @@ public class DeliveryRecoveryTests(AppFixture fixture) : IAsyncLifetime
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
         fixture.DiscordChannelFails(channelId, 50001);
-        await fixture.Bus.Publish(new PublishToGuildChannel(guild.Id, channelId, "one"), TestContext.Current.CancellationToken);
-        await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId), 1);
+        await fixture.Bus.Publish(new PublishToGuildChannel(guild.ExternalId, channelId, "one"), TestContext.Current.CancellationToken);
+        await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId), 1);
 
         fixture.RecoverDiscordChannel(channelId);
-        await fixture.Bus.Publish(new PublishToGuildChannel(guild.Id, channelId, "two"), TestContext.Current.CancellationToken);
+        await fixture.Bus.Publish(new PublishToGuildChannel(guild.ExternalId, channelId, "two"), TestContext.Current.CancellationToken);
 
-        await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId), 0);
+        await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId), 0);
     }
 
     private static async Task WaitForFailureCount(Func<Task<ChannelSubscription?>> read, int expected)

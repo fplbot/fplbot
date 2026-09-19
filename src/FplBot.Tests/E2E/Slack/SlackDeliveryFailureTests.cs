@@ -27,10 +27,10 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         var channelId = installation.ChannelSubscriptions.First().ChannelId;
         fixture.SlackChannelFails(channelId, "channel_not_found");
 
-        await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
+        await fixture.Bus.Publish(new PublishToSlack(installation.ExternalId, channelId, "hello"),
             TestContext.Current.CancellationToken);
 
-        await WaitForFailureCount(installation.Id, channelId, 1);
+        await WaitForFailureCount(installation.ExternalId, channelId, 1);
     }
 
     [Theory]
@@ -43,11 +43,11 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         fixture.SlackChannelFails(channelId, slackError);
 
         await fixture.Bus.Publish(
-            new PublishDeadlineNotificationToSlackWorkspace(installation.Id, channelId,
+            new PublishDeadlineNotificationToSlackWorkspace(installation.ExternalId, channelId,
                 new GameweekNearingDeadline(1, "Gameweek 1", new DateTime(2021, 8, 15, 10, 0, 0, DateTimeKind.Utc))),
             TestContext.Current.CancellationToken);
 
-        await WaitForFailureCount(installation.Id, channelId, 1);
+        await WaitForFailureCount(installation.ExternalId, channelId, 1);
     }
 
     [Fact]
@@ -58,11 +58,11 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         fixture.SlackChannelFails(channelId, "account_inactive");
 
         var consumedBefore = fixture.ConsumedSoFar;
-        await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
+        await fixture.Bus.Publish(new PublishToSlack(installation.ExternalId, channelId, "hello"),
             TestContext.Current.CancellationToken);
         await fixture.WaitUntilBusIdle(consumedBefore);
 
-        var sub = await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId);
+        var sub = await fixture.SlackRepo.GetChannelSubscription(installation.ExternalId, channelId);
         Assert.NotNull(sub);
         Assert.Equal(0, sub.FailureCount);
     }
@@ -75,11 +75,11 @@ public class SlackDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         fixture.SlackChannelFails(channelId, "ratelimited");
 
         var consumedBefore = fixture.ConsumedSoFar;
-        await fixture.Bus.Publish(new PublishToSlack(installation.Id, channelId, "hello"),
+        await fixture.Bus.Publish(new PublishToSlack(installation.ExternalId, channelId, "hello"),
             TestContext.Current.CancellationToken);
         await fixture.WaitUntilBusIdle(consumedBefore);
 
-        var sub = await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId);
+        var sub = await fixture.SlackRepo.GetChannelSubscription(installation.ExternalId, channelId);
         Assert.NotNull(sub);
         Assert.Equal(0, sub.FailureCount);
     }

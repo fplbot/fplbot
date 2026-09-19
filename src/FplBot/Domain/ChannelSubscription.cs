@@ -5,7 +5,9 @@ public class ChannelSubscription
     public const int MaxFailures = 5;
     public static readonly TimeSpan MaxFailureAge = TimeSpan.FromDays(7);
 
-    public string ChannelId { get; }
+    public SubscriptionId Id { get; }
+
+    public string ChannelId { get; private set; }
 
     public ClassicLeagueId? FollowedLeagueId { get; private set; }
 
@@ -17,29 +19,30 @@ public class ChannelSubscription
 
     public EventCollection Events { get; } = EventCollection.Empty();
 
-    private ChannelSubscription(string channelId)
+    private ChannelSubscription(SubscriptionId id, string channelId)
     {
+        Id = id;
         ChannelId = channelId;
     }
 
     public static ChannelSubscription Follow(string channelId, ClassicLeagueId leagueId)
     {
-        var subscription = new ChannelSubscription(channelId);
+        var subscription = new ChannelSubscription(SubscriptionId.New(), channelId);
         subscription.Follow(leagueId);
         return subscription;
     }
 
     public static ChannelSubscription Subscribe(string channelId, FplEvent[] fplEvents)
     {
-        var subscription = new ChannelSubscription(channelId);
+        var subscription = new ChannelSubscription(SubscriptionId.New(), channelId);
         subscription.Subscribe(fplEvents);
         return subscription;
     }
 
-    public static ChannelSubscription Load(string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events,
+    public static ChannelSubscription Load(SubscriptionId id, string channelId, ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events,
         int failureCount = 0, DateTimeOffset? failingSince = null, string? lastFailureReason = null)
     {
-        var subscription = new ChannelSubscription(channelId)
+        var subscription = new ChannelSubscription(id, channelId)
         {
             FollowedLeagueId = followedLeagueId,
             FailureCount = failureCount,
@@ -48,6 +51,11 @@ public class ChannelSubscription
         };
         subscription.Events.Add(events);
         return subscription;
+    }
+
+    public void MoveTo(string newChannelId)
+    {
+        ChannelId = newChannelId;
     }
 
     public void Follow(ClassicLeagueId leagueId)

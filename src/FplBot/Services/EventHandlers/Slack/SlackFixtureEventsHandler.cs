@@ -54,7 +54,7 @@ public class SlackFixtureEventsHandler(
 
         foreach (var sub in installation.ChannelSubscriptions)
         {
-            await DoSubHandling(installation.Id, installation.Token, sub, message.FixtureEvents);
+            await DoSubHandling(installation.ExternalId, installation.Token, sub, message.FixtureEvents);
         }
     }
 
