@@ -101,7 +101,7 @@ async function removeAllSubs(installationId: string, guildId: string, guildName:
 }
 
 async function removeGuild(installationId: string, guildId: string, guildName: string) {
-  if (!confirm(`Delete ${guildName} (${guildId})? This forgets all of fplbot's tracked data for this server — it does not remove the bot from Discord.`)) return;
+  if (!confirm(`Delete ${guildName} (${guildId})? This forgets all of fplbot's tracked data for this server and removes the bot from it.`)) return;
   const key = `guild-${installationId}`;
   deleting.value = key;
   error.value = "";

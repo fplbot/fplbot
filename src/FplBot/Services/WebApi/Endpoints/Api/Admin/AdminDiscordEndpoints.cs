@@ -473,14 +473,28 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
     }
 
-    // Removes the guild itself and every channel subscription under it — the same cleanup
-    // GuildStatusChecker already does when it discovers a guild is no longer reachable, just
-    // triggered manually from the admin UI instead of automatically. This only forgets our
-    // own tracked data; it doesn't call Discord to remove the bot from the server (there's no
-    // "leave guild" support in DiscordClient today).
-    internal static async Task<IResult> DeleteGuild(string installationId, IIdentityResolver resolver, IGuildRepository repo)
+    // Removes the guild itself and every channel subscription under it, and takes the bot out of
+    // the server on the way — an admin uninstall that only forgot our own data would leave the bot
+    // sitting in the member list of a server we no longer track. Leaving is best-effort: the usual
+    // reason a guild gets removed is that the bot was kicked already, which is also the case
+    // GuildStatusChecker handles automatically, and Discord answers that with a 4xx.
+    internal static async Task<IResult> DeleteGuild(
+        string installationId,
+        IIdentityResolver resolver,
+        IGuildRepository repo,
+        IDiscordClient discordClient,
+        ILogger<Program> logger)
     {
         if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
+
+        try
+        {
+            await discordClient.GuildLeave(guildId);
+        }
+        catch (Exception e)
+        {
+            logger.LogWarning(e, "Could not leave guild {GuildId}, deleting it anyway", guildId);
+        }
 
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation is not null)

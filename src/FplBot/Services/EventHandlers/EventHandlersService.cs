@@ -55,6 +55,7 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<AddSubscriptionCommandHandler>();
         cfg.AddConsumer<RemoveSubscriptionCommandHandler>();
         cfg.AddConsumer<DiscordHelpCommandHandler>();
+        cfg.AddConsumer<DiscordStandingsCommandHandler>();
 
         cfg.AddConsumer<SlackFixtureEventsHandler>();
         cfg.AddConsumer<SlackFixtureFulltimeHandler>();

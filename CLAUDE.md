@@ -85,7 +85,7 @@ Request signature verification differs by environment:
 
 | | Development | Integration |
 |---|---|---|
-| Slack `/events` | off | on |
+| Slack `/slack/events` | off | on |
 | Discord interactions | on, unless `SKIP_DISCORD_SIGNATURE_VERIFICATION=true` | on |
 
 Receiving real webhooks also needs a public URL (ngrok) onto `https://localhost:1337`, registered

@@ -168,7 +168,7 @@ not make `Development` talk to the real APIs. Use `Integration` for that.
 Consequences worth knowing:
 
 - A deferred Discord slash command never gets its followup, so it sits on "thinking…" forever.
-- Slack request signature verification on `/events` is **off** in `Development`, on in `Integration`.
+- Slack request signature verification on `/slack/events` is **off** in `Development`, on in `Integration`.
 - Discord interaction signature verification is **on everywhere**; in `Development` only, it can be
   disabled with `SKIP_DISCORD_SIGNATURE_VERIFICATION=true`.
 

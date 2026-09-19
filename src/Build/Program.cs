@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using System.Text.Json;
 using Bullseye;
 using SimpleExec;
@@ -82,6 +83,13 @@ targets.Add("backfill-internal-ids-test",
 targets.Add("backfill-internal-ids-prod",
     "Backfill internal installation/subscription ids and their InstallationId-*/SubId-* reverse indexes on prod (idempotent)",
     async () => await BackfillInternalIds(ProdApp));
+targets.Add("publish-slash-command-test",
+    "Register or update one Discord slash command in one guild of the test app's Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
+    async () => await PublishSlashCommand(TestApp));
+
+targets.Add("publish-slash-command-prod",
+    "Register or update one Discord slash command in one guild of the prod Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
+    async () => await PublishSlashCommand(ProdApp));
 
 await targets.RunAndExitAsync(args);
 
@@ -312,6 +320,86 @@ async Task BackfillInternalIds(string app)
     });
 
     Console.WriteLine($"Backfilled internal ids on {app}: {mintedIds} id(s) minted, {indexed} reverse index entrie(s) written");
+}
+
+async Task PublishSlashCommand(string app)
+{
+    var name = Env("SLASH_COMMAND", "");
+    var commands = SlashCommands();
+    if (!commands.TryGetValue(name, out var command))
+    {
+        throw new Exception($"Set SLASH_COMMAND to one of: {string.Join(", ", commands.Keys)}");
+    }
+
+    var guild = Env("GUILD_ID", "");
+    if (guild.Length == 0)
+    {
+        throw new Exception("Set GUILD_ID to the guild to publish the command to");
+    }
+
+    var (appId, _) = await Command.ReadAsync("heroku", $"config:get DiscordAppId --app {app}");
+    var (token, _) = await Command.ReadAsync("heroku", $"config:get DISCORD_TOKEN --app {app}");
+
+    using var http = new HttpClient();
+    http.DefaultRequestHeaders.Add("Authorization", $"Bot {token.Trim()}");
+    var response = await http.PostAsync($"https://discord.com/api/v10/applications/{appId.Trim()}/guilds/{guild}/commands",
+        new StringContent(JsonSerializer.Serialize(command), Encoding.UTF8, "application/json"));
+    var responseBody = await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
+    {
+        throw new Exception($"Discord rejected /{name} ({(int)response.StatusCode}): {responseBody}");
+    }
+
+    Console.WriteLine($"Published /{name} to guild {guild} of {app}'s Discord application.");
+}
+
+Dictionary<string, object> SlashCommands()
+{
+    // Mirrors FplBot.Discord.DiscordSlashCommandsEnsurer.GetDefinedCommands() and, for the event
+    // choices, FplBot.Data.EventSubscription. Build.csproj deliberately has no reference to FplBot
+    // (see BackfillEventIndexes for the same tradeoff), so a command whose name, description or
+    // options change has to be updated in both places.
+    string[] eventSubscriptions =
+    [
+        "All", "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
+        "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates",
+        "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek"
+    ];
+
+    object EventChoices() => new
+    {
+        type = 3,
+        name = "event",
+        description = "Available events",
+        required = true,
+        choices = eventSubscriptions.Select(e => new { name = e, value = e })
+    };
+
+    return new Dictionary<string, object>
+    {
+        ["help"] = new { name = "help", description = "Shows help" },
+        ["follow"] = new
+        {
+            name = "follow",
+            description = "Follow a FPL league in this channel",
+            options = new object[]
+            {
+                new { type = 4, name = "leagueid", description = "A FPL League Id.", required = true }
+            }
+        },
+        ["standings"] = new { name = "standings", description = "Post the standings for the league this channel follows" },
+        ["subscriptions"] = new
+        {
+            name = "subscriptions",
+            description = "Manage subscription",
+            options = new object[]
+            {
+                new { type = 1, name = "add", description = "add/remove", options = new[] { EventChoices() } },
+                new { type = 1, name = "remove", description = "add/remove", options = new[] { EventChoices() } }
+            }
+        }
+    };
 }
 
 ConfigurationOptions ParseRedisUrl(string redisUrl)

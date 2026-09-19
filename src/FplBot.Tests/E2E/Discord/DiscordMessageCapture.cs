@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 
 namespace FplBot.Tests.E2E.Discord;
@@ -6,12 +7,15 @@ public record DiscordCapturedMessage(string ChannelId, string? Text, string? Tit
 
 public record DiscordCapturedFollowup(string InteractionToken, string? Title, string? Description);
 
+public record DiscordLeftGuild(string GuildId);
+
 public class DiscordMessageCapture
 {
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
 
     private Channel<DiscordCapturedMessage> _channel = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedMessage>();
     private Channel<DiscordCapturedFollowup> _followups = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedFollowup>();
+    private readonly ConcurrentBag<string> _leftGuilds = [];
 
     public void Record(DiscordCapturedMessage message) => _channel.Writer.TryWrite(message);
 
@@ -94,9 +98,16 @@ public class DiscordMessageCapture
         return any;
     }
 
+    // The bot leaving a guild happens inside the request that triggered it, so unlike messages
+    // and followups there is nothing to wait for.
+    public void Record(DiscordLeftGuild left) => _leftGuilds.Add(left.GuildId);
+
+    public bool LeftGuild(string guildId) => _leftGuilds.Contains(guildId);
+
     public void Reset()
     {
         _channel = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedMessage>();
         _followups = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedFollowup>();
+        _leftGuilds.Clear();
     }
 }
