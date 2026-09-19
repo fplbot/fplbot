@@ -56,17 +56,7 @@ public class DeliveryRecoveryTests(AppFixture fixture) : IAsyncLifetime
 
     private static async Task WaitForFailureCount(Func<Task<ChannelSubscription?>> read, int expected)
     {
-        for (var i = 0; i < 100; i++)
-        {
-            var sub = await read();
-            if (sub is not null && sub.FailureCount == expected)
-            {
-                return;
-            }
-
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Failure count never reached {expected}");
+        await AppFixture.WaitUntil(async () => await read() is { } sub && sub.FailureCount == expected,
+            $"Failure count never reached {expected}");
     }
 }
