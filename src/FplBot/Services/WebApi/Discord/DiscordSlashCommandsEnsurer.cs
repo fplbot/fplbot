@@ -50,6 +50,7 @@ public class DiscordSlashCommandsEnsurer(IDiscordClient client, ILogger<DiscordS
                 Required = true
             }
         ]),
+        new("standings", "Post the standings for the league this channel follows", []),
         new("subscriptions", "Manage subscription", [
             OptionWithOptions("add", OptionWithChoices("event")),
             OptionWithOptions("remove", OptionWithChoices("event"))

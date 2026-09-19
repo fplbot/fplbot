@@ -43,7 +43,8 @@ public static class ServiceCollectionExtensions
             .AddSlashCommandHandler<HelpSlashCommandHandler>()
             .AddSlashCommandHandler<FollowSlashCommandHandler>()
             .AddSlashCommandHandler<AddSubscriptionSlashCommandHandler>()
-            .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>();
+            .AddSlashCommandHandler<RemoveSubscriptionSlashCommandHandler>()
+            .AddSlashCommandHandler<StandingsSlashCommandHandler>();
         services.AddTeamContextToSlashCommandHandlers();
         services.AddOptions<DiscordClientOptions>()
             .ValidateWithFluentValidation(new DiscordClientOptionsValidator())

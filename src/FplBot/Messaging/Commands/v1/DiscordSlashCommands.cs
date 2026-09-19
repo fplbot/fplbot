@@ -7,3 +7,5 @@ public record ProcessAddSubscriptionCommand(string TeamId, string ChannelId, str
 public record ProcessRemoveSubscriptionCommand(string TeamId, string ChannelId, string InteractionToken, string Subscription, long AppPermissions);
 
 public record ProcessDiscordHelpCommand(string TeamId, string ChannelId, string InteractionToken);
+
+public record ProcessDiscordStandingsCommand(string TeamId, string ChannelId, string InteractionToken);
