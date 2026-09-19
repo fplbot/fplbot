@@ -140,7 +140,7 @@ async function submitDanger() {
 
       <div v-if="isDev" class="alert alert-warning dev-callout">
         <span><strong>NB!</strong> {{ adapter.devCallout }}</span>
-        <a :href="adapter.appUrl(details.externalId)" class="btn small btn-secondary external">
+        <a :href="adapter.appUrl(details.externalId)" target="_blank" rel="noopener" class="btn small btn-secondary external">
           Open in {{ adapter.platformName }}
         </a>
       </div>
@@ -180,6 +180,8 @@ async function submitDanger() {
                   <a
                     v-if="isDev && !c.channel.startsWith('#')"
                     :href="adapter.channelUrl(details.externalId, c.channel)"
+                    target="_blank"
+                    rel="noopener"
                     class="external"
                   >{{ c.channel }}</a>
                   <template v-else>{{ c.channel }}</template>

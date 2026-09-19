@@ -8,6 +8,11 @@ import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
 
+// The seeded throwaway workspace/server is a REAL one you can open; the other dev seeds are fake.
+const isThrowaway = (name: string | null) =>
+  import.meta.env.DEV && (name ?? "").toLowerCase().includes("throwaway");
+
+
 const pageSize = 25;
 const teams = ref<TeamSummary[]>([]);
 const totalCount = ref(0);
@@ -135,9 +140,18 @@ async function removeSub(subscriptionId: string) {
         <AdminPager v-if="teams.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
 
         <div class="team-list">
-        <div v-for="t in teams" :key="t.id" class="team">
+        <div v-for="t in teams" :key="t.id" class="team" :class="{ throwaway: isThrowaway(t.teamName) }">
           <div class="team-header">
-            <h3>{{ t.teamName }} <span class="team-id">({{ t.teamId }})</span></h3>
+            <h3>
+              {{ t.teamName }} <span class="team-id">({{ t.teamId }})</span>
+              <a
+                v-if="isThrowaway(t.teamName)"
+                :href="`https://app.slack.com/client/${t.teamId}`"
+                target="_blank"
+                rel="noopener"
+                class="external"
+              >Open in Slack</a>
+            </h3>
             <div class="team-actions">
               <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
               <router-link :to="`/admin/teams/${t.id}`" class="btn small btn-secondary">Edit</router-link>

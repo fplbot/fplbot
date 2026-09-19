@@ -314,6 +314,8 @@ async function submitDelete() {
         <a
           v-if="isDev && details && !channel.channel.startsWith('#')"
           :href="adapter.channelUrl(details.externalId, channel.channel)"
+          target="_blank"
+          rel="noopener"
           class="external"
         >{{ channel.channel }}</a>
         <template v-else>{{ channel.channel }}</template>
@@ -325,6 +327,8 @@ async function submitDelete() {
         <a
           v-if="!channel.channel.startsWith('#')"
           :href="adapter.channelUrl(details.externalId, channel.channel)"
+          target="_blank"
+          rel="noopener"
           class="btn small btn-secondary external"
         >
           Open channel in {{ adapter.platformName }}

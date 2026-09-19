@@ -178,6 +178,13 @@ a {
   gap: 0.75rem;
 }
 
+/* A seeded dev installation that is a REAL workspace/server you can open, unlike the
+   other fake dev seeds. */
+.throwaway {
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+}
+
 /* Marks a link that leaves the admin for Slack/Discord. */
 .external::after {
   content: " \2197";

@@ -16,6 +16,11 @@ import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
 
+// The seeded throwaway workspace/server is a REAL one you can open; the other dev seeds are fake.
+const isThrowaway = (name: string | null) =>
+  import.meta.env.DEV && (name ?? "").toLowerCase().includes("throwaway");
+
+
 const pageSize = 25;
 const guilds = ref<GuildWithSubs[]>([]);
 const totalCount = ref(0);
@@ -158,9 +163,18 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
         <AdminPager v-if="guilds.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
 
         <div class="guild-list">
-        <div v-for="g in guilds" :key="g.id" class="guild">
+        <div v-for="g in guilds" :key="g.id" class="guild" :class="{ throwaway: isThrowaway(g.guildName) }">
           <div class="guild-header">
-            <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
+            <h3>
+              {{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span>
+              <a
+                v-if="isThrowaway(g.guildName)"
+                :href="`https://discord.com/channels/${g.guildId}`"
+                target="_blank"
+                rel="noopener"
+                class="external"
+              >Open in Discord</a>
+            </h3>
             <div class="guild-actions">
               <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.id } }">
                 Edit
