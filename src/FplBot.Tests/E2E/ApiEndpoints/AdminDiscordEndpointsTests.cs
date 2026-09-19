@@ -22,6 +22,9 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
+    private static string SubId(Installation installation, string channelId) =>
+        installation.GetChannel(channelId)!.Id.Value;
+
     [Fact]
     public async Task GetSubscriptions_ReturnsGuildsWithTheirChannelSubscriptions()
     {
@@ -29,7 +32,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>("/api/admin/discord/servers");
 
-        var guild = Assert.Single(page.Items, g => g.GuildId == installedGuild.Id);
+        var guild = Assert.Single(page.Items, g => g.GuildId == installedGuild.ExternalId);
         var sub = Assert.Single(guild.Subscriptions);
         Assert.Equal(12345, sub.LeagueId);
         Assert.Contains(EventSubscription.Standings, sub.Subscriptions);
@@ -47,7 +50,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>("/api/admin/discord/servers");
 
-        var dto = page.Items.Single(g => g.GuildId == guild.Id).Subscriptions.Single();
+        var dto = page.Items.Single(g => g.GuildId == guild.ExternalId).Subscriptions.Single();
         Assert.Equal(2, dto.FailureCount);
         Assert.Equal(failingSince, dto.FailingSince);
         Assert.Equal("50013", dto.LastFailureReason);
@@ -74,8 +77,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>("/api/admin/discord/servers?failingOnly=true");
 
-        Assert.Equal(failing.Id, Assert.Single(page.Items).GuildId);
-        Assert.DoesNotContain(page.Items, g => g.GuildId == healthy.Id);
+        Assert.Equal(failing.ExternalId, Assert.Single(page.Items).GuildId);
+        Assert.DoesNotContain(page.Items, g => g.GuildId == healthy.ExternalId);
     }
 
     [Fact]
@@ -84,9 +87,9 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var matching = await fixture.SeedGuildInstallation();
         await fixture.SeedGuildInstallation();
 
-        var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>($"/api/admin/discord/servers?query={matching.Id}");
+        var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>($"/api/admin/discord/servers?query={matching.ExternalId}");
 
-        Assert.Equal(matching.Id, Assert.Single(page.Items).GuildId);
+        Assert.Equal(matching.ExternalId, Assert.Single(page.Items).GuildId);
     }
 
     [Fact]
@@ -121,7 +124,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         response.EnsureSuccessStatusCode();
         foreach (var guild in new[] { first, second })
         {
-            var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+            var reloaded = await fixture.GuildRepo.GetInstallation(guild.ExternalId);
             var channel = reloaded.GetChannel(guild.ChannelSubscriptions.First().ChannelId)!;
             Assert.Equal(0, channel.FailureCount);
             Assert.Null(channel.FailingSince);
@@ -135,10 +138,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.Delete($"/api/admin/discord/servers/{installedGuild.Id}/{channelId}");
+        var response = await fixture.Delete($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}");
 
         response.EnsureSuccessStatusCode();
-        var remaining = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var remaining = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.DoesNotContain(remaining!.ChannelSubscriptions, c => c.ChannelId == channelId);
     }
 
@@ -147,10 +150,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
 
-        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id}/subscriptions");
+        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id.Value}/subscriptions");
 
         response.EnsureSuccessStatusCode();
-        var remaining = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var remaining = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.NotNull(remaining);
         Assert.Empty(remaining.ChannelSubscriptions);
     }
@@ -160,23 +163,23 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
 
-        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id}");
+        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         response.EnsureSuccessStatusCode();
-        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id));
-        Assert.True(fixture.DiscordCapture.LeftGuild(installedGuild.Id));
+        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId));
+        Assert.True(fixture.DiscordCapture.LeftGuild(installedGuild.ExternalId));
     }
 
     [Fact]
     public async Task DeleteGuild_WhenTheBotIsAlreadyGone_StillRemovesGuild()
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
-        fixture.DiscordChannelFails(installedGuild.Id, HttpStatusCode.NotFound);
+        fixture.DiscordChannelFails(installedGuild.ExternalId, HttpStatusCode.NotFound);
 
-        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id}");
+        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         response.EnsureSuccessStatusCode();
-        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id));
+        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId));
     }
 
     [Fact]
@@ -184,9 +187,9 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation(12345, [EventSubscription.Standings]);
 
-        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id}");
+        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
-        Assert.Equal(installedGuild.Id, guild.GetProperty("guildId").GetString());
+        Assert.Equal(installedGuild.ExternalId, guild.GetProperty("guildId").GetString());
     }
 
     [Fact]
@@ -195,7 +198,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings], channelId: "893932860162064999");
         fixture.SetDiscordGuildChannels(new global::Discord.Net.HttpClients.DiscordClient.Channel(893932860162064999, "fplbot", 0));
 
-        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id}");
+        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         var channel = Assert.Single(guild.GetProperty("channels").EnumerateArray());
         Assert.Equal("fplbot", channel.GetProperty("channelName").GetString());
@@ -212,7 +215,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
             new global::Discord.Net.HttpClients.DiscordClient.Channel(2, "a-category", 4),
             new global::Discord.Net.HttpClients.DiscordClient.Channel(4, "voice-chat", 2));
 
-        var channels = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id}/available-channels");
+        var channels = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}/available-channels");
 
         var listed = channels.EnumerateArray().ToList();
         Assert.Equal(["alpha", "zulu"], listed.Select(c => c.GetProperty("name").GetString()));
@@ -227,10 +230,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         LeagueExists(999, "New League");
 
         var response = await fixture.Put(
-            $"/api/admin/discord/guilds/{installedGuild.Id}/channels/{channelId}/league", new FollowGuildLeagueRequest(999));
+            $"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/league", new FollowLeagueRequest(999));
 
         response.EnsureSuccessStatusCode();
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.Equal(999, (int)updated!.GetChannel(channelId)!.FollowedLeagueId!.Value);
     }
 
@@ -242,10 +245,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         LeagueDoesNotExist(404404);
 
         var response = await fixture.Put(
-            $"/api/admin/discord/guilds/{installedGuild.Id}/channels/{channelId}/league", new FollowGuildLeagueRequest(404404));
+            $"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/league", new FollowLeagueRequest(404404));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.Equal(123, (int)updated!.GetChannel(channelId)!.FollowedLeagueId!.Value);
     }
 
@@ -255,10 +258,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(123, [EventSubscription.Standings]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id}/channels/{channelId}/league");
+        var response = await fixture.Delete($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/league");
 
         response.EnsureSuccessStatusCode();
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.Null(updated!.GetChannel(channelId)!.FollowedLeagueId);
     }
 
@@ -268,10 +271,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
 
         var response = await fixture.Post(
-            $"/api/admin/discord/guilds/{installedGuild.Id}/channels", new AddGuildChannelRequest("222222222222222222"));
+            $"/api/admin/discord/guilds/{installedGuild.Id.Value}/channels", new AddChannelRequest("222222222222222222"));
 
         response.EnsureSuccessStatusCode();
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.True(updated!.GetChannel("222222222222222222")!.IsSubscribedTo(FplEvent.PriceChanges));
     }
 
@@ -282,7 +285,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
         var response = await fixture.Post(
-            $"/api/admin/discord/guilds/{installedGuild.Id}/channels", new AddGuildChannelRequest(channelId));
+            $"/api/admin/discord/guilds/{installedGuild.Id.Value}/channels", new AddChannelRequest(channelId));
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -294,11 +297,11 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var oldChannelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
         var response = await fixture.Put(
-            $"/api/admin/discord/guilds/{installedGuild.Id}/channels/{oldChannelId}/channel",
-            new MoveGuildChannelRequest("222222222222222222"));
+            $"/api/admin/subscriptions/{SubId(installedGuild, oldChannelId)}/channel",
+            new MoveChannelRequest("222222222222222222"));
 
         response.EnsureSuccessStatusCode();
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.Null(updated!.GetChannel(oldChannelId));
         Assert.NotNull(updated.GetChannel("222222222222222222"));
     }
@@ -312,11 +315,11 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         await fixture.GuildRepo.Save(installedGuild);
 
         var response = await fixture.Put(
-            $"/api/admin/discord/guilds/{installedGuild.Id}/channels/{oldChannelId}/channel",
-            new MoveGuildChannelRequest("222222222222222222"));
+            $"/api/admin/subscriptions/{SubId(installedGuild, oldChannelId)}/channel",
+            new MoveChannelRequest("222222222222222222"));
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.NotNull(updated!.GetChannel(oldChannelId));
     }
 
@@ -326,11 +329,24 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings], channelId: "893932860162064999");
         fixture.SetDiscordGuildChannels(new global::Discord.Net.HttpClients.DiscordClient.Channel(111111111111111111, "other", 0));
 
-        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id}");
+        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         var channel = Assert.Single(guild.GetProperty("channels").EnumerateArray());
         Assert.Equal(JsonValueKind.Null, channel.GetProperty("channelName").ValueKind);
         Assert.False(channel.GetProperty("channelStatus").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetGuild_IncludesTheIdsTheAdminUiLinksWith()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var subscription = installedGuild.ChannelSubscriptions.First();
+
+        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
+
+        Assert.Equal(installedGuild.Id.Value, guild.GetProperty("id").GetString());
+        var channel = Assert.Single(guild.GetProperty("channels").EnumerateArray());
+        Assert.Equal(subscription.Id.Value, channel.GetProperty("id").GetString());
     }
 
     [Fact]
@@ -343,7 +359,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         installedGuild.GetChannel(channelId)!.RecordDeliveryFailure(failingSince.AddDays(1), "50013");
         await fixture.GuildRepo.Save(installedGuild);
 
-        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id}");
+        var guild = await fixture.GetJson<JsonElement>($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         var channel = Assert.Single(guild.GetProperty("channels").EnumerateArray());
         Assert.Equal(2, channel.GetProperty("failureCount").GetInt32());
@@ -368,7 +384,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(leagueId: null, subscriptions: [EventSubscription.Standings]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.Post($"/api/admin/discord/guilds/{installedGuild.Id}/channels/{channelId}/publish-standings");
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish-standings");
 
         var value = await AppFixture.ReadJson<JsonElement>(response);
         Assert.False(value.GetProperty("published").GetBoolean());
@@ -383,11 +399,11 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings, EventSubscription.Captains]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.Put($"/api/admin/discord/guilds/{installedGuild.Id}/channels/{channelId}/subscriptions",
-            new UpdateGuildChannelSubscriptionsRequest([EventSubscription.Captains, EventSubscription.Deadlines]));
+        var response = await fixture.Put($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/subscriptions",
+            new UpdateChannelSubscriptionsRequest([EventSubscription.Captains, EventSubscription.Deadlines]));
 
         response.EnsureSuccessStatusCode();
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         var channel = updated!.GetChannel(channelId)!;
         Assert.Equal(
             new[] { FplEvent.Captains, FplEvent.Deadlines }.OrderBy(e => e),
@@ -397,8 +413,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task UpdateChannelSubscriptions_GuildNotFound_ReturnsNotFound()
     {
-        var response = await fixture.Put($"/api/admin/discord/guilds/{Guid.NewGuid():N}/channels/channel-1/subscriptions",
-            new UpdateGuildChannelSubscriptionsRequest([]));
+        var response = await fixture.Put($"/api/admin/subscriptions/{Guid.NewGuid():N}/subscriptions",
+            new UpdateChannelSubscriptionsRequest([]));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -409,11 +425,11 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var installedGuild = await fixture.SeedGuildInstallation(leagueId: 123, subscriptions: [EventSubscription.Standings]);
         var oldChannelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.Put($"/api/admin/discord/guilds/{installedGuild.Id}/channels/{oldChannelId}/channel",
-            new MoveGuildChannelRequest("new-channel"));
+        var response = await fixture.Put($"/api/admin/subscriptions/{SubId(installedGuild, oldChannelId)}/channel",
+            new MoveChannelRequest("new-channel"));
 
         response.EnsureSuccessStatusCode();
-        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.Id);
+        var updated = await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId);
         Assert.Null(updated!.GetChannel(oldChannelId));
         Assert.Equal(123, (int)updated.GetChannel("new-channel")!.FollowedLeagueId!.Value);
     }
@@ -423,8 +439,8 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var installedGuild = await fixture.SeedGuildInstallation();
 
-        var response = await fixture.Put($"/api/admin/discord/guilds/{installedGuild.Id}/channels/missing-channel/channel",
-            new MoveGuildChannelRequest("new-channel"));
+        var response = await fixture.Put($"/api/admin/subscriptions/{Guid.NewGuid():N}/channel",
+            new MoveChannelRequest("new-channel"));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

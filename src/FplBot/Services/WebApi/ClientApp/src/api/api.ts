@@ -92,19 +92,19 @@ export function getTeams(query: string, page: number, pageSize: number, failingO
   return request(`/api/admin/teams?${params.toString()}`);
 }
 
-export async function getTeam(teamId: string): Promise<TeamDetails | null> {
-  const res = await fetch(`/api/admin/teams/${teamId}`, { credentials: "include" });
+export async function getTeam(installationId: string): Promise<TeamDetails | null> {
+  const res = await fetch(`/api/admin/teams/${installationId}`, { credentials: "include" });
   if (res.status === 404) return null;
   if (!res.ok) throw new AdminApiError(`getTeam() failed with status ${res.status}`, res.status);
   return res.json();
 }
 
-export function uninstallTeam(teamId: string): Promise<MessageResponse> {
-  return postJson(`/api/admin/teams/${teamId}/uninstall`);
+export function uninstallTeam(installationId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/teams/${installationId}/uninstall`);
 }
 
-export function publishStandings(teamId: string, channelId: string): Promise<{ published: boolean; message: string }> {
-  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/publish-standings`);
+export function publishStandings(subscriptionId: string): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/subscriptions/${subscriptionId}/publish-standings`);
 }
 
 export function broadcastToSlack(message: string): Promise<MessageResponse> {
@@ -117,36 +117,36 @@ export const ALL_EVENT_SUBSCRIPTIONS: EventSubscription[] = [
   "Lineups", "NewPlayers", "FixtureRemovedFromGameweek",
 ];
 
-export function updateChannelSubscriptions(
-  teamId: string,
-  channelId: string,
-  subscriptions: EventSubscription[]
-): Promise<MessageResponse> {
-  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/subscriptions`, { subscriptions }, "PUT");
+export function updateChannelSubscriptions(subscriptionId: string, subscriptions: EventSubscription[]): Promise<MessageResponse> {
+  return postJson(`/api/admin/subscriptions/${subscriptionId}/subscriptions`, { subscriptions }, "PUT");
 }
 
-export function getAvailableChannels(teamId: string): Promise<AvailableChannel[]> {
-  return request(`/api/admin/teams/${teamId}/available-channels`);
+export function getAvailableChannels(installationId: string): Promise<AvailableChannel[]> {
+  return request(`/api/admin/teams/${installationId}/available-channels`);
 }
 
-export function followLeague(teamId: string, channelId: string, leagueId: number): Promise<MessageResponse> {
-  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/league`, { leagueId }, "PUT");
+export function followLeague(subscriptionId: string, leagueId: number): Promise<MessageResponse> {
+  return postJson(`/api/admin/subscriptions/${subscriptionId}/league`, { leagueId }, "PUT");
 }
 
-export function addChannelSubscription(teamId: string, channelId: string): Promise<MessageResponse> {
-  return postJson(`/api/admin/teams/${teamId}/channels`, { channelId });
+export function addChannelSubscription(installationId: string, channelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/teams/${installationId}/channels`, { channelId });
 }
 
-export function unfollowLeague(teamId: string, channelId: string): Promise<MessageResponse> {
-  return request(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/league`, { method: "DELETE" });
+export function unfollowLeague(subscriptionId: string): Promise<MessageResponse> {
+  return request(`/api/admin/subscriptions/${subscriptionId}/league`, { method: "DELETE" });
 }
 
-export function moveChannel(teamId: string, channelId: string, newChannelId: string): Promise<MessageResponse> {
-  return postJson(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}/channel`, { newChannelId }, "PUT");
+export function moveChannel(subscriptionId: string, newChannelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/subscriptions/${subscriptionId}/channel`, { newChannelId }, "PUT");
 }
 
-export function deleteChannelSubscription(teamId: string, channelId: string): Promise<MessageResponse> {
-  return request(`/api/admin/teams/${teamId}/channels/${encodeURIComponent(channelId)}`, { method: "DELETE" });
+export function getSubscriptionInstallation(subscriptionId: string): Promise<{ installationId: string; platform: "Slack" | "Discord" }> {
+  return request(`/api/admin/subscriptions/${subscriptionId}`);
+}
+
+export function deleteChannelSubscription(subscriptionId: string): Promise<MessageResponse> {
+  return request(`/api/admin/subscriptions/${subscriptionId}`, { method: "DELETE" });
 }
 
 // ---- Admin: search indexing bookmarks ----
@@ -198,13 +198,8 @@ export function getDiscordServers(query: string, page: number, pageSize: number,
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
   return request(`/api/admin/discord/servers?${params.toString()}`);
 }
-
-export function deleteDiscordSubscription(guildId: string, channelId: string): Promise<MessageResponse> {
-  return request(`/api/admin/discord/servers/${guildId}/${channelId}`, { method: "DELETE" });
-}
-
-export function deleteAllDiscordSubscriptionsForGuild(guildId: string): Promise<MessageResponse> {
-  return request(`/api/admin/discord/guilds/${guildId}/subscriptions`, { method: "DELETE" });
+export function deleteAllDiscordSubscriptionsForGuild(installationId: string): Promise<MessageResponse> {
+  return request(`/api/admin/discord/guilds/${installationId}/subscriptions`, { method: "DELETE" });
 }
 
 export function getDiscordFailureStats(): Promise<ChannelFailureStats> {
@@ -223,49 +218,22 @@ export function resetSlackFailures(): Promise<{ cleared: number }> {
   return request(`/api/admin/slack/failures/reset`, { method: "POST" });
 }
 
-export function deleteDiscordGuild(guildId: string): Promise<MessageResponse> {
-  return request(`/api/admin/discord/guilds/${guildId}`, { method: "DELETE" });
+export function deleteDiscordGuild(installationId: string): Promise<MessageResponse> {
+  return request(`/api/admin/discord/guilds/${installationId}`, { method: "DELETE" });
 }
 
-export async function getGuild(guildId: string): Promise<GuildDetails | null> {
-  const res = await fetch(`/api/admin/discord/guilds/${guildId}`, { credentials: "include" });
+export async function getGuild(installationId: string): Promise<GuildDetails | null> {
+  const res = await fetch(`/api/admin/discord/guilds/${installationId}`, { credentials: "include" });
   if (res.status === 404) return null;
   if (!res.ok) throw new AdminApiError(`getGuild() failed with status ${res.status}`, res.status);
   return res.json();
 }
-
-export function publishStandingsToGuild(guildId: string, channelId: string): Promise<{ published: boolean; message: string }> {
-  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/publish-standings`);
+export function getAvailableGuildChannels(installationId: string): Promise<AvailableChannel[]> {
+  return request(`/api/admin/discord/guilds/${installationId}/available-channels`);
 }
-
-export function updateGuildChannelSubscriptions(
-  guildId: string,
-  channelId: string,
-  subscriptions: EventSubscription[]
-): Promise<MessageResponse> {
-  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/subscriptions`, { subscriptions }, "PUT");
+export function addGuildChannelSubscription(installationId: string, channelId: string): Promise<MessageResponse> {
+  return postJson(`/api/admin/discord/guilds/${installationId}/channels`, { channelId });
 }
-
-export function getAvailableGuildChannels(guildId: string): Promise<AvailableChannel[]> {
-  return request(`/api/admin/discord/guilds/${guildId}/available-channels`);
-}
-
-export function followGuildLeague(guildId: string, channelId: string, leagueId: number): Promise<MessageResponse> {
-  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/league`, { leagueId }, "PUT");
-}
-
-export function addGuildChannelSubscription(guildId: string, channelId: string): Promise<MessageResponse> {
-  return postJson(`/api/admin/discord/guilds/${guildId}/channels`, { channelId });
-}
-
-export function unfollowGuildLeague(guildId: string, channelId: string): Promise<MessageResponse> {
-  return request(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/league`, { method: "DELETE" });
-}
-
-export function moveGuildChannel(guildId: string, channelId: string, newChannelId: string): Promise<MessageResponse> {
-  return postJson(`/api/admin/discord/guilds/${guildId}/channels/${encodeURIComponent(channelId)}/channel`, { newChannelId }, "PUT");
-}
-
 // ---- OAuth (public site install buttons) ----
 
 export async function redirectToSlackInstall(returnTo?: string): Promise<void> {

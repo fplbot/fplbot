@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import { ALL_EVENT_SUBSCRIPTIONS, getLeague } from "../../api/api";
+import {
+  ALL_EVENT_SUBSCRIPTIONS,
+  getLeague,
+  getSubscriptionInstallation,
+  updateChannelSubscriptions,
+  moveChannel,
+  followLeague,
+  unfollowLeague,
+  deleteChannelSubscription,
+  publishStandings,
+} from "../../api/api";
+import { slackInstallationAdapter, discordInstallationAdapter, isThrowaway } from "../../composables/installationAdapters";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
 import type { AvailableChannel, EventSubscription } from "../../api/types";
 import ChannelPicker from "../../components/ChannelPicker.vue";
@@ -10,7 +21,15 @@ import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
 
-const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
+const props = defineProps<{ subscriptionId: string }>();
+
+// Which platform a subscription belongs to is a property of its id, not of the route.
+const adapter = ref<InstallationAdapter | null>(null);
+
+// The URL names only the subscription; the installation it belongs to is looked up, since the
+// page still renders the workspace around it.
+const entityId = ref("");
+
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -22,7 +41,7 @@ const selectedSubscriptions = ref<Set<EventSubscription>>(new Set());
 const savingSubscriptions = ref(false);
 const subscriptionsFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
-const newChannelId = ref(props.channelId);
+const newChannelId = ref("");
 const movingChannel = ref(false);
 const moveFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 const availableChannels = ref<AvailableChannel[]>([]);
@@ -35,7 +54,7 @@ const subscribedChannelIds = computed(
 
 const moveOptions = computed<ChannelPickerOption[]>(() => {
   const options = availableChannels.value.map((c) => {
-    const isCurrent = c.id === props.channelId;
+    const isCurrent = c.id === channel.value?.channel;
     const taken = !isCurrent && subscribedChannelIds.value.has(c.id);
     return {
       value: c.id,
@@ -44,11 +63,12 @@ const moveOptions = computed<ChannelPickerOption[]>(() => {
       disabled: isCurrent || taken,
     };
   });
-  if (!options.some((o) => o.value === props.channelId)) {
+  const currentChannelId = channel.value?.channel;
+  if (currentChannelId && !options.some((o) => o.value === currentChannelId)) {
     const name = channel.value?.channelName;
     options.unshift({
-      value: props.channelId,
-      label: `${name ? `${formatChannelName(name)} ` : ""}${props.channelId}`,
+      value: currentChannelId,
+      label: `${name ? `${formatChannelName(name)} ` : ""}${currentChannelId}`,
       group: "Current",
       disabled: true,
     });
@@ -110,18 +130,22 @@ async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    const data = await props.adapter.getDetails(props.entityId);
+    const { installationId, platform } = await getSubscriptionInstallation(props.subscriptionId);
+    entityId.value = installationId;
+    adapter.value = platform === "Discord" ? discordInstallationAdapter : slackInstallationAdapter;
+    const data = await adapter.value!.getDetails(installationId);
     if (data == null) {
-      router.replace(props.adapter.listRoute);
+      router.replace(adapter.value!.listRoute);
       return;
     }
     details.value = data;
-    const found = data.channels.find((c) => c.channel === props.channelId);
+    const found = data.channels.find((c) => c.id === props.subscriptionId);
     if (!found) {
-      router.replace({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
+      router.replace({ name: adapter.value!.detailsRouteName, params: { entityId: entityId.value } });
       return;
     }
     channel.value = found;
+    newChannelId.value = found.channel;
     selectedSubscriptions.value = new Set(found.subscriptions);
     leagueIdInput.value = found.leagueId;
   } catch (e) {
@@ -135,7 +159,7 @@ async function loadAvailableChannels() {
   loadingChannelList.value = true;
   channelListError.value = "";
   try {
-    availableChannels.value = await props.adapter.getAvailableChannels(props.entityId);
+    availableChannels.value = await adapter.value!.getAvailableChannels(entityId.value);
   } catch (e) {
     availableChannels.value = [];
     channelListError.value = describeAdminError(e);
@@ -144,17 +168,19 @@ async function loadAvailableChannels() {
   }
 }
 
-onMounted(load);
-onMounted(loadAvailableChannels);
+onMounted(async () => {
+  await load();
+  await loadAvailableChannels();
+});
 
 watch(
-  () => props.channelId,
-  async (id) => {
-    newChannelId.value = id;
+  () => props.subscriptionId,
+  async () => {
     subscriptionsFeedback.value = null;
     publishFeedback.value = null;
     leagueFeedback.value = null;
-    await Promise.all([load(), loadAvailableChannels()]);
+    await load();
+    await loadAvailableChannels();
   }
 );
 
@@ -184,7 +210,7 @@ async function saveSubscriptions() {
   savingSubscriptions.value = true;
   subscriptionsFeedback.value = null;
   try {
-    const res = await props.adapter.updateChannelSubscriptions(props.entityId, props.channelId, [...selectedSubscriptions.value]);
+    const res = await updateChannelSubscriptions(props.subscriptionId, [...selectedSubscriptions.value]);
     subscriptionsFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -199,7 +225,7 @@ async function submitLeague() {
   savingLeague.value = true;
   leagueFeedback.value = null;
   try {
-    const res = await props.adapter.followLeague(props.entityId, props.channelId, leagueIdInput.value);
+    const res = await followLeague(props.subscriptionId, leagueIdInput.value);
     leagueFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -214,7 +240,7 @@ async function submitUnfollowLeague() {
   savingLeague.value = true;
   leagueFeedback.value = null;
   try {
-    const res = await props.adapter.unfollowLeague(props.entityId, props.channelId);
+    const res = await unfollowLeague(props.subscriptionId);
     leagueFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -225,17 +251,17 @@ async function submitUnfollowLeague() {
 }
 
 async function submitMoveChannel() {
-  if (!newChannelId.value || newChannelId.value === props.channelId) return;
+  if (!newChannelId.value || newChannelId.value === channel.value?.channel) return;
   const target = availableChannels.value.find((c) => c.id === newChannelId.value);
   const describedTarget = target ? `${formatChannelName(target.name)} (${target.id})` : newChannelId.value;
 
-  if (!confirm(`Move this subscription from ${props.channelId} to ${describedTarget}?`)) return;
+  if (!confirm(`Move this subscription from ${channel.value?.channel} to ${describedTarget}?`)) return;
   movingChannel.value = true;
   moveFeedback.value = null;
   try {
-    const res = await props.adapter.moveChannel(props.entityId, props.channelId, newChannelId.value);
+    const res = await moveChannel(props.subscriptionId, newChannelId.value);
     moveFeedback.value = { type: "success", text: res.message };
-    router.replace({ name: props.adapter.manageRouteName, params: { entityId: props.entityId, channelId: newChannelId.value } });
+    await load();
   } catch (e) {
     moveFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
@@ -247,7 +273,7 @@ async function submitPublish() {
   publishing.value = true;
   publishFeedback.value = null;
   try {
-    const res = await props.adapter.publishStandings(props.entityId, props.channelId);
+    const res = await publishStandings(props.subscriptionId);
     publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
   } catch (e) {
     publishFeedback.value = { type: "error", text: describeAdminError(e) };
@@ -257,11 +283,11 @@ async function submitPublish() {
 }
 
 async function submitDelete() {
-  if (!confirm(`Delete the subscription for channel ${props.channelId}? This cannot be undone.`)) return;
+  if (!confirm(`Delete the subscription for channel ${channel.value?.channel}? This cannot be undone.`)) return;
   deleting.value = true;
   try {
-    await props.adapter.deleteChannelSubscription(props.entityId, props.channelId);
-    router.push({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
+    await deleteChannelSubscription(props.subscriptionId);
+    router.push({ name: adapter.value!.detailsRouteName, params: { entityId: entityId.value } });
   } catch (e) {
     loadError.value = describeAdminError(e);
   } finally {
@@ -272,20 +298,40 @@ async function submitDelete() {
 
 <template>
   <div>
-    <router-link :to="{ name: adapter.detailsRouteName, params: { entityId } }" class="back-link">
+    <router-link v-if="adapter" :to="{ name: adapter.detailsRouteName, params: { entityId } }" class="back-link">
       &larr; Back to {{ details?.name || "details" }}
     </router-link>
 
     <div v-if="loading" class="spinner"></div>
     <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>
 
-    <template v-else-if="channel">
+    <template v-else-if="channel && adapter">
       <h1>Manage channel</h1>
       <p class="channel-name">Channel: <span v-if="channel.channelName">{{ formatChannelName(channel.channelName) }}</span><span v-else class="unavailable">name unavailable</span></p>
       <p class="channel-id">
-        {{ channel.channel }}
+        <a
+          v-if="details && isThrowaway(details.name) && !channel.channel.startsWith('#')"
+          :href="adapter.channelUrl(details.externalId, channel.channel)"
+          target="_blank"
+          rel="noopener"
+          class="external"
+        >{{ channel.channel }}</a>
+        <template v-else>{{ channel.channel }}</template>
         <span class="lookup-note">(name looked up live via {{ adapter.apiLabel }}, not stored)</span>
       </p>
+
+      <div v-if="details && isThrowaway(details.name)" class="alert alert-warning dev-callout">
+        <span><strong>NB!</strong> {{ adapter.devCallout }}</span>
+        <a
+          v-if="!channel.channel.startsWith('#')"
+          :href="adapter.channelUrl(details.externalId, channel.channel)"
+          target="_blank"
+          rel="noopener"
+          class="btn small btn-secondary external"
+        >
+          Open channel in {{ adapter.platformName }}
+        </a>
+      </div>
 
       <div class="card">
         <h2>Status</h2>

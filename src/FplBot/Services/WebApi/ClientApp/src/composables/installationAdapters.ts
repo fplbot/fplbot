@@ -1,28 +1,22 @@
 import {
   getTeam,
   uninstallTeam,
-  updateChannelSubscriptions,
-  moveChannel,
-  followLeague,
-  unfollowLeague,
   addChannelSubscription,
   getAvailableChannels,
-  deleteChannelSubscription,
-  publishStandings,
   getGuild,
   deleteDiscordGuild,
-  updateGuildChannelSubscriptions,
-  moveGuildChannel,
-  followGuildLeague,
-  unfollowGuildLeague,
   addGuildChannelSubscription,
   getAvailableGuildChannels,
-  deleteDiscordSubscription,
-  publishStandingsToGuild,
 } from "../api/api";
 import type { AvailableChannel, EventSubscription, MessageResponse } from "../api/types";
 
+// The seeded throwaway workspace/server is a REAL one you can open in Slack/Discord; every other
+// dev seed is fabricated, so linking to it or warning about it would be a lie.
+export const isThrowaway = (name: string | null | undefined) =>
+  import.meta.env.DEV && (name ?? "").toLowerCase().includes("throwaway");
+
 export interface EntityChannel {
+  id: string;
   channel: string;
   channelName: string | null;
   leagueId: number | null;
@@ -39,6 +33,7 @@ export interface EntityChannel {
 
 export interface EntityDetails {
   id: string;
+  externalId: string;
   name: string | null;
   token?: string | null;
   pendingRemoval?: boolean;
@@ -52,6 +47,8 @@ export interface EntityDetails {
 // only supports a hard delete) expressed here instead of duplicated across two views.
 export interface InstallationAdapter {
   apiLabel: string;
+  platformName: string;
+  devCallout: string;
   entityNoun: string;
   channelNotVisibleHint: string;
   notListedButDeliveringHint?: string;
@@ -61,21 +58,19 @@ export interface InstallationAdapter {
   manageRouteName: string;
   showOverview: boolean;
   danger: "uninstall" | "delete";
+  appUrl(externalId: string): string;
+  channelUrl(externalId: string, channelId: string): string;
   getDetails(id: string): Promise<EntityDetails | null>;
-  updateChannelSubscriptions(id: string, channelId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
-  moveChannel(id: string, channelId: string, newChannelId: string): Promise<MessageResponse>;
   getAvailableChannels(id: string): Promise<AvailableChannel[]>;
   addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
-  followLeague(id: string, channelId: string, leagueId: number): Promise<MessageResponse>;
-  unfollowLeague(id: string, channelId: string): Promise<MessageResponse>;
-  deleteChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
-  publishStandings(id: string, channelId: string): Promise<{ published: boolean; message: string }>;
   uninstall?(id: string): Promise<MessageResponse>;
   deleteEntity?(id: string): Promise<MessageResponse>;
 }
 
 export const slackInstallationAdapter: InstallationAdapter = {
   apiLabel: "Slack API",
+  platformName: "Slack",
+  devCallout: "This is a real Slack Workspace you have access to for dev-purposes.",
   entityNoun: "workspace",
   channelNotVisibleHint:
     "conversations.list only returns public channels, so a private channel the bot posts in looks like this and is fine. Otherwise the channel was archived or deleted, or the bot was removed from the workspace.",
@@ -83,48 +78,42 @@ export const slackInstallationAdapter: InstallationAdapter = {
   listRoute: "/admin/slack",
   backLinkLabel: "Back to workspaces",
   detailsRouteName: "admin-team-details",
-  manageRouteName: "admin-team-channel-manage",
+  manageRouteName: "admin-subscription-manage",
   showOverview: true,
   danger: "uninstall",
+  appUrl: (externalId) => `https://app.slack.com/client/${externalId}`,
+  channelUrl: (externalId, channelId) => `https://app.slack.com/client/${externalId}/${channelId}`,
   async getDetails(id) {
     const data = await getTeam(id);
     if (data == null) return null;
-    return { id: data.teamId, name: data.teamName, token: data.token, pendingRemoval: data.pendingRemoval, channels: data.channels };
+    return { id: data.id, externalId: data.teamId, name: data.teamName, token: data.token, pendingRemoval: data.pendingRemoval, channels: data.channels };
   },
-  updateChannelSubscriptions,
-  moveChannel,
-  followLeague,
-  unfollowLeague,
   addChannelSubscription,
   getAvailableChannels,
-  deleteChannelSubscription,
-  publishStandings,
   uninstall: uninstallTeam,
 };
 
 export const discordInstallationAdapter: InstallationAdapter = {
   apiLabel: "Discord API",
+  platformName: "Discord",
+  devCallout: "This is a real DevOnly Discord server you have access to for dev-purposes.",
   entityNoun: "server",
   channelNotVisibleHint:
     "The bot did not get this channel back from the guild channel list — the channel was deleted, or the bot lost the permission to view it.",
   listRoute: "/admin/discord/servers",
   backLinkLabel: "Back to guilds",
   detailsRouteName: "admin-guild-details",
-  manageRouteName: "admin-guild-channel-manage",
+  manageRouteName: "admin-subscription-manage",
   showOverview: false,
   danger: "delete",
+  appUrl: (externalId) => `https://discord.com/channels/${externalId}`,
+  channelUrl: (externalId, channelId) => `https://discord.com/channels/${externalId}/${channelId}`,
   async getDetails(id) {
     const data = await getGuild(id);
     if (data == null) return null;
-    return { id: data.guildId, name: data.guildName, channels: data.channels };
+    return { id: data.id, externalId: data.guildId, name: data.guildName, channels: data.channels };
   },
-  updateChannelSubscriptions: updateGuildChannelSubscriptions,
-  moveChannel: moveGuildChannel,
   getAvailableChannels: getAvailableGuildChannels,
-  followLeague: followGuildLeague,
-  unfollowLeague: unfollowGuildLeague,
   addChannelSubscription: addGuildChannelSubscription,
-  deleteChannelSubscription: deleteDiscordSubscription,
-  publishStandings: publishStandingsToGuild,
   deleteEntity: deleteDiscordGuild,
 };

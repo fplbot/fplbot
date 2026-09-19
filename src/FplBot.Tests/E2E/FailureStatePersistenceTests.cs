@@ -21,7 +21,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1), "50013");
         await fixture.GuildRepo.Save(guild);
 
-        var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+        var reloaded = await fixture.GuildRepo.GetInstallation(guild.ExternalId);
         var sub = reloaded.GetChannel(channelId)!;
         Assert.Equal(2, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);
@@ -37,11 +37,11 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         guild.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "50013");
         await fixture.GuildRepo.Save(guild);
 
-        var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+        var reloaded = await fixture.GuildRepo.GetInstallation(guild.ExternalId);
         reloaded.GetChannel(channelId)!.ClearDeliveryFailures();
         await fixture.GuildRepo.Save(reloaded);
 
-        var afterClear = await fixture.GuildRepo.GetInstallation(guild.Id);
+        var afterClear = await fixture.GuildRepo.GetInstallation(guild.ExternalId);
         var sub = afterClear.GetChannel(channelId)!;
         Assert.Equal(0, sub.FailureCount);
         Assert.Null(sub.FailingSince);
@@ -58,7 +58,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         installation.GetChannel(channelId)!.RecordDeliveryFailure(Day0.AddDays(1), "not_in_channel");
         await fixture.SlackRepo.Save(installation);
 
-        var reloaded = await fixture.SlackRepo.GetInstallation(installation.Id);
+        var reloaded = await fixture.SlackRepo.GetInstallation(installation.ExternalId);
         var sub = reloaded.GetChannel(channelId)!;
         Assert.Equal(2, sub.FailureCount);
         Assert.Equal(Day0, sub.FailingSince);
@@ -74,11 +74,11 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         installation.GetChannel(channelId)!.RecordDeliveryFailure(Day0, "not_in_channel");
         await fixture.SlackRepo.Save(installation);
 
-        var reloaded = await fixture.SlackRepo.GetInstallation(installation.Id);
+        var reloaded = await fixture.SlackRepo.GetInstallation(installation.ExternalId);
         reloaded.GetChannel(channelId)!.ClearDeliveryFailures();
         await fixture.SlackRepo.Save(reloaded);
 
-        var afterClear = await fixture.SlackRepo.GetInstallation(installation.Id);
+        var afterClear = await fixture.SlackRepo.GetInstallation(installation.ExternalId);
         var sub = afterClear.GetChannel(channelId)!;
         Assert.Equal(0, sub.FailureCount);
         Assert.Null(sub.FailingSince);
@@ -91,7 +91,7 @@ public class FailureStatePersistenceTests(AppFixture fixture) : IAsyncLifetime
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+        var reloaded = await fixture.GuildRepo.GetInstallation(guild.ExternalId);
         var sub = reloaded.GetChannel(channelId)!;
         Assert.Equal(0, sub.FailureCount);
         Assert.Null(sub.FailingSince);

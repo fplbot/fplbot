@@ -7,6 +7,8 @@ import { useAdminListQuery } from "../../composables/useAdminListQuery";
 import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
+import { isThrowaway } from "../../composables/installationAdapters";
+
 
 const pageSize = 25;
 const teams = ref<TeamSummary[]>([]);
@@ -66,10 +68,10 @@ const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
 async function submitUninstall(team: TeamSummary) {
   if (!confirm(`Uninstall fplbot from ${team.teamName}? This cannot be undone.`)) return;
-  uninstalling.value = team.teamId;
+  uninstalling.value = team.id;
   error.value = "";
   try {
-    await uninstallTeam(team.teamId);
+    await uninstallTeam(team.id);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -78,12 +80,12 @@ async function submitUninstall(team: TeamSummary) {
   }
 }
 
-async function removeSub(teamId: string, channelId: string) {
-  const key = `${teamId}-${channelId}`;
+async function removeSub(subscriptionId: string) {
+  const key = subscriptionId;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteChannelSubscription(teamId, channelId);
+    await deleteChannelSubscription(subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -135,18 +137,25 @@ async function removeSub(teamId: string, channelId: string) {
         <AdminPager v-if="teams.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
 
         <div class="team-list">
-        <div v-for="t in teams" :key="t.teamId" class="team">
+        <div v-for="t in teams" :key="t.id" class="team" :class="{ throwaway: isThrowaway(t.teamName) }">
           <div class="team-header">
             <h3>{{ t.teamName }} <span class="team-id">({{ t.teamId }})</span></h3>
             <div class="team-actions">
               <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
-              <router-link :to="`/admin/teams/${t.teamId}`" class="btn small btn-secondary">Edit</router-link>
+              <a
+                v-if="isThrowaway(t.teamName)"
+                :href="`https://app.slack.com/client/${t.teamId}`"
+                target="_blank"
+                rel="noopener"
+                class="btn small btn-secondary external"
+              >Open in Slack</a>
+              <router-link :to="`/admin/teams/${t.id}`" class="btn small btn-secondary">Edit</router-link>
               <button
                 class="btn small danger"
-                :disabled="t.pendingRemoval || uninstalling === t.teamId"
+                :disabled="t.pendingRemoval || uninstalling === t.id"
                 @click="submitUninstall(t)"
               >
-                {{ uninstalling === t.teamId ? "Uninstalling..." : "Uninstall" }}
+                {{ uninstalling === t.id ? "Uninstalling..." : "Uninstall" }}
               </button>
             </div>
           </div>
@@ -160,7 +169,7 @@ async function removeSub(teamId: string, channelId: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in t.subscriptions" :key="s.channelId" :class="{ failing: s.failureCount > 0 }">
+              <tr v-for="s in t.subscriptions" :key="s.id" :class="{ failing: s.failureCount > 0 }">
                 <td>
                   {{ s.channelId }}
                   <span v-if="s.failureCount > 0" :title="failureSummary(s)">⚠️</span>
@@ -172,7 +181,7 @@ async function removeSub(teamId: string, channelId: string) {
                     class="btn small icon-btn"
                     title="Manage channel"
                     aria-label="Manage channel"
-                    :to="{ name: 'admin-team-channel-manage', params: { entityId: t.teamId, channelId: s.channelId } }"
+                    :to="{ name: 'admin-subscription-manage', params: { subscriptionId: s.id } }"
                   >
                     ✏️
                   </router-link>
@@ -180,8 +189,8 @@ async function removeSub(teamId: string, channelId: string) {
                     class="btn small danger icon-btn"
                     title="Delete channel subscription"
                     aria-label="Delete channel subscription"
-                    :disabled="deleting === `${t.teamId}-${s.channelId}`"
-                    @click="removeSub(t.teamId, s.channelId)"
+                    :disabled="deleting === s.id"
+                    @click="removeSub(s.id)"
                   >
                     ❌
                   </button>
@@ -238,6 +247,14 @@ async function removeSub(teamId: string, channelId: string) {
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   padding: 1rem;
+}
+
+/* The throwaway install is a REAL workspace/server, unlike the other dev seeds. Blue, not
+   amber: the yellow family already means "delivery is failing" on these pages. */
+.team.throwaway {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  border-left-width: 4px;
 }
 
 .team-header {

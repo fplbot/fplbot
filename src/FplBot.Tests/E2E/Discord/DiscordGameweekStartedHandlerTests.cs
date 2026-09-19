@@ -20,7 +20,7 @@ public class DiscordGameweekStartedHandlerTests(AppFixture fixture) : IAsyncLife
         var installedGuild = await fixture.SeedGuildInstallation(54321, [EventSubscription.Captains]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        await fixture.Bus.Publish(new ProcessGameweekStartedForGuildChannel(installedGuild.Id, channelId, 5),
+        await fixture.Bus.Publish(new ProcessGameweekStartedForGuildChannel(installedGuild.ExternalId, channelId, 5),
             TestContext.Current.CancellationToken);
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
@@ -33,7 +33,7 @@ public class DiscordGameweekStartedHandlerTests(AppFixture fixture) : IAsyncLife
         var installedGuild = await fixture.SeedGuildInstallation(54321, [EventSubscription.PriceChanges]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        await fixture.Bus.Publish(new ProcessGameweekStartedForGuildChannel(installedGuild.Id, channelId, 5),
+        await fixture.Bus.Publish(new ProcessGameweekStartedForGuildChannel(installedGuild.ExternalId, channelId, 5),
             TestContext.Current.CancellationToken);
 
         await fixture.WaitUntilBusIdle();

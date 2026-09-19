@@ -1,6 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.ApplicationServices.Slack;
+using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.EventHandlers.Slack;
@@ -12,6 +13,7 @@ using Slackbot.Net.SlackClients.Http;
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
 public record ChannelSubscriptionDto(
+    string Id,
     string TeamId,
     string ChannelId,
     int? LeagueId,
@@ -20,7 +22,7 @@ public record ChannelSubscriptionDto(
     DateTimeOffset? FailingSince,
     string? LastFailureReason);
 
-public record TeamSummaryDto(string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
+public record TeamSummaryDto(string Id, string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
 
 public record BroadcastRequest(string Message);
 
@@ -38,19 +40,39 @@ public static class AdminSlackEndpoints
 {
     private const int MaxChannelPages = 25;
 
+    // A subscription id is enough to address a subscription, but the admin UI still needs its
+    // installation to render the workspace around it.
+    internal static async Task<IResult> GetSubscriptionInstallation(
+        string subscriptionId,
+        IIdentityResolver resolver,
+        ISlackTeamRepository teamRepo)
+    {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+
+        var installation = await teamRepo.FindInstallationByTeamId(resolved.TeamId.ToUpper());
+        return installation is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(new { installationId = installation.Id.Value, platform = nameof(ChatPlatform.Slack) });
+    }
+
+    private static async Task<string?> ResolveTeamId(IIdentityResolver resolver, string installationId) =>
+        await resolver.ResolveInstallation(new InstallationId(installationId)) is { Platform: ChatPlatform.Slack } installation
+            ? installation.ExternalId
+            : null;
+
+    private static async Task<(string TeamId, string ChannelId)?> ResolveChannel(IIdentityResolver resolver, string subscriptionId) =>
+        await resolver.ResolveSubscription(new SubscriptionId(subscriptionId)) is { Platform: ChatPlatform.Slack } subscription
+            ? (subscription.InstallationExternalId, subscription.ChannelId)
+            : null;
+
+
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/teams", GetTeams);
-        group.MapGet("/teams/{teamId}", GetTeam);
-        group.MapGet("/teams/{teamId}/available-channels", GetAvailableChannels);
-        group.MapPost("/teams/{teamId}/channels", AddChannel);
-        group.MapPost("/teams/{teamId}/uninstall", Uninstall);
-        group.MapPost("/teams/{teamId}/channels/{channelId}/publish-standings", PublishStandings);
-        group.MapPut("/teams/{teamId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
-        group.MapPut("/teams/{teamId}/channels/{channelId}/channel", MoveChannel);
-        group.MapPut("/teams/{teamId}/channels/{channelId}/league", FollowLeague);
-        group.MapDelete("/teams/{teamId}/channels/{channelId}/league", UnfollowLeague);
-        group.MapDelete("/teams/{teamId}/channels/{channelId}", DeleteChannelSubscription);
+        group.MapGet("/teams/{installationId}", GetTeam);
+        group.MapGet("/teams/{installationId}/available-channels", GetAvailableChannels);
+        group.MapPost("/teams/{installationId}/channels", AddChannel);
+        group.MapPost("/teams/{installationId}/uninstall", Uninstall);
         group.MapGet("/slack/failures", GetFailureStats);
         group.MapPost("/slack/failures/reset", ResetFailures);
 
@@ -95,7 +117,7 @@ public static class AdminSlackEndpoints
             [
                 .. installations.Where(i =>
                     i.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    i.Id.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    i.ExternalId.Contains(query, StringComparison.OrdinalIgnoreCase))
             ];
 
         if (failingOnly is true)
@@ -115,23 +137,26 @@ public static class AdminSlackEndpoints
 
     private static async Task<TeamSummaryDto> ToDto(Installation installation, ISlackTeamRepository teamRepo)
     {
-        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.Id, c)).ToList();
-        return new(installation.Id, installation.Name, channels, installation.PendingRemoval);
+        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.ExternalId, c)).ToList();
+        return new(installation.Id.Value, installation.ExternalId, installation.Name, channels, installation.PendingRemoval);
     }
 
     private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel) =>
-        new(teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
+        new(channel.Id.Value, teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
             ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason);
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];
 
     internal static async Task<IResult> GetAvailableChannels(
-        string teamId,
+        string installationId,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         ISlackClientBuilder slackClientBuilder,
         ILogger<Program> logger)
     {
+        if (await ResolveTeamId(resolver, installationId) is not { } teamId) return TypedResults.NotFound();
+
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
 
@@ -176,12 +201,15 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> GetTeam(
-        string teamId,
+        string installationId,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         ILeagueClient leagueClient,
         ISlackClientBuilder slackClientBuilder,
         ILogger<Program> logger)
     {
+        if (await ResolveTeamId(resolver, installationId) is not { } teamId) return TypedResults.NotFound();
+
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
 
@@ -205,6 +233,7 @@ public static class AdminSlackEndpoints
 
             channels.Add(new
             {
+                id = channel.Id.Value,
                 channel = channel.ChannelId,
                 channelName,
                 leagueId,
@@ -222,7 +251,8 @@ public static class AdminSlackEndpoints
 
         return TypedResults.Ok(new
         {
-            teamId = installation.Id,
+            id = installation.Id.Value,
+            teamId = installation.ExternalId,
             teamName = installation.Name,
             token = installation.Token,
             pendingRemoval = installation.PendingRemoval,
@@ -231,10 +261,13 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> Uninstall(
-        string teamId,
+        string installationId,
+        IIdentityResolver resolver,
         AdminUninstallSlackWorkspace adminUninstallSlackWorkspace,
         ILogger<Program> logger)
     {
+        if (await ResolveTeamId(resolver, installationId) is not { } teamId) return TypedResults.NotFound();
+
         var teamIdToUpper = teamId.ToUpper();
         logger.LogInformation("Marking {TeamId} for removal", teamIdToUpper);
 
@@ -243,12 +276,15 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> PublishStandings(
-        string teamId,
-        string channelId,
+        string subscriptionId,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         ISendEndpointProvider sendEndpointProvider,
         IGlobalSettingsClient gameweekClient)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (teamId, channelId) = resolved;
+
         var teamIdToUpper = teamId.ToUpper();
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
@@ -264,17 +300,20 @@ public static class AdminSlackEndpoints
         var gameweek = settings!.Gameweeks.GetCurrentGameweek();
 
         var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.Id, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.ExternalId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
 
         return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(
-        string teamId,
-        string channelId,
+        string subscriptionId,
         UpdateChannelSubscriptionsRequest request,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (teamId, channelId) = resolved;
+
         var teamIdToUpper = teamId.ToUpper();
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
@@ -290,12 +329,15 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> FollowLeague(
-        string teamId,
-        string channelId,
+        string subscriptionId,
         FollowLeagueRequest request,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         ILeagueClient leagueClient)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (teamId, channelId) = resolved;
+
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
         if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
@@ -314,10 +356,13 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> UnfollowLeague(
-        string teamId,
-        string channelId,
+        string subscriptionId,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (teamId, channelId) = resolved;
+
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
         if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
@@ -329,10 +374,13 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> AddChannel(
-        string teamId,
+        string installationId,
         AddChannelRequest request,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo)
     {
+        if (await ResolveTeamId(resolver, installationId) is not { } teamId) return TypedResults.NotFound();
+
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
 
@@ -353,12 +401,15 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> MoveChannel(
-        string teamId,
-        string channelId,
+        string subscriptionId,
         MoveChannelRequest request,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         IPublishEndpoint publishEndpoint)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (teamId, channelId) = resolved;
+
         var teamIdToUpper = teamId.ToUpper();
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
         if (installation == null) return TypedResults.NotFound();
@@ -385,10 +436,13 @@ public static class AdminSlackEndpoints
     }
 
     internal static async Task<IResult> DeleteChannelSubscription(
-        string teamId,
-        string channelId,
+        string subscriptionId,
+        IIdentityResolver resolver,
         ISlackTeamRepository teamRepo)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (teamId, channelId) = resolved;
+
         var installation = await teamRepo.FindInstallationByTeamId(teamId.ToUpper());
         if (installation == null) return TypedResults.NotFound();
 

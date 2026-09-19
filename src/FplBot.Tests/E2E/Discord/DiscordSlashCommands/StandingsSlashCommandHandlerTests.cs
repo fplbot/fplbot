@@ -63,7 +63,7 @@ public class StandingsSlashCommandHandlerTests(AppFixture fixture) : IAsyncLifet
             }
         });
 
-        await fixture.AskDiscord("standings", guildId: installedGuild.Id, channelId: channelId);
+        await fixture.AskDiscord("standings", guildId: installedGuild.ExternalId, channelId: channelId);
 
         var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
         Assert.Contains("Standings", msg.Description);
@@ -76,7 +76,7 @@ public class StandingsSlashCommandHandlerTests(AppFixture fixture) : IAsyncLifet
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var (token, _) = await fixture.AskDiscord("standings", guildId: installedGuild.Id, channelId: channelId);
+        var (token, _) = await fixture.AskDiscord("standings", guildId: installedGuild.ExternalId, channelId: channelId);
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("isn't following an FPL league", followup.Description);

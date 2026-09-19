@@ -18,10 +18,10 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
         var channelId = guild.ChannelSubscriptions.First().ChannelId;
 
-        await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelId, "50001", Day0),
+        await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, channelId, "50001", Day0),
             TestContext.Current.CancellationToken);
 
-        var sub = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId), 1);
+        var sub = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId), 1);
         Assert.Equal(Day0, sub.FailingSince);
     }
 
@@ -34,12 +34,12 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         for (var day = 0; day < 5; day++)
         {
             var consumedBefore = fixture.ConsumedSoFar;
-            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelId, "50001", Day0.AddDays(day * 2)),
+            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, channelId, "50001", Day0.AddDays(day * 2)),
                 TestContext.Current.CancellationToken);
             await fixture.WaitUntilBusIdle(consumedBefore);
         }
 
-        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId) is null);
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId) is null);
     }
 
     [Fact]
@@ -54,14 +54,14 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         for (var day = 0; day < 5; day++)
         {
             var consumedBefore = fixture.ConsumedSoFar;
-            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, failingChannel, "50001", Day0.AddDays(day * 2)),
+            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, failingChannel, "50001", Day0.AddDays(day * 2)),
                 TestContext.Current.CancellationToken);
             await fixture.WaitUntilBusIdle(consumedBefore);
         }
 
-        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, failingChannel) is null);
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, failingChannel) is null);
 
-        var healthy = await fixture.GuildRepo.GetChannelSubscription(guild.Id, healthyChannel);
+        var healthy = await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, healthyChannel);
         Assert.NotNull(healthy);
         Assert.Equal(0, healthy.FailureCount);
     }
@@ -81,13 +81,13 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         {
             var consumedBefore = fixture.ConsumedSoFar;
             await Task.WhenAll(
-                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelA, "50001", Day0), TestContext.Current.CancellationToken),
-                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelB, "50001", Day0), TestContext.Current.CancellationToken));
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, channelA, "50001", Day0), TestContext.Current.CancellationToken),
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, channelB, "50001", Day0), TestContext.Current.CancellationToken));
             await fixture.WaitUntilBusIdle(consumedBefore, published: 2);
         }
 
-        var subA = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelA), failuresPerChannel);
-        var subB = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, channelB), failuresPerChannel);
+        var subA = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelA), failuresPerChannel);
+        var subB = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelB), failuresPerChannel);
 
         Assert.Equal(failuresPerChannel, subA.FailureCount);
         Assert.Equal(failuresPerChannel, subB.FailureCount);
@@ -108,16 +108,16 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         {
             var consumedBefore = fixture.ConsumedSoFar;
             await Task.WhenAll(
-                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, removingChannel, "50001", Day0.AddDays(day * 2)),
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, removingChannel, "50001", Day0.AddDays(day * 2)),
                     TestContext.Current.CancellationToken),
-                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, survivingChannel, "50001", Day0),
+                fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, survivingChannel, "50001", Day0),
                     TestContext.Current.CancellationToken));
             await fixture.WaitUntilBusIdle(consumedBefore, published: 2);
         }
 
-        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.Id, removingChannel) is null);
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, removingChannel) is null);
 
-        var surviving = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.Id, survivingChannel), rounds);
+        var surviving = await WaitForFailureCount(() => fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, survivingChannel), rounds);
         Assert.Equal(rounds, surviving.FailureCount);
     }
 
@@ -127,10 +127,10 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         var installation = await fixture.SeedInstallation();
         var channelId = installation.ChannelSubscriptions.First().ChannelId;
 
-        await fixture.Bus.Publish(new SlackChannelDeliveryFailed(installation.Id, channelId, "channel_not_found", Day0),
+        await fixture.Bus.Publish(new SlackChannelDeliveryFailed(installation.ExternalId, channelId, "channel_not_found", Day0),
             TestContext.Current.CancellationToken);
 
-        var sub = await WaitForFailureCount(() => fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId), 1);
+        var sub = await WaitForFailureCount(() => fixture.SlackRepo.GetChannelSubscription(installation.ExternalId, channelId), 1);
         Assert.Equal(Day0, sub.FailingSince);
     }
 
@@ -144,12 +144,12 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         {
             var consumedBefore = fixture.ConsumedSoFar;
             await fixture.Bus.Publish(
-                new SlackChannelDeliveryFailed(installation.Id, channelId, "channel_not_found", Day0.AddDays(day * 2)),
+                new SlackChannelDeliveryFailed(installation.ExternalId, channelId, "channel_not_found", Day0.AddDays(day * 2)),
                 TestContext.Current.CancellationToken);
             await fixture.WaitUntilBusIdle(consumedBefore);
         }
 
-        await AppFixture.WaitUntil(async () => await fixture.SlackRepo.GetChannelSubscription(installation.Id, channelId) is null);
+        await AppFixture.WaitUntil(async () => await fixture.SlackRepo.GetChannelSubscription(installation.ExternalId, channelId) is null);
     }
 
     [Fact]
@@ -158,11 +158,11 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
 
         var consumedBefore = fixture.ConsumedSoFar;
-        await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, "no-such-channel", "50001", Day0),
+        await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, "no-such-channel", "50001", Day0),
             TestContext.Current.CancellationToken);
         await fixture.WaitUntilBusIdle(consumedBefore);
 
-        var reloaded = await fixture.GuildRepo.GetInstallation(guild.Id);
+        var reloaded = await fixture.GuildRepo.GetInstallation(guild.ExternalId);
         Assert.Single(reloaded.ChannelSubscriptions);
     }
 
@@ -178,7 +178,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         {
             while (!reading.IsCancellationRequested)
             {
-                if (await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId) is { FailureCount: > 0, FailingSince: null })
+                if (await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId) is { FailureCount: > 0, FailingSince: null })
                 {
                     Interlocked.Increment(ref halfWritten);
                 }
@@ -188,7 +188,7 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         for (var i = 0; i < 20; i++)
         {
             var consumedBefore = fixture.ConsumedSoFar;
-            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.Id, channelId, "50001", Day0),
+            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, channelId, "50001", Day0),
                 TestContext.Current.CancellationToken);
             await fixture.WaitUntilBusIdle(consumedBefore);
         }

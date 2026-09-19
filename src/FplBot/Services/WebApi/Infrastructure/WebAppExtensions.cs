@@ -20,7 +20,6 @@ public static class WebAppExtensions
     public static void UseWebApp(this WebApplication app)
     {
         var env = app.Environment;
-        app.UseSerilogRequestLogging();
 
         // Always ProblemDetails, in every environment — there's no server-rendered HTML
         // surface left to protect with UseDeveloperExceptionPage (no Razor Pages, every
@@ -90,6 +89,7 @@ public static class WebAppExtensions
         AdminSlackEndpoints.Map(admin);
         AdminSearchEndpoints.Map(admin);
         AdminDiscordEndpoints.Map(admin);
+        AdminSubscriptionEndpoints.Map(admin);
         AdminHealthEndpoints.Map(admin, env);
         AdminErrorEndpoints.Map(admin);
 

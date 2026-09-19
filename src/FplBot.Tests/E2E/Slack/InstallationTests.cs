@@ -83,7 +83,7 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
         var installation = await fixture.SeedInstallation(i => i.Subscribe(i.ChannelSubscriptions.Single().ChannelId, [FplEvent.Standings]));
         var channel = installation.ChannelSubscriptions.Single();
 
-        var result = await Repo.GetChannelSubscription(installation.Id, channel.ChannelId);
+        var result = await Repo.GetChannelSubscription(installation.ExternalId, channel.ChannelId);
 
         Assert.NotNull(result);
         Assert.Equal(channel.FollowedLeagueId, result!.FollowedLeagueId);
@@ -95,7 +95,7 @@ public class SlackbotNetInstallationBridgeTests(AppFixture fixture) : IAsyncLife
     {
         var installation = await fixture.SeedInstallation();
 
-        var result = await Repo.GetChannelSubscription(installation.Id, "#does-not-exist");
+        var result = await Repo.GetChannelSubscription(installation.ExternalId, "#does-not-exist");
 
         Assert.Null(result);
     }

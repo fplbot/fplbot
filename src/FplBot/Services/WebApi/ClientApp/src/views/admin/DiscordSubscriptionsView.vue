@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import {
   getDiscordServers,
-  deleteDiscordSubscription,
+  deleteChannelSubscription,
   deleteAllDiscordSubscriptionsForGuild,
   deleteDiscordGuild,
   getDiscordFailureStats,
@@ -15,6 +15,8 @@ import { useAdminListQuery } from "../../composables/useAdminListQuery";
 import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
+import { isThrowaway } from "../../composables/installationAdapters";
+
 
 const pageSize = 25;
 const guilds = ref<GuildWithSubs[]>([]);
@@ -71,12 +73,12 @@ void loadFailureStats();
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
-async function removeSub(guildId: string, channelId: string) {
-  const key = `${guildId}-${channelId}`;
+async function removeSub(subscriptionId: string) {
+  const key = subscriptionId;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteDiscordSubscription(guildId, channelId);
+    await deleteChannelSubscription(subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -85,13 +87,13 @@ async function removeSub(guildId: string, channelId: string) {
   }
 }
 
-async function removeAllSubs(guildId: string, guildName: string) {
+async function removeAllSubs(installationId: string, guildId: string, guildName: string) {
   if (!confirm(`Delete all channel subscriptions for ${guildName} (${guildId})? The guild stays listed as installed.`)) return;
-  const key = `guild-subs-${guildId}`;
+  const key = `guild-subs-${installationId}`;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteAllDiscordSubscriptionsForGuild(guildId);
+    await deleteAllDiscordSubscriptionsForGuild(installationId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -100,13 +102,13 @@ async function removeAllSubs(guildId: string, guildName: string) {
   }
 }
 
-async function removeGuild(guildId: string, guildName: string) {
+async function removeGuild(installationId: string, guildId: string, guildName: string) {
   if (!confirm(`Delete ${guildName} (${guildId})? This forgets all of fplbot's tracked data for this server and removes the bot from it.`)) return;
-  const key = `guild-${guildId}`;
+  const key = `guild-${installationId}`;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteDiscordGuild(guildId);
+    await deleteDiscordGuild(installationId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -158,26 +160,33 @@ async function removeGuild(guildId: string, guildName: string) {
         <AdminPager v-if="guilds.length > 0" :page="page" :total-pages="totalPages()" :total-count="totalCount" @update:page="goToPage" />
 
         <div class="guild-list">
-        <div v-for="g in guilds" :key="g.guildId" class="guild">
+        <div v-for="g in guilds" :key="g.id" class="guild" :class="{ throwaway: isThrowaway(g.guildName) }">
           <div class="guild-header">
             <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
             <div class="guild-actions">
-              <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.guildId } }">
+              <a
+                v-if="isThrowaway(g.guildName)"
+                :href="`https://discord.com/channels/${g.guildId}`"
+                target="_blank"
+                rel="noopener"
+                class="btn small btn-secondary external"
+              >Open in Discord</a>
+              <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.id } }">
                 Edit
               </router-link>
               <div class="guild-actions-danger">
                 <button
                   v-if="g.subscriptions.length > 0"
                   class="btn small danger"
-                  :disabled="deleting === `guild-subs-${g.guildId}`"
-                  @click="removeAllSubs(g.guildId, g.guildName)"
+                  :disabled="deleting === `guild-subs-${g.id}`"
+                  @click="removeAllSubs(g.id, g.guildId, g.guildName)"
                 >
                   Delete all subs
                 </button>
                 <button
                   class="btn small danger"
-                  :disabled="deleting === `guild-${g.guildId}`"
-                  @click="removeGuild(g.guildId, g.guildName)"
+                  :disabled="deleting === `guild-${g.id}`"
+                  @click="removeGuild(g.id, g.guildId, g.guildName)"
                 >
                   Delete guild
                 </button>
@@ -194,7 +203,7 @@ async function removeGuild(guildId: string, guildName: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in g.subscriptions" :key="s.channelId" :class="{ failing: s.failureCount > 0 }">
+              <tr v-for="s in g.subscriptions" :key="s.id" :class="{ failing: s.failureCount > 0 }">
                 <td>
                   {{ s.channelId }}
                   <span v-if="s.failureCount > 0" :title="failureSummary(s)">⚠️</span>
@@ -206,7 +215,7 @@ async function removeGuild(guildId: string, guildName: string) {
                     class="btn small icon-btn"
                     title="Manage channel"
                     aria-label="Manage channel"
-                    :to="{ name: 'admin-guild-channel-manage', params: { entityId: g.guildId, channelId: s.channelId } }"
+                    :to="{ name: 'admin-subscription-manage', params: { subscriptionId: s.id } }"
                   >
                     ✏️
                   </router-link>
@@ -214,8 +223,8 @@ async function removeGuild(guildId: string, guildName: string) {
                     class="btn small danger icon-btn"
                     title="Delete channel subscription"
                     aria-label="Delete channel subscription"
-                    :disabled="deleting === `${g.guildId}-${s.channelId}`"
-                    @click="removeSub(g.guildId, s.channelId)"
+                    :disabled="deleting === s.id"
+                    @click="removeSub(s.id)"
                   >
                     ❌
                   </button>
@@ -267,6 +276,14 @@ async function removeGuild(guildId: string, guildName: string) {
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   padding: 1rem;
+}
+
+/* The throwaway install is a REAL workspace/server, unlike the other dev seeds. Blue, not
+   amber: the yellow family already means "delivery is failing" on these pages. */
+.guild.throwaway {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  border-left-width: 4px;
 }
 
 .guild-header {

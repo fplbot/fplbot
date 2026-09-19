@@ -51,6 +51,7 @@ export type EventSubscription =
 // A single Slack channel's subscription within a team (one team can now follow a league /
 // receive notifications in more than one channel — mirrors Discord's GuildSubscription).
 export interface ChannelSubscription {
+  id: string;
   teamId: string;
   channelId: string;
   leagueId: number | null;
@@ -61,6 +62,7 @@ export interface ChannelSubscription {
 }
 
 export interface TeamSummary {
+  id: string;
   teamId: string;
   teamName: string;
   subscriptions: ChannelSubscription[];
@@ -73,6 +75,7 @@ export interface AvailableChannel {
 }
 
 export interface TeamDetailsChannel {
+  id: string;
   channel: string;
   channelName: string | null;
   leagueId: number | null;
@@ -88,6 +91,7 @@ export interface TeamDetailsChannel {
 }
 
 export interface TeamDetails {
+  id: string;
   teamId: string;
   teamName: string | null;
   token: string | null;
@@ -145,6 +149,7 @@ export interface SlashCommandDefinition {
 // ---- Admin: Discord subscriptions ----
 
 export interface GuildSubscription {
+  id: string;
   guildId: string;
   channelId: string;
   leagueId: number | null;
@@ -155,12 +160,14 @@ export interface GuildSubscription {
 }
 
 export interface GuildWithSubs {
+  id: string;
   guildId: string;
   guildName: string;
   subscriptions: GuildSubscription[];
 }
 
 export interface GuildDetailsChannel {
+  id: string;
   channel: string;
   channelName: string | null;
   leagueId: number | null;
@@ -176,6 +183,7 @@ export interface GuildDetailsChannel {
 }
 
 export interface GuildDetails {
+  id: string;
   guildId: string;
   guildName: string | null;
   channels: GuildDetailsChannel[];

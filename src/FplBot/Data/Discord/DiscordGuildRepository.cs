@@ -7,9 +7,11 @@ namespace FplBot.Data.Discord;
 public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<DiscordGuildRepository> logger) : IGuildRepository
 {
     private const string GuildIndexKey = "GuildIndex";
+    private const string PlatformPrefix = "discord";
     private const int MaxConcurrentGuildFetches = 64;
 
     private readonly RedisValue _nameField = "name";
+    private readonly RedisValue _idField = "id";
     private readonly RedisValue _guildIdField = "guildid";
     private readonly RedisValue _channelIdField = "channelid";
     private readonly RedisValue _leagueIdField = "leagueid";
@@ -40,9 +42,9 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
             return null;
         }
 
-        var fetched = await _db.HashGetAsync(key, [_nameField]);
+        var fetched = await _db.HashGetAsync(key, [_nameField, _idField]);
         var channels = await GetChannelSubscriptions(teamId);
-        return Installation.Load(teamId, fetched[0].ToString() ?? string.Empty, token: null, channels);
+        return Installation.Load(ToInstallationId(fetched[1]), teamId, fetched[0].ToString() ?? string.Empty, token: null, channels);
     }
 
     public async Task<IEnumerable<Installation>> GetAllInstallations()
@@ -53,9 +55,9 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         await Parallel.ForEachAsync(guildIds, new ParallelOptions { MaxDegreeOfParallelism = MaxConcurrentGuildFetches }, async (guildIdValue, _) =>
         {
             var guildId = guildIdValue.ToString();
-            var fetched = await _db.HashGetAsync(FromGuildIdToGuildKey(guildId), [_nameField]);
+            var fetched = await _db.HashGetAsync(FromGuildIdToGuildKey(guildId), [_nameField, _idField]);
             var channels = await GetChannelSubscriptions(guildId);
-            installations.Add(Installation.Load(guildId, fetched[0].ToString() ?? string.Empty, token: null, channels));
+            installations.Add(Installation.Load(ToInstallationId(fetched[1]), guildId, fetched[0].ToString() ?? string.Empty, token: null, channels));
         });
 
         return installations;
@@ -63,24 +65,28 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
 
     public async Task Save(Installation installation)
     {
-        var storedChannelIds = (await _db.SetMembersAsync(ToChannelSubIndexKey(installation.Id)))
+        var storedChannelIds = (await _db.SetMembersAsync(ToChannelSubIndexKey(installation.ExternalId)))
             .Select(v => v.ToString() ?? string.Empty)
             .ToHashSet();
 
-        var hashEntries = new HashEntry[] { new(_guildIdField, installation.Id), new(_nameField, installation.Name) };
-        await _db.HashSetAsync(FromGuildIdToGuildKey(installation.Id), hashEntries);
-        await _db.SetAddAsync(GuildIndexKey, installation.Id);
+        var hashEntries = new HashEntry[]
+        {
+            new(_guildIdField, installation.ExternalId), new(_nameField, installation.Name), new(_idField, installation.Id.Value)
+        };
+        await _db.HashSetAsync(FromGuildIdToGuildKey(installation.ExternalId), hashEntries);
+        await _db.SetAddAsync(GuildIndexKey, installation.ExternalId);
+        await _db.StringSetAsync(ToInstallationIdIndexKey(installation.Id.Value), ToInstallationIndexEntry(installation.ExternalId));
 
         var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
 
         foreach (var channel in installation.ChannelSubscriptions)
         {
-            await SaveChannelSubscription(installation.Id, channel);
+            await SaveChannelSubscription(installation.ExternalId, channel);
         }
 
         foreach (var removedChannelId in storedChannelIds.Except(currentChannelIds))
         {
-            await DeleteChannelSubscription(installation.Id, removedChannelId);
+            await DeleteChannelSubscription(installation.ExternalId, removedChannelId);
         }
     }
 
@@ -93,15 +99,16 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
 
     public async Task Delete(Installation installation)
     {
-        var channels = await GetChannelSubscriptions(installation.Id);
+        var channels = await GetChannelSubscriptions(installation.ExternalId);
         foreach (var channel in channels)
         {
-            await DeleteChannelSubscription(installation.Id, channel.ChannelId);
+            await DeleteChannelSubscription(installation.ExternalId, channel.ChannelId);
         }
 
-        await _db.KeyDeleteAsync(ToChannelSubIndexKey(installation.Id));
-        await _db.SetRemoveAsync(GuildIndexKey, installation.Id);
-        await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.Id));
+        await _db.KeyDeleteAsync(ToChannelSubIndexKey(installation.ExternalId));
+        await _db.SetRemoveAsync(GuildIndexKey, installation.ExternalId);
+        await _db.KeyDeleteAsync(ToInstallationIdIndexKey(installation.Id.Value));
+        await _db.KeyDeleteAsync(FromGuildIdToGuildKey(installation.ExternalId));
     }
 
     public async Task SaveChannelSubscription(string guildId, ChannelSubscription channel)
@@ -113,6 +120,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         var hashEntries = new List<HashEntry>
         {
             new(_guildIdField, guildId),
+            new(_idField, channel.Id.Value),
             new(_channelIdField, channel.ChannelId),
             new(_subscriptionsField, string.Join(" ", channel.Events.Current.Select(ToStorageEvent))),
             new(_failureCountField, channel.FailureCount)
@@ -146,6 +154,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         await transaction.ExecuteAsync();
 
         await _db.SetAddAsync(ToChannelSubIndexKey(guildId), channel.ChannelId);
+        await _db.StringSetAsync(ToSubIdIndexKey(channel.Id.Value), ToSubIndexEntry(guildId, channel.ChannelId));
         await UpdateEventIndex(guildId, channel.ChannelId, oldEvents, newEvents);
     }
 
@@ -155,9 +164,46 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         var events = ExpandEvents(ParseSubscriptionString((await _db.HashGetAsync(key, _subscriptionsField)).ToString(), " ").Select(ToDomainEvent));
         await UpdateEventIndex(guildId, channelId, events, []);
 
+        await RemoveSubIdIndexPointingAt(await _db.HashGetAsync(key, _idField), guildId, channelId);
+
         await _db.KeyDeleteAsync(key);
         await _db.SetRemoveAsync(ToChannelSubIndexKey(guildId), channelId);
     }
+
+    // Save() diff-syncs by channel id, so a moved subscription looks like "old channel gone, new
+    // channel added". The subscription keeps its id across a move, so deleting the old channel must
+    // not take the reverse index entry with it - by then it already points at the new channel.
+    private async Task RemoveSubIdIndexPointingAt(RedisValue subId, string guildId, string channelId)
+    {
+        if (!subId.HasValue)
+        {
+            return;
+        }
+
+        var indexKey = ToSubIdIndexKey(subId!);
+        if (await _db.StringGetAsync(indexKey) == ToSubIndexEntry(guildId, channelId))
+        {
+            await _db.KeyDeleteAsync(indexKey);
+        }
+    }
+
+    // Rows written before internal ids existed have no id field; backfill-internal-ids gives them one.
+    // Until it runs they get an id that lives only for this instance, deliberately without writing it
+    // back: a read must never write, or a hash deleted mid-read is resurrected by the very lookup
+    // checking whether it is gone.
+    private static InstallationId ToInstallationId(RedisValue stored) =>
+        stored.HasValue ? new InstallationId(stored!) : InstallationId.New();
+
+    private static SubscriptionId ToSubscriptionId(RedisValue stored) =>
+        stored.HasValue ? new SubscriptionId(stored!) : SubscriptionId.New();
+
+    private static string ToInstallationIdIndexKey(string id) => $"InstallationId-{id}";
+
+    private static string ToInstallationIndexEntry(string guildId) => $"{PlatformPrefix}:{guildId}";
+
+    private static string ToSubIdIndexKey(string subId) => $"SubId-{subId}";
+
+    private static string ToSubIndexEntry(string guildId, string channelId) => $"{PlatformPrefix}:{guildId}:{channelId}";
 
     // A channel subscribed via FplEvent.All (EventCollection's short-circuit sentinel, see
     // EventCollection.Contains) is stored as the single literal "All" in the subscriptions hash
@@ -252,7 +298,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
         var fetched = await _db.HashGetAsync(FromGuildIdAndChannelToGuildChannelSubKey(guildId, channelId),
         [
             _channelIdField, _leagueIdField, _subscriptionsField, _failureCountField, _failingSinceField,
-            _lastFailureReasonField
+            _lastFailureReasonField, _idField
         ]);
         if (!fetched[0].HasValue)
         {
@@ -267,7 +313,7 @@ public class DiscordGuildRepository(IConnectionMultiplexer redis, ILogger<Discor
             ? DateTimeOffset.FromUnixTimeMilliseconds((long)fetched[4])
             : (DateTimeOffset?)null;
         var lastFailureReason = fetched[5].HasValue ? fetched[5].ToString() : null;
-        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
+        return ChannelSubscription.Load(ToSubscriptionId(fetched[6]), channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
             lastFailureReason);
     }
 

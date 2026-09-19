@@ -15,6 +15,6 @@ public class AdminUninstallSlackWorkspace(ISlackTeamRepository repository, IPubl
         var installation = await repository.GetInstallation(teamId);
         installation.MarkForRemoval();
         await repository.Save(installation);
-        await publisher.Publish(new TeamMarkedForRemoval(installation.Id));
+        await publisher.Publish(new TeamMarkedForRemoval(installation.ExternalId));
     }
 }

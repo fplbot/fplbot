@@ -14,7 +14,7 @@ public class WebApiService : IFplBotService
     {
         var builder = WebApplication.CreateBuilder(args);
         FplBotApplication.AddLocalUserSecrets(builder.Configuration, builder.Environment);
-        builder.Host.UseSerilog((ctx, lc) => FplBotApplication.ConfigureSerilog(ctx, lc, allActive));
+        FplBotApplication.WireUpLogging(builder, allActive);
         var port = Environment.GetEnvironmentVariable("PORT") ?? "1337";
         // Slack requires OAuth redirect_uris to be https — even for localhost. In dev, serve
         // https on localhost using the trusted ASP.NET Core dev cert (`dotnet dev-certs https
@@ -30,6 +30,7 @@ public class WebApiService : IFplBotService
             cfg => FplBotApplication.ConfigureAzureServiceBus(cfg, builder.Configuration));
 
         var app = builder.Build();
+        FplBotApplication.UseLogging(app);
         foreach (var svc in allActive)
             svc.ConfigureApp(app);
 

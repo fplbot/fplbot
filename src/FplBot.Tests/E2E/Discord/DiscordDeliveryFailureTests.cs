@@ -29,7 +29,7 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
 
         await PublishPriceChange();
 
-        await WaitForFailureCount(fixture, guild.Id, channelId, 1);
+        await WaitForFailureCount(fixture, guild.ExternalId, channelId, 1);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
 
         await PublishPriceChange();
 
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
+        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId);
         Assert.NotNull(sub);
         Assert.Equal(0, sub.FailureCount);
     }
@@ -56,7 +56,7 @@ public class DiscordDeliveryFailureTests(AppFixture fixture) : IAsyncLifetime
         await PublishPriceChange();
 
 
-        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.Id, channelId);
+        var sub = await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId);
         Assert.NotNull(sub);
         Assert.Equal(0, sub.FailureCount);
     }

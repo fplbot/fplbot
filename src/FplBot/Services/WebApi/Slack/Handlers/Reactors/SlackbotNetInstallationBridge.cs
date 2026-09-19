@@ -16,7 +16,7 @@ public class SlackbotNetInstallationBridge(
     {
         var existing = await repository.FindInstallationByTeamId(workspace.TeamId);
         var installation = existing is not null
-            ? Installation.Reinstall(workspace.TeamId, workspace.TeamName, workspace.Token, existing.ChannelSubscriptions)
+            ? Installation.Reinstall(existing.Id, workspace.TeamId, workspace.TeamName, workspace.Token, existing.ChannelSubscriptions)
             : Installation.Install(workspace.TeamId, workspace.TeamName, workspace.Token);
         await repository.Save(installation);
         await publisher.Publish(new AppInstalled(workspace.TeamId, workspace.TeamName, ChatPlatform.Slack));
@@ -35,6 +35,6 @@ public class SlackbotNetInstallationBridge(
 
         installation.Uninstall();
         await repository.Delete(installation);
-        await publisher.Publish(new AppUninstalled(installation.Id, installation.Name));
+        await publisher.Publish(new AppUninstalled(installation.ExternalId, installation.Name));
     }
 }

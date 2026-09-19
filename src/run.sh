@@ -13,5 +13,11 @@ fi
 vite=$!
 trap 'kill $vite 2>/dev/null || true' EXIT
 
+profile="Default"
+if [ "${1:-}" = "integration" ]; then
+  profile="Integration"
+  shift
+fi
+
 echo "Vite on http://localhost:5173 (open this one - it proxies to the backend)"
-dotnet run --project "$src/FplBot" "$@"
+dotnet run --project "$src/FplBot" --launch-profile "$profile" "$@"

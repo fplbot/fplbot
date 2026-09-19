@@ -7,6 +7,7 @@ namespace FplBot.Data.Slack;
 public class SlackTeamRepository : ISlackTeamRepository
 {
     private const string TeamIndexKey = "TeamIndex";
+    private const string PlatformPrefix = "slack";
 
     private readonly ILogger<SlackTeamRepository> _logger;
 
@@ -18,6 +19,7 @@ public class SlackTeamRepository : ISlackTeamRepository
     private readonly string _teamNameField = "teamName";
     private readonly string _teamIdField = "teamId";
     private readonly string _pendingRemovalField = "pendingRemoval";
+    private readonly string _idField = "id";
 
     // Channel subscriptions: one hash per channel, keyed as SlackChannelSub-{teamId}-{channelId}.
     private readonly string _channelSubChannelIdField = "channelId";
@@ -47,10 +49,10 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     private async Task<Installation> LoadInstallation(string teamId)
     {
-        var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField]);
+        var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField, _idField]);
         var pendingRemoval = fetched[2].HasValue && (bool)fetched[2];
         var channels = await GetChannelSubscriptions(teamId);
-        return Installation.Load(teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
+        return Installation.Load(ToInstallationId(fetched[3]), teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
     }
 
     private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
@@ -74,7 +76,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task Save(Installation installation)
     {
-        var storedChannelIds = (await _db.SetMembersAsync(ToChannelSubIndexKey(installation.Id)))
+        var storedChannelIds = (await _db.SetMembersAsync(ToChannelSubIndexKey(installation.ExternalId)))
             .Select(v => v.ToString() ?? string.Empty)
             .ToHashSet();
 
@@ -82,23 +84,25 @@ public class SlackTeamRepository : ISlackTeamRepository
         {
             new(_accessTokenField, installation.Token),
             new(_teamNameField, installation.Name),
-            new(_teamIdField, installation.Id),
+            new(_teamIdField, installation.ExternalId),
+            new(_idField, installation.Id.Value),
             new(_pendingRemovalField, installation.PendingRemoval)
         };
 
-        await _db.HashSetAsync(FromTeamIdToTeamKey(installation.Id), hashEntries);
-        await _db.SetAddAsync(TeamIndexKey, installation.Id);
+        await _db.HashSetAsync(FromTeamIdToTeamKey(installation.ExternalId), hashEntries);
+        await _db.SetAddAsync(TeamIndexKey, installation.ExternalId);
+        await _db.StringSetAsync(ToInstallationIdIndexKey(installation.Id.Value), ToInstallationIndexEntry(installation.ExternalId));
 
         var currentChannelIds = installation.ChannelSubscriptions.Select(c => c.ChannelId).ToHashSet();
 
         foreach (var channel in installation.ChannelSubscriptions)
         {
-            await SaveChannelSubscription(installation.Id, channel);
+            await SaveChannelSubscription(installation.ExternalId, channel);
         }
 
         foreach (var removedChannelId in storedChannelIds.Except(currentChannelIds))
         {
-            await DeleteChannelSubscription(installation.Id, removedChannelId);
+            await DeleteChannelSubscription(installation.ExternalId, removedChannelId);
         }
     }
 
@@ -129,7 +133,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task Delete(Installation installation)
     {
-        var teamId = installation.Id;
+        var teamId = installation.ExternalId;
 
         var channelIds = await _db.SetMembersAsync(ToChannelSubIndexKey(teamId));
         foreach (var channelId in channelIds)
@@ -139,6 +143,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
         await _db.SetRemoveAsync(TeamIndexKey, teamId);
+        await _db.KeyDeleteAsync(ToInstallationIdIndexKey(installation.Id.Value));
 
         await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
     }
@@ -195,6 +200,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         var hashEntries = new List<HashEntry>
         {
             new HashEntry(_teamIdField, teamId),
+            new HashEntry(_idField, channel.Id.Value),
             new HashEntry(_channelSubChannelIdField, channel.ChannelId),
             new HashEntry(_channelSubSubscriptionsField, string.Join(" ", subscriptions)),
             new HashEntry(_channelSubFailureCountField, channel.FailureCount)
@@ -229,6 +235,7 @@ public class SlackTeamRepository : ISlackTeamRepository
         await transaction.ExecuteAsync();
 
         await _db.SetAddAsync(ToChannelSubIndexKey(teamId), channel.ChannelId);
+        await _db.StringSetAsync(ToSubIdIndexKey(channel.Id.Value), ToSubIndexEntry(teamId, channel.ChannelId));
         await UpdateEventIndex(teamId, channel.ChannelId, oldEvents, newEvents);
     }
 
@@ -330,7 +337,8 @@ public class SlackTeamRepository : ISlackTeamRepository
         var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId),
         [
             _channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField,
-            _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField
+            _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField,
+            _idField
         ]);
         if (!fetched[0].HasValue)
         {
@@ -345,7 +353,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             ? DateTimeOffset.FromUnixTimeMilliseconds((long)fetched[4])
             : (DateTimeOffset?)null;
         var lastFailureReason = fetched[5].HasValue ? fetched[5].ToString() : null;
-        return ChannelSubscription.Load(channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
+        return ChannelSubscription.Load(ToSubscriptionId(fetched[6]), channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
             lastFailureReason);
     }
 
@@ -355,9 +363,46 @@ public class SlackTeamRepository : ISlackTeamRepository
         var events = ExpandEvents(GetSubscriptions(teamId, await _db.HashGetAsync(key, _channelSubSubscriptionsField)).Select(ToDomainEvent));
         await UpdateEventIndex(teamId, channelId, events, []);
 
+        await RemoveSubIdIndexPointingAt(await _db.HashGetAsync(key, _idField), teamId, channelId);
+
         await _db.KeyDeleteAsync(key);
         await _db.SetRemoveAsync(ToChannelSubIndexKey(teamId), channelId);
     }
+
+    // Save() diff-syncs by channel id, so a moved subscription looks like "old channel gone, new
+    // channel added". The subscription keeps its id across a move, so deleting the old channel must
+    // not take the reverse index entry with it - by then it already points at the new channel.
+    private async Task RemoveSubIdIndexPointingAt(RedisValue subId, string teamId, string channelId)
+    {
+        if (!subId.HasValue)
+        {
+            return;
+        }
+
+        var indexKey = ToSubIdIndexKey(subId!);
+        if (await _db.StringGetAsync(indexKey) == ToSubIndexEntry(teamId, channelId))
+        {
+            await _db.KeyDeleteAsync(indexKey);
+        }
+    }
+
+    // Rows written before internal ids existed have no id field; backfill-internal-ids gives them one.
+    // Until it runs they get an id that lives only for this instance, deliberately without writing it
+    // back: a read must never write, or a hash deleted mid-read is resurrected by the very lookup
+    // checking whether it is gone.
+    private static InstallationId ToInstallationId(RedisValue stored) =>
+        stored.HasValue ? new InstallationId(stored!) : InstallationId.New();
+
+    private static SubscriptionId ToSubscriptionId(RedisValue stored) =>
+        stored.HasValue ? new SubscriptionId(stored!) : SubscriptionId.New();
+
+    private static string ToInstallationIdIndexKey(string id) => $"InstallationId-{id}";
+
+    private static string ToInstallationIndexEntry(string teamId) => $"{PlatformPrefix}:{teamId}";
+
+    private static string ToSubIdIndexKey(string subId) => $"SubId-{subId}";
+
+    private static string ToSubIndexEntry(string teamId, string channelId) => $"{PlatformPrefix}:{teamId}:{channelId}";
 
     private static string FromTeamAndChannelToChannelSubKey(string teamId, string channelId) =>
         $"SlackChannelSub-{teamId}-{channelId}";

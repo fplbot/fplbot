@@ -76,6 +76,13 @@ targets.Add("backfill-event-index-prod",
     "Backfill the per-event GuildEventIndex-*/SlackEventIndex-* sets on prod from existing channel subscriptions (idempotent)",
     async () => await BackfillEventIndexes(ProdApp));
 
+targets.Add("backfill-internal-ids-test",
+    "Backfill internal installation/subscription ids and their InstallationId-*/SubId-* reverse indexes on the test app (idempotent)",
+    async () => await BackfillInternalIds(TestApp));
+
+targets.Add("backfill-internal-ids-prod",
+    "Backfill internal installation/subscription ids and their InstallationId-*/SubId-* reverse indexes on prod (idempotent)",
+    async () => await BackfillInternalIds(ProdApp));
 targets.Add("publish-slash-command-test",
     "Register or update one Discord slash command in one guild of the test app's Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
     async () => await PublishSlashCommand(TestApp));
@@ -250,6 +257,69 @@ async Task BackfillEventIndexes(string app)
     });
 
     Console.WriteLine($"Backfilled event indexes on {app}: {discordIndexed} Discord channel(s), {slackIndexed} Slack channel(s)");
+}
+
+async Task BackfillInternalIds(string app)
+{
+    const int maxConcurrentFetches = 64;
+
+    var redisUrl = await GetRedisUrl(app);
+    var redis = await ConnectionMultiplexer.ConnectAsync(ParseRedisUrl(redisUrl));
+    var db = redis.GetDatabase();
+
+    var mintedIds = 0;
+    var indexed = 0;
+
+    // Keeps an id that is already there, so a rerun mints nothing new and only repairs a missing
+    // reverse index entry. NotExists also means a concurrent app read converges on one id.
+    async Task<string> EnsureId(string key)
+    {
+        var stored = await db.HashGetAsync(key, "id");
+        if (stored.HasValue) return stored.ToString();
+
+        var candidate = Guid.NewGuid().ToString("N");
+        if (await db.HashSetAsync(key, "id", candidate, When.NotExists))
+        {
+            Interlocked.Increment(ref mintedIds);
+            return candidate;
+        }
+
+        return (await db.HashGetAsync(key, "id")).ToString();
+    }
+
+    async Task BackfillOne(string platform, string installationKey, string externalId, string channelSubIndexKey,
+        Func<string, string> toChannelSubKey)
+    {
+        var installationId = await EnsureId(installationKey);
+        await db.StringSetAsync($"InstallationId-{installationId}", $"{platform}:{externalId}");
+        Interlocked.Increment(ref indexed);
+
+        foreach (var channelIdValue in await db.SetMembersAsync(channelSubIndexKey))
+        {
+            var channelId = channelIdValue.ToString();
+            var subId = await EnsureId(toChannelSubKey(channelId));
+            await db.StringSetAsync($"SubId-{subId}", $"{platform}:{externalId}:{channelId}");
+            Interlocked.Increment(ref indexed);
+        }
+    }
+
+    var guildIds = await db.SetMembersAsync("GuildIndex");
+    await Parallel.ForEachAsync(guildIds, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (guildIdValue, _) =>
+    {
+        var guildId = guildIdValue.ToString();
+        await BackfillOne("discord", $"Guild-{guildId}", guildId, $"GuildChannelSubIndex-{guildId}",
+            channelId => $"GuildSubs-{guildId}-Channel-{channelId}");
+    });
+
+    var teamIds = await db.SetMembersAsync("TeamIndex");
+    await Parallel.ForEachAsync(teamIds, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentFetches }, async (teamIdValue, _) =>
+    {
+        var teamId = teamIdValue.ToString();
+        await BackfillOne("slack", $"TeamId-{teamId}", teamId, $"SlackChannelSubIndex-{teamId}",
+            channelId => $"SlackChannelSub-{teamId}-{channelId}");
+    });
+
+    Console.WriteLine($"Backfilled internal ids on {app}: {mintedIds} id(s) minted, {indexed} reverse index entrie(s) written");
 }
 
 async Task PublishSlashCommand(string app)

@@ -50,7 +50,7 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
         SetLeagueFound(leagueId, "Test League");
 
         var (token, _) = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(),
-            guildId: installedGuild.Id, channelId: Guid.NewGuid().ToString("N"));
+            guildId: installedGuild.ExternalId, channelId: Guid.NewGuid().ToString("N"));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Now following the 'Test League' FPL league", followup.Description);
@@ -64,7 +64,7 @@ public class FollowSlashCommandHandlerTests(AppFixture fixture)
         var leagueId = NewLeagueId();
         SetLeagueFound(leagueId, "Other League");
 
-        var (token, _) = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(), guildId: seeded.Id, channelId: ChannelOf(seeded));
+        var (token, _) = await fixture.AskDiscord("follow", optionValue: leagueId.ToString(), guildId: seeded.ExternalId, channelId: ChannelOf(seeded));
         var followup = await fixture.DiscordCapture.WaitForFollowupAsync(token);
 
         Assert.Contains("Now following the 'Other League' FPL league", followup.Description);
