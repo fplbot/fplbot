@@ -4,6 +4,7 @@ using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 using FplBot.WebApi.Admin;
 using MassTransit;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,10 @@ public class AdminErrorQueueFixture : IAsyncLifetime
     // 5300 is only bound when a fixed port is requested), so every test needing admin/management
     // operations must share this one fixture instance — see AdminErrorQueueCollection below.
     private const int EmulatorPort = 16712;
+
+    // A faulted message carries the trace it belongs to; this is the UI an operator would open it
+    // in. Configured here so the peek can be asserted against a known link.
+    public const string TraceUiUrl = "https://traces.example/detail/{traceId}";
 
     private readonly ServiceBusEmulatorFixture _emulator = new(EmulatorPort);
     private IHost _host = null!;
@@ -68,6 +73,10 @@ public class AdminErrorQueueFixture : IAsyncLifetime
         await _emulator.StartAsync();
 
         var hostBuilder = Host.CreateDefaultBuilder()
+            .ConfigureAppConfiguration(c => c.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["TRACE_UI_URL"] = TraceUiUrl
+            }))
             .ConfigureServices(services =>
             {
                 services.AddLogging(b => b.AddConsole());

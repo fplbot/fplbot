@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Azure.Messaging.ServiceBus;
 
 namespace FplBot.Tests.E2E.Admin;
@@ -69,5 +70,36 @@ public class AdminErrorQueueServiceListTests(AdminErrorQueueFixture fixture)
         Assert.Equal(rawBody, message.OriginalMessageJson);
 
         await fixture.DrainMatchingAsync(AdminErrorQueueFixtureTests.ErrorQueueName, marker);
+    }
+
+    [Fact]
+    public async Task PeekMessagesAsync_CarriesTheTraceIdOfTheTraceThatFaulted()
+    {
+        var key = Guid.NewGuid().ToString();
+
+        using var source = new ActivitySource("AdminErrorQueueServiceListTests");
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = s => s.Name == source.Name,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        using var activity = source.StartActivity("publish poison");
+        var expectedTraceId = activity!.TraceId.ToHexString();
+        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
+
+        var found = await AdminErrorQueueFixtureTests.WaitForMessageAsync(
+            fixture, AdminErrorQueueFixtureTests.ErrorQueueName, key);
+        Assert.True(found);
+
+        var messages = await fixture.Service.PeekMessagesAsync(
+            AdminErrorQueueFixtureTests.ErrorQueueName, ct: TestContext.Current.CancellationToken);
+        var mine = messages.Single(m => m.OriginalMessageJson?.Contains(key, StringComparison.Ordinal) == true);
+
+        Assert.Equal(expectedTraceId, mine.TraceId);
+        Assert.Equal($"https://traces.example/detail/{expectedTraceId}", mine.TraceUrl);
+
+        await fixture.DrainMatchingAsync(AdminErrorQueueFixtureTests.ErrorQueueName, key);
     }
 }
