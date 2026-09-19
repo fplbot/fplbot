@@ -87,11 +87,11 @@ async function addChannelSub() {
 onMounted(load);
 onMounted(loadAvailableChannels);
 
-async function removeChannelSub(channelId: string) {
+async function removeChannelSub(subscriptionId: string, channelId: string) {
   if (!confirm(`Delete the subscription for channel ${channelId}?`)) return;
-  deleting.value = channelId;
+  deleting.value = subscriptionId;
   try {
-    await props.adapter.deleteChannelSubscription(props.entityId, channelId);
+    await props.adapter.deleteChannelSubscription(props.entityId, subscriptionId);
     await load();
   } catch (e) {
     loadError.value = describeAdminError(e);
@@ -132,7 +132,7 @@ async function submitDanger() {
 
     <template v-else-if="details">
       <h1>{{ details.name }}</h1>
-      <p class="entity-id">{{ details.id }}</p>
+      <p class="entity-id">{{ details.externalId }}</p>
 
       <div v-if="adapter.showOverview" class="card">
         <h2>Overview</h2>
@@ -199,7 +199,7 @@ async function submitDanger() {
                   class="btn small icon-btn"
                   title="Manage channel"
                   aria-label="Manage channel"
-                  :to="{ name: adapter.manageRouteName, params: { entityId: entityId, channelId: c.channel } }"
+                  :to="{ name: adapter.manageRouteName, params: { entityId: entityId, subscriptionId: c.id } }"
                 >
                   ✏️
                 </router-link>
@@ -207,8 +207,8 @@ async function submitDanger() {
                   class="btn small danger icon-btn"
                   title="Delete channel subscription"
                   aria-label="Delete channel subscription"
-                  :disabled="deleting === c.channel"
-                  @click="removeChannelSub(c.channel)"
+                  :disabled="deleting === c.id"
+                  @click="removeChannelSub(c.id, c.channel)"
                 >
                   ❌
                 </button>

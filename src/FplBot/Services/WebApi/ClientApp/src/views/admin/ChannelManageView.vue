@@ -10,7 +10,7 @@ import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
 
-const props = defineProps<{ entityId: string; channelId: string; adapter: InstallationAdapter }>();
+const props = defineProps<{ entityId: string; subscriptionId: string; adapter: InstallationAdapter }>();
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -22,7 +22,7 @@ const selectedSubscriptions = ref<Set<EventSubscription>>(new Set());
 const savingSubscriptions = ref(false);
 const subscriptionsFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
-const newChannelId = ref(props.channelId);
+const newChannelId = ref("");
 const movingChannel = ref(false);
 const moveFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 const availableChannels = ref<AvailableChannel[]>([]);
@@ -35,7 +35,7 @@ const subscribedChannelIds = computed(
 
 const moveOptions = computed<ChannelPickerOption[]>(() => {
   const options = availableChannels.value.map((c) => {
-    const isCurrent = c.id === props.channelId;
+    const isCurrent = c.id === channel.value?.channel;
     const taken = !isCurrent && subscribedChannelIds.value.has(c.id);
     return {
       value: c.id,
@@ -44,11 +44,12 @@ const moveOptions = computed<ChannelPickerOption[]>(() => {
       disabled: isCurrent || taken,
     };
   });
-  if (!options.some((o) => o.value === props.channelId)) {
+  const currentChannelId = channel.value?.channel;
+  if (currentChannelId && !options.some((o) => o.value === currentChannelId)) {
     const name = channel.value?.channelName;
     options.unshift({
-      value: props.channelId,
-      label: `${name ? `${formatChannelName(name)} ` : ""}${props.channelId}`,
+      value: currentChannelId,
+      label: `${name ? `${formatChannelName(name)} ` : ""}${currentChannelId}`,
       group: "Current",
       disabled: true,
     });
@@ -116,12 +117,13 @@ async function load() {
       return;
     }
     details.value = data;
-    const found = data.channels.find((c) => c.channel === props.channelId);
+    const found = data.channels.find((c) => c.id === props.subscriptionId);
     if (!found) {
       router.replace({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
       return;
     }
     channel.value = found;
+    newChannelId.value = found.channel;
     selectedSubscriptions.value = new Set(found.subscriptions);
     leagueIdInput.value = found.leagueId;
   } catch (e) {
@@ -148,9 +150,8 @@ onMounted(load);
 onMounted(loadAvailableChannels);
 
 watch(
-  () => props.channelId,
-  async (id) => {
-    newChannelId.value = id;
+  () => props.subscriptionId,
+  async () => {
     subscriptionsFeedback.value = null;
     publishFeedback.value = null;
     leagueFeedback.value = null;
@@ -184,7 +185,7 @@ async function saveSubscriptions() {
   savingSubscriptions.value = true;
   subscriptionsFeedback.value = null;
   try {
-    const res = await props.adapter.updateChannelSubscriptions(props.entityId, props.channelId, [...selectedSubscriptions.value]);
+    const res = await props.adapter.updateChannelSubscriptions(props.entityId, props.subscriptionId, [...selectedSubscriptions.value]);
     subscriptionsFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -199,7 +200,7 @@ async function submitLeague() {
   savingLeague.value = true;
   leagueFeedback.value = null;
   try {
-    const res = await props.adapter.followLeague(props.entityId, props.channelId, leagueIdInput.value);
+    const res = await props.adapter.followLeague(props.entityId, props.subscriptionId, leagueIdInput.value);
     leagueFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -214,7 +215,7 @@ async function submitUnfollowLeague() {
   savingLeague.value = true;
   leagueFeedback.value = null;
   try {
-    const res = await props.adapter.unfollowLeague(props.entityId, props.channelId);
+    const res = await props.adapter.unfollowLeague(props.entityId, props.subscriptionId);
     leagueFeedback.value = { type: "success", text: res.message };
     await load();
   } catch (e) {
@@ -225,17 +226,17 @@ async function submitUnfollowLeague() {
 }
 
 async function submitMoveChannel() {
-  if (!newChannelId.value || newChannelId.value === props.channelId) return;
+  if (!newChannelId.value || newChannelId.value === channel.value?.channel) return;
   const target = availableChannels.value.find((c) => c.id === newChannelId.value);
   const describedTarget = target ? `${formatChannelName(target.name)} (${target.id})` : newChannelId.value;
 
-  if (!confirm(`Move this subscription from ${props.channelId} to ${describedTarget}?`)) return;
+  if (!confirm(`Move this subscription from ${channel.value?.channel} to ${describedTarget}?`)) return;
   movingChannel.value = true;
   moveFeedback.value = null;
   try {
-    const res = await props.adapter.moveChannel(props.entityId, props.channelId, newChannelId.value);
+    const res = await props.adapter.moveChannel(props.entityId, props.subscriptionId, newChannelId.value);
     moveFeedback.value = { type: "success", text: res.message };
-    router.replace({ name: props.adapter.manageRouteName, params: { entityId: props.entityId, channelId: newChannelId.value } });
+    await load();
   } catch (e) {
     moveFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
@@ -247,7 +248,7 @@ async function submitPublish() {
   publishing.value = true;
   publishFeedback.value = null;
   try {
-    const res = await props.adapter.publishStandings(props.entityId, props.channelId);
+    const res = await props.adapter.publishStandings(props.entityId, props.subscriptionId);
     publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
   } catch (e) {
     publishFeedback.value = { type: "error", text: describeAdminError(e) };
@@ -257,10 +258,10 @@ async function submitPublish() {
 }
 
 async function submitDelete() {
-  if (!confirm(`Delete the subscription for channel ${props.channelId}? This cannot be undone.`)) return;
+  if (!confirm(`Delete the subscription for channel ${channel.value?.channel}? This cannot be undone.`)) return;
   deleting.value = true;
   try {
-    await props.adapter.deleteChannelSubscription(props.entityId, props.channelId);
+    await props.adapter.deleteChannelSubscription(props.entityId, props.subscriptionId);
     router.push({ name: props.adapter.detailsRouteName, params: { entityId: props.entityId } });
   } catch (e) {
     loadError.value = describeAdminError(e);

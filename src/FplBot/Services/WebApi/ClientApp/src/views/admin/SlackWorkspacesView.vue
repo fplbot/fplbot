@@ -78,12 +78,12 @@ async function submitUninstall(team: TeamSummary) {
   }
 }
 
-async function removeSub(teamId: string, channelId: string) {
-  const key = `${teamId}-${channelId}`;
+async function removeSub(installationId: string, subscriptionId: string) {
+  const key = `${installationId}-${subscriptionId}`;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteChannelSubscription(teamId, channelId);
+    await deleteChannelSubscription(installationId, subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -172,7 +172,7 @@ async function removeSub(teamId: string, channelId: string) {
                     class="btn small icon-btn"
                     title="Manage channel"
                     aria-label="Manage channel"
-                    :to="{ name: 'admin-team-channel-manage', params: { entityId: t.teamId, channelId: s.channelId } }"
+                    :to="{ name: 'admin-team-channel-manage', params: { entityId: t.id, subscriptionId: s.id } }"
                   >
                     ✏️
                   </router-link>
@@ -180,8 +180,8 @@ async function removeSub(teamId: string, channelId: string) {
                     class="btn small danger icon-btn"
                     title="Delete channel subscription"
                     aria-label="Delete channel subscription"
-                    :disabled="deleting === `${t.teamId}-${s.channelId}`"
-                    @click="removeSub(t.teamId, s.channelId)"
+                    :disabled="deleting === `${t.id}-${s.id}`"
+                    @click="removeSub(t.id, s.id)"
                   >
                     ❌
                   </button>

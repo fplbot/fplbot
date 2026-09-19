@@ -23,6 +23,7 @@ import {
 import type { AvailableChannel, EventSubscription, MessageResponse } from "../api/types";
 
 export interface EntityChannel {
+  id: string;
   channel: string;
   channelName: string | null;
   leagueId: number | null;
@@ -39,6 +40,7 @@ export interface EntityChannel {
 
 export interface EntityDetails {
   id: string;
+  externalId: string;
   name: string | null;
   token?: string | null;
   pendingRemoval?: boolean;
@@ -62,14 +64,14 @@ export interface InstallationAdapter {
   showOverview: boolean;
   danger: "uninstall" | "delete";
   getDetails(id: string): Promise<EntityDetails | null>;
-  updateChannelSubscriptions(id: string, channelId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
-  moveChannel(id: string, channelId: string, newChannelId: string): Promise<MessageResponse>;
+  updateChannelSubscriptions(id: string, subscriptionId: string, subscriptions: EventSubscription[]): Promise<MessageResponse>;
+  moveChannel(id: string, subscriptionId: string, newChannelId: string): Promise<MessageResponse>;
   getAvailableChannels(id: string): Promise<AvailableChannel[]>;
   addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
-  followLeague(id: string, channelId: string, leagueId: number): Promise<MessageResponse>;
-  unfollowLeague(id: string, channelId: string): Promise<MessageResponse>;
-  deleteChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
-  publishStandings(id: string, channelId: string): Promise<{ published: boolean; message: string }>;
+  followLeague(id: string, subscriptionId: string, leagueId: number): Promise<MessageResponse>;
+  unfollowLeague(id: string, subscriptionId: string): Promise<MessageResponse>;
+  deleteChannelSubscription(id: string, subscriptionId: string): Promise<MessageResponse>;
+  publishStandings(id: string, subscriptionId: string): Promise<{ published: boolean; message: string }>;
   uninstall?(id: string): Promise<MessageResponse>;
   deleteEntity?(id: string): Promise<MessageResponse>;
 }
@@ -89,7 +91,7 @@ export const slackInstallationAdapter: InstallationAdapter = {
   async getDetails(id) {
     const data = await getTeam(id);
     if (data == null) return null;
-    return { id: data.teamId, name: data.teamName, token: data.token, pendingRemoval: data.pendingRemoval, channels: data.channels };
+    return { id: data.id, externalId: data.teamId, name: data.teamName, token: data.token, pendingRemoval: data.pendingRemoval, channels: data.channels };
   },
   updateChannelSubscriptions,
   moveChannel,
@@ -116,7 +118,7 @@ export const discordInstallationAdapter: InstallationAdapter = {
   async getDetails(id) {
     const data = await getGuild(id);
     if (data == null) return null;
-    return { id: data.guildId, name: data.guildName, channels: data.channels };
+    return { id: data.id, externalId: data.guildId, name: data.guildName, channels: data.channels };
   },
   updateChannelSubscriptions: updateGuildChannelSubscriptions,
   moveChannel: moveGuildChannel,

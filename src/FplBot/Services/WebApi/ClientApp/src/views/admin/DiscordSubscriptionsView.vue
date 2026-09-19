@@ -71,12 +71,12 @@ void loadFailureStats();
 
 const totalPages = () => Math.max(1, Math.ceil(totalCount.value / pageSize));
 
-async function removeSub(guildId: string, channelId: string) {
-  const key = `${guildId}-${channelId}`;
+async function removeSub(installationId: string, subscriptionId: string) {
+  const key = `${installationId}-${subscriptionId}`;
   deleting.value = key;
   error.value = "";
   try {
-    await deleteDiscordSubscription(guildId, channelId);
+    await deleteDiscordSubscription(installationId, subscriptionId);
     await load();
   } catch (e) {
     error.value = describeAdminError(e);
@@ -162,22 +162,22 @@ async function removeGuild(guildId: string, guildName: string) {
           <div class="guild-header">
             <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
             <div class="guild-actions">
-              <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.guildId } }">
+              <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.id } }">
                 Edit
               </router-link>
               <div class="guild-actions-danger">
                 <button
                   v-if="g.subscriptions.length > 0"
                   class="btn small danger"
-                  :disabled="deleting === `guild-subs-${g.guildId}`"
-                  @click="removeAllSubs(g.guildId, g.guildName)"
+                  :disabled="deleting === `guild-subs-${g.id}`"
+                  @click="removeAllSubs(g.id, g.guildName)"
                 >
                   Delete all subs
                 </button>
                 <button
                   class="btn small danger"
-                  :disabled="deleting === `guild-${g.guildId}`"
-                  @click="removeGuild(g.guildId, g.guildName)"
+                  :disabled="deleting === `guild-${g.id}`"
+                  @click="removeGuild(g.id, g.guildName)"
                 >
                   Delete guild
                 </button>
@@ -206,7 +206,7 @@ async function removeGuild(guildId: string, guildName: string) {
                     class="btn small icon-btn"
                     title="Manage channel"
                     aria-label="Manage channel"
-                    :to="{ name: 'admin-guild-channel-manage', params: { entityId: g.guildId, channelId: s.channelId } }"
+                    :to="{ name: 'admin-guild-channel-manage', params: { entityId: g.id, subscriptionId: s.id } }"
                   >
                     ✏️
                   </router-link>
@@ -214,8 +214,8 @@ async function removeGuild(guildId: string, guildName: string) {
                     class="btn small danger icon-btn"
                     title="Delete channel subscription"
                     aria-label="Delete channel subscription"
-                    :disabled="deleting === `${g.guildId}-${s.channelId}`"
-                    @click="removeSub(g.guildId, s.channelId)"
+                    :disabled="deleting === `${g.id}-${s.id}`"
+                    @click="removeSub(g.id, s.id)"
                   >
                     ❌
                   </button>

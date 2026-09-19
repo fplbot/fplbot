@@ -128,10 +128,10 @@ const router = createRouter({
           props: (route) => ({ entityId: route.params.entityId, adapter: slackInstallationAdapter }),
         },
         {
-          path: "teams/:entityId/channels/:channelId",
+          path: "teams/:entityId/subscriptions/:subscriptionId",
           name: "admin-team-channel-manage",
           component: () => import("./views/admin/ChannelManageView.vue"),
-          props: (route) => ({ entityId: route.params.entityId, channelId: route.params.channelId, adapter: slackInstallationAdapter }),
+          props: (route) => ({ entityId: route.params.entityId, subscriptionId: route.params.subscriptionId, adapter: slackInstallationAdapter }),
         },
         {
           path: "guilds/:entityId",
@@ -140,10 +140,10 @@ const router = createRouter({
           props: (route) => ({ entityId: route.params.entityId, adapter: discordInstallationAdapter }),
         },
         {
-          path: "guilds/:entityId/channels/:channelId",
+          path: "guilds/:entityId/subscriptions/:subscriptionId",
           name: "admin-guild-channel-manage",
           component: () => import("./views/admin/ChannelManageView.vue"),
-          props: (route) => ({ entityId: route.params.entityId, channelId: route.params.channelId, adapter: discordInstallationAdapter }),
+          props: (route) => ({ entityId: route.params.entityId, subscriptionId: route.params.subscriptionId, adapter: discordInstallationAdapter }),
         },
       ],
     },

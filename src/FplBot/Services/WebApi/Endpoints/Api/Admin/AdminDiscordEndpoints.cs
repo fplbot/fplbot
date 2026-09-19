@@ -2,6 +2,7 @@ using Discord.Net.HttpClients;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using FplBot.Data;
+using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord;
 using FplBot.Domain;
@@ -12,7 +13,7 @@ using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record GuildWithSubsDto(string GuildId, string GuildName, IEnumerable<ChannelSubscriptionDto> Subscriptions);
+public record GuildWithSubsDto(string Id, string GuildId, string GuildName, IEnumerable<ChannelSubscriptionDto> Subscriptions);
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
@@ -28,6 +29,16 @@ public static class AdminDiscordEndpoints
 {
     // Slash commands are only ever managed for this one hardcoded test guild today —
     // carried over unchanged from Pages/Admin/Discord/Slashcommands.cshtml.cs.
+    private static async Task<string?> ResolveGuildId(IIdentityResolver resolver, string installationId) =>
+        await resolver.ResolveInstallation(new InstallationId(installationId)) is { Platform: ChatPlatform.Discord } installation
+            ? installation.ExternalId
+            : null;
+
+    private static async Task<(string GuildId, string ChannelId)?> ResolveChannel(IIdentityResolver resolver, string subscriptionId) =>
+        await resolver.ResolveSubscription(new SubscriptionId(subscriptionId)) is { Platform: ChatPlatform.Discord } subscription
+            ? (subscription.InstallationExternalId, subscription.ChannelId)
+            : null;
+
     private const string TestGuildId = "893932860162064414";
 
     public static void Map(RouteGroupBuilder group)
@@ -39,18 +50,18 @@ public static class AdminDiscordEndpoints
         group.MapPost("/discord/slashcommands/uninstall", UninstallSlashCommands);
 
         group.MapGet("/discord/servers", GetSubscriptions);
-        group.MapDelete("/discord/servers/{guildId}/{channelId}", DeleteSubscription);
-        group.MapDelete("/discord/guilds/{guildId}/subscriptions", DeleteAllSubscriptionsForGuild);
-        group.MapDelete("/discord/guilds/{guildId}", DeleteGuild);
+        group.MapDelete("/discord/servers/{installationId}/{subscriptionId}", DeleteSubscription);
+        group.MapDelete("/discord/guilds/{installationId}/subscriptions", DeleteAllSubscriptionsForGuild);
+        group.MapDelete("/discord/guilds/{installationId}", DeleteGuild);
 
-        group.MapGet("/discord/guilds/{guildId}", GetGuild);
-        group.MapGet("/discord/guilds/{guildId}/available-channels", GetAvailableChannels);
-        group.MapPost("/discord/guilds/{guildId}/channels", AddChannel);
-        group.MapPost("/discord/guilds/{guildId}/channels/{channelId}/publish-standings", PublishStandings);
-        group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/subscriptions", UpdateChannelSubscriptions);
-        group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/channel", MoveChannel);
-        group.MapPut("/discord/guilds/{guildId}/channels/{channelId}/league", FollowLeague);
-        group.MapDelete("/discord/guilds/{guildId}/channels/{channelId}/league", UnfollowLeague);
+        group.MapGet("/discord/guilds/{installationId}", GetGuild);
+        group.MapGet("/discord/guilds/{installationId}/available-channels", GetAvailableChannels);
+        group.MapPost("/discord/guilds/{installationId}/channels", AddChannel);
+        group.MapPost("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/publish-standings", PublishStandings);
+        group.MapPut("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/subscriptions", UpdateChannelSubscriptions);
+        group.MapPut("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/channel", MoveChannel);
+        group.MapPut("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/league", FollowLeague);
+        group.MapDelete("/discord/guilds/{installationId}/subscriptions/{subscriptionId}/league", UnfollowLeague);
 
         group.MapGet("/discord/failures", GetFailureStats);
         group.MapPost("/discord/failures/reset", ResetFailures);
@@ -142,7 +153,7 @@ public static class AdminDiscordEndpoints
         var installations = (await repo.GetAllInstallations()).ToList();
 
         var guildsWithSubs = installations
-            .Select(i => new GuildWithSubsDto(i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c))))
+            .Select(i => new GuildWithSubsDto(i.Id.Value, i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c))))
             .ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
@@ -168,7 +179,7 @@ public static class AdminDiscordEndpoints
     }
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
-        new(guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
+        new(channel.Id.Value, guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
             ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason);
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
@@ -177,11 +188,14 @@ public static class AdminDiscordEndpoints
     private static FplEvent ToFplEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
 
     internal static async Task<IResult> GetAvailableChannels(
-        string guildId,
+        string installationId,
+        IIdentityResolver resolver,
         IGuildRepository repo,
         IDiscordClient discordClient,
         ILogger<Program> logger)
     {
+        if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
@@ -219,12 +233,15 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> GetGuild(
-        string guildId,
+        string installationId,
+        IIdentityResolver resolver,
         IGuildRepository repo,
         ILeagueClient leagueClient,
         IDiscordClient discordClient,
         ILogger<Program> logger)
     {
+        if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
@@ -266,12 +283,16 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> PublishStandings(
-        string guildId,
-        string channelId,
+        string installationId,
+        string subscriptionId,
+        IIdentityResolver resolver,
         IGuildRepository repo,
         ISendEndpointProvider sendEndpointProvider,
         IGlobalSettingsClient gameweekClient)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (guildId, channelId) = resolved;
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
@@ -291,11 +312,15 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(
-        string guildId,
-        string channelId,
+        string installationId,
+        string subscriptionId,
         UpdateGuildChannelSubscriptionsRequest request,
+        IIdentityResolver resolver,
         IGuildRepository repo)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (guildId, channelId) = resolved;
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
@@ -310,12 +335,16 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> FollowLeague(
-        string guildId,
-        string channelId,
+        string installationId,
+        string subscriptionId,
         FollowGuildLeagueRequest request,
+        IIdentityResolver resolver,
         IGuildRepository repo,
         ILeagueClient leagueClient)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (guildId, channelId) = resolved;
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
         if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
@@ -334,10 +363,14 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> UnfollowLeague(
-        string guildId,
-        string channelId,
+        string installationId,
+        string subscriptionId,
+        IIdentityResolver resolver,
         IGuildRepository repo)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (guildId, channelId) = resolved;
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
         if (installation.GetChannel(channelId) is null) return TypedResults.NotFound();
@@ -349,10 +382,13 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> AddChannel(
-        string guildId,
+        string installationId,
         AddGuildChannelRequest request,
+        IIdentityResolver resolver,
         IGuildRepository repo)
     {
+        if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
@@ -373,12 +409,16 @@ public static class AdminDiscordEndpoints
     }
 
     internal static async Task<IResult> MoveChannel(
-        string guildId,
-        string channelId,
+        string installationId,
+        string subscriptionId,
         MoveGuildChannelRequest request,
+        IIdentityResolver resolver,
         IGuildRepository repo,
         IPublishEndpoint publishEndpoint)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (guildId, channelId) = resolved;
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation == null) return TypedResults.NotFound();
 
@@ -403,8 +443,11 @@ public static class AdminDiscordEndpoints
         return result;
     }
 
-    internal static async Task<IResult> DeleteSubscription(string guildId, string channelId, IGuildRepository repo)
+    internal static async Task<IResult> DeleteSubscription(string installationId, string subscriptionId, IIdentityResolver resolver, IGuildRepository repo)
     {
+        if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
+        var (guildId, channelId) = resolved;
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation is not null)
         {
@@ -415,8 +458,10 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { message = $"Deleted sub {guildId}-{channelId}" });
     }
 
-    internal static async Task<IResult> DeleteAllSubscriptionsForGuild(string guildId, IGuildRepository repo)
+    internal static async Task<IResult> DeleteAllSubscriptionsForGuild(string installationId, IIdentityResolver resolver, IGuildRepository repo)
     {
+        if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         var count = installation?.ChannelSubscriptions.Count ?? 0;
         if (installation is not null)
@@ -437,8 +482,10 @@ public static class AdminDiscordEndpoints
     // triggered manually from the admin UI instead of automatically. This only forgets our
     // own tracked data; it doesn't call Discord to remove the bot from the server (there's no
     // "leave guild" support in DiscordClient today).
-    internal static async Task<IResult> DeleteGuild(string guildId, IGuildRepository repo)
+    internal static async Task<IResult> DeleteGuild(string installationId, IIdentityResolver resolver, IGuildRepository repo)
     {
+        if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
+
         var installation = await repo.FindInstallationByTeamId(guildId);
         if (installation is not null)
         {
