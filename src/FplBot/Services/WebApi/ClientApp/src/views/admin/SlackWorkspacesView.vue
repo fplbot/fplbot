@@ -7,10 +7,7 @@ import { useAdminListQuery } from "../../composables/useAdminListQuery";
 import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
-
-// The seeded throwaway workspace/server is a REAL one you can open; the other dev seeds are fake.
-const isThrowaway = (name: string | null) =>
-  import.meta.env.DEV && (name ?? "").toLowerCase().includes("throwaway");
+import { isThrowaway } from "../../composables/installationAdapters";
 
 
 const pageSize = 25;

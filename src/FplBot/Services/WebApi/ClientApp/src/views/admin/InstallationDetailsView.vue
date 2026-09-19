@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { isThrowaway } from "../../composables/installationAdapters";
 import type { InstallationAdapter, EntityDetails } from "../../composables/installationAdapters";
 import type { AvailableChannel } from "../../api/types";
 import { deleteChannelSubscription } from "../../api/api";
@@ -12,8 +13,6 @@ import { formatDateTime, formatChannelName } from "../../formatting";
 
 const props = defineProps<{ entityId: string; adapter: InstallationAdapter }>();
 
-// Only useful against the throwaway dev workspace/guild, so it stays out of the deployed admin.
-const isDev = import.meta.env.DEV;
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -138,7 +137,7 @@ async function submitDanger() {
       <h1>{{ details.name }}</h1>
       <p class="entity-id">{{ details.externalId }}</p>
 
-      <div v-if="isDev" class="alert alert-warning dev-callout">
+      <div v-if="isThrowaway(details.name)" class="alert alert-warning dev-callout">
         <span><strong>NB!</strong> {{ adapter.devCallout }}</span>
         <a :href="adapter.appUrl(details.externalId)" target="_blank" rel="noopener" class="btn small btn-secondary external">
           Open in {{ adapter.platformName }}
@@ -178,7 +177,7 @@ async function submitDanger() {
                 </div>
                 <div class="channel-id">
                   <a
-                    v-if="isDev && !c.channel.startsWith('#')"
+                    v-if="isThrowaway(details.name) && !c.channel.startsWith('#')"
                     :href="adapter.channelUrl(details.externalId, c.channel)"
                     target="_blank"
                     rel="noopener"

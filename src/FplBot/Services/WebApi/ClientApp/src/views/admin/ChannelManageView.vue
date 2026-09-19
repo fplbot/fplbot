@@ -12,7 +12,7 @@ import {
   deleteChannelSubscription,
   publishStandings,
 } from "../../api/api";
-import { slackInstallationAdapter, discordInstallationAdapter } from "../../composables/installationAdapters";
+import { slackInstallationAdapter, discordInstallationAdapter, isThrowaway } from "../../composables/installationAdapters";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
 import type { AvailableChannel, EventSubscription } from "../../api/types";
 import ChannelPicker from "../../components/ChannelPicker.vue";
@@ -30,8 +30,6 @@ const adapter = ref<InstallationAdapter | null>(null);
 // page still renders the workspace around it.
 const entityId = ref("");
 
-// Only useful against the throwaway dev workspace/guild, so it stays out of the deployed admin.
-const isDev = import.meta.env.DEV;
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -312,7 +310,7 @@ async function submitDelete() {
       <p class="channel-name">Channel: <span v-if="channel.channelName">{{ formatChannelName(channel.channelName) }}</span><span v-else class="unavailable">name unavailable</span></p>
       <p class="channel-id">
         <a
-          v-if="isDev && details && !channel.channel.startsWith('#')"
+          v-if="details && isThrowaway(details.name) && !channel.channel.startsWith('#')"
           :href="adapter.channelUrl(details.externalId, channel.channel)"
           target="_blank"
           rel="noopener"
@@ -322,7 +320,7 @@ async function submitDelete() {
         <span class="lookup-note">(name looked up live via {{ adapter.apiLabel }}, not stored)</span>
       </p>
 
-      <div v-if="isDev && details" class="alert alert-warning dev-callout">
+      <div v-if="details && isThrowaway(details.name)" class="alert alert-warning dev-callout">
         <span><strong>NB!</strong> {{ adapter.devCallout }}</span>
         <a
           v-if="!channel.channel.startsWith('#')"

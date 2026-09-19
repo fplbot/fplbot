@@ -10,6 +10,11 @@ import {
 } from "../api/api";
 import type { AvailableChannel, EventSubscription, MessageResponse } from "../api/types";
 
+// The seeded throwaway workspace/server is a REAL one you can open in Slack/Discord; every other
+// dev seed is fabricated, so linking to it or warning about it would be a lie.
+export const isThrowaway = (name: string | null | undefined) =>
+  import.meta.env.DEV && (name ?? "").toLowerCase().includes("throwaway");
+
 export interface EntityChannel {
   id: string;
   channel: string;
