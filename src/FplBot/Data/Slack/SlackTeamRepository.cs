@@ -49,16 +49,10 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     private async Task<Installation> LoadInstallation(string teamId)
     {
-        var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField]);
+        var fetched = await _db.HashGetAsync(FromTeamIdToTeamKey(teamId), [_accessTokenField, _teamNameField, _pendingRemovalField, _idField]);
         var pendingRemoval = fetched[2].HasValue && (bool)fetched[2];
         var channels = await GetChannelSubscriptions(teamId);
-        var (id, minted) = await EnsureId(FromTeamIdToTeamKey(teamId), InstallationId.New().Value);
-        if (minted)
-        {
-            await _db.StringSetAsync(ToInstallationIdIndexKey(id), ToInstallationIndexEntry(teamId));
-        }
-
-        return Installation.Load(new InstallationId(id), teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
+        return Installation.Load(ToInstallationId(fetched[3]), teamId, fetched[1]!, fetched[0].ToString() ?? string.Empty, channels, pendingRemoval);
     }
 
     private static FplEvent ToDomainEvent(EventSubscription e) => Enum.Parse<FplEvent>(e.ToString());
@@ -149,6 +143,7 @@ public class SlackTeamRepository : ISlackTeamRepository
 
         await _db.KeyDeleteAsync(ToChannelSubIndexKey(teamId));
         await _db.SetRemoveAsync(TeamIndexKey, teamId);
+        await _db.KeyDeleteAsync(ToInstallationIdIndexKey(installation.Id.Value));
 
         await _db.KeyDeleteAsync(FromTeamIdToTeamKey(teamId));
     }
@@ -342,7 +337,8 @@ public class SlackTeamRepository : ISlackTeamRepository
         var fetched = await _db.HashGetAsync(FromTeamAndChannelToChannelSubKey(teamId, channelId),
         [
             _channelSubChannelIdField, _channelSubLeagueIdField, _channelSubSubscriptionsField,
-            _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField
+            _channelSubFailureCountField, _channelSubFailingSinceField, _channelSubLastFailureReasonField,
+            _idField
         ]);
         if (!fetched[0].HasValue)
         {
@@ -357,14 +353,7 @@ public class SlackTeamRepository : ISlackTeamRepository
             ? DateTimeOffset.FromUnixTimeMilliseconds((long)fetched[4])
             : (DateTimeOffset?)null;
         var lastFailureReason = fetched[5].HasValue ? fetched[5].ToString() : null;
-        var key = FromTeamAndChannelToChannelSubKey(teamId, channelId);
-        var (subId, mintedSubId) = await EnsureId(key, SubscriptionId.New().Value);
-        if (mintedSubId)
-        {
-            await _db.StringSetAsync(ToSubIdIndexKey(subId), ToSubIndexEntry(teamId, channelId));
-        }
-
-        return ChannelSubscription.Load(new SubscriptionId(subId), channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
+        return ChannelSubscription.Load(ToSubscriptionId(fetched[6]), channelId, domainLeagueId, subs.Select(ToDomainEvent), failureCount, failingSince,
             lastFailureReason);
     }
 
@@ -397,21 +386,15 @@ public class SlackTeamRepository : ISlackTeamRepository
         }
     }
 
-    // Legacy rows predate the id field. Mint one with NotExists so concurrent readers converge on a
-    // single value instead of each inventing its own. Only a freshly minted id needs its reverse
-    // index entry written here - rewriting it on every read would paper over a stale index.
-    private async Task<(string Id, bool Minted)> EnsureId(RedisKey key, string candidate)
-    {
-        var stored = await _db.HashGetAsync(key, _idField);
-        if (stored.HasValue)
-        {
-            return (stored!, false);
-        }
+    // Rows written before internal ids existed have no id field; backfill-internal-ids gives them one.
+    // Until it runs they get an id that lives only for this instance, deliberately without writing it
+    // back: a read must never write, or a hash deleted mid-read is resurrected by the very lookup
+    // checking whether it is gone.
+    private static InstallationId ToInstallationId(RedisValue stored) =>
+        stored.HasValue ? new InstallationId(stored!) : InstallationId.New();
 
-        return await _db.HashSetAsync(key, _idField, candidate, When.NotExists)
-            ? (candidate, true)
-            : ((await _db.HashGetAsync(key, _idField))!, false);
-    }
+    private static SubscriptionId ToSubscriptionId(RedisValue stored) =>
+        stored.HasValue ? new SubscriptionId(stored!) : SubscriptionId.New();
 
     private static string ToInstallationIdIndexKey(string id) => $"InstallationId-{id}";
 
