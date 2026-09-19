@@ -77,11 +77,11 @@ targets.Add("backfill-event-index-prod",
     async () => await BackfillEventIndexes(ProdApp));
 
 targets.Add("publish-slash-command-test",
-    "Register or update one Discord slash command on the test app's Discord application (SLASH_COMMAND=<name>, requires HEROKU_API_KEY)",
+    "Register or update one Discord slash command in one guild of the test app's Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
     async () => await PublishSlashCommand(TestApp));
 
 targets.Add("publish-slash-command-prod",
-    "Register or update one Discord slash command on the prod Discord application (SLASH_COMMAND=<name>, requires HEROKU_API_KEY)",
+    "Register or update one Discord slash command in one guild of the prod Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
     async () => await PublishSlashCommand(ProdApp));
 
 await targets.RunAndExitAsync(args);
@@ -261,12 +261,18 @@ async Task PublishSlashCommand(string app)
         throw new Exception($"Set SLASH_COMMAND to one of: {string.Join(", ", commands.Keys)}");
     }
 
+    var guild = Env("GUILD_ID", "");
+    if (guild.Length == 0)
+    {
+        throw new Exception("Set GUILD_ID to the guild to publish the command to");
+    }
+
     var (appId, _) = await Command.ReadAsync("heroku", $"config:get DiscordAppId --app {app}");
     var (token, _) = await Command.ReadAsync("heroku", $"config:get DISCORD_TOKEN --app {app}");
 
     using var http = new HttpClient();
     http.DefaultRequestHeaders.Add("Authorization", $"Bot {token.Trim()}");
-    var response = await http.PostAsync($"https://discord.com/api/v10/applications/{appId.Trim()}/commands",
+    var response = await http.PostAsync($"https://discord.com/api/v10/applications/{appId.Trim()}/guilds/{guild}/commands",
         new StringContent(JsonSerializer.Serialize(command), Encoding.UTF8, "application/json"));
     var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -275,7 +281,7 @@ async Task PublishSlashCommand(string app)
         throw new Exception($"Discord rejected /{name} ({(int)response.StatusCode}): {responseBody}");
     }
 
-    Console.WriteLine($"Published /{name} globally on the Discord application of {app}. Global commands can take up to an hour to reach every guild.");
+    Console.WriteLine($"Published /{name} to guild {guild} of {app}'s Discord application.");
 }
 
 Dictionary<string, object> SlashCommands()
