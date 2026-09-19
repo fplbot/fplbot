@@ -88,11 +88,11 @@ internal static class DevSeeder
     {
         Console.WriteLine($"[DevSeeder] Slack token for T0C2TLMHKDK: {SlackToken[..Math.Min(12, SlackToken.Length)]}... (set DEV_SEED_SLACK_TOKEN in FplBot.AppHost user secrets for a real one)");
 
-        await SeedSlackWorkspace(db, "DEV-SLACK", "Dev Slack Workspace", "xoxb-dev-fake-token", "C0DEV000001", 12345, AllSubs,
+        await SeedSlackWorkspace(db, "DEV-SLACK", "DevSeededWorkspace", "xoxb-dev-fake-token", "C0DEV000001", 12345, AllSubs,
             "5eedcafe00000000000000000000deac", "5eedbeef000000000000000001234501");
-        await SeedSlackWorkspace(db, "DEV-SLACK-2", "Dev Slack Workspace 2", "xoxb-dev-fake-token-2", "C0DEV000002", 23456, "Standings Captains Transfers",
+        await SeedSlackWorkspace(db, "DEV-SLACK-2", "DevSeededWorkspace 2", "xoxb-dev-fake-token-2", "C0DEV000002", 23456, "Standings Captains Transfers",
             "5eedcafe0000000000000000000deac2", "5eedbeef000000000000000002345601");
-        await SeedSlackWorkspace(db, "DEV-SLACK-3", "Dev Slack Workspace 3", "xoxb-dev-fake-token-3", "C0DEV000003", 34567, "PriceChanges InjuryUpdates Deadlines",
+        await SeedSlackWorkspace(db, "DEV-SLACK-3", "DevSeededWorkspace 3", "xoxb-dev-fake-token-3", "C0DEV000003", 34567, "PriceChanges InjuryUpdates Deadlines",
             "5eedcafe0000000000000000000deac3", "5eedbeef000000000000000003456701");
         await SeedSlackWorkspace(db, "T0C2TLMHKDK", "fplbotdev-throwaway-slack", SlackToken, "C0C2YFF57HQ", 555, AllSubs,
             "5eedcafe000000000000000000000c2d", "5eedbeef000000000000000000055501");
@@ -100,7 +100,7 @@ internal static class DevSeeder
         // No channel subscriptions at all — a bare install to exercise the "no channels" path in the admin UI.
         await db.HashSetAsync("TeamId-DEV-SLACK-BARE", [
             new HashEntry("accessToken", "xoxb-dev-fake-token-bare"),
-            new HashEntry("teamName", "Dev Slack Workspace (bare install)")
+            new HashEntry("teamName", "DevSeededWorkspace (bare install)")
         ]);
         await SeedInstallationId(db, "slack", "TeamId-DEV-SLACK-BARE", "DEV-SLACK-BARE", "5eedcafe00000000000000000deacbae");
         Console.WriteLine("[DevSeeder] Inserted Slack workspace TeamId-DEV-SLACK-BARE (no channel subscriptions).");
@@ -134,7 +134,7 @@ internal static class DevSeeder
     private static async Task SeedDiscord(IDatabase db)
     {
         await db.HashSetAsync("Guild-111222333444555666", [
-            new HashEntry("name", "Dev Discord Guild")
+            new HashEntry("name", "DevSeededServer")
         ]);
         await db.SetAddAsync("GuildIndex", "111222333444555666");
         await SeedInstallationId(db, "discord", "Guild-111222333444555666", "111222333444555666", "5eedcafe000000111222333444555666");
