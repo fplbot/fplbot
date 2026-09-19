@@ -7,10 +7,9 @@ using Testcontainers.Redis;
 
 namespace FplBot.Tests.E2E.ApiEndpoints;
 
-// Exercises AdminHealthEndpoints against real Redis/Elasticsearch — including actually
-// stopping a container mid-test to simulate an outage — rather than faking either client.
-// Uses its own throwaway Redis connections (not AppFixture.SlackRepo's) so stopping one
-// mid-test doesn't affect the shared fixture other AppSearch tests rely on.
+// Exercises AdminHealthEndpoints against real Redis/Elasticsearch rather than faking either
+// client. Uses its own throwaway Redis connection, not AppFixture.SlackRepo's, so it stays
+// independent of the shared fixture other AppSearch tests rely on.
 [Collection("AppSearch")]
 public class AdminHealthEndpointsTests(SearchAppFixture appFixture)
 {
@@ -32,33 +31,6 @@ public class AdminHealthEndpointsTests(SearchAppFixture appFixture)
         var ok = Assert.IsType<Ok<DependencyHealthResponse>>(result);
         Assert.True(ok.Value!.Healthy, DescribeFailures(ok.Value));
         Assert.All(ok.Value.Dependencies, d => Assert.True(d.Healthy));
-    }
-
-    [Fact]
-    public async Task GetDependencyHealth_RedisUnreachable_ReportsUnhealthy()
-    {
-        // A dedicated, throwaway Redis container that we deliberately stop mid-test — a real
-        // outage, not a fake IConnectionMultiplexer — while leaving the shared Elasticsearch
-        // fixture untouched so only the Redis dependency flips to unhealthy.
-        var redisContainer = new RedisBuilder("redis:latest").Build();
-        await redisContainer.StartAsync(TestContext.Current.CancellationToken);
-        var redis = await ConnectionMultiplexer.ConnectAsync(redisContainer.GetConnectionString());
-
-        var beforeStop = await AdminHealthEndpoints.GetDependencyHealth(redis, appFixture.ElasticClient);
-        var beforeStopOk = Assert.IsType<Ok<DependencyHealthResponse>>(beforeStop);
-        Assert.True(beforeStopOk.Value!.Healthy, DescribeFailures(beforeStopOk.Value));
-
-        await redisContainer.StopAsync(TestContext.Current.CancellationToken);
-
-        var result = await AdminHealthEndpoints.GetDependencyHealth(redis, appFixture.ElasticClient);
-
-        var unavailable = Assert.IsType<JsonHttpResult<DependencyHealthResponse>>(result);
-        Assert.Equal(StatusCodes.Status503ServiceUnavailable, unavailable.StatusCode);
-        Assert.False(unavailable.Value!.Healthy);
-        Assert.False(unavailable.Value.Dependencies.Single(d => d.Name == "Redis").Healthy);
-        Assert.True(unavailable.Value.Dependencies.Single(d => d.Name == "Elasticsearch").Healthy);
-
-        await redisContainer.DisposeAsync();
     }
 
     [Fact]

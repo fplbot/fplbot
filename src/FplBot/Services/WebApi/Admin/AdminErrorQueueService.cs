@@ -28,6 +28,20 @@ public class AdminErrorQueueService(
 {
     private const string ErrorQueueSuffix = "_error";
 
+    // These queues hold a handful of messages, so a drain is one full batch plus the empty receive
+    // that ends it - and that empty receive is the whole cost. Keep the wait short, and confirm an
+    // empty batch with a second receive so a momentarily empty read can't truncate a drain.
+    private static readonly TimeSpan ReceiveWait = TimeSpan.FromMilliseconds(500);
+
+    private static async Task<IReadOnlyList<ServiceBusReceivedMessage>> ReceiveBatchAsync(
+        ServiceBusReceiver receiver, int maxMessages, CancellationToken ct)
+    {
+        var batch = await receiver.ReceiveMessagesAsync(maxMessages, ReceiveWait, ct);
+        return batch.Count > 0
+            ? batch
+            : await receiver.ReceiveMessagesAsync(maxMessages, ReceiveWait, ct);
+    }
+
     // Every receive-based operation below locks messages it looks at, and this transport's lock
     // duration is minutes, not seconds. Two overlapping operations on the same queue therefore
     // don't just interleave — the second one sees an empty queue (everything is locked by the
@@ -205,7 +219,7 @@ public class AdminErrorQueueService(
         {
             while (match is null && held.Count < maxScanned)
             {
-                var batch = await receiver.ReceiveMessagesAsync(maxMessages: 100, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
+                var batch = await ReceiveBatchAsync(receiver, maxMessages: 100, ct);
                 if (batch.Count == 0)
                     break;
 
@@ -248,7 +262,7 @@ public class AdminErrorQueueService(
 
         while (true)
         {
-            var messages = await receiver.ReceiveMessagesAsync(maxMessages: 50, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
+            var messages = await ReceiveBatchAsync(receiver, maxMessages: 50, ct);
             if (messages.Count == 0)
                 break;
 
@@ -294,7 +308,7 @@ public class AdminErrorQueueService(
         {
             while (retried < maxRetried)
             {
-                var batch = await receiver.ReceiveMessagesAsync(maxMessages: 50, maxWaitTime: TimeSpan.FromSeconds(5), cancellationToken: ct);
+                var batch = await ReceiveBatchAsync(receiver, maxMessages: 50, ct);
                 if (batch.Count == 0)
                     break;
 
