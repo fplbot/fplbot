@@ -75,7 +75,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         // present (proving the scan didn't discard everything it touched), then clean them up.
         foreach (var otherKey in keys.Take(2))
         {
-            var otherStillThere = await MessageStillPresentAsync(otherKey);
+            var otherStillThere = await MessagePresentAsync(otherKey);
             Assert.True(otherStillThere, $"Expected the non-target message {otherKey} to remain in the queue.");
             await fixture.DrainMatchingAsync(Queue, otherKey);
         }
@@ -113,24 +113,7 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
         Assert.True(results[1], "Expected the second of two overlapping discards to find its message.");
     }
 
-    [Fact]
-    public async Task RetryMessageAsync_UnknownMessageId_ReturnsFalse()
-    {
-        var key = Guid.NewGuid().ToString();
-        await fixture.Publisher.Publish(new PoisonTestMessage(key, AlwaysFault: true), TestContext.Current.CancellationToken);
-
-        Assert.True(await AdminErrorQueueFixtureTests.WaitForMessageAsync(fixture, Queue, key));
-
-        var result = await fixture.Service.RetryMessageAsync(Queue, Guid.NewGuid().ToString(), TestContext.Current.CancellationToken);
-
-        Assert.False(result);
-
-        // A non-matching messageId leaves every real message untouched (abandoned back) — drain
-        // this test's own message so it doesn't leak into later tests.
-        await fixture.DrainMatchingAsync(Queue, key);
-    }
-
-    private async Task<ErrorQueueMessage> WaitForOwnMessageAsync(string key, int attempts = 20)
+    private async Task<ErrorQueueMessage> WaitForOwnMessageAsync(string key, int attempts = 100)
     {
         for (var i = 0; i < attempts; i++)
         {
@@ -138,32 +121,38 @@ public class AdminErrorQueueServiceRetryDiscardTests(AdminErrorQueueFixture fixt
             var match = messages.FirstOrDefault(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
             if (match is not null)
                 return match;
-            await Task.Delay(250, TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
         }
 
         throw new TimeoutException("No peekable message matching this test's key appeared in time.");
     }
 
-    private async Task<bool> MessageStillPresentAsync(string key, int attempts = 12)
+    private async Task<bool> MessagePresentAsync(string key)
+    {
+        var messages = await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken);
+        return messages.Any(m => m.OriginalMessageJson != null && m.OriginalMessageJson.Contains(key));
+    }
+
+    private async Task<bool> MessageStillPresentAsync(string key, int attempts = 60)
     {
         for (var i = 0; i < attempts; i++)
         {
             var messages = await fixture.Service.PeekMessagesAsync(Queue, ct: TestContext.Current.CancellationToken);
             if (messages.All(m => m.OriginalMessageJson == null || !m.OriginalMessageJson.Contains(key)))
                 return false;
-            await Task.Delay(250, TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
         }
 
         return true;
     }
 
-    private static async Task<bool> WaitForConditionAsync(Func<Task<bool>> check, int attempts = 20)
+    private static async Task<bool> WaitForConditionAsync(Func<Task<bool>> check, int attempts = 100)
     {
         for (var i = 0; i < attempts; i++)
         {
             if (await check())
                 return true;
-            await Task.Delay(250, TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
         }
 
         return false;

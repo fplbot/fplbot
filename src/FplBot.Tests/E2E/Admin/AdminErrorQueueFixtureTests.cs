@@ -22,7 +22,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
     // by later tasks' tests instead of a bespoke polling loop, and instead of trusting
     // ActiveMessageCount (see Task 2's notes — it reads 0 unconditionally against this emulator).
     internal static async Task<bool> WaitForMessageAsync(
-        AdminErrorQueueFixture fixture, string queue, string bodyContains, int attempts = 20)
+        AdminErrorQueueFixture fixture, string queue, string bodyContains, int attempts = 100)
     {
         for (var i = 0; i < attempts; i++)
         {
@@ -30,7 +30,7 @@ public class AdminErrorQueueFixtureTests(AdminErrorQueueFixture fixture)
             var peeked = await receiver.PeekMessagesAsync(10, cancellationToken: TestContext.Current.CancellationToken);
             if (peeked.Any(m => m.Body.ToString().Contains(bodyContains, StringComparison.Ordinal)))
                 return true;
-            await Task.Delay(250, TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
         }
 
         return false;

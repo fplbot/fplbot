@@ -55,14 +55,14 @@ public class AdminErrorQueueFixture : IAsyncLifetime
 
     // Mutating admin endpoints answer 202 and finish the work in the background, so a test that
     // asserts on the outcome has to wait for the job rather than for the HTTP response.
-    public async Task<ErrorQueueJob> WaitForJobAsync(Guid jobId, int attempts = 60)
+    public async Task<ErrorQueueJob> WaitForJobAsync(Guid jobId, int attempts = 300)
     {
         for (var i = 0; i < attempts; i++)
         {
             var job = Jobs.Get(jobId);
             if (job is { Status: ErrorQueueJobStatus.Succeeded or ErrorQueueJobStatus.Failed })
                 return job;
-            await Task.Delay(250);
+            await Task.Delay(50);
         }
 
         throw new TimeoutException($"Job {jobId} did not finish in time.");

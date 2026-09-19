@@ -55,13 +55,13 @@ public class AdminErrorQueueServiceRetryAllTests(AdminErrorQueueFixture fixture)
         await fixture.DrainMatchingAsync(Queue, key);
     }
 
-    private static async Task<bool> WaitForConditionAsync(Func<bool> check, int attempts = 20)
+    private static async Task<bool> WaitForConditionAsync(Func<bool> check, int attempts = 100)
     {
         for (var i = 0; i < attempts; i++)
         {
             if (check())
                 return true;
-            await Task.Delay(250, TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
         }
 
         return false;
