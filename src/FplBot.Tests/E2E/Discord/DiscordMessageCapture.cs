@@ -8,6 +8,8 @@ public record DiscordCapturedFollowup(string InteractionToken, string? Title, st
 
 public class DiscordMessageCapture
 {
+    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
+
     private Channel<DiscordCapturedMessage> _channel = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedMessage>();
     private Channel<DiscordCapturedFollowup> _followups = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedFollowup>();
 
@@ -15,8 +17,16 @@ public class DiscordMessageCapture
 
     public async Task<DiscordCapturedMessage> WaitForMessageAsync(TimeSpan? timeout = null)
     {
-        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(15));
-        return await _channel.Reader.ReadAsync(cts.Token);
+        var waitFor = timeout ?? DefaultTimeout;
+        using var cts = new CancellationTokenSource(waitFor);
+        try
+        {
+            return await _channel.Reader.ReadAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException($"No Discord message arrived within {waitFor}.");
+        }
     }
 
     /// <summary>
@@ -26,12 +36,23 @@ public class DiscordMessageCapture
     /// </summary>
     public async Task<DiscordCapturedMessage> WaitForMessageAsync(string channelId, TimeSpan? timeout = null)
     {
-        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(15));
-        while (true)
+        var waitFor = timeout ?? DefaultTimeout;
+        using var cts = new CancellationTokenSource(waitFor);
+        var otherChannels = 0;
+        try
         {
-            var msg = await _channel.Reader.ReadAsync(cts.Token);
-            if (msg.ChannelId == channelId)
-                return msg;
+            while (true)
+            {
+                var msg = await _channel.Reader.ReadAsync(cts.Token);
+                if (msg.ChannelId == channelId)
+                    return msg;
+                otherChannels++;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException(
+                $"No Discord message for channel {channelId} within {waitFor} ({otherChannels} message(s) arrived for other channels).");
         }
     }
 
@@ -44,12 +65,20 @@ public class DiscordMessageCapture
     /// </summary>
     public async Task<DiscordCapturedFollowup> WaitForFollowupAsync(string interactionToken, TimeSpan? timeout = null)
     {
-        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(15));
-        while (true)
+        var waitFor = timeout ?? DefaultTimeout;
+        using var cts = new CancellationTokenSource(waitFor);
+        try
         {
-            var followup = await _followups.Reader.ReadAsync(cts.Token);
-            if (followup.InteractionToken == interactionToken)
-                return followup;
+            while (true)
+            {
+                var followup = await _followups.Reader.ReadAsync(cts.Token);
+                if (followup.InteractionToken == interactionToken)
+                    return followup;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException($"No Discord followup for interaction {interactionToken} within {waitFor}.");
         }
     }
 

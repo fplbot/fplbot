@@ -5,14 +5,24 @@ namespace FplBot.Tests.E2E.Slack.SlackSubscriptions;
 
 public class SlackMessageCapture
 {
+    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
+
     private Channel<ChatPostMessageRequest> _channel = System.Threading.Channels.Channel.CreateUnbounded<ChatPostMessageRequest>();
 
     public void Record(ChatPostMessageRequest req) => _channel.Writer.TryWrite(req);
 
     public async Task<ChatPostMessageRequest> WaitForMessageAsync(TimeSpan? timeout = null)
     {
-        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(15));
-        return await _channel.Reader.ReadAsync(cts.Token);
+        var waitFor = timeout ?? DefaultTimeout;
+        using var cts = new CancellationTokenSource(waitFor);
+        try
+        {
+            return await _channel.Reader.ReadAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException($"No Slack message arrived within {waitFor}.");
+        }
     }
 
     /// <summary>
@@ -22,12 +32,23 @@ public class SlackMessageCapture
     /// </summary>
     public async Task<ChatPostMessageRequest> WaitForMessageAsync(string channel, TimeSpan? timeout = null)
     {
-        using var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(15));
-        while (true)
+        var waitFor = timeout ?? DefaultTimeout;
+        using var cts = new CancellationTokenSource(waitFor);
+        var otherChannels = 0;
+        try
         {
-            var msg = await _channel.Reader.ReadAsync(cts.Token);
-            if (msg.Channel == channel)
-                return msg;
+            while (true)
+            {
+                var msg = await _channel.Reader.ReadAsync(cts.Token);
+                if (msg.Channel == channel)
+                    return msg;
+                otherChannels++;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException(
+                $"No Slack message for channel {channel} within {waitFor} ({otherChannels} message(s) arrived for other channels).");
         }
     }
 

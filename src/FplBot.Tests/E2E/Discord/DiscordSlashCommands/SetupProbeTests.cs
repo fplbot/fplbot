@@ -72,8 +72,8 @@ public class SetupProbeTests(AppFixture fixture) : IAsyncLifetime
 
         await fixture.AskDiscord("follow", optionValue: "15263", guildId: guild.Id, channelId: channelId);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(300)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
     }
 
     [Fact]
