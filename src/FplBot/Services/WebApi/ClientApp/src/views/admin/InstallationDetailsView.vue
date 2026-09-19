@@ -11,6 +11,9 @@ import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
 
 const props = defineProps<{ entityId: string; adapter: InstallationAdapter }>();
+
+// Only useful against the throwaway dev workspace/guild, so it stays out of the deployed admin.
+const isDev = import.meta.env.DEV;
 const router = useRouter();
 
 const details = ref<EntityDetails | null>(null);
@@ -133,7 +136,12 @@ async function submitDanger() {
 
     <template v-else-if="details">
       <h1>{{ details.name }}</h1>
-      <p class="entity-id">{{ details.externalId }}</p>
+      <p class="entity-id">
+        {{ details.externalId }}
+        <a v-if="isDev" :href="adapter.appUrl(details.externalId)" target="_blank" rel="noopener" class="app-link">
+          open in browser
+        </a>
+      </p>
 
       <div v-if="adapter.showOverview" class="card">
         <h2>Overview</h2>
@@ -297,6 +305,10 @@ async function submitDanger() {
   font-size: 0.9rem;
   text-decoration: none;
   color: var(--fpl-purple);
+}
+
+.app-link {
+  margin-left: 0.5rem;
 }
 
 .entity-id {

@@ -51,6 +51,7 @@ export interface InstallationAdapter {
   manageRouteName: string;
   showOverview: boolean;
   danger: "uninstall" | "delete";
+  appUrl(externalId: string): string;
   getDetails(id: string): Promise<EntityDetails | null>;
   getAvailableChannels(id: string): Promise<AvailableChannel[]>;
   addChannelSubscription(id: string, channelId: string): Promise<MessageResponse>;
@@ -70,6 +71,7 @@ export const slackInstallationAdapter: InstallationAdapter = {
   manageRouteName: "admin-subscription-manage",
   showOverview: true,
   danger: "uninstall",
+  appUrl: (externalId) => `https://app.slack.com/client/${externalId}`,
   async getDetails(id) {
     const data = await getTeam(id);
     if (data == null) return null;
@@ -91,6 +93,7 @@ export const discordInstallationAdapter: InstallationAdapter = {
   manageRouteName: "admin-subscription-manage",
   showOverview: false,
   danger: "delete",
+  appUrl: (externalId) => `https://discord.com/channels/${externalId}`,
   async getDetails(id) {
     const data = await getGuild(id);
     if (data == null) return null;
