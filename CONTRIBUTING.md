@@ -194,8 +194,9 @@ open to anyone contributing:
 - Slack: https://join.slack.com/t/fplbotdevthro-spe4676/shared_invite/zt-4aryvvlls-09QreAxPL_Nc9t7IlJrXTg
 - Discord: https://discord.gg/kmUnuTVgQ
 
-Create your own Slack app (https://api.slack.com/apps → From scratch) or Discord application
-against it, so several people can test at once without sharing one bot identity.
+Use the existing dev apps against them — `@fplbotdevelop` on Slack and the dev Discord
+application, both linked under [Dev (local)](#dev-local) — rather than registering your own.
+Ask a maintainer for their credentials and put them in user secrets as below.
 
 #### Slack
 
@@ -222,8 +223,8 @@ dotnet user-secrets set DiscordAppId "..." --project src/FplBot
 
 All five Discord values must come from the *same* Discord Application (Developer Portal → your app
 → Bot tab for the token, General Information for the rest). Mixing values from different apps fails
-in confusing ways: wrong bot invited, signature verification failures. Creating the Application is a
-one-time manual step at discord.com/developers/applications — there's no API for it.
+in confusing ways: wrong bot invited, signature verification failures. If you ever do need an Application of your own,
+creating one is a manual step at discord.com/developers/applications — there's no API for it.
 
 With the secrets in place, run against them:
 
