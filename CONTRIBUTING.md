@@ -185,20 +185,52 @@ on localhost, telemetry to the Aspire dashboard — but every integration is liv
 Supply real credentials with [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets),
 never `appsettings.json` — see [Credentials](#credentials).
 
+#### Somewhere to test
+
+Don't point a development app at a workspace or server people actually use — a half-finished
+notification lands in front of them, and every restart re-posts. There's a throwaway of each,
+open to anyone contributing:
+
+- Slack: https://join.slack.com/t/fplbotdevthro-spe4676/shared_invite/zt-4aryvvlls-09QreAxPL_Nc9t7IlJrXTg
+- Discord: https://discord.gg/kmUnuTVgQ
+
+Use the existing dev apps against them — `@fplbotdevelop` on Slack and the dev Discord
+application, both linked under [Dev (local)](#dev-local) — rather than registering your own.
+Ask a maintainer for their credentials and put them in user secrets as below.
+
+Always install from the **Install fplbot** buttons on the app's own front page — the Vue app on
+https://localhost:5173 — or from the admin pages. Never from an install link in Slack's or
+Discord's own dashboards: only our own flow completes the install and stores the token.
+
+#### Slack
+
+```shell
+dotnet user-secrets set CLIENT_ID "..." --project src/FplBot
+dotnet user-secrets set CLIENT_SECRET "..." --project src/FplBot
+dotnet user-secrets set CLIENT_SIGNING_SECRET "..." --project src/FplBot
+dotnet user-secrets set SlackAppId "..." --project src/FplBot
+```
+
+#### Discord
+
 ```shell
 dotnet user-secrets set DISCORD_TOKEN "..." --project src/FplBot
 dotnet user-secrets set DISCORD_CLIENT_ID "..." --project src/FplBot
 dotnet user-secrets set DISCORD_CLIENT_SECRET "..." --project src/FplBot
 dotnet user-secrets set DISCORD_PUBLICKEY "..." --project src/FplBot
 dotnet user-secrets set DiscordAppId "..." --project src/FplBot
-
-dotnet run --project src/FplBot --launch-profile Integration
 ```
 
 All five Discord values must come from the *same* Discord Application (Developer Portal → your app
 → Bot tab for the token, General Information for the rest). Mixing values from different apps fails
-in confusing ways: wrong bot invited, signature verification failures. Creating the Application is a
-one-time manual step at discord.com/developers/applications — there's no API for it.
+in confusing ways: wrong bot invited, signature verification failures. If you ever do need an Application of your own,
+creating one is a manual step at discord.com/developers/applications — there's no API for it.
+
+With the secrets in place, run against them:
+
+```shell
+dotnet run --project src/FplBot --launch-profile Integration
+```
 
 Real Slack and Discord sign their webhooks, so to receive events you also need a public URL
 (ngrok) pointed at `https://localhost:1337` and registered in the app's dashboard.
@@ -285,10 +317,12 @@ Requires `HEROKU_TOKEN` for push and `HEROKU_API_KEY` for release.
 ## Environments
 
 ### Dev (local)
-- Slack bot app: https://api.slack.com/apps/A0BV9MKL214/ — credentials at root of `appsettings.json`
-- Slack admin login app: https://api.slack.com/apps/A0BUW9JBL0P/ — credentials under `admin:{}` in `appsettings.json`
+- Slack bot app (`@fplbotdevelop`): https://api.slack.com/apps/A0BV9MKL214/ — credentials at root of `appsettings.json`
+- Slack admin login app (`Admin Portal [dev]` — Sign in with Slack for the local admin pages): https://api.slack.com/apps/A0BUW9JBL0P/ — credentials under `admin:{}` in `appsettings.json`
+- Discord app: https://discord.com/developers/applications/895012635144224830/information
 - Manifests + recreation: `src/slack-app-manifest.json` / `src/slack-admin-app-manifest.json`, run `python3 src/create-slack-dev-app.py [--admin]`
 - Event subscriptions not configured — requires ngrok to expose `localhost:1337` first
+- Throwaway workspace and server to install into: see [Integration](#integration-testing-against-real-slackdiscord)
 
 ### Test
 - Heroku: https://dashboard.heroku.com/apps/blank-fplbot-test/
