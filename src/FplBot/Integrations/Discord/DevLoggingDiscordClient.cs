@@ -93,4 +93,11 @@ public class DevLoggingDiscordClient(DiscordClient inner, IHostEnvironment env, 
         logger.LogInformation("[DEV] Discord guilds.channels.get → guild:{GuildId} (not calling real API)", guildId);
         return Task.FromResult(Enumerable.Empty<DiscordClient.Channel>());
     }
+
+    public Task GuildLeave(string guildId)
+    {
+        if (!env.IsDevelopment()) return inner.GuildLeave(guildId);
+        logger.LogInformation("[DEV] Discord guilds.leave → guild:{GuildId} (not calling real API)", guildId);
+        return Task.CompletedTask;
+    }
 }

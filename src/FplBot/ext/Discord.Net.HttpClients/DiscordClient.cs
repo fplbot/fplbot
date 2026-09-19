@@ -165,6 +165,12 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
         return await res.Content.ReadFromJsonAsync<IEnumerable<Channel>>(SerializerOptions) ?? [];
     }
 
+    public async Task GuildLeave(string guildId)
+    {
+        var res = await client.DeleteAsync($"/api/v10/users/@me/guilds/{guildId}");
+        res.EnsureSuccessStatusCode();
+    }
+
     public async Task<Guild> GuildGet(string guildId)
     {
         var res = await client.GetAsync($"/api/v10/guilds/{guildId}");

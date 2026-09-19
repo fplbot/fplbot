@@ -77,6 +77,13 @@ public class CapturingDiscordClient(DiscordMessageCapture capture) : IDiscordCli
     public Task<IEnumerable<DiscordClient.Channel>> GuildChannelsGet(string guildId) =>
         Task.FromResult(_guildChannels);
 
+    public Task GuildLeave(string guildId)
+    {
+        ThrowIfFailing(guildId);
+        capture.Record(new DiscordLeftGuild(guildId));
+        return Task.CompletedTask;
+    }
+
     private void ThrowIfFailing(string channelId)
     {
         if (_failing.TryGetValue(channelId, out var failure))
