@@ -187,9 +187,8 @@ a {
 
 /* Marks a link that leaves the admin for Slack/Discord. */
 .external::after {
-  content: " \2197";
-  font-size: 0.85em;
-  opacity: 0.7;
+  content: " \2197\FE0F";
+  font-size: 0.9em;
 }
 
 .admin-table {

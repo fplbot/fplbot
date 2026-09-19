@@ -165,17 +165,15 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
         <div class="guild-list">
         <div v-for="g in guilds" :key="g.id" class="guild" :class="{ throwaway: isThrowaway(g.guildName) }">
           <div class="guild-header">
-            <h3>
-              {{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span>
+            <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
+            <div class="guild-actions">
               <a
                 v-if="isThrowaway(g.guildName)"
                 :href="`https://discord.com/channels/${g.guildId}`"
                 target="_blank"
                 rel="noopener"
-                class="external"
+                class="btn small btn-secondary external"
               >Open in Discord</a>
-            </h3>
-            <div class="guild-actions">
               <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.id } }">
                 Edit
               </router-link>

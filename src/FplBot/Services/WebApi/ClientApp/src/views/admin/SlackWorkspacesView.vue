@@ -142,18 +142,16 @@ async function removeSub(subscriptionId: string) {
         <div class="team-list">
         <div v-for="t in teams" :key="t.id" class="team" :class="{ throwaway: isThrowaway(t.teamName) }">
           <div class="team-header">
-            <h3>
-              {{ t.teamName }} <span class="team-id">({{ t.teamId }})</span>
+            <h3>{{ t.teamName }} <span class="team-id">({{ t.teamId }})</span></h3>
+            <div class="team-actions">
+              <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
               <a
                 v-if="isThrowaway(t.teamName)"
                 :href="`https://app.slack.com/client/${t.teamId}`"
                 target="_blank"
                 rel="noopener"
-                class="external"
+                class="btn small btn-secondary external"
               >Open in Slack</a>
-            </h3>
-            <div class="team-actions">
-              <span v-if="t.pendingRemoval" class="status bad">Pending removal</span>
               <router-link :to="`/admin/teams/${t.id}`" class="btn small btn-secondary">Edit</router-link>
               <button
                 class="btn small danger"
