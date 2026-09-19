@@ -15,9 +15,16 @@ public record ErrorQueueMessage(
     string ExceptionMessage,
     string? StackTrace,
     string? ConsumerType,
-    string? OriginalMessageJson);
+    string? OriginalMessageJson,
+    string? TraceId,
+    string? TraceUrl);
 
-public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, ServiceBusClient client, ILogger<AdminErrorQueueService> logger)
+public class AdminErrorQueueService(
+    ServiceBusAdministrationClient adminClient,
+    ServiceBusClient client,
+    ILogger<AdminErrorQueueService> logger,
+    IConfiguration config,
+    IHostEnvironment env)
 {
     private const string ErrorQueueSuffix = "_error";
 
@@ -79,10 +86,17 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
     {
         await using var receiver = client.CreateReceiver(queue);
         var peeked = await receiver.PeekMessagesAsync(maxMessages, cancellationToken: ct);
-        return [.. peeked.Select(ToErrorQueueMessage)];
+        return [.. peeked.Select(m => ToErrorQueueMessage(m, TraceUrlTemplate()))];
     }
 
-    private static ErrorQueueMessage ToErrorQueueMessage(ServiceBusReceivedMessage message)
+    // Where an operator can go to see the trace. Local dev has the Aspire dashboard; anywhere else
+    // this stays unset until a trace backend exists, and the UI just shows the id to copy.
+    private const string LocalTraceUi = "https://localhost:11000/traces/detail/{traceId}";
+
+    private string? TraceUrlTemplate() =>
+        config["TRACE_UI_URL"] ?? (FplBotApplication.IsTelemetryEnabled(env, config) ? LocalTraceUi : null);
+
+    private static ErrorQueueMessage ToErrorQueueMessage(ServiceBusReceivedMessage message, string? traceUrlTemplate)
     {
         var props = message.ApplicationProperties;
         var bodyText = message.Body.ToString();
@@ -99,6 +113,8 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             originalMessageJson = bodyText;
         }
 
+        var traceId = TraceIdOf(message, bodyText);
+
         return new ErrorQueueMessage(
             message.MessageId,
             message.EnqueuedTime,
@@ -106,7 +122,36 @@ public class AdminErrorQueueService(ServiceBusAdministrationClient adminClient, 
             GetProperty(props, "MT-Fault-Message") ?? "",
             GetProperty(props, "MT-Fault-StackTrace"),
             GetProperty(props, "MT-Fault-ConsumerType"),
-            originalMessageJson);
+            originalMessageJson,
+            traceId,
+            traceId is not null && traceUrlTemplate is not null
+                ? traceUrlTemplate.Replace("{traceId}", traceId)
+                : null);
+    }
+
+    // MassTransit propagates W3C trace context as "00-<trace id>-<span id>-<flags>", on the broker
+    // message and inside the envelope. Surfacing just the trace id gives an operator something to
+    // paste into a trace UI to see what led to the fault.
+    private static string? TraceIdOf(ServiceBusReceivedMessage message, string bodyText)
+    {
+        var traceParent = GetProperty(message.ApplicationProperties, "Diagnostic-Id")
+                          ?? GetProperty(message.ApplicationProperties, "MT-Activity-Id")
+                          ?? EnvelopeActivityId(bodyText);
+
+        var parts = traceParent?.Split('-');
+        return parts is { Length: 4 } && parts[1].Length == 32 ? parts[1] : null;
+    }
+
+    private static string? EnvelopeActivityId(string bodyText)
+    {
+        try
+        {
+            return JsonNode.Parse(bodyText)?["headers"]?["MT-Activity-Id"]?.GetValue<string>();
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)
+        {
+            return null;
+        }
     }
 
     private static string? GetProperty(IReadOnlyDictionary<string, object> props, string key) =>

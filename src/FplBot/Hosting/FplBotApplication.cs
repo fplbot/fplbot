@@ -34,6 +34,11 @@ public static class FplBotApplication
         await hostOwner.RunHostAsync(args, selectedServices);
     }
 
+    // Telemetry only goes somewhere in local envs, where the Aspire dashboard is listening. Shared
+    // so anything pointing an operator at a trace agrees with whether traces are being collected.
+    public static bool IsTelemetryEnabled(IHostEnvironment env, IConfiguration config) =>
+        env.IsLocal() && config.GetValue("OTEL_ENABLED", true);
+
     internal static void LogStartup(IHost host, List<IFplBotService> active)
     {
         host.Services.GetRequiredService<ILoggerFactory>()
@@ -75,7 +80,7 @@ public static class FplBotApplication
             configureBus(x);
         });
 
-        if (env.IsLocal() && config.GetValue("OTEL_ENABLED", true))
+        if (IsTelemetryEnabled(env, config))
         {
             ConfigureOpenTelemetry(services, config, active);
         }

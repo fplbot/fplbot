@@ -290,6 +290,8 @@ export interface ErrorQueueMessage {
   stackTrace: string | null;
   consumerType: string | null;
   originalMessageJson: string | null;
+  traceId: string | null;
+  traceUrl: string | null;
 }
 
 // Retry/discard/purge/retry-all drain a Service Bus queue, which takes longer than a browser

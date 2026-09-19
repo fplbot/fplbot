@@ -33,6 +33,16 @@ async function load() {
   }
 }
 
+const copied = ref<string | null>(null);
+
+async function copyTraceId(traceId: string) {
+  await navigator.clipboard.writeText(traceId);
+  copied.value = traceId;
+  setTimeout(() => {
+    if (copied.value === traceId) copied.value = null;
+  }, 1500);
+}
+
 function toggle(messageId: string) {
   if (expanded.value.has(messageId)) {
     expanded.value.delete(messageId);
@@ -121,6 +131,12 @@ onMounted(load);
             <div>
               <div><b>{{ m.messageId }}</b></div>
               <div class="meta">{{ formatDateTime(m.enqueuedTime) }}</div>
+              <div v-if="m.traceId" class="meta">
+                trace
+                <a v-if="m.traceUrl" class="trace-link" :href="m.traceUrl" target="_blank" rel="noopener"><code>{{ m.traceId }}</code> ↗</a>
+                <code v-else class="trace-id" title="Copy trace id" @click="copyTraceId(m.traceId)">{{ m.traceId }}</code>
+                <span v-if="copied === m.traceId" class="copied">copied</span>
+              </div>
             </div>
             <div class="message-actions">
               <button class="btn small" :disabled="acting !== null || bulkAction !== null" @click="retry(m)">
@@ -151,6 +167,28 @@ onMounted(load);
 .lead {
   color: #6b7280;
   margin-bottom: 1rem;
+}
+
+.trace-link {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.trace-link:hover {
+  color: #1d4ed8;
+}
+
+.trace-id {
+  cursor: pointer;
+  user-select: all;
+}
+
+.trace-id:hover {
+  text-decoration: underline;
+}
+
+.copied {
+  margin-left: 0.4rem;
 }
 
 .queue-header {
