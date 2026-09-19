@@ -18,6 +18,8 @@ public static class IFplApiClientServiceCollectionExtensions
         services.AddHttpClient<IGlobalSettingsClient, GlobalSettingsClient>();
         services.AddHttpClient<ILiveClient, LiveClient>();
         services.AddHttpClient<IEventStatusClient, EventStatusClient>();
+        services.AddHttpClient<IPlayerImageClient, PlayerImageClient>()
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri("https://platform-static-files.s3.amazonaws.com/"));
         services.ConfigureOptions<FplClientOptionsConfigurator>();
         return services;
     }
