@@ -12,7 +12,7 @@ namespace FplBot.WebApi.Infrastructure;
 
 public static class WebAppExtensions
 {
-    public const string SlackEventsPath = "/events";
+    public const string SlackEventsPath = "/slack/events";
     public const string DiscordEventsPath = "/discord/events";
 
     public static readonly string[] WebhookPaths = [SlackEventsPath, DiscordEventsPath];
@@ -101,7 +101,7 @@ public static class WebAppExtensions
         // a real endpoint gets a genuine 404 (ProblemDetails, via UseStatusCodePages
         // above) instead; everything else falls through to the SPA, whose own Vue Router
         // catch-all renders the actual not-found page.
-        var reservedBackendPrefixes = new[] { "/api", "/debug", "/oauth", "/events", "/discord" };
+        var reservedBackendPrefixes = new[] { "/api", "/debug", "/oauth", "/slack", "/discord" };
         app.MapFallback(async context =>
         {
             var path = context.Request.Path;
