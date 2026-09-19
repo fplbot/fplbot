@@ -139,7 +139,7 @@ async function submitDanger() {
       <p class="entity-id">
         {{ details.externalId }}
         <a v-if="isDev" :href="adapter.appUrl(details.externalId)" target="_blank" rel="noopener" class="app-link">
-          open in browser
+          Open in {{ adapter.platformName }}
         </a>
       </p>
 

@@ -42,6 +42,7 @@ export interface EntityDetails {
 // only supports a hard delete) expressed here instead of duplicated across two views.
 export interface InstallationAdapter {
   apiLabel: string;
+  platformName: string;
   entityNoun: string;
   channelNotVisibleHint: string;
   notListedButDeliveringHint?: string;
@@ -61,6 +62,7 @@ export interface InstallationAdapter {
 
 export const slackInstallationAdapter: InstallationAdapter = {
   apiLabel: "Slack API",
+  platformName: "Slack",
   entityNoun: "workspace",
   channelNotVisibleHint:
     "conversations.list only returns public channels, so a private channel the bot posts in looks like this and is fine. Otherwise the channel was archived or deleted, or the bot was removed from the workspace.",
@@ -84,6 +86,7 @@ export const slackInstallationAdapter: InstallationAdapter = {
 
 export const discordInstallationAdapter: InstallationAdapter = {
   apiLabel: "Discord API",
+  platformName: "Discord",
   entityNoun: "server",
   channelNotVisibleHint:
     "The bot did not get this channel back from the guild channel list — the channel was deleted, or the bot lost the permission to view it.",
