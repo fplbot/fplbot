@@ -288,7 +288,7 @@ public class AppFixture : IAsyncLifetime
             }
         };
 
-        var response = await _client.PostAsJsonAsync("/events", payload);
+        var response = await _client.PostAsJsonAsync("/slack/events", payload);
         response.EnsureSuccessStatusCode();
     }
 

@@ -16,7 +16,7 @@ This skill is the source of truth for test rules in this repo.
 ### Higher-level starting points
 
 - An API request:
-  - Slack/Discord event notification on the `/events` / `/discord/events` endpoints
+  - Slack/Discord event notification on the `/slack/events` / `/discord/events` endpoints
   - Admin endpoints
 - An FPL notification (`GameweekJustBegan`, `FixtureEventsOccured`, etc.):
   - These come from `RecurringAction`s that poll the FPL APIs and diff particular aspects of the data.
