@@ -43,7 +43,7 @@ public class DiscordInjuryUpdateHandlerTests(AppFixture fixture) : IAsyncLifetim
                 new InjuryStatus("d", "Knee injury"))
         ]), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 }

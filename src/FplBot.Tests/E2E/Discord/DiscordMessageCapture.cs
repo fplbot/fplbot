@@ -53,6 +53,18 @@ public class DiscordMessageCapture
         }
     }
 
+    // Non-blocking counterpart to WaitForMessageAsync, for asserting that nothing was posted
+    // once the bus is idle. Drains what is queued so a stray message from another test sharing
+    // this capture doesn't answer for this one.
+    public bool AnyMessage(string? channelId = null)
+    {
+        var any = false;
+        while (_channel.Reader.TryRead(out var msg))
+            any |= channelId is null || msg.ChannelId == channelId;
+
+        return any;
+    }
+
     public void Reset()
     {
         _channel = System.Threading.Channels.Channel.CreateUnbounded<DiscordCapturedMessage>();

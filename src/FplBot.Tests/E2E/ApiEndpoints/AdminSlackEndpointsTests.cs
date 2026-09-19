@@ -145,8 +145,8 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         dynamic value = Assert.IsAssignableFrom<IValueHttpResult>(result).Value!;
         Assert.False((bool)value.published);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage());
     }
 
     [Fact]

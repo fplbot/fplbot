@@ -33,8 +33,8 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
 
         await monitor.Reset(1);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_channel));
     }
 
     [Fact]
@@ -61,8 +61,8 @@ public class LineupEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         // One LineupReady produces two Slack messages: the main post and its threaded lineup reply.
         await fixture.SlackCapture.WaitForMessageAsync(_channel);
         await fixture.SlackCapture.WaitForMessageAsync(_channel);
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_channel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_channel));
     }
 
     [Fact]

@@ -34,8 +34,8 @@ public class DiscordFixtureEventsHandlerTests(AppFixture fixture) : IAsyncLifeti
 
         await fixture.Bus.Publish(new FixtureEventsOccured([SampleGoalEvent()]), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(channelId, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
     }
 
     private static FixtureEvents SampleGoalEvent() =>

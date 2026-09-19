@@ -34,8 +34,8 @@ public class DiscordLineupReadyHandlerTests(AppFixture fixture) : IAsyncLifetime
 
         await fixture.Bus.Publish(new LineupReady(SampleLineups()), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.DiscordCapture.WaitForMessageAsync(TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
     }
 
     private static Lineups SampleLineups() =>

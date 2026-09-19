@@ -67,8 +67,8 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 
         await BeginGameweek();
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_slackChannel));
     }
 
     [Fact]
@@ -79,8 +79,8 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 
         await BeginGameweek();
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(otherChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(otherChannel));
     }
 
     [Fact]
@@ -101,8 +101,8 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
     {
         await BeginGameweek(gameweekId: 1);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_slackChannel));
     }
 
     [Fact]
@@ -114,8 +114,8 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 
         await BeginGameweek();
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_slackChannel));
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public class NewLeagueEntriesEventPublishingE2ETests(AppFixture fixture) : IAsyn
 
         await BeginGameweek();
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(_slackChannel, TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage(_slackChannel));
     }
 
     [Fact]

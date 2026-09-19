@@ -31,6 +31,18 @@ public class SlackMessageCapture
         }
     }
 
+    // Non-blocking counterpart to WaitForMessageAsync, for asserting that nothing was posted
+    // once the bus is idle. Drains what is queued so a stray message from another test sharing
+    // this capture doesn't answer for this one.
+    public bool AnyMessage(string? channel = null)
+    {
+        var any = false;
+        while (_channel.Reader.TryRead(out var msg))
+            any |= channel is null || msg.Channel == channel;
+
+        return any;
+    }
+
     public void Reset()
     {
         _channel = System.Threading.Channels.Channel.CreateUnbounded<ChatPostMessageRequest>();

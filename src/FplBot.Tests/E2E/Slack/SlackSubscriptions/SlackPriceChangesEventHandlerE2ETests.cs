@@ -56,8 +56,8 @@ public class SlackPriceCHangesEventHandlerE2ETests(AppFixture fixture, ITestOutp
                 TeamShortName: "MCI")
         ]), TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            fixture.SlackCapture.WaitForMessageAsync(timeout: TimeSpan.FromMilliseconds(500)));
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage());
     }
 
     private async Task SeedTeam(string teamId, string channel, params FplEvent[] events)
