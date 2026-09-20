@@ -5,7 +5,6 @@ using Azure.Messaging.ServiceBus.Administration;
 using CronBackgroundServices;
 using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
-using Fpl.PulseLive;
 using Fpl.Search;
 using FplBot.Config;
 using FplBot.Data.Web;
@@ -86,14 +85,8 @@ public static class WebApplicationBuilderExtensions
         // Only otherwise registered for the EventPublishers service (Fpl.EventPublishers.States.LineupState).
         // The admin "publish now" lineups action runs here in WebApi, which is a separate container in
         // production, so it needs its own registration rather than relying on EventPublishers' being active.
-        services.AddHttpClient<IPulseLiveClient, PulseLiveClient>().ConfigureHttpClient(client =>
-        {
-            client.BaseAddress = new Uri("https://sdp-prem-prod.premier-league-prod.pulselive.com");
-            client.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36");
-            client.DefaultRequestHeaders.Add("Origin", "https://www.premierleague.com");
-            client.DefaultRequestHeaders.Add("Referer", "https://www.premierleague.com");
-        });
+        // AddPulseLiveClient no-ops if EventPublishers already registered it in this same process.
+        services.AddPulseLiveClient();
 
         var asbConnectionString = configuration["ASB_CONNECTIONSTRING"]
                                   ?? throw new InvalidOperationException("Service bus connection string not configured. Set ASB_CONNECTIONSTRING.");
