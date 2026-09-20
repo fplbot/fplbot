@@ -304,6 +304,16 @@ export interface SubscriberSummary {
   endpointHost: string;
 }
 
+export interface SubscriberDetail {
+  id: string;
+  name: string | null;
+  leagueId: number | null;
+  events: string[];
+  available: string[];
+  requiresLeague: string[];
+  endpointHost: string;
+}
+
 // ---- Admin: error queues ----
 
 export interface ErrorQueueSummary {

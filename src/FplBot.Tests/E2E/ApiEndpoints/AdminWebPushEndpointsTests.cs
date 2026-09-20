@@ -54,11 +54,14 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         var subscriberId = await fixture.SubscribeToWebPush(leagueId: 456, name: "Pixel");
 
-        var subscriber = await fixture.GetJson<SubscriberSummaryDto>($"/api/admin/web/subscribers/{subscriberId}");
+        var subscriber = await fixture.GetJson<SubscriberDetailDto>($"/api/admin/web/subscribers/{subscriberId}");
 
         Assert.Equal(subscriberId, subscriber.Id);
         Assert.Equal("Pixel", subscriber.Name);
         Assert.Equal(456, subscriber.LeagueId);
+        Assert.Contains("Standings", subscriber.Events);
+        Assert.Contains("FixtureGoals", subscriber.Available);
+        Assert.Contains("Standings", subscriber.RequiresLeague);
     }
 
     [Fact]
@@ -67,6 +70,69 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var response = await fixture.Get("/api/admin/web/subscribers/nope");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEvents_AdminCanChangeASubscribersEvents()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/events", new { events = new[] { "Deadlines" } });
+        response.EnsureSuccessStatusCode();
+        var subscriber = await AppFixture.ReadJson<SubscriberDetailDto>(response);
+
+        Assert.Equal(["Deadlines"], subscriber.Events);
+    }
+
+    [Fact]
+    public async Task PutEvents_UnknownSubscriber_ReturnsNotFound()
+    {
+        var response = await fixture.Put("/api/admin/web/subscribers/nope/events", new { events = new[] { "Deadlines" } });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutLeague_AdminCanSetALeague()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/league", new { leagueId = 789 });
+        response.EnsureSuccessStatusCode();
+        var subscriber = await AppFixture.ReadJson<SubscriberDetailDto>(response);
+
+        Assert.Equal(789, subscriber.LeagueId);
+        Assert.DoesNotContain("Standings", subscriber.Events);
+
+        var afterEnablingStandings = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/events",
+            new { events = subscriber.Events.Append("Standings") });
+        afterEnablingStandings.EnsureSuccessStatusCode();
+        var updated = await AppFixture.ReadJson<SubscriberDetailDto>(afterEnablingStandings);
+
+        Assert.Contains("Standings", updated.Events);
+    }
+
+    [Fact]
+    public async Task PutLeague_Null_UnfollowsAndDropsLeagueRequiringEvents()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/league", new { leagueId = (long?)null });
+        response.EnsureSuccessStatusCode();
+        var subscriber = await AppFixture.ReadJson<SubscriberDetailDto>(response);
+
+        Assert.Null(subscriber.LeagueId);
+        Assert.DoesNotContain("Standings", subscriber.Events);
+    }
+
+    [Fact]
+    public async Task PutLeague_InvalidLeagueId_ReturnsBadRequest()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/league", new { leagueId = 0 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

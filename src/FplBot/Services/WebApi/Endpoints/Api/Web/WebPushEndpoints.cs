@@ -135,9 +135,9 @@ public static class WebPushEndpoints
             ? await repo.Find(new WebPushSubscriberId(header.ToString()))
             : null;
 
-    private static bool IsValidLeagueId(long leagueId) => leagueId is >= 1 and <= int.MaxValue;
+    internal static bool IsValidLeagueId(long leagueId) => leagueId is >= 1 and <= int.MaxValue;
 
-    private static FplEvent[] Parse(IEnumerable<string> events) =>
+    internal static FplEvent[] Parse(IEnumerable<string> events) =>
         [
             ..events.Select(e => Enum.TryParse<FplEvent>(e, out var parsed) ? parsed : (FplEvent?)null)
                 .Where(e => e.HasValue)

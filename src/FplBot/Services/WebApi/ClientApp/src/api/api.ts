@@ -24,6 +24,7 @@ import type {
   SearchAnyResult,
   SearchType,
   SlashCommandDefinition,
+  SubscriberDetail,
   SubscriberSummary,
   TeamDetails,
   TeamSummary,
@@ -245,11 +246,19 @@ export function getWebPushSubscribers(page: number, pageSize: number): Promise<P
   return request(`/api/admin/web/subscribers?${params.toString()}`);
 }
 
-export async function getWebPushSubscriber(subscriberId: string): Promise<SubscriberSummary | null> {
+export async function getWebPushSubscriber(subscriberId: string): Promise<SubscriberDetail | null> {
   const res = await fetch(`/api/admin/web/subscribers/${subscriberId}`, { credentials: "include" });
   if (res.status === 404) return null;
   if (!res.ok) throw new AdminApiError(`getWebPushSubscriber() failed with status ${res.status}`, res.status);
   return res.json();
+}
+
+export function updateWebPushSubscriberEvents(subscriberId: string, events: string[]): Promise<SubscriberDetail> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/events`, { events }, "PUT");
+}
+
+export function updateWebPushSubscriberLeague(subscriberId: string, leagueId: number | null): Promise<SubscriberDetail> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/league`, { leagueId }, "PUT");
 }
 
 export function deleteWebPushSubscriber(subscriberId: string): Promise<void> {

@@ -1,11 +1,15 @@
 using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.Messaging.Contracts.Commands.v1;
+using FplBot.WebApi.Endpoints.Api.Web;
 using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
 public record SubscriberSummaryDto(string Id, string? Name, long? LeagueId, int EventCount, string EndpointHost);
+
+public record SubscriberDetailDto(string Id, string? Name, long? LeagueId, string[] Events, string[] Available,
+    string[] RequiresLeague, string EndpointHost);
 
 public record WebPushBroadcastRequest(string Title, string Body);
 
@@ -15,6 +19,8 @@ public static class AdminWebPushEndpoints
     {
         group.MapGet("/web/subscribers", GetSubscribers);
         group.MapGet("/web/subscribers/{subscriberId}", GetSubscriber);
+        group.MapPut("/web/subscribers/{subscriberId}/events", PutEvents);
+        group.MapPut("/web/subscribers/{subscriberId}/league", PutLeague);
         group.MapDelete("/web/subscribers/{subscriberId}", DeleteSubscriber);
         group.MapPost("/web/broadcast", Broadcast);
     }
@@ -23,13 +29,51 @@ public static class AdminWebPushEndpoints
     {
         var (items, total) = await repo.GetPage(page, pageSize);
         return TypedResults.Ok(new PagedResult<SubscriberSummaryDto>(
-            [.. items.Select(ToDto)], page, pageSize, total));
+            [.. items.Select(ToSummaryDto)], page, pageSize, total));
     }
 
     internal static async Task<IResult> GetSubscriber(string subscriberId, IWebPushSubscriberRepository repo) =>
         await repo.Find(new WebPushSubscriberId(subscriberId)) is { } subscriber
-            ? TypedResults.Ok(ToDto(subscriber))
+            ? TypedResults.Ok(ToDetailDto(subscriber))
             : TypedResults.NotFound();
+
+    internal static async Task<IResult> PutEvents(string subscriberId, EventsRequest request, IWebPushSubscriberRepository repo)
+    {
+        if (await repo.Find(new WebPushSubscriberId(subscriberId)) is not { } subscriber)
+        {
+            return TypedResults.NotFound();
+        }
+
+        subscriber.Unsubscribe([.. subscriber.Events.Current]);
+        subscriber.Subscribe(WebPushEndpoints.Parse(request.Events));
+        await repo.Save(subscriber);
+        return TypedResults.Ok(ToDetailDto(subscriber));
+    }
+
+    internal static async Task<IResult> PutLeague(string subscriberId, LeagueRequest request, IWebPushSubscriberRepository repo)
+    {
+        if (await repo.Find(new WebPushSubscriberId(subscriberId)) is not { } subscriber)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (request.LeagueId is { } invalid && !WebPushEndpoints.IsValidLeagueId(invalid))
+        {
+            return TypedResults.BadRequest(new { errors = new { leagueId = new[] { "leagueId must be between 1 and 2147483647" } } });
+        }
+
+        if (request.LeagueId is { } leagueId)
+        {
+            subscriber.Follow(new ClassicLeagueId(leagueId));
+        }
+        else
+        {
+            subscriber.Unfollow();
+        }
+
+        await repo.Save(subscriber);
+        return TypedResults.Ok(ToDetailDto(subscriber));
+    }
 
     internal static async Task<IResult> DeleteSubscriber(string subscriberId, IWebPushSubscriberRepository repo)
     {
@@ -43,10 +87,22 @@ public static class AdminWebPushEndpoints
         return TypedResults.Accepted("/api/admin/web/subscribers");
     }
 
-    private static SubscriberSummaryDto ToDto(WebPushSubscriber subscriber) =>
+    private static SubscriberSummaryDto ToSummaryDto(WebPushSubscriber subscriber) =>
         new(subscriber.Id.Value,
             subscriber.Name,
             subscriber.FollowedLeagueId?.Value,
             subscriber.Events.Current.Count,
-            Uri.TryCreate(subscriber.PushKeys.Endpoint, UriKind.Absolute, out var uri) ? uri.Host : "unknown");
+            EndpointHost(subscriber));
+
+    private static SubscriberDetailDto ToDetailDto(WebPushSubscriber subscriber) =>
+        new(subscriber.Id.Value,
+            subscriber.Name,
+            subscriber.FollowedLeagueId?.Value,
+            [.. subscriber.Events.Current.Select(e => e.ToString())],
+            [.. FplEvents.SupportedOnWeb.Select(e => e.ToString())],
+            [.. FplEvents.RequiringALeague.Select(e => e.ToString())],
+            EndpointHost(subscriber));
+
+    private static string EndpointHost(WebPushSubscriber subscriber) =>
+        Uri.TryCreate(subscriber.PushKeys.Endpoint, UriKind.Absolute, out var uri) ? uri.Host : "unknown";
 }
