@@ -25,7 +25,7 @@ public class WebPushSender(IOptions<WebPushOptions> options, ILogger<WebPushSend
         }
         catch (Exception e)
         {
-            var host = Uri.TryCreate(keys.Endpoint, UriKind.Absolute, out var uri) ? uri.Host : "unknown";
+            var host = Uri.TryCreate(keys?.Endpoint, UriKind.Absolute, out var uri) ? uri.Host : "unknown";
             logger.LogWarning(e, "Web push delivery failed for endpoint host {Host}", host);
             return WebPushOutcome.Failed;
         }
