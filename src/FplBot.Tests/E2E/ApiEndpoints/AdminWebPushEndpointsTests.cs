@@ -1,5 +1,10 @@
 using System.Net;
+using FakeItEasy;
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
+using Fpl.PulseLive;
 using FplBot.WebApi.Endpoints.Api.Admin;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FplBot.Tests.E2E.ApiEndpoints;
 
@@ -197,6 +202,113 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
         Assert.Contains("60 minutes", push.Body);
+    }
+
+    // The current gameweek in bootstrap-static.json (see GameweekExtensions.GetCurrentGameweek).
+    private const int CurrentGameweekId = 3;
+
+    private static Fixture RealPlayedFixture(bool finished = false) => new()
+    {
+        Id = 1,
+        Code = 1,
+        Event = CurrentGameweekId,
+        HomeTeamId = 1,
+        AwayTeamId = 2,
+        KickOffTime = DateTime.UtcNow.AddHours(-2),
+        Minutes = 90,
+        Finished = finished,
+        FinishedProvisional = finished,
+        HomeTeamScore = finished ? 2 : 1,
+        AwayTeamScore = finished ? 1 : 0,
+        Stats =
+        [
+            new FixtureStat
+            {
+                Identifier = "goals_scored",
+                HomeStats = [new FixtureStatValue { Element = 1, Value = finished ? 2 : 1 }],
+                AwayStats = finished ? [new FixtureStatValue { Element = 2, Value = 1 }] : []
+            }
+        ]
+    };
+
+    private void SeedFixture(Fixture fixture_) =>
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixturesByGameweek(CurrentGameweekId))
+            .Returns([fixture_]);
+
+    private void SeedLineups()
+    {
+        var homeLineup = new TeamLineup
+        {
+            TeamId = 1,
+            Players = [new PulsePlayer { Id = 1, KnownName = "Raya", Position = "Goalkeeper", IsCaptain = false }],
+            Formation = new PulseFormation { Label = "4-3-3", Lineup = [[1]] }
+        };
+        var awayLineup = new TeamLineup
+        {
+            TeamId = 2,
+            Players = [new PulsePlayer { Id = 2, KnownName = "Martinez", Position = "Goalkeeper", IsCaptain = false }],
+            Formation = new PulseFormation { Label = "4-4-2", Lineup = [[2]] }
+        };
+        A.CallTo(() => fixture.Services.GetRequiredService<IPulseLiveClient>().GetMatchDetails(1))
+            .Returns(new MatchDetails { HomeTeam = homeLineup, AwayTeam = awayLineup });
+    }
+
+    [Fact]
+    public async Task Publish_FixtureEvents_NoFixturesForGameweek_DoesNotPublish()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixturesByGameweek(CurrentGameweekId)).Returns([]);
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/FixtureEvents");
+
+        var value = await AppFixture.ReadJson<System.Text.Json.JsonElement>(response);
+        Assert.False(value.GetProperty("published").GetBoolean());
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.WebPushCapture.Any());
+    }
+
+    [Fact]
+    public async Task Publish_FixtureEvents_RealGoalRecorded_PublishesIt()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        SeedFixture(RealPlayedFixture());
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/FixtureEvents");
+        response.EnsureSuccessStatusCode();
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("Raya", push.Body);
+    }
+
+    [Fact]
+    public async Task Publish_FixtureFullTime_FixtureFinished_PublishesScore()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        SeedFixture(RealPlayedFixture(finished: true));
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/FixtureFullTime");
+        response.EnsureSuccessStatusCode();
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("2-1", push.Title);
+    }
+
+    [Fact]
+    public async Task Publish_Lineups_Confirmed_PublishesThem()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        SeedFixture(RealPlayedFixture());
+        SeedLineups();
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/Lineups");
+        response.EnsureSuccessStatusCode();
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("Lineups", push.Title);
     }
 
     [Fact]

@@ -1,12 +1,16 @@
 using Discord.Net.HttpClients;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.EventPublishers.Models.Mappers;
+using Fpl.PulseLive;
 using FplBot.Data;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Discord;
 using FplBot.Domain;
 using FplBot.EventHandlers.Discord;
+using FplBot.Formatting;
+using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -290,7 +294,10 @@ public static class AdminDiscordEndpoints
         IIdentityResolver resolver,
         IGuildRepository repo,
         ISendEndpointProvider sendEndpointProvider,
-        IGlobalSettingsClient gameweekClient)
+        IGlobalSettingsClient gameweekClient,
+        IFixtureClient fixtureClient,
+        ILiveClient liveClient,
+        IPulseLiveClient pulseClient)
     {
         if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
         var (guildId, channelId) = resolved;
@@ -332,6 +339,74 @@ public static class AdminDiscordEndpoints
                 await deadline1Endpoint.Send(new PublishToGuildChannel(installation.ExternalId, channel.ChannelId,
                     $"😱 Gameweek {gameweek.Id} deadline in 60 minutes! @here"));
                 break;
+            case PublishableEvent.FixtureEvents:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                var (events, refusalReason) = await PublishableFixtureLookup.ResolveFixtureEvents(fixture, gameweekClient);
+                if (refusalReason is not null)
+                {
+                    return TypedResults.Ok(new { published = false, message = refusalReason });
+                }
+
+                var fixtureEventsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordFixtureEventsHandler)}"));
+                await fixtureEventsEndpoint.Send(new PublishFixtureEventsToGuild(installation.ExternalId, channel.ChannelId, events));
+                break;
+            }
+            case PublishableEvent.FixtureFullTime:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                if (!fixture.Finished && !fixture.FinishedProvisional)
+                {
+                    return TypedResults.Ok(new { published = false, message = "This fixture hasn't finished yet." });
+                }
+
+                var fulltimeSettings = await gameweekClient.GetGlobalSettings();
+                var liveItems = fixture.Event.HasValue ? await liveClient.GetLiveItems(fixture.Event.Value, isOngoingGameweek: true) : null;
+                var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(fulltimeSettings?.Teams ?? [], fulltimeSettings?.Players ?? [], fixture, liveItems);
+                var title = $"*FT: {finished.HomeTeam.ShortName} {finished.Fixture.HomeTeamScore}-{finished.Fixture.AwayTeamScore} {finished.AwayTeam.ShortName}*";
+                var threadMessage = Formatter.FormatProvisionalFinished(finished);
+
+                var fulltimeEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(PublishToGuildHandler)}"));
+                await fulltimeEndpoint.Send(new PublishRichToGuildChannel(installation.ExternalId, channel.ChannelId, $"ℹ️ {title}", threadMessage));
+                break;
+            }
+            case PublishableEvent.Lineups:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                var matchDetails = await pulseClient.GetMatchDetails(fixture.Code);
+                if (matchDetails is null || !matchDetails.HasLineUps())
+                {
+                    return TypedResults.Ok(new { published = false, message = "Lineups aren't confirmed yet for this fixture." });
+                }
+
+                var lineupSettings = await gameweekClient.GetGlobalSettings();
+                var teamShortNames = lineupSettings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? [];
+                var homeAbbr = teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?") ?? "?";
+                var awayAbbr = teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
+                var lineupReady = MatchDetailsMapper.TryMapToLineup(matchDetails, fixture.Code, homeAbbr, awayAbbr);
+                if (lineupReady is null)
+                {
+                    return TypedResults.Ok(new { published = false, message = "Could not map lineups for this fixture." });
+                }
+
+                var firstMessage = $"*Lineups {lineupReady.Lineup.HomeTeamLineup.TeamName}-{lineupReady.Lineup.AwayTeamLineup.TeamName} ready* ";
+                var formattedLineup = Formatter.FormatLineup(lineupReady.Lineup);
+                var lineupsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(PublishToGuildHandler)}"));
+                await lineupsEndpoint.Send(new PublishRichToGuildChannel(installation.ExternalId, channel.ChannelId, $"ℹ️ {firstMessage}", formattedLineup));
+                break;
+            }
         }
 
         return TypedResults.Ok(new { published = true, message = $"Published {evt} to {channelId}" });

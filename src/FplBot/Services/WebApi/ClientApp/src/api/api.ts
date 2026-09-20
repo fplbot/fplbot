@@ -107,7 +107,14 @@ export function uninstallTeam(installationId: string): Promise<MessageResponse> 
   return postJson(`/api/admin/teams/${installationId}/uninstall`);
 }
 
-export type PublishableEvent = "Standings" | "GameweekStarted" | "Deadline24Hours" | "Deadline1Hour";
+export type PublishableEvent =
+  | "Standings"
+  | "GameweekStarted"
+  | "Deadline24Hours"
+  | "Deadline1Hour"
+  | "FixtureEvents"
+  | "FixtureFullTime"
+  | "Lineups";
 
 export function publishSubscriptionEvent(
   subscriptionId: string,

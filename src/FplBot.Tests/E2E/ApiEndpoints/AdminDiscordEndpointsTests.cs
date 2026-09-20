@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.PulseLive;
 using FplBot.Data;
 using FplBot.Domain;
 using FplBot.WebApi.Endpoints.Api.Admin;
@@ -524,4 +525,156 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         A.CallTo(() => fixture.Services.GetRequiredService<ILeagueClient>()
                 .GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
             .Returns(Task.FromResult<ClassicLeague?>(null));
+
+    // The current gameweek in bootstrap-static.json (see GameweekExtensions.GetCurrentGameweek).
+    private const int CurrentGameweekId = 3;
+
+    private static Fixture RealPlayedFixture(bool finished = false) => new()
+    {
+        Id = 1,
+        Code = 1,
+        Event = CurrentGameweekId,
+        HomeTeamId = 1,
+        AwayTeamId = 2,
+        KickOffTime = DateTime.UtcNow.AddHours(-2),
+        Minutes = 90,
+        Finished = finished,
+        FinishedProvisional = finished,
+        HomeTeamScore = finished ? 2 : 1,
+        AwayTeamScore = finished ? 1 : 0,
+        Stats =
+        [
+            new FixtureStat
+            {
+                Identifier = "goals_scored",
+                HomeStats = [new FixtureStatValue { Element = 1, Value = finished ? 2 : 1 }],
+                AwayStats = finished ? [new FixtureStatValue { Element = 2, Value = 1 }] : []
+            }
+        ]
+    };
+
+    private void SeedFixture(Fixture fixture_) =>
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixturesByGameweek(CurrentGameweekId))
+            .Returns([fixture_]);
+
+    private void SeedNoFixtures() =>
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixturesByGameweek(CurrentGameweekId))
+            .Returns([]);
+
+    private void SeedLineups()
+    {
+        var homeLineup = new TeamLineup
+        {
+            TeamId = 1,
+            Players = [new PulsePlayer { Id = 1, KnownName = "Raya", Position = "Goalkeeper", IsCaptain = false }],
+            Formation = new PulseFormation { Label = "4-3-3", Lineup = [[1]] }
+        };
+        var awayLineup = new TeamLineup
+        {
+            TeamId = 2,
+            Players = [new PulsePlayer { Id = 2, KnownName = "Martinez", Position = "Goalkeeper", IsCaptain = false }],
+            Formation = new PulseFormation { Label = "4-4-2", Lineup = [[2]] }
+        };
+        A.CallTo(() => fixture.Services.GetRequiredService<IPulseLiveClient>().GetMatchDetails(1))
+            .Returns(new MatchDetails { HomeTeam = homeLineup, AwayTeam = awayLineup });
+    }
+
+    // Other tests in this shared-fixture collection may configure GetMatchDetails(1) too (fixture
+    // code 1 is reused across these publish-now tests), so "not confirmed yet" must stub its own
+    // null result rather than relying on an unconfigured fake's default.
+    private void SeedNoLineups() =>
+        A.CallTo(() => fixture.Services.GetRequiredService<IPulseLiveClient>().GetMatchDetails(1))
+            .Returns((MatchDetails?)null);
+
+    [Fact]
+    public async Task Publish_FixtureEvents_NoFixturesForGameweek_DoesNotPublish()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.FixtureGoals]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        SeedNoFixtures();
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/FixtureEvents");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.False(value.GetProperty("published").GetBoolean());
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
+    }
+
+    [Fact]
+    public async Task Publish_FixtureEvents_RealGoalRecorded_PublishesIt()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.FixtureGoals]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        SeedFixture(RealPlayedFixture());
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/FixtureEvents");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        Assert.Contains("Raya", msg.Description);
+    }
+
+    [Fact]
+    public async Task Publish_FixtureFullTime_FixtureNotFinished_DoesNotPublish()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.FixtureFullTime]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        SeedFixture(RealPlayedFixture(finished: false));
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/FixtureFullTime");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.False(value.GetProperty("published").GetBoolean());
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
+    }
+
+    [Fact]
+    public async Task Publish_FixtureFullTime_FixtureFinished_PublishesScore()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.FixtureFullTime]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        SeedFixture(RealPlayedFixture(finished: true));
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/FixtureFullTime");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        Assert.Contains("2-1", msg.Title);
+    }
+
+    [Fact]
+    public async Task Publish_Lineups_NotConfirmedYet_DoesNotPublish()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Lineups]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        SeedFixture(RealPlayedFixture());
+        SeedNoLineups();
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/Lineups");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.False(value.GetProperty("published").GetBoolean());
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
+    }
+
+    [Fact]
+    public async Task Publish_Lineups_Confirmed_PublishesThem()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Lineups]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+        SeedFixture(RealPlayedFixture());
+        SeedLineups();
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/Lineups");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        Assert.Contains("Lineups", msg.Title);
+    }
 }

@@ -1,4 +1,5 @@
 using Fpl.Client.Abstractions;
+using Fpl.PulseLive;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
@@ -18,7 +19,10 @@ public enum PublishableEvent
     Standings,
     GameweekStarted,
     Deadline24Hours,
-    Deadline1Hour
+    Deadline1Hour,
+    FixtureEvents,
+    FixtureFullTime,
+    Lineups
 }
 
 // A subscription id is unique across platforms and already says which platform it belongs to, so
@@ -124,17 +128,22 @@ public static class AdminSubscriptionEndpoints
         ISlackTeamRepository slackRepo,
         IGuildRepository guildRepo,
         ISendEndpointProvider sendEndpointProvider,
-        IGlobalSettingsClient gameweekClient)
+        IGlobalSettingsClient gameweekClient,
+        IFixtureClient fixtureClient,
+        ILiveClient liveClient,
+        IPulseLiveClient pulseClient)
     {
         if (!Enum.TryParse<PublishableEvent>(eventName, ignoreCase: true, out var evt))
         {
-            return TypedResults.BadRequest(new { errors = new { eventName = new[] { "must be one of Standings, GameweekStarted, Deadline24Hours, Deadline1Hour" } } });
+            return TypedResults.BadRequest(new { errors = new { eventName = new[] { "must be one of Standings, GameweekStarted, Deadline24Hours, Deadline1Hour, FixtureEvents, FixtureFullTime, Lineups" } } });
         }
 
         return await PlatformOf(resolver, subscriptionId) switch
         {
-            ChatPlatform.Slack => await AdminSlackEndpoints.Publish(subscriptionId, evt, resolver, slackRepo, sendEndpointProvider, gameweekClient),
-            ChatPlatform.Discord => await AdminDiscordEndpoints.Publish(subscriptionId, evt, resolver, guildRepo, sendEndpointProvider, gameweekClient),
+            ChatPlatform.Slack => await AdminSlackEndpoints.Publish(subscriptionId, evt, resolver, slackRepo, sendEndpointProvider, gameweekClient,
+                fixtureClient, liveClient, pulseClient),
+            ChatPlatform.Discord => await AdminDiscordEndpoints.Publish(subscriptionId, evt, resolver, guildRepo, sendEndpointProvider, gameweekClient,
+                fixtureClient, liveClient, pulseClient),
             _ => TypedResults.NotFound()
         };
     }

@@ -13,6 +13,9 @@ const EVENTS: { value: PublishableEvent; label: string; requiresLeague: boolean 
   { value: "GameweekStarted", label: "Gameweek started (captains & transfers)", requiresLeague: true },
   { value: "Deadline24Hours", label: "Deadline reminder (24 hours out)", requiresLeague: false },
   { value: "Deadline1Hour", label: "Deadline reminder (1 hour out)", requiresLeague: false },
+  { value: "FixtureEvents", label: "Goals/cards for the first fixture", requiresLeague: false },
+  { value: "FixtureFullTime", label: "Full time for the first fixture", requiresLeague: false },
+  { value: "Lineups", label: "Lineups for the first fixture", requiresLeague: false },
 ];
 
 const selected = ref<PublishableEvent>("Standings");

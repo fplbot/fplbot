@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.PulseLive;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Domain;
@@ -178,6 +179,120 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
         Assert.True(value.GetProperty("published").GetBoolean());
         var msg = await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
         Assert.Contains("60 minutes", msg.Text);
+    }
+
+    // The current gameweek in bootstrap-static.json (see GameweekExtensions.GetCurrentGameweek).
+    private const int CurrentGameweekId = 3;
+
+    private static Fixture RealPlayedFixture(bool finished = false) => new()
+    {
+        Id = 1,
+        Code = 1,
+        Event = CurrentGameweekId,
+        HomeTeamId = 1,
+        AwayTeamId = 2,
+        KickOffTime = DateTime.UtcNow.AddHours(-2),
+        Minutes = 90,
+        Finished = finished,
+        FinishedProvisional = finished,
+        HomeTeamScore = finished ? 2 : 1,
+        AwayTeamScore = finished ? 1 : 0,
+        Stats =
+        [
+            new FixtureStat
+            {
+                Identifier = "goals_scored",
+                HomeStats = [new FixtureStatValue { Element = 1, Value = finished ? 2 : 1 }],
+                AwayStats = finished ? [new FixtureStatValue { Element = 2, Value = 1 }] : []
+            }
+        ]
+    };
+
+    private void SeedFixture(Fixture fixture_) =>
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixturesByGameweek(CurrentGameweekId))
+            .Returns([fixture_]);
+
+    private void SeedLineups()
+    {
+        var homeLineup = new TeamLineup
+        {
+            TeamId = 1,
+            Players = [new PulsePlayer { Id = 1, KnownName = "Raya", Position = "Goalkeeper", IsCaptain = false }],
+            Formation = new PulseFormation { Label = "4-3-3", Lineup = [[1]] }
+        };
+        var awayLineup = new TeamLineup
+        {
+            TeamId = 2,
+            Players = [new PulsePlayer { Id = 2, KnownName = "Martinez", Position = "Goalkeeper", IsCaptain = false }],
+            Formation = new PulseFormation { Label = "4-4-2", Lineup = [[2]] }
+        };
+        A.CallTo(() => fixture.Services.GetRequiredService<IPulseLiveClient>().GetMatchDetails(1))
+            .Returns(new MatchDetails { HomeTeam = homeLineup, AwayTeam = awayLineup });
+    }
+
+    [Fact]
+    public async Task Publish_FixtureEvents_NoFixturesForGameweek_DoesNotPublish()
+    {
+        await fixture.InstallSlackbot("T6", "Blank");
+        await fixture.Subscribe("T6", "C0FPLBOT01", FplEvent.FixtureGoals);
+        A.CallTo(() => fixture.Services.GetRequiredService<IFixtureClient>().GetFixturesByGameweek(CurrentGameweekId)).Returns([]);
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T6", "C0FPLBOT01")}/publish/FixtureEvents");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.False(value.GetProperty("published").GetBoolean());
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage());
+    }
+
+    [Fact]
+    public async Task Publish_FixtureEvents_RealGoalRecorded_PublishesIt()
+    {
+        await fixture.InstallSlackbot("T7", "Blank");
+        await fixture.Subscribe("T7", "C0FPLBOT01", FplEvent.FixtureGoals);
+        SeedFixture(RealPlayedFixture());
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T7", "C0FPLBOT01")}/publish/FixtureEvents");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        Assert.Contains("Raya", msg.Text);
+    }
+
+    [Fact]
+    public async Task Publish_FixtureFullTime_FixtureFinished_PublishesScore()
+    {
+        await fixture.InstallSlackbot("T8", "Blank");
+        await fixture.Subscribe("T8", "C0FPLBOT01", FplEvent.FixtureFullTime);
+        SeedFixture(RealPlayedFixture(finished: true));
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T8", "C0FPLBOT01")}/publish/FixtureFullTime");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        Assert.Contains("2-1", msg.Text);
+    }
+
+    [Fact]
+    public async Task Publish_Lineups_Confirmed_PublishesThem()
+    {
+        await fixture.InstallSlackbot("T9", "Blank");
+        await fixture.Subscribe("T9", "C0FPLBOT01", FplEvent.Lineups);
+        SeedFixture(RealPlayedFixture());
+        SeedLineups();
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T9", "C0FPLBOT01")}/publish/Lineups");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        Assert.Contains("Lineups", msg.Text);
     }
 
     [Fact]

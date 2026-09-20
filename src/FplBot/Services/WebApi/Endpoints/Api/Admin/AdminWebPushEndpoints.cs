@@ -1,5 +1,7 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.EventPublishers.Models.Mappers;
+using Fpl.PulseLive;
 using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.EventHandlers.Web;
@@ -86,11 +88,12 @@ public static class AdminWebPushEndpoints
     }
 
     internal static async Task<IResult> Publish(string subscriberId, string eventName, IWebPushSubscriberRepository repo,
-        IPublishEndpoint publishEndpoint, IGlobalSettingsClient gameweekClient)
+        IPublishEndpoint publishEndpoint, IGlobalSettingsClient gameweekClient, IFixtureClient fixtureClient,
+        IPulseLiveClient pulseClient)
     {
         if (!Enum.TryParse<PublishableEvent>(eventName, ignoreCase: true, out var evt))
         {
-            return TypedResults.BadRequest(new { errors = new { eventName = new[] { "must be one of Standings, GameweekStarted, Deadline24Hours, Deadline1Hour" } } });
+            return TypedResults.BadRequest(new { errors = new { eventName = new[] { "must be one of Standings, GameweekStarted, Deadline24Hours, Deadline1Hour, FixtureEvents, FixtureFullTime, Lineups" } } });
         }
 
         if (await repo.Find(new WebPushSubscriberId(subscriberId)) is not { } subscriber)
@@ -108,6 +111,92 @@ public static class AdminWebPushEndpoints
         if (settings?.Gameweeks.GetCurrentGameweek() is not { } gameweek)
         {
             return TypedResults.Ok(new { published = false, message = "Could not determine the current gameweek." });
+        }
+
+        switch (evt)
+        {
+            case PublishableEvent.FixtureEvents:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                var (events, refusalReason) = await PublishableFixtureLookup.ResolveFixtureEvents(fixture, gameweekClient);
+                if (refusalReason is not null)
+                {
+                    return TypedResults.Ok(new { published = false, message = refusalReason });
+                }
+
+                var sentCount = 0;
+                foreach (var fixtureEvent in events)
+                {
+                    foreach (var (statType, playerEvents) in fixtureEvent.StatMap)
+                    {
+                        foreach (var playerEvent in playerEvents.Where(p => !p.IsRemoved))
+                        {
+                            var (eventTitle, eventBody) = WebPushFormatter.FixtureEvent(statType, fixtureEvent.FixtureScore, playerEvent.Player.WebName);
+                            await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, eventTitle, eventBody,
+                                (int?)subscriber.FollowedLeagueId?.Value));
+                            sentCount++;
+                        }
+                    }
+                }
+
+                return TypedResults.Ok(new
+                {
+                    published = sentCount > 0,
+                    message = sentCount > 0 ? $"Published {sentCount} fixture event notification(s)." : "No publishable player events found."
+                });
+            }
+            case PublishableEvent.FixtureFullTime:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                if (!fixture.Finished && !fixture.FinishedProvisional)
+                {
+                    return TypedResults.Ok(new { published = false, message = "This fixture hasn't finished yet." });
+                }
+
+                var fulltimeSettings = await gameweekClient.GetGlobalSettings();
+                var teams = fulltimeSettings?.Teams ?? [];
+                var homeTeam = teams.FirstOrDefault(t => t.Id == fixture.HomeTeamId);
+                var awayTeam = teams.FirstOrDefault(t => t.Id == fixture.AwayTeamId);
+                var (ftTitle, ftBody) = WebPushFormatter.FixtureFullTime(homeTeam?.ShortName, fixture.HomeTeamScore, fixture.AwayTeamScore, awayTeam?.ShortName);
+                await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, ftTitle, ftBody, (int?)subscriber.FollowedLeagueId?.Value));
+                return TypedResults.Ok(new { published = true, message = "Published." });
+            }
+            case PublishableEvent.Lineups:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                var matchDetails = await pulseClient.GetMatchDetails(fixture.Code);
+                if (matchDetails is null || !matchDetails.HasLineUps())
+                {
+                    return TypedResults.Ok(new { published = false, message = "Lineups aren't confirmed yet for this fixture." });
+                }
+
+                var lineupSettings = await gameweekClient.GetGlobalSettings();
+                var teamShortNames = lineupSettings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? [];
+                var homeAbbr = teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?") ?? "?";
+                var awayAbbr = teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
+                var lineupReady = MatchDetailsMapper.TryMapToLineup(matchDetails, fixture.Code, homeAbbr, awayAbbr);
+                if (lineupReady is null)
+                {
+                    return TypedResults.Ok(new { published = false, message = "Could not map lineups for this fixture." });
+                }
+
+                var (luTitle, luBody) = WebPushFormatter.Lineups(
+                    $"{lineupReady.Lineup.HomeTeamLineup.TeamName} v {lineupReady.Lineup.AwayTeamLineup.TeamName}");
+                await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, luTitle, luBody, (int?)subscriber.FollowedLeagueId?.Value));
+                return TypedResults.Ok(new { published = true, message = "Published." });
+            }
         }
 
         // The real system never sends an arbitrary "time remaining" reminder — only ever one of

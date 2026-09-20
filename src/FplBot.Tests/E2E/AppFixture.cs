@@ -8,6 +8,7 @@ using FakeItEasy;
 using Fpl.Client;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.PulseLive;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
@@ -278,6 +279,7 @@ public class AppFixture : IAsyncLifetime
         builder.Services.AddSingleton(A.Fake<ITransfersClient>());
         builder.Services.AddSingleton(A.Fake<IEntryClient>());
         builder.Services.AddSingleton(A.Fake<ILiveClient>());
+        builder.Services.AddSingleton(A.Fake<IPulseLiveClient>());
         builder.Services.AddSingleton(A.Fake<IEntryHistoryClient>());
         builder.Services.AddSingleton(A.Fake<IEventStatusClient>());
 
