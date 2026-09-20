@@ -81,9 +81,12 @@ export async function sendTestNotification(): Promise<void> {
 }
 
 export async function unsubscribe(): Promise<void> {
-  await fetch("/api/web/me", authed("DELETE"));
-  localStorage.removeItem(STORAGE_KEY);
+  const response = await fetch("/api/web/me", authed("DELETE"));
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`DELETE /api/web/me failed: ${response.status}`);
+  }
   const registration = await navigator.serviceWorker.getRegistration("/sw.js");
   const subscription = await registration?.pushManager.getSubscription();
   await subscription?.unsubscribe();
+  localStorage.removeItem(STORAGE_KEY);
 }
