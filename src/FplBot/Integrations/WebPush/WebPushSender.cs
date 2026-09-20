@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using FplBot.Domain;
 using Microsoft.Extensions.Options;
 using WebPush;
@@ -16,7 +15,7 @@ public class WebPushSender(IOptions<WebPushOptions> options, ILogger<WebPushSend
         {
             var subscription = new PushSubscription(keys.Endpoint, keys.P256dh, keys.Auth);
             var vapid = new VapidDetails(options.Value.Subject, options.Value.PublicKey, options.Value.PrivateKey);
-            await _client.SendNotificationAsync(subscription, JsonSerializer.Serialize(payload), vapid);
+            await _client.SendNotificationAsync(subscription, WebPushPayloadJson.Serialize(payload), vapid);
             return WebPushOutcome.Delivered;
         }
         catch (WebPushException e) when (e.StatusCode is HttpStatusCode.Gone or HttpStatusCode.NotFound)
