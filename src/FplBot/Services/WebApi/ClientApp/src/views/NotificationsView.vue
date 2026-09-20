@@ -43,6 +43,21 @@ const shareLink = computed(() =>
   state.value?.leagueId ? `${window.location.origin}/notifications?league=${state.value.leagueId}` : null
 );
 
+const linkCopied = ref(false);
+let copiedTimeout: ReturnType<typeof setTimeout> | undefined;
+
+async function copyShareLink() {
+  if (!shareLink.value) return;
+  try {
+    await navigator.clipboard.writeText(shareLink.value);
+    linkCopied.value = true;
+    clearTimeout(copiedTimeout);
+    copiedTimeout = setTimeout(() => (linkCopied.value = false), 2000);
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
 function label(event: string) {
   return event.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
@@ -345,7 +360,10 @@ async function stop() {
 
         <div v-if="shareLink" class="share">
           <p>Share this with your league:</p>
-          <code>{{ shareLink }}</code>
+          <button class="btn small share-btn" @click="copyShareLink">
+            <code>{{ shareLink }}</code>
+            <span class="copy-label">{{ linkCopied ? "Copied!" : "Copy" }}</span>
+          </button>
         </div>
       </section>
     </div>
@@ -497,14 +515,36 @@ h2 {
   margin-top: 0.5rem;
 }
 
-.share code {
-  display: block;
+.share-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
-  word-break: break-all;
+  cursor: pointer;
+  text-align: left;
+}
+
+.share-btn code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.875rem;
+  background: none;
+  padding: 0;
+}
+
+.copy-label {
+  flex-shrink: 0;
+  font-weight: bold;
+  font-size: 0.8125rem;
+  color: var(--fpl-purple);
 }
 
 .spinner-wrap {
