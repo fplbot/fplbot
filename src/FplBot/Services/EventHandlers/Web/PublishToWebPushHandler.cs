@@ -19,6 +19,7 @@ public class PublishToWebPushHandler(
         var subscriberId = new WebPushSubscriberId(message.SubscriberId);
         if (await repo.Find(subscriberId) is not { } subscriber)
         {
+            await repo.Delete(subscriberId);
             return;
         }
 
