@@ -77,6 +77,7 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<PublishToSlackHandler>();
         cfg.AddConsumer<BroadcastToSlackHandler>();
 
+        cfg.AddConsumer<WebPushDispatchHandler>();
         cfg.AddConsumer<PublishToWebPushHandler>();
 
         cfg.AddConsumer<SubscribeCommandHandler>();
