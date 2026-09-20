@@ -30,6 +30,8 @@ const testSent = ref(false);
 const leagueQuery = ref("");
 const leagueResults = ref<LeagueItem[]>([]);
 const searched = ref(false);
+const manualLeagueInput = ref("");
+const manualLeagueError = ref<string | null>(null);
 const chosenLeagueId = ref<number | null>(route.query.league ? Number(route.query.league) || null : null);
 const chosenLeagueName = ref<string | null>(null);
 const followedLeagueName = ref<string | null>(null);
@@ -98,6 +100,44 @@ function pickLeague(league: LeagueItem) {
 function clearChosenLeague() {
   chosenLeagueId.value = null;
   chosenLeagueName.value = null;
+}
+
+function parseLeagueId(raw: string): number | null {
+  const trimmed = raw.trim();
+  const fromUrl = trimmed.match(/leagues\/(\d+)/);
+  const id = Number(fromUrl ? fromUrl[1] : trimmed);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+async function resolveManualLeague(raw: string): Promise<LeagueItem | null> {
+  const id = parseLeagueId(raw);
+  if (id === null) {
+    manualLeagueError.value = "Enter a league id, or paste a fantasy.premierleague.com league link.";
+    return null;
+  }
+  try {
+    const league = await getLeague(id);
+    if (!league) {
+      manualLeagueError.value = `No league found with id ${id}.`;
+      return null;
+    }
+    return { id, name: league.leagueName };
+  } catch (e) {
+    manualLeagueError.value = (e as Error).message;
+    return null;
+  }
+}
+
+async function useManualLeague() {
+  manualLeagueError.value = null;
+  const league = await resolveManualLeague(manualLeagueInput.value);
+  if (!league) return;
+  if (state.value) {
+    await followLeague(league);
+  } else {
+    pickLeague(league);
+  }
+  manualLeagueInput.value = "";
 }
 
 async function enable() {
@@ -225,6 +265,17 @@ async function stop() {
             </li>
           </ul>
           <p v-else-if="searched">No leagues matched "{{ leagueQuery }}".</p>
+
+          <form class="search-form manual-league" @submit.prevent="useManualLeague">
+            <input
+              v-model="manualLeagueInput"
+              placeholder="Or paste a league id or fantasy.premierleague.com link"
+              class="search-input"
+            />
+            <button type="submit" class="btn">Use this</button>
+          </form>
+          <p v-if="manualLeagueError" class="error">{{ manualLeagueError }}</p>
+
           <p class="hint">
             You can skip this and add a league later — league-specific notifications stay off until you do.
           </p>
@@ -257,6 +308,16 @@ async function stop() {
             </li>
           </ul>
           <p v-else-if="searched">No leagues matched "{{ leagueQuery }}".</p>
+
+          <form class="search-form manual-league" @submit.prevent="useManualLeague">
+            <input
+              v-model="manualLeagueInput"
+              placeholder="Or paste a league id or fantasy.premierleague.com link"
+              class="search-input"
+            />
+            <button type="submit" class="btn">Use this</button>
+          </form>
+          <p v-if="manualLeagueError" class="error">{{ manualLeagueError }}</p>
         </template>
 
         <h2>Notifications</h2>
@@ -338,6 +399,10 @@ h2 {
 
 .search-form .search-input {
   flex-grow: 1;
+}
+
+.manual-league {
+  margin-top: 0.5rem;
 }
 
 .league-list {
