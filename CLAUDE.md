@@ -263,8 +263,11 @@ See `src/.claude/commands/add-notification.md` for the full recipe. Summary:
 3. Add publishing in a `RecurringAction` or `State` class
 4. Create Discord handler (`Services/EventHandlers/Discord/Discord<Name>Handler.cs`)
 5. Create Slack handler (`Services/EventHandlers/Slack/Slack<Name>Handler.cs`)
-6. Register both consumers in `EventHandlersService.ConfigureMassTransit()`
-7. Add an E2E test (`FplBot.Tests/E2E/`), plus a formatter unit test if the formatting is non-trivial
+6. Decide web delivery: add a dispatch in `Services/EventHandlers/Web/WebPushDispatchHandler.cs`,
+   or exclude the value from `FplEvents.SupportedOnWeb` — every value not excluded there is offered
+   and enabled by default on `/notifications`, so skipping both leaves a checkbox that never delivers
+7. Register the consumers in `EventHandlersService.ConfigureMassTransit()`
+8. Add an E2E test (`FplBot.Tests/E2E/`), plus a formatter unit test if the formatting is non-trivial
 
 ## Adding a command handler
 
