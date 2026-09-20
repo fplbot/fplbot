@@ -45,9 +45,20 @@ public static class WebPushEndpoints
             return TypedResults.BadRequest(new { errors = new { push = new[] { "endpoint, p256dh and auth are required" } } });
         }
 
+        if (!Uri.TryCreate(request.Endpoint, UriKind.Absolute, out var endpointUri) ||
+            endpointUri.Scheme != Uri.UriSchemeHttps)
+        {
+            return TypedResults.BadRequest(new { errors = new { push = new[] { "endpoint must be an absolute https URL" } } });
+        }
+
+        if (request.LeagueId is { } leagueId && !IsValidLeagueId(leagueId))
+        {
+            return TypedResults.BadRequest(new { errors = new { leagueId = new[] { "leagueId must be between 1 and 2147483647" } } });
+        }
+
         var subscriber = WebPushSubscriber.Register(
             new PushKeys(request.Endpoint, request.P256dh, request.Auth), request.Name,
-            request.LeagueId is { } leagueId ? new ClassicLeagueId(leagueId) : null);
+            request.LeagueId is { } league ? new ClassicLeagueId(league) : null);
 
         await repo.Save(subscriber);
         return TypedResults.Ok(new SubscribeResponse(subscriber.Id.Value));
@@ -74,6 +85,11 @@ public static class WebPushEndpoints
         if (await Resolve(context, repo) is not { } subscriber)
         {
             return TypedResults.NotFound();
+        }
+
+        if (request.LeagueId is { } invalid && !IsValidLeagueId(invalid))
+        {
+            return TypedResults.BadRequest(new { errors = new { leagueId = new[] { "leagueId must be between 1 and 2147483647" } } });
         }
 
         if (request.LeagueId is { } leagueId)
@@ -118,6 +134,8 @@ public static class WebPushEndpoints
         context.Request.Headers.TryGetValue(SubscriberIdHeader, out var header) && !string.IsNullOrWhiteSpace(header)
             ? await repo.Find(new WebPushSubscriberId(header.ToString()))
             : null;
+
+    private static bool IsValidLeagueId(long leagueId) => leagueId is >= 1 and <= int.MaxValue;
 
     private static FplEvent[] Parse(IEnumerable<string> events) =>
         [

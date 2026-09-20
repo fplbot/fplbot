@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using FplBot.WebApi.Endpoints.Api.Admin;
 using FplBot.WebApi.Endpoints.Api.Web;
 
 namespace FplBot.Tests.E2E.ApiEndpoints;
@@ -35,6 +36,46 @@ public class WebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
         Assert.DoesNotContain("Standings", state.Events);
         Assert.DoesNotContain("Captains", state.Events);
         Assert.Contains("FixtureGoals", state.Events);
+    }
+
+    [Fact]
+    public async Task Subscribe_NonUriEndpoint_IsRejectedAndStoresNothing()
+    {
+        var response = await fixture.Post("/api/web/push/subscribe", new { endpoint = "x", p256dh = "y", auth = "z" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var page = await fixture.GetJson<PagedResult<SubscriberSummaryDto>>("/api/admin/web/subscribers?page=0&pageSize=20");
+        Assert.Equal(0, page.TotalCount);
+    }
+
+    [Fact]
+    public async Task Subscribe_NonHttpsEndpoint_IsRejected()
+    {
+        var response = await fixture.Post("/api/web/push/subscribe",
+            new { endpoint = "http://push.example.test/abc", p256dh = "y", auth = "z" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Subscribe_LeagueIdBeyondIntRange_IsRejected()
+    {
+        var response = await fixture.Post("/api/web/push/subscribe",
+            new { endpoint = "https://push.example.test/abc", p256dh = "y", auth = "z", leagueId = 4294967297L });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutLeague_LeagueIdBeyondIntRange_IsRejectedAndKeepsCurrentLeague()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.PutWebPush(subscriberId, "/api/web/me/league", new { leagueId = 4294967297L });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var state = await fixture.GetWebPushState(subscriberId);
+        Assert.Equal(123, state.LeagueId);
     }
 
     [Fact]

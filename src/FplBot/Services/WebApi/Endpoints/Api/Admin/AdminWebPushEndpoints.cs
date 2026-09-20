@@ -48,5 +48,5 @@ public static class AdminWebPushEndpoints
             subscriber.Name,
             subscriber.FollowedLeagueId?.Value,
             subscriber.Events.Current.Count,
-            new Uri(subscriber.PushKeys.Endpoint).Host);
+            Uri.TryCreate(subscriber.PushKeys.Endpoint, UriKind.Absolute, out var uri) ? uri.Host : "unknown");
 }
