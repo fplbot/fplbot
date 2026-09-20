@@ -269,10 +269,12 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Publish_FixtureEvents_RealGoalRecorded_PublishesIt()
+    public async Task Publish_FixtureEvents_RealGoalRecorded_PublishesItWithNoLink()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
-        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        // Following a league would give a Standings/GameweekStarted push a /leagues/{id} link, but a
+        // fixture event has no league-specific destination, so it must not carry one either.
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
         SeedFixture(RealPlayedFixture());
 
         var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/FixtureEvents");
@@ -280,13 +282,14 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
         Assert.Contains("Raya", push.Body);
+        Assert.Null(push.Link);
     }
 
     [Fact]
-    public async Task Publish_FixtureFullTime_FixtureFinished_PublishesScore()
+    public async Task Publish_FixtureFullTime_FixtureFinished_PublishesScoreWithNoLink()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
-        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
         SeedFixture(RealPlayedFixture(finished: true));
 
         var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/FixtureFullTime");
@@ -294,13 +297,14 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
         Assert.Contains("2-1", push.Title);
+        Assert.Null(push.Link);
     }
 
     [Fact]
-    public async Task Publish_Lineups_Confirmed_PublishesThem()
+    public async Task Publish_Lineups_Confirmed_PublishesFormattedLineupWithNoLink()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
-        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
         SeedFixture(RealPlayedFixture());
         SeedLineups();
 
@@ -309,6 +313,8 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
         Assert.Contains("Lineups", push.Title);
+        Assert.Contains("Raya", push.Body);
+        Assert.Null(push.Link);
     }
 
     [Fact]

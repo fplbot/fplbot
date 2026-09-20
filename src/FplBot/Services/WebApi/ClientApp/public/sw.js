@@ -6,14 +6,17 @@ self.addEventListener("push", (event) => {
       body: payload.body || "",
       icon: "/android-icon-192x192.png",
       badge: "/android-icon-96x96.png",
-      data: { link: payload.link || "/" },
+      data: { link: payload.link || null },
     })
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const link = (event.notification.data && event.notification.data.link) || "/";
+  const link = event.notification.data && event.notification.data.link;
+  if (!link) {
+    return;
+  }
   const target = new URL(link, self.location.origin).href;
 
   event.waitUntil(

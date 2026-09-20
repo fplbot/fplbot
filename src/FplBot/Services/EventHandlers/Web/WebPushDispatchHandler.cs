@@ -2,6 +2,7 @@ using Fpl.Client.Abstractions;
 using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.EventHandlers.Discord.Helpers;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -48,9 +49,7 @@ public class WebPushDispatchHandler(
         DispatchGlobal(context, FplEvent.Deadlines, WebPushFormatter.Deadline("in 60 minutes"));
 
     public Task Consume(ConsumeContext<LineupReady> context) =>
-        DispatchGlobal(context, FplEvent.Lineups,
-            WebPushFormatter.Lineups(
-                $"{context.Message.Lineup.HomeTeamLineup.TeamName} v {context.Message.Lineup.AwayTeamLineup.TeamName}"));
+        DispatchGlobal(context, FplEvent.Lineups, WebPushFormatter.Lineups(Formatter.FormatLineup(context.Message.Lineup)));
 
     public Task Consume(ConsumeContext<NewPlayersRegistered> context)
     {

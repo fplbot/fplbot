@@ -5,6 +5,7 @@ using Fpl.PulseLive;
 using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.EventHandlers.Web;
+using FplBot.Formatting;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.WebApi.Endpoints.Api.Web;
 using MassTransit;
@@ -136,8 +137,7 @@ public static class AdminWebPushEndpoints
                         foreach (var playerEvent in playerEvents.Where(p => !p.IsRemoved))
                         {
                             var (eventTitle, eventBody) = WebPushFormatter.FixtureEvent(statType, fixtureEvent.FixtureScore, playerEvent.Player.WebName);
-                            await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, eventTitle, eventBody,
-                                (int?)subscriber.FollowedLeagueId?.Value));
+                            await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, eventTitle, eventBody, null));
                             sentCount++;
                         }
                     }
@@ -166,7 +166,7 @@ public static class AdminWebPushEndpoints
                 var homeTeam = teams.FirstOrDefault(t => t.Id == fixture.HomeTeamId);
                 var awayTeam = teams.FirstOrDefault(t => t.Id == fixture.AwayTeamId);
                 var (ftTitle, ftBody) = WebPushFormatter.FixtureFullTime(homeTeam?.ShortName, fixture.HomeTeamScore, fixture.AwayTeamScore, awayTeam?.ShortName);
-                await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, ftTitle, ftBody, (int?)subscriber.FollowedLeagueId?.Value));
+                await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, ftTitle, ftBody, null));
                 return TypedResults.Ok(new { published = true, message = "Published." });
             }
             case PublishableEvent.Lineups:
@@ -192,9 +192,8 @@ public static class AdminWebPushEndpoints
                     return TypedResults.Ok(new { published = false, message = "Could not map lineups for this fixture." });
                 }
 
-                var (luTitle, luBody) = WebPushFormatter.Lineups(
-                    $"{lineupReady.Lineup.HomeTeamLineup.TeamName} v {lineupReady.Lineup.AwayTeamLineup.TeamName}");
-                await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, luTitle, luBody, (int?)subscriber.FollowedLeagueId?.Value));
+                var (luTitle, luBody) = WebPushFormatter.Lineups(Formatter.FormatLineup(lineupReady.Lineup));
+                await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, luTitle, luBody, null));
                 return TypedResults.Ok(new { published = true, message = "Published." });
             }
         }
