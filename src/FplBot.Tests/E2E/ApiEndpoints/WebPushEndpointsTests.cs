@@ -38,6 +38,21 @@ public class WebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PutLeague_AfterOptingOutOfEverything_DoesNotReenableEvents()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null);
+        var optOut = await fixture.PutWebPush(subscriberId, "/api/web/me/events", new { events = Array.Empty<string>() });
+        optOut.EnsureSuccessStatusCode();
+
+        var followed = await fixture.PutWebPush(subscriberId, "/api/web/me/league", new { leagueId = 123L });
+        followed.EnsureSuccessStatusCode();
+
+        var state = await fixture.GetWebPushState(subscriberId);
+        Assert.Equal(123, state.LeagueId);
+        Assert.Empty(state.Events);
+    }
+
+    [Fact]
     public async Task PutEvents_Taunts_IsNeverAccepted()
     {
         var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);

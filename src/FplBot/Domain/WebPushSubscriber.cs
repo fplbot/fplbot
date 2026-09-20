@@ -19,8 +19,17 @@ public class WebPushSubscriber
         Name = name;
     }
 
-    public static WebPushSubscriber Register(PushKeys pushKeys, string? name) =>
-        new(WebPushSubscriberId.New(), pushKeys, name);
+    public static WebPushSubscriber Register(PushKeys pushKeys, string? name, ClassicLeagueId? leagueId)
+    {
+        var subscriber = new WebPushSubscriber(WebPushSubscriberId.New(), pushKeys, name);
+        if (leagueId is not null)
+        {
+            subscriber.Follow(leagueId);
+        }
+
+        subscriber.Subscribe(FplEvents.SupportedOnWeb);
+        return subscriber;
+    }
 
     public static WebPushSubscriber Load(WebPushSubscriberId id, PushKeys pushKeys, string? name,
         ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
@@ -30,14 +39,7 @@ public class WebPushSubscriber
         return subscriber;
     }
 
-    public void Follow(ClassicLeagueId leagueId)
-    {
-        FollowedLeagueId = leagueId;
-        if (!Events.Current.Any())
-        {
-            Events.Add(FplEvents.SupportedOnWeb);
-        }
-    }
+    public void Follow(ClassicLeagueId leagueId) => FollowedLeagueId = leagueId;
 
     public void Unfollow()
     {

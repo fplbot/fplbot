@@ -46,16 +46,8 @@ public static class WebPushEndpoints
         }
 
         var subscriber = WebPushSubscriber.Register(
-            new PushKeys(request.Endpoint, request.P256dh, request.Auth), request.Name);
-
-        if (request.LeagueId is { } leagueId)
-        {
-            subscriber.Follow(new ClassicLeagueId(leagueId));
-        }
-        else
-        {
-            subscriber.Subscribe(FplEvents.SupportedOnWeb);
-        }
+            new PushKeys(request.Endpoint, request.P256dh, request.Auth), request.Name,
+            request.LeagueId is { } leagueId ? new ClassicLeagueId(leagueId) : null);
 
         await repo.Save(subscriber);
         return TypedResults.Ok(new SubscribeResponse(subscriber.Id.Value));
