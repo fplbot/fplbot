@@ -21,6 +21,7 @@ using FplBot.Services.WebApi;
 using FplBot.Tests.E2E.Discord;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
 using FplBot.Tests.Helpers;
+using FplBot.WebApi.Endpoints.Api.Web;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -150,6 +151,52 @@ public class AppFixture : IAsyncLifetime
 
     private static StringContent AsJson(object? body) =>
         new(JsonSerializer.Serialize(body ?? new { }, HttpJson), Encoding.UTF8, "application/json");
+
+    public async Task<string> SubscribeToWebPush(long? leagueId = null, string? endpoint = null, string? name = null)
+    {
+        var response = await Post("/api/web/push/subscribe", new
+        {
+            endpoint = endpoint ?? $"https://push.example.test/{Guid.NewGuid():N}",
+            p256dh = "BFakeP256dhKeyForTests",
+            auth = "FakeAuthSecret",
+            leagueId,
+            name
+        });
+        response.EnsureSuccessStatusCode();
+        var body = await ReadJson<SubscribeResponse>(response);
+        return body.SubscriberId;
+    }
+
+    public async Task<SubscriberStateResponse> GetWebPushState(string subscriberId)
+    {
+        var response = await GetWebPushRaw(subscriberId, "/api/web/me");
+        response.EnsureSuccessStatusCode();
+        return await ReadJson<SubscriberStateResponse>(response);
+    }
+
+    public Task<HttpResponseMessage> GetWebPushRaw(string subscriberId, string path) =>
+        SendWebPush(HttpMethod.Get, subscriberId, path, null);
+
+    public Task<HttpResponseMessage> PutWebPush(string subscriberId, string path, object body) =>
+        SendWebPush(HttpMethod.Put, subscriberId, path, body);
+
+    public Task<HttpResponseMessage> PostWebPush(string subscriberId, string path, object? body = null) =>
+        SendWebPush(HttpMethod.Post, subscriberId, path, body);
+
+    public Task<HttpResponseMessage> DeleteWebPush(string subscriberId, string path) =>
+        SendWebPush(HttpMethod.Delete, subscriberId, path, null);
+
+    private Task<HttpResponseMessage> SendWebPush(HttpMethod method, string subscriberId, string path, object? body)
+    {
+        var request = new HttpRequestMessage(method, path);
+        request.Headers.Add("X-Subscriber-Id", subscriberId);
+        if (body is not null)
+        {
+            request.Content = AsJson(body);
+        }
+
+        return _client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
 
     public virtual async ValueTask InitializeAsync()
     {

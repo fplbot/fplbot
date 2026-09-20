@@ -3,6 +3,7 @@ using FplBot.WebApi.Endpoints.Api.Admin;
 using FplBot.WebApi.Endpoints.Api.Fpl;
 using FplBot.WebApi.Endpoints.Api.Oauth;
 using FplBot.WebApi.Endpoints.Api.Search;
+using FplBot.WebApi.Endpoints.Api.Web;
 using FplBot.WebApi.Endpoints.Test;
 using Microsoft.Extensions.FileProviders;
 using Serilog;
@@ -79,6 +80,7 @@ public static class WebAppExtensions
         FplEndpoints.Map(api.MapGroup("/fpl").RequireCors(CorsOriginValidator.CorsPolicyName));
         SearchEndpoints.Map(api.MapGroup("/search").RequireCors(CorsOriginValidator.CorsPolicyName));
         InstallUrlEndpoints.Map(api.MapGroup("/oauth").RequireCors(CorsOriginValidator.CorsPolicyName));
+        WebPushEndpoints.Map(api.MapGroup("/web").RequireCors(CorsOriginValidator.CorsPolicyName));
 
         // Two separate /admin groups on purpose: login/logout/me carry mixed per-route auth
         // (see AdminAuthEndpoints), while everything else requires the IsAdmin policy as a
