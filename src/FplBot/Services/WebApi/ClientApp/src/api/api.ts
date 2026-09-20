@@ -14,6 +14,8 @@ import type {
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
+  LeagueSearchResponse,
+  LeagueSearchResult,
   LeagueSummary,
   MessageResponse,
   PagedResult,
@@ -263,6 +265,16 @@ export async function searchAny(
     throw new Error(`Search request failed with status ${res.status}`);
   }
   const data: SearchAnyResponse = await res.json();
+  return data.hits;
+}
+
+export async function searchLeagues(query: string, page: number): Promise<LeagueSearchResult> {
+  const params = new URLSearchParams({ query, page: String(page), countryToBoost: "" });
+  const res = await fetch(`/api/search/leagues?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`League search request failed with status ${res.status}`);
+  }
+  const data: LeagueSearchResponse = await res.json();
   return data.hits;
 }
 

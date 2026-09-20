@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import("./views/SearchView.vue"),
     },
     {
+      path: "/notifications",
+      name: "notifications",
+      component: () => import("./views/NotificationsView.vue"),
+    },
+    {
       path: "/leagues/:id",
       name: "league-details",
       component: () => import("./views/LeagueDetailsView.vue"),

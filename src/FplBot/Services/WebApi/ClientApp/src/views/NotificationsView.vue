@@ -1,0 +1,450 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from "vue";
+import { useRoute } from "vue-router";
+import NavBar from "../components/NavBar.vue";
+import AppFooter from "../components/AppFooter.vue";
+import { searchLeagues, getLeague } from "../api/api";
+import type { LeagueItem } from "../api/types";
+import {
+  enableNotifications,
+  getState,
+  setEvents,
+  setLeague,
+  sendTestNotification,
+  unsubscribe,
+  storedSubscriberId,
+  isIos,
+  isStandalone,
+  pushSupported,
+  type SubscriberState,
+} from "../api/webpush";
+
+const route = useRoute();
+
+const state = ref<SubscriberState | null>(null);
+const loading = ref(true);
+const error = ref<string | null>(null);
+const busy = ref(false);
+const testSent = ref(false);
+
+const leagueQuery = ref("");
+const leagueResults = ref<LeagueItem[]>([]);
+const searched = ref(false);
+const chosenLeagueId = ref<number | null>(route.query.league ? Number(route.query.league) || null : null);
+const chosenLeagueName = ref<string | null>(null);
+const followedLeagueName = ref<string | null>(null);
+const deviceName = ref("");
+
+const needsHomeScreen = computed(() => isIos() && !isStandalone());
+const supported = computed(() => pushSupported());
+const shareLink = computed(() =>
+  state.value?.leagueId ? `${window.location.origin}/notifications?league=${state.value.leagueId}` : null
+);
+
+function label(event: string) {
+  return event.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
+onMounted(async () => {
+  if (storedSubscriberId()) {
+    try {
+      state.value = await getState();
+      await loadFollowedLeagueName();
+    } catch {
+      state.value = null;
+    }
+  }
+  if (!state.value && chosenLeagueId.value) {
+    try {
+      chosenLeagueName.value = (await getLeague(chosenLeagueId.value))?.leagueName ?? null;
+    } catch {
+      chosenLeagueName.value = null;
+    }
+  }
+  loading.value = false;
+});
+
+async function loadFollowedLeagueName() {
+  if (!state.value?.leagueId) {
+    followedLeagueName.value = null;
+    return;
+  }
+  try {
+    followedLeagueName.value = (await getLeague(state.value.leagueId))?.leagueName ?? null;
+  } catch {
+    followedLeagueName.value = null;
+  }
+}
+
+async function runLeagueSearch() {
+  if (!leagueQuery.value) return;
+  error.value = null;
+  try {
+    leagueResults.value = (await searchLeagues(leagueQuery.value, 0)).exposedHits;
+    searched.value = true;
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+function pickLeague(league: LeagueItem) {
+  chosenLeagueId.value = league.id;
+  chosenLeagueName.value = league.name ?? null;
+  leagueResults.value = [];
+  searched.value = false;
+  leagueQuery.value = "";
+}
+
+function clearChosenLeague() {
+  chosenLeagueId.value = null;
+  chosenLeagueName.value = null;
+}
+
+async function enable() {
+  busy.value = true;
+  error.value = null;
+  try {
+    state.value = await enableNotifications(chosenLeagueId.value, deviceName.value || null);
+    await loadFollowedLeagueName();
+  } catch (e) {
+    error.value = (e as Error).message;
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function toggle(event: string) {
+  if (!state.value) return;
+  const next = state.value.events.includes(event)
+    ? state.value.events.filter((e) => e !== event)
+    : [...state.value.events, event];
+  error.value = null;
+  try {
+    state.value = await setEvents(next);
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+const requiresLeague = (event: string) =>
+  !!state.value && state.value.requiresLeague.includes(event) && state.value.leagueId === null;
+
+async function followLeague(league: LeagueItem) {
+  error.value = null;
+  try {
+    state.value = await setLeague(league.id);
+    followedLeagueName.value = league.name ?? null;
+    leagueResults.value = [];
+    searched.value = false;
+    leagueQuery.value = "";
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+async function stopFollowing() {
+  error.value = null;
+  try {
+    state.value = await setLeague(null);
+    followedLeagueName.value = null;
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+async function sendTest() {
+  error.value = null;
+  testSent.value = false;
+  try {
+    await sendTestNotification();
+    testSent.value = true;
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+async function stop() {
+  busy.value = true;
+  error.value = null;
+  try {
+    await unsubscribe();
+    state.value = null;
+    followedLeagueName.value = null;
+  } catch (e) {
+    error.value = (e as Error).message;
+  } finally {
+    busy.value = false;
+  }
+}
+</script>
+
+<template>
+  <div class="page">
+    <NavBar />
+
+    <div class="content">
+      <h1>Notifications on this device</h1>
+
+      <section v-if="needsHomeScreen" class="card">
+        <h2>Add FplBot to your Home Screen first</h2>
+        <p>
+          iPhones and iPads only deliver notifications to sites added to the Home Screen. Tap the
+          Share button in Safari, choose <strong>Add to Home Screen</strong>, then open FplBot from
+          the icon and come back to this page.
+        </p>
+      </section>
+
+      <section v-else-if="!supported" class="card">
+        <p>This browser doesn't support web push notifications.</p>
+      </section>
+
+      <div v-else-if="loading" class="spinner-wrap">
+        <div class="spinner"></div>
+      </div>
+
+      <section v-else-if="!state" class="card">
+        <h2>Which league do you want to follow?</h2>
+
+        <div v-if="chosenLeagueId" class="chosen-league">
+          <p>
+            Following <strong>{{ chosenLeagueName ?? `league ${chosenLeagueId}` }}</strong>
+            <button class="link-btn" @click="clearChosenLeague">Change</button>
+          </p>
+        </div>
+        <template v-else>
+          <form class="search-form" @submit.prevent="runLeagueSearch">
+            <input v-model="leagueQuery" placeholder="Search for your league" class="search-input" />
+            <button type="submit" class="btn">Search</button>
+          </form>
+          <ul v-if="leagueResults.length" class="league-list">
+            <li v-for="league in leagueResults" :key="league.id">
+              <button class="league-row" @click="pickLeague(league)">
+                <span class="league-name">{{ league.name }}</span>
+                <span class="league-admin" v-if="league.adminName">Admin: {{ league.adminName }}</span>
+              </button>
+            </li>
+          </ul>
+          <p v-else-if="searched">No leagues matched "{{ leagueQuery }}".</p>
+          <p class="hint">
+            You can skip this and add a league later — league-specific notifications stay off until you do.
+          </p>
+        </template>
+
+        <input v-model="deviceName" placeholder="Name this device (optional)" class="search-input" />
+        <button class="btn enable-btn" :disabled="busy" @click="enable">Enable notifications</button>
+        <p v-if="error" class="error">{{ error }}</p>
+      </section>
+
+      <section v-else class="card">
+        <div v-if="state.leagueId" class="chosen-league">
+          <p>
+            Following <strong>{{ followedLeagueName ?? `league ${state.leagueId}` }}</strong>
+            <button class="link-btn" @click="stopFollowing">Stop following</button>
+          </p>
+        </div>
+        <template v-else>
+          <p>No league followed — league notifications are unavailable until you pick one.</p>
+          <form class="search-form" @submit.prevent="runLeagueSearch">
+            <input v-model="leagueQuery" placeholder="Search for your league" class="search-input" />
+            <button type="submit" class="btn">Search</button>
+          </form>
+          <ul v-if="leagueResults.length" class="league-list">
+            <li v-for="league in leagueResults" :key="league.id">
+              <button class="league-row" @click="followLeague(league)">
+                <span class="league-name">{{ league.name }}</span>
+                <span class="league-admin" v-if="league.adminName">Admin: {{ league.adminName }}</span>
+              </button>
+            </li>
+          </ul>
+          <p v-else-if="searched">No leagues matched "{{ leagueQuery }}".</p>
+        </template>
+
+        <h2>Notifications</h2>
+        <ul class="event-list">
+          <li v-for="event in state.available" :key="event">
+            <label :class="{ disabled: requiresLeague(event) }">
+              <input
+                type="checkbox"
+                :checked="state.events.includes(event)"
+                :disabled="requiresLeague(event)"
+                @change="toggle(event)"
+              />
+              {{ label(event) }}
+              <em v-if="requiresLeague(event)">needs a league</em>
+            </label>
+          </li>
+        </ul>
+
+        <div class="actions">
+          <button class="btn" @click="sendTest">Send a test notification</button>
+          <button class="btn danger" :disabled="busy" @click="stop">Turn off notifications</button>
+        </div>
+        <p v-if="testSent">Test notification sent — it should arrive in a moment.</p>
+        <p v-if="error" class="error">{{ error }}</p>
+
+        <div v-if="shareLink" class="share">
+          <p>Share this with your league:</p>
+          <code>{{ shareLink }}</code>
+        </div>
+      </section>
+    </div>
+
+    <AppFooter />
+  </div>
+</template>
+
+<style scoped>
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex-grow: 1;
+  max-width: 36rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 1rem 0 0.75rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-form .search-input {
+  flex-grow: 1;
+}
+
+.league-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.league-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.league-row:hover {
+  background: #f9fafb;
+}
+
+.league-name {
+  font-weight: bold;
+}
+
+.league-admin {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+  color: var(--fpl-purple);
+  padding: 0;
+  margin-left: 0.5rem;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.enable-btn {
+  margin-top: 0.5rem;
+}
+
+.event-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.event-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-list label.disabled {
+  color: #9ca3af;
+}
+
+.event-list em {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.share {
+  margin-top: 0.5rem;
+}
+
+.share code {
+  display: block;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  word-break: break-all;
+  font-size: 0.875rem;
+}
+
+.spinner-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+</style>

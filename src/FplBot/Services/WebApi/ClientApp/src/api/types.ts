@@ -220,6 +220,18 @@ export interface LeagueItem {
   adminCountry?: string;
 }
 
+export interface LeagueSearchResult {
+  exposedHits: LeagueItem[];
+  maxHits: number;
+  totalHits: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface LeagueSearchResponse {
+  hits: LeagueSearchResult;
+}
+
 // The /search/any endpoint wraps each hit in a { type, source } container
 // (see SearchService.SearchAny / SearchContainer in the backend) rather than
 // exposing EntryItem/LeagueItem directly in the array.
