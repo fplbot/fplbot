@@ -103,18 +103,13 @@ public class WebPushSubscriberRepository(IConnectionMultiplexer redis) : IWebPus
     public async Task<IEnumerable<(WebPushSubscriberId Id, ClassicLeagueId LeagueId)>> GetFollowingALeague(
         params FplEvent[] fplEvents)
     {
-        var ids = await GetSubscribedTo(fplEvents);
-        var result = new List<(WebPushSubscriberId, ClassicLeagueId)>();
-        foreach (var id in ids)
-        {
-            var league = await _db.HashGetAsync(SubscriberKey(id), LeagueIdField);
-            if (league.HasValue)
-            {
-                result.Add((id, new ClassicLeagueId((long)league)));
-            }
-        }
+        var ids = (await GetSubscribedTo(fplEvents)).ToList();
+        var leagues = await Task.WhenAll(ids.Select(id => _db.HashGetAsync(SubscriberKey(id), LeagueIdField)));
 
-        return result;
+        return ids.Zip(leagues)
+            .Where(pair => pair.Second.HasValue)
+            .Select(pair => (pair.First, new ClassicLeagueId((long)pair.Second)))
+            .ToList();
     }
 
     public async Task<(IReadOnlyList<WebPushSubscriber> Items, int TotalCount)> GetPage(int page, int pageSize)
