@@ -7,7 +7,9 @@ using Discord.Net.Endpoints.Authentication;
 using Discord.Net.Endpoints.Hosting;
 using Fpl.Search;
 using FplBot.Config;
+using FplBot.Data.Web;
 using FplBot.Discord;
+using FplBot.Integrations.WebPush;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Admin;
 using FplBot.WebApi.Configurations;
@@ -77,6 +79,14 @@ public static class WebApplicationBuilderExtensions
         services.AddFplBotSlackWebEndpoints(configuration, redisConn, env);
         services.AddFplBotDiscordWebEndpoints(configuration, redisConn, env);
         services.AddIndexingServices(configuration, redisConn);
+        services.AddWebPushSubscribers();
+        services.Configure<WebPushOptions>(configuration.GetSection("WebPush"));
+
+        // Only otherwise registered for the EventPublishers service (Fpl.EventPublishers.States.LineupState).
+        // The admin "publish now" lineups action runs here in WebApi, which is a separate container in
+        // production, so it needs its own registration rather than relying on EventPublishers' being active.
+        // AddPulseLiveClient no-ops if EventPublishers already registered it in this same process.
+        services.AddPulseLiveClient();
 
         var asbConnectionString = configuration["ASB_CONNECTIONSTRING"]
                                   ?? throw new InvalidOperationException("Service bus connection string not configured. Set ASB_CONNECTIONSTRING.");

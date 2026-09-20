@@ -155,16 +155,17 @@ public static class Formatter
         return (amount / 10.0).ToString("£0.0", CultureInfo.InvariantCulture);
     }
 
-    public static string FormatNewPlayers(IEnumerable<NewPlayer> newPlayers)
+    public static string FormatNewPlayers(IEnumerable<NewPlayer> newPlayers, bool includeheader = true)
     {
-        var header = "🆕 New player!";
-        if (newPlayers.Count() > 1)
+        var nameAndCost = newPlayers.Select(NameAndCost);
+        var body = BulletPoints<string>(nameAndCost);
+        if (!includeheader)
         {
-            header = "🆕 New players!";
+            return body;
         }
 
-        var nameAndCost = newPlayers.Select(NameAndCost);
-        return $"{header}\n{BulletPoints<string>(nameAndCost)}";
+        var header = newPlayers.Count() > 1 ? "🆕 New players!" : "🆕 New player!";
+        return $"{header}\n{body}";
 
         string NameAndCost(NewPlayer p)
         {
@@ -224,7 +225,7 @@ public static class Formatter
         }
     }
 
-    public static string FormatPriceChanged(IEnumerable<PlayerWithPriceChange> priceChangesPlayers)
+    public static string FormatPriceChanged(IEnumerable<PlayerWithPriceChange> priceChangesPlayers, bool markdown = true)
     {
         if (!priceChangesPlayers.Any())
             return "No players with price changes.";
@@ -236,10 +237,15 @@ public static class Formatter
             var priceChange = $"{FormatCurrency(group.Key)}";
             var header = group.Key switch
             {
-                > 0 => $"*Price up {priceChange} 📈*",
-                < 0 => $"*Price down {priceChange} 📉*",
-                0 => "*Back to status quo… 🙃*"
+                > 0 => $"Price up {priceChange} 📈",
+                < 0 => $"Price down {priceChange} 📉",
+                0 => "Back to status quo… 🙃"
             };
+            if (markdown)
+            {
+                header = $"*{header}*";
+            }
+
             messageToSend += $"\n\n{header}";
             foreach (var p in group)
             {
@@ -250,18 +256,24 @@ public static class Formatter
         return messageToSend;
     }
 
+    public static string FormatFixtureRemoved(RemovedFixture fixture, int gameweek) =>
+        $"{fixture.Home.Name}-{fixture.Away.Name} has been removed from gameweek {gameweek}!";
+
+    public static string FormatDeadlineReminder(int gameweek, string relative) =>
+        $"Gameweek {gameweek} deadline is {relative}!";
+
     public static string BulletPoints<T>(IEnumerable<T> list)
     {
         return string.Join("\n", list.Select(s => $"▪️ {s}"));
     }
 
-    public static string FormatInjuryStatusUpdates(IEnumerable<InjuredPlayerUpdate> statusUpdates)
+    public static string FormatInjuryStatusUpdates(IEnumerable<InjuredPlayerUpdate> statusUpdates, bool markdown = true)
     {
         var grouped = statusUpdates.GroupBy(Change).Where(c => c.Key != null);
         var sb = new StringBuilder();
         foreach (var group in grouped)
         {
-            sb.Append($"*{group.Key}*\n");
+            sb.Append(markdown ? $"*{group.Key}*\n" : $"{group.Key}\n");
             foreach (var gUpdate in group)
             {
                 var chance = string.Empty;
@@ -328,17 +340,18 @@ public static class Formatter
         return null;
     }
 
-    public static string FormatLineup(Lineups details)
+    public static string FormatLineup(Lineups details, bool markdown = true)
     {
         var formattedOutput = "";
-        FormatTeamLineup(details.HomeTeamLineup, ref formattedOutput);
-        FormatTeamLineup(details.AwayTeamLineup, ref formattedOutput, true);
+        FormatTeamLineup(details.HomeTeamLineup, ref formattedOutput, markdown: markdown);
+        FormatTeamLineup(details.AwayTeamLineup, ref formattedOutput, reverse: true, markdown: markdown);
         return formattedOutput;
     }
 
-    private static void FormatTeamLineup(FormationDetails playerInLineup, ref string formattedOutput, bool reverse = false)
+    private static void FormatTeamLineup(FormationDetails playerInLineup, ref string formattedOutput, bool reverse = false, bool markdown = true)
     {
-        formattedOutput += $"*{playerInLineup.TeamName}* ({playerInLineup.Formation})\n";
+        var teamHeader = markdown ? $"*{playerInLineup.TeamName}*" : playerInLineup.TeamName;
+        formattedOutput += $"{teamHeader} ({playerInLineup.Formation})\n";
         var formationSegments = playerInLineup.Segments;
         if (reverse)
             formationSegments.Reverse();
@@ -510,29 +523,30 @@ public static class Formatter
         return bonusPointsOutput;
     }
 
-    public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league, bool? includeTitle = true)
+    public static string FormatGameweekFinished(Gameweek gw, ClassicLeague league, bool? includeTitle = true, bool markdown = true)
     {
         var introText = includeTitle == true ? $"{gw.Name} is finished." : "";
         var globalAverage = (int)Math.Round(gw.AverageScore);
+        string Bold(object value) => markdown ? $"*{value}*" : value.ToString()!;
 
         var leagueAvgTxt = "";
         if (league.Standings?.Entries.Any() == true)
         {
             var leagueAverage = (int)Math.Round(league.Standings!.Entries.Average(entry => entry.EventTotal));
-            leagueAvgTxt = $" Your league's average was *{leagueAverage}* points.";
+            leagueAvgTxt = $" Your league's average was {Bold(leagueAverage)} points.";
         }
 
         if (globalAverage < 40)
         {
-            introText += $" It was probably a disappointing one, with a global average of *{gw.AverageScore}* points.";
+            introText += $" It was probably a disappointing one, with a global average of {Bold(gw.AverageScore)} points.";
         }
         else if (globalAverage > 80)
         {
-            introText += $" Must've been pretty intense, with a global average of *{globalAverage}* points.";
+            introText += $" Must've been pretty intense, with a global average of {Bold(globalAverage)} points.";
         }
         else
         {
-            introText += $" The global average was *{globalAverage}* points.";
+            introText += $" The global average was {Bold(globalAverage)} points.";
         }
 
         introText += leagueAvgTxt;

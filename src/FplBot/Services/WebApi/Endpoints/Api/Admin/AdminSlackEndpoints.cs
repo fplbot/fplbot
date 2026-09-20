@@ -1,10 +1,14 @@
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.EventPublishers.Models.Mappers;
+using Fpl.PulseLive;
 using FplBot.ApplicationServices.Slack;
 using FplBot.Data;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.EventHandlers.Slack;
+using FplBot.Formatting;
+using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.Messaging.Contracts.Events.v1;
 using MassTransit;
@@ -275,34 +279,127 @@ public static class AdminSlackEndpoints
         return TypedResults.Accepted("/", new { message = $"Marked {teamIdToUpper} for removal." });
     }
 
-    internal static async Task<IResult> PublishStandings(
+    internal static async Task<IResult> Publish(
         string subscriptionId,
+        PublishableEvent evt,
         IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         ISendEndpointProvider sendEndpointProvider,
-        IGlobalSettingsClient gameweekClient)
+        IGlobalSettingsClient gameweekClient,
+        IFixtureClient fixtureClient,
+        ILiveClient liveClient,
+        IPulseLiveClient pulseClient)
     {
         if (await ResolveChannel(resolver, subscriptionId) is not { } resolved) return TypedResults.NotFound();
         var (teamId, channelId) = resolved;
 
         var teamIdToUpper = teamId.ToUpper();
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
-        if (installation == null) return TypedResults.NotFound();
+        var channel = installation?.ChannelSubscriptions.FirstOrDefault(c => c.ChannelId == channelId);
+        if (installation is null || channel is null) return TypedResults.NotFound();
 
-        var channels = installation.ChannelSubscriptions;
-        var channel = channels.FirstOrDefault(c => c.ChannelId == channelId);
-        if (channel?.FollowedLeagueId is null)
+        var requiresLeague = evt is PublishableEvent.Standings or PublishableEvent.GameweekStarted;
+        if (requiresLeague && channel.FollowedLeagueId is null)
         {
             return TypedResults.Ok(new { published = false, message = $"Did not publish. Channel {channelId} is not following a league." });
         }
 
         var settings = await gameweekClient.GetGlobalSettings();
-        var gameweek = settings!.Gameweeks.GetCurrentGameweek();
+        if (settings?.Gameweeks.GetCurrentGameweek() is not { } gameweek)
+        {
+            return TypedResults.Ok(new { published = false, message = "Could not determine the current gameweek." });
+        }
 
-        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.ExternalId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        switch (evt)
+        {
+            case PublishableEvent.Standings:
+                var standingsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
+                await standingsEndpoint.Send(new PublishStandingsToSlackWorkspace(installation.ExternalId, channel.ChannelId,
+                    (int)channel.FollowedLeagueId!.Value, gameweek.Id));
+                break;
+            case PublishableEvent.GameweekStarted:
+                var startedEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekStartedHandler)}"));
+                await startedEndpoint.Send(new ProcessGameweekStartedForSlackChannel(installation.ExternalId, channel.ChannelId, gameweek.Id));
+                break;
+            case PublishableEvent.Deadline24Hours:
+                var deadline24Endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackNearDeadlineHandler)}"));
+                await deadline24Endpoint.Send(new PublishDeadlineNotificationToSlackWorkspace(installation.ExternalId, channel.ChannelId,
+                    new GameweekNearingDeadline(gameweek.Id, gameweek.Name ?? $"Gameweek {gameweek.Id}", gameweek.Deadline)));
+                break;
+            case PublishableEvent.Deadline1Hour:
+                var deadline1Endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(PublishToSlackHandler)}"));
+                await deadline1Endpoint.Send(new PublishToSlack(installation.ExternalId, channel.ChannelId,
+                    $"<!channel> ⏳ Gameweek {gameweek.Id} deadline in 60 minutes!"));
+                break;
+            case PublishableEvent.FixtureEvents:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
 
-        return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
+                var (events, refusalReason) = await PublishableFixtureLookup.ResolveFixtureEvents(fixture, gameweekClient);
+                if (refusalReason is not null)
+                {
+                    return TypedResults.Ok(new { published = false, message = refusalReason });
+                }
+
+                var fixtureEventsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackFixtureEventsHandler)}"));
+                await fixtureEventsEndpoint.Send(new PublishFixtureEventsToSlackChannel(installation.ExternalId, channel.ChannelId, events));
+                break;
+            }
+            case PublishableEvent.FixtureFullTime:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                if (!fixture.Finished && !fixture.FinishedProvisional)
+                {
+                    return TypedResults.Ok(new { published = false, message = "This fixture hasn't finished yet." });
+                }
+
+                var fulltimeSettings = await gameweekClient.GetGlobalSettings();
+                var liveItems = fixture.Event.HasValue ? await liveClient.GetLiveItems(fixture.Event.Value, isOngoingGameweek: true) : null;
+                var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(fulltimeSettings?.Teams ?? [], fulltimeSettings?.Players ?? [], fixture, liveItems);
+                var title = $"*FT: {finished.HomeTeam.ShortName} {finished.Fixture.HomeTeamScore}-{finished.Fixture.AwayTeamScore} {finished.AwayTeam.ShortName}*";
+                var threadMessage = Formatter.FormatProvisionalFinished(finished);
+
+                var fulltimeEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackFixtureFulltimeHandler)}"));
+                await fulltimeEndpoint.Send(new PublishFulltimeMessageToSlackWorkspace(installation.ExternalId, channel.ChannelId, title, threadMessage));
+                break;
+            }
+            case PublishableEvent.Lineups:
+            {
+                if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
+                {
+                    return TypedResults.Ok(new { published = false, message = "No fixtures found for the current gameweek." });
+                }
+
+                var matchDetails = await pulseClient.GetMatchDetails(fixture.Code);
+                if (matchDetails is null || !matchDetails.HasLineUps())
+                {
+                    return TypedResults.Ok(new { published = false, message = "Lineups aren't confirmed yet for this fixture." });
+                }
+
+                var lineupSettings = await gameweekClient.GetGlobalSettings();
+                var teamShortNames = lineupSettings?.Teams.ToDictionary(t => t.Id, t => t.ShortName) ?? [];
+                var homeAbbr = teamShortNames.GetValueOrDefault(fixture.HomeTeamId, "?") ?? "?";
+                var awayAbbr = teamShortNames.GetValueOrDefault(fixture.AwayTeamId, "?") ?? "?";
+                var lineupReady = MatchDetailsMapper.TryMapToLineup(matchDetails, fixture.Code, homeAbbr, awayAbbr);
+                if (lineupReady is null)
+                {
+                    return TypedResults.Ok(new { published = false, message = "Could not map lineups for this fixture." });
+                }
+
+                var lineupsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackLineupReadyHandler)}"));
+                await lineupsEndpoint.Send(new PublishLineupsToSlackWorkspace(installation.ExternalId, channel.ChannelId, lineupReady.Lineup));
+                break;
+            }
+        }
+
+        return TypedResults.Ok(new { published = true, message = $"Published {evt} to {channelId}" });
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(

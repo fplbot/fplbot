@@ -22,7 +22,7 @@ public class SlackFixtureEventsHandler(
     ITransfersByGameWeek transfersByGameWeek,
     IGlobalSettingsClient globalSettingsClient,
     ILogger<SlackFixtureEventsHandler> logger)
-    : IConsumer<FixtureEventsOccured>, IConsumer<PublishFixtureEventsToSlackWorkspace>
+    : IConsumer<FixtureEventsOccured>, IConsumer<PublishFixtureEventsToSlackWorkspace>, IConsumer<PublishFixtureEventsToSlackChannel>
 {
     public async Task Consume(ConsumeContext<FixtureEventsOccured> context)
     {
@@ -56,6 +56,18 @@ public class SlackFixtureEventsHandler(
         {
             await DoSubHandling(installation.ExternalId, installation.Token, sub, message.FixtureEvents);
         }
+    }
+
+    public async Task Consume(ConsumeContext<PublishFixtureEventsToSlackChannel> context)
+    {
+        var message = context.Message;
+        if (await slackTeamRepo.GetChannelSubscription(message.TeamId, message.ChannelId) is not { } sub)
+        {
+            return;
+        }
+
+        var installation = await slackTeamRepo.GetInstallation(message.TeamId);
+        await DoSubHandling(installation.ExternalId, installation.Token, sub, message.FixtureEvents);
     }
 
     private async Task DoSubHandling(string teamId, string? token, ChannelSubscription sub, List<FixtureEvents> fixtureEvents)

@@ -23,6 +23,7 @@ async function handleLogout() {
 const navLinks = [
   { to: "/admin/slack", label: "Slack" },
   { to: "/admin/discord", label: "Discord" },
+  { to: "/admin/web", label: "Web push" },
   { to: "/admin/search", label: "Search" },
   { to: "/admin/errors", label: "Errors" },
 ];

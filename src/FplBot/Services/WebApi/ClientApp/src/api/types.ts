@@ -220,6 +220,18 @@ export interface LeagueItem {
   adminCountry?: string;
 }
 
+export interface LeagueSearchResult {
+  exposedHits: LeagueItem[];
+  maxHits: number;
+  totalHits: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface LeagueSearchResponse {
+  hits: LeagueSearchResult;
+}
+
 // The /search/any endpoint wraps each hit in a { type, source } container
 // (see SearchService.SearchAny / SearchContainer in the backend) rather than
 // exposing EntryItem/LeagueItem directly in the array.
@@ -280,6 +292,26 @@ export interface LeagueDetails {
   gameweek?: number;
   standings: StandingEntry[];
   summaries: EntrySummary[];
+}
+
+// ---- Admin: web push ----
+
+export interface SubscriberSummary {
+  id: string;
+  name: string | null;
+  leagueId: number | null;
+  eventCount: number;
+  endpointHost: string;
+}
+
+export interface SubscriberDetail {
+  id: string;
+  name: string | null;
+  leagueId: number | null;
+  events: string[];
+  available: string[];
+  requiresLeague: string[];
+  endpointHost: string;
 }
 
 // ---- Admin: error queues ----

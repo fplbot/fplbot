@@ -14,6 +14,8 @@ import type {
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
+  LeagueSearchResponse,
+  LeagueSearchResult,
   LeagueSummary,
   MessageResponse,
   PagedResult,
@@ -22,6 +24,8 @@ import type {
   SearchAnyResult,
   SearchType,
   SlashCommandDefinition,
+  SubscriberDetail,
+  SubscriberSummary,
   TeamDetails,
   TeamSummary,
 } from "./types";
@@ -103,8 +107,20 @@ export function uninstallTeam(installationId: string): Promise<MessageResponse> 
   return postJson(`/api/admin/teams/${installationId}/uninstall`);
 }
 
-export function publishStandings(subscriptionId: string): Promise<{ published: boolean; message: string }> {
-  return postJson(`/api/admin/subscriptions/${subscriptionId}/publish-standings`);
+export type PublishableEvent =
+  | "Standings"
+  | "GameweekStarted"
+  | "Deadline24Hours"
+  | "Deadline1Hour"
+  | "FixtureEvents"
+  | "FixtureFullTime"
+  | "Lineups";
+
+export function publishSubscriptionEvent(
+  subscriptionId: string,
+  eventName: PublishableEvent
+): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/subscriptions/${subscriptionId}/publish/${eventName}`);
 }
 
 export function broadcastToSlack(message: string): Promise<MessageResponse> {
@@ -234,6 +250,44 @@ export function getAvailableGuildChannels(installationId: string): Promise<Avail
 export function addGuildChannelSubscription(installationId: string, channelId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/discord/guilds/${installationId}/channels`, { channelId });
 }
+
+// ---- Admin: web push ----
+
+export function getWebPushSubscribers(page: number, pageSize: number): Promise<PagedResult<SubscriberSummary>> {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return request(`/api/admin/web/subscribers?${params.toString()}`);
+}
+
+export async function getWebPushSubscriber(subscriberId: string): Promise<SubscriberDetail | null> {
+  const res = await fetch(`/api/admin/web/subscribers/${subscriberId}`, { credentials: "include" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new AdminApiError(`getWebPushSubscriber() failed with status ${res.status}`, res.status);
+  return res.json();
+}
+
+export function updateWebPushSubscriberEvents(subscriberId: string, events: string[]): Promise<SubscriberDetail> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/events`, { events }, "PUT");
+}
+
+export function updateWebPushSubscriberLeague(subscriberId: string, leagueId: number | null): Promise<SubscriberDetail> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/league`, { leagueId }, "PUT");
+}
+
+export function deleteWebPushSubscriber(subscriberId: string): Promise<void> {
+  return request(`/api/admin/web/subscribers/${subscriberId}`, { method: "DELETE" });
+}
+
+export function publishWebPushEvent(
+  subscriberId: string,
+  eventName: PublishableEvent
+): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/publish/${eventName}`);
+}
+
+export function broadcastToWebPush(title: string, body: string): Promise<void> {
+  return postJson("/api/admin/web/broadcast", { title, body });
+}
+
 // ---- OAuth (public site install buttons) ----
 
 export async function redirectToSlackInstall(returnTo?: string): Promise<void> {
@@ -263,6 +317,16 @@ export async function searchAny(
     throw new Error(`Search request failed with status ${res.status}`);
   }
   const data: SearchAnyResponse = await res.json();
+  return data.hits;
+}
+
+export async function searchLeagues(query: string, page: number): Promise<LeagueSearchResult> {
+  const params = new URLSearchParams({ query, page: String(page), countryToBoost: "" });
+  const res = await fetch(`/api/search/leagues?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`League search request failed with status ${res.status}`);
+  }
+  const data: LeagueSearchResponse = await res.json();
   return data.hits;
 }
 

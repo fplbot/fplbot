@@ -10,5 +10,6 @@
     <PackageReference Include="Bullseye" Version="6.2.0" />
     <PackageReference Include="SimpleExec" Version="13.1.0" />
     <PackageReference Include="StackExchange.Redis" Version="3.3.0" />
+    <PackageReference Include="WebPush" Version="1.0.13" />
   </ItemGroup>
 </Project>

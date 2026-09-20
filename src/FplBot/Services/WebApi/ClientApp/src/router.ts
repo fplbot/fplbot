@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import("./views/SearchView.vue"),
     },
     {
+      path: "/notifications",
+      name: "notifications",
+      component: () => import("./views/NotificationsView.vue"),
+    },
+    {
       path: "/leagues/:id",
       name: "league-details",
       component: () => import("./views/LeagueDetailsView.vue"),
@@ -81,6 +86,32 @@ const router = createRouter({
               path: "servers",
               name: "admin-discord-servers",
               component: () => import("./views/admin/DiscordSubscriptionsView.vue"),
+            },
+          ],
+        },
+        {
+          path: "web",
+          component: () => import("./views/admin/WebPushSection.vue"),
+          children: [
+            {
+              path: "",
+              redirect: "/admin/web/subscribers",
+            },
+            {
+              path: "subscribers",
+              name: "admin-web-subscribers",
+              component: () => import("./views/admin/WebPushSubscribersView.vue"),
+            },
+            {
+              path: "subscribers/:subscriberId",
+              name: "admin-web-subscriber-details",
+              component: () => import("./views/admin/WebPushSubscriberDetailsView.vue"),
+              props: true,
+            },
+            {
+              path: "broadcast",
+              name: "admin-web-broadcast",
+              component: () => import("./views/admin/WebPushBroadcastView.vue"),
             },
           ],
         },

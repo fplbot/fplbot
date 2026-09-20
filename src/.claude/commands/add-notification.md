@@ -1,6 +1,6 @@
 # Add a new FPL event notification
 
-This skill adds a notification type that gets broadcast to subscribed Slack workspaces and Discord guilds when an FPL event occurs.
+This skill adds a notification type that gets broadcast to subscribed Slack workspaces, Discord guilds and web push subscribers when an FPL event occurs.
 
 ## What you need to know first
 
@@ -124,7 +124,16 @@ public class SlackYourEventHandler(ISlackTeamRepository slackTeamRepo, ILogger<S
 
 Never post to Slack with `ISlackClientBuilder` from a handler — go through `PublishToSlack` (or `ISlackWorkSpacePublisher`), which owns delivery-failure accounting.
 
-### 6. Register both consumers — CRITICAL
+### 6. Decide the web delivery — every enum value ships to the web whether you meant it or not
+
+`FplEvents.SupportedOnWeb` is derived from the enum, so your new value is automatically offered as a checkbox on `/notifications`, enabled by default for new subscribers, and indexed in Redis. Give it a delivery path or opt it out — never neither:
+
+- Deliver: add `IConsumer<YourEvent>` to `FplBot/Services/EventHandlers/Web/WebPushDispatchHandler.cs` and dispatch via `Dispatch` (global events) or `repo.GetFollowingALeague` (league-scoped ones — fan out a per-subscriber command, mirroring `ProcessGameweekFinishedForWebPushSubscriber`/`ProcessGameweekStartedForWebPushSubscriber`, rather than doing the league fetch inline). Build the title/body from the same `Formatter`/`Formatting.Helpers` methods Discord and Slack already call for this event — don't hand-roll new text. The handler class is already registered, so no new registration is needed for this.
+- Opt out: exclude the value from `FplEvents.SupportedOnWeb` in `FplBot/Domain/FplEvents.cs`, next to `Taunts`.
+
+Skipping both leaves a checkbox that never delivers anything.
+
+### 7. Register both consumers — CRITICAL
 
 Open `FplBot/Services/EventHandlers/EventHandlersService.cs` and add both to `ConfigureMassTransit`:
 
@@ -133,15 +142,15 @@ cfg.AddConsumer<DiscordYourEventHandler>();
 cfg.AddConsumer<SlackYourEventHandler>();
 ```
 
-### 7. Fan-out: don't do per-channel work here
+### 8. Fan-out: don't do per-channel work here
 
 The handlers above only format once and dispatch — that's fine. If your notification needs per-channel data (that channel's followed league, a per-channel FPL call), it must not happen in this loop. Publish a per-channel command instead and do the work in a second consumer, as `GameweekJustBegan` → `ProcessNewLeagueEntriesForGuildChannel` does. One message per channel isolates a slow or failing league from the rest of the fan-out.
 
-### 8. Formatter
+### 9. Formatter
 
 If formatting is non-trivial, put it in `FplBot/Services/EventPublishers/Formatting/` (namespace `FplBot.Formatting`). Builders stay `static` and synchronous, taking already-fetched data as parameters — do the `await` in the handler, not the builder.
 
-### 9. Tests — required, not optional
+### 10. Tests — required, not optional
 
 - Add an **E2E test** in `FplBot.Tests/E2E/` that drives the publisher (the `RecurringAction` / state class), not a hand-constructed event, and asserts the Slack/Discord message that comes out. Use `AppFixture`, set state up via its real flows (`InstallSlackbot()`, `Subscribe(...)`, `AskSlackbot(...)`), and assert on outcomes — no `A.CallTo()` assertions on internals.
 - Add a formatter unit test in `FplBot.Tests/UnitTests/Formatting/` only if the formatting is worth pinning down in isolation.

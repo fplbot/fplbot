@@ -52,6 +52,10 @@ onMounted(() => {
               Add to Discord
             </button>
           </div>
+          <p class="notifications-pitch">
+            No Slack or Discord?
+            <router-link to="/notifications">Get notifications straight to this device</router-link>
+          </p>
         </div>
       </div>
     </section>
@@ -143,6 +147,15 @@ h1 {
 
 .install-btn {
   padding: 0.75rem 1.5rem;
+}
+
+.notifications-pitch {
+  margin-top: 1.5rem;
+}
+
+.notifications-pitch a {
+  font-weight: bold;
+  color: var(--fpl-purple);
 }
 
 .install-btn.discord {

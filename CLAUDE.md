@@ -233,6 +233,28 @@ there is no "get everything, then filter in the handler" API.
 
 Redis key convention: `{EntityType}-{id}` (e.g. `TeamId-T12345`, `GuildSubs-{guildId}-Channel-{channelId}`).
 
+## Web push
+
+The third notification platform: browsers subscribed on fplbot.app, for FPL managers who use
+neither Slack nor Discord. It has its own aggregate — `Domain/WebPushSubscriber.cs`, no channels,
+one browser per subscriber — and its own repository (`Data/Web/WebPushSubscriberRepository.cs`,
+`IWebPushSubscriberRepository`, not `IDomainRepository`). It shares only `FplEvent`,
+`EventCollection` and `ClassicLeagueId` with Slack and Discord; `Installation` and
+`ChannelSubscription` are not involved. `FplEvent.Taunts` is unsupported on web
+(`FplEvents.SupportedOnWeb`).
+
+Public endpoints live under `/api/web` (`Services/WebApi/Endpoints/Api/Web/`), the admin API under
+`/api/admin/web`, delivery in `Services/EventHandlers/Web/` and the actual sending in
+`Integrations/WebPush/WebPushSender.cs`.
+
+VAPID keys are configuration under `WebPush:*` (`PublicKey`, `PrivateKey`, `Subject`).
+`appsettings.json` has a committed dev keypair; test and prod override it with Heroku config vars
+in the double-underscore form (`WebPush__PublicKey` etc).
+
+There is no delivery-failure counting like Slack/Discord channels have: when a push endpoint
+returns `410 Gone` the per-subscriber consumer deletes the subscriber outright, since a gone
+endpoint means the browser revoked the subscription and can never come back.
+
 ## Adding a new notification
 
 See `src/.claude/commands/add-notification.md` for the full recipe. Summary:
@@ -241,8 +263,11 @@ See `src/.claude/commands/add-notification.md` for the full recipe. Summary:
 3. Add publishing in a `RecurringAction` or `State` class
 4. Create Discord handler (`Services/EventHandlers/Discord/Discord<Name>Handler.cs`)
 5. Create Slack handler (`Services/EventHandlers/Slack/Slack<Name>Handler.cs`)
-6. Register both consumers in `EventHandlersService.ConfigureMassTransit()`
-7. Add an E2E test (`FplBot.Tests/E2E/`), plus a formatter unit test if the formatting is non-trivial
+6. Decide web delivery: add a dispatch in `Services/EventHandlers/Web/WebPushDispatchHandler.cs`,
+   or exclude the value from `FplEvents.SupportedOnWeb` — every value not excluded there is offered
+   and enabled by default on `/notifications`, so skipping both leaves a checkbox that never delivers
+7. Register the consumers in `EventHandlersService.ConfigureMassTransit()`
+8. Add an E2E test (`FplBot.Tests/E2E/`), plus a formatter unit test if the formatting is non-trivial
 
 ## Adding a command handler
 

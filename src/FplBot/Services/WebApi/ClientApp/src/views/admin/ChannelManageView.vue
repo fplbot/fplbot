@@ -10,13 +10,14 @@ import {
   followLeague,
   unfollowLeague,
   deleteChannelSubscription,
-  publishStandings,
+  publishSubscriptionEvent,
 } from "../../api/api";
 import { slackInstallationAdapter, discordInstallationAdapter, isThrowaway } from "../../composables/installationAdapters";
 import type { InstallationAdapter, EntityDetails, EntityChannel } from "../../composables/installationAdapters";
 import type { AvailableChannel, EventSubscription } from "../../api/types";
 import ChannelPicker from "../../components/ChannelPicker.vue";
 import type { ChannelPickerOption } from "../../components/ChannelPicker.vue";
+import PublishEventCard from "../../components/PublishEventCard.vue";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { describeFailureReason } from "../../api/deliveryFailures";
 import { formatDateTime, formatChannelName } from "../../formatting";
@@ -109,9 +110,6 @@ watch(leagueIdInput, (id) => {
 
 const deleting = ref(false);
 
-const publishing = ref(false);
-const publishFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
-
 const purgeStatus = computed(() => {
   const c = channel.value;
   if (!c || !c.purgeEligibleAt || c.failureCount === 0) {
@@ -177,7 +175,6 @@ watch(
   () => props.subscriptionId,
   async () => {
     subscriptionsFeedback.value = null;
-    publishFeedback.value = null;
     leagueFeedback.value = null;
     await load();
     await loadAvailableChannels();
@@ -266,19 +263,6 @@ async function submitMoveChannel() {
     moveFeedback.value = { type: "error", text: describeAdminError(e) };
   } finally {
     movingChannel.value = false;
-  }
-}
-
-async function submitPublish() {
-  publishing.value = true;
-  publishFeedback.value = null;
-  try {
-    const res = await publishStandings(props.subscriptionId);
-    publishFeedback.value = { type: res.published ? "success" : "error", text: res.message };
-  } catch (e) {
-    publishFeedback.value = { type: "error", text: describeAdminError(e) };
-  } finally {
-    publishing.value = false;
   }
 }
 
@@ -463,16 +447,11 @@ async function submitDelete() {
         </button>
       </div>
 
-      <div class="card">
-        <h2>Publish standings</h2>
-        <p v-if="publishFeedback" :class="['alert', publishFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
-          {{ publishFeedback.text }}
-        </p>
-        <p v-if="!channel.leagueId" class="hint">Not following a league, so there are no standings to publish.</p>
-        <button class="btn small" :disabled="publishing || !channel.leagueId" @click="submitPublish">
-          {{ publishing ? "Publishing..." : "Publish standings" }}
-        </button>
-      </div>
+      <PublishEventCard
+        :key="subscriptionId"
+        :has-league="!!channel.leagueId"
+        :publish="(event) => publishSubscriptionEvent(subscriptionId, event)"
+      />
 
       <div class="card danger-zone">
         <h2>Danger zone</h2>
