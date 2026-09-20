@@ -44,7 +44,9 @@ public class WebPushFullTimeTests(AppFixture fixture) : IAsyncLifetime
         Assert.Contains("HOM", push.Title);
         Assert.Contains("2-1", push.Title);
         Assert.Contains("AWA", push.Title);
-        Assert.Contains("Full time", push.Body);
+        // No bonus points, defensive contributions, or live stats are seeded for this fixture,
+        // so there's nothing to report beyond the score already in the title.
+        Assert.Empty(push.Body);
     }
 
     private void SetUpFixture(int fixtureCode)

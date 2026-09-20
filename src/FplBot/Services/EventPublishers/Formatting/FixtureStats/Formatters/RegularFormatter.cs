@@ -18,7 +18,15 @@ internal class RegularFormatter(IDescribeEvents describer, FormattingType format
 
             if (g.Any(g => g.IsRemoved))
             {
-                message = $"{StrikeThrough()}{message.TrimEnd()}{StrikeThrough()} (VAR? 🤷‍♀️)";
+                if(formattingType == FormattingType.Web)
+                {
+                    message = $"REMOVED: {message.TrimEnd()} (VAR? 🤷‍♀️)";
+                }
+                else
+                {
+                    message = $"{StrikeThrough()}{message.TrimEnd()}{StrikeThrough()} (VAR? 🤷‍♀️)";
+                }
+
             }
 
             return message;
@@ -31,7 +39,7 @@ internal class RegularFormatter(IDescribeEvents describer, FormattingType format
         {
             FormattingType.Slack => "~",
             FormattingType.Discord => "~~",
-            _ => "ℹ️"
+            _ => "*"
         };
     }
 }

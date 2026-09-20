@@ -162,7 +162,7 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
         response.EnsureSuccessStatusCode();
 
         var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
-        Assert.Contains("standings", push.Title, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("finished", push.Title, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

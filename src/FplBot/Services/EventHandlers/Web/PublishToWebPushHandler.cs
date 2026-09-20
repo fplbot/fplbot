@@ -24,7 +24,7 @@ public class PublishToWebPushHandler(
         }
 
         var payload = new WebPushPayload(message.Title, message.Body,
-            message.LeagueId is { } leagueId ? $"/leagues/{leagueId}" : null);
+            message.LeagueIdForLink is { } leagueId ? $"/leagues/{leagueId}" : null);
 
         if (env.IsDevelopment() && sender is WebPushSender)
         {

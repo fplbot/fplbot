@@ -12,10 +12,10 @@ public class CaptainsByGameWeek(
     ILogger<CaptainsByGameWeek> logger)
     : ICaptainsByGameWeek
 {
-    public string GetCaptainsByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeExternalLinks = true)
+    public string GetCaptainsByGameWeek(int gameweek, IEnumerable<EntryCaptainPick> entryCaptainPicks, bool includeExternalLinks = true, bool markdown = true)
     {
         var sb = new StringBuilder();
-        sb.Append($"💥 *Captain picks for gameweek {gameweek}*\n");
+        sb.Append(markdown ? $"💥 *Captain picks for gameweek {gameweek}*\n" : $"💥 Captain picks for gameweek {gameweek}\n");
 
         foreach (var entryCaptainPick in entryCaptainPicks)
         {
@@ -23,7 +23,8 @@ public class CaptainsByGameWeek(
             var viceCaptain = entryCaptainPick.ViceCaptain;
 
             var entryLinkOrName = includeExternalLinks ? entryCaptainPick.Entry.GetEntryLink(gameweek) : entryCaptainPick.Entry.EntryName;
-            sb.Append($"*{entryLinkOrName}* - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
+            var namePart = markdown ? $"*{entryLinkOrName}*" : entryLinkOrName;
+            sb.Append($"{namePart} - {captain.FirstName} {captain.SecondName} ({viceCaptain.FirstName} {viceCaptain.SecondName}) ");
             if (entryCaptainPick.IsTripleCaptain)
             {
                 sb.Append("TRIPLECAPPED!! 🚀🚀🚀");

@@ -6,6 +6,8 @@ using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.EventHandlers.Web;
 using FplBot.Formatting;
+using FplBot.Formatting.FixtureStats;
+using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.WebApi.Endpoints.Api.Web;
 using MassTransit;
@@ -90,7 +92,7 @@ public static class AdminWebPushEndpoints
 
     internal static async Task<IResult> Publish(string subscriberId, string eventName, IWebPushSubscriberRepository repo,
         IPublishEndpoint publishEndpoint, IGlobalSettingsClient gameweekClient, IFixtureClient fixtureClient,
-        IPulseLiveClient pulseClient)
+        IPulseLiveClient pulseClient, ILiveClient liveClient)
     {
         if (!Enum.TryParse<PublishableEvent>(eventName, ignoreCase: true, out var evt))
         {
@@ -116,6 +118,12 @@ public static class AdminWebPushEndpoints
 
         switch (evt)
         {
+            case PublishableEvent.Standings:
+                await publishEndpoint.Publish(new ProcessGameweekFinishedForWebPushSubscriber(subscriber.Id.Value, (int)subscriber.FollowedLeagueId!.Value, gameweek.Id));
+                return TypedResults.Ok(new { published = true, message = "Published." });
+            case PublishableEvent.GameweekStarted:
+                await publishEndpoint.Publish(new ProcessGameweekStartedForWebPushSubscriber(subscriber.Id.Value, (int)subscriber.FollowedLeagueId!.Value, gameweek.Id));
+                return TypedResults.Ok(new { published = true, message = "Published." });
             case PublishableEvent.FixtureEvents:
             {
                 if (await PublishableFixtureLookup.FindFirstFixture(fixtureClient, gameweek.Id) is not { } fixture)
@@ -129,24 +137,16 @@ public static class AdminWebPushEndpoints
                     return TypedResults.Ok(new { published = false, message = refusalReason });
                 }
 
-                var sentCount = 0;
-                foreach (var fixtureEvent in events)
+                var messages = GameweekEventsFormatter.FormatNewFixtureEvents(events, _ => true, FormattingType.Web);
+                foreach (var message in messages)
                 {
-                    foreach (var (statType, playerEvents) in fixtureEvent.StatMap)
-                    {
-                        foreach (var playerEvent in playerEvents.Where(p => !p.IsRemoved))
-                        {
-                            var (eventTitle, eventBody) = WebPushFormatter.FixtureEvent(statType, fixtureEvent.FixtureScore, playerEvent.Player.WebName);
-                            await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, eventTitle, eventBody, null));
-                            sentCount++;
-                        }
-                    }
+                    await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, message.Title, message.Details, null));
                 }
 
                 return TypedResults.Ok(new
                 {
-                    published = sentCount > 0,
-                    message = sentCount > 0 ? $"Published {sentCount} fixture event notification(s)." : "No publishable player events found."
+                    published = messages.Count > 0,
+                    message = messages.Count > 0 ? $"Published {messages.Count} fixture event notification(s)." : "No publishable player events found."
                 });
             }
             case PublishableEvent.FixtureFullTime:
@@ -162,10 +162,9 @@ public static class AdminWebPushEndpoints
                 }
 
                 var fulltimeSettings = await gameweekClient.GetGlobalSettings();
-                var teams = fulltimeSettings?.Teams ?? [];
-                var homeTeam = teams.FirstOrDefault(t => t.Id == fixture.HomeTeamId);
-                var awayTeam = teams.FirstOrDefault(t => t.Id == fixture.AwayTeamId);
-                var (ftTitle, ftBody) = WebPushFormatter.FixtureFullTime(homeTeam?.ShortName, fixture.HomeTeamScore, fixture.AwayTeamScore, awayTeam?.ShortName);
+                var liveItems = fixture.Event.HasValue ? await liveClient.GetLiveItems(fixture.Event.Value, isOngoingGameweek: true) : null;
+                var finished = FixtureFulltimeModelBuilder.CreateFinishedFixture(fulltimeSettings?.Teams ?? [], fulltimeSettings?.Players ?? [], fixture, liveItems);
+                var (ftTitle, ftBody) = WebPushMessages.FixtureFullTime(finished);
                 await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, ftTitle, ftBody, null));
                 return TypedResults.Ok(new { published = true, message = "Published." });
             }
@@ -192,7 +191,7 @@ public static class AdminWebPushEndpoints
                     return TypedResults.Ok(new { published = false, message = "Could not map lineups for this fixture." });
                 }
 
-                var (luTitle, luBody) = WebPushFormatter.Lineups(Formatter.FormatLineup(lineupReady.Lineup));
+                var (luTitle, luBody) = WebPushMessages.Lineups(lineupReady.Lineup);
                 await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, luTitle, luBody, null));
                 return TypedResults.Ok(new { published = true, message = "Published." });
             }
@@ -203,10 +202,8 @@ public static class AdminWebPushEndpoints
         // a countdown that would say something the real system never actually says.
         var (title, body) = evt switch
         {
-            PublishableEvent.Standings => WebPushFormatter.Standings(gameweek.Id),
-            PublishableEvent.GameweekStarted => WebPushFormatter.GameweekStarted(gameweek.Id),
-            PublishableEvent.Deadline24Hours => WebPushFormatter.Deadline("in 24 hours"),
-            PublishableEvent.Deadline1Hour => WebPushFormatter.Deadline("in 60 minutes"),
+            PublishableEvent.Deadline24Hours => WebPushMessages.DeadlineReminder(gameweek.Id, "in 24 hours"),
+            PublishableEvent.Deadline1Hour => WebPushMessages.DeadlineReminder(gameweek.Id, "in 60 minutes"),
             _ => throw new ArgumentOutOfRangeException(nameof(evt))
         };
 

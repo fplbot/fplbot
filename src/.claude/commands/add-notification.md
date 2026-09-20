@@ -128,7 +128,7 @@ Never post to Slack with `ISlackClientBuilder` from a handler — go through `Pu
 
 `FplEvents.SupportedOnWeb` is derived from the enum, so your new value is automatically offered as a checkbox on `/notifications`, enabled by default for new subscribers, and indexed in Redis. Give it a delivery path or opt it out — never neither:
 
-- Deliver: add `IConsumer<YourEvent>` to `FplBot/Services/EventHandlers/Web/WebPushDispatchHandler.cs` and dispatch via `DispatchGlobal` (global events) or `DispatchWithLeague` (league-scoped ones), with the text in `WebPushFormatter`. The handler class is already registered, so no new registration is needed for this.
+- Deliver: add `IConsumer<YourEvent>` to `FplBot/Services/EventHandlers/Web/WebPushDispatchHandler.cs` and dispatch via `Dispatch` (global events) or `repo.GetFollowingALeague` (league-scoped ones — fan out a per-subscriber command, mirroring `ProcessGameweekFinishedForWebPushSubscriber`/`ProcessGameweekStartedForWebPushSubscriber`, rather than doing the league fetch inline). Build the title/body from the same `Formatter`/`Formatting.Helpers` methods Discord and Slack already call for this event — don't hand-roll new text. The handler class is already registered, so no new registration is needed for this.
 - Opt out: exclude the value from `FplEvents.SupportedOnWeb` in `FplBot/Domain/FplEvents.cs`, next to `Taunts`.
 
 Skipping both leaves a checkbox that never delivers anything.
