@@ -12,11 +12,10 @@ public class WebPushSender(IOptions<WebPushOptions> options, ILogger<WebPushSend
 
     public async Task<WebPushOutcome> Send(PushKeys keys, WebPushPayload payload)
     {
-        var subscription = new PushSubscription(keys.Endpoint, keys.P256dh, keys.Auth);
-        var vapid = new VapidDetails(options.Value.Subject, options.Value.PublicKey, options.Value.PrivateKey);
-
         try
         {
+            var subscription = new PushSubscription(keys.Endpoint, keys.P256dh, keys.Auth);
+            var vapid = new VapidDetails(options.Value.Subject, options.Value.PublicKey, options.Value.PrivateKey);
             await _client.SendNotificationAsync(subscription, JsonSerializer.Serialize(payload), vapid);
             return WebPushOutcome.Delivered;
         }
@@ -26,7 +25,8 @@ public class WebPushSender(IOptions<WebPushOptions> options, ILogger<WebPushSend
         }
         catch (Exception e)
         {
-            logger.LogWarning(e, "Web push delivery failed for endpoint host {Host}", new Uri(keys.Endpoint).Host);
+            var host = Uri.TryCreate(keys.Endpoint, UriKind.Absolute, out var uri) ? uri.Host : "unknown";
+            logger.LogWarning(e, "Web push delivery failed for endpoint host {Host}", host);
             return WebPushOutcome.Failed;
         }
     }
