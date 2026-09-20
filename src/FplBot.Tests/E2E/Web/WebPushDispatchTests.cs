@@ -70,6 +70,21 @@ public class WebPushDispatchTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GameweekJustBegan_SubscriberWithOnlyTransfers_GetsGameweekStarted()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+        var response = await fixture.PutWebPush(subscriberId, "/api/web/me/events", new { events = new[] { "Transfers" } });
+        response.EnsureSuccessStatusCode();
+
+        await fixture.Bus.Publish(new GameweekJustBegan(new NewGameweek(12)), TestContext.Current.CancellationToken);
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("12", push.Title);
+        Assert.Equal("/leagues/123", push.Link);
+    }
+
+    [Fact]
     public async Task PriceChanges_SubscribedSubscriber_GetsCount()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";

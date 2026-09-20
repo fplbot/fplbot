@@ -114,11 +114,12 @@ public class WebPushDispatchHandler(
         DispatchGlobal(context, FplEvent.FixtureRemovedFromGameweek, WebPushFormatter.FixtureRemoved(1));
 
     public Task Consume(ConsumeContext<GameweekFinished> context) =>
-        DispatchWithLeague(context, FplEvent.Standings,
+        DispatchWithLeague(context, [FplEvent.Standings],
             WebPushFormatter.Standings(context.Message.FinishedGameweek.Id));
 
     public Task Consume(ConsumeContext<GameweekJustBegan> context) =>
-        DispatchWithLeague(context, FplEvent.Captains, WebPushFormatter.GameweekStarted(context.Message.NewGameweek.Id));
+        DispatchWithLeague(context, [FplEvent.Captains, FplEvent.Transfers],
+            WebPushFormatter.GameweekStarted(context.Message.NewGameweek.Id));
 
     private async Task DispatchGlobal(ConsumeContext context, FplEvent fplEvent, (string Title, string Body) text)
     {
@@ -128,9 +129,9 @@ public class WebPushDispatchHandler(
         }
     }
 
-    private async Task DispatchWithLeague(ConsumeContext context, FplEvent fplEvent, (string Title, string Body) text)
+    private async Task DispatchWithLeague(ConsumeContext context, FplEvent[] fplEvents, (string Title, string Body) text)
     {
-        foreach (var (id, leagueId) in await repo.GetFollowingALeague(fplEvent))
+        foreach (var (id, leagueId) in await repo.GetFollowingALeague(fplEvents))
         {
             await context.Publish(new PublishToWebPushSubscriber(id.Value, text.Title, text.Body, (int)leagueId.Value));
         }
