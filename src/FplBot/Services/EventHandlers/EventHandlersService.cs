@@ -4,6 +4,9 @@ using FplBot.EventHandlers.Discord.Commands;
 using FplBot.EventHandlers.Slack.Commands;
 using FplBot.EventHandlers.Slack;
 using FplBot.EventHandlers.Slack.Helpers;
+using FplBot.EventHandlers.Web;
+using FplBot.Data.Web;
+using FplBot.Integrations.WebPush;
 using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using Fpl.Search;
@@ -27,6 +30,9 @@ public class EventHandlersService : WorkerFplBotService
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();
         services.AddSearching(config.GetSection("Search"));
+        services.AddWebPushSubscribers();
+        services.Configure<WebPushOptions>(config.GetSection("WebPush"));
+        services.AddSingleton<IWebPushSender, WebPushSender>();
     }
 
     public override void AddConsumers(IBusRegistrationConfigurator cfg)
@@ -70,6 +76,8 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<SlackPriceChangeHandler>();
         cfg.AddConsumer<PublishToSlackHandler>();
         cfg.AddConsumer<BroadcastToSlackHandler>();
+
+        cfg.AddConsumer<PublishToWebPushHandler>();
 
         cfg.AddConsumer<SubscribeCommandHandler>();
         cfg.AddConsumer<SubscriptionsCommandHandler>();

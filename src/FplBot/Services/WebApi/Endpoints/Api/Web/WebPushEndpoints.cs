@@ -1,6 +1,8 @@
 using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.Integrations.WebPush;
+using FplBot.Messaging.Contracts.Commands.v1;
+using MassTransit;
 using Microsoft.Extensions.Options;
 
 namespace FplBot.WebApi.Endpoints.Api.Web;
@@ -29,6 +31,7 @@ public static class WebPushEndpoints
         group.MapPut("/me/events", PutEvents);
         group.MapPut("/me/league", PutLeague);
         group.MapDelete("/me", DeleteMe);
+        group.MapPost("/me/test", PostTest);
     }
 
     internal static IResult GetKey(IOptions<WebPushOptions> options) =>
@@ -103,6 +106,20 @@ public static class WebPushEndpoints
 
         await repo.Delete(subscriber.Id);
         return TypedResults.NoContent();
+    }
+
+    internal static async Task<IResult> PostTest(HttpContext context, IWebPushSubscriberRepository repo,
+        IPublishEndpoint publishEndpoint)
+    {
+        if (await Resolve(context, repo) is not { } subscriber)
+        {
+            return TypedResults.NotFound();
+        }
+
+        await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value,
+            "FplBot", "Notifications are working.", (int?)subscriber.FollowedLeagueId?.Value));
+
+        return TypedResults.Accepted($"/api/web/me");
     }
 
     internal static async Task<WebPushSubscriber?> Resolve(HttpContext context, IWebPushSubscriberRepository repo) =>

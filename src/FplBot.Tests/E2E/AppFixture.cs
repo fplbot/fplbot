@@ -16,10 +16,12 @@ using FplBot.Data.Discord;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.Hosting;
+using FplBot.Integrations.WebPush;
 using FplBot.Services.EventHandlers;
 using FplBot.Services.WebApi;
 using FplBot.Tests.E2E.Discord;
 using FplBot.Tests.E2E.Slack.SlackSubscriptions;
+using FplBot.Tests.E2E.Web;
 using FplBot.Tests.Helpers;
 using FplBot.WebApi.Endpoints.Api.Web;
 using MassTransit;
@@ -70,6 +72,8 @@ public class AppFixture : IAsyncLifetime
 
 
     public DiscordMessageCapture DiscordCapture { get; } = new();
+
+    public CapturingWebPushSender WebPushCapture { get; } = new();
 
     public ISlackClient SlackClient { get; private set; } = null!;
 
@@ -283,6 +287,9 @@ public class AppFixture : IAsyncLifetime
         builder.Services.RemoveAll<IDiscordClient>();
         _capturingDiscordClient = new CapturingDiscordClient(DiscordCapture);
         builder.Services.AddSingleton<IDiscordClient>(_capturingDiscordClient);
+
+        builder.Services.RemoveAll<IWebPushSender>();
+        builder.Services.AddSingleton<IWebPushSender>(WebPushCapture);
 
         ConfigureSearchClient(builder.Services);
 
