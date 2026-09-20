@@ -50,6 +50,9 @@ export async function enableNotifications(leagueId: number | null, name: string 
   const registration = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;
 
+  const existing = await registration.pushManager.getSubscription();
+  if (existing) await existing.unsubscribe();
+
   const { publicKey } = await json<{ publicKey: string }>("/api/web/push/key");
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
