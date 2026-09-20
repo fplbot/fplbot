@@ -34,6 +34,8 @@ public class WebPushDeliveryTests(AppFixture fixture) : IAsyncLifetime
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
         var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+        var before = await fixture.GetWebPushRaw(subscriberId, "/api/web/me");
+        Assert.Equal(HttpStatusCode.OK, before.StatusCode);
         fixture.WebPushCapture.FailEndpointAsGone(endpoint);
 
         await fixture.Bus.Publish(new PublishToWebPushSubscriber(subscriberId, "Title", "Body", 123),
@@ -45,7 +47,7 @@ public class WebPushDeliveryTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task OneDeadEndpoint_DoesNotStopTheOther()
+    public async Task Gone_DeletesOnlyTheDeadSubscriber()
     {
         var deadEndpoint = $"https://push.example.test/{Guid.NewGuid():N}";
         var liveEndpoint = $"https://push.example.test/{Guid.NewGuid():N}";
@@ -60,5 +62,12 @@ public class WebPushDeliveryTests(AppFixture fixture) : IAsyncLifetime
 
         var push = await fixture.WebPushCapture.WaitForAsync(liveEndpoint);
         Assert.Equal("Title", push.Title);
+        await fixture.WaitUntilBusIdle();
+
+        var deadResponse = await fixture.GetWebPushRaw(dead, "/api/web/me");
+        Assert.Equal(HttpStatusCode.NotFound, deadResponse.StatusCode);
+
+        var liveResponse = await fixture.GetWebPushRaw(live, "/api/web/me");
+        Assert.Equal(HttpStatusCode.OK, liveResponse.StatusCode);
     }
 }
