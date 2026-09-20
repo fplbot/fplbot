@@ -52,6 +52,9 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
 
+    <!-- Web push -->
+    <PackageReference Include="WebPush" Version="1.0.13" />
+
     <!-- Misc -->
     <PackageReference Include="MinimalHttpLogger" Version="3.0.1" />
   </ItemGroup>

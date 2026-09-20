@@ -83,6 +83,19 @@ targets.Add("backfill-internal-ids-test",
 targets.Add("backfill-internal-ids-prod",
     "Backfill internal installation/subscription ids and their InstallationId-*/SubId-* reverse indexes on prod (idempotent)",
     async () => await BackfillInternalIds(ProdApp));
+
+targets.Add("vapid-keys",
+    "Generate a VAPID keypair for web push (one-time; rotating it invalidates every existing subscription)",
+    () =>
+    {
+        var keys = WebPush.VapidHelper.GenerateVapidKeys();
+        Console.WriteLine($"WebPush:PublicKey  {keys.PublicKey}");
+        Console.WriteLine($"WebPush:PrivateKey {keys.PrivateKey}");
+        Console.WriteLine();
+        Console.WriteLine("dotnet user-secrets set WebPush:PublicKey \"<public>\" --project src/FplBot");
+        Console.WriteLine("dotnet user-secrets set WebPush:PrivateKey \"<private>\" --project src/FplBot");
+    });
+
 targets.Add("publish-slash-command-test",
     "Register or update one Discord slash command in one guild of the test app's Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
     async () => await PublishSlashCommand(TestApp));
