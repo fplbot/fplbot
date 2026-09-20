@@ -160,8 +160,18 @@ public static class FplBotApplication
                     if (WebAppExtensions.WebhookPaths.Contains(request.Path.Value))
                         activity.DisplayName = $"{request.Method} {request.Path.Value}";
                 })
-                .AddHttpClientInstrumentation(o => o.FilterHttpRequestMessage =
-                    req => req.RequestUri?.Port != LocalServiceBusEmulatorPort)
+                .AddHttpClientInstrumentation(o =>
+                {
+                    o.FilterHttpRequestMessage = req => req.RequestUri?.Port != LocalServiceBusEmulatorPort;
+                    // Outbound spans default to a bare "GET"/"POST" — indistinguishable from any other
+                    // outbound call in a flat trace list. Name them by destination host so e.g. a push
+                    // delivery to fcm.googleapis.com doesn't require opening the span to identify.
+                    o.EnrichWithHttpRequestMessage = (activity, request) =>
+                    {
+                        if (request.RequestUri is { } uri)
+                            activity.DisplayName = $"{request.Method} {uri.Host}";
+                    };
+                })
                 .AddSource(DiagnosticHeaders.DefaultListenerName)
                 .AddSource(DiscordDiagnostics.ActivitySourceName)
                 .AddSource([.. fplServices.Select(svc => FplBotDiagnostics.SourceNameFor(svc.ServiceType))])
