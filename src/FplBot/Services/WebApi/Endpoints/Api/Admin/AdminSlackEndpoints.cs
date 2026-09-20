@@ -275,8 +275,9 @@ public static class AdminSlackEndpoints
         return TypedResults.Accepted("/", new { message = $"Marked {teamIdToUpper} for removal." });
     }
 
-    internal static async Task<IResult> PublishStandings(
+    internal static async Task<IResult> Publish(
         string subscriptionId,
+        PublishableEvent evt,
         IIdentityResolver resolver,
         ISlackTeamRepository teamRepo,
         ISendEndpointProvider sendEndpointProvider,
@@ -287,22 +288,45 @@ public static class AdminSlackEndpoints
 
         var teamIdToUpper = teamId.ToUpper();
         var installation = await teamRepo.FindInstallationByTeamId(teamIdToUpper);
-        if (installation == null) return TypedResults.NotFound();
+        var channel = installation?.ChannelSubscriptions.FirstOrDefault(c => c.ChannelId == channelId);
+        if (installation is null || channel is null) return TypedResults.NotFound();
 
-        var channels = installation.ChannelSubscriptions;
-        var channel = channels.FirstOrDefault(c => c.ChannelId == channelId);
-        if (channel?.FollowedLeagueId is null)
+        var requiresLeague = evt is PublishableEvent.Standings or PublishableEvent.GameweekStarted;
+        if (requiresLeague && channel.FollowedLeagueId is null)
         {
             return TypedResults.Ok(new { published = false, message = $"Did not publish. Channel {channelId} is not following a league." });
         }
 
         var settings = await gameweekClient.GetGlobalSettings();
-        var gameweek = settings!.Gameweeks.GetCurrentGameweek();
+        if (settings?.Gameweeks.GetCurrentGameweek() is not { } gameweek)
+        {
+            return TypedResults.Ok(new { published = false, message = "Could not determine the current gameweek." });
+        }
 
-        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToSlackWorkspace(installation.ExternalId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        switch (evt)
+        {
+            case PublishableEvent.Standings:
+                var standingsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekFinishedHandler)}"));
+                await standingsEndpoint.Send(new PublishStandingsToSlackWorkspace(installation.ExternalId, channel.ChannelId,
+                    (int)channel.FollowedLeagueId!.Value, gameweek.Id));
+                break;
+            case PublishableEvent.GameweekStarted:
+                var startedEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackGameweekStartedHandler)}"));
+                await startedEndpoint.Send(new ProcessGameweekStartedForSlackChannel(installation.ExternalId, channel.ChannelId, gameweek.Id));
+                break;
+            case PublishableEvent.Deadline24Hours:
+                var deadline24Endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(SlackNearDeadlineHandler)}"));
+                await deadline24Endpoint.Send(new PublishDeadlineNotificationToSlackWorkspace(installation.ExternalId, channel.ChannelId,
+                    new GameweekNearingDeadline(gameweek.Id, gameweek.Name ?? $"Gameweek {gameweek.Id}", gameweek.Deadline)));
+                break;
+            case PublishableEvent.Deadline1Hour:
+                var deadline1Endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(PublishToSlackHandler)}"));
+                await deadline1Endpoint.Send(new PublishToSlack(installation.ExternalId, channel.ChannelId,
+                    $"<!channel> ⏳ Gameweek {gameweek.Id} deadline in 60 minutes!"));
+                break;
+        }
 
-        return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
+        return TypedResults.Ok(new { published = true, message = $"Published {evt} to {channelId}" });
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(

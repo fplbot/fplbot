@@ -284,8 +284,9 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { id = installation.Id.Value, guildId = installation.ExternalId, guildName = installation.Name, channels });
     }
 
-    internal static async Task<IResult> PublishStandings(
+    internal static async Task<IResult> Publish(
         string subscriptionId,
+        PublishableEvent evt,
         IIdentityResolver resolver,
         IGuildRepository repo,
         ISendEndpointProvider sendEndpointProvider,
@@ -295,21 +296,45 @@ public static class AdminDiscordEndpoints
         var (guildId, channelId) = resolved;
 
         var installation = await repo.FindInstallationByTeamId(guildId);
-        if (installation == null) return TypedResults.NotFound();
+        var channel = installation?.GetChannel(channelId);
+        if (installation is null || channel is null) return TypedResults.NotFound();
 
-        var channel = installation.GetChannel(channelId);
-        if (channel?.FollowedLeagueId is null)
+        var requiresLeague = evt is PublishableEvent.Standings or PublishableEvent.GameweekStarted;
+        if (requiresLeague && channel.FollowedLeagueId is null)
         {
             return TypedResults.Ok(new { published = false, message = $"Did not publish. Channel {channelId} is not following a league." });
         }
 
         var settings = await gameweekClient.GetGlobalSettings();
-        var gameweek = settings!.Gameweeks.GetCurrentGameweek();
+        if (settings?.Gameweeks.GetCurrentGameweek() is not { } gameweek)
+        {
+            return TypedResults.Ok(new { published = false, message = "Could not determine the current gameweek." });
+        }
 
-        var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordGameweekFinishedHandler)}"));
-        await endpoint.Send(new PublishStandingsToDiscordGuild(installation.ExternalId, channel.ChannelId, (int)channel.FollowedLeagueId.Value, gameweek!.Id));
+        switch (evt)
+        {
+            case PublishableEvent.Standings:
+                var standingsEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordGameweekFinishedHandler)}"));
+                await standingsEndpoint.Send(new PublishStandingsToDiscordGuild(installation.ExternalId, channel.ChannelId,
+                    (int)channel.FollowedLeagueId!.Value, gameweek.Id));
+                break;
+            case PublishableEvent.GameweekStarted:
+                var startedEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(DiscordGameweekStartedHandler)}"));
+                await startedEndpoint.Send(new ProcessGameweekStartedForGuildChannel(installation.ExternalId, channel.ChannelId, gameweek.Id));
+                break;
+            case PublishableEvent.Deadline24Hours:
+                var deadline24Endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(PublishToGuildHandler)}"));
+                await deadline24Endpoint.Send(new PublishToGuildChannel(installation.ExternalId, channel.ChannelId,
+                    $"⏳Gameweek {gameweek.Id} deadline in 24 hours!"));
+                break;
+            case PublishableEvent.Deadline1Hour:
+                var deadline1Endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{nameof(PublishToGuildHandler)}"));
+                await deadline1Endpoint.Send(new PublishToGuildChannel(installation.ExternalId, channel.ChannelId,
+                    $"😱 Gameweek {gameweek.Id} deadline in 60 minutes! @here"));
+                break;
+        }
 
-        return TypedResults.Ok(new { published = true, message = $"Published standings to {channelId}" });
+        return TypedResults.Ok(new { published = true, message = $"Published {evt} to {channelId}" });
     }
 
     internal static async Task<IResult> UpdateChannelSubscriptions(

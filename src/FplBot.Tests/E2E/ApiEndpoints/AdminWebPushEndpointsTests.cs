@@ -148,6 +148,76 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Publish_Standings_SubscriberFollowingLeague_PublishesNow()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/Standings");
+        response.EnsureSuccessStatusCode();
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("standings", push.Title, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Publish_Standings_SubscriberNotFollowingLeague_DoesNotPublish()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null);
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/Standings");
+        var value = await AppFixture.ReadJson<System.Text.Json.JsonElement>(response);
+
+        Assert.False(value.GetProperty("published").GetBoolean());
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.WebPushCapture.Any());
+    }
+
+    [Fact]
+    public async Task Publish_Deadline24Hours_SubscriberNotFollowingLeague_StillPublishes()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/Deadline24Hours");
+        response.EnsureSuccessStatusCode();
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("24 hours", push.Body);
+    }
+
+    [Fact]
+    public async Task Publish_Deadline1Hour_SubscriberNotFollowingLeague_StillPublishes()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: null, endpoint: endpoint);
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/Deadline1Hour");
+        response.EnsureSuccessStatusCode();
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("60 minutes", push.Body);
+    }
+
+    [Fact]
+    public async Task Publish_UnknownEventName_ReturnsBadRequest()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.Post($"/api/admin/web/subscribers/{subscriberId}/publish/NotARealEvent");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Publish_UnknownSubscriber_ReturnsNotFound()
+    {
+        var response = await fixture.Post("/api/admin/web/subscribers/nope/publish/Standings");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Broadcast_SendsToSubscribers()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";

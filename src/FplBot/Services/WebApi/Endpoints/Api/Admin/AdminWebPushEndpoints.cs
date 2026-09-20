@@ -1,5 +1,8 @@
+using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using FplBot.Data.Web;
 using FplBot.Domain;
+using FplBot.EventHandlers.Web;
 using FplBot.Messaging.Contracts.Commands.v1;
 using FplBot.WebApi.Endpoints.Api.Web;
 using MassTransit;
@@ -22,6 +25,7 @@ public static class AdminWebPushEndpoints
         group.MapPut("/web/subscribers/{subscriberId}/events", PutEvents);
         group.MapPut("/web/subscribers/{subscriberId}/league", PutLeague);
         group.MapDelete("/web/subscribers/{subscriberId}", DeleteSubscriber);
+        group.MapPost("/web/subscribers/{subscriberId}/publish/{eventName}", Publish);
         group.MapPost("/web/broadcast", Broadcast);
     }
 
@@ -79,6 +83,48 @@ public static class AdminWebPushEndpoints
     {
         await repo.Delete(new WebPushSubscriberId(subscriberId));
         return TypedResults.NoContent();
+    }
+
+    internal static async Task<IResult> Publish(string subscriberId, string eventName, IWebPushSubscriberRepository repo,
+        IPublishEndpoint publishEndpoint, IGlobalSettingsClient gameweekClient)
+    {
+        if (!Enum.TryParse<PublishableEvent>(eventName, ignoreCase: true, out var evt))
+        {
+            return TypedResults.BadRequest(new { errors = new { eventName = new[] { "must be one of Standings, GameweekStarted, Deadline24Hours, Deadline1Hour" } } });
+        }
+
+        if (await repo.Find(new WebPushSubscriberId(subscriberId)) is not { } subscriber)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var requiresLeague = evt is PublishableEvent.Standings or PublishableEvent.GameweekStarted;
+        if (requiresLeague && subscriber.FollowedLeagueId is null)
+        {
+            return TypedResults.Ok(new { published = false, message = "Did not publish. Subscriber is not following a league." });
+        }
+
+        var settings = await gameweekClient.GetGlobalSettings();
+        if (settings?.Gameweeks.GetCurrentGameweek() is not { } gameweek)
+        {
+            return TypedResults.Ok(new { published = false, message = "Could not determine the current gameweek." });
+        }
+
+        // The real system never sends an arbitrary "time remaining" reminder — only ever one of
+        // these two fixed messages, so "publish now" replays one verbatim rather than computing
+        // a countdown that would say something the real system never actually says.
+        var (title, body) = evt switch
+        {
+            PublishableEvent.Standings => WebPushFormatter.Standings(gameweek.Id),
+            PublishableEvent.GameweekStarted => WebPushFormatter.GameweekStarted(gameweek.Id),
+            PublishableEvent.Deadline24Hours => WebPushFormatter.Deadline("in 24 hours"),
+            PublishableEvent.Deadline1Hour => WebPushFormatter.Deadline("in 60 minutes"),
+            _ => throw new ArgumentOutOfRangeException(nameof(evt))
+        };
+
+        await publishEndpoint.Publish(new PublishToWebPushSubscriber(subscriber.Id.Value, title, body, (int?)subscriber.FollowedLeagueId?.Value));
+
+        return TypedResults.Ok(new { published = true, message = $"Published {evt} to subscriber" });
     }
 
     internal static async Task<IResult> Broadcast(WebPushBroadcastRequest request, IPublishEndpoint publishEndpoint)

@@ -19,7 +19,7 @@ internal class SlackGameweekStartedHandler(
     ISlackTeamRepository teamsRepo,
     ILeagueClient leagueClient,
     ILogger<SlackGameweekStartedHandler> logger)
-    : IConsumer<GameweekJustBegan>, IConsumer<ProcessGameweekStartedForSlackWorkspace>
+    : IConsumer<GameweekJustBegan>, IConsumer<ProcessGameweekStartedForSlackWorkspace>, IConsumer<ProcessGameweekStartedForSlackChannel>
 {
     private const int MemberCountForLargeLeague = 25;
 
@@ -44,6 +44,17 @@ internal class SlackGameweekStartedHandler(
         {
             await DoSubHandling(installation.ExternalId, sub, newGameweek);
         }
+    }
+
+    public async Task Consume(ConsumeContext<ProcessGameweekStartedForSlackChannel> context)
+    {
+        var message = context.Message;
+        if (await teamsRepo.GetChannelSubscription(message.TeamId, message.ChannelId) is not { } sub)
+        {
+            return;
+        }
+
+        await DoSubHandling(message.TeamId, sub, message.GameweekId);
     }
 
     private async Task DoSubHandling(string teamId, ChannelSubscription sub, int newGameweek)

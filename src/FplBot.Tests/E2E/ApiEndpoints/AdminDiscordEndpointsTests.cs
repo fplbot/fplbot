@@ -379,18 +379,88 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task PublishStandings_ChannelNotFollowingLeague_DoesNotPublish()
+    public async Task Publish_Standings_ChannelNotFollowingLeague_DoesNotPublish()
     {
         var installedGuild = await fixture.SeedGuildInstallation(leagueId: null, subscriptions: [EventSubscription.Standings]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
-        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish-standings");
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/Standings");
 
         var value = await AppFixture.ReadJson<JsonElement>(response);
         Assert.False(value.GetProperty("published").GetBoolean());
 
         await fixture.WaitUntilBusIdle();
         Assert.False(fixture.DiscordCapture.AnyMessage(channelId));
+    }
+
+    [Fact]
+    public async Task Publish_Standings_ChannelFollowingLeague_PublishesNow()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(leagueId: 123, subscriptions: [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/Standings");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+    }
+
+    [Fact]
+    public async Task Publish_GameweekStarted_ChannelFollowingLeague_PublishesToOnlyThatChannel()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(leagueId: 123, subscriptions: [EventSubscription.Captains],
+            channelId: "channel-a");
+        var otherGuild = await fixture.SeedGuildInstallation(leagueId: 123, subscriptions: [EventSubscription.Captains],
+            channelId: "channel-b");
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/GameweekStarted");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage(otherGuild.ChannelSubscriptions.First().ChannelId));
+    }
+
+    [Fact]
+    public async Task Publish_Deadline24Hours_ChannelNotFollowingLeague_StillPublishes()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(leagueId: null, subscriptions: [EventSubscription.Deadlines]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/Deadline24Hours");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        Assert.Contains("24 hours", msg.Text);
+    }
+
+    [Fact]
+    public async Task Publish_Deadline1Hour_ChannelNotFollowingLeague_StillPublishes()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(leagueId: null, subscriptions: [EventSubscription.Deadlines]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/Deadline1Hour");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.DiscordCapture.WaitForMessageAsync(channelId);
+        Assert.Contains("60 minutes", msg.Text);
+    }
+
+    [Fact]
+    public async Task Publish_UnknownEventName_ReturnsBadRequest()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(leagueId: 123, subscriptions: [EventSubscription.Standings]);
+        var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{SubId(installedGuild, channelId)}/publish/NotARealEvent");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

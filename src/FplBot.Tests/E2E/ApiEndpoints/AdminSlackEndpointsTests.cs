@@ -102,19 +102,94 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task PublishStandings_ChannelNotFollowingLeague_DoesNotPublish()
+    public async Task Publish_Standings_ChannelNotFollowingLeague_DoesNotPublish()
     {
         await fixture.InstallSlackbot("T1", "Blank");
         await fixture.Subscribe("T1", "C0FPLBOT01", FplEvent.Standings);
 
         var response = await fixture.Post(
-            $"/api/admin/subscriptions/{await SubscriptionId("T1", "C0FPLBOT01")}/publish-standings");
+            $"/api/admin/subscriptions/{await SubscriptionId("T1", "C0FPLBOT01")}/publish/Standings");
 
         var value = await AppFixture.ReadJson<JsonElement>(response);
         Assert.False(value.GetProperty("published").GetBoolean());
 
         await fixture.WaitUntilBusIdle();
         Assert.False(fixture.SlackCapture.AnyMessage());
+    }
+
+    [Fact]
+    public async Task Publish_Standings_ChannelFollowingLeague_PublishesNow()
+    {
+        var teamId = await fixture.InstallSlackbot("T2", "Blank");
+        await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Standings);
+        var subscriptionId = await SubscriptionId(teamId, "C0FPLBOT01");
+        await fixture.Put($"/api/admin/subscriptions/{subscriptionId}/league", new FollowLeagueRequest(123));
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{subscriptionId}/publish/Standings");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+    }
+
+    [Fact]
+    public async Task Publish_GameweekStarted_ChannelFollowingLeague_PublishesToOnlyThatChannel()
+    {
+        var teamId = await fixture.InstallSlackbot("T3", "Blank");
+        await fixture.Subscribe(teamId, "C0FPLBOT01", FplEvent.Captains);
+        await fixture.Subscribe(teamId, "C0FPLBOT02", FplEvent.Captains);
+        var subscriptionId = await SubscriptionId(teamId, "C0FPLBOT01");
+        await fixture.Put($"/api/admin/subscriptions/{subscriptionId}/league", new FollowLeagueRequest(123));
+
+        var response = await fixture.Post($"/api/admin/subscriptions/{subscriptionId}/publish/GameweekStarted");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage("C0FPLBOT02"));
+    }
+
+    [Fact]
+    public async Task Publish_Deadline24Hours_ChannelNotFollowingLeague_StillPublishes()
+    {
+        await fixture.InstallSlackbot("T4", "Blank");
+        await fixture.Subscribe("T4", "C0FPLBOT01", FplEvent.Deadlines);
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T4", "C0FPLBOT01")}/publish/Deadline24Hours");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        Assert.Contains("24 hours", msg.Text);
+    }
+
+    [Fact]
+    public async Task Publish_Deadline1Hour_ChannelNotFollowingLeague_StillPublishes()
+    {
+        await fixture.InstallSlackbot("T4b", "Blank");
+        await fixture.Subscribe("T4b", "C0FPLBOT01", FplEvent.Deadlines);
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T4b", "C0FPLBOT01")}/publish/Deadline1Hour");
+
+        var value = await AppFixture.ReadJson<JsonElement>(response);
+        Assert.True(value.GetProperty("published").GetBoolean());
+        var msg = await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        Assert.Contains("60 minutes", msg.Text);
+    }
+
+    [Fact]
+    public async Task Publish_UnknownEventName_ReturnsBadRequest()
+    {
+        await fixture.InstallSlackbot("T5", "Blank");
+        await fixture.Subscribe("T5", "C0FPLBOT01", FplEvent.Standings);
+
+        var response = await fixture.Post(
+            $"/api/admin/subscriptions/{await SubscriptionId("T5", "C0FPLBOT01")}/publish/NotARealEvent");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

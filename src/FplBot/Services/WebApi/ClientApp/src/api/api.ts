@@ -107,8 +107,13 @@ export function uninstallTeam(installationId: string): Promise<MessageResponse> 
   return postJson(`/api/admin/teams/${installationId}/uninstall`);
 }
 
-export function publishStandings(subscriptionId: string): Promise<{ published: boolean; message: string }> {
-  return postJson(`/api/admin/subscriptions/${subscriptionId}/publish-standings`);
+export type PublishableEvent = "Standings" | "GameweekStarted" | "Deadline24Hours" | "Deadline1Hour";
+
+export function publishSubscriptionEvent(
+  subscriptionId: string,
+  eventName: PublishableEvent
+): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/subscriptions/${subscriptionId}/publish/${eventName}`);
 }
 
 export function broadcastToSlack(message: string): Promise<MessageResponse> {
@@ -263,6 +268,13 @@ export function updateWebPushSubscriberLeague(subscriberId: string, leagueId: nu
 
 export function deleteWebPushSubscriber(subscriberId: string): Promise<void> {
   return request(`/api/admin/web/subscribers/${subscriberId}`, { method: "DELETE" });
+}
+
+export function publishWebPushEvent(
+  subscriberId: string,
+  eventName: PublishableEvent
+): Promise<{ published: boolean; message: string }> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/publish/${eventName}`);
 }
 
 export function broadcastToWebPush(title: string, body: string): Promise<void> {

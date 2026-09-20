@@ -6,9 +6,11 @@ import {
   updateWebPushSubscriberEvents,
   updateWebPushSubscriberLeague,
   deleteWebPushSubscriber,
+  publishWebPushEvent,
 } from "../../api/api";
 import type { SubscriberDetail } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
+import PublishEventCard from "../../components/PublishEventCard.vue";
 
 const props = defineProps<{ subscriberId: string }>();
 const router = useRouter();
@@ -192,6 +194,12 @@ onMounted(load);
           </button>
         </div>
       </div>
+
+      <PublishEventCard
+        :key="subscriberId"
+        :has-league="!!subscriber.leagueId"
+        :publish="(event) => publishWebPushEvent(subscriberId, event)"
+      />
 
       <div class="card danger-zone">
         <h2>Danger zone</h2>
