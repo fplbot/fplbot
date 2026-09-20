@@ -24,6 +24,7 @@ import type {
   SearchAnyResult,
   SearchType,
   SlashCommandDefinition,
+  SubscriberSummary,
   TeamDetails,
   TeamSummary,
 } from "./types";
@@ -236,6 +237,29 @@ export function getAvailableGuildChannels(installationId: string): Promise<Avail
 export function addGuildChannelSubscription(installationId: string, channelId: string): Promise<MessageResponse> {
   return postJson(`/api/admin/discord/guilds/${installationId}/channels`, { channelId });
 }
+
+// ---- Admin: web push ----
+
+export function getWebPushSubscribers(page: number, pageSize: number): Promise<PagedResult<SubscriberSummary>> {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return request(`/api/admin/web/subscribers?${params.toString()}`);
+}
+
+export async function getWebPushSubscriber(subscriberId: string): Promise<SubscriberSummary | null> {
+  const res = await fetch(`/api/admin/web/subscribers/${subscriberId}`, { credentials: "include" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new AdminApiError(`getWebPushSubscriber() failed with status ${res.status}`, res.status);
+  return res.json();
+}
+
+export function deleteWebPushSubscriber(subscriberId: string): Promise<void> {
+  return request(`/api/admin/web/subscribers/${subscriberId}`, { method: "DELETE" });
+}
+
+export function broadcastToWebPush(title: string, body: string): Promise<void> {
+  return postJson("/api/admin/web/broadcast", { title, body });
+}
+
 // ---- OAuth (public site install buttons) ----
 
 export async function redirectToSlackInstall(returnTo?: string): Promise<void> {

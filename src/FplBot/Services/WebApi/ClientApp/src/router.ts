@@ -90,6 +90,32 @@ const router = createRouter({
           ],
         },
         {
+          path: "web",
+          component: () => import("./views/admin/WebPushSection.vue"),
+          children: [
+            {
+              path: "",
+              redirect: "/admin/web/subscribers",
+            },
+            {
+              path: "subscribers",
+              name: "admin-web-subscribers",
+              component: () => import("./views/admin/WebPushSubscribersView.vue"),
+            },
+            {
+              path: "subscribers/:subscriberId",
+              name: "admin-web-subscriber-details",
+              component: () => import("./views/admin/WebPushSubscriberDetailsView.vue"),
+              props: true,
+            },
+            {
+              path: "broadcast",
+              name: "admin-web-broadcast",
+              component: () => import("./views/admin/WebPushBroadcastView.vue"),
+            },
+          ],
+        },
+        {
           path: "search",
           component: () => import("./views/admin/SearchSection.vue"),
           children: [

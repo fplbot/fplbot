@@ -233,6 +233,28 @@ there is no "get everything, then filter in the handler" API.
 
 Redis key convention: `{EntityType}-{id}` (e.g. `TeamId-T12345`, `GuildSubs-{guildId}-Channel-{channelId}`).
 
+## Web push
+
+The third notification platform: browsers subscribed on fplbot.app, for FPL managers who use
+neither Slack nor Discord. It has its own aggregate — `Domain/WebPushSubscriber.cs`, no channels,
+one browser per subscriber — and its own repository (`Data/Web/WebPushSubscriberRepository.cs`,
+`IWebPushSubscriberRepository`, not `IDomainRepository`). It shares only `FplEvent`,
+`EventCollection` and `ClassicLeagueId` with Slack and Discord; `Installation` and
+`ChannelSubscription` are not involved. `FplEvent.Taunts` is unsupported on web
+(`FplEvents.SupportedOnWeb`).
+
+Public endpoints live under `/api/web` (`Services/WebApi/Endpoints/Api/Web/`), the admin API under
+`/api/admin/web`, delivery in `Services/EventHandlers/Web/` and the actual sending in
+`Integrations/WebPush/WebPushSender.cs`.
+
+VAPID keys are configuration under `WebPush:*` (`PublicKey`, `PrivateKey`, `Subject`).
+`appsettings.json` has a committed dev keypair; test and prod override it with Heroku config vars
+in the double-underscore form (`WebPush__PublicKey` etc).
+
+There is no delivery-failure counting like Slack/Discord channels have: when a push endpoint
+returns `410 Gone` the per-subscriber consumer deletes the subscriber outright, since a gone
+endpoint means the browser revoked the subscription and can never come back.
+
 ## Adding a new notification
 
 See `src/.claude/commands/add-notification.md` for the full recipe. Summary:

@@ -294,6 +294,16 @@ export interface LeagueDetails {
   summaries: EntrySummary[];
 }
 
+// ---- Admin: web push ----
+
+export interface SubscriberSummary {
+  id: string;
+  name: string | null;
+  leagueId: number | null;
+  eventCount: number;
+  endpointHost: string;
+}
+
 // ---- Admin: error queues ----
 
 export interface ErrorQueueSummary {
