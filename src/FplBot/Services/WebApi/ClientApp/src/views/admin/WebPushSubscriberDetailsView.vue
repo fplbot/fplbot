@@ -154,8 +154,10 @@ onMounted(load);
         <p v-if="leagueFeedback" :class="['alert', leagueFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
           {{ leagueFeedback.text }}
         </p>
-        <label for="league-id">League id</label>
-        <input id="league-id" v-model.number="leagueIdInput" type="number" min="1" placeholder="e.g. 579157" />
+        <div class="field">
+          <label for="league-id">League id</label>
+          <input id="league-id" v-model.number="leagueIdInput" type="number" min="1" placeholder="e.g. 579157" />
+        </div>
         <div class="subscription-actions">
           <button class="btn small" :disabled="!canSaveLeague" @click="submitLeague">
             {{ savingLeague ? "Saving..." : "Save league" }}
