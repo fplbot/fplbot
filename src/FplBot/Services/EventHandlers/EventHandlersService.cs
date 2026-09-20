@@ -79,6 +79,7 @@ public class EventHandlersService : WorkerFplBotService
 
         cfg.AddConsumer<WebPushDispatchHandler>();
         cfg.AddConsumer<PublishToWebPushHandler>();
+        cfg.AddConsumer<BroadcastToWebPushHandler>();
 
         cfg.AddConsumer<SubscribeCommandHandler>();
         cfg.AddConsumer<SubscriptionsCommandHandler>();

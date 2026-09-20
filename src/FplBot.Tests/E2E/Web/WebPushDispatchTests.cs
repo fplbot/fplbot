@@ -186,4 +186,93 @@ public class WebPushDispatchTests(AppFixture fixture) : IAsyncLifetime
         var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
         Assert.Contains("postponed", push.Title);
     }
+
+    [Fact]
+    public async Task Goal_SendsOneNotificationPerGoal()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new FixtureEventsOccured([
+            new FixtureEvents(
+                new FixtureScore(new FixtureTeam(1, "Manchester City", "MCI"),
+                    new FixtureTeam(2, "Arsenal", "ARS"), 34, 2, 0),
+                new Dictionary<StatType, List<PlayerEvent>>
+                {
+                    [StatType.GoalsScored] =
+                    [
+                        new PlayerEvent(new PlayerDetails(1, "Foden"), TeamType.Home, false),
+                        new PlayerEvent(new PlayerDetails(2, "Haaland"), TeamType.Home, false)
+                    ]
+                })
+        ]), TestContext.Current.CancellationToken);
+
+        var first = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        var second = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.All([first, second], push => Assert.Contains("2-0", push.Title));
+        Assert.Contains("Foden", first.Body + second.Body);
+        Assert.Contains("Haaland", first.Body + second.Body);
+    }
+
+    [Fact]
+    public async Task RedCard_SendsCardNotification()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new FixtureEventsOccured([
+            new FixtureEvents(
+                new FixtureScore(new FixtureTeam(1, "Manchester City", "MCI"),
+                    new FixtureTeam(2, "Arsenal", "ARS"), 60, 1, 0),
+                new Dictionary<StatType, List<PlayerEvent>>
+                {
+                    [StatType.RedCards] = [new PlayerEvent(new PlayerDetails(3, "Gabriel"), TeamType.Away, false)]
+                })
+        ]), TestContext.Current.CancellationToken);
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("1-0", push.Title);
+        Assert.Contains("Gabriel", push.Body);
+        Assert.Contains("red card", push.Body);
+    }
+
+    [Fact]
+    public async Task RemovedGoal_SendsNothing()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new FixtureEventsOccured([
+            new FixtureEvents(
+                new FixtureScore(new FixtureTeam(1, "Manchester City", "MCI"),
+                    new FixtureTeam(2, "Arsenal", "ARS"), 40, 1, 0),
+                new Dictionary<StatType, List<PlayerEvent>>
+                {
+                    [StatType.GoalsScored] = [new PlayerEvent(new PlayerDetails(1, "Foden"), TeamType.Home, true)]
+                })
+        ]), TestContext.Current.CancellationToken);
+
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.WebPushCapture.Any());
+    }
+
+    [Fact]
+    public async Task YellowCard_SendsNothing()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new FixtureEventsOccured([
+            new FixtureEvents(
+                new FixtureScore(new FixtureTeam(1, "Manchester City", "MCI"),
+                    new FixtureTeam(2, "Arsenal", "ARS"), 55, 1, 0),
+                new Dictionary<StatType, List<PlayerEvent>>
+                {
+                    [StatType.YellowCards] = [new PlayerEvent(new PlayerDetails(4, "Rice"), TeamType.Away, false)]
+                })
+        ]), TestContext.Current.CancellationToken);
+
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.WebPushCapture.Any());
+    }
 }

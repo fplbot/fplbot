@@ -1,3 +1,4 @@
+using Fpl.Client.Abstractions;
 using FplBot.Data.Web;
 using FplBot.Domain;
 using FplBot.EventHandlers.Discord.Helpers;
@@ -7,13 +8,19 @@ using MassTransit;
 
 namespace FplBot.EventHandlers.Web;
 
-public class WebPushDispatchHandler(IWebPushSubscriberRepository repo) :
+public class WebPushDispatchHandler(
+    IWebPushSubscriberRepository repo,
+    IGlobalSettingsClient settingsClient,
+    IFixtureClient fixtureClient,
+    ILogger<WebPushDispatchHandler> logger) :
     IConsumer<InjuryUpdateOccured>,
     IConsumer<PlayersPriceChanged>,
     IConsumer<TwentyFourHoursToDeadline>,
     IConsumer<OneHourToDeadline>,
     IConsumer<LineupReady>,
     IConsumer<NewPlayersRegistered>,
+    IConsumer<FixtureEventsOccured>,
+    IConsumer<FixtureFinished>,
     IConsumer<FixtureRemovedFromGameweek>,
     IConsumer<GameweekFinished>,
     IConsumer<GameweekJustBegan>
@@ -52,6 +59,56 @@ public class WebPushDispatchHandler(IWebPushSubscriberRepository repo) :
             ? Task.CompletedTask
             : DispatchGlobal(context, FplEvent.NewPlayers, WebPushFormatter.NewPlayers(relevant.Count));
     }
+
+    public async Task Consume(ConsumeContext<FixtureEventsOccured> context)
+    {
+        foreach (var fixtureEvents in context.Message.FixtureEvents)
+        {
+            foreach (var (statType, events) in fixtureEvents.StatMap)
+            {
+                if (GetFplEventForStat(statType) is not { } fplEvent)
+                {
+                    continue;
+                }
+
+                foreach (var playerEvent in events.Where(e => !e.IsRemoved))
+                {
+                    await DispatchGlobal(context, fplEvent,
+                        WebPushFormatter.FixtureEvent(statType, fixtureEvents.FixtureScore, playerEvent.Player.WebName));
+                }
+            }
+        }
+    }
+
+    public async Task Consume(ConsumeContext<FixtureFinished> context)
+    {
+        var fixtures = await fixtureClient.GetFixtures() ?? [];
+        if (fixtures.FirstOrDefault(f => f.Id == context.Message.FixtureId) is not { } finishedFixture)
+        {
+            logger.LogWarning("Could not find fixture {FixtureId} in FPL API", context.Message.FixtureId);
+            return;
+        }
+
+        var settings = await settingsClient.GetGlobalSettings();
+        var teams = settings?.Teams ?? [];
+        await DispatchGlobal(context, FplEvent.FixtureFullTime,
+            WebPushFormatter.FixtureFullTime(
+                teams.First(t => t.Id == finishedFixture.HomeTeamId).ShortName,
+                finishedFixture.HomeTeamScore,
+                finishedFixture.AwayTeamScore,
+                teams.First(t => t.Id == finishedFixture.AwayTeamId).ShortName));
+    }
+
+    private static FplEvent? GetFplEventForStat(StatType statType) => statType switch
+    {
+        StatType.GoalsScored => FplEvent.FixtureGoals,
+        StatType.Assists => FplEvent.FixtureAssists,
+        StatType.OwnGoals => FplEvent.FixtureGoals,
+        StatType.RedCards => FplEvent.FixtureCards,
+        StatType.PenaltiesSaved => FplEvent.FixturePenaltyMisses,
+        StatType.PenaltiesMissed => FplEvent.FixturePenaltyMisses,
+        _ => null
+    };
 
     public Task Consume(ConsumeContext<FixtureRemovedFromGameweek> context) =>
         DispatchGlobal(context, FplEvent.FixtureRemovedFromGameweek, WebPushFormatter.FixtureRemoved(1));

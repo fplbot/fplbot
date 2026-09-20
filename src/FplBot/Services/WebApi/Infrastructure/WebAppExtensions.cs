@@ -94,6 +94,7 @@ public static class WebAppExtensions
         AdminSubscriptionEndpoints.Map(admin);
         AdminHealthEndpoints.Map(admin, env);
         AdminErrorEndpoints.Map(admin);
+        AdminWebPushEndpoints.Map(admin);
 
         // A plain MapFallbackToFile("index.html") would serve the SPA shell for *any*
         // unmatched request, including a typo'd /api/**, /debug/**, or webhook path —
