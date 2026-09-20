@@ -86,6 +86,35 @@ public class WebPushDispatchTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PriceChanges_CountsOnlyRelevantPlayers()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new PlayersPriceChanged([
+            new PlayerWithPriceChange(1, "Salah", 1, 130, 25.0, 14, "LIV"),
+            new PlayerWithPriceChange(2, "Nobody", 1, 40, -1.0, 1, "ARS")
+        ]), TestContext.Current.CancellationToken);
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("1 player", push.Body);
+    }
+
+    [Fact]
+    public async Task NewPlayersRegistered_OnlyIrrelevantPlayers_GetsNothing()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new NewPlayersRegistered([
+            new NewPlayer(1, "Nobody", -1, 14, "MUN")
+        ]), TestContext.Current.CancellationToken);
+
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.WebPushCapture.Any());
+    }
+
+    [Fact]
     public async Task TwentyFourHoursToDeadline_SubscribedSubscriber_GetsDeadlineReminder()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";

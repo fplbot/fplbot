@@ -26,9 +26,13 @@ public class WebPushDispatchHandler(IWebPushSubscriberRepository repo) :
             : DispatchGlobal(context, FplEvent.InjuryUpdates, WebPushFormatter.InjuryUpdates(relevant.Count));
     }
 
-    public Task Consume(ConsumeContext<PlayersPriceChanged> context) =>
-        DispatchGlobal(context, FplEvent.PriceChanges,
-            WebPushFormatter.PriceChanges(context.Message.PlayersWithPriceChanges.Count));
+    public Task Consume(ConsumeContext<PlayersPriceChanged> context)
+    {
+        var relevant = context.Message.PlayersWithPriceChanges.Where(c => c.IsRelevant()).ToList();
+        return relevant.Count == 0
+            ? Task.CompletedTask
+            : DispatchGlobal(context, FplEvent.PriceChanges, WebPushFormatter.PriceChanges(relevant.Count));
+    }
 
     public Task Consume(ConsumeContext<TwentyFourHoursToDeadline> context) =>
         DispatchGlobal(context, FplEvent.Deadlines, WebPushFormatter.Deadline("in 24 hours"));
@@ -41,9 +45,13 @@ public class WebPushDispatchHandler(IWebPushSubscriberRepository repo) :
             WebPushFormatter.Lineups(
                 $"{context.Message.Lineup.HomeTeamLineup.TeamName} v {context.Message.Lineup.AwayTeamLineup.TeamName}"));
 
-    public Task Consume(ConsumeContext<NewPlayersRegistered> context) =>
-        DispatchGlobal(context, FplEvent.NewPlayers,
-            WebPushFormatter.NewPlayers(context.Message.NewPlayers.Count));
+    public Task Consume(ConsumeContext<NewPlayersRegistered> context)
+    {
+        var relevant = context.Message.NewPlayers.Where(c => c.IsRelevant()).ToList();
+        return relevant.Count == 0
+            ? Task.CompletedTask
+            : DispatchGlobal(context, FplEvent.NewPlayers, WebPushFormatter.NewPlayers(relevant.Count));
+    }
 
     public Task Consume(ConsumeContext<FixtureRemovedFromGameweek> context) =>
         DispatchGlobal(context, FplEvent.FixtureRemovedFromGameweek, WebPushFormatter.FixtureRemoved(1));
