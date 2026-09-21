@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
             .ValidateWithFluentValidation(new OAuthOptionsValidator())
             .ValidateOnStart();
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
+        services.AddSingleton<IChannelMemberCountRepository, ChannelMemberCountRepository>();
         services.AddDevAwareSlackClientBuilder(env);
         services.AddSingleton<ISlackWorkSpacePublisher, SlackWorkSpacePublisher>();
         return services;

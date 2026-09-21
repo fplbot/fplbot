@@ -7,6 +7,7 @@ defineProps<{ label: string; value: string; sublabel?: string }>();
     <span class="stat-label">{{ label }}</span>
     <span class="stat-value">{{ value }}</span>
     <span v-if="sublabel" class="stat-sublabel">{{ sublabel }}</span>
+    <slot />
   </div>
 </template>
 

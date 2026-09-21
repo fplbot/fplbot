@@ -25,6 +25,7 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.Configure<RedisOptions>(config);
         services.TryAddSingleton(redisConnection);
         services.AddSingleton<ISlackTeamRepository, SlackTeamRepository>();
+        services.AddSingleton<IChannelMemberCountRepository, ChannelMemberCountRepository>();
         services.AddFplApiClient(config);
         services.AddSearching(config.GetSection("Search"));
         services.AddDevAwareSlackClientBuilder(env);

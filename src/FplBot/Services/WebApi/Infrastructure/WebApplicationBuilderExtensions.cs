@@ -48,7 +48,8 @@ public static class WebApplicationBuilderExtensions
             .ValidateWithFluentValidation(new DiscordWebOptionsValidator())
             .ValidateOnStart();
 
-        services.AddRecurrer<GuildStatusChecker>();
+        services.AddRecurrer<GuildMemberCountChecker>();
+        services.AddRecurrer<SlackChannelMemberCountChecker>();
 
         services.AddDataProtection()
             .PersistKeysToStackExchangeRedis(redisConn)

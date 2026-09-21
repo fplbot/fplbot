@@ -44,6 +44,10 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<SlackChannelDeliveryFailedHandler>();
         cfg.AddConsumer<DiscordChannelDeliveryFailedHandler>();
         cfg.AddConsumer<ChannelMovedHandler>();
+        cfg.AddConsumer<RefreshDiscordReachStatsHandler>();
+        cfg.AddConsumer<RefreshGuildMemberCountHandler>();
+        cfg.AddConsumer<RefreshSlackReachStatsHandler>();
+        cfg.AddConsumer<RefreshChannelMemberCountHandler>();
         cfg.AddConsumer<BroadcastHandler>();
         cfg.AddConsumer<DiscordFixtureEventsHandler>();
         cfg.AddConsumer<DiscordFixtureFulltimeHandler>();

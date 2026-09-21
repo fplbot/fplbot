@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<RedisOptions>(config);
         services.AddSingleton<IGuildRepository, DiscordGuildRepository>();
+        services.AddSingleton<IGuildMemberCountRepository, GuildMemberCountRepository>();
         services.AddDiscordHttpClient(c =>
         {
             c.DiscordApplicationId = config["DiscordAppId"] ?? string.Empty;

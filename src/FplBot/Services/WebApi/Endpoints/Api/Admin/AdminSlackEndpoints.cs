@@ -16,6 +16,9 @@ using Slackbot.Net.SlackClients.Http;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
+// MemberCount/MemberCountUpdatedAt are Slack-only (per-channel, see conversations.info's
+// num_members - ChannelMemberCountRepository) - Discord's equivalent metric lives at the guild
+// level (GuildWithSubsDto), so Discord's ToDto leaves these null.
 public record ChannelSubscriptionDto(
     string Id,
     string TeamId,
@@ -24,9 +27,19 @@ public record ChannelSubscriptionDto(
     IEnumerable<EventSubscription> Subscriptions,
     int FailureCount,
     DateTimeOffset? FailingSince,
-    string? LastFailureReason);
+    string? LastFailureReason,
+    int? MemberCount = null,
+    DateTimeOffset? MemberCountUpdatedAt = null);
 
 public record TeamSummaryDto(string Id, string TeamId, string TeamName, IEnumerable<ChannelSubscriptionDto> Subscriptions, bool PendingRemoval);
+
+// TotalApproximateMembers sums each subscribed channel's own member count (see
+// conversations.info's num_members) rather than a workspace-wide member count: unlike a Discord
+// guild, a Slack channel isn't visible to everyone in the workspace, so per-channel is the closer
+// reach proxy. This double-counts a user in multiple subscribed channels of the same workspace -
+// the same kind of approximation Discord's reach number already accepts. OldestUpdate is the
+// least-recently-refreshed channel currently contributing to the total.
+public record TeamReachStatsDto(int TotalTeams, long TotalApproximateMembers, DateTimeOffset? OldestUpdate);
 
 public record BroadcastRequest(string Message);
 
@@ -73,6 +86,8 @@ public static class AdminSlackEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         group.MapGet("/teams", GetTeams);
+        group.MapGet("/slack/reach", GetReachStats);
+        group.MapPost("/slack/reach/refresh", RefreshReachStats);
         group.MapGet("/teams/{installationId}", GetTeam);
         group.MapGet("/teams/{installationId}/available-channels", GetAvailableChannels);
         group.MapPost("/teams/{installationId}/channels", AddChannel);
@@ -108,12 +123,14 @@ public static class AdminSlackEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetTeams(string? query, int? page, int? pageSize, bool? failingOnly, ISlackTeamRepository teamRepo)
+    internal static async Task<IResult> GetTeams(string? query, int? page, int? pageSize, bool? failingOnly, int? minMembers,
+        ISlackTeamRepository teamRepo, IChannelMemberCountRepository channelMemberCountRepo)
     {
         var pageNumber = page is > 0 ? page.Value : 1;
         var size = pageSize is > 0 ? Math.Min(pageSize.Value, 100) : 25;
 
         var installations = (await teamRepo.GetAllInstallations()).ToList();
+        var memberCounts = await channelMemberCountRepo.GetAll();
 
         var filtered = string.IsNullOrWhiteSpace(query)
             ? installations
@@ -129,25 +146,53 @@ public static class AdminSlackEndpoints
             filtered = [.. filtered.Where(i => i.ChannelSubscriptions.Any(c => c.FailureCount > 0))];
         }
 
-        var page_ = filtered.Skip((pageNumber - 1) * size).Take(size).ToList();
-        var items = new List<TeamSummaryDto>();
-        foreach (var installation in page_)
+        if (minMembers is > 0)
         {
-            items.Add(await ToDto(installation, teamRepo));
+            filtered = [.. filtered.Where(i => TeamMemberCount(i, memberCounts) >= minMembers)];
         }
+
+        var page_ = filtered.Skip((pageNumber - 1) * size).Take(size).ToList();
+        var items = page_.Select(installation => ToDto(installation, memberCounts)).ToList();
 
         return TypedResults.Ok(new PagedResult<TeamSummaryDto>(items, pageNumber, size, filtered.Count));
     }
 
-    private static async Task<TeamSummaryDto> ToDto(Installation installation, ISlackTeamRepository teamRepo)
+    // A team's "size" for filtering: the sum of its subscribed channels' own member counts -
+    // the same metric TeamReachStatsDto.TotalApproximateMembers sums across all teams.
+    private static int TeamMemberCount(Installation installation, IReadOnlyDictionary<string, ChannelMemberCount> memberCounts) =>
+        installation.ChannelSubscriptions.Sum(c => memberCounts.GetValueOrDefault(c.ChannelId)?.MemberCount ?? 0);
+
+    // The admin analytics page's total-reach number: totalTeams is every installed workspace,
+    // totalApproximateMembers sums whatever the nightly SlackChannelMemberCountChecker sweep (or
+    // a manual refresh) has fetched so far - a channel not yet swept simply contributes 0.
+    internal static async Task<IResult> GetReachStats(ISlackTeamRepository teamRepo, IChannelMemberCountRepository channelMemberCountRepo)
     {
-        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.ExternalId, c)).ToList();
+        var totalTeams = (await teamRepo.GetAllInstallations()).Count();
+        var counts = (await channelMemberCountRepo.GetAll()).Values;
+        var totalApproximateMembers = counts.Sum(v => (long)v.MemberCount);
+        var oldestUpdate = counts.Any() ? counts.Min(v => v.UpdatedAt) : (DateTimeOffset?)null;
+        return TypedResults.Ok(new TeamReachStatsDto(totalTeams, totalApproximateMembers, oldestUpdate));
+    }
+
+    internal static async Task<IResult> RefreshReachStats(IPublishEndpoint publishEndpoint)
+    {
+        await publishEndpoint.Publish(new RefreshSlackReachStats());
+        return TypedResults.Accepted("/api/admin/slack/reach");
+    }
+
+    private static TeamSummaryDto ToDto(Installation installation, IReadOnlyDictionary<string, ChannelMemberCount> memberCounts)
+    {
+        var channels = installation.ChannelSubscriptions.Select(c => ToDto(installation.ExternalId, c, memberCounts)).ToList();
         return new(installation.Id.Value, installation.ExternalId, installation.Name, channels, installation.PendingRemoval);
     }
 
-    private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel) =>
-        new(channel.Id.Value, teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
-            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason);
+    private static ChannelSubscriptionDto ToDto(string teamId, ChannelSubscription channel, IReadOnlyDictionary<string, ChannelMemberCount> memberCounts)
+    {
+        var count = memberCounts.GetValueOrDefault(channel.ChannelId);
+        return new(channel.Id.Value, teamId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,
+            ToEventSubscriptions(channel), channel.FailureCount, channel.FailingSince, channel.LastFailureReason,
+            count?.MemberCount, count?.UpdatedAt);
+    }
 
     private static IEnumerable<EventSubscription> ToEventSubscriptions(ChannelSubscription? channel) =>
         channel?.Events.Current.Select(e => Enum.Parse<EventSubscription>(e.ToString())) ?? [];

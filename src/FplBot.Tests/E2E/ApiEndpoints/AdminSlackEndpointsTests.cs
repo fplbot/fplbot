@@ -103,6 +103,19 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetTeams_MinMembers_ExcludesSmallerTeams()
+    {
+        var small = await fixture.SeedInstallation();
+        var big = await fixture.SeedInstallation();
+        await fixture.ChannelMemberCountRepo.SetMemberCount(small.ChannelSubscriptions.First().ChannelId, 5);
+        await fixture.ChannelMemberCountRepo.SetMemberCount(big.ChannelSubscriptions.First().ChannelId, 500);
+
+        var page = await fixture.GetJson<PagedResult<TeamSummaryDto>>("/api/admin/teams?minMembers=100");
+
+        Assert.Equal(big.ExternalId, Assert.Single(page.Items).TeamId);
+    }
+
+    [Fact]
     public async Task Publish_Standings_ChannelNotFollowingLeague_DoesNotPublish()
     {
         await fixture.InstallSlackbot("T1", "Blank");

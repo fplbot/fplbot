@@ -148,7 +148,8 @@ public static class FplBotApplication
                         nameof(NearDeadlineRecurringAction),
                         nameof(PlayerUpdatesRecurringAction),
                         nameof(GameweekLifecycleRecurringAction),
-                        nameof(GuildStatusChecker)
+                        nameof(GuildMemberCountChecker),
+                        nameof(SlackChannelMemberCountChecker)
                     ]))
                 .AddAspNetCoreInstrumentation(o => o.EnrichWithHttpResponse = (activity, response) =>
                 {

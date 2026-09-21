@@ -17,12 +17,19 @@ using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record GuildWithSubsDto(string Id, string GuildId, string GuildName, IEnumerable<ChannelSubscriptionDto> Subscriptions);
+public record GuildWithSubsDto(
+    string Id,
+    string GuildId,
+    string GuildName,
+    IEnumerable<ChannelSubscriptionDto> Subscriptions,
+    int? ApproximateMemberCount,
+    DateTimeOffset? MemberCountUpdatedAt);
 
 // TotalApproximateMembers mirrors Discord's own "approximate_member_count" field name and
 // semantics: an approximation that includes bot accounts, not a unique human count. Never
-// relabel this "users" or "unique users" downstream.
-public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers);
+// relabel this "users" or "unique users" downstream. OldestUpdate is the least-recently-refreshed
+// guild currently contributing to the total - the honest staleness bound for a summed metric.
+public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers, DateTimeOffset? OldestUpdate);
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
@@ -67,6 +74,7 @@ public static class AdminDiscordEndpoints
 
         group.MapGet("/discord/servers", GetSubscriptions);
         group.MapGet("/discord/reach", GetReachStats);
+        group.MapPost("/discord/reach/refresh", RefreshReachStats);
         group.MapDelete("/discord/guilds/{installationId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{installationId}", DeleteGuild);
 
@@ -156,15 +164,21 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, IGuildRepository repo)
+    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, int? minMembers, IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
     {
         var pageNumber = page is > 0 ? page.Value : 1;
         var size = pageSize is > 0 ? Math.Min(pageSize.Value, 100) : 25;
 
         var installations = (await repo.GetAllInstallations()).ToList();
+        var memberCounts = await memberCountRepo.GetAll();
 
         var guildsWithSubs = installations
-            .Select(i => new GuildWithSubsDto(i.Id.Value, i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c))))
+            .Select(i =>
+            {
+                var count = memberCounts.GetValueOrDefault(i.ExternalId);
+                return new GuildWithSubsDto(i.Id.Value, i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c)),
+                    count?.ApproximateMemberCount, count?.UpdatedAt);
+            })
             .ToList();
 
         var filtered = string.IsNullOrWhiteSpace(query)
@@ -181,6 +195,11 @@ public static class AdminDiscordEndpoints
             filtered = [.. filtered.Where(g => g.Subscriptions.Any(c => c.FailureCount > 0))];
         }
 
+        if (minMembers is > 0)
+        {
+            filtered = [.. filtered.Where(g => (g.ApproximateMemberCount ?? 0) >= minMembers)];
+        }
+
         var items = filtered
             .Skip((pageNumber - 1) * size)
             .Take(size)
@@ -189,14 +208,23 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, pageNumber, size, filtered.Count));
     }
 
-    // The future admin analytics page's total-reach number: totalGuilds is every installed
-    // guild, totalApproximateMembers sums whatever GuildStatusChecker's hourly sweep has
-    // fetched so far - a guild not yet swept (or perpetually Forbidden) simply contributes 0.
+    // The admin analytics page's total-reach number: totalGuilds is every installed guild,
+    // totalApproximateMembers sums whatever the nightly GuildMemberCountChecker sweep (or a
+    // manual refresh) has fetched so far - a guild not yet swept (or perpetually Forbidden)
+    // simply contributes 0.
     internal static async Task<IResult> GetReachStats(IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
     {
         var totalGuilds = (await repo.GetAllInstallations()).Count();
-        var totalApproximateMembers = (await memberCountRepo.GetAll()).Values.Sum(v => (long)v);
-        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers));
+        var counts = (await memberCountRepo.GetAll()).Values;
+        var totalApproximateMembers = counts.Sum(v => (long)v.ApproximateMemberCount);
+        var oldestUpdate = counts.Any() ? counts.Min(v => v.UpdatedAt) : (DateTimeOffset?)null;
+        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers, oldestUpdate));
+    }
+
+    internal static async Task<IResult> RefreshReachStats(IPublishEndpoint publishEndpoint)
+    {
+        await publishEndpoint.Publish(new RefreshDiscordReachStats());
+        return TypedResults.Accepted("/api/admin/discord/reach");
     }
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
