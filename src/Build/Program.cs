@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Bullseye;
@@ -11,12 +12,26 @@ const string ProdApp = "blank-fplbot";
 var version = Env("VERSION", "1.0.0-local");
 var infoVersion = Env("INFOVERSION", version);
 
+// Regression guard, not a hard perf budget: the suite runs in ~10s locally. If it creeps well past
+// that, something is adding real wall-clock cost (a blocking Task.Delay, a leaked container wait,
+// etc) rather than a legitimate slow test - see --show-slowest-tests on the test binary to find it.
+var maxTestDuration = TimeSpan.FromSeconds(int.Parse(Env("MAX_TEST_DURATION_SECONDS", "60")));
+
 var targets = new Targets();
 
 targets.Add("test",
     "Run all tests",
-    async () => await Command.RunAsync("dotnet",
-        "test src -p:TreatWarningsAsErrors=true --report-gh"));
+    async () =>
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await Command.RunAsync("dotnet", "test src -p:TreatWarningsAsErrors=true --report-gh");
+        stopwatch.Stop();
+
+        if (stopwatch.Elapsed > maxTestDuration)
+            throw new Exception(
+                $"Test suite took {stopwatch.Elapsed:g}, over the {maxTestDuration:g} budget (override with MAX_TEST_DURATION_SECONDS). " +
+                "Run the FplBot.Tests binary directly with --show-slowest-tests 25 to find the regression.");
+    });
 
 targets.Add("client-build",
     "Install dependencies and build the WebApi ClientApp",
