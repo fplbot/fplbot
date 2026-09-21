@@ -20,7 +20,9 @@ const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
-const relativeTimeFormatter = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
+// English, not LOCALE - the dashboard UI text is English, and "for 8 måneder siden" next to an
+// English "Last updated:" label reads as a mixed-language bug rather than a locale choice.
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 // "Never" for null/epoch (the sentinel a metric that predates timestamp-tracking reads back as —
 // see GuildMemberCountRepository's UnixEpoch fallback), otherwise a coarse "X hours ago".
