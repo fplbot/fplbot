@@ -12,6 +12,7 @@ import type {
   EventSubscription,
   GuildDetails,
   GuildReachStats,
+  GuildSizeBucket,
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
@@ -237,9 +238,11 @@ export function getDiscordServers(
   pageSize: number,
   failingOnly = false,
   minMembers?: number,
+  sortByMembers?: boolean,
 ): Promise<PagedResult<GuildWithSubs>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
   if (minMembers) params.set("minMembers", String(minMembers));
+  if (sortByMembers) params.set("sortByMembers", "true");
   return request(`/api/admin/discord/servers?${params.toString()}`);
 }
 
@@ -249,6 +252,10 @@ export function getDiscordReachStats(): Promise<GuildReachStats> {
 
 export function refreshDiscordReachStats(): Promise<void> {
   return postJson("/api/admin/discord/reach/refresh");
+}
+
+export function getDiscordSizeDistribution(): Promise<GuildSizeBucket[]> {
+  return request("/api/admin/discord/reach/size-distribution");
 }
 
 export function deleteAllDiscordSubscriptionsForGuild(installationId: string): Promise<MessageResponse> {

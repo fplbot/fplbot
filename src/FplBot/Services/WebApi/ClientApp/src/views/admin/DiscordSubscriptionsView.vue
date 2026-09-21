@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import {
   getDiscordServers,
   deleteChannelSubscription,
@@ -55,12 +56,13 @@ async function resetFailures() {
 }
 
 const minMembers = ref<number | undefined>(undefined);
+const sortByMembers = ref(useRoute().query.sortByMembers === "1");
 
 async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await getDiscordServers(query.value, page.value, pageSize, failingOnly.value, minMembers.value);
+    const result = await getDiscordServers(query.value, page.value, pageSize, failingOnly.value, minMembers.value, sortByMembers.value);
     guilds.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
@@ -72,7 +74,7 @@ async function load() {
 
 const { query, page, failingOnly, goToPage } = useAdminListQuery(load);
 
-watch(minMembers, () => {
+watch([minMembers, sortByMembers], () => {
   page.value = 1;
   load();
 });
@@ -166,6 +168,13 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
         <input id="guild-search-min-members" v-model.number="minMembers" type="number" min="0" placeholder="e.g. 100" />
       </div>
 
+      <div class="field checkbox-field">
+        <label for="guild-search-sort-by-members">
+          <input id="guild-search-sort-by-members" v-model="sortByMembers" type="checkbox" />
+          Sort by size (largest first)
+        </label>
+      </div>
+
       <p v-if="error" class="alert alert-error">{{ error }}</p>
       <div v-if="loading" class="spinner"></div>
 
@@ -184,10 +193,12 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
               >
                 &middot; {{ formatNumber(g.approximateMemberCount) }} members
               </span>
+              <span v-if="g.isCommunity !== null" class="guild-member-count">
+                &middot; {{ g.isCommunity ? "Community" : "Private" }}
+              </span>
             </h3>
             <div class="guild-actions">
               <a
-                v-if="isThrowaway(g.guildName)"
                 :href="`https://discord.com/channels/${g.guildId}`"
                 target="_blank"
                 rel="noopener"

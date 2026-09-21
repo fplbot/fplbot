@@ -172,6 +172,9 @@ export interface GuildWithSubs {
   subscriptions: GuildSubscription[];
   approximateMemberCount: number | null;
   memberCountUpdatedAt: string | null;
+  // Mirrors Discord's "COMMUNITY" guild feature flag - the closest thing to a public/private
+  // distinction a guild has. Null until the guild has been swept at least once.
+  isCommunity: boolean | null;
 }
 
 export interface GuildDetailsChannel {
@@ -201,12 +204,18 @@ export interface GuildReachStats {
   totalGuilds: number;
   totalApproximateMembers: number;
   oldestUpdate: string | null;
+  communityGuilds: number;
 }
 
 export interface TeamReachStats {
   totalTeams: number;
   totalApproximateMembers: number;
   oldestUpdate: string | null;
+}
+
+export interface GuildSizeBucket {
+  label: string;
+  count: number;
 }
 
 // ---- OAuth ----

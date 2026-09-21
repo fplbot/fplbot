@@ -17,19 +17,28 @@ using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
+// IsCommunity mirrors Discord's "COMMUNITY" guild feature flag - the closest thing a guild has
+// to a public/private distinction (community servers can enable discovery; regular servers are
+// invite-only). Null until the guild has been swept at least once.
 public record GuildWithSubsDto(
     string Id,
     string GuildId,
     string GuildName,
     IEnumerable<ChannelSubscriptionDto> Subscriptions,
     int? ApproximateMemberCount,
-    DateTimeOffset? MemberCountUpdatedAt);
+    DateTimeOffset? MemberCountUpdatedAt,
+    bool? IsCommunity);
 
 // TotalApproximateMembers mirrors Discord's own "approximate_member_count" field name and
 // semantics: an approximation that includes bot accounts, not a unique human count. Never
 // relabel this "users" or "unique users" downstream. OldestUpdate is the least-recently-refreshed
 // guild currently contributing to the total - the honest staleness bound for a summed metric.
-public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers, DateTimeOffset? OldestUpdate);
+// CommunityGuilds counts only guilds already swept with the COMMUNITY feature flag set.
+public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers, DateTimeOffset? OldestUpdate, int CommunityGuilds);
+
+// One row per size bucket, in the fixed display order - "Not yet counted" first, then ascending
+// by size. Count is the number of installed guilds falling in that bucket.
+public record GuildSizeBucketDto(string Label, int Count);
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
@@ -75,6 +84,7 @@ public static class AdminDiscordEndpoints
         group.MapGet("/discord/servers", GetSubscriptions);
         group.MapGet("/discord/reach", GetReachStats);
         group.MapPost("/discord/reach/refresh", RefreshReachStats);
+        group.MapGet("/discord/reach/size-distribution", GetSizeDistribution);
         group.MapDelete("/discord/guilds/{installationId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{installationId}", DeleteGuild);
 
@@ -164,7 +174,8 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, int? minMembers, IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
+    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, int? minMembers, bool? sortByMembers,
+        IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
     {
         var pageNumber = page is > 0 ? page.Value : 1;
         var size = pageSize is > 0 ? Math.Min(pageSize.Value, 100) : 25;
@@ -177,7 +188,7 @@ public static class AdminDiscordEndpoints
             {
                 var count = memberCounts.GetValueOrDefault(i.ExternalId);
                 return new GuildWithSubsDto(i.Id.Value, i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c)),
-                    count?.ApproximateMemberCount, count?.UpdatedAt);
+                    count?.ApproximateMemberCount, count?.UpdatedAt, count is null ? null : count.IsCommunity);
             })
             .ToList();
 
@@ -200,6 +211,11 @@ public static class AdminDiscordEndpoints
             filtered = [.. filtered.Where(g => (g.ApproximateMemberCount ?? 0) >= minMembers)];
         }
 
+        if (sortByMembers is true)
+        {
+            filtered = [.. filtered.OrderByDescending(g => g.ApproximateMemberCount ?? 0)];
+        }
+
         var items = filtered
             .Skip((pageNumber - 1) * size)
             .Take(size)
@@ -218,7 +234,8 @@ public static class AdminDiscordEndpoints
         var counts = (await memberCountRepo.GetAll()).Values;
         var totalApproximateMembers = counts.Sum(v => (long)v.ApproximateMemberCount);
         var oldestUpdate = counts.Any() ? counts.Min(v => v.UpdatedAt) : (DateTimeOffset?)null;
-        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers, oldestUpdate));
+        var communityGuilds = counts.Count(v => v.IsCommunity);
+        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers, oldestUpdate, communityGuilds));
     }
 
     internal static async Task<IResult> RefreshReachStats(IPublishEndpoint publishEndpoint)
@@ -226,6 +243,126 @@ public static class AdminDiscordEndpoints
         await publishEndpoint.Publish(new RefreshDiscordReachStats());
         return TypedResults.Accepted("/api/admin/discord/reach");
     }
+
+    private const int TargetSizeBucketCount = 6;
+
+    // Powers the guild-size-distribution bar chart on the dashboard. "Not yet counted" covers
+    // guilds with no stored ApproximateMemberCount (never swept) - clamped at 0 in case a guild
+    // was deleted without its lingering member-count entry being cleaned up (DeleteGuild doesn't
+    // touch GuildMemberCountRepository today). The size buckets themselves are computed from the
+    // actual spread of counted guilds rather than fixed thresholds - guild sizes are expected to
+    // be power-law-like (many small servers, a long tail of large ones), and a fixed linear scale
+    // would either bury the small end in one bucket or waste bars on an empty large end depending
+    // on which way that guess is wrong. Log-spaced boundaries adapt to whichever it turns out to be.
+    internal static async Task<IResult> GetSizeDistribution(IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
+    {
+        var totalGuilds = (await repo.GetAllInstallations()).Count();
+        var counts = (await memberCountRepo.GetAll()).Values.Select(v => v.ApproximateMemberCount).ToList();
+
+        var buckets = new List<GuildSizeBucketDto> { new("Not yet counted", Math.Max(0, totalGuilds - counts.Count)) };
+        buckets.AddRange(BuildSizeBuckets(counts));
+
+        return TypedResults.Ok(buckets);
+    }
+
+    // Discord's approximate_member_count is never 0 in practice (it includes the bot itself), so
+    // flooring at 1 for the log scale doesn't drop any real guild.
+    private static IEnumerable<GuildSizeBucketDto> BuildSizeBuckets(IReadOnlyCollection<int> counts)
+    {
+        if (counts.Count == 0)
+        {
+            yield break;
+        }
+
+        var min = Math.Max(1, counts.Min());
+        var max = Math.Max(min, counts.Max());
+
+        var boundaries = new List<int> { RoundToNiceNumber(min) };
+        for (var i = 1; i <= TargetSizeBucketCount; i++)
+        {
+            var raw = min * Math.Pow((double)max / min, (double)i / TargetSizeBucketCount);
+            var nice = RoundToNiceNumber(raw);
+            if (nice > boundaries[^1])
+            {
+                boundaries.Add(nice);
+            }
+        }
+
+        // Nearest-rounding the top boundary can round DOWN past the true max (e.g. it lands
+        // exactly on a rounding threshold) - that would silently drop the largest guild(s) from
+        // every bucket. The last bucket must always cover the real max.
+        if (boundaries[^1] < max)
+        {
+            boundaries.Add(RoundUpToNiceNumber(max));
+        }
+
+        // Every counted guild rounds to (effectively) the same size - one bucket, not a range.
+        if (boundaries.Count == 1)
+        {
+            yield return new GuildSizeBucketDto(FormatBucketBound(boundaries[0]), counts.Count);
+            yield break;
+        }
+
+        for (var i = 0; i < boundaries.Count - 1; i++)
+        {
+            var lower = boundaries[i];
+            var upper = boundaries[i + 1];
+            var isLastBucket = i == boundaries.Count - 2;
+            var count = counts.Count(c => c >= lower && (isLastBucket ? c <= upper : c < upper));
+            var label = isLastBucket
+                ? $"{FormatBucketBound(lower)}+"
+                : $"{FormatBucketBound(lower)}-{FormatBucketBound(upper - 1)}";
+            yield return new GuildSizeBucketDto(label, count);
+        }
+    }
+
+    // Snaps a raw log-scale boundary to a human-friendly step (1, 2, 5, 10, 20, 50, 100, ...) -
+    // the same "nice numbers" idea as a chart's y-axis ticks, applied multiplicatively.
+    private static int RoundToNiceNumber(double value)
+    {
+        if (value < 1)
+        {
+            return 1;
+        }
+
+        var exponent = Math.Floor(Math.Log10(value));
+        var magnitude = Math.Pow(10, exponent);
+        var fraction = value / magnitude;
+        var niceFraction = fraction switch
+        {
+            <= 1.5 => 1,
+            <= 3.5 => 2,
+            <= 7.5 => 5,
+            _ => 10
+        };
+        return (int)Math.Round(niceFraction * magnitude);
+    }
+
+    // Same idea as RoundToNiceNumber but always rounds up (ceilings to the next nice step) -
+    // used only for the final safety-net boundary, where the guarantee "covers the true max"
+    // matters more than landing on the visually nearest step.
+    private static int RoundUpToNiceNumber(double value)
+    {
+        if (value < 1)
+        {
+            return 1;
+        }
+
+        var exponent = Math.Floor(Math.Log10(value));
+        var magnitude = Math.Pow(10, exponent);
+        var fraction = value / magnitude;
+        var niceFraction = fraction switch
+        {
+            <= 1 => 1,
+            <= 2 => 2,
+            <= 5 => 5,
+            _ => 10
+        };
+        return (int)Math.Round(niceFraction * magnitude);
+    }
+
+    private static string FormatBucketBound(int value) =>
+        value >= 1000 ? $"{value / 1000.0:0.#}K" : value.ToString();
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>
         new(channel.Id.Value, guildId, channel.ChannelId, channel.FollowedLeagueId is { } id ? (int)id.Value : null,

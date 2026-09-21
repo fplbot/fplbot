@@ -184,8 +184,14 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
 
 // The Lowercase naming policy below only lowercases whole property names (no snake_case
 // splitting), so approximate_member_count needs an explicit JsonPropertyName - it wins over
-// the naming policy regardless.
-public record Guild(string Id, [property: JsonPropertyName("approximate_member_count")] int ApproximateMemberCount);
+// the naming policy regardless. Features is a flat array of enabled guild feature flags -
+// "COMMUNITY" is what Discord's docs use to mean a server has enabled community/discovery
+// features (welcome screen, membership screening, discovery eligibility), the closest thing
+// to a public/private distinction a guild has: https://docs.discord.com/developers/resources/guild
+public record Guild(
+    string Id,
+    [property: JsonPropertyName("approximate_member_count")] int ApproximateMemberCount,
+    string[]? Features = null);
 
 public class ApplicationCommandOptions
 {

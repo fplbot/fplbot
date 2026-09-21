@@ -9,13 +9,12 @@ namespace FplBot.WebApi.Infrastructure;
 // RefreshDiscordReachStatsHandler / RefreshGuildMemberCountHandler in EventHandlers). Runs at
 // night - low-traffic hours for both fplbot and the Discord API - and offset from Slack's sweep
 // so the two don't compete for the bus at the same time.
-public class GuildMemberCountChecker(IServiceScopeFactory scopeFactory) : IRecurringAction
+public class GuildMemberCountChecker(IPublishEndpoint publishEndpoint) : IRecurringAction
 {
     public async Task Process(CancellationToken stoppingToken)
     {
         using var activity = FplBotDiagnostics.For(FplBotService.WebApi).StartActivity(nameof(GuildMemberCountChecker));
-        using var scope = scopeFactory.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>().Publish(new RefreshDiscordReachStats(), stoppingToken);
+        await publishEndpoint.Publish(new RefreshDiscordReachStats(), stoppingToken);
     }
 
     // 03:00 UTC

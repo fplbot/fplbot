@@ -50,6 +50,22 @@ public class RefreshDiscordReachStatsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task FansOutAndStoresIsCommunityPerGuild()
+    {
+        var community = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var privateGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        fixture.SetDiscordGuildIsCommunity(community.ExternalId, true);
+
+        var consumedBefore = fixture.ConsumedSoFar;
+        await fixture.Bus.Publish(new RefreshDiscordReachStats(), TestContext.Current.CancellationToken);
+        await fixture.WaitUntilBusIdle(consumedBefore, published: 3);
+
+        var counts = await fixture.GuildMemberCountRepo.GetAll();
+        Assert.True(counts[community.ExternalId].IsCommunity);
+        Assert.False(counts[privateGuild.ExternalId].IsCommunity);
+    }
+
+    [Fact]
     public async Task AdminRefreshEndpoint_TriggersTheSameFanOut()
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
