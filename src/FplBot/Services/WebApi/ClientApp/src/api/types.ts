@@ -191,6 +191,11 @@ export interface GuildDetails {
   channels: GuildDetailsChannel[];
 }
 
+export interface GuildReachStats {
+  totalGuilds: number;
+  totalApproximateMembers: number;
+}
+
 // ---- OAuth ----
 
 export interface InstallUrlResponse {

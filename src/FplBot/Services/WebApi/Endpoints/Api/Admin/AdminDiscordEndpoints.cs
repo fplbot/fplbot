@@ -19,6 +19,11 @@ namespace FplBot.WebApi.Endpoints.Api.Admin;
 
 public record GuildWithSubsDto(string Id, string GuildId, string GuildName, IEnumerable<ChannelSubscriptionDto> Subscriptions);
 
+// TotalApproximateMembers mirrors Discord's own "approximate_member_count" field name and
+// semantics: an approximation that includes bot accounts, not a unique human count. Never
+// relabel this "users" or "unique users" downstream.
+public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers);
+
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
 public static class AdminDiscordEndpoints
@@ -61,6 +66,7 @@ public static class AdminDiscordEndpoints
         group.MapPost("/discord/slashcommands/uninstall", UninstallSlashCommands);
 
         group.MapGet("/discord/servers", GetSubscriptions);
+        group.MapGet("/discord/reach", GetReachStats);
         group.MapDelete("/discord/guilds/{installationId}/subscriptions", DeleteAllSubscriptionsForGuild);
         group.MapDelete("/discord/guilds/{installationId}", DeleteGuild);
 
@@ -181,6 +187,16 @@ public static class AdminDiscordEndpoints
             .ToList();
 
         return TypedResults.Ok(new PagedResult<GuildWithSubsDto>(items, pageNumber, size, filtered.Count));
+    }
+
+    // The future admin analytics page's total-reach number: totalGuilds is every installed
+    // guild, totalApproximateMembers sums whatever GuildStatusChecker's hourly sweep has
+    // fetched so far - a guild not yet swept (or perpetually Forbidden) simply contributes 0.
+    internal static async Task<IResult> GetReachStats(IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
+    {
+        var totalGuilds = (await repo.GetAllInstallations()).Count();
+        var totalApproximateMembers = (await memberCountRepo.GetAll()).Values.Sum(v => (long)v);
+        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers));
     }
 
     private static ChannelSubscriptionDto ToDto(string guildId, ChannelSubscription channel) =>

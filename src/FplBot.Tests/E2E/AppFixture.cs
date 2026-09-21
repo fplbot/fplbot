@@ -87,6 +87,7 @@ public class AppFixture : IAsyncLifetime
     public ISendEndpointProvider Publisher => _managerScope.ServiceProvider.GetRequiredService<ISendEndpointProvider>();
     public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
     public IGuildRepository GuildRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildRepository>();
+    public IGuildMemberCountRepository GuildMemberCountRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildMemberCountRepository>();
 
     public void SlackChannelFails(string channelId, string slackError) =>
         _capturingSlackClient.FailChannel(channelId, slackError);
