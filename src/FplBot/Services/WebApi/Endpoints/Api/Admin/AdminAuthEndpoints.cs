@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using AspNet.Security.OAuth.Discord;
 using AspNet.Security.OAuth.Slack;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -17,10 +19,15 @@ public static class AdminAuthEndpoints
         group.MapGet("/me", Me).RequireAuthorization();
     }
 
-    private static IResult Login(string? returnUrl) =>
+    private static IResult Login(string? returnUrl, string? provider) =>
         TypedResults.Challenge(
             new AuthenticationProperties { RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/admin" : returnUrl },
-            authenticationSchemes: [SlackAuthenticationDefaults.AuthenticationScheme]);
+            authenticationSchemes: [ResolveScheme(provider)]);
+
+    private static string ResolveScheme(string? provider) =>
+        string.Equals(provider, "discord", StringComparison.OrdinalIgnoreCase)
+            ? DiscordAuthenticationDefaults.AuthenticationScheme
+            : SlackAuthenticationDefaults.AuthenticationScheme;
 
     private static async Task<IResult> Me(HttpContext httpContext, IAuthorizationService authorizationService)
     {
@@ -30,6 +37,8 @@ public static class AdminAuthEndpoints
         return TypedResults.Ok(new
         {
             name = user.Identity?.Name,
+            email = user.FindFirst(ClaimTypes.Email)?.Value,
+            provider = user.Identity?.AuthenticationType,
             teamId = user.FindFirst("urn:slack:team_id")?.Value,
             teamName = user.FindFirst("urn:slack:team_name")?.Value,
             userId = user.FindFirst("urn:slack:user_id")?.Value,

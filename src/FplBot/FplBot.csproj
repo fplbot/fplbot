@@ -32,6 +32,7 @@
 
     <!-- Web / Auth -->
     <PackageReference Include="AspNet.Security.OAuth.Slack" Version="10.0.0" />
+    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="10.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
 
     <!-- Slack -->

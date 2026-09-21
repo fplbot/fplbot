@@ -81,8 +81,12 @@ export async function getMe(): Promise<AdminMe | null> {
   return res.json();
 }
 
-export function loginUrl(returnUrl?: string): string {
-  return returnUrl ? `/api/admin/login?returnUrl=${encodeURIComponent(returnUrl)}` : "/api/admin/login";
+export type AdminAuthProvider = "slack" | "discord";
+
+export function loginUrl(provider: AdminAuthProvider, returnUrl?: string): string {
+  const params = new URLSearchParams({ provider });
+  if (returnUrl) params.set("returnUrl", returnUrl);
+  return `/api/admin/login?${params.toString()}`;
 }
 
 export async function logout(): Promise<void> {

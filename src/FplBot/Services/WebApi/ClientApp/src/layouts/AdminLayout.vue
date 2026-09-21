@@ -2,7 +2,7 @@
 import { onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useAdminAuth } from "../composables/useAdminAuth";
-import { loginUrl, logout } from "../api/api";
+import { loginUrl, logout, type AdminAuthProvider } from "../api/api";
 
 const route = useRoute();
 const { state, me, refresh } = useAdminAuth();
@@ -11,8 +11,8 @@ const signedOut = computed(() => route.query.signedout === "1");
 
 onMounted(refresh);
 
-function signInHref() {
-  return loginUrl(typeof route.query.returnUrl === "string" ? route.query.returnUrl : "/admin");
+function signInHref(provider: AdminAuthProvider) {
+  return loginUrl(provider, typeof route.query.returnUrl === "string" ? route.query.returnUrl : "/admin");
 }
 
 async function handleLogout() {
@@ -39,10 +39,15 @@ const navLinks = [
       <div class="card gate-card">
         <h1>fplbot admin</h1>
         <p v-if="signedOut" class="alert alert-success">You've been signed out.</p>
-        <p class="lead">Sign in with the fplbot admin Slack workspace to continue.</p>
-        <a class="btn slack-btn long" :href="signInHref()">
-          <span class="slack-mark">#</span> Sign in with Slack
-        </a>
+        <p class="lead">Sign in to continue.</p>
+        <div class="signin-options">
+          <a class="btn slack-btn long" :href="signInHref('slack')">
+            <span class="slack-mark">#</span> Sign in with Slack
+          </a>
+          <a class="btn discord-btn long" :href="signInHref('discord')">
+            Sign in with Discord
+          </a>
+        </div>
       </div>
     </div>
 
@@ -50,9 +55,18 @@ const navLinks = [
       <div class="card gate-card">
         <h1>&#9888;&#65039; Forbidden</h1>
         <p>
-          <b>{{ me?.name }}</b> from <b>{{ me?.teamName }}</b> does not have access to this admin panel.
+          <b>{{ me?.name }}</b><template v-if="me?.teamName"> from <b>{{ me?.teamName }}</b></template
+          ><template v-else-if="me?.email"> (<b>{{ me?.email }}</b>)</template> does not have access to this admin
+          panel.
         </p>
-        <a class="btn long" :href="signInHref()">Try another workspace</a>
+        <div class="signin-options">
+          <a class="btn slack-btn long" :href="signInHref('slack')">
+            <span class="slack-mark">#</span> Try Slack
+          </a>
+          <a class="btn discord-btn long" :href="signInHref('discord')">
+            Try Discord
+          </a>
+        </div>
       </div>
     </div>
 
@@ -72,7 +86,7 @@ const navLinks = [
             <router-link v-for="link in navLinks" :key="link.to" :to="link.to">{{ link.label }}</router-link>
           </nav>
           <div class="identity">
-            <span>{{ me?.teamName }}</span>
+            <span>{{ me?.teamName ?? me?.email ?? me?.name }}</span>
             <button class="btn small" @click="handleLogout">Sign out</button>
           </div>
         </div>
@@ -113,6 +127,12 @@ const navLinks = [
   margin-bottom: 1.5rem;
 }
 
+.signin-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .slack-btn {
   display: inline-flex;
   align-items: center;
@@ -129,6 +149,20 @@ const navLinks = [
 
 .slack-mark {
   font-weight: 900;
+}
+
+.discord-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #5865f2;
+  color: white;
+}
+
+.discord-btn:hover {
+  background: #4752c4;
+  color: white;
 }
 
 .admin-nav {
