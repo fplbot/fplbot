@@ -7,7 +7,7 @@ using MassTransit;
 
 namespace FplBot.WebApi.Infrastructure;
 
-public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discordClient, IServiceScopeFactory scopeFactory, ILogger<GuildStatusChecker> logger) : IRecurringAction
+public class GuildStatusChecker(IGuildRepository guildRepo, IGuildMemberCountRepository guildMemberCountRepo, DiscordClient discordClient, IServiceScopeFactory scopeFactory, ILogger<GuildStatusChecker> logger) : IRecurringAction
 {
     public async Task Process(CancellationToken stoppingToken)
     {
@@ -20,6 +20,7 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
             {
                 var fetchedGuild = await discordClient.GuildGet(guild.ExternalId);
                 logger.LogDebug("AccessCheck: Access to guild {GuildId} OK.", fetchedGuild.Id);
+                await guildMemberCountRepo.SetApproximateMemberCount(guild.ExternalId, fetchedGuild.ApproximateMemberCount);
             }
             catch (HttpRequestException hre) when (hre.StatusCode == HttpStatusCode.NotFound)
             {
@@ -28,6 +29,7 @@ public class GuildStatusChecker(IGuildRepository guildRepo, DiscordClient discor
                     , counter, guild.ExternalId, guild.Name);
                 guild.Uninstall();
                 await guildRepo.Delete(guild);
+                await guildMemberCountRepo.Delete(guild.ExternalId);
                 using (var scope = scopeFactory.CreateScope())
                 {
                     await scope.ServiceProvider.GetRequiredService<IPublishEndpoint>()

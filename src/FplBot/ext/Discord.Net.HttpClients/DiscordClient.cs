@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Discord.Net.HttpClients.Components;
 using Microsoft.Extensions.Options;
 
@@ -173,7 +174,7 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
 
     public async Task<Guild> GuildGet(string guildId)
     {
-        var res = await client.GetAsync($"/api/v10/guilds/{guildId}");
+        var res = await client.GetAsync($"/api/v10/guilds/{guildId}?with_counts=true");
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<Guild>(SerializerOptions) ?? throw new InvalidOperationException("Failed to deserialize Guild response");
     }
@@ -181,7 +182,10 @@ public class DiscordClient(HttpClient client, IOptions<DiscordClientOptions> opt
     private readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web) { PropertyNamingPolicy = new Lowercase(), };
 }
 
-public record Guild(string Id);
+// The Lowercase naming policy below only lowercases whole property names (no snake_case
+// splitting), so approximate_member_count needs an explicit JsonPropertyName - it wins over
+// the naming policy regardless.
+public record Guild(string Id, [property: JsonPropertyName("approximate_member_count")] int ApproximateMemberCount);
 
 public class ApplicationCommandOptions
 {

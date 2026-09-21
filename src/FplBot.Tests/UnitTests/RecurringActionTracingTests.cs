@@ -45,7 +45,7 @@ public class RecurringActionTracingTests
     {
         var guildRepo = A.Fake<IGuildRepository>();
         A.CallTo(() => guildRepo.GetAllInstallations()).Returns([]);
-        var action = new GuildStatusChecker(guildRepo, DiscordClientThatIsNeverCalled(), A.Fake<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
+        var action = new GuildStatusChecker(guildRepo, A.Fake<IGuildMemberCountRepository>(), DiscordClientThatIsNeverCalled(), A.Fake<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
 
         var started = await CaptureSpans(() => action.Process(CancellationToken.None));
 

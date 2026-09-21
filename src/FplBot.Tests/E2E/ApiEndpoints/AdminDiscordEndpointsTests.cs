@@ -94,6 +94,31 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetReachStats_SumsApproximateMemberCountsAcrossGuilds()
+    {
+        var first = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var second = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(first.ExternalId, 10);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(second.ExternalId, 32);
+
+        var stats = await fixture.GetJson<GuildReachStatsDto>("/api/admin/discord/reach");
+
+        Assert.Equal(2, stats.TotalGuilds);
+        Assert.Equal(42, stats.TotalApproximateMembers);
+    }
+
+    [Fact]
+    public async Task GetReachStats_GuildWithNoStoredCountYet_ContributesZero()
+    {
+        await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+
+        var stats = await fixture.GetJson<GuildReachStatsDto>("/api/admin/discord/reach");
+
+        Assert.Equal(1, stats.TotalGuilds);
+        Assert.Equal(0, stats.TotalApproximateMembers);
+    }
+
+    [Fact]
     public async Task GetFailureStats_CountsFailingChannelsAndGuilds()
     {
         var failing = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);

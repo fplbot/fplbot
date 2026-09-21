@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
 
         services.TryAddSingleton<IConnectionMultiplexer>(connection);
         services.AddSingleton<IGuildRepository, DiscordGuildRepository>();
+        services.AddSingleton<IGuildMemberCountRepository, GuildMemberCountRepository>();
 
         services.AddDiscordBotEvents<DiscordNetInstallationBridge>()
             .AddSlashCommandHandler<HelpSlashCommandHandler>()

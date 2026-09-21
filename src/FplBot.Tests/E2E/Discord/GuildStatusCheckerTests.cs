@@ -29,6 +29,18 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GuildNoLongerReachable_RemovesItsStoredMemberCount()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(installedGuild.ExternalId, 42);
+        var sut = BuildChecker(HttpStatusCode.NotFound, installedGuild.ExternalId);
+
+        await sut.Process(CancellationToken.None);
+
+        Assert.DoesNotContain(installedGuild.ExternalId, (await fixture.GuildMemberCountRepo.GetAll()).Keys);
+    }
+
+    [Fact]
     public async Task GuildStillReachable_KeepsGuildAndSubscriptions()
     {
         var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
@@ -41,23 +53,36 @@ public class GuildStatusCheckerTests(AppFixture fixture) : IAsyncLifetime
         Assert.NotEmpty(remaining.ChannelSubscriptions);
     }
 
-    private GuildStatusChecker BuildChecker(HttpStatusCode statusCode, string guildId)
+    [Fact]
+    public async Task GuildStillReachable_PersistsItsApproximateMemberCount()
     {
-        var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, guildId)) { BaseAddress = new Uri("https://discord.example/") };
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        var sut = BuildChecker(HttpStatusCode.OK, installedGuild.ExternalId, approximateMemberCount: 123);
+
+        await sut.Process(CancellationToken.None);
+
+        var counts = await fixture.GuildMemberCountRepo.GetAll();
+        Assert.Equal(123, counts[installedGuild.ExternalId]);
+    }
+
+    private GuildStatusChecker BuildChecker(HttpStatusCode statusCode, string guildId, int approximateMemberCount = 0)
+    {
+        var httpClient = new HttpClient(new StubHttpMessageHandler(statusCode, guildId, approximateMemberCount)) { BaseAddress = new Uri("https://discord.example/") };
         var discordClient = new DiscordClient(httpClient,
             Options.Create(new DiscordClientOptions { DiscordApplicationId = "test", DiscordAppToken = "test" }),
             NullLogger<DiscordClient>.Instance);
-        return new GuildStatusChecker(fixture.GuildRepo, discordClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
+        return new GuildStatusChecker(fixture.GuildRepo, fixture.GuildMemberCountRepo, discordClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
     }
 
-    private class StubHttpMessageHandler(HttpStatusCode statusCode, string guildId) : HttpMessageHandler
+    private class StubHttpMessageHandler(HttpStatusCode statusCode, string guildId, int approximateMemberCount) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var response = new HttpResponseMessage(statusCode);
             if (statusCode == HttpStatusCode.OK)
             {
-                response.Content = new StringContent($$"""{"id":"{{guildId}}"}""", Encoding.UTF8, "application/json");
+                response.Content = new StringContent(
+                    $$"""{"id":"{{guildId}}","approximate_member_count":{{approximateMemberCount}}}""", Encoding.UTF8, "application/json");
             }
 
             return Task.FromResult(response);
