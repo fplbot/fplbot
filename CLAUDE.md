@@ -186,7 +186,11 @@ Faulted messages land in MassTransit's per-consumer `_error` queue. Inspect and 
 the admin Errors dashboard (`Services/WebApi/Endpoints/Api/Admin/AdminErrorEndpoints.cs`), which
 exposes list / retry / retry-all / discard / purge per queue.
 
-Messages have a 2-hour TTL on Azure Service Bus, so anything older than that is gone regardless.
+`bus.DefaultMessageTimeToLive = TimeSpan.FromHours(2)` stamps a per-message send-time TTL, bounding
+how long a message can sit unconsumed in its main queue — it is not a queue entity property. The
+`_error` and `_skipped` queues have their own entity-level TTL of 2 days
+(`bus.SendTopology.ConfigureErrorSettings` / `ConfigureDeadLetterSettings` in `ConfigureAzureServiceBus`),
+so faulted/skipped messages stop accumulating there regardless of the original message's TTL.
 
 ## Domain
 
