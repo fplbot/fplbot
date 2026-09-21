@@ -11,6 +11,7 @@ import type {
   ErrorQueueSummary,
   EventSubscription,
   GuildDetails,
+  GuildReachStats,
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
@@ -213,6 +214,10 @@ export function uninstallSlashCommands(): Promise<MessageResponse> {
 export function getDiscordServers(query: string, page: number, pageSize: number, failingOnly = false): Promise<PagedResult<GuildWithSubs>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
   return request(`/api/admin/discord/servers?${params.toString()}`);
+}
+
+export function getDiscordReachStats(): Promise<GuildReachStats> {
+  return request("/api/admin/discord/reach");
 }
 export function deleteAllDiscordSubscriptionsForGuild(installationId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/guilds/${installationId}/subscriptions`, { method: "DELETE" });

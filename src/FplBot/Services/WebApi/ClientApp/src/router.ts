@@ -46,7 +46,8 @@ const router = createRouter({
       children: [
         {
           path: "",
-          redirect: "/admin/slack",
+          name: "admin-dashboard",
+          component: () => import("./views/admin/DashboardView.vue"),
         },
         {
           path: "slack",
