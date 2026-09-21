@@ -247,6 +247,16 @@ public static class FplBotApplication
             bus.Host(connectionString);
             bus.UseServiceBusMessageScheduler();
             bus.DefaultMessageTimeToLive = TimeSpan.FromHours(2);
+
+            // Entity-level TTL on the auto-provisioned _error/_skipped queues (MassTransit calls the
+            // latter "DeadLetterSettings", but it's the per-consumer skip queue, not ASB's native DLQ
+            // subqueue). This is separate from the DefaultMessageTimeToLive above, which only stamps a
+            // per-message send-time TTL and never applies to a queue entity. Without this, the _error/
+            // _skipped queues' own entity TTL defaults to MassTransit's ~366 days, so faulted/skipped
+            // messages accumulate indefinitely regardless of the original message's TTL.
+            bus.SendTopology.ConfigureErrorSettings = e => e.DefaultMessageTimeToLive = TimeSpan.FromDays(2);
+            bus.SendTopology.ConfigureDeadLetterSettings = e => e.DefaultMessageTimeToLive = TimeSpan.FromDays(2);
+
             bus.ConfigureEndpoints(ctx);
         });
     }
