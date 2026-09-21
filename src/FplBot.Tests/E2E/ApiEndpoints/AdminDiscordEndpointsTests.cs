@@ -107,6 +107,21 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetSubscriptions_SortByMembers_OrdersLargestFirst()
+    {
+        var small = await fixture.SeedGuildInstallation();
+        var medium = await fixture.SeedGuildInstallation();
+        var big = await fixture.SeedGuildInstallation();
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(small.ExternalId, 5);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(medium.ExternalId, 50);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(big.ExternalId, 500);
+
+        var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>("/api/admin/discord/servers?sortByMembers=true");
+
+        Assert.Equal([big.ExternalId, medium.ExternalId, small.ExternalId], page.Items.Select(g => g.GuildId));
+    }
+
+    [Fact]
     public async Task GetReachStats_SumsApproximateMemberCountsAcrossGuilds()
     {
         var first = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
@@ -118,6 +133,33 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         Assert.Equal(2, stats.TotalGuilds);
         Assert.Equal(42, stats.TotalApproximateMembers);
+    }
+
+    [Fact]
+    public async Task GetSubscriptions_ReportsIsCommunity()
+    {
+        var community = await fixture.SeedGuildInstallation();
+        var privateGuild = await fixture.SeedGuildInstallation();
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(community.ExternalId, 10, isCommunity: true);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(privateGuild.ExternalId, 10, isCommunity: false);
+
+        var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>("/api/admin/discord/servers");
+
+        Assert.True(page.Items.Single(g => g.GuildId == community.ExternalId).IsCommunity);
+        Assert.False(page.Items.Single(g => g.GuildId == privateGuild.ExternalId).IsCommunity);
+    }
+
+    [Fact]
+    public async Task GetReachStats_CountsCommunityGuilds()
+    {
+        var community = await fixture.SeedGuildInstallation();
+        var privateGuild = await fixture.SeedGuildInstallation();
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(community.ExternalId, 10, isCommunity: true);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(privateGuild.ExternalId, 10, isCommunity: false);
+
+        var stats = await fixture.GetJson<GuildReachStatsDto>("/api/admin/discord/reach");
+
+        Assert.Equal(1, stats.CommunityGuilds);
     }
 
     [Fact]

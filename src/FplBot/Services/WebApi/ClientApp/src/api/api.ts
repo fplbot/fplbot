@@ -237,9 +237,11 @@ export function getDiscordServers(
   pageSize: number,
   failingOnly = false,
   minMembers?: number,
+  sortByMembers?: boolean,
 ): Promise<PagedResult<GuildWithSubs>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
   if (minMembers) params.set("minMembers", String(minMembers));
+  if (sortByMembers) params.set("sortByMembers", "true");
   return request(`/api/admin/discord/servers?${params.toString()}`);
 }
 

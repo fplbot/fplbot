@@ -2,12 +2,13 @@
 import { ref, onMounted } from "vue";
 import {
   getDiscordReachStats,
+  getDiscordServers,
   getSlackReachStats,
   getWebPushSubscribers,
   refreshDiscordReachStats,
   refreshSlackReachStats,
 } from "../../api/api";
-import type { GuildReachStats, TeamReachStats } from "../../api/types";
+import type { GuildReachStats, GuildWithSubs, TeamReachStats } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { formatNumber, formatRelativeTime } from "../../formatting";
 import StatTile from "../../components/StatTile.vue";
@@ -17,6 +18,7 @@ const error = ref("");
 const discordReach = ref<GuildReachStats | null>(null);
 const slackReach = ref<TeamReachStats | null>(null);
 const webPushSubscriberCount = ref<number | null>(null);
+const topDiscordServers = ref<GuildWithSubs[]>([]);
 
 const refreshingDiscord = ref(false);
 const refreshingSlack = ref(false);
@@ -27,14 +29,16 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const [discord, slack, webPush] = await Promise.all([
+    const [discord, slack, webPush, topServers] = await Promise.all([
       getDiscordReachStats(),
       getSlackReachStats(),
       getWebPushSubscribers(0, 1),
+      getDiscordServers("", 1, 10, false, undefined, true),
     ]);
     discordReach.value = discord;
     slackReach.value = slack;
     webPushSubscriberCount.value = webPush.totalCount;
+    topDiscordServers.value = topServers.items;
   } catch (e) {
     error.value = describeAdminError(e);
   } finally {
@@ -83,6 +87,13 @@ onMounted(load);
 
       <StatTile
         v-if="discordReach"
+        label="Community Discord servers"
+        :value="`${formatNumber(discordReach.communityGuilds)} / ${formatNumber(discordReach.totalGuilds)}`"
+        sublabel="Servers with Discord's COMMUNITY feature enabled (discovery-eligible) vs. all installed servers. Not-yet-swept servers count as non-community."
+      />
+
+      <StatTile
+        v-if="discordReach"
         label="Total Discord reach"
         :value="formatNumber(discordReach.totalApproximateMembers)"
         sublabel="Includes bot accounts, not just people. Servers not yet counted contribute zero."
@@ -118,6 +129,46 @@ onMounted(load);
         label="Total Web Push subscribers"
         :value="formatNumber(webPushSubscriberCount)"
       />
+    </div>
+
+    <div v-if="!loading && topDiscordServers.length > 0" class="card top-servers">
+      <div class="top-servers-header">
+        <h2>Top 10 Discord servers</h2>
+        <router-link
+          :to="{ name: 'admin-discord-servers', query: { sortByMembers: '1' } }"
+          class="btn-link"
+        >
+          See full list sorted by size&hellip;
+        </router-link>
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Server</th>
+            <th>Members</th>
+            <th>Type</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="g in topDiscordServers" :key="g.id">
+            <td>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></td>
+            <td>{{ g.approximateMemberCount !== null ? formatNumber(g.approximateMemberCount) : "—" }}</td>
+            <td>{{ g.isCommunity === null ? "—" : g.isCommunity ? "Community" : "Private" }}</td>
+            <td class="row-actions">
+              <a
+                :href="`https://discord.com/channels/${g.guildId}`"
+                target="_blank"
+                rel="noopener"
+                class="btn small btn-secondary"
+              >Open in Discord</a>
+              <router-link class="btn small btn-secondary" :to="{ name: 'admin-guild-details', params: { entityId: g.id } }">
+                Manage
+              </router-link>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -161,5 +212,34 @@ onMounted(load);
 .stat-refresh-message {
   font-size: 0.75rem;
   color: #6b7280;
+}
+
+.top-servers {
+  margin-top: 2rem;
+}
+
+.top-servers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.top-servers-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.guild-id {
+  font-weight: normal;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 </style>

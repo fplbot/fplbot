@@ -100,6 +100,9 @@ public class AppFixture : IAsyncLifetime
     public void SetDiscordGuildMemberCount(string guildId, int approximateMemberCount) =>
         _stubDiscordGuildGet.SetApproximateMemberCount(guildId, approximateMemberCount);
 
+    public void SetDiscordGuildIsCommunity(string guildId, bool isCommunity) =>
+        _stubDiscordGuildGet.SetIsCommunity(guildId, isCommunity);
+
     public void DiscordGuildGetFails(string guildId, HttpStatusCode status) =>
         _stubDiscordGuildGet.FailGuild(guildId, status);
 

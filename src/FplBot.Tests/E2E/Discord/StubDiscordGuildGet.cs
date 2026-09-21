@@ -12,15 +12,19 @@ namespace FplBot.Tests.E2E.Discord;
 public partial class StubDiscordGuildGet : HttpMessageHandler
 {
     private readonly ConcurrentDictionary<string, int> _memberCounts = new();
+    private readonly ConcurrentDictionary<string, bool> _isCommunity = new();
     private readonly ConcurrentDictionary<string, HttpStatusCode> _failing = new();
 
     public void SetApproximateMemberCount(string guildId, int count) => _memberCounts[guildId] = count;
+
+    public void SetIsCommunity(string guildId, bool isCommunity) => _isCommunity[guildId] = isCommunity;
 
     public void FailGuild(string guildId, HttpStatusCode status) => _failing[guildId] = status;
 
     public void Reset()
     {
         _memberCounts.Clear();
+        _isCommunity.Clear();
         _failing.Clear();
     }
 
@@ -35,7 +39,8 @@ public partial class StubDiscordGuildGet : HttpMessageHandler
         }
 
         var count = _memberCounts.GetValueOrDefault(guildId, 0);
-        var body = $$"""{"id":"{{guildId}}","approximate_member_count":{{count}}}""";
+        var features = _isCommunity.GetValueOrDefault(guildId, false) ? """["COMMUNITY"]""" : "[]";
+        var body = $$"""{"id":"{{guildId}}","approximate_member_count":{{count}},"features":{{features}}}""";
         return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(body, Encoding.UTF8, "application/json")

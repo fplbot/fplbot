@@ -17,19 +17,24 @@ using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
+// IsCommunity mirrors Discord's "COMMUNITY" guild feature flag - the closest thing a guild has
+// to a public/private distinction (community servers can enable discovery; regular servers are
+// invite-only). Null until the guild has been swept at least once.
 public record GuildWithSubsDto(
     string Id,
     string GuildId,
     string GuildName,
     IEnumerable<ChannelSubscriptionDto> Subscriptions,
     int? ApproximateMemberCount,
-    DateTimeOffset? MemberCountUpdatedAt);
+    DateTimeOffset? MemberCountUpdatedAt,
+    bool? IsCommunity);
 
 // TotalApproximateMembers mirrors Discord's own "approximate_member_count" field name and
 // semantics: an approximation that includes bot accounts, not a unique human count. Never
 // relabel this "users" or "unique users" downstream. OldestUpdate is the least-recently-refreshed
 // guild currently contributing to the total - the honest staleness bound for a summed metric.
-public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers, DateTimeOffset? OldestUpdate);
+// CommunityGuilds counts only guilds already swept with the COMMUNITY feature flag set.
+public record GuildReachStatsDto(int TotalGuilds, long TotalApproximateMembers, DateTimeOffset? OldestUpdate, int CommunityGuilds);
 
 public record DiscordBroadcastRequest(string Message, ChannelFilter Filter);
 
@@ -164,7 +169,8 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { cleared });
     }
 
-    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, int? minMembers, IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
+    internal static async Task<IResult> GetSubscriptions(string? query, int? page, int? pageSize, bool? failingOnly, int? minMembers, bool? sortByMembers,
+        IGuildRepository repo, IGuildMemberCountRepository memberCountRepo)
     {
         var pageNumber = page is > 0 ? page.Value : 1;
         var size = pageSize is > 0 ? Math.Min(pageSize.Value, 100) : 25;
@@ -177,7 +183,7 @@ public static class AdminDiscordEndpoints
             {
                 var count = memberCounts.GetValueOrDefault(i.ExternalId);
                 return new GuildWithSubsDto(i.Id.Value, i.ExternalId, i.Name, i.ChannelSubscriptions.Select(c => ToDto(i.ExternalId, c)),
-                    count?.ApproximateMemberCount, count?.UpdatedAt);
+                    count?.ApproximateMemberCount, count?.UpdatedAt, count is null ? null : count.IsCommunity);
             })
             .ToList();
 
@@ -200,6 +206,11 @@ public static class AdminDiscordEndpoints
             filtered = [.. filtered.Where(g => (g.ApproximateMemberCount ?? 0) >= minMembers)];
         }
 
+        if (sortByMembers is true)
+        {
+            filtered = [.. filtered.OrderByDescending(g => g.ApproximateMemberCount ?? 0)];
+        }
+
         var items = filtered
             .Skip((pageNumber - 1) * size)
             .Take(size)
@@ -218,7 +229,8 @@ public static class AdminDiscordEndpoints
         var counts = (await memberCountRepo.GetAll()).Values;
         var totalApproximateMembers = counts.Sum(v => (long)v.ApproximateMemberCount);
         var oldestUpdate = counts.Any() ? counts.Min(v => v.UpdatedAt) : (DateTimeOffset?)null;
-        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers, oldestUpdate));
+        var communityGuilds = counts.Count(v => v.IsCommunity);
+        return TypedResults.Ok(new GuildReachStatsDto(totalGuilds, totalApproximateMembers, oldestUpdate, communityGuilds));
     }
 
     internal static async Task<IResult> RefreshReachStats(IPublishEndpoint publishEndpoint)

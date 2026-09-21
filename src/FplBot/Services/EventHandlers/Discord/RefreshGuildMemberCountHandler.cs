@@ -19,7 +19,8 @@ public class RefreshGuildMemberCountHandler(
         try
         {
             var guild = await discordClient.GuildGet(guildId);
-            await guildMemberCountRepo.SetApproximateMemberCount(guildId, guild.ApproximateMemberCount);
+            var isCommunity = guild.Features?.Contains("COMMUNITY") ?? false;
+            await guildMemberCountRepo.SetApproximateMemberCount(guildId, guild.ApproximateMemberCount, isCommunity);
         }
         catch (Exception e)
         {
