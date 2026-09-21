@@ -425,6 +425,12 @@ public static class TestBuilder
         return player;
     }
 
+    public static Player WithNextPriceChangeLikelihood(this Player player, int likelihood, string projectedPercent = "100.0")
+    {
+        player.PriceChangeProjections = [new PriceChangeProjection { Offset = 0, Likelihood = likelihood, ProjectedPercent = projectedPercent }];
+        return player;
+    }
+
     public static Gameweek OlderGameweek(int id)
     {
         return new Gameweek { Id = id };

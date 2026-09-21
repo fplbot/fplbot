@@ -95,7 +95,12 @@ public class WebPushSubscriberRepository(IConnectionMultiplexer redis) : IWebPus
 
     public async Task<IEnumerable<WebPushSubscriberId>> GetSubscribedTo(params FplEvent[] fplEvents)
     {
-        var keys = fplEvents.Select(e => (RedisKey)EventIndexKey(e)).ToArray();
+        // A subscriber who opted into FplEvent.All is only ever indexed under the "All" sentinel
+        // (see EventCollection), never under every concrete event — so any concrete-event query
+        // must also union in the "All" index, or those subscribers silently vanish from it. Doing
+        // this here, rather than expanding "All" at write time, means it stays correct for events
+        // added after a subscriber already saved "All".
+        var keys = fplEvents.Append(FplEvent.All).Distinct().Select(e => (RedisKey)EventIndexKey(e)).ToArray();
         var members = await _db.SetCombineAsync(SetOperation.Union, keys);
         return members.Select(m => new WebPushSubscriberId(m.ToString()));
     }

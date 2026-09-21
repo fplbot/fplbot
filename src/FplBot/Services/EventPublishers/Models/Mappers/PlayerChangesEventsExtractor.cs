@@ -28,6 +28,25 @@ public static class PlayerChangesEventsExtractor
         ));
     }
 
+    public static IEnumerable<PlayerLikelyPriceChange> GetLikelyPriceChanges(ICollection<Player> after, ICollection<Team> teams)
+    {
+        if (after == null)
+            return [];
+
+        return after
+            .Where(p => p.IsVeryLikelyToChangePrice())
+            .Select(p => new PlayerLikelyPriceChange
+            (
+                p.Id,
+                p.WebName ?? string.Empty,
+                p.NowCost,
+                teams.FirstOrDefault(t => t.Code == p.TeamCode)?.Id ?? 0,
+                teams.FirstOrDefault(t => t.Code == p.TeamCode)?.ShortName ?? string.Empty,
+                p.PriceChangeProjections.FirstOrDefault(pr => pr.Offset == 0)?.ProjectedPercent ?? string.Empty,
+                p.NextPriceChangeLikelihood
+            ));
+    }
+
     public static IEnumerable<InjuredPlayerUpdate> GetInjuryUpdates(ICollection<Player> after, ICollection<Player> players, ICollection<Team> teams)
     {
         if (players == null)

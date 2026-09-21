@@ -22,6 +22,7 @@ public class WebPushDispatchHandler(
     ILogger<WebPushDispatchHandler> logger) :
     IConsumer<InjuryUpdateOccured>,
     IConsumer<PlayersPriceChanged>,
+    IConsumer<PlayersLikelyToChangePrice>,
     IConsumer<TwentyFourHoursToDeadline>,
     IConsumer<OneHourToDeadline>,
     IConsumer<LineupReady>,
@@ -50,6 +51,15 @@ public class WebPushDispatchHandler(
         return relevant.Count == 0
             ? Task.CompletedTask
             : Dispatch(context, FplEvent.PriceChanges, ("💰 Price changes", Formatter.FormatPriceChanged(relevant, markdown: false)));
+    }
+
+    public Task Consume(ConsumeContext<PlayersLikelyToChangePrice> context)
+    {
+        var players = context.Message.Players;
+        // Also shown to existing PriceChanges subscribers for now, as a showcase — remove once the audience has grown.
+        return players.Count == 0
+            ? Task.CompletedTask
+            : Dispatch(context, [FplEvent.LikelyPriceChanges, FplEvent.PriceChanges], ("🔮 Likely price changes", Formatter.FormatLikelyPriceChanges(players, markdown: false)));
     }
 
     public Task Consume(ConsumeContext<TwentyFourHoursToDeadline> context) =>
@@ -222,9 +232,12 @@ public class WebPushDispatchHandler(
         await context.Publish(new PublishToWebPushSubscriber(message.SubscriberId, $"🎬 GW{message.GameweekId} has started", body, message.LeagueId));
     }
 
-    private async Task Dispatch(ConsumeContext context, FplEvent fplEvent, (string Title, string Body) text)
+    private Task Dispatch(ConsumeContext context, FplEvent fplEvent, (string Title, string Body) text) =>
+        Dispatch(context, [fplEvent], text);
+
+    private async Task Dispatch(ConsumeContext context, FplEvent[] fplEvents, (string Title, string Body) text)
     {
-        foreach (var id in await repo.GetSubscribedTo(fplEvent))
+        foreach (var id in await repo.GetSubscribedTo(fplEvents))
         {
             await context.Publish(new PublishToWebPushSubscriber(id.Value, text.Title, text.Body, null));
         }
