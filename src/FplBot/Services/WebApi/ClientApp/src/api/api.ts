@@ -12,6 +12,7 @@ import type {
   EventSubscription,
   GuildDetails,
   GuildReachStats,
+  GuildSizeBucket,
   GuildWithSubs,
   InstallUrlResponse,
   LeagueDetails,
@@ -251,6 +252,10 @@ export function getDiscordReachStats(): Promise<GuildReachStats> {
 
 export function refreshDiscordReachStats(): Promise<void> {
   return postJson("/api/admin/discord/reach/refresh");
+}
+
+export function getDiscordSizeDistribution(): Promise<GuildSizeBucket[]> {
+  return request("/api/admin/discord/reach/size-distribution");
 }
 
 export function deleteAllDiscordSubscriptionsForGuild(installationId: string): Promise<MessageResponse> {

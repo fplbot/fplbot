@@ -213,6 +213,11 @@ export interface TeamReachStats {
   oldestUpdate: string | null;
 }
 
+export interface GuildSizeBucket {
+  label: string;
+  count: number;
+}
+
 // ---- OAuth ----
 
 export interface InstallUrlResponse {

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using FakeItEasy;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using FplBot.Core.RecurringActions;
@@ -41,7 +40,7 @@ public class RecurringActionTracingTests
     [Fact]
     public async Task GuildMemberCountCheckerStartsASpan()
     {
-        var action = new GuildMemberCountChecker(ScopeFactoryPublishing(A.Fake<IPublishEndpoint>()));
+        var action = new GuildMemberCountChecker(A.Fake<IPublishEndpoint>());
 
         var started = await CaptureSpans(() => action.Process(CancellationToken.None));
 
@@ -51,18 +50,11 @@ public class RecurringActionTracingTests
     [Fact]
     public async Task SlackChannelMemberCountCheckerStartsASpan()
     {
-        var action = new SlackChannelMemberCountChecker(ScopeFactoryPublishing(A.Fake<IPublishEndpoint>()));
+        var action = new SlackChannelMemberCountChecker(A.Fake<IPublishEndpoint>());
 
         var started = await CaptureSpans(() => action.Process(CancellationToken.None));
 
         Assert.Contains((FplBotDiagnostics.SourceNameFor(FplBotService.WebApi), nameof(SlackChannelMemberCountChecker)), started);
-    }
-
-    private static IServiceScopeFactory ScopeFactoryPublishing(IPublishEndpoint publishEndpoint)
-    {
-        var services = new ServiceCollection();
-        services.AddSingleton(publishEndpoint);
-        return services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
     }
 
     private static async Task<List<(string Source, string Name)>> CaptureSpans(Func<Task> act)

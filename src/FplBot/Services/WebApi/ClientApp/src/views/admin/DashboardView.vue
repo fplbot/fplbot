@@ -3,15 +3,17 @@ import { ref, onMounted } from "vue";
 import {
   getDiscordReachStats,
   getDiscordServers,
+  getDiscordSizeDistribution,
   getSlackReachStats,
   getWebPushSubscribers,
   refreshDiscordReachStats,
   refreshSlackReachStats,
 } from "../../api/api";
-import type { GuildReachStats, GuildWithSubs, TeamReachStats } from "../../api/types";
+import type { GuildReachStats, GuildSizeBucket, GuildWithSubs, TeamReachStats } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { formatNumber, formatRelativeTime } from "../../formatting";
 import StatTile from "../../components/StatTile.vue";
+import GuildSizeDistributionChart from "../../components/GuildSizeDistributionChart.vue";
 
 const loading = ref(true);
 const error = ref("");
@@ -19,6 +21,7 @@ const discordReach = ref<GuildReachStats | null>(null);
 const slackReach = ref<TeamReachStats | null>(null);
 const webPushSubscriberCount = ref<number | null>(null);
 const topDiscordServers = ref<GuildWithSubs[]>([]);
+const guildSizeBuckets = ref<GuildSizeBucket[]>([]);
 
 const refreshingDiscord = ref(false);
 const refreshingSlack = ref(false);
@@ -29,16 +32,18 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const [discord, slack, webPush, topServers] = await Promise.all([
+    const [discord, slack, webPush, topServers, sizeDistribution] = await Promise.all([
       getDiscordReachStats(),
       getSlackReachStats(),
       getWebPushSubscribers(0, 1),
       getDiscordServers("", 1, 10, false, undefined, true),
+      getDiscordSizeDistribution(),
     ]);
     discordReach.value = discord;
     slackReach.value = slack;
     webPushSubscriberCount.value = webPush.totalCount;
     topDiscordServers.value = topServers.items;
+    guildSizeBuckets.value = sizeDistribution;
   } catch (e) {
     error.value = describeAdminError(e);
   } finally {
@@ -170,6 +175,8 @@ onMounted(load);
         </tbody>
       </table>
     </div>
+
+    <GuildSizeDistributionChart v-if="!loading && guildSizeBuckets.length > 0" :buckets="guildSizeBuckets" />
   </div>
 </template>
 

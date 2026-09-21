@@ -163,6 +163,45 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetSizeDistribution_BucketsAllCountedGuildsExactlyOnce_PlusNotYetCounted()
+    {
+        var tiny = await fixture.SeedGuildInstallation();
+        var small = await fixture.SeedGuildInstallation();
+        var huge = await fixture.SeedGuildInstallation();
+        await fixture.SeedGuildInstallation(); // left uncounted on purpose
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(tiny.ExternalId, 5);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(small.ExternalId, 42);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(huge.ExternalId, 15_000);
+
+        var buckets = await fixture.GetJson<List<GuildSizeBucketDto>>("/api/admin/discord/reach/size-distribution");
+
+        Assert.Equal(1, buckets.Single(b => b.Label == "Not yet counted").Count);
+        var sizeBuckets = buckets.Where(b => b.Label != "Not yet counted").ToList();
+        Assert.Equal(3, sizeBuckets.Sum(b => b.Count));
+        // The smallest and largest counted guilds land at the two ends of the bucket range -
+        // the dynamic boundaries always stretch to cover the true min and max.
+        Assert.True(sizeBuckets.First().Count > 0);
+        Assert.True(sizeBuckets.Last().Count > 0);
+    }
+
+    [Fact]
+    public async Task GetSizeDistribution_NarrowRangeOfSmallGuilds_DoesNotCreateWastedLargeBuckets()
+    {
+        var a = await fixture.SeedGuildInstallation();
+        var b = await fixture.SeedGuildInstallation();
+        var c = await fixture.SeedGuildInstallation();
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(a.ExternalId, 5);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(b.ExternalId, 8);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(c.ExternalId, 9);
+
+        var buckets = await fixture.GetJson<List<GuildSizeBucketDto>>("/api/admin/discord/reach/size-distribution");
+        var sizeBuckets = buckets.Where(x => x.Label != "Not yet counted").ToList();
+
+        Assert.Equal(3, sizeBuckets.Sum(x => x.Count));
+        Assert.DoesNotContain(sizeBuckets, x => x.Label.Contains('K'));
+    }
+
+    [Fact]
     public async Task GetReachStats_GuildWithNoStoredCountYet_ContributesZero()
     {
         await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
