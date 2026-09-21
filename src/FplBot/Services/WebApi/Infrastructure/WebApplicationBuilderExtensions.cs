@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using AspNet.Security.OAuth.Discord;
 using AspNet.Security.OAuth.Slack;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
@@ -39,6 +40,8 @@ public static class WebApplicationBuilderExtensions
             .Bind(configuration.GetSection("admin"))
             .ValidateWithFluentValidation(new SlackAdminOptionsValidator())
             .ValidateOnStart();
+
+        services.Configure<DiscordAdminOptions>(configuration.GetSection("admin"));
 
         services.AddOptions<DiscordWebOptions>()
             .Bind(configuration)
@@ -135,6 +138,17 @@ public static class WebApplicationBuilderExtensions
                     return Task.FromResult(0);
                 };
             })
+            .AddDiscord(c =>
+            {
+                c.Scope.Add("email");
+                c.Events.OnRemoteFailure = r =>
+                {
+                    var errorMsg = r.Request.Query["error"];
+                    r.Response.Redirect($"/error?msg={errorMsg}");
+                    r.HandleResponse();
+                    return Task.FromResult(0);
+                };
+            })
             .AddSlackbotEvents(c =>
             {
                 c.SigningSecret = configuration.GetValue<string>("CLIENT_SIGNING_SECRET") ?? "";
@@ -154,22 +168,28 @@ public static class WebApplicationBuilderExtensions
                     opts.ClientSecret = admin.SlackClientSecret ?? "";
                 }));
 
-        services.AddAuthorization();
-        services.AddOptions<AuthorizationOptions>()
-            .Configure<IOptions<SlackAdminOptions>>((authOptions, adminOpts) =>
-            {
-                var admin = adminOpts.Value;
-                var allowedUserIds = (admin.AllowedUserIds ?? "")
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                authOptions.AddPolicy("IsAdmin", b =>
+        // Discord admin login reuses the same Discord application as the bot (root
+        // DISCORD_CLIENT_ID/DISCORD_CLIENT_SECRET, already bound as DiscordWebOptions) rather than
+        // a dedicated admin app like Slack has — there's no separate "admin" Discord application.
+        services.AddSingleton<IPostConfigureOptions<DiscordAuthenticationOptions>>(sp =>
+            new PostConfigureOptions<DiscordAuthenticationOptions>(
+                DiscordAuthenticationDefaults.AuthenticationScheme,
+                opts =>
                 {
-                    b.RequireAuthenticatedUser();
-                    if (!string.IsNullOrEmpty(admin.AllowedTeamId))
-                        b.RequireClaim("urn:slack:team_id", admin.AllowedTeamId);
-                    if (allowedUserIds.Length > 0)
-                        b.RequireClaim("urn:slack:user_id", allowedUserIds);
-                });
+                    var discord = sp.GetRequiredService<IOptions<DiscordWebOptions>>().Value;
+                    opts.ClientId = discord.DISCORD_CLIENT_ID ?? "";
+                    opts.ClientSecret = discord.DISCORD_CLIENT_SECRET ?? "";
+                }));
+
+        services.AddSingleton<IAuthorizationHandler, IsAdminAuthorizationHandler>();
+        services.AddAuthorization(o =>
+        {
+            o.AddPolicy("IsAdmin", b =>
+            {
+                b.RequireAuthenticatedUser();
+                b.AddRequirements(new IsAdminRequirement());
             });
+        });
 
         services.ConfigureHttpJsonOptions(opts =>
         {

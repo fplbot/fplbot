@@ -20,6 +20,8 @@ export interface MessageResponse {
 
 export interface AdminMe {
   name: string | null;
+  email: string | null;
+  provider: string | null;
   teamId: string | null;
   teamName: string | null;
   userId: string | null;

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using AspNet.Security.OAuth.Discord;
 using Discord.Net.HttpClients;
 using FakeItEasy;
 using Fpl.Client;
@@ -126,6 +127,8 @@ public class AppFixture : IAsyncLifetime
     private const string RemoteIpHeader = "X-Test-Remote-Ip";
 
     public Task<HttpResponseMessage> Get(string path) => _client.GetAsync(path, TestContext.Current.CancellationToken);
+
+    public Task<HttpResponseMessage> Send(HttpRequestMessage request) => _client.SendAsync(request, TestContext.Current.CancellationToken);
 
     public async Task<HttpResponseMessage> GetFrom(string path, string remoteIp)
     {
@@ -271,6 +274,11 @@ public class AppFixture : IAsyncLifetime
                 .RequireAuthenticatedUser()));
         builder.Services.AddHttpClient("Discord.Net.Endpoints.TokenExchange")
             .ConfigurePrimaryHttpMessageHandler(() => new StubDiscordTokenExchange());
+        // The admin-login Discord OAuth scheme (AspNet.Security.OAuth.Discord) makes its token-exchange
+        // and userinfo calls through its own per-scheme Backchannel, not the named HttpClient above —
+        // stub that one too so DiscordLoginTests can drive a real challenge/callback round trip.
+        builder.Services.Configure<DiscordAuthenticationOptions>(DiscordAuthenticationDefaults.AuthenticationScheme,
+            o => o.BackchannelHttpHandler = new StubDiscordAdminOAuth());
         builder.Services.AddHttpClient(nameof(IPlayerImageClient))
             .ConfigurePrimaryHttpMessageHandler(() => new StubPlayerImages());
         builder.Services.AddSingleton(fakeGlobalSettings);
