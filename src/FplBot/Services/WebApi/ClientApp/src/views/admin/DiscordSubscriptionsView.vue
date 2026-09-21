@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import {
   getDiscordServers,
   deleteChannelSubscription,
@@ -16,6 +16,7 @@ import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
 import { isThrowaway } from "../../composables/installationAdapters";
+import { formatDateTime, formatNumber } from "../../formatting";
 
 
 const pageSize = 25;
@@ -53,11 +54,13 @@ async function resetFailures() {
   }
 }
 
+const minMembers = ref<number | undefined>(undefined);
+
 async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await getDiscordServers(query.value, page.value, pageSize, failingOnly.value);
+    const result = await getDiscordServers(query.value, page.value, pageSize, failingOnly.value, minMembers.value);
     guilds.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
@@ -68,6 +71,11 @@ async function load() {
 }
 
 const { query, page, failingOnly, goToPage } = useAdminListQuery(load);
+
+watch(minMembers, () => {
+  page.value = 1;
+  load();
+});
 
 void loadFailureStats();
 
@@ -153,6 +161,11 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
         </label>
       </div>
 
+      <div class="field">
+        <label for="guild-search-min-members">Minimum size (approximate member count)</label>
+        <input id="guild-search-min-members" v-model.number="minMembers" type="number" min="0" placeholder="e.g. 100" />
+      </div>
+
       <p v-if="error" class="alert alert-error">{{ error }}</p>
       <div v-if="loading" class="spinner"></div>
 
@@ -162,7 +175,16 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
         <div class="guild-list">
         <div v-for="g in guilds" :key="g.id" class="guild" :class="{ throwaway: isThrowaway(g.guildName) }">
           <div class="guild-header">
-            <h3>{{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span></h3>
+            <h3>
+              {{ g.guildName }} <span class="guild-id">({{ g.guildId }})</span>
+              <span
+                v-if="g.approximateMemberCount !== null"
+                class="guild-member-count"
+                :title="g.memberCountUpdatedAt ? `Updated ${formatDateTime(g.memberCountUpdatedAt)}` : undefined"
+              >
+                &middot; {{ formatNumber(g.approximateMemberCount) }} members
+              </span>
+            </h3>
             <div class="guild-actions">
               <a
                 v-if="isThrowaway(g.guildName)"
@@ -316,6 +338,12 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
 }
 
 .guild-id {
+  font-weight: normal;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.guild-member-count {
   font-weight: normal;
   color: #6b7280;
   font-size: 0.85rem;

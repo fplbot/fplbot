@@ -28,6 +28,7 @@ import type {
   SubscriberDetail,
   SubscriberSummary,
   TeamDetails,
+  TeamReachStats,
   TeamSummary,
 } from "./types";
 
@@ -96,9 +97,24 @@ export async function logout(): Promise<void> {
 
 // ---- Admin: Slack teams ----
 
-export function getTeams(query: string, page: number, pageSize: number, failingOnly = false): Promise<PagedResult<TeamSummary>> {
+export function getTeams(
+  query: string,
+  page: number,
+  pageSize: number,
+  failingOnly = false,
+  minMembers?: number,
+): Promise<PagedResult<TeamSummary>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
+  if (minMembers) params.set("minMembers", String(minMembers));
   return request(`/api/admin/teams?${params.toString()}`);
+}
+
+export function getSlackReachStats(): Promise<TeamReachStats> {
+  return request("/api/admin/slack/reach");
+}
+
+export function refreshSlackReachStats(): Promise<void> {
+  return postJson("/api/admin/slack/reach/refresh");
 }
 
 export async function getTeam(installationId: string): Promise<TeamDetails | null> {
@@ -215,14 +231,26 @@ export function uninstallSlashCommands(): Promise<MessageResponse> {
   return postJson("/api/admin/discord/slashcommands/uninstall");
 }
 
-export function getDiscordServers(query: string, page: number, pageSize: number, failingOnly = false): Promise<PagedResult<GuildWithSubs>> {
+export function getDiscordServers(
+  query: string,
+  page: number,
+  pageSize: number,
+  failingOnly = false,
+  minMembers?: number,
+): Promise<PagedResult<GuildWithSubs>> {
   const params = new URLSearchParams({ query, page: String(page), pageSize: String(pageSize), failingOnly: String(failingOnly) });
+  if (minMembers) params.set("minMembers", String(minMembers));
   return request(`/api/admin/discord/servers?${params.toString()}`);
 }
 
 export function getDiscordReachStats(): Promise<GuildReachStats> {
   return request("/api/admin/discord/reach");
 }
+
+export function refreshDiscordReachStats(): Promise<void> {
+  return postJson("/api/admin/discord/reach/refresh");
+}
+
 export function deleteAllDiscordSubscriptionsForGuild(installationId: string): Promise<MessageResponse> {
   return request(`/api/admin/discord/guilds/${installationId}/subscriptions`, { method: "DELETE" });
 }

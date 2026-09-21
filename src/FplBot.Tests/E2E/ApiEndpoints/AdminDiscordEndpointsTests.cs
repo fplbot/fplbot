@@ -94,6 +94,19 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetSubscriptions_MinMembers_ExcludesSmallerGuilds()
+    {
+        var small = await fixture.SeedGuildInstallation();
+        var big = await fixture.SeedGuildInstallation();
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(small.ExternalId, 5);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(big.ExternalId, 500);
+
+        var page = await fixture.GetJson<PagedResult<GuildWithSubsDto>>("/api/admin/discord/servers?minMembers=100");
+
+        Assert.Equal(big.ExternalId, Assert.Single(page.Items).GuildId);
+    }
+
+    [Fact]
     public async Task GetReachStats_SumsApproximateMemberCountsAcrossGuilds()
     {
         var first = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);

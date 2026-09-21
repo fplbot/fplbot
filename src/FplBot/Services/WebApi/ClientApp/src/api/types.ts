@@ -52,6 +52,8 @@ export type EventSubscription =
 
 // A single Slack channel's subscription within a team (one team can now follow a league /
 // receive notifications in more than one channel — mirrors Discord's GuildSubscription).
+// memberCount/memberCountUpdatedAt are Slack-only (see conversations.info's num_members) —
+// Discord's equivalent lives at the guild level (GuildWithSubs), not per channel.
 export interface ChannelSubscription {
   id: string;
   teamId: string;
@@ -61,6 +63,8 @@ export interface ChannelSubscription {
   failureCount: number;
   failingSince: string | null;
   lastFailureReason: string | null;
+  memberCount: number | null;
+  memberCountUpdatedAt: string | null;
 }
 
 export interface TeamSummary {
@@ -166,6 +170,8 @@ export interface GuildWithSubs {
   guildId: string;
   guildName: string;
   subscriptions: GuildSubscription[];
+  approximateMemberCount: number | null;
+  memberCountUpdatedAt: string | null;
 }
 
 export interface GuildDetailsChannel {
@@ -194,6 +200,13 @@ export interface GuildDetails {
 export interface GuildReachStats {
   totalGuilds: number;
   totalApproximateMembers: number;
+  oldestUpdate: string | null;
+}
+
+export interface TeamReachStats {
+  totalTeams: number;
+  totalApproximateMembers: number;
+  oldestUpdate: string | null;
 }
 
 // ---- OAuth ----

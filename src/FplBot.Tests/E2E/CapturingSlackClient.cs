@@ -14,7 +14,9 @@ using Slackbot.Net.SlackClients.Http.Models.Responses;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ChatGetPermalink;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsHistoryResponse;
+using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsInfo;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsList;
+using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsMembers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsRepliesResponse;
 using Slackbot.Net.SlackClients.Http.Models.Responses.FileUpload;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UserProfile;
@@ -26,10 +28,13 @@ namespace FplBot.Tests.E2E;
 public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
 {
     private readonly ConcurrentDictionary<string, string> _failing = new();
+    private readonly ConcurrentDictionary<string, int> _memberCounts = new();
     private Func<Task<Response>> _appsUninstallOutcome = DefaultAppsUninstallOutcome;
     private Conversation[] _channels = [];
 
     public void SetChannels(params Conversation[] channels) => _channels = channels;
+
+    public void SetMemberCount(string channelId, int memberCount) => _memberCounts[channelId] = memberCount;
 
     private static Func<Task<Response>> DefaultAppsUninstallOutcome => () => Task.FromResult(new Response { Ok = true });
 
@@ -44,6 +49,7 @@ public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
     public void Reset()
     {
         _failing.Clear();
+        _memberCounts.Clear();
         _channels = [];
         _appsUninstallOutcome = DefaultAppsUninstallOutcome;
     }
@@ -85,8 +91,26 @@ public class CapturingSlackClient(SlackMessageCapture capture) : ISlackClient
     public Task<Response> ReactionsAdd(string name, string channel, string timestamp) =>
         throw new NotImplementedException();
 
-    public Task<ConversationsListResponse> ConversationsMembers(string channel) =>
+    public Task<ConversationsMembersResponse> ConversationsMembers(string channel) =>
         throw new NotImplementedException();
+
+    public Task<ConversationsInfoResponse> ConversationsInfo(string channel, bool includeNumMembers = false)
+    {
+        if (_failing.TryGetValue(channel, out var error))
+        {
+            throw new WellKnownSlackApiException(error: error, responseContent: "{}");
+        }
+
+        return Task.FromResult(new ConversationsInfoResponse
+        {
+            Ok = true,
+            Channel = new ConversationInfo
+            {
+                Id = channel,
+                Num_Members = includeNumMembers && _memberCounts.TryGetValue(channel, out var count) ? count : null
+            }
+        });
+    }
 
     public Task<ConversationsRepliesResponse> ConversationsReplies(string channel, string ts, int? limit = null, string? cursor = null) =>
         throw new NotImplementedException();

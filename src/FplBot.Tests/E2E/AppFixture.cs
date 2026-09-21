@@ -69,6 +69,7 @@ public class AppFixture : IAsyncLifetime
     private ConnectionMultiplexer _multiplexer = null!;
     private CapturingSlackClient _capturingSlackClient = null!;
     private CapturingDiscordClient _capturingDiscordClient = null!;
+    private readonly StubDiscordGuildGet _stubDiscordGuildGet = new();
 
     public SlackMessageCapture SlackCapture { get; } = new();
 
@@ -88,9 +89,19 @@ public class AppFixture : IAsyncLifetime
     public ISlackTeamRepository SlackRepo => _managerScope.ServiceProvider.GetRequiredService<ISlackTeamRepository>();
     public IGuildRepository GuildRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildRepository>();
     public IGuildMemberCountRepository GuildMemberCountRepo => _managerScope.ServiceProvider.GetRequiredService<IGuildMemberCountRepository>();
+    public IChannelMemberCountRepository ChannelMemberCountRepo => _managerScope.ServiceProvider.GetRequiredService<IChannelMemberCountRepository>();
 
     public void SlackChannelFails(string channelId, string slackError) =>
         _capturingSlackClient.FailChannel(channelId, slackError);
+
+    public void SetSlackChannelMemberCount(string channelId, int memberCount) =>
+        _capturingSlackClient.SetMemberCount(channelId, memberCount);
+
+    public void SetDiscordGuildMemberCount(string guildId, int approximateMemberCount) =>
+        _stubDiscordGuildGet.SetApproximateMemberCount(guildId, approximateMemberCount);
+
+    public void DiscordGuildGetFails(string guildId, HttpStatusCode status) =>
+        _stubDiscordGuildGet.FailGuild(guildId, status);
 
     public void RecoverSlackChannel(string channelId) => _capturingSlackClient.RecoverChannel(channelId);
 
@@ -282,6 +293,11 @@ public class AppFixture : IAsyncLifetime
             o => o.BackchannelHttpHandler = new StubDiscordAdminOAuth());
         builder.Services.AddHttpClient(nameof(IPlayerImageClient))
             .ConfigurePrimaryHttpMessageHandler(() => new StubPlayerImages());
+        // RefreshGuildMemberCountHandler calls the concrete DiscordClient directly (not the
+        // IDiscordClient interface CapturingDiscordClient replaces above), so its own typed
+        // HttpClient needs its own stub — same override technique, one call per test guild.
+        builder.Services.AddHttpClient<global::Discord.Net.HttpClients.DiscordClient>()
+            .ConfigurePrimaryHttpMessageHandler(() => _stubDiscordGuildGet);
         builder.Services.AddSingleton(fakeGlobalSettings);
         builder.Services.AddSingleton(fakeFixtureClient);
         builder.Services.AddSingleton(fakeLeagueClient);

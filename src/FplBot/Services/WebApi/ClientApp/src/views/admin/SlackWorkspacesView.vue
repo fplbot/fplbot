@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { getTeams, uninstallTeam, deleteChannelSubscription, getSlackFailureStats, resetSlackFailures, redirectToSlackInstall } from "../../api/api";
 import type { TeamSummary } from "../../api/types";
 import { describeAdminError } from "../../composables/useAdminAuth";
@@ -8,6 +8,7 @@ import AdminPager from "../../components/AdminPager.vue";
 import { failureSummary } from "../../api/deliveryFailures";
 import type { ChannelFailureStats } from "../../api/types";
 import { isThrowaway } from "../../composables/installationAdapters";
+import { formatDateTime } from "../../formatting";
 
 
 const pageSize = 25;
@@ -46,11 +47,13 @@ async function resetFailures() {
   }
 }
 
+const minMembers = ref<number | undefined>(undefined);
+
 async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await getTeams(query.value, page.value, pageSize, failingOnly.value);
+    const result = await getTeams(query.value, page.value, pageSize, failingOnly.value, minMembers.value);
     teams.value = result.items;
     totalCount.value = result.totalCount;
   } catch (e) {
@@ -61,6 +64,11 @@ async function load() {
 }
 
 const { query, page, failingOnly, goToPage } = useAdminListQuery(load);
+
+watch(minMembers, () => {
+  page.value = 1;
+  load();
+});
 
 void loadFailureStats();
 
@@ -130,6 +138,11 @@ async function removeSub(subscriptionId: string) {
         </label>
       </div>
 
+      <div class="field">
+        <label for="team-search-min-members">Minimum size (summed member count across subscribed channels)</label>
+        <input id="team-search-min-members" v-model.number="minMembers" type="number" min="0" placeholder="e.g. 100" />
+      </div>
+
       <p v-if="error" class="alert alert-error">{{ error }}</p>
       <div v-if="loading" class="spinner"></div>
 
@@ -165,6 +178,7 @@ async function removeSub(subscriptionId: string) {
                 <th>Channel</th>
                 <th>League</th>
                 <th>Subscriptions</th>
+                <th>Members</th>
                 <th></th>
               </tr>
             </thead>
@@ -176,6 +190,9 @@ async function removeSub(subscriptionId: string) {
                 </td>
                 <td>{{ s.leagueId || "—" }}</td>
                 <td>{{ s.subscriptions.join(", ") || "—" }}</td>
+                <td :title="s.memberCountUpdatedAt ? `Updated ${formatDateTime(s.memberCountUpdatedAt)}` : undefined">
+                  {{ s.memberCount ?? "—" }}
+                </td>
                 <td class="row-actions">
                   <router-link
                     class="btn small icon-btn"

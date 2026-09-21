@@ -1,12 +1,10 @@
 using System.Diagnostics;
-using Discord.Net.HttpClients;
 using FakeItEasy;
+using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using FplBot.Core.RecurringActions;
-using FplBot.Data.Discord;
-using FplBot.Domain;
 using FplBot.Hosting;
 using FplBot.WebApi.Infrastructure;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -41,21 +39,31 @@ public class RecurringActionTracingTests
     }
 
     [Fact]
-    public async Task GuildStatusCheckerStartsASpan()
+    public async Task GuildMemberCountCheckerStartsASpan()
     {
-        var guildRepo = A.Fake<IGuildRepository>();
-        A.CallTo(() => guildRepo.GetAllInstallations()).Returns([]);
-        var action = new GuildStatusChecker(guildRepo, A.Fake<IGuildMemberCountRepository>(), DiscordClientThatIsNeverCalled(), A.Fake<IServiceScopeFactory>(), NullLogger<GuildStatusChecker>.Instance);
+        var action = new GuildMemberCountChecker(ScopeFactoryPublishing(A.Fake<IPublishEndpoint>()));
 
         var started = await CaptureSpans(() => action.Process(CancellationToken.None));
 
-        Assert.Contains((FplBotDiagnostics.SourceNameFor(FplBotService.WebApi), nameof(GuildStatusChecker)), started);
+        Assert.Contains((FplBotDiagnostics.SourceNameFor(FplBotService.WebApi), nameof(GuildMemberCountChecker)), started);
     }
 
-    private static DiscordClient DiscordClientThatIsNeverCalled() =>
-        new(new HttpClient { BaseAddress = new Uri("https://localhost") },
-            Options.Create(new DiscordClientOptions { DiscordApplicationId = "id", DiscordAppToken = "token" }),
-            NullLogger<DiscordClient>.Instance);
+    [Fact]
+    public async Task SlackChannelMemberCountCheckerStartsASpan()
+    {
+        var action = new SlackChannelMemberCountChecker(ScopeFactoryPublishing(A.Fake<IPublishEndpoint>()));
+
+        var started = await CaptureSpans(() => action.Process(CancellationToken.None));
+
+        Assert.Contains((FplBotDiagnostics.SourceNameFor(FplBotService.WebApi), nameof(SlackChannelMemberCountChecker)), started);
+    }
+
+    private static IServiceScopeFactory ScopeFactoryPublishing(IPublishEndpoint publishEndpoint)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(publishEndpoint);
+        return services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
+    }
 
     private static async Task<List<(string Source, string Name)>> CaptureSpans(Func<Task> act)
     {

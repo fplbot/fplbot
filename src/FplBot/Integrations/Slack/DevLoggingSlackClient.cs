@@ -11,7 +11,9 @@ using Slackbot.Net.SlackClients.Http.Models.Responses;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ChatGetPermalink;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ChatPostMessage;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsHistoryResponse;
+using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsInfo;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsList;
+using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsMembers;
 using Slackbot.Net.SlackClients.Http.Models.Responses.ConversationsRepliesResponse;
 using Slackbot.Net.SlackClients.Http.Models.Responses.FileUpload;
 using Slackbot.Net.SlackClients.Http.Models.Responses.UserProfile;
@@ -190,14 +192,30 @@ public class DevLoggingSlackClient(ILogger<DevLoggingSlackClient> logger) : ISla
         });
     }
 
-    public Task<ConversationsListResponse> ConversationsMembers(string channel)
+    public Task<ConversationsMembersResponse> ConversationsMembers(string channel)
     {
         logger.LogInformation("[DEV] Slack conversations.members → {Channel} (fake)", channel);
-        return Task.FromResult(new ConversationsListResponse
+        return Task.FromResult(new ConversationsMembersResponse
         {
             Ok = true,
-            Channels = FakeChannels,
+            Members = FakeChannels.Select(c => c.Id),
             Response_Metadata = new ResponseMetadata { Next_Cursor = "" }
+        });
+    }
+
+    public Task<ConversationsInfoResponse> ConversationsInfo(string channel, bool includeNumMembers = false)
+    {
+        logger.LogInformation("[DEV] Slack conversations.info → {Channel} (fake)", channel);
+        return Task.FromResult(new ConversationsInfoResponse
+        {
+            Ok = true,
+            Channel = new ConversationInfo
+            {
+                Id = channel,
+                Name = FakeChannels.FirstOrDefault(c => c.Id == channel)?.Name ?? channel,
+                Is_Channel = true,
+                Num_Members = includeNumMembers ? 3 : null
+            }
         });
     }
 
