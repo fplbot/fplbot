@@ -13,6 +13,7 @@ import type { GuildReachStats, GuildSizeBucket, GuildWithSubs, TeamReachStats } 
 import { describeAdminError } from "../../composables/useAdminAuth";
 import { formatNumber, formatRelativeTime } from "../../formatting";
 import StatTile from "../../components/StatTile.vue";
+import StatMeter from "../../components/StatMeter.vue";
 import GuildSizeDistributionChart from "../../components/GuildSizeDistributionChart.vue";
 
 const loading = ref(true);
@@ -95,7 +96,9 @@ onMounted(load);
         label="Community Discord servers"
         :value="`${formatNumber(discordReach.communityGuilds)} / ${formatNumber(discordReach.totalGuilds)}`"
         sublabel="Servers with Discord's COMMUNITY feature enabled (discovery-eligible) vs. all installed servers. Not-yet-swept servers count as non-community."
-      />
+      >
+        <StatMeter :value="discordReach.communityGuilds" :total="discordReach.totalGuilds" label="community" />
+      </StatTile>
 
       <StatTile
         v-if="discordReach"
