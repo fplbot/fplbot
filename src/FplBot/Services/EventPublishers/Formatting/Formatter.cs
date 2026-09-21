@@ -256,6 +256,31 @@ public static class Formatter
         return messageToSend;
     }
 
+    public static string FormatLikelyPriceChanges(IEnumerable<PlayerLikelyPriceChange> players, bool markdown = true)
+    {
+        if (!players.Any())
+            return "No players likely to change price.";
+
+        var messageToSend = "";
+        var grouped = players.OrderByDescending(p => p.Likelihood).ThenByDescending(p => p.NowCost).GroupBy(p => p.Likelihood > 0);
+        foreach (var group in grouped.OrderByDescending(g => g.Key))
+        {
+            var header = group.Key ? "Likely to rise 📈" : "Likely to fall 📉";
+            if (markdown)
+            {
+                header = $"*{header}*";
+            }
+
+            messageToSend += $"\n\n{header}";
+            foreach (var p in group)
+            {
+                messageToSend += $"\n• {p.WebName} ({p.TeamShortName}) {FormatCurrency(p.NowCost)}";
+            }
+        }
+
+        return messageToSend;
+    }
+
     public static string FormatFixtureRemoved(RemovedFixture fixture, int gameweek) =>
         $"{fixture.Home.Name}-{fixture.Away.Name} has been removed from gameweek {gameweek}!";
 

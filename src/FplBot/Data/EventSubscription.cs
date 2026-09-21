@@ -17,5 +17,6 @@ public enum EventSubscription
     Deadlines,
     Lineups,
     NewPlayers,
-    FixtureRemovedFromGameweek
+    FixtureRemovedFromGameweek,
+    LikelyPriceChanges
 }

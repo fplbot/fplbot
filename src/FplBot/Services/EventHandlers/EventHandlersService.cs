@@ -61,6 +61,7 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<DiscordNewLeagueEntriesHandler>();
         cfg.AddConsumer<DiscordNewPlayersHandler>();
         cfg.AddConsumer<DiscordPriceChangeHandler>();
+        cfg.AddConsumer<DiscordLikelyPriceChangeHandler>();
         cfg.AddConsumer<PublishToGuildHandler>();
         cfg.AddConsumer<FollowCommandHandler>();
         cfg.AddConsumer<AddSubscriptionCommandHandler>();
@@ -79,6 +80,7 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<SlackNewLeagueEntriesHandler>();
         cfg.AddConsumer<SlackNewPlayerHandler>();
         cfg.AddConsumer<SlackPriceChangeHandler>();
+        cfg.AddConsumer<SlackLikelyPriceChangeHandler>();
         cfg.AddConsumer<PublishToSlackHandler>();
         cfg.AddConsumer<BroadcastToSlackHandler>();
 

@@ -103,4 +103,43 @@ public class PlayerChangesEventsExtractorTests(ITestOutputHelper helper)
 
         Assert.Empty(priceChanges);
     }
+
+    [Fact]
+    public void GetLikelyPriceChanges_WhenNoProjection_ReturnsNoChanges()
+    {
+        var after = new List<Player> { TestBuilder.Player() };
+
+        var likely = PlayerChangesEventsExtractor.GetLikelyPriceChanges(after, [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
+
+        Assert.Empty(likely);
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(-4)]
+    [InlineData(0)]
+    public void GetLikelyPriceChanges_WhenBelowVeryLikelyThreshold_ReturnsNoChanges(int likelihood)
+    {
+        var after = new List<Player> { TestBuilder.Player().WithNextPriceChangeLikelihood(likelihood) };
+
+        var likely = PlayerChangesEventsExtractor.GetLikelyPriceChanges(after, [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]);
+
+        Assert.Empty(likely);
+    }
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(-5)]
+    public void GetLikelyPriceChanges_WhenVeryLikelyThreshold_ReturnsThePlayer(int likelihood)
+    {
+        var after = new List<Player> { TestBuilder.Player().WithNextPriceChangeLikelihood(likelihood, "123.4") };
+
+        var likely = PlayerChangesEventsExtractor.GetLikelyPriceChanges(after, [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()]).ToList();
+
+        Assert.Single(likely);
+        Assert.Equal(TestBuilder.Player().WebName, likely[0].WebName);
+        Assert.Equal(likelihood, likely[0].Likelihood);
+        Assert.Equal("123.4", likely[0].ProjectedPercent);
+        Assert.Equal(TestBuilder.HomeTeam().Id, likely[0].TeamId);
+    }
 }

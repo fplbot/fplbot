@@ -77,6 +77,18 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task WithLikelyPriceChange_ShowcasedToPriceChangesSubscriber()
+    {
+        var state = CreateLikelyPriceChangeScenario();
+        await state.Process(CancellationToken.None);
+        await state.Process(CancellationToken.None);
+
+        var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
+        Assert.Equal(Channel, msg.Channel);
+        Assert.Contains("PlayerWebname", msg.Text);
+    }
+
+    [Fact]
     public async Task WithPlayerTransferBetweenTwoPLTeams_EmitsEvent()
     {
         var messageSession = new TestPublishEndpoint();
@@ -229,6 +241,23 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
             });
 
         return CreatePlayerBaseScenario(playerClient);
+    }
+
+    private PlayerUpdatesRecurringAction CreateLikelyPriceChangeScenario()
+    {
+        var settingsClient = GlobalSettingsClientBuilder.Returning(
+            new GlobalSettings
+            {
+                Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
+                Players = [TestBuilder.Player()]
+            },
+            new GlobalSettings
+            {
+                Teams = [TestBuilder.HomeTeam(), TestBuilder.AwayTeam()],
+                Players = [TestBuilder.Player().WithNextPriceChangeLikelihood(5)]
+            });
+
+        return CreatePlayerBaseScenario(settingsClient);
     }
 
     private PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>

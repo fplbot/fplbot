@@ -61,6 +61,21 @@ public class Player
     [JsonPropertyName("cost_change_event_fall")]
     public int CostChangeEventFall { get; set; }
 
+    [JsonPropertyName("price_change_percent")]
+    public string? PriceChangePercent { get; set; }
+
+    [JsonPropertyName("price_change_hourly_rate")]
+    public int PriceChangeHourlyRate { get; set; }
+
+    [JsonPropertyName("price_change_projections")]
+    public List<PriceChangeProjection> PriceChangeProjections { get; set; } = [];
+
+    [JsonPropertyName("price_change_locked_until")]
+    public DateTime? PriceChangeLockedUntil { get; set; }
+
+    [JsonPropertyName("price_change_calibrating")]
+    public bool PriceChangeCalibrating { get; set; }
+
     [JsonPropertyName("in_dreamteam")]
     public bool InDreamteam { get; set; }
 
@@ -161,6 +176,22 @@ public class Player
     public int TeamId { get; set; }
 
     public string FullName => $"{FirstName} {SecondName}";
+
+    public int NextPriceChangeLikelihood => PriceChangeProjections.FirstOrDefault(p => p.Offset == 0)?.Likelihood ?? 0;
+
+    public bool IsVeryLikelyToChangePrice() => Math.Abs(NextPriceChangeLikelihood) == 5;
+}
+
+public class PriceChangeProjection
+{
+    [JsonPropertyName("offset")]
+    public int Offset { get; set; }
+
+    [JsonPropertyName("projected_percent")]
+    public string? ProjectedPercent { get; set; }
+
+    [JsonPropertyName("likelihood")]
+    public int Likelihood { get; set; }
 }
 
 public static class PlayerStatuses

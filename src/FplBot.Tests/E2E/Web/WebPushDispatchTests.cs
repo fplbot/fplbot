@@ -118,6 +118,37 @@ public class WebPushDispatchTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task LikelyPriceChanges_SubscribedSubscriber_GetsThePlayerNames()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+
+        await fixture.Bus.Publish(new PlayersLikelyToChangePrice([
+            new PlayerLikelyPriceChange(1, "Haaland", 145, 11, "MCI", "123.2", 5)
+        ]), TestContext.Current.CancellationToken);
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("Likely", push.Title);
+        Assert.Contains("Haaland", push.Body);
+    }
+
+    [Fact]
+    public async Task LikelyPriceChanges_SubscriberOnlySubscribedToPriceChanges_StillGetsNotified()
+    {
+        var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, endpoint: endpoint);
+        var response = await fixture.PutWebPush(subscriberId, "/api/web/me/events", new { events = new[] { "PriceChanges" } });
+        response.EnsureSuccessStatusCode();
+
+        await fixture.Bus.Publish(new PlayersLikelyToChangePrice([
+            new PlayerLikelyPriceChange(1, "Haaland", 145, 11, "MCI", "123.2", 5)
+        ]), TestContext.Current.CancellationToken);
+
+        var push = await fixture.WebPushCapture.WaitForAsync(endpoint);
+        Assert.Contains("Haaland", push.Body);
+    }
+
+    [Fact]
     public async Task NewPlayersRegistered_OnlyIrrelevantPlayers_GetsNothing()
     {
         var endpoint = $"https://push.example.test/{Guid.NewGuid():N}";

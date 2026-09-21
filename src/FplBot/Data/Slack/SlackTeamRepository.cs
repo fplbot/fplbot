@@ -126,7 +126,11 @@ public class SlackTeamRepository : ISlackTeamRepository
 
     public async Task<IEnumerable<(string InstallationId, string ChannelId)>> GetChannelsSubscribedTo(params FplEvent[] fplEvents)
     {
-        var keys = fplEvents.Select(e => (RedisKey)ToEventIndexKey(e)).ToArray();
+        // ExpandEvents only expands "All" into the concrete FplEvent values that existed at save
+        // time, so a channel that saved "All" before a new event was added would be missing from
+        // that event's index. Unioning in the "All" index here as well keeps this correct for
+        // events added after the fact, without requiring every "All" channel to re-save.
+        var keys = fplEvents.Append(FplEvent.All).Distinct().Select(e => (RedisKey)ToEventIndexKey(e)).ToArray();
         var entries = await _db.SetCombineAsync(SetOperation.Union, keys);
         return entries.Select(ParseEventIndexEntry);
     }
