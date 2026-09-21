@@ -33,6 +33,7 @@ public class EventHandlersService : WorkerFplBotService
         services.AddWebPushSubscribers();
         services.Configure<WebPushOptions>(config.GetSection("WebPush"));
         services.AddSingleton<IWebPushSender, WebPushSender>();
+        services.Configure<ReachStatsSweepOptions>(config.GetSection("ReachStatsSweep"));
     }
 
     public override void AddConsumers(IBusRegistrationConfigurator cfg)

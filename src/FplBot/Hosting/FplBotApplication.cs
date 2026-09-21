@@ -240,6 +240,8 @@ public static class FplBotApplication
 
     internal static void ConfigureAzureServiceBus(IBusRegistrationConfigurator cfg, IConfiguration config)
     {
+        cfg.AddServiceBusMessageScheduler();
+
         cfg.UsingAzureServiceBus((ctx, bus) =>
         {
             var connectionString = config["ASB_CONNECTIONSTRING"]

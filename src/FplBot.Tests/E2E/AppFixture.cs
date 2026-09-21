@@ -270,11 +270,24 @@ public class AppFixture : IAsyncLifetime
 
         var active = new List<IFplBotService> { new WebApiService(), new EventHandlersService() };
         FplBotApplication.ConfigureServices(builder.Services, config, _multiplexer, builder.Environment, active,
-            cfg => cfg.UsingInMemory((ctx, c) =>
+            cfg =>
             {
-                c.ConnectConsumeObserver(BusActivity);
-                c.ConfigureEndpoints(ctx);
-            }));
+                cfg.AddDelayedMessageScheduler();
+                cfg.UsingInMemory((ctx, c) =>
+                {
+                    c.UseDelayedMessageScheduler();
+                    c.ConnectConsumeObserver(BusActivity);
+                    c.ConfigureEndpoints(ctx);
+                });
+            });
+
+        // Runs after EventHandlersService's own Configure<ReachStatsSweepOptions>, so this wins:
+        // the fan-out handlers schedule with zero delay instead of the real production stagger.
+        builder.Services.Configure<ReachStatsSweepOptions>(o =>
+        {
+            o.DelayBetweenDiscordGuilds = TimeSpan.Zero;
+            o.DelayBetweenSlackChannels = TimeSpan.Zero;
+        });
 
         builder.Services.AddSingleton<IConnectionMultiplexer>(_multiplexer);
         builder.Services.AddSingleton(_multiplexer);
