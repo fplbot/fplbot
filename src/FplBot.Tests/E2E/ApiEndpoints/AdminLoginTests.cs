@@ -8,8 +8,9 @@ namespace FplBot.Tests.E2E.ApiEndpoints;
 // Exercises the admin-login provider selection end to end: which OAuth scheme /api/admin/login
 // challenges, and — for Discord, the newly added provider — a full challenge/callback round trip
 // against a stubbed Discord token/userinfo backchannel (StubDiscordAdminOAuth), asserting the
-// resulting session reflects the Discord identity. Slack's own AllowedTeamId/AllowedUserIds gate
-// is untouched by this change and isn't re-tested here.
+// resulting session reflects the Discord identity. Both providers now authorize against the same
+// admin.AllowedEmails list (see AdminAuthorizationTests for that logic) — this file only covers
+// the HTTP-level challenge/callback wiring, not the allow-list matching itself.
 [Collection("App")]
 public class AdminLoginTests(AppFixture fixture)
 {
@@ -23,12 +24,16 @@ public class AdminLoginTests(AppFixture fixture)
     }
 
     [Fact]
-    public async Task Login_WithProviderSlack_ChallengesSlack()
+    public async Task Login_WithProviderSlack_ChallengesSlackWithIdentityEmailScope()
     {
         var response = await fixture.Get("/api/admin/login?provider=slack");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.StartsWith(SlackAuthenticationDefaults.AuthorizationEndpoint, response.Headers.Location!.ToString());
+        var location = response.Headers.Location!;
+        Assert.StartsWith(SlackAuthenticationDefaults.AuthorizationEndpoint, location.ToString());
+
+        var scope = QueryHelpers.ParseQuery(location.Query)["scope"].ToString();
+        Assert.Contains("identity.email", scope);
     }
 
     [Fact]

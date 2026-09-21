@@ -41,7 +41,7 @@ public static class WebApplicationBuilderExtensions
             .ValidateWithFluentValidation(new SlackAdminOptionsValidator())
             .ValidateOnStart();
 
-        services.Configure<DiscordAdminOptions>(configuration.GetSection("admin"));
+        services.Configure<AdminAllowedEmails>(configuration.GetSection("admin"));
 
         services.AddOptions<DiscordWebOptions>()
             .Bind(configuration)
@@ -129,7 +129,10 @@ public static class WebApplicationBuilderExtensions
             })
             .AddSlack(c =>
             {
+                // identity.team stays for display purposes only (teamName/teamId in /me) — it's
+                // identity.email, not team membership, that now decides who's let in.
                 c.Scope.Add("identity.team");
+                c.Scope.Add("identity.email");
                 c.Events.OnRemoteFailure = r =>
                 {
                     var errorMsg = r.Request.Query["error"];
