@@ -1,8 +1,8 @@
 {
-  "name": "FplBot",
-  "short_name": "FplBot",
-  "description": "Fantasy Premier League notifications for your league.",
-  "start_url": "/",
+  "name": "fplbot.app",
+  "short_name": "fplbot.app",
+  "description": "FPL notifications",
+  "start_url": "/notifications",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#37003c",
