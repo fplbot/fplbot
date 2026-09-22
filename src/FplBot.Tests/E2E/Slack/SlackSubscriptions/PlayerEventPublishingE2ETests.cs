@@ -1,7 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.RecurringActions;
+using Fpl.EventPublishers.States;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.Messaging.Contracts.Events.v1;
@@ -32,8 +32,8 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     public async Task WithPriceIncrease()
     {
         var state = CreatePriceIncreaseScenario();
-        await state.Process(CancellationToken.None);
-        await state.Process(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
@@ -44,8 +44,8 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     public async Task WithInjuryUpdate()
     {
         var state = CreateNewInjuryScenario();
-        await state.Process(CancellationToken.None);
-        await state.Process(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
@@ -56,8 +56,8 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     public async Task WithNewPlayer()
     {
         var state = CreateNewPlayerScenario();
-        await state.Process(CancellationToken.None);
-        await state.Process(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
@@ -68,8 +68,8 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     public async Task WithChangeInDoubtfulnessEmitsEvent()
     {
         var state = CreateChangeInDoubtfulnessScenario();
-        await state.Process(CancellationToken.None);
-        await state.Process(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
@@ -80,8 +80,8 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     public async Task WithLikelyPriceChange_ShowcasedToPriceChangesSubscriber()
     {
         var state = CreateLikelyPriceChangeScenario();
-        await state.Process(CancellationToken.None);
-        await state.Process(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
@@ -93,14 +93,14 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
     {
         var messageSession = new TestPublishEndpoint();
         var state = CreateTeamChangeScenario(messageSession);
-        await state.Process(CancellationToken.None);
-        await state.Process(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
+        await state.Tick(CancellationToken.None);
 
         Assert.Single(messageSession.PublishedMessages);
         Assert.IsType<PremiershipPlayerTransferred>(messageSession.PublishedMessages[0].Message);
     }
 
-    private static PlayerUpdatesRecurringAction CreateTeamChangeScenario(TestPublishEndpoint messageSession)
+    private static PlayerUpdatesMonitor CreateTeamChangeScenario(TestPublishEndpoint messageSession)
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
@@ -119,10 +119,10 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
                 ]
             });
 
-        return new PlayerUpdatesRecurringAction(settingsClient, new TestScopeFactory(messageSession), NullLogger<PlayerUpdatesRecurringAction>.Instance);
+        return new PlayerUpdatesMonitor(settingsClient, new TestScopeFactory(messageSession), NullLogger<PlayerUpdatesMonitor>.Instance);
     }
 
-    private PlayerUpdatesRecurringAction CreateNewInjuryScenario()
+    private PlayerUpdatesMonitor CreateNewInjuryScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
@@ -152,7 +152,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private PlayerUpdatesRecurringAction CreateChangeInDoubtfulnessScenario()
+    private PlayerUpdatesMonitor CreateChangeInDoubtfulnessScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
@@ -182,7 +182,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private PlayerUpdatesRecurringAction CreateNewPlayerScenario()
+    private PlayerUpdatesMonitor CreateNewPlayerScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
@@ -213,7 +213,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private PlayerUpdatesRecurringAction CreatePriceIncreaseScenario()
+    private PlayerUpdatesMonitor CreatePriceIncreaseScenario()
     {
         var playerClient = GlobalSettingsClientBuilder.Returning(new GlobalSettings
         {
@@ -243,7 +243,7 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         return CreatePlayerBaseScenario(playerClient);
     }
 
-    private PlayerUpdatesRecurringAction CreateLikelyPriceChangeScenario()
+    private PlayerUpdatesMonitor CreateLikelyPriceChangeScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(
             new GlobalSettings
@@ -260,6 +260,6 @@ public class PlayerEventPublishingE2ETests(AppFixture fixture) : IAsyncLifetime
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>
-        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<PlayerUpdatesRecurringAction>.Instance);
+    private PlayerUpdatesMonitor CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>
+        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<PlayerUpdatesMonitor>.Instance);
 }

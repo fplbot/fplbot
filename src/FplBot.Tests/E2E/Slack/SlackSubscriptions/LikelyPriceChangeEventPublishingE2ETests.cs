@@ -1,7 +1,7 @@
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
-using Fpl.EventPublishers.RecurringActions;
+using Fpl.EventPublishers.States;
 using FplBot.Data.Slack;
 using FplBot.Domain;
 using FplBot.Tests.Helpers;
@@ -30,8 +30,8 @@ public class LikelyPriceChangeEventPublishingE2ETests(AppFixture fixture) : IAsy
     public async Task WithLikelyPriceChange_FiresOnceOnBecomingVeryLikely()
     {
         var state = CreateLikelyPriceChangeScenario();
-        await state.Process(CancellationToken.None); // init: seeds baseline
-        await state.Process(CancellationToken.None); // becomes very likely: notifies
+        await state.Tick(CancellationToken.None); // init: seeds baseline
+        await state.Tick(CancellationToken.None); // becomes very likely: notifies
 
         var msg = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Equal(Channel, msg.Channel);
@@ -42,12 +42,12 @@ public class LikelyPriceChangeEventPublishingE2ETests(AppFixture fixture) : IAsy
     public async Task WithLikelyPriceChange_DoesNotRepeatWhileStillVeryLikely()
     {
         var state = CreateLikelyPriceChangeScenario();
-        await state.Process(CancellationToken.None); // init
-        await state.Process(CancellationToken.None); // becomes very likely: notifies
+        await state.Tick(CancellationToken.None); // init
+        await state.Tick(CancellationToken.None); // becomes very likely: notifies
         await fixture.SlackCapture.WaitForMessageAsync(Channel);
 
         fixture.SlackCapture.Reset();
-        await state.Process(CancellationToken.None); // still very likely on the next poll: should NOT notify again
+        await state.Tick(CancellationToken.None); // still very likely on the next poll: should NOT notify again
 
         await fixture.WaitUntilBusIdle();
         Assert.False(fixture.SlackCapture.AnyMessage());
@@ -57,25 +57,25 @@ public class LikelyPriceChangeEventPublishingE2ETests(AppFixture fixture) : IAsy
     public async Task WithLikelyPriceChange_RenotifiesAfterMomentumResetsToNeutral()
     {
         var state = CreateRearmingLikelyPriceChangeScenario();
-        await state.Process(CancellationToken.None); // init: seeds baseline
-        await state.Process(CancellationToken.None); // becomes very likely: notifies
+        await state.Tick(CancellationToken.None); // init: seeds baseline
+        await state.Tick(CancellationToken.None); // becomes very likely: notifies
 
         var first = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Contains("PlayerWebname", first.Text);
 
         fixture.SlackCapture.Reset();
-        await state.Process(CancellationToken.None); // momentum resets to neutral: should NOT notify
+        await state.Tick(CancellationToken.None); // momentum resets to neutral: should NOT notify
 
         await fixture.WaitUntilBusIdle();
         Assert.False(fixture.SlackCapture.AnyMessage());
 
-        await state.Process(CancellationToken.None); // becomes very likely again: notifies once more
+        await state.Tick(CancellationToken.None); // becomes very likely again: notifies once more
 
         var second = await fixture.SlackCapture.WaitForMessageAsync(Channel);
         Assert.Contains("PlayerWebname", second.Text);
     }
 
-    private PlayerUpdatesRecurringAction CreateLikelyPriceChangeScenario()
+    private PlayerUpdatesMonitor CreateLikelyPriceChangeScenario()
     {
         var settingsClient = GlobalSettingsClientBuilder.Returning(
             new GlobalSettings
@@ -92,7 +92,7 @@ public class LikelyPriceChangeEventPublishingE2ETests(AppFixture fixture) : IAsy
         return CreatePlayerBaseScenario(settingsClient);
     }
 
-    private PlayerUpdatesRecurringAction CreateRearmingLikelyPriceChangeScenario()
+    private PlayerUpdatesMonitor CreateRearmingLikelyPriceChangeScenario()
     {
         var baseline = new GlobalSettings
         {
@@ -110,7 +110,7 @@ public class LikelyPriceChangeEventPublishingE2ETests(AppFixture fixture) : IAsy
             Players = [TestBuilder.Player().WithNextPriceChangeLikelihood(0)]
         };
 
-        // PlayerUpdatesRecurringAction calls GetGlobalSettings() twice per non-init Process() call — once
+        // PlayerUpdatesMonitor calls GetGlobalSettings() twice per non-init Process() call — once
         // to check whether it still holds initial state (discarded once state exists), once more for the
         // actual "after" snapshot used in the diff — so each logical poll after the first needs its value
         // returned twice in a row to keep both calls within that poll consistent.
@@ -127,6 +127,6 @@ public class LikelyPriceChangeEventPublishingE2ETests(AppFixture fixture) : IAsy
         return CreatePlayerBaseScenario(fake);
     }
 
-    private PlayerUpdatesRecurringAction CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>
-        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<PlayerUpdatesRecurringAction>.Instance);
+    private PlayerUpdatesMonitor CreatePlayerBaseScenario(IGlobalSettingsClient playerClient) =>
+        new(playerClient, fixture.Services.GetRequiredService<IServiceScopeFactory>(), NullLogger<PlayerUpdatesMonitor>.Instance);
 }
