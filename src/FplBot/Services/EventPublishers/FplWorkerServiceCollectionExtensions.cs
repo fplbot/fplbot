@@ -19,6 +19,7 @@ public static class FplWorkerServiceCollectionExtensions
         services.AddPulseLiveClient();
         services.AddSingleton<NearDeadLineMonitor>();
         services.AddSingleton<GameweekLifecycleMonitor>();
+        services.AddSingleton<PlayerUpdatesMonitor>();
         services.AddRecurrer<GameweekLifecycleRecurringAction>()
             .AddRecurrer<NearDeadlineRecurringAction>()
             .AddRecurrer<PlayerUpdatesRecurringAction>();
