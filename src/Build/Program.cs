@@ -113,11 +113,19 @@ targets.Add("vapid-keys",
 
 targets.Add("publish-slash-command-test",
     "Register or update one Discord slash command in one guild of the test app's Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
-    async () => await PublishSlashCommand(TestApp));
+    async () => await PublishSlashCommand(TestApp, guild: Env("GUILD_ID", "")));
 
 targets.Add("publish-slash-command-prod",
     "Register or update one Discord slash command in one guild of the prod Discord application (SLASH_COMMAND=<name> GUILD_ID=<id>, requires HEROKU_API_KEY)",
-    async () => await PublishSlashCommand(ProdApp));
+    async () => await PublishSlashCommand(ProdApp, guild: Env("GUILD_ID", "")));
+
+targets.Add("publish-slash-command-global-test",
+    "Register or update one Discord slash command globally on the test app's Discord application — propagates to every guild within ~1 hour (SLASH_COMMAND=<name>, requires HEROKU_API_KEY)",
+    async () => await PublishSlashCommand(TestApp, guild: null));
+
+targets.Add("publish-slash-command-global-prod",
+    "Register or update one Discord slash command globally on the prod app's Discord application — propagates to every guild within ~1 hour (SLASH_COMMAND=<name>, requires HEROKU_API_KEY)",
+    async () => await PublishSlashCommand(ProdApp, guild: null));
 
 await targets.RunAndExitAsync(args);
 
@@ -350,7 +358,7 @@ async Task BackfillInternalIds(string app)
     Console.WriteLine($"Backfilled internal ids on {app}: {mintedIds} id(s) minted, {indexed} reverse index entrie(s) written");
 }
 
-async Task PublishSlashCommand(string app)
+async Task PublishSlashCommand(string app, string? guild)
 {
     var name = Env("SLASH_COMMAND", "");
     var commands = SlashCommands();
@@ -359,8 +367,7 @@ async Task PublishSlashCommand(string app)
         throw new Exception($"Set SLASH_COMMAND to one of: {string.Join(", ", commands.Keys)}");
     }
 
-    var guild = Env("GUILD_ID", "");
-    if (guild.Length == 0)
+    if (guild is { Length: 0 })
     {
         throw new Exception("Set GUILD_ID to the guild to publish the command to");
     }
@@ -368,9 +375,14 @@ async Task PublishSlashCommand(string app)
     var (appId, _) = await Command.ReadAsync("heroku", $"config:get DiscordAppId --app {app}");
     var (token, _) = await Command.ReadAsync("heroku", $"config:get DISCORD_TOKEN --app {app}");
 
+    // A global create/update (no guild segment) upserts by command name — Discord's own docs:
+    // "Creating a command with the same name as an existing command for your application will
+    // overwrite the old command." Same behavior applies per-guild, scoped to that guild.
+    var scope = guild == null ? "commands" : $"guilds/{guild}/commands";
+
     using var http = new HttpClient();
     http.DefaultRequestHeaders.Add("Authorization", $"Bot {token.Trim()}");
-    var response = await http.PostAsync($"https://discord.com/api/v10/applications/{appId.Trim()}/guilds/{guild}/commands",
+    var response = await http.PostAsync($"https://discord.com/api/v10/applications/{appId.Trim()}/{scope}",
         new StringContent(JsonSerializer.Serialize(command), Encoding.UTF8, "application/json"));
     var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -379,7 +391,9 @@ async Task PublishSlashCommand(string app)
         throw new Exception($"Discord rejected /{name} ({(int)response.StatusCode}): {responseBody}");
     }
 
-    Console.WriteLine($"Published /{name} to guild {guild} of {app}'s Discord application.");
+    Console.WriteLine(guild == null
+        ? $"Published /{name} globally on {app}'s Discord application — allow up to ~1 hour to propagate to every guild."
+        : $"Published /{name} to guild {guild} of {app}'s Discord application.");
 }
 
 Dictionary<string, object> SlashCommands()
@@ -392,7 +406,7 @@ Dictionary<string, object> SlashCommands()
     [
         "All", "Standings", "Captains", "Transfers", "FixtureGoals", "FixtureAssists", "FixtureCards",
         "FixturePenaltyMisses", "FixtureFullTime", "Taunts", "PriceChanges", "InjuryUpdates",
-        "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek"
+        "Deadlines", "Lineups", "NewPlayers", "FixtureRemovedFromGameweek", "LikelyPriceChanges"
     ];
 
     object EventChoices() => new

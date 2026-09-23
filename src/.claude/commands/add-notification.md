@@ -173,6 +173,16 @@ This is manual because `DiscordSlashCommandsEnsurer` is only ever invoked from t
 endpoints (`POST /api/admin/discord/slashcommands/install[-global]`) — there's no hook that calls it
 on deploy.
 
+Equivalent Bullseye targets exist if you'd rather not use the admin UI — `SLASH_COMMAND` has to be
+one of the hardcoded command names (`SlashCommands()` in `Build/Program.cs`, a manually-synced copy
+of `EventSubscription` since `Build.csproj` doesn't reference `FplBot` — keep that array in sync too
+when adding a value):
+
+```bash
+SLASH_COMMAND=subscriptions GUILD_ID=<test-guild-id> dotnet run --project src/Build -- publish-slash-command-test
+SLASH_COMMAND=subscriptions dotnet run --project src/Build -- publish-slash-command-global-prod
+```
+
 ## Verify
 
 ```bash
