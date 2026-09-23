@@ -219,6 +219,11 @@ it. The two are converted by name (`Enum.Parse<FplEvent>(e.ToString())`), so the
 value-for-value identical — **adding a notification means adding the value to both**. It also backs
 the `StatType` → subscription mapping helpers under `Services/EventHandlers/*/Helpers/`.
 
+Adding a value here does not update Discord's own stored copy of the `/subscriptions` command —
+that only refreshes when someone re-pushes it via `/admin` → Discord slash commands ("Install to
+test guild" to verify, then "Install globally"; global propagation can take up to ~1 hour). Nothing
+does this automatically on deploy or app startup.
+
 Everything past the command boundary — repositories, `ChannelSubscription`, event handlers — uses
 `Domain/FplEvent.cs`.
 
