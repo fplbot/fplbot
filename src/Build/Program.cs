@@ -58,14 +58,20 @@ targets.Add("docker-push-prod",
     async () => await PushImages($"registry.heroku.com/{ProdApp}"));
 
 targets.Add("deploy-test",
-    "Release containers to the test Heroku app (requires HEROKU_API_KEY)",
-    async () => await Command.RunAsync("heroku",
-        $"container:release web eventpublisher indexer eventhandler --app {TestApp}"));
+    "Release containers to the test Heroku app and re-publish the /subscriptions slash command globally (requires HEROKU_API_KEY)",
+    async () =>
+    {
+        await Command.RunAsync("heroku", $"container:release web eventpublisher indexer eventhandler --app {TestApp}");
+        await PublishSlashCommand(TestApp, guild: null, commandName: "subscriptions");
+    });
 
 targets.Add("deploy-prod",
-    "Release containers to the prod Heroku app (requires HEROKU_API_KEY)",
-    async () => await Command.RunAsync("heroku",
-        $"container:release web eventpublisher indexer eventhandler --app {ProdApp}"));
+    "Release containers to the prod Heroku app and re-publish the /subscriptions slash command globally (requires HEROKU_API_KEY)",
+    async () =>
+    {
+        await Command.RunAsync("heroku", $"container:release web eventpublisher indexer eventhandler --app {ProdApp}");
+        await PublishSlashCommand(ProdApp, guild: null, commandName: "subscriptions");
+    });
 
 targets.Add("backup-redis-test",
     "Dump Slack/Discord installation Redis data from the test app to a local JSON file (read-only)",
@@ -358,9 +364,9 @@ async Task BackfillInternalIds(string app)
     Console.WriteLine($"Backfilled internal ids on {app}: {mintedIds} id(s) minted, {indexed} reverse index entrie(s) written");
 }
 
-async Task PublishSlashCommand(string app, string? guild)
+async Task PublishSlashCommand(string app, string? guild, string? commandName = null)
 {
-    var name = Env("SLASH_COMMAND", "");
+    var name = commandName ?? Env("SLASH_COMMAND", "");
     var commands = SlashCommands();
     if (!commands.TryGetValue(name, out var command))
     {

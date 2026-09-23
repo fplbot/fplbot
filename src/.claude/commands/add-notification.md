@@ -155,32 +155,25 @@ If formatting is non-trivial, put it in `FplBot/Services/EventPublishers/Formatt
 - Add an **E2E test** in `FplBot.Tests/E2E/` that drives the publisher (the `RecurringAction` / state class), not a hand-constructed event, and asserts the Slack/Discord message that comes out. Use `AppFixture`, set state up via its real flows (`InstallSlackbot()`, `Subscribe(...)`, `AskSlackbot(...)`), and assert on outcomes — no `A.CallTo()` assertions on internals.
 - Add a formatter unit test in `FplBot.Tests/UnitTests/Formatting/` only if the formatting is worth pinning down in isolation.
 
-### 11. After deploying: push the new Discord slash-command choice
+### 11. No extra step needed for the `/subscriptions` choice itself
 
 Adding a value to `EventSubscription` changes what the *code* would offer, but Discord's own stored
-copy of the `/subscriptions` command's `event` choices doesn't refresh itself — nothing pushes it
-automatically on deploy or app startup. Until someone does, the new value is live everywhere
-*except* that dropdown, which silently keeps showing the old list.
+copy of the `/subscriptions` command's `event` choices doesn't refresh on its own. That refresh is
+handled for you, though: the `deploy-test`/`deploy-prod` Bullseye targets re-publish `/subscriptions`
+globally as their last step, right after releasing containers — so once your deploy goes out, no
+manual push is required. Discord can still take **up to ~1 hour** to propagate a global command
+update to every guild — don't assume it's broken if it's not visible immediately.
 
-Once the deploy has gone out (the running app needs the new enum value compiled in first):
-1. Go to `/admin` → **Discord slash commands**.
-2. Click **"Install to test guild"** first to sanity-check the new choice looks right (guild-scoped,
-   shows up within seconds).
-3. Click **"Install globally"** for it to reach every guild. Discord can take **up to ~1 hour** to
-   propagate a global command update — don't assume it's broken if it's not there immediately.
+Keep `SlashCommands()`'s hardcoded event list in `Build/Program.cs` in sync when adding a value —
+it's a manually-synced mirror of `EventSubscription` since `Build.csproj` doesn't reference `FplBot`.
 
-This is manual because `DiscordSlashCommandsEnsurer` is only ever invoked from those two admin
-endpoints (`POST /api/admin/discord/slashcommands/install[-global]`) — there's no hook that calls it
-on deploy.
-
-Equivalent Bullseye targets exist if you'd rather not use the admin UI — `SLASH_COMMAND` has to be
-one of the hardcoded command names (`SlashCommands()` in `Build/Program.cs`, a manually-synced copy
-of `EventSubscription` since `Build.csproj` doesn't reference `FplBot` — keep that array in sync too
-when adding a value):
+This auto-publish only covers `/subscriptions`. If you ever change one of the *other* commands
+(`help`, `follow`, `standings` — name, description, or options), that still needs a manual push, via
+`/admin` → Discord slash commands, or:
 
 ```bash
-SLASH_COMMAND=subscriptions GUILD_ID=<test-guild-id> dotnet run --project src/Build -- publish-slash-command-test
-SLASH_COMMAND=subscriptions dotnet run --project src/Build -- publish-slash-command-global-prod
+SLASH_COMMAND=<name> GUILD_ID=<test-guild-id> dotnet run --project src/Build -- publish-slash-command-test
+SLASH_COMMAND=<name> dotnet run --project src/Build -- publish-slash-command-global-prod
 ```
 
 ## Verify
