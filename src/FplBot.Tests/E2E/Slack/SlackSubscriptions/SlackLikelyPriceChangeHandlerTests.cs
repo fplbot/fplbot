@@ -34,9 +34,22 @@ public class SlackLikelyPriceChangeHandlerTests(AppFixture fixture, ITestOutputH
     }
 
     [Fact]
-    public async Task LikelyPriceChange_WorkspaceSubscribedToPriceChangesOnly_StillReceivesAsShowcase()
+    public async Task LikelyPriceChange_WorkspaceSubscribedToPriceChangesOnly_NoSlackMessage()
     {
         await SeedTeam(_teamId!, "#prices", FplEvent.PriceChanges);
+
+        await fixture.Bus.Publish(new PlayersLikelyToChangePrice([
+            new PlayerLikelyPriceChange(1, "Haaland", 145, 11, "MCI", "123.2", 5)
+        ]), TestContext.Current.CancellationToken);
+
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.SlackCapture.AnyMessage());
+    }
+
+    [Fact]
+    public async Task LikelyPriceChange_WorkspaceSubscribedToAll_ReceivesSlackMessage()
+    {
+        await SeedTeam(_teamId!, "#prices", FplEvent.All);
 
         await fixture.Bus.Publish(new PlayersLikelyToChangePrice([
             new PlayerLikelyPriceChange(1, "Haaland", 145, 11, "MCI", "123.2", 5)

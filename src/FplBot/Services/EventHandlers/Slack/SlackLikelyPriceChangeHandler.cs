@@ -21,8 +21,7 @@ public class SlackLikelyPriceChangeHandler(ISlackTeamRepository slackTeamRepo, I
         if (string.IsNullOrEmpty(formatted))
             return;
 
-        // Also shown to existing PriceChanges subscribers for now, as a showcase — remove once the audience has grown.
-        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.LikelyPriceChanges, FplEvent.PriceChanges);
+        var subscribedChannels = await slackTeamRepo.GetChannelsSubscribedTo(FplEvent.LikelyPriceChanges);
         foreach (var (teamId, channelId) in subscribedChannels)
         {
             await context.Publish(new PublishToSlack(teamId, channelId, formatted));
