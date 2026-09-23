@@ -21,8 +21,7 @@ public class DiscordLikelyPriceChangeHandler(IGuildRepository repo, ILogger<Disc
         if (string.IsNullOrEmpty(formatted))
             return;
 
-        // Also shown to existing PriceChanges subscribers for now, as a showcase — remove once the audience has grown.
-        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.LikelyPriceChanges, FplEvent.PriceChanges);
+        var subscribedChannels = await repo.GetChannelsSubscribedTo(FplEvent.LikelyPriceChanges);
         foreach (var (guildId, channelId) in subscribedChannels)
         {
             await context.Publish(new PublishRichToGuildChannel(guildId, channelId, "🔮 Likely price changes", formatted));

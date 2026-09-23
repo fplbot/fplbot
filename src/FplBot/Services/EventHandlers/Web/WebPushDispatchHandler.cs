@@ -56,10 +56,9 @@ public class WebPushDispatchHandler(
     public Task Consume(ConsumeContext<PlayersLikelyToChangePrice> context)
     {
         var players = context.Message.Players;
-        // Also shown to existing PriceChanges subscribers for now, as a showcase — remove once the audience has grown.
         return players.Count == 0
             ? Task.CompletedTask
-            : Dispatch(context, [FplEvent.LikelyPriceChanges, FplEvent.PriceChanges], ("🔮 Likely price changes", Formatter.FormatLikelyPriceChanges(players, markdown: false)));
+            : Dispatch(context, FplEvent.LikelyPriceChanges, ("🔮 Likely price changes", Formatter.FormatLikelyPriceChanges(players, markdown: false)));
     }
 
     public Task Consume(ConsumeContext<TwentyFourHoursToDeadline> context) =>

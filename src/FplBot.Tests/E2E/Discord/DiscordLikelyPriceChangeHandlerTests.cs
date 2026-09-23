@@ -29,9 +29,22 @@ public class DiscordLikelyPriceChangeHandlerTests(AppFixture fixture) : IAsyncLi
     }
 
     [Fact]
-    public async Task WhenChannelSubscribedToPriceChangesOnly_StillPostsAsShowcase()
+    public async Task WhenChannelSubscribedToPriceChangesOnly_DoesNotPost()
     {
-        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+
+        await fixture.Bus.Publish(new PlayersLikelyToChangePrice([
+            new PlayerLikelyPriceChange(1, "Haaland", 145, 11, "MCI", "123.2", 5)
+        ]), TestContext.Current.CancellationToken);
+
+        await fixture.WaitUntilBusIdle();
+        Assert.False(fixture.DiscordCapture.AnyMessage());
+    }
+
+    [Fact]
+    public async Task WhenChannelSubscribedToAll_PostsFormattedLikelyPriceChange()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.All]);
         var channelId = installedGuild.ChannelSubscriptions.First().ChannelId;
 
         await fixture.Bus.Publish(new PlayersLikelyToChangePrice([
