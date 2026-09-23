@@ -155,6 +155,24 @@ If formatting is non-trivial, put it in `FplBot/Services/EventPublishers/Formatt
 - Add an **E2E test** in `FplBot.Tests/E2E/` that drives the publisher (the `RecurringAction` / state class), not a hand-constructed event, and asserts the Slack/Discord message that comes out. Use `AppFixture`, set state up via its real flows (`InstallSlackbot()`, `Subscribe(...)`, `AskSlackbot(...)`), and assert on outcomes — no `A.CallTo()` assertions on internals.
 - Add a formatter unit test in `FplBot.Tests/UnitTests/Formatting/` only if the formatting is worth pinning down in isolation.
 
+### 11. After deploying: push the new Discord slash-command choice
+
+Adding a value to `EventSubscription` changes what the *code* would offer, but Discord's own stored
+copy of the `/subscriptions` command's `event` choices doesn't refresh itself — nothing pushes it
+automatically on deploy or app startup. Until someone does, the new value is live everywhere
+*except* that dropdown, which silently keeps showing the old list.
+
+Once the deploy has gone out (the running app needs the new enum value compiled in first):
+1. Go to `/admin` → **Discord slash commands**.
+2. Click **"Install to test guild"** first to sanity-check the new choice looks right (guild-scoped,
+   shows up within seconds).
+3. Click **"Install globally"** for it to reach every guild. Discord can take **up to ~1 hour** to
+   propagate a global command update — don't assume it's broken if it's not there immediately.
+
+This is manual because `DiscordSlashCommandsEnsurer` is only ever invoked from those two admin
+endpoints (`POST /api/admin/discord/slashcommands/install[-global]`) — there's no hook that calls it
+on deploy.
+
 ## Verify
 
 ```bash
