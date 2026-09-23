@@ -159,10 +159,12 @@ If formatting is non-trivial, put it in `FplBot/Services/EventPublishers/Formatt
 
 Adding a value to `EventSubscription` changes what the *code* would offer, but Discord's own stored
 copy of the `/subscriptions` command's `event` choices doesn't refresh on its own. That refresh is
-handled for you, though: the `deploy-test`/`deploy-prod` Bullseye targets re-publish `/subscriptions`
-globally as their last step, right after releasing containers — so once your deploy goes out, no
-manual push is required. Discord can still take **up to ~1 hour** to propagate a global command
-update to every guild — don't assume it's broken if it's not visible immediately.
+handled for you, though: `deploy-test`/`deploy-prod` (`Build/Program.cs`) depend on their own
+`publish-subscriptions-global-{test,prod}` target, so one `dotnet run --project src/Build --
+deploy-test`/`deploy-prod` invocation both re-publishes `/subscriptions` globally and releases
+containers — no manual push required once your deploy goes out. Discord can still take **up to
+~1 hour** to propagate a global command update to every guild — don't assume it's broken if it's not
+visible immediately.
 
 Keep `SlashCommands()`'s hardcoded event list in `Build/Program.cs` in sync when adding a value —
 it's a manually-synced mirror of `EventSubscription` since `Build.csproj` doesn't reference `FplBot`.

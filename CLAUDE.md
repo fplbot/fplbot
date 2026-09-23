@@ -220,9 +220,10 @@ value-for-value identical — **adding a notification means adding the value to 
 the `StatType` → subscription mapping helpers under `Services/EventHandlers/*/Helpers/`.
 
 Adding a value here does not update Discord's own stored copy of the `/subscriptions` command by
-itself — but `deploy-test`/`deploy-prod` (`Build/Program.cs`) re-publish it globally as their last
-step after every deploy, so no manual push is needed once the deploy goes out. Global propagation
-can still take up to ~1 hour. (Other slash commands — `help`, `follow`, `standings` — aren't
+itself — but `deploy-test`/`deploy-prod` (`Build/Program.cs`) depend on
+`publish-subscriptions-global-{test,prod}`, so one deploy invocation both releases containers and
+re-publishes it globally — no manual push needed once the deploy goes out. Global propagation can
+still take up to ~1 hour. (Other slash commands — `help`, `follow`, `standings` — aren't
 auto-published; changing those still needs a manual push via `/admin` or `publish-slash-command-*`.)
 
 Everything past the command boundary — repositories, `ChannelSubscription`, event handlers — uses

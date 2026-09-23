@@ -57,21 +57,25 @@ targets.Add("docker-push-prod",
     "Retag and push local images to the Heroku prod registry (requires HEROKU_TOKEN)",
     async () => await PushImages($"registry.heroku.com/{ProdApp}"));
 
+targets.Add("publish-subscriptions-global-test",
+    "Re-publish the /subscriptions slash command globally on the test app's Discord application (requires HEROKU_API_KEY)",
+    async () => await PublishSlashCommand(TestApp, guild: null, commandName: "subscriptions"));
+
+targets.Add("publish-subscriptions-global-prod",
+    "Re-publish the /subscriptions slash command globally on the prod app's Discord application (requires HEROKU_API_KEY)",
+    async () => await PublishSlashCommand(ProdApp, guild: null, commandName: "subscriptions"));
+
 targets.Add("deploy-test",
     "Release containers to the test Heroku app and re-publish the /subscriptions slash command globally (requires HEROKU_API_KEY)",
-    async () =>
-    {
-        await Command.RunAsync("heroku", $"container:release web eventpublisher indexer eventhandler --app {TestApp}");
-        await PublishSlashCommand(TestApp, guild: null, commandName: "subscriptions");
-    });
+    dependsOn: ["publish-subscriptions-global-test"],
+    async () => await Command.RunAsync("heroku",
+        $"container:release web eventpublisher indexer eventhandler --app {TestApp}"));
 
 targets.Add("deploy-prod",
     "Release containers to the prod Heroku app and re-publish the /subscriptions slash command globally (requires HEROKU_API_KEY)",
-    async () =>
-    {
-        await Command.RunAsync("heroku", $"container:release web eventpublisher indexer eventhandler --app {ProdApp}");
-        await PublishSlashCommand(ProdApp, guild: null, commandName: "subscriptions");
-    });
+    dependsOn: ["publish-subscriptions-global-prod"],
+    async () => await Command.RunAsync("heroku",
+        $"container:release web eventpublisher indexer eventhandler --app {ProdApp}"));
 
 targets.Add("backup-redis-test",
     "Dump Slack/Discord installation Redis data from the test app to a local JSON file (read-only)",
