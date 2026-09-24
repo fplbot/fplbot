@@ -155,6 +155,29 @@ If formatting is non-trivial, put it in `FplBot/Services/EventPublishers/Formatt
 - Add an **E2E test** in `FplBot.Tests/E2E/` that drives the publisher (the `RecurringAction` / state class), not a hand-constructed event, and asserts the Slack/Discord message that comes out. Use `AppFixture`, set state up via its real flows (`InstallSlackbot()`, `Subscribe(...)`, `AskSlackbot(...)`), and assert on outcomes — no `A.CallTo()` assertions on internals.
 - Add a formatter unit test in `FplBot.Tests/UnitTests/Formatting/` only if the formatting is worth pinning down in isolation.
 
+### 11. No extra step needed for the `/subscriptions` choice itself
+
+Adding a value to `EventSubscription` changes what the *code* would offer, but Discord's own stored
+copy of the `/subscriptions` command's `event` choices doesn't refresh on its own. That refresh is
+handled for you, though: `deploy-test`/`deploy-prod` (`Build/Program.cs`) depend on their own
+`publish-subscriptions-global-{test,prod}` target, so one `dotnet run --project src/Build --
+deploy-test`/`deploy-prod` invocation both re-publishes `/subscriptions` globally and releases
+containers — no manual push required once your deploy goes out. Discord can still take **up to
+~1 hour** to propagate a global command update to every guild — don't assume it's broken if it's not
+visible immediately.
+
+Keep `SlashCommands()`'s hardcoded event list in `Build/Program.cs` in sync when adding a value —
+it's a manually-synced mirror of `EventSubscription` since `Build.csproj` doesn't reference `FplBot`.
+
+This auto-publish only covers `/subscriptions`. If you ever change one of the *other* commands
+(`help`, `follow`, `standings` — name, description, or options), that still needs a manual push, via
+`/admin` → Discord slash commands, or:
+
+```bash
+SLASH_COMMAND=<name> GUILD_ID=<test-guild-id> dotnet run --project src/Build -- publish-slash-command-test
+SLASH_COMMAND=<name> dotnet run --project src/Build -- publish-slash-command-global-prod
+```
+
 ## Verify
 
 ```bash
