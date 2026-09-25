@@ -18,6 +18,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         fixture.DiscordCapture.Reset();
         fixture.ResetChannelOutcomes();
+        fixture.SlackCapture.Reset();
         await fixture.FlushRedisAsync();
     }
 
@@ -288,6 +289,10 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         response.EnsureSuccessStatusCode();
         await AppFixture.WaitUntil(async () => await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId) is null);
         Assert.True(fixture.DiscordCapture.LeftGuild(installedGuild.ExternalId));
+
+        // Drain the async ops-notification side effect so it can't leak into a later,
+        // unrelated test sharing this fixture's SlackCapture.
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]
@@ -300,6 +305,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         response.EnsureSuccessStatusCode();
         await AppFixture.WaitUntil(async () => await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId) is null);
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]
@@ -312,6 +318,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         response.EnsureSuccessStatusCode();
         await AppFixture.WaitUntil(async () => !(await fixture.GuildMemberCountRepo.GetAll()).ContainsKey(installedGuild.ExternalId));
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]
