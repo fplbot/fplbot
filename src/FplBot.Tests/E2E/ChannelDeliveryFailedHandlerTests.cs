@@ -43,6 +43,49 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
     }
 
     [Fact]
+    public async Task DiscordFailuresPastBothThresholds_WhenLastSubscriptionPurged_UninstallsGuildAndClearsMemberCount()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var channelId = guild.ChannelSubscriptions.First().ChannelId;
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(guild.ExternalId, 500);
+
+        for (var day = 0; day < 5; day++)
+        {
+            var consumedBefore = fixture.ConsumedSoFar;
+            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, channelId, "50001", Day0.AddDays(day * 2)),
+                TestContext.Current.CancellationToken);
+            await fixture.WaitUntilBusIdle(consumedBefore);
+        }
+
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.FindInstallationByTeamId(guild.ExternalId) is null);
+
+        var counts = await fixture.GuildMemberCountRepo.GetAll();
+        Assert.False(counts.ContainsKey(guild.ExternalId));
+    }
+
+    [Fact]
+    public async Task DiscordFailuresPastBothThresholds_WhenSiblingChannelSurvives_GuildStaysInstalled()
+    {
+        var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);
+        var failingChannel = guild.ChannelSubscriptions.First().ChannelId;
+        var healthyChannel = "healthy-" + Guid.NewGuid().ToString("N");
+        guild.Subscribe(healthyChannel, [FplEvent.PriceChanges]);
+        await fixture.GuildRepo.Save(guild);
+
+        for (var day = 0; day < 5; day++)
+        {
+            var consumedBefore = fixture.ConsumedSoFar;
+            await fixture.Bus.Publish(new DiscordChannelDeliveryFailed(guild.ExternalId, failingChannel, "50001", Day0.AddDays(day * 2)),
+                TestContext.Current.CancellationToken);
+            await fixture.WaitUntilBusIdle(consumedBefore);
+        }
+
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, failingChannel) is null);
+
+        Assert.NotNull(await fixture.GuildRepo.FindInstallationByTeamId(guild.ExternalId));
+    }
+
+    [Fact]
     public async Task DiscordFailures_LeaveSiblingChannelsUntouched()
     {
         var guild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.PriceChanges]);

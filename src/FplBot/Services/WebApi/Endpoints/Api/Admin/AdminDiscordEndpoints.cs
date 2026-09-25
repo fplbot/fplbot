@@ -247,9 +247,10 @@ public static class AdminDiscordEndpoints
     private const int TargetSizeBucketCount = 6;
 
     // Powers the guild-size-distribution bar chart on the dashboard. "Not yet counted" covers
-    // guilds with no stored ApproximateMemberCount (never swept) - clamped at 0 in case a guild
-    // was deleted without its lingering member-count entry being cleaned up (DeleteGuild doesn't
-    // touch GuildMemberCountRepository today). The size buckets themselves are computed from the
+    // guilds with no stored ApproximateMemberCount (never swept) - clamped at 0 as a defensive
+    // floor in case a guild's member-count entry is ever orphaned (UninstallGuildHandler cleans
+    // it up on every removal path today, so this should no longer happen in practice). The size
+    // buckets themselves are computed from the
     // actual spread of counted guilds rather than fixed thresholds - guild sizes are expected to
     // be power-law-like (many small servers, a long tail of large ones), and a fixed linear scale
     // would either bury the small end in one bucket or waste bars on an empty large end depending
@@ -755,35 +756,19 @@ public static class AdminDiscordEndpoints
         return TypedResults.Ok(new { message = $"Deleted {count} subscription(s) for guild {guildId}" });
     }
 
-    // Removes the guild itself and every channel subscription under it, and takes the bot out of
-    // the server on the way — an admin uninstall that only forgot our own data would leave the bot
-    // sitting in the member list of a server we no longer track. Leaving is best-effort: the usual
-    // reason a guild gets removed is that the bot was kicked already, which is also the case
-    // GuildStatusChecker handles automatically, and Discord answers that with a 4xx.
+    // Just publishes - the actual removal (leaving the guild, deleting the installation, clearing
+    // its GuildMemberCountRepository entry) happens in UninstallGuildHandler, the same consumer the
+    // auto-purge path (RemoveStaleServerHandler) uses once a guild's last channel subscription is
+    // purged for delivery failures. One canonical uninstall path for both triggers.
     internal static async Task<IResult> DeleteGuild(
         string installationId,
         IIdentityResolver resolver,
-        IGuildRepository repo,
-        IDiscordClient discordClient,
-        ILogger<Program> logger)
+        IPublishEndpoint publishEndpoint)
     {
         if (await ResolveGuildId(resolver, installationId) is not { } guildId) return TypedResults.NotFound();
 
-        try
-        {
-            await discordClient.GuildLeave(guildId);
-        }
-        catch (Exception e)
-        {
-            logger.LogWarning(e, "Could not leave guild {GuildId}, deleting it anyway", guildId);
-        }
+        await publishEndpoint.Publish(new UninstallGuild(guildId, UninstallReason.AdminDeleted));
 
-        var installation = await repo.FindInstallationByTeamId(guildId);
-        if (installation is not null)
-        {
-            await repo.Delete(installation);
-        }
-
-        return TypedResults.Ok(new { message = $"Deleted guild {guildId}" });
+        return TypedResults.Accepted($"/api/admin/discord/guilds/{installationId}", new { message = $"Uninstall queued for guild {guildId}" });
     }
 }

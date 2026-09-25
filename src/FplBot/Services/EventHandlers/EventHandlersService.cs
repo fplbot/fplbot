@@ -47,6 +47,8 @@ public class EventHandlersService : WorkerFplBotService
         cfg.AddConsumer<ChannelMovedHandler>();
         cfg.AddConsumer<RefreshDiscordReachStatsHandler>();
         cfg.AddConsumer<RefreshGuildMemberCountHandler>();
+        cfg.AddConsumer<RemoveStaleServerHandler>();
+        cfg.AddConsumer<UninstallGuildHandler>();
         cfg.AddConsumer<RefreshSlackReachStatsHandler>();
         cfg.AddConsumer<RefreshChannelMemberCountHandler>();
         cfg.AddConsumer<BroadcastHandler>();

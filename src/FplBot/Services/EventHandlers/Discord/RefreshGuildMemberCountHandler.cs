@@ -7,7 +7,9 @@ namespace FplBot.EventHandlers.Discord;
 
 // A fetch failure just skips this guild for this sweep - it keeps its last-known (or no) count
 // until the next successful sweep. Guild reachability/removal is handled entirely by
-// DiscordChannelDeliveryFailedHandler's failure-count cleanup, not here.
+// DiscordChannelDeliveryFailedHandler's failure-count cleanup (which, once a guild's last channel
+// subscription is purged, cascades through PurgedLastSubscriptionForServer -> RemoveStaleServerHandler
+// -> UninstallGuild -> UninstallGuildHandler), not here.
 public class RefreshGuildMemberCountHandler(
     IGuildMemberCountRepository guildMemberCountRepo,
     DiscordClient discordClient,
