@@ -141,6 +141,50 @@ public class AdminWebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PutEntry_AdminCanLinkAnEntry()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/entry", new { entryId = 789 });
+        response.EnsureSuccessStatusCode();
+        var subscriber = await AppFixture.ReadJson<SubscriberDetailDto>(response);
+
+        Assert.Equal(789, subscriber.EntryId);
+        Assert.Equal(123, subscriber.LeagueId);
+    }
+
+    [Fact]
+    public async Task PutEntry_Null_UnlinksTheEntryOnly()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, entryId: 456);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/entry", new { entryId = (long?)null });
+        response.EnsureSuccessStatusCode();
+        var subscriber = await AppFixture.ReadJson<SubscriberDetailDto>(response);
+
+        Assert.Null(subscriber.EntryId);
+        Assert.Equal(123, subscriber.LeagueId);
+    }
+
+    [Fact]
+    public async Task PutEntry_InvalidEntryId_ReturnsBadRequest()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.Put($"/api/admin/web/subscribers/{subscriberId}/entry", new { entryId = 0 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEntry_UnknownSubscriber_ReturnsNotFound()
+    {
+        var response = await fixture.Put("/api/admin/web/subscribers/nope/entry", new { entryId = 456 });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Delete_RemovesTheSubscriber()
     {
         var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);

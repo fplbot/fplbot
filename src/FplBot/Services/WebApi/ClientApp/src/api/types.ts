@@ -329,6 +329,7 @@ export interface SubscriberSummary {
   id: string;
   name: string | null;
   leagueId: number | null;
+  entryId: number | null;
   eventCount: number;
   endpointHost: string;
 }
@@ -337,6 +338,7 @@ export interface SubscriberDetail {
   id: string;
   name: string | null;
   leagueId: number | null;
+  entryId: number | null;
   events: string[];
   available: string[];
   requiresLeague: string[];

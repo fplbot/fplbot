@@ -3,13 +3,14 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
-import { searchLeagues, getLeague } from "../api/api";
+import { searchLeagues, getLeague, getEntry } from "../api/api";
 import type { LeagueItem } from "../api/types";
 import {
   enableNotifications,
   getState,
   setEvents,
   setLeague,
+  setEntry,
   sendTestNotification,
   unsubscribe,
   storedSubscriberId,
@@ -36,6 +37,10 @@ const chosenLeagueId = ref<number | null>(route.query.league ? Number(route.quer
 const chosenLeagueName = ref<string | null>(null);
 const followedLeagueName = ref<string | null>(null);
 const deviceName = ref("");
+
+const manualEntryInput = ref("");
+const manualEntryError = ref<string | null>(null);
+const linkedEntryName = ref<string | null>(null);
 
 const needsHomeScreen = computed(() => isIos() && !isStandalone());
 const supported = computed(() => pushSupported());
@@ -67,6 +72,7 @@ onMounted(async () => {
     try {
       state.value = await getState();
       await loadFollowedLeagueName();
+      await loadLinkedEntryName();
     } catch {
       state.value = null;
     }
@@ -90,6 +96,57 @@ async function loadFollowedLeagueName() {
     followedLeagueName.value = (await getLeague(state.value.leagueId))?.leagueName ?? null;
   } catch {
     followedLeagueName.value = null;
+  }
+}
+
+async function loadLinkedEntryName() {
+  if (!state.value?.entryId) {
+    linkedEntryName.value = null;
+    return;
+  }
+  try {
+    const entry = await getEntry(state.value.entryId);
+    linkedEntryName.value = entry?.teamName ?? entry?.realName ?? null;
+  } catch {
+    linkedEntryName.value = null;
+  }
+}
+
+function parseEntryId(raw: string): number | null {
+  const trimmed = raw.trim();
+  const fromUrl = trimmed.match(/entry\/(\d+)/);
+  const id = Number(fromUrl ? fromUrl[1] : trimmed);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+async function linkEntry() {
+  manualEntryError.value = null;
+  const id = parseEntryId(manualEntryInput.value);
+  if (id === null) {
+    manualEntryError.value = "Enter your entry id, or paste a fantasy.premierleague.com/entry/... link.";
+    return;
+  }
+  try {
+    const entry = await getEntry(id);
+    if (!entry) {
+      manualEntryError.value = `No FPL team found with id ${id}.`;
+      return;
+    }
+    state.value = await setEntry(id);
+    linkedEntryName.value = entry.teamName ?? entry.realName ?? null;
+    manualEntryInput.value = "";
+  } catch (e) {
+    manualEntryError.value = (e as Error).message;
+  }
+}
+
+async function unlinkEntry() {
+  error.value = null;
+  try {
+    state.value = await setEntry(null);
+    linkedEntryName.value = null;
+  } catch (e) {
+    error.value = (e as Error).message;
   }
 }
 
@@ -333,6 +390,26 @@ async function stop() {
             <button type="submit" class="btn">Use this</button>
           </form>
           <p v-if="manualLeagueError" class="error">{{ manualLeagueError }}</p>
+        </template>
+
+        <h2>Your FPL team</h2>
+        <div v-if="state.entryId" class="chosen-league">
+          <p>
+            Linked to <strong>{{ linkedEntryName ?? `entry ${state.entryId}` }}</strong>
+            <button class="link-btn" @click="unlinkEntry">Unlink</button>
+          </p>
+        </div>
+        <template v-else>
+          <p class="hint">Link your FPL team for a more personalized experience later.</p>
+          <form class="search-form manual-league" @submit.prevent="linkEntry">
+            <input
+              v-model="manualEntryInput"
+              placeholder="Your entry id or fantasy.premierleague.com/entry/... link"
+              class="search-input"
+            />
+            <button type="submit" class="btn">Link my team</button>
+          </form>
+          <p v-if="manualEntryError" class="error">{{ manualEntryError }}</p>
         </template>
 
         <h2>Notifications</h2>

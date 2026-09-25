@@ -26,6 +26,73 @@ public class WebPushEndpointsTests(AppFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Subscribe_WithEntry_CoexistsWithLeague()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, entryId: 456);
+
+        var state = await fixture.GetWebPushState(subscriberId);
+
+        Assert.Equal(123, state.LeagueId);
+        Assert.Equal(456, state.EntryId);
+    }
+
+    [Fact]
+    public async Task Subscribe_WithoutEntry_LeavesEntryNull()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var state = await fixture.GetWebPushState(subscriberId);
+
+        Assert.Null(state.EntryId);
+    }
+
+    [Fact]
+    public async Task Subscribe_EntryIdBeyondIntRange_IsRejected()
+    {
+        var response = await fixture.Post("/api/web/push/subscribe",
+            new { endpoint = "https://push.example.test/abc", p256dh = "y", auth = "z", entryId = 4294967297L });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PutEntry_LinksEntryWithoutAffectingLeague()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123);
+
+        var response = await fixture.PutWebPush(subscriberId, "/api/web/me/entry", new { entryId = 456L });
+
+        response.EnsureSuccessStatusCode();
+        var state = await fixture.GetWebPushState(subscriberId);
+        Assert.Equal(456, state.EntryId);
+        Assert.Equal(123, state.LeagueId);
+    }
+
+    [Fact]
+    public async Task PutEntry_Unlink_ClearsEntryOnly()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(leagueId: 123, entryId: 456);
+
+        await fixture.PutWebPush(subscriberId, "/api/web/me/entry", new { entryId = (long?)null });
+
+        var state = await fixture.GetWebPushState(subscriberId);
+        Assert.Null(state.EntryId);
+        Assert.Equal(123, state.LeagueId);
+    }
+
+    [Fact]
+    public async Task PutEntry_EntryIdBeyondIntRange_IsRejectedAndKeepsCurrentEntry()
+    {
+        var subscriberId = await fixture.SubscribeToWebPush(entryId: 456);
+
+        var response = await fixture.PutWebPush(subscriberId, "/api/web/me/entry", new { entryId = 4294967297L });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var state = await fixture.GetWebPushState(subscriberId);
+        Assert.Equal(456, state.EntryId);
+    }
+
+    [Fact]
     public async Task Subscribe_WithoutLeague_HasNoLeagueRequiringEvents()
     {
         var subscriberId = await fixture.SubscribeToWebPush(leagueId: null);

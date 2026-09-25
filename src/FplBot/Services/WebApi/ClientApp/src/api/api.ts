@@ -5,6 +5,7 @@ import type {
   ChannelFailureStats,
   ChannelFilter,
   DiscordSlashCommand,
+  EntryItem,
   ErrorQueueJobAccepted,
   ErrorQueueJobState,
   ErrorQueueMessage,
@@ -317,6 +318,10 @@ export function updateWebPushSubscriberLeague(subscriberId: string, leagueId: nu
   return postJson(`/api/admin/web/subscribers/${subscriberId}/league`, { leagueId }, "PUT");
 }
 
+export function updateWebPushSubscriberEntry(subscriberId: string, entryId: number | null): Promise<SubscriberDetail> {
+  return postJson(`/api/admin/web/subscribers/${subscriberId}/entry`, { entryId }, "PUT");
+}
+
 export function deleteWebPushSubscriber(subscriberId: string): Promise<void> {
   return request(`/api/admin/web/subscribers/${subscriberId}`, { method: "DELETE" });
 }
@@ -383,6 +388,19 @@ export async function getLeague(leagueId: number): Promise<LeagueSummary | null>
   }
   if (!res.ok) {
     throw new Error(`League request failed with status ${res.status}`);
+  }
+  return res.json();
+}
+
+// ---- Entry details (public site) ----
+
+export async function getEntry(entryId: number): Promise<EntryItem | null> {
+  const res = await fetch(`/api/search/entries/${entryId}`);
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Entry request failed with status ${res.status}`);
   }
   return res.json();
 }

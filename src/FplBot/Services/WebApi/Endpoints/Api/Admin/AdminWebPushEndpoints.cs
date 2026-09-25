@@ -14,9 +14,9 @@ using MassTransit;
 
 namespace FplBot.WebApi.Endpoints.Api.Admin;
 
-public record SubscriberSummaryDto(string Id, string? Name, long? LeagueId, int EventCount, string EndpointHost);
+public record SubscriberSummaryDto(string Id, string? Name, long? LeagueId, long? EntryId, int EventCount, string EndpointHost);
 
-public record SubscriberDetailDto(string Id, string? Name, long? LeagueId, string[] Events, string[] Available,
+public record SubscriberDetailDto(string Id, string? Name, long? LeagueId, long? EntryId, string[] Events, string[] Available,
     string[] RequiresLeague, string EndpointHost);
 
 public record WebPushBroadcastRequest(string Title, string Body);
@@ -29,6 +29,7 @@ public static class AdminWebPushEndpoints
         group.MapGet("/web/subscribers/{subscriberId}", GetSubscriber);
         group.MapPut("/web/subscribers/{subscriberId}/events", PutEvents);
         group.MapPut("/web/subscribers/{subscriberId}/league", PutLeague);
+        group.MapPut("/web/subscribers/{subscriberId}/entry", PutEntry);
         group.MapDelete("/web/subscribers/{subscriberId}", DeleteSubscriber);
         group.MapPost("/web/subscribers/{subscriberId}/publish/{eventName}", Publish);
         group.MapPost("/web/broadcast", Broadcast);
@@ -78,6 +79,31 @@ public static class AdminWebPushEndpoints
         else
         {
             subscriber.Unfollow();
+        }
+
+        await repo.Save(subscriber);
+        return TypedResults.Ok(ToDetailDto(subscriber));
+    }
+
+    internal static async Task<IResult> PutEntry(string subscriberId, EntryRequest request, IWebPushSubscriberRepository repo)
+    {
+        if (await repo.Find(new WebPushSubscriberId(subscriberId)) is not { } subscriber)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (request.EntryId is { } invalid && !WebPushEndpoints.IsValidEntryId(invalid))
+        {
+            return TypedResults.BadRequest(new { errors = new { entryId = new[] { "entryId must be between 1 and 2147483647" } } });
+        }
+
+        if (request.EntryId is { } entryId)
+        {
+            subscriber.LinkEntry(new FplEntryId(entryId));
+        }
+        else
+        {
+            subscriber.UnlinkEntry();
         }
 
         await repo.Save(subscriber);
@@ -222,6 +248,7 @@ public static class AdminWebPushEndpoints
         new(subscriber.Id.Value,
             subscriber.Name,
             subscriber.FollowedLeagueId?.Value,
+            subscriber.LinkedEntryId?.Value,
             subscriber.Events.Current.Count,
             EndpointHost(subscriber));
 
@@ -229,6 +256,7 @@ public static class AdminWebPushEndpoints
         new(subscriber.Id.Value,
             subscriber.Name,
             subscriber.FollowedLeagueId?.Value,
+            subscriber.LinkedEntryId?.Value,
             [.. subscriber.Events.Current.Select(e => e.ToString())],
             [.. FplEvents.SupportedOnWeb.Select(e => e.ToString())],
             [.. FplEvents.RequiringALeague.Select(e => e.ToString())],
