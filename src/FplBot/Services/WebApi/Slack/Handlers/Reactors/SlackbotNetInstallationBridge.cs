@@ -35,6 +35,6 @@ public class SlackbotNetInstallationBridge(
 
         installation.Uninstall();
         await repository.Delete(installation);
-        await publisher.Publish(new AppUninstalled(installation.ExternalId, installation.Name));
+        await publisher.Publish(new AppUninstalled(installation.ExternalId, installation.Name, UninstallReason.SelfUninstalled));
     }
 }

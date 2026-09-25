@@ -19,7 +19,13 @@ public class SlackWorkspaceUninstalledHandler(
         var token = config.GetValue<string>("SlackToken_FplBot_Workspace");
         var env = config.GetValue<string>("DOTNET_ENVIRONMENT");
         var prefix = env == "Production" ? "" : $"{env}: ";
+        var text = context.Message.Reason switch
+        {
+            UninstallReason.AutoPurged => $"{prefix}😔 fplbot gave up on '{teamName}' after repeated delivery failures",
+            UninstallReason.AdminDeleted => $"{prefix}🗑️ '{teamName}' was removed by an admin",
+            _ => $"{prefix}😔 '{teamName}' decided to uninstall @fplbot"
+        };
         var client = builder.Build(token);
-        await client.ChatPostMessage("#fplbot-notifications", $"{prefix}😔 '{teamName}' decided to uninstall @fplbot");
+        await client.ChatPostMessage("#fplbot-notifications", text);
     }
 }

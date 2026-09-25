@@ -34,6 +34,6 @@ public class DiscordNetInstallationBridge(
         }
 
         await repository.Delete(installation);
-        await publisher.Publish(new AppUninstalled(installation.ExternalId, installation.Name));
+        await publisher.Publish(new AppUninstalled(installation.ExternalId, installation.Name, UninstallReason.SelfUninstalled));
     }
 }

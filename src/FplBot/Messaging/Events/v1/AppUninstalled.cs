@@ -1,3 +1,10 @@
 namespace FplBot.Messaging.Contracts.Events.v1;
 
-public record AppUninstalled(string TeamId, string TeamName);
+public enum UninstallReason
+{
+    SelfUninstalled,
+    AutoPurged,
+    AdminDeleted
+}
+
+public record AppUninstalled(string TeamId, string TeamName, UninstallReason Reason);
