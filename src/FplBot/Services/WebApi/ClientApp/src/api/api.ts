@@ -5,7 +5,9 @@ import type {
   ChannelFailureStats,
   ChannelFilter,
   DiscordSlashCommand,
-  EntryItem,
+  EntryLookup,
+  EntrySearchResponse,
+  EntrySearchResult,
   ErrorQueueJobAccepted,
   ErrorQueueJobState,
   ErrorQueueMessage,
@@ -379,6 +381,16 @@ export async function searchLeagues(query: string, page: number): Promise<League
   return data.hits;
 }
 
+export async function searchEntries(query: string, page: number): Promise<EntrySearchResult> {
+  const params = new URLSearchParams({ query, page: String(page) });
+  const res = await fetch(`/api/search/entries?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Entry search request failed with status ${res.status}`);
+  }
+  const data: EntrySearchResponse = await res.json();
+  return data.hits;
+}
+
 // ---- League details (public site) ----
 
 export async function getLeague(leagueId: number): Promise<LeagueSummary | null> {
@@ -394,8 +406,8 @@ export async function getLeague(leagueId: number): Promise<LeagueSummary | null>
 
 // ---- Entry details (public site) ----
 
-export async function getEntry(entryId: number): Promise<EntryItem | null> {
-  const res = await fetch(`/api/search/entries/${entryId}`);
+export async function getEntry(entryId: number): Promise<EntryLookup | null> {
+  const res = await fetch(`/api/fpl/entries/${entryId}`);
   if (res.status === 404) {
     return null;
   }

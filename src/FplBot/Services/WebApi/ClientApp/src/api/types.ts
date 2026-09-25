@@ -261,6 +261,26 @@ export interface LeagueSearchResponse {
   hits: LeagueSearchResult;
 }
 
+export interface EntrySearchResult {
+  exposedHits: EntryItem[];
+  maxHits: number;
+  totalHits: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface EntrySearchResponse {
+  hits: EntrySearchResult;
+}
+
+// A direct-id lookup against the live FPL API (GET /api/fpl/entries/{id}) - unlike EntryItem,
+// which comes from the search index and carries extra indexed-only fields.
+export interface EntryLookup {
+  id: number;
+  teamName?: string;
+  realName?: string;
+}
+
 // The /search/any endpoint wraps each hit in a { type, source } container
 // (see SearchService.SearchAny / SearchContainer in the backend) rather than
 // exposing EntryItem/LeagueItem directly in the array.
