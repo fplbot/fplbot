@@ -29,6 +29,16 @@ public class McpEndpointsTests(AppFixture fixture)
     }
 
     [Fact]
+    public async Task ListTools_OnMcpFplbotAppHost_AlsoWorksAtRoot()
+    {
+        await using var client = await fixture.ConnectMcpClient("http://mcp.fplbot.app/");
+
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Contains("get_league", tools.Select(t => t.Name));
+    }
+
+    [Fact]
     public async Task GetLeague_Found_ReturnsLeagueNameAndAdmin()
     {
         const int leagueId = 600;

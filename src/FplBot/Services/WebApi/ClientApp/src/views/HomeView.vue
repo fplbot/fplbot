@@ -81,11 +81,6 @@ onMounted(() => {
           straight from Claude or ChatGPT.
         </p>
         <div class="mcp-buttons">
-          <!--
-            mcpName/mcpServerUrl and name/url are community-documented prefill params, not
-            confirmed by Anthropic's/OpenAI's own docs. Best effort: unsupported params are
-            ignored, so this degrades to opening the plain "add connector" screen.
-          -->
           <a
             class="btn mcp-btn"
             href="https://claude.ai/settings/connectors?modal=add-custom-connector&amp;mcpName=fplbot&amp;mcpServerUrl=https://mcp.fplbot.app"

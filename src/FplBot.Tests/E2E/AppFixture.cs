@@ -557,8 +557,6 @@ public class AppFixture : IAsyncLifetime
     }
 
 
-    // No-op here: only the search-focused subclass (SearchAppFixture) needs a real
-    // Elasticsearch-backed IElasticClient; every other AppFixture consumer doesn't touch search.
     public IndexedQueryCapture IndexedQueries { get; } = new();
 
     protected virtual void ConfigureSearchClient(IServiceCollection services)
@@ -567,13 +565,6 @@ public class AppFixture : IAsyncLifetime
         services.AddSingleton(A.Fake<IElasticClient>());
         services.RemoveAll<IIndexingClient>();
         services.AddSingleton<IIndexingClient>(IndexedQueries);
-        // Wrapping, not a blank fake: SearchQueryAnalyticsTests (same "App" collection) depends
-        // on the real SearchService running behind /api/search/entries to publish IndexQuery via
-        // IPublishEndpoint. A bare A.Fake<ISearchService>() would silently swallow that for every
-        // AppFixture test, not just MCP ones. Unconfigured calls fall through to a real
-        // SearchService built from its own long-lived scope (IServiceScopeFactory, not IBus, per
-        // this repo's singleton/IPublishEndpoint rule) so IPublishEndpoint resolves safely;
-        // A.CallTo(...) setups in a test override that call for its own scenario.
         services.RemoveAll<ISearchService>();
         services.AddSingleton<ISearchService>(sp =>
         {
