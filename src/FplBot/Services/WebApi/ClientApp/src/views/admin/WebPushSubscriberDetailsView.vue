@@ -5,6 +5,7 @@ import {
   getWebPushSubscriber,
   updateWebPushSubscriberEvents,
   updateWebPushSubscriberLeague,
+  updateWebPushSubscriberEntry,
   deleteWebPushSubscriber,
   publishWebPushEvent,
 } from "../../api/api";
@@ -25,6 +26,10 @@ const leagueIdInput = ref<number | null>(null);
 const savingLeague = ref(false);
 const leagueFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
+const entryIdInput = ref<number | null>(null);
+const savingEntry = ref(false);
+const entryFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
+
 const savingSubscriptions = ref(false);
 const subscriptionsFeedback = ref<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -40,6 +45,7 @@ async function load() {
     subscriber.value = found;
     selectedEvents.value = new Set(found.events);
     leagueIdInput.value = found.leagueId;
+    entryIdInput.value = found.entryId;
   } catch (e) {
     error.value = describeAdminError(e);
   } finally {
@@ -110,6 +116,35 @@ async function submitUnfollowLeague() {
   }
 }
 
+async function submitEntry() {
+  if (entryIdInput.value == null) return;
+  savingEntry.value = true;
+  entryFeedback.value = null;
+  try {
+    subscriber.value = await updateWebPushSubscriberEntry(props.subscriberId, entryIdInput.value);
+    entryFeedback.value = { type: "success", text: "Entry saved." };
+  } catch (e) {
+    entryFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    savingEntry.value = false;
+  }
+}
+
+async function submitUnlinkEntry() {
+  if (!confirm("Unlink this subscriber's FPL team?")) return;
+  savingEntry.value = true;
+  entryFeedback.value = null;
+  try {
+    subscriber.value = await updateWebPushSubscriberEntry(props.subscriberId, null);
+    entryIdInput.value = null;
+    entryFeedback.value = { type: "success", text: "Entry unlinked." };
+  } catch (e) {
+    entryFeedback.value = { type: "error", text: describeAdminError(e) };
+  } finally {
+    savingEntry.value = false;
+  }
+}
+
 async function remove() {
   const s = subscriber.value;
   if (!s) return;
@@ -127,6 +162,10 @@ async function remove() {
 
 const canSaveLeague = computed(() =>
   !savingLeague.value && leagueIdInput.value != null && leagueIdInput.value !== subscriber.value?.leagueId
+);
+
+const canSaveEntry = computed(() =>
+  !savingEntry.value && entryIdInput.value != null && entryIdInput.value !== subscriber.value?.entryId
 );
 
 onMounted(load);
@@ -166,6 +205,25 @@ onMounted(load);
           </button>
           <button v-if="subscriber.leagueId" class="btn small danger" :disabled="savingLeague" @click="submitUnfollowLeague">
             Stop following
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Entry</h2>
+        <p v-if="entryFeedback" :class="['alert', entryFeedback.type === 'success' ? 'alert-success' : 'alert-error']">
+          {{ entryFeedback.text }}
+        </p>
+        <div class="field">
+          <label for="entry-id">Entry id</label>
+          <input id="entry-id" v-model.number="entryIdInput" type="number" min="1" placeholder="e.g. 579157" />
+        </div>
+        <div class="subscription-actions">
+          <button class="btn small" :disabled="!canSaveEntry" @click="submitEntry">
+            {{ savingEntry ? "Saving..." : "Save entry" }}
+          </button>
+          <button v-if="subscriber.entryId" class="btn small danger" :disabled="savingEntry" @click="submitUnlinkEntry">
+            Unlink
           </button>
         </div>
       </div>

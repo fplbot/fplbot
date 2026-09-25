@@ -13,6 +13,7 @@ public class WebPushSubscriberRepository(IConnectionMultiplexer redis) : IWebPus
     private static readonly RedisValue P256dhField = "p256dh";
     private static readonly RedisValue AuthField = "auth";
     private static readonly RedisValue LeagueIdField = "leagueid";
+    private static readonly RedisValue EntryIdField = "entryid";
     private static readonly RedisValue SubsField = "subs";
     private static readonly RedisValue CreatedField = "created";
 
@@ -21,7 +22,7 @@ public class WebPushSubscriberRepository(IConnectionMultiplexer redis) : IWebPus
     public async Task<WebPushSubscriber?> Find(WebPushSubscriberId id)
     {
         var fetched = await _db.HashGetAsync(SubscriberKey(id),
-            [NameField, EndpointField, P256dhField, AuthField, LeagueIdField, SubsField]);
+            [NameField, EndpointField, P256dhField, AuthField, LeagueIdField, SubsField, EntryIdField]);
 
         return fetched[1].HasValue
             ? WebPushSubscriber.Load(
@@ -29,6 +30,7 @@ public class WebPushSubscriberRepository(IConnectionMultiplexer redis) : IWebPus
                 new PushKeys(fetched[1]!, fetched[2]!, fetched[3]!),
                 fetched[0].HasValue ? fetched[0].ToString() : null,
                 fetched[4].HasValue ? new ClassicLeagueId((long)fetched[4]) : null,
+                fetched[6].HasValue ? new FplEntryId((long)fetched[6]) : null,
                 ParseEvents(fetched[5]))
             : null;
     }
@@ -59,6 +61,15 @@ public class WebPushSubscriberRepository(IConnectionMultiplexer redis) : IWebPus
         else
         {
             await _db.HashDeleteAsync(key, LeagueIdField);
+        }
+
+        if (subscriber.LinkedEntryId is { } entry)
+        {
+            entries.Add(new HashEntry(EntryIdField, entry.Value));
+        }
+        else
+        {
+            await _db.HashDeleteAsync(key, EntryIdField);
         }
 
         if (!await _db.KeyExistsAsync(key))

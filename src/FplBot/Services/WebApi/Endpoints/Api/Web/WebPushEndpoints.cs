@@ -7,15 +7,17 @@ using Microsoft.Extensions.Options;
 
 namespace FplBot.WebApi.Endpoints.Api.Web;
 
-public record SubscribeRequest(string Endpoint, string P256dh, string Auth, long? LeagueId, string? Name);
+public record SubscribeRequest(string Endpoint, string P256dh, string Auth, long? LeagueId, string? Name, long? EntryId = null);
 
 public record SubscribeResponse(string SubscriberId);
 
-public record SubscriberStateResponse(string SubscriberId, long? LeagueId, string[] Events, string[] Available, string[] RequiresLeague);
+public record SubscriberStateResponse(string SubscriberId, long? LeagueId, long? EntryId, string[] Events, string[] Available, string[] RequiresLeague);
 
 public record EventsRequest(string[] Events);
 
 public record LeagueRequest(long? LeagueId);
+
+public record EntryRequest(long? EntryId);
 
 public record VapidKeyResponse(string PublicKey);
 
@@ -30,6 +32,7 @@ public static class WebPushEndpoints
         group.MapGet("/me", GetMe);
         group.MapPut("/me/events", PutEvents);
         group.MapPut("/me/league", PutLeague);
+        group.MapPut("/me/entry", PutEntry);
         group.MapDelete("/me", DeleteMe);
         group.MapPost("/me/test", PostTest);
     }
@@ -56,9 +59,15 @@ public static class WebPushEndpoints
             return TypedResults.BadRequest(new { errors = new { leagueId = new[] { "leagueId must be between 1 and 2147483647" } } });
         }
 
+        if (request.EntryId is { } entryId && !IsValidEntryId(entryId))
+        {
+            return TypedResults.BadRequest(new { errors = new { entryId = new[] { "entryId must be between 1 and 2147483647" } } });
+        }
+
         var subscriber = WebPushSubscriber.Register(
             new PushKeys(request.Endpoint, request.P256dh, request.Auth), request.Name,
-            request.LeagueId is { } league ? new ClassicLeagueId(league) : null);
+            request.LeagueId is { } league ? new ClassicLeagueId(league) : null,
+            request.EntryId is { } entry ? new FplEntryId(entry) : null);
 
         await repo.Save(subscriber);
         return TypedResults.Ok(new SubscribeResponse(subscriber.Id.Value));
@@ -105,6 +114,31 @@ public static class WebPushEndpoints
         return TypedResults.Ok(ToState(subscriber));
     }
 
+    internal static async Task<IResult> PutEntry(HttpContext context, EntryRequest request, IWebPushSubscriberRepository repo)
+    {
+        if (await Resolve(context, repo) is not { } subscriber)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (request.EntryId is { } invalid && !IsValidEntryId(invalid))
+        {
+            return TypedResults.BadRequest(new { errors = new { entryId = new[] { "entryId must be between 1 and 2147483647" } } });
+        }
+
+        if (request.EntryId is { } entryId)
+        {
+            subscriber.LinkEntry(new FplEntryId(entryId));
+        }
+        else
+        {
+            subscriber.UnlinkEntry();
+        }
+
+        await repo.Save(subscriber);
+        return TypedResults.Ok(ToState(subscriber));
+    }
+
     internal static async Task<IResult> DeleteMe(HttpContext context, IWebPushSubscriberRepository repo)
     {
         if (await Resolve(context, repo) is not { } subscriber)
@@ -137,6 +171,8 @@ public static class WebPushEndpoints
 
     internal static bool IsValidLeagueId(long leagueId) => leagueId is >= 1 and <= int.MaxValue;
 
+    internal static bool IsValidEntryId(long entryId) => entryId is >= 1 and <= int.MaxValue;
+
     internal static FplEvent[] Parse(IEnumerable<string> events) =>
         [
             ..events.Select(e => Enum.TryParse<FplEvent>(e, out var parsed) ? parsed : (FplEvent?)null)
@@ -147,6 +183,7 @@ public static class WebPushEndpoints
     private static SubscriberStateResponse ToState(WebPushSubscriber subscriber) =>
         new(subscriber.Id.Value,
             subscriber.FollowedLeagueId?.Value,
+            subscriber.LinkedEntryId?.Value,
             [..subscriber.Events.Current.Select(e => e.ToString())],
             [..FplEvents.SupportedOnWeb.Select(e => e.ToString())],
             [..FplEvents.RequiringALeague.Select(e => e.ToString())]);

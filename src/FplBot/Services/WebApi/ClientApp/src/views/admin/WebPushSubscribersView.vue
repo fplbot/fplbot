@@ -68,6 +68,7 @@ onMounted(load);
             <tr>
               <th>Name</th>
               <th>League</th>
+              <th>Entry</th>
               <th>Events</th>
               <th>Push service</th>
               <th></th>
@@ -81,6 +82,7 @@ onMounted(load);
                 </router-link>
               </td>
               <td>{{ s.leagueId ?? "—" }}</td>
+              <td>{{ s.entryId ?? "—" }}</td>
               <td>{{ s.eventCount }}</td>
               <td>{{ s.endpointHost }}</td>
               <td>

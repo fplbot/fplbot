@@ -10,6 +10,8 @@ public class WebPushSubscriber
 
     public ClassicLeagueId? FollowedLeagueId { get; private set; }
 
+    public FplEntryId? LinkedEntryId { get; private set; }
+
     public EventCollection Events { get; } = EventCollection.Empty();
 
     private WebPushSubscriber(WebPushSubscriberId id, PushKeys pushKeys, string? name)
@@ -19,7 +21,7 @@ public class WebPushSubscriber
         Name = name;
     }
 
-    public static WebPushSubscriber Register(PushKeys pushKeys, string? name, ClassicLeagueId? leagueId)
+    public static WebPushSubscriber Register(PushKeys pushKeys, string? name, ClassicLeagueId? leagueId, FplEntryId? entryId = null)
     {
         var subscriber = new WebPushSubscriber(WebPushSubscriberId.New(), pushKeys, name);
         if (leagueId is not null)
@@ -27,14 +29,23 @@ public class WebPushSubscriber
             subscriber.Follow(leagueId);
         }
 
+        if (entryId is not null)
+        {
+            subscriber.LinkEntry(entryId);
+        }
+
         subscriber.Subscribe(FplEvents.SupportedOnWeb);
         return subscriber;
     }
 
     public static WebPushSubscriber Load(WebPushSubscriberId id, PushKeys pushKeys, string? name,
-        ClassicLeagueId? followedLeagueId, IEnumerable<FplEvent> events)
+        ClassicLeagueId? followedLeagueId, FplEntryId? linkedEntryId, IEnumerable<FplEvent> events)
     {
-        var subscriber = new WebPushSubscriber(id, pushKeys, name) { FollowedLeagueId = followedLeagueId };
+        var subscriber = new WebPushSubscriber(id, pushKeys, name)
+        {
+            FollowedLeagueId = followedLeagueId,
+            LinkedEntryId = linkedEntryId
+        };
         subscriber.Events.Add(events);
         return subscriber;
     }
@@ -46,6 +57,10 @@ public class WebPushSubscriber
         FollowedLeagueId = null;
         Events.Remove(FplEvents.RequiringALeague);
     }
+
+    public void LinkEntry(FplEntryId entryId) => LinkedEntryId = entryId;
+
+    public void UnlinkEntry() => LinkedEntryId = null;
 
     public void Subscribe(FplEvent[] fplEvents) => Events.Add(Allowed(fplEvents));
 

@@ -1,6 +1,7 @@
 export interface SubscriberState {
   subscriberId: string;
   leagueId: number | null;
+  entryId: number | null;
   events: string[];
   available: string[];
   requiresLeague: string[];
@@ -77,6 +78,9 @@ export const setEvents = (events: string[]) =>
 
 export const setLeague = (leagueId: number | null) =>
   json<SubscriberState>("/api/web/me/league", authed("PUT", { leagueId }));
+
+export const setEntry = (entryId: number | null) =>
+  json<SubscriberState>("/api/web/me/entry", authed("PUT", { entryId }));
 
 export async function sendTestNotification(): Promise<void> {
   const response = await fetch("/api/web/me/test", authed("POST"));

@@ -175,7 +175,7 @@ public class AppFixture : IAsyncLifetime
     private static StringContent AsJson(object? body) =>
         new(JsonSerializer.Serialize(body ?? new { }, HttpJson), Encoding.UTF8, "application/json");
 
-    public async Task<string> SubscribeToWebPush(long? leagueId = null, string? endpoint = null, string? name = null)
+    public async Task<string> SubscribeToWebPush(long? leagueId = null, string? endpoint = null, string? name = null, long? entryId = null)
     {
         var response = await Post("/api/web/push/subscribe", new
         {
@@ -183,7 +183,8 @@ public class AppFixture : IAsyncLifetime
             p256dh = "BFakeP256dhKeyForTests",
             auth = "FakeAuthSecret",
             leagueId,
-            name
+            name,
+            entryId
         });
         response.EnsureSuccessStatusCode();
         var body = await ReadJson<SubscribeResponse>(response);
