@@ -13,6 +13,7 @@ using Fpl.PulseLive;
 using Fpl.Search;
 using Fpl.Search.Indexing;
 using Fpl.Search.Models;
+using Fpl.Search.Searching;
 using FplBot.Data;
 using FplBot.Data.Discord;
 using FplBot.Data.Slack;
@@ -36,6 +37,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using ModelContextProtocol.Client;
 using Nest;
 using Slackbot.Net.Abstractions.Hosting;
 using Slackbot.Net.SlackClients.Http;
@@ -171,6 +173,14 @@ public class AppFixture : IAsyncLifetime
         (await JsonSerializer.DeserializeAsync<T>(
             await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken), HttpJson,
             TestContext.Current.CancellationToken))!;
+
+    public async Task<McpClient> ConnectMcpClient(string path = "/mcp") =>
+        await McpClient.CreateAsync(
+            new HttpClientTransport(
+                new HttpClientTransportOptions { Endpoint = new Uri(_client.BaseAddress!, path) },
+                _client,
+                ownsHttpClient: false),
+            cancellationToken: TestContext.Current.CancellationToken);
 
     private static StringContent AsJson(object? body) =>
         new(JsonSerializer.Serialize(body ?? new { }, HttpJson), Encoding.UTF8, "application/json");
@@ -557,6 +567,20 @@ public class AppFixture : IAsyncLifetime
         services.AddSingleton(A.Fake<IElasticClient>());
         services.RemoveAll<IIndexingClient>();
         services.AddSingleton<IIndexingClient>(IndexedQueries);
+        // Wrapping, not a blank fake: SearchQueryAnalyticsTests (same "App" collection) depends
+        // on the real SearchService running behind /api/search/entries to publish IndexQuery via
+        // IPublishEndpoint. A bare A.Fake<ISearchService>() would silently swallow that for every
+        // AppFixture test, not just MCP ones. Unconfigured calls fall through to a real
+        // SearchService built from its own long-lived scope (IServiceScopeFactory, not IBus, per
+        // this repo's singleton/IPublishEndpoint rule) so IPublishEndpoint resolves safely;
+        // A.CallTo(...) setups in a test override that call for its own scenario.
+        services.RemoveAll<ISearchService>();
+        services.AddSingleton<ISearchService>(sp =>
+        {
+            var scope = sp.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            var real = ActivatorUtilities.CreateInstance<SearchService>(scope.ServiceProvider);
+            return A.Fake<ISearchService>(o => o.Wrapping(real));
+        });
     }
 
     public async Task FlushRedisAsync()
