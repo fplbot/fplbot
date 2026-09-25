@@ -56,6 +56,9 @@
     <!-- Web push -->
     <PackageReference Include="WebPush" Version="1.0.13" />
 
+    <!-- MCP -->
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+
     <!-- Misc -->
     <PackageReference Include="MinimalHttpLogger" Version="3.0.1" />
   </ItemGroup>

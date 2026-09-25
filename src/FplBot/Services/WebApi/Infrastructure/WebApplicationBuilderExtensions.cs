@@ -14,6 +14,7 @@ using FplBot.Integrations.WebPush;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Admin;
 using FplBot.WebApi.Configurations;
+using FplBot.WebApi.Mcp;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
+using ModelContextProtocol.AspNetCore;
+using ModelContextProtocol.Server;
 using Slackbot.Net.Endpoints.Authentication;
 using Slackbot.Net.Endpoints.Hosting;
 using StackExchange.Redis;
@@ -244,5 +247,7 @@ public static class WebApplicationBuilderExtensions
 
         services.AddHttpContextAccessor();
         services.Configure<BlockedIpOptions>(configuration.GetSection("IpBlocking"));
+
+        services.AddMcpServer().WithHttpTransport().WithTools<FplMcpTools>();
     }
 }
