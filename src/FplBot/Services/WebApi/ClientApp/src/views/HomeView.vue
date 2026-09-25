@@ -73,6 +73,39 @@ onMounted(() => {
       </div>
     </section>
 
+    <section id="mcp" class="mcp">
+      <div class="container">
+        <h2>Use fplbot from your AI assistant</h2>
+        <p class="mcp-lead">
+          fplbot also runs as an MCP server, so you can look up leagues and search for managers
+          straight from Claude or ChatGPT.
+        </p>
+        <div class="mcp-buttons">
+          <!--
+            mcpName/mcpServerUrl and name/url are community-documented prefill params, not
+            confirmed by Anthropic's/OpenAI's own docs. Best effort: unsupported params are
+            ignored, so this degrades to opening the plain "add connector" screen.
+          -->
+          <a
+            class="btn mcp-btn"
+            href="https://claude.ai/settings/connectors?modal=add-custom-connector&amp;mcpName=fplbot&amp;mcpServerUrl=https://mcp.fplbot.app"
+            target="_blank"
+            rel="noopener"
+          >
+            Add to Claude
+          </a>
+          <a
+            class="btn mcp-btn secondary"
+            href="https://chatgpt.com/mcps/add?name=fplbot&amp;url=https://mcp.fplbot.app"
+            target="_blank"
+            rel="noopener"
+          >
+            Add to ChatGPT
+          </a>
+        </div>
+      </div>
+    </section>
+
     <AppFooter />
   </div>
 </template>
@@ -180,5 +213,39 @@ h1 {
   font-size: 1.125rem;
   line-height: 1.9;
   max-width: 40rem;
+}
+
+.mcp {
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.mcp h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.mcp-lead {
+  font-size: 1.125rem;
+  max-width: 36rem;
+  margin: 0 auto 2rem;
+}
+
+.mcp-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.mcp-btn {
+  padding: 0.75rem 1.5rem;
+}
+
+.mcp-btn.secondary {
+  background: white;
+  color: var(--fpl-purple);
+  border: 1px solid #d1d5db;
 }
 </style>
