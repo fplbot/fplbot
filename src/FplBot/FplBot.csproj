@@ -14,7 +14,7 @@
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="MassTransit" Version="8.5.10" />
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.10" />
-    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.21.0" />
 
     <!-- Data / Redis -->
     <PackageReference Include="StackExchange.Redis" Version="3.3.1" />
