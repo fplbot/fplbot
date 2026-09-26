@@ -33,6 +33,7 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("get_price_changes", names);
         Assert.Contains("get_captains", names);
         Assert.Contains("get_transfers", names);
+        Assert.Contains("get_gameweek", names);
     }
 
     [Fact]
@@ -345,5 +346,79 @@ public class McpEndpointsTests(AppFixture fixture)
 
         var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
         Assert.Contains("Transfer FC", text);
+    }
+
+    [Fact]
+    public async Task GetGameweek_NoId_ReturnsPreviousCurrentAndNext()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks =
+            [
+                new() { Id = 4, Name = "Gameweek 4", IsPrevious = true },
+                new() { Id = 5, Name = "Gameweek 5", IsCurrent = true },
+                new() { Id = 6, Name = "Gameweek 6", IsNext = true }
+            ]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(4)).Returns([]);
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(5)).Returns([]);
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(6)).Returns([]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getGameweek = tools.First(t => t.Name == "get_gameweek");
+
+            var result = await getGameweek.CallAsync(new Dictionary<string, object?>(), cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains("Gameweek 4", text);
+            Assert.Contains("Gameweek 5", text);
+            Assert.Contains("Gameweek 6", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetGameweek_WithId_ReturnsOnlyThatGameweek()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 1, Name = "Gameweek 1", IsFinished = true }]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns([]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getGameweek = tools.First(t => t.Name == "get_gameweek");
+
+            var result = await getGameweek.CallAsync(
+                new Dictionary<string, object?> { ["gameweekId"] = 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains("Gameweek 1", text);
+            Assert.DoesNotContain("\"previous\"", text);
+            Assert.DoesNotContain("\"current\"", text);
+            Assert.DoesNotContain("\"next\"", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
     }
 }

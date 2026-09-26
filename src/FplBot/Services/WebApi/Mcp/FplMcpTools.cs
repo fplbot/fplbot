@@ -25,6 +25,7 @@ public class FplMcpTools(
     IPriceChangedPlayersFinder priceChangedPlayersFinder,
     ICaptainsByGameWeek captainsByGameWeek,
     ITransfersByGameWeek transfersByGameWeek,
+    IFixtureClient fixtureClient,
     ISearchService searchService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<Program> logger)
@@ -90,6 +91,41 @@ public class FplMcpTools(
         [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null) =>
         await transfersByGameWeek.GetTransfersByGameweek(await ResolveGameweek(gameweek), leagueId);
 
+    [McpServerTool(Name = "get_gameweek", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Gameweek info (id, name, deadline UTC, fixtures) for the previous/current/next gameweek, or a specific gameweek by id.")]
+    public async Task<GameweekResponse> GetGameweek(
+        [Description("Specific gameweek id to look up; if omitted, returns previous/current/next instead")] int? gameweekId = null)
+    {
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var gameweeks = settings?.Gameweeks ?? [];
+
+        if (gameweekId is { } requestedId)
+        {
+            var requested = gameweeks.SingleOrDefault(g => g.Id == requestedId);
+            return new GameweekResponse(null, null, null, await ToGameweekWithFixtures(requested));
+        }
+
+        var previousTask = ToGameweekWithFixtures(gameweeks.GetPreviousGameweek());
+        var currentTask = ToGameweekWithFixtures(gameweeks.GetCurrentGameweek());
+        var nextTask = ToGameweekWithFixtures(gameweeks.GetNextGameweek());
+        await Task.WhenAll(previousTask, currentTask, nextTask);
+
+        return new GameweekResponse(await previousTask, await currentTask, await nextTask, null);
+    }
+
+    private async Task<GameweekWithFixtures?> ToGameweekWithFixtures(Gameweek? gameweek)
+    {
+        if (gameweek == null) return null;
+
+        var fixtures = await fixtureClient.GetFixturesByGameweek(gameweek.Id) ?? [];
+        return new GameweekWithFixtures(
+            gameweek.Id,
+            gameweek.Name,
+            gameweek.Deadline,
+            gameweek.IsFinished,
+            fixtures.Select(f => new FixtureSummary(f.Id, f.HomeTeamId, f.AwayTeamId, f.KickOffTime, f.Finished, f.HomeTeamDifficulty, f.AwayTeamDifficulty)));
+    }
+
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Look up a single FPL manager entry by id.")]
     public Task<EntryItem?> GetEntry(
@@ -147,3 +183,25 @@ public record InjuredPlayerSummary(
 public record PriceChangesResponse(
     IEnumerable<PlayerWithPriceChange> AlreadyChanged,
     IEnumerable<PlayerLikelyPriceChange> LikelyToChange);
+
+public record GameweekResponse(
+    GameweekWithFixtures? Previous,
+    GameweekWithFixtures? Current,
+    GameweekWithFixtures? Next,
+    GameweekWithFixtures? Requested);
+
+public record GameweekWithFixtures(
+    int Id,
+    string? Name,
+    DateTime Deadline,
+    bool IsFinished,
+    IEnumerable<FixtureSummary> Fixtures);
+
+public record FixtureSummary(
+    int Id,
+    int HomeTeamId,
+    int AwayTeamId,
+    DateTime? KickOffTime,
+    bool Finished,
+    int HomeTeamDifficulty,
+    int AwayTeamDifficulty);

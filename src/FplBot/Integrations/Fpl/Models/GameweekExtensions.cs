@@ -6,4 +6,14 @@ public static class GameweekExtensions
     {
         return gameweeks.SingleOrDefault(x => x.IsCurrent);
     }
+
+    public static Gameweek? GetPreviousGameweek(this ICollection<Gameweek> gameweeks)
+    {
+        return gameweeks.SingleOrDefault(x => x.IsPrevious);
+    }
+
+    public static Gameweek? GetNextGameweek(this ICollection<Gameweek> gameweeks)
+    {
+        return gameweeks.SingleOrDefault(x => x.IsNext);
+    }
 }
