@@ -488,6 +488,75 @@ public class McpEndpointsTests(AppFixture fixture)
     }
 
     [Fact]
+    public async Task GetGameweek_FutureDeadline_ReturnsPositiveUntilDeadline()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        var futureDeadline = DateTime.UtcNow.AddDays(3);
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 1, Name = "Gameweek 1", Deadline = futureDeadline }]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns([]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getGameweek = tools.First(t => t.Name == "get_gameweek");
+
+            var result = await getGameweek.CallAsync(
+                new Dictionary<string, object?> { ["gameweekId"] = 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var untilDeadline = doc.RootElement.GetProperty("requested").GetProperty("untilDeadline").GetString();
+            Assert.NotNull(untilDeadline);
+            Assert.True(TimeSpan.Parse(untilDeadline) > TimeSpan.FromDays(2.9));
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetGameweek_PastDeadline_OmitsUntilDeadline()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 1, Name = "Gameweek 1", Deadline = DateTime.UtcNow.AddDays(-3) }]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns([]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getGameweek = tools.First(t => t.Name == "get_gameweek");
+
+            var result = await getGameweek.CallAsync(
+                new Dictionary<string, object?> { ["gameweekId"] = 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            Assert.False(doc.RootElement.GetProperty("requested").TryGetProperty("untilDeadline", out _));
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
     public async Task GetGameweek_NoId_ReturnsPreviousCurrentAndNext_ToleratesMissingTeams()
     {
         var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();

@@ -102,7 +102,7 @@ public class FplMcpTools(
         await transfersByGameWeek.GetTransfersByGameweek(await ResolveGameweek(gameweek), leagueId);
 
     [McpServerTool(Name = "get_gameweek", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Gameweek info (id, name, deadline UTC, time until deadline, fixtures) for the previous/current/next gameweek, or a specific gameweek by id. Fixtures include short team codes (e.g. WHU-CHE) - use those, not full names, to match fplbot's Slack/Discord bot conventions.")]
+    [Description("Gameweek info (id, name, deadline UTC, time remaining until deadline as untilDeadline, fixtures) for the previous/current/next gameweek, or a specific gameweek by id. untilDeadline is omitted once the deadline has passed. Fixtures include short team codes (e.g. WHU-CHE) - use those, not full names, to match fplbot's Slack/Discord bot conventions.")]
     public async Task<GameweekResponse> GetGameweek(
         [Description("Specific gameweek id to look up; if omitted, returns previous/current/next instead")] int? gameweekId = null)
     {
@@ -130,10 +130,12 @@ public class FplMcpTools(
         if (gameweek == null) return null;
 
         var fixtures = await fixtureClient.GetFixturesByGameweek(gameweek.Id) ?? [];
+        var untilDeadline = gameweek.Deadline - DateTime.UtcNow;
         return new GameweekWithFixtures(
             gameweek.Id,
             gameweek.Name,
             gameweek.Deadline,
+            untilDeadline > TimeSpan.Zero ? untilDeadline : null,
             gameweek.IsFinished,
             fixtures.Select(f => new FixtureSummary(
                 f.Id,
@@ -323,6 +325,7 @@ public record GameweekWithFixtures(
     int Id,
     string? Name,
     DateTime Deadline,
+    TimeSpan? UntilDeadline,
     bool IsFinished,
     IEnumerable<FixtureSummary> Fixtures);
 
