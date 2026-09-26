@@ -248,6 +248,6 @@ public static class WebApplicationBuilderExtensions
         services.AddHttpContextAccessor();
         services.Configure<BlockedIpOptions>(configuration.GetSection("IpBlocking"));
 
-        services.AddMcpServer().WithHttpTransport().WithTools<FplMcpTools>();
+        services.AddMcpServer().WithHttpTransport().WithTools<FplMcpTools>().WithResources<FplDomainResource>();
     }
 }

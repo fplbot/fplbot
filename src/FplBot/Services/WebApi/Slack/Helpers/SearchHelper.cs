@@ -1,4 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using System.Globalization;
+using System.Text;
 using Fastenshtein;
 
 namespace FplBot.Services.WebApi.Slack.Helpers;
@@ -38,7 +40,7 @@ internal static class SearchHelper
 
     public static SearchResult<T> Find<T>(IEnumerable<T> collection, string input, Func<T, ISearchableProperty> searchProperties)
     {
-        var normalizedInput = input.ToLower();
+        var normalizedInput = Fold(input);
 
         var lev = new Levenshtein(normalizedInput);
 
@@ -49,7 +51,7 @@ internal static class SearchHelper
         {
             foreach (var searchProperty in searchProperties(item).AsStrings)
             {
-                var termToMatchAgainst = searchProperty.ToLower();
+                var termToMatchAgainst = Fold(searchProperty);
                 if (termToMatchAgainst == normalizedInput)
                 {
                     return new SearchResult<T>(item, 0);
@@ -64,6 +66,22 @@ internal static class SearchHelper
         }
 
         return new SearchResult<T>(currentWinner, lowestDistance);
+    }
+
+    private static string Fold(string s)
+    {
+        var lowered = s.ToLowerInvariant().Replace("ß", "ss");
+        var decomposed = lowered.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(decomposed.Length);
+        foreach (var c in decomposed)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 
     private class SearchResultWithPri<T>(int pri, SearchResult<T> searchResult)
