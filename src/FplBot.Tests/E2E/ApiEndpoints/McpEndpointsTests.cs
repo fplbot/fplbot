@@ -111,6 +111,40 @@ public class McpEndpointsTests(AppFixture fixture)
     }
 
     [Fact]
+    public async Task GetPlayer_FuzzyMatch_HandlesNonAsciiNames()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Players =
+            [
+                new Player { Id = 1, FirstName = "Jan", SecondName = "Groß", WebName = "Groß", OwnershipPercentage = 1 },
+                new Player { Id = 2, FirstName = "Ross", SecondName = "Barkley", WebName = "Barkley", OwnershipPercentage = 40 }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getPlayer = tools.First(t => t.Name == "get_player");
+
+            var result = await getPlayer.CallAsync(
+                new Dictionary<string, object?> { ["name"] = "Gross" },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            var webName = JsonDocument.Parse(text).RootElement.GetProperty("web_name").GetString();
+            Assert.Equal("Groß", webName);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
     public async Task GetInjuries_ReturnsOnlyInjuredOverOwnershipThreshold()
     {
         var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
