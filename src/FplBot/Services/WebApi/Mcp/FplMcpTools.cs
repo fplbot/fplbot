@@ -4,9 +4,11 @@ using Fpl.Client.Models;
 using Fpl.EventPublishers.Models.Mappers;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
+using FplBot.Formatting;
 using FplBot.Formatting.Helpers;
 using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Endpoints.Api.Fpl;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 
 namespace FplBot.WebApi.Mcp;
@@ -21,6 +23,8 @@ public class FplMcpTools(
     IPlayerSearch playerSearch,
     IInjuredPlayersFinder injuredPlayersFinder,
     IPriceChangedPlayersFinder priceChangedPlayersFinder,
+    ICaptainsByGameWeek captainsByGameWeek,
+    ITransfersByGameWeek transfersByGameWeek,
     ISearchService searchService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<Program> logger)
@@ -72,6 +76,20 @@ public class FplMcpTools(
         return new PriceChangesResponse(alreadyChanged, likelyToChange);
     }
 
+    [McpServerTool(Name = "get_captains", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Captain and vice-captain picks for every entry in a classic league for a given gameweek (defaults to the current gameweek).")]
+    public async Task<IEnumerable<EntryCaptainPick>> GetCaptains(
+        [Description("The classic league's FPL id")] int leagueId,
+        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null) =>
+        await captainsByGameWeek.GetEntryCaptainPicks(await ResolveGameweek(gameweek), leagueId);
+
+    [McpServerTool(Name = "get_transfers", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Transfers made by every entry in a classic league for a given gameweek (defaults to the current gameweek).")]
+    public async Task<IEnumerable<TransfersByGameWeek.Transfer>> GetTransfers(
+        [Description("The classic league's FPL id")] int leagueId,
+        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null) =>
+        await transfersByGameWeek.GetTransfersByGameweek(await ResolveGameweek(gameweek), leagueId);
+
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Look up a single FPL manager entry by id.")]
     public Task<EntryItem?> GetEntry(
@@ -100,6 +118,15 @@ public class FplMcpTools(
         [Description("Zero-based page number")] int page = 0,
         [Description("Restrict to entries, leagues, or both")] SearchType type = SearchType.All) =>
         searchService.SearchAny(query, page, MaxHits, BuildMetaData(), type);
+
+    private async Task<int> ResolveGameweek(int? gameweek)
+    {
+        if (gameweek is { } explicitGameweek) return explicitGameweek;
+
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var current = settings?.Gameweeks.GetCurrentGameweek();
+        return current?.Id ?? throw new McpException("No current gameweek — the season may be between gameweeks.");
+    }
 
     private SearchMetaData BuildMetaData() => new()
     {

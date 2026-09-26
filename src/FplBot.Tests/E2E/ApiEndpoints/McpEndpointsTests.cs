@@ -3,6 +3,8 @@ using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
+using FplBot.Formatting;
+using FplBot.Formatting.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -29,6 +31,8 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("get_player", names);
         Assert.Contains("get_injuries", names);
         Assert.Contains("get_price_changes", names);
+        Assert.Contains("get_captains", names);
+        Assert.Contains("get_transfers", names);
     }
 
     [Fact]
@@ -248,5 +252,98 @@ public class McpEndpointsTests(AppFixture fixture)
 
         var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
         Assert.Contains("Magnus Skjelbek", text);
+    }
+
+    [Fact]
+    public async Task GetCaptains_ReturnsCaptainPicksForLeague()
+    {
+        const int leagueId = 700;
+        var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
+        var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+
+        // Setup league with one entry
+        A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
+            .Returns(new ClassicLeague
+            {
+                Standings = new ClassicLeagueStandings
+                {
+                    Entries = [new ClassicLeagueEntry { Entry = 1, EntryName = "Captain FC", PlayerName = "Test Player" }]
+                }
+            });
+
+        // Setup entry picks for gameweek 5
+        A.CallTo(() => entryClient.GetPicks(1, 5)).Returns(new EntryPicks
+        {
+            ActiveChip = null,
+            Picks = [new Pick { PlayerId = 10, IsCaptain = true }, new Pick { PlayerId = 20, IsViceCaptain = true }],
+            EventEntryHistory = new EventEntryHistory { Bank = 0, Value = 1000 }
+        });
+
+        // Setup global settings with players and current gameweek
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 5, IsCurrent = true }],
+            Players = [
+                new Player { Id = 10, FirstName = "Erling", SecondName = "Haaland" },
+                new Player { Id = 20, FirstName = "Mohamed", SecondName = "Salah" }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getCaptains = tools.First(t => t.Name == "get_captains");
+
+            var result = await getCaptains.CallAsync(
+                new Dictionary<string, object?> { ["leagueId"] = leagueId },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains("Haaland", text);
+            Assert.Contains("Salah", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetTransfers_ReturnsTransfersForLeague()
+    {
+        const int leagueId = 701;
+        const int gameweek = 6;
+        var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
+        var transfersClient = fixture.Services.GetRequiredService<ITransfersClient>();
+
+        // Setup league with one entry
+        A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
+            .Returns(new ClassicLeague
+            {
+                Standings = new ClassicLeagueStandings
+                {
+                    Entries = [new ClassicLeagueEntry { Entry = 1, EntryName = "Transfer FC", PlayerName = "Test Manager" }]
+                }
+            });
+
+        // Setup transfers for the entry
+        A.CallTo(() => transfersClient.GetTransfers(1)).Returns(
+        [
+            new Transfer { Entry = 1, Event = gameweek, ElementIn = 10, ElementOut = 20 }
+        ]);
+
+        await using var client = await fixture.ConnectMcpClient();
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var getTransfers = tools.First(t => t.Name == "get_transfers");
+
+        var result = await getTransfers.CallAsync(
+            new Dictionary<string, object?> { ["leagueId"] = leagueId, ["gameweek"] = gameweek },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+        Assert.Contains("Transfer FC", text);
     }
 }
