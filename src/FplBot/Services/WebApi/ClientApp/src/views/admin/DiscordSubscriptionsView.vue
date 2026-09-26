@@ -119,7 +119,10 @@ async function removeGuild(installationId: string, guildId: string, guildName: s
   error.value = "";
   try {
     await deleteDiscordGuild(installationId);
-    await load();
+    // Uninstall is queued, not done yet (see UninstallGuildHandler) - an immediate reload could
+    // still show the guild as present, so drop it from the local list instead of trusting load().
+    guilds.value = guilds.value.filter((g) => g.id !== installationId);
+    totalCount.value = Math.max(0, totalCount.value - 1);
   } catch (e) {
     error.value = describeAdminError(e);
   } finally {

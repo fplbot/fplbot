@@ -18,6 +18,7 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
     {
         fixture.DiscordCapture.Reset();
         fixture.ResetChannelOutcomes();
+        fixture.SlackCapture.Reset();
         await fixture.FlushRedisAsync();
     }
 
@@ -286,8 +287,12 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         response.EnsureSuccessStatusCode();
-        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId));
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId) is null);
         Assert.True(fixture.DiscordCapture.LeftGuild(installedGuild.ExternalId));
+
+        // Drain the async ops-notification side effect so it can't leak into a later,
+        // unrelated test sharing this fixture's SlackCapture.
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]
@@ -299,7 +304,21 @@ public class AdminDiscordEndpointsTests(AppFixture fixture) : IAsyncLifetime
         var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
 
         response.EnsureSuccessStatusCode();
-        Assert.Null(await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId));
+        await AppFixture.WaitUntil(async () => await fixture.GuildRepo.FindInstallationByTeamId(installedGuild.ExternalId) is null);
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
+    }
+
+    [Fact]
+    public async Task DeleteGuild_AlsoClearsMemberCountEntry()
+    {
+        var installedGuild = await fixture.SeedGuildInstallation(subscriptions: [EventSubscription.Standings]);
+        await fixture.GuildMemberCountRepo.SetApproximateMemberCount(installedGuild.ExternalId, 500);
+
+        var response = await fixture.Delete($"/api/admin/discord/guilds/{installedGuild.Id.Value}");
+
+        response.EnsureSuccessStatusCode();
+        await AppFixture.WaitUntil(async () => !(await fixture.GuildMemberCountRepo.GetAll()).ContainsKey(installedGuild.ExternalId));
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]

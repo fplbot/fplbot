@@ -9,6 +9,33 @@ public static class FplEndpoints
     {
         group.MapGet("/leagues/{leagueId:int}", GetLeague);
         group.MapGet("/leagues/{leagueId:int}/details", GetLeagueDetails);
+        group.MapGet("/entries/{entryId:int}", GetEntry);
+    }
+
+    // A direct id lookup (someone typing/pasting their own entry id) must go straight to the FPL
+    // API - the /api/search/entries/{id} equivalent only knows about entries SlowEntryIndexProvider
+    // has already crawled, which lags real entries by however far its sequential id sweep has
+    // reached (or is disabled entirely, as it is in the test environment), so a perfectly valid
+    // entry id can 404 there for a long time.
+    private static async Task<IResult> GetEntry(int entryId, IEntryClient entryClient, ILogger<Program> logger)
+    {
+        try
+        {
+            var entry = await entryClient.Get(entryId, tolerate404: true);
+            if (entry is not { Exists: true }) return TypedResults.NotFound();
+            return TypedResults.Ok(new
+            {
+                id = entryId,
+                teamName = entry.TeamName,
+                realName = entry.PlayerFullName
+            });
+        }
+        catch (HttpRequestException e)
+        {
+            logger.LogWarning(e.ToString());
+        }
+
+        return TypedResults.NotFound();
     }
 
     private static async Task<IResult> GetLeague(int leagueId, ILeagueClient leagueClient, ILogger<Program> logger) =>

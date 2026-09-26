@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import AppFooter from "../components/AppFooter.vue";
-import { searchLeagues, getLeague, getEntry } from "../api/api";
-import type { LeagueItem } from "../api/types";
+import { searchLeagues, getLeague, getEntry, searchEntries } from "../api/api";
+import type { LeagueItem, EntryItem } from "../api/types";
 import {
   enableNotifications,
   getState,
@@ -41,6 +41,9 @@ const deviceName = ref("");
 const manualEntryInput = ref("");
 const manualEntryError = ref<string | null>(null);
 const linkedEntryName = ref<string | null>(null);
+const entryQuery = ref("");
+const entryResults = ref<EntryItem[]>([]);
+const entrySearched = ref(false);
 
 const needsHomeScreen = computed(() => isIos() && !isStandalone());
 const supported = computed(() => pushSupported());
@@ -147,6 +150,30 @@ async function unlinkEntry() {
     linkedEntryName.value = null;
   } catch (e) {
     error.value = (e as Error).message;
+  }
+}
+
+async function runEntrySearch() {
+  if (!entryQuery.value) return;
+  manualEntryError.value = null;
+  try {
+    entryResults.value = (await searchEntries(entryQuery.value, 0)).exposedHits;
+    entrySearched.value = true;
+  } catch (e) {
+    manualEntryError.value = (e as Error).message;
+  }
+}
+
+async function pickEntry(entry: EntryItem) {
+  manualEntryError.value = null;
+  try {
+    state.value = await setEntry(entry.id);
+    linkedEntryName.value = entry.teamName ?? entry.realName ?? null;
+    entryResults.value = [];
+    entrySearched.value = false;
+    entryQuery.value = "";
+  } catch (e) {
+    manualEntryError.value = (e as Error).message;
   }
 }
 
@@ -401,13 +428,27 @@ async function stop() {
         </div>
         <template v-else>
           <p class="hint">Link your FPL team for a more personalized experience later.</p>
+          <form class="search-form" @submit.prevent="runEntrySearch">
+            <input v-model="entryQuery" placeholder="Search for your team by name" class="search-input" />
+            <button type="submit" class="btn">Search</button>
+          </form>
+          <ul v-if="entryResults.length" class="league-list">
+            <li v-for="entry in entryResults" :key="entry.id">
+              <button class="league-row" @click="pickEntry(entry)">
+                <span class="league-name">{{ entry.teamName ?? entry.realName ?? `entry ${entry.id}` }}</span>
+                <span class="league-admin" v-if="entry.teamName && entry.realName">{{ entry.realName }}</span>
+              </button>
+            </li>
+          </ul>
+          <p v-else-if="entrySearched">No teams matched "{{ entryQuery }}".</p>
+
           <form class="search-form manual-league" @submit.prevent="linkEntry">
             <input
               v-model="manualEntryInput"
-              placeholder="Your entry id or fantasy.premierleague.com/entry/... link"
+              placeholder="Or paste your entry id or fantasy.premierleague.com/entry/... link"
               class="search-input"
             />
-            <button type="submit" class="btn">Link my team</button>
+            <button type="submit" class="btn">Use this</button>
           </form>
           <p v-if="manualEntryError" class="error">{{ manualEntryError }}</p>
         </template>

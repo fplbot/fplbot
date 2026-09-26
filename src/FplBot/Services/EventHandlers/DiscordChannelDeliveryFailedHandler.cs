@@ -25,5 +25,11 @@ public class DiscordChannelDeliveryFailedHandler(
 
         await context.Publish(new DiscordChannelSubscriptionRemoved(
             message.TeamId, message.ChannelId, message.Reason, removed.FailureCount, removed.FailingSince!.Value));
+
+        var remaining = await repository.FindInstallationByTeamId(message.TeamId);
+        if (remaining is { ChannelSubscriptions.Count: 0 })
+        {
+            await context.Publish(new PurgedLastSubscriptionForServer(message.TeamId));
+        }
     }
 }
