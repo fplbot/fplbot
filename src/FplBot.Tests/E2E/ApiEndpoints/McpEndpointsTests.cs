@@ -892,4 +892,124 @@ public class McpEndpointsTests(AppFixture fixture)
             A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
         }
     }
+
+    [Fact]
+    public async Task FindPlayers_FiltersSortsAndLimits()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 10, IsCurrent = true }],
+            Teams = [new Team { Id = 1, Code = 3, ShortName = "BHA" }],
+            Players =
+            [
+                new Player { Id = 1, WebName = "TopScorer", TeamCode = 3, TeamId = 1, Status = "a", EpNext = 9.5, NowCost = 100, Position = FplPlayerPosition.Forward },
+                new Player { Id = 2, WebName = "MidScorer", TeamCode = 3, TeamId = 1, Status = "a", EpNext = 5.0, NowCost = 80, Position = FplPlayerPosition.Forward },
+                new Player { Id = 3, WebName = "Injured", TeamCode = 3, TeamId = 1, Status = "i", EpNext = 20.0, NowCost = 90, Position = FplPlayerPosition.Forward }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var findPlayers = tools.First(t => t.Name == "find_players");
+
+            var result = await findPlayers.CallAsync(
+                new Dictionary<string, object?> { ["limit"] = 10 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var players = doc.RootElement.GetProperty("players").EnumerateArray().ToArray();
+
+            Assert.Equal(2, players.Length);
+            Assert.Equal("TopScorer", players[0].GetProperty("webName").GetString());
+            Assert.Equal("MidScorer", players[1].GetProperty("webName").GetString());
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task FindPlayers_ListTools_IncludesFindPlayers()
+    {
+        await using var client = await fixture.ConnectMcpClient();
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains("find_players", tools.Select(t => t.Name));
+    }
+
+    [Fact]
+    public async Task FindPlayers_SortByAcceptsEnumNameFromClient()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 10, IsCurrent = true }],
+            Teams = [new Team { Id = 1, ShortName = "BHA" }],
+            Players =
+            [
+                new Player { Id = 1, WebName = "HighForm", TeamId = 1, Status = "a", Form = 8.0, EpNext = 1.0 },
+                new Player { Id = 2, WebName = "LowForm", TeamId = 1, Status = "a", Form = 2.0, EpNext = 9.0 }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var findPlayers = tools.First(t => t.Name == "find_players");
+
+            var result = await findPlayers.CallAsync(
+                new Dictionary<string, object?> { ["sortBy"] = "Form" },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.False(result.IsError ?? false);
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var players = doc.RootElement.GetProperty("players").EnumerateArray().ToArray();
+            Assert.Equal("HighForm", players[0].GetProperty("webName").GetString());
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task FindPlayers_NoCurrentOrNextGameweek_StillReturnsRankedPlayersWithNullFixtureEase()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 38, IsFinished = true }],
+            Teams = [new Team { Id = 1, ShortName = "BHA" }],
+            Players = [new Player { Id = 1, WebName = "OffSeasonPlayer", TeamId = 1, Status = "a", EpNext = 5.0 }]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var findPlayers = tools.First(t => t.Name == "find_players");
+
+            var result = await findPlayers.CallAsync(new Dictionary<string, object?>(), cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.False(result.IsError ?? false);
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var player = doc.RootElement.GetProperty("players").EnumerateArray().Single();
+            Assert.Equal("OffSeasonPlayer", player.GetProperty("webName").GetString());
+            Assert.False(player.TryGetProperty("fixtureEaseNext3", out _));
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
 }

@@ -210,6 +210,98 @@ public class FplMcpTools(
         return new TeamFixtureDifficulty(team.Id, team.Name ?? "", matchedPlayer, gameweeks);
     }
 
+    [McpServerTool(Name = "find_players", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Discover and rank players by form, expected points, value, ownership, or upcoming fixture ease - use this instead of guessing a name when the question is 'who should I get' rather than 'tell me about X'. Filter by position and/or team and/or price. Results use webName (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
+    public async Task<PlayerRankingResult> FindPlayers(
+        [Description("Filter to one position")] FplPlayerPosition? position = null,
+        [Description("The team's FPL id")] int? teamId = null,
+        [Description("The team's name or short name, e.g. \"Brighton\" or \"BHA\"")] string? teamName = null,
+        [Description("Maximum price in millions, e.g. 8.5")] double? maxPrice = null,
+        [Description("Minimum ownership percentage")] double? minOwnership = null,
+        [Description("Exclude injured/suspended/unavailable players (keeps doubtful players). Default true")] bool excludeUnavailable = true,
+        [Description("What to sort by; defaults to expected points next gameweek")] PlayerSortMetric sortBy = PlayerSortMetric.EpNext,
+        [Description("Max results, default 10, capped at 50")] int limit = 10)
+    {
+        if (teamId.HasValue && !string.IsNullOrWhiteSpace(teamName))
+        {
+            throw new McpException("Provide at most one of teamId or teamName.");
+        }
+
+        var cappedLimit = Math.Clamp(limit, 1, 50);
+
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var teams = settings?.Teams ?? [];
+        var players = settings?.Players ?? [];
+
+        Team? filterTeam = null;
+        if (teamId.HasValue)
+        {
+            filterTeam = teams.SingleOrDefault(t => t.Id == teamId.Value)
+                ?? throw new McpException($"No team found with id {teamId.Value}.");
+        }
+        else if (!string.IsNullOrWhiteSpace(teamName))
+        {
+            filterTeam = teams.SingleOrDefault(t =>
+                    string.Equals(t.Name, teamName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(t.ShortName, teamName, StringComparison.OrdinalIgnoreCase))
+                ?? throw new McpException($"No team found matching \"{teamName}\".");
+        }
+
+        var teamsById = teams.ToDictionary(t => t.Id);
+
+        Dictionary<int, double?> fixtureEaseByTeam;
+        try
+        {
+            var (_, _, fixtures) = await GetUpcomingFixtures(3);
+            fixtureEaseByTeam = teams.ToDictionary(t => t.Id, t =>
+            {
+                var teamFixtures = fixtures.Where(f => f.HomeTeamId == t.Id || f.AwayTeamId == t.Id).ToArray();
+                return teamFixtures.Length == 0 ? (double?)null : teamFixtures.Average(f => f.HomeTeamId == t.Id ? f.HomeTeamDifficulty : f.AwayTeamDifficulty);
+            });
+        }
+        catch (McpException)
+        {
+            fixtureEaseByTeam = [];
+        }
+
+        var candidates = players.Where(p =>
+            (position == null || p.Position == position) &&
+            (filterTeam == null || p.TeamId == filterTeam.Id) &&
+            (maxPrice == null || p.NowCost / 10.0 <= maxPrice) &&
+            (minOwnership == null || p.OwnershipPercentage >= minOwnership) &&
+            (!excludeUnavailable || p.Status == null || p.Status == PlayerStatuses.Available || p.Status == PlayerStatuses.Doubtful));
+
+        var ranked = sortBy switch
+        {
+            PlayerSortMetric.EpNext => candidates.OrderByDescending(p => p.EpNext ?? double.MinValue),
+            PlayerSortMetric.Form => candidates.OrderByDescending(p => p.Form),
+            PlayerSortMetric.TotalPoints => candidates.OrderByDescending(p => p.TotalPoints),
+            PlayerSortMetric.PointsPerGame => candidates.OrderByDescending(p => p.PointsPerGame),
+            PlayerSortMetric.Value => candidates.OrderByDescending(p => p.NowCost == 0 ? 0 : p.TotalPoints / (p.NowCost / 10.0)),
+            PlayerSortMetric.Ownership => candidates.OrderByDescending(p => p.OwnershipPercentage),
+            PlayerSortMetric.IctIndex => candidates.OrderByDescending(p => p.IctIndex),
+            PlayerSortMetric.FixtureEase => candidates.OrderBy(p => fixtureEaseByTeam.GetValueOrDefault(p.TeamId) ?? double.MaxValue),
+            _ => candidates.OrderByDescending(p => p.EpNext ?? double.MinValue)
+        };
+
+        var top = ranked.Take(cappedLimit).Select(p => new RankedPlayer(
+            p.Id,
+            p.WebName ?? "",
+            teamsById.GetValueOrDefault(p.TeamId)?.ShortName ?? "",
+            p.Position,
+            p.NowCost / 10.0,
+            p.Form,
+            p.EpNext,
+            p.TotalPoints,
+            p.PointsPerGame,
+            p.OwnershipPercentage,
+            p.IctIndex,
+            p.Status,
+            fixtureEaseByTeam.GetValueOrDefault(p.TeamId)));
+
+        return new PlayerRankingResult(top);
+    }
+
     [McpServerTool(Name = "get_double_and_blank_gameweeks", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Which teams have a blank (no fixture) or double (2+ fixtures) gameweek in the next N gameweeks (default 5).")]
     public async Task<DoubleAndBlankGameweeksResponse> GetDoubleAndBlankGameweeks(
@@ -351,3 +443,32 @@ public record DoubleAndBlankGameweeksResponse(IEnumerable<GameweekTeamCounts> Ga
 public record GameweekTeamCounts(int GameweekId, IEnumerable<TeamRef> BlankTeams, IEnumerable<TeamRef> DoubleTeams);
 
 public record TeamRef(int TeamId, string ShortName);
+
+public enum PlayerSortMetric
+{
+    EpNext,
+    Form,
+    TotalPoints,
+    PointsPerGame,
+    Value,
+    Ownership,
+    IctIndex,
+    FixtureEase
+}
+
+public record PlayerRankingResult(IEnumerable<RankedPlayer> Players);
+
+public record RankedPlayer(
+    int Id,
+    string WebName,
+    string TeamShortName,
+    FplPlayerPosition Position,
+    double Price,
+    double Form,
+    double? EpNext,
+    int TotalPoints,
+    double PointsPerGame,
+    double OwnershipPercentage,
+    double IctIndex,
+    string? Status,
+    double? FixtureEaseNext3);
