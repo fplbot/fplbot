@@ -219,21 +219,119 @@ public class McpEndpointsTests(AppFixture fixture)
     }
 
     [Fact]
-    public async Task GetEntry_Found_ReturnsEntry()
+    public async Task GetEntry_Found_ReturnsProfileWithSquad()
     {
-        var searchService = fixture.Services.GetRequiredService<ISearchService>();
-        A.CallTo(() => searchService.GetEntry(42)).Returns(new EntryItem { Id = 42, RealName = "Magnus Skjelbek" });
+        const int entryId = 800;
+        var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
+        var entryHistoryClient = fixture.Services.GetRequiredService<IEntryHistoryClient>();
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+
+        A.CallTo(() => entryClient.Get(entryId, true)).Returns(new BasicEntry
+        {
+            Id = entryId,
+            TeamName = "Squad FC",
+            PlayerFirstName = "Magnus",
+            PlayerLastName = "Skjelbek",
+            SummaryOverallPoints = 500,
+            SummaryOverallRank = 12345
+        });
+
+        A.CallTo(() => entryClient.GetPicks(entryId, 5, true)).Returns(new EntryPicks
+        {
+            ActiveChip = null,
+            Picks =
+            [
+                new Pick { PlayerId = 10, TeamPosition = 1, IsCaptain = true },
+                new Pick { PlayerId = 20, TeamPosition = 2, IsViceCaptain = true },
+                new Pick { PlayerId = 30, TeamPosition = 12 }
+            ],
+            EventEntryHistory = new EventEntryHistory { Bank = 5, Value = 1005 }
+        });
+
+        A.CallTo(() => entryHistoryClient.GetHistory(entryId, true)).Returns((entryId, new EntryHistory
+        {
+            SeasonHistory = [new EntrySeasonHistory(), new EntrySeasonHistory(), new EntrySeasonHistory()]
+        }));
+
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 5, IsCurrent = true }],
+            Players =
+            [
+                new Player { Id = 10, WebName = "Haaland" },
+                new Player { Id = 20, WebName = "Salah" },
+                new Player { Id = 30, WebName = "BenchWarmer" }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getEntry = tools.First(t => t.Name == "get_entry");
+
+            var result = await getEntry.CallAsync(
+                new Dictionary<string, object?> { ["id"] = entryId },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            Assert.Equal("Squad FC", doc.RootElement.GetProperty("teamName").GetString());
+            Assert.Equal("Haaland", doc.RootElement.GetProperty("captain").GetString());
+            Assert.Equal("Salah", doc.RootElement.GetProperty("viceCaptain").GetString());
+            Assert.Equal(100.5, doc.RootElement.GetProperty("squadValue").GetDouble());
+            Assert.Equal(0.5, doc.RootElement.GetProperty("bank").GetDouble());
+            Assert.Equal(3, doc.RootElement.GetProperty("seasonsPlayed").GetInt32());
+            var starters = doc.RootElement.GetProperty("startingXi").EnumerateArray().Select(p => p.GetProperty("webName").GetString()).ToArray();
+            var bench = doc.RootElement.GetProperty("bench").EnumerateArray().Select(p => p.GetProperty("webName").GetString()).ToArray();
+            Assert.Equal(["Haaland", "Salah"], starters);
+            Assert.Equal(["BenchWarmer"], bench);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetEntry_NotFound_ReturnsError()
+    {
+        const int entryId = 801;
+        var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
+        A.CallTo(() => entryClient.Get(entryId, true)).Returns((BasicEntry?)null);
 
         await using var client = await fixture.ConnectMcpClient();
         var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
         var getEntry = tools.First(t => t.Name == "get_entry");
 
         var result = await getEntry.CallAsync(
-            new Dictionary<string, object?> { ["id"] = 42 },
+            new Dictionary<string, object?> { ["id"] = entryId },
             cancellationToken: TestContext.Current.CancellationToken);
 
+        Assert.True(result.IsError);
         var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
-        Assert.Contains("Magnus Skjelbek", text);
+        Assert.Contains($"No entry found with id {entryId}", text);
+    }
+
+    [Fact]
+    public async Task GetEntry_ApiReturns200WithNotFoundDetail_ReturnsError()
+    {
+        const int entryId = 802;
+        var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
+        A.CallTo(() => entryClient.Get(entryId, true)).Returns(new BasicEntry { Id = entryId, Detail = "Not found." });
+
+        await using var client = await fixture.ConnectMcpClient();
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var getEntry = tools.First(t => t.Name == "get_entry");
+
+        var result = await getEntry.CallAsync(
+            new Dictionary<string, object?> { ["id"] = entryId },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+        Assert.Contains($"No entry found with id {entryId}", text);
     }
 
     [Fact]

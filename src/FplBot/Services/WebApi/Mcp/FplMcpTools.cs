@@ -329,10 +329,74 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Look up a single FPL manager entry by id.")]
-    public Task<EntryItem?> GetEntry(
-        [Description("The FPL manager entry id")] int id) =>
-        searchService.GetEntry(id);
+    [Description("Look up an FPL manager entry by id: profile plus current squad (starting XI, bench, captain/vice-captain, active chip, squad value, bank). Squad reflects the gameweek whose deadline has most recently passed - picks for a gameweek aren't public before its deadline. Players are shown by webName (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
+    public async Task<EntryProfile> GetEntry(
+        [Description("The FPL manager entry id")] int id)
+    {
+        var entry = await entryClient.Get(id, tolerate404: true);
+        if (entry is not { Exists: true })
+        {
+            throw new McpException($"No entry found with id {id}.");
+        }
+
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var gwId = settings?.Gameweeks.GetCurrentGameweek()?.Id ?? settings?.Gameweeks.GetPreviousGameweek()?.Id;
+
+        var historyTask = entryHistoryClient.GetHistory(id, tolerate404: true);
+
+        SquadPick[]? startingXi = null;
+        SquadPick[]? bench = null;
+        string? captain = null;
+        string? viceCaptain = null;
+        string? activeChip = null;
+        double? squadValue = null;
+        double? bank = null;
+
+        if (gwId is { } resolvedGwId)
+        {
+            var picksTask = entryClient.GetPicks(id, resolvedGwId, tolerate404: true);
+            await Task.WhenAll(picksTask, historyTask);
+            var picks = await picksTask;
+            if (picks != null)
+            {
+                var playersById = (settings?.Players ?? []).ToDictionary(p => p.Id);
+                SquadPick ToSquadPick(Pick pick) => new(
+                    pick.PlayerId,
+                    playersById.GetValueOrDefault(pick.PlayerId)?.WebName ?? "",
+                    playersById.GetValueOrDefault(pick.PlayerId)?.Position ?? FplPlayerPosition.NotSet,
+                    pick.IsCaptain,
+                    pick.IsViceCaptain);
+
+                var ordered = picks.Picks.OrderBy(p => p.TeamPosition).ToArray();
+                startingXi = [.. ordered.Where(p => p.TeamPosition <= 11).Select(ToSquadPick)];
+                bench = [.. ordered.Where(p => p.TeamPosition > 11).Select(ToSquadPick)];
+                captain = ordered.FirstOrDefault(p => p.IsCaptain) is { } c ? playersById.GetValueOrDefault(c.PlayerId)?.WebName : null;
+                viceCaptain = ordered.FirstOrDefault(p => p.IsViceCaptain) is { } vc ? playersById.GetValueOrDefault(vc.PlayerId)?.WebName : null;
+                activeChip = picks.ActiveChip;
+                squadValue = picks.EventEntryHistory?.Value / 10.0;
+                bank = picks.EventEntryHistory?.Bank / 10.0;
+            }
+        }
+
+        var history = await historyTask;
+        var seasonsPlayed = history?.entryHistory.SeasonHistory.Count ?? 0;
+
+        return new EntryProfile(
+            entry.Id,
+            entry.TeamName ?? "",
+            entry.PlayerFullName,
+            entry.PlayerRegionName,
+            entry.SummaryOverallPoints,
+            entry.SummaryOverallRank,
+            seasonsPlayed,
+            captain,
+            viceCaptain,
+            activeChip,
+            squadValue,
+            bank,
+            startingXi,
+            bench);
+    }
 
     [McpServerTool(Name = "search_entries", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Search for FPL manager entries by manager or team name.")]
@@ -472,3 +536,21 @@ public record RankedPlayer(
     double IctIndex,
     string? Status,
     double? FixtureEaseNext3);
+
+public record EntryProfile(
+    int Id,
+    string TeamName,
+    string PlayerFullName,
+    string? Country,
+    int? SummaryOverallPoints,
+    int? SummaryOverallRank,
+    int SeasonsPlayed,
+    string? Captain,
+    string? ViceCaptain,
+    string? ActiveChip,
+    double? SquadValue,
+    double? Bank,
+    IEnumerable<SquadPick>? StartingXi,
+    IEnumerable<SquadPick>? Bench);
+
+public record SquadPick(int PlayerId, string WebName, FplPlayerPosition Position, bool IsCaptain, bool IsViceCaptain);
