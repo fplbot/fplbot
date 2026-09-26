@@ -33,20 +33,21 @@ public class FplMcpTools(
 {
     private const int MaxHits = 10;
 
+    // League id 314 is FPL's global "Overall" league (stable for years, not a documented API contract) - see get_league's description.
     [McpServerTool(Name = "get_league", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Look up a classic FPL league by id: its name and admin manager's name.")]
+    [Description("Look up a classic FPL league by id: its name and admin manager's name (no standings - use get_league_details or get_league_trends for those). League id 314 is FPL's built-in global \"Overall\" league - a de facto top-managers-worldwide leaderboard (this is a stable FPL numbering convention, not a documented API contract) - use get_league_trends(314) to see what they're doing.")]
     public Task<object?> GetLeague(
         [Description("The classic league's FPL id")] int leagueId) =>
         FplEndpoints.GetLeagueData(leagueId, leagueClient, logger);
 
     [McpServerTool(Name = "get_league_details", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Full classic league standings plus current-gameweek summaries (captain, vice-captain, chip, transfers) per entry.")]
+    [Description("Classic league standings (first page only - up to 50 top-ranked entries, not the whole league for leagues bigger than that) plus current-gameweek summaries (captain, vice-captain, chip, transfers) per entry.")]
     public Task<object?> GetLeagueDetails(
         [Description("The classic league's FPL id")] int leagueId) =>
         FplEndpoints.GetLeagueDetailsData(leagueId, leagueClient, entryClient, transfersClient, entryHistoryClient, globalSettingsClient, logger);
 
     [McpServerTool(Name = "get_player", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Look up an FPL player by name (fuzzy match — handles nicknames, misspellings, and partial names). Returns full player stats.")]
+    [Description("Look up an FPL player by name (fuzzy match - handles nicknames, misspellings, partial names, and non-ASCII characters like ß). Returns full player stats. When referring to the player elsewhere, use the returned web_name field (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
     public async Task<Player?> GetPlayer(
         [Description("Player name, nickname, or partial name (e.g. 'haaland', 'van dijk', 'kun')")] string name)
     {
@@ -79,7 +80,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_captains", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Captain and vice-captain picks for every entry in a classic league for a given gameweek (defaults to the current gameweek).")]
+    [Description("Captain and vice-captain picks for every entry on a classic league's first standings page (up to 50 entries, not the whole league for leagues bigger than that) for a given gameweek (defaults to the current gameweek). Captain/viceCaptain are full player objects - use their web_name field (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
     public async Task<IEnumerable<EntryCaptainPick>> GetCaptains(
         [Description("The classic league's FPL id")] int leagueId,
         [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null)
@@ -213,7 +214,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_fixture_difficulty", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("A team's fixtures and difficulty ratings for the next N gameweeks (default 5), identified by team id, team name, or a player on it. An empty fixtures list for a gameweek means a blank gameweek for this team; two or more means a double gameweek.")]
+    [Description("A team's fixtures and difficulty ratings for the next N gameweeks (default 5), identified by team id, team name, or a player on it. An empty fixtures list for a gameweek means a blank gameweek for this team; two or more means a double gameweek. Opponent is shown by short code (e.g. BHA), matching fplbot's Slack/Discord bot conventions.")]
     public async Task<TeamFixtureDifficulty> GetFixtureDifficulty(
         [Description("The team's FPL id")] int? teamId = null,
         [Description("The team's name or short name, e.g. \"Brighton\" or \"BHA\"")] string? teamName = null,
@@ -366,7 +367,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_double_and_blank_gameweeks", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Which teams have a blank (no fixture) or double (2+ fixtures) gameweek in the next N gameweeks (default 5).")]
+    [Description("Which teams have a blank (no fixture) or double (2+ fixtures) gameweek in the next N gameweeks (default 5). Teams are shown by short code (e.g. BHA), matching fplbot's Slack/Discord bot conventions.")]
     public async Task<DoubleAndBlankGameweeksResponse> GetDoubleAndBlankGameweeks(
         [Description("How many gameweeks ahead to include, starting from the current gameweek")] int gameweeksAhead = 5)
     {

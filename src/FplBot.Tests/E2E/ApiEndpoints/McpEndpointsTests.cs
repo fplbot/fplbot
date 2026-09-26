@@ -96,6 +96,15 @@ public class McpEndpointsTests(AppFixture fixture)
     }
 
     [Fact]
+    public async Task GetLeague_Description_Mentions314()
+    {
+        await using var client = await fixture.ConnectMcpClient();
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var getLeague = tools.First(t => t.Name == "get_league");
+        Assert.Contains("314", getLeague.Description);
+    }
+
+    [Fact]
     public async Task GetPlayer_FuzzyMatch_ReturnsPlayer()
     {
         await using var client = await fixture.ConnectMcpClient();
