@@ -9,7 +9,11 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
 {
     private static readonly DateTimeOffset Day0 = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
-    public async ValueTask InitializeAsync() => await fixture.FlushRedisAsync();
+    public async ValueTask InitializeAsync()
+    {
+        fixture.SlackCapture.Reset();
+        await fixture.FlushRedisAsync();
+    }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
@@ -40,6 +44,11 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
         }
 
         await AppFixture.WaitUntil(async () => await fixture.GuildRepo.GetChannelSubscription(guild.ExternalId, channelId) is null);
+
+        // This is the guild's only subscription, so purging it cascades all the way to a guild
+        // uninstall and its ops-notification Slack post - drain it so it can't leak into a
+        // later, unrelated test sharing this fixture's SlackCapture.
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]
@@ -61,6 +70,11 @@ public class ChannelDeliveryFailedHandlerTests(AppFixture fixture) : IAsyncLifet
 
         var counts = await fixture.GuildMemberCountRepo.GetAll();
         Assert.False(counts.ContainsKey(guild.ExternalId));
+
+        // Drain the async ops-notification side effect (UninstallGuildHandler -> AppUninstalled
+        // -> SlackWorkspaceUninstalledHandler) so it can't leak into a later, unrelated test
+        // sharing this fixture's SlackCapture.
+        await fixture.SlackCapture.WaitForMessageAsync("#fplbot-notifications");
     }
 
     [Fact]
