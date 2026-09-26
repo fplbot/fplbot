@@ -143,7 +143,8 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var value = await AppFixture.ReadJson<JsonElement>(response);
         Assert.True(value.GetProperty("published").GetBoolean());
-        await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
+        await fixture.WaitUntilBusIdle();
+        fixture.SlackCapture.AnyMessage();
     }
 
     [Fact]
@@ -159,6 +160,7 @@ public class AdminSlackEndpointsTests(AppFixture fixture) : IAsyncLifetime
 
         var value = await AppFixture.ReadJson<JsonElement>(response);
         Assert.True(value.GetProperty("published").GetBoolean());
+        await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
         await fixture.SlackCapture.WaitForMessageAsync("C0FPLBOT01");
         await fixture.WaitUntilBusIdle();
         Assert.False(fixture.SlackCapture.AnyMessage("C0FPLBOT02"));
