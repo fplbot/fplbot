@@ -38,6 +38,8 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("get_gameweek", names);
         Assert.Contains("get_fixture_difficulty", names);
         Assert.Contains("get_double_and_blank_gameweeks", names);
+        Assert.Contains("find_players", names);
+        Assert.Contains("get_league_trends", names);
     }
 
     [Fact]
@@ -282,9 +284,10 @@ public class McpEndpointsTests(AppFixture fixture)
         A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
         {
             Gameweeks = [new() { Id = 5, IsCurrent = true }],
+            Teams = [new Team { Id = 1, ShortName = "MCI" }],
             Players =
             [
-                new Player { Id = 10, WebName = "Haaland" },
+                new Player { Id = 10, WebName = "Haaland", TeamId = 1, NowCost = 140, Form = 8.5, EpNext = 7.0 },
                 new Player { Id = 20, WebName = "Salah" },
                 new Player { Id = 30, WebName = "BenchWarmer" }
             ]
@@ -312,6 +315,10 @@ public class McpEndpointsTests(AppFixture fixture)
             var bench = doc.RootElement.GetProperty("bench").EnumerateArray().Select(p => p.GetProperty("webName").GetString()).ToArray();
             Assert.Equal(["Haaland", "Salah"], starters);
             Assert.Equal(["BenchWarmer"], bench);
+
+            var captainPick = doc.RootElement.GetProperty("startingXi").EnumerateArray().Single(p => p.GetProperty("webName").GetString() == "Haaland");
+            Assert.Equal(14.0, captainPick.GetProperty("price").GetDouble());
+            Assert.Equal("MCI", captainPick.GetProperty("teamShortName").GetString());
         }
         finally
         {
@@ -920,6 +927,7 @@ public class McpEndpointsTests(AppFixture fixture)
                 cancellationToken: TestContext.Current.CancellationToken);
             var byNameText = Assert.IsType<TextContentBlock>(Assert.Single(byName.Content)).Text;
             Assert.Contains("\"teamId\":1", byNameText);
+            Assert.Contains("\"teamShortName\":\"BHA\"", byNameText);
             Assert.DoesNotContain("\"matchedPlayer\"", byNameText);
 
             var byPlayer = await getFixtureDifficulty.CallAsync(
@@ -1156,9 +1164,10 @@ public class McpEndpointsTests(AppFixture fixture)
             Teams = [new Team { Id = 1, Code = 3, ShortName = "BHA" }],
             Players =
             [
-                new Player { Id = 1, WebName = "TopScorer", TeamCode = 3, TeamId = 1, Status = "a", EpNext = 9.5, NowCost = 100, Position = FplPlayerPosition.Forward },
                 new Player { Id = 2, WebName = "MidScorer", TeamCode = 3, TeamId = 1, Status = "a", EpNext = 5.0, NowCost = 80, Position = FplPlayerPosition.Forward },
-                new Player { Id = 3, WebName = "Injured", TeamCode = 3, TeamId = 1, Status = "i", EpNext = 20.0, NowCost = 90, Position = FplPlayerPosition.Forward }
+                new Player { Id = 1, WebName = "TopScorer", TeamCode = 3, TeamId = 1, Status = "a", EpNext = 9.5, NowCost = 100, Position = FplPlayerPosition.Forward },
+                new Player { Id = 3, WebName = "Injured", TeamCode = 3, TeamId = 1, Status = "i", EpNext = 20.0, NowCost = 90, Position = FplPlayerPosition.Forward },
+                new Player { Id = 4, WebName = "Doubtful", TeamCode = 3, TeamId = 1, Status = "d", EpNext = 3.0, NowCost = 90, Position = FplPlayerPosition.Forward }
             ]
         });
 
@@ -1176,22 +1185,15 @@ public class McpEndpointsTests(AppFixture fixture)
             using var doc = JsonDocument.Parse(text);
             var players = doc.RootElement.GetProperty("players").EnumerateArray().ToArray();
 
-            Assert.Equal(2, players.Length);
+            Assert.Equal(3, players.Length);
             Assert.Equal("TopScorer", players[0].GetProperty("webName").GetString());
             Assert.Equal("MidScorer", players[1].GetProperty("webName").GetString());
+            Assert.Equal("Doubtful", players[2].GetProperty("webName").GetString());
         }
         finally
         {
             A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
         }
-    }
-
-    [Fact]
-    public async Task FindPlayers_ListTools_IncludesFindPlayers()
-    {
-        await using var client = await fixture.ConnectMcpClient();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
-        Assert.Contains("find_players", tools.Select(t => t.Name));
     }
 
     [Fact]
