@@ -8,8 +8,21 @@ using Microsoft.Extensions.DependencyInjection;
 namespace FplBot.Tests.E2E.ApiEndpoints;
 
 [Collection("App")]
-public class FplEndpointsTests(AppFixture fixture)
+public class FplEndpointsTests(AppFixture fixture) : IAsyncLifetime
 {
+    private GlobalSettings? _originalGlobalSettings;
+
+    public async ValueTask InitializeAsync()
+    {
+        _originalGlobalSettings = await fixture.Services.GetRequiredService<IGlobalSettingsClient>().GetGlobalSettings();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        A.CallTo(() => fixture.Services.GetRequiredService<IGlobalSettingsClient>().GetGlobalSettings()).Returns(_originalGlobalSettings);
+        return ValueTask.CompletedTask;
+    }
+
     [Fact]
     public async Task GetLeague_Found_ReturnsLeagueNameAndAdmin()
     {
@@ -47,18 +60,19 @@ public class FplEndpointsTests(AppFixture fixture)
     {
         const int leagueId = 557;
         const int gameweekId = 9;
+        const int entryId = 900557;
 
         var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
         A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._)).Returns(new ClassicLeague
         {
-            Properties = new ClassicLeagueProperties { Name = "Details League", AdminEntry = 1 },
+            Properties = new ClassicLeagueProperties { Name = "Details League", AdminEntry = entryId },
             Standings = new ClassicLeagueStandings
             {
                 Entries =
                 [
                     new ClassicLeagueEntry
                     {
-                        Entry = 1, PlayerName = "Admin Player", EntryName = "Admin FC",
+                        Entry = entryId, PlayerName = "Admin Player", EntryName = "Admin FC",
                         Rank = 1, LastRank = 1, Total = 100, EventTotal = 50
                     }
                 ]
@@ -72,11 +86,11 @@ public class FplEndpointsTests(AppFixture fixture)
         });
 
         var transfersClient = fixture.Services.GetRequiredService<ITransfersClient>();
-        A.CallTo(() => transfersClient.GetTransfers(1)).Returns((ICollection<Transfer>?)null);
+        A.CallTo(() => transfersClient.GetTransfers(entryId)).Returns((ICollection<Transfer>?)null);
         var entryHistoryClient = fixture.Services.GetRequiredService<IEntryHistoryClient>();
-        A.CallTo(() => entryHistoryClient.GetHistory(1)).Returns(((int, EntryHistory)?)null);
+        A.CallTo(() => entryHistoryClient.GetHistory(entryId)).Returns(((int, EntryHistory)?)null);
         var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
-        A.CallTo(() => entryClient.GetPicks(1, gameweekId)).Returns((EntryPicks?)null);
+        A.CallTo(() => entryClient.GetPicks(entryId, gameweekId)).Returns((EntryPicks?)null);
 
         var json = await fixture.GetJson<JsonElement>($"/api/fpl/leagues/{leagueId}/details");
 
