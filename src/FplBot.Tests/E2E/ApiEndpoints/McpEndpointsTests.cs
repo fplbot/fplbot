@@ -41,6 +41,22 @@ public class McpEndpointsTests(AppFixture fixture)
     }
 
     [Fact]
+    public async Task ListResources_ExposesDomainKnowledge()
+    {
+        await using var client = await fixture.ConnectMcpClient();
+
+        var resources = await client.ListResourcesAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        var domainResource = Assert.Single(resources, r => r.Uri == "fplbot://domain-knowledge");
+        var read = await client.ReadResourceAsync(domainResource.Uri, cancellationToken: TestContext.Current.CancellationToken);
+        var textContent = Assert.IsType<TextResourceContents>(Assert.Single(read.Contents));
+        Assert.Contains("314", textContent.Text);
+        Assert.Contains("wildcard", textContent.Text);
+        Assert.Contains("web_name", textContent.Text);
+        Assert.Contains("webName", textContent.Text);
+    }
+
+    [Fact]
     public async Task ListTools_OnMcpFplbotAppHost_AlsoWorksAtRoot()
     {
         await using var client = await fixture.ConnectMcpClient("http://mcp.fplbot.app/");
