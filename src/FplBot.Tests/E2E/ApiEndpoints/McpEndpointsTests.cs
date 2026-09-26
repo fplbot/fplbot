@@ -13,7 +13,7 @@ namespace FplBot.Tests.E2E.ApiEndpoints;
 public class McpEndpointsTests(AppFixture fixture)
 {
     [Fact]
-    public async Task ListTools_ExposesAllSixFplTools()
+    public async Task ListTools_ExposesAllFplTools()
     {
         await using var client = await fixture.ConnectMcpClient();
 
@@ -26,6 +26,7 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("search_entries", names);
         Assert.Contains("search_leagues", names);
         Assert.Contains("search_any", names);
+        Assert.Contains("get_player", names);
     }
 
     [Fact]
@@ -81,6 +82,21 @@ public class McpEndpointsTests(AppFixture fixture)
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Empty(result.Content);
+    }
+
+    [Fact]
+    public async Task GetPlayer_FuzzyMatch_ReturnsPlayer()
+    {
+        await using var client = await fixture.ConnectMcpClient();
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var getPlayer = tools.First(t => t.Name == "get_player");
+
+        var result = await getPlayer.CallAsync(
+            new Dictionary<string, object?> { ["name"] = "van dijk" },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+        Assert.Contains("Virgil van Dijk", text);
     }
 
     [Fact]

@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using Fpl.Client.Abstractions;
+using Fpl.Client.Models;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
+using FplBot.Formatting.Helpers;
 using FplBot.WebApi.Endpoints.Api.Fpl;
 using ModelContextProtocol.Server;
 
@@ -14,6 +16,7 @@ public class FplMcpTools(
     ITransfersClient transfersClient,
     IEntryHistoryClient entryHistoryClient,
     IGlobalSettingsClient globalSettingsClient,
+    IPlayerSearch playerSearch,
     ISearchService searchService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<Program> logger)
@@ -31,6 +34,15 @@ public class FplMcpTools(
     public Task<object?> GetLeagueDetails(
         [Description("The classic league's FPL id")] int leagueId) =>
         FplEndpoints.GetLeagueDetailsData(leagueId, leagueClient, entryClient, transfersClient, entryHistoryClient, globalSettingsClient, logger);
+
+    [McpServerTool(Name = "get_player", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Look up an FPL player by name (fuzzy match — handles nicknames, misspellings, and partial names). Returns full player stats.")]
+    public async Task<Player?> GetPlayer(
+        [Description("Player name, nickname, or partial name (e.g. 'haaland', 'van dijk', 'kun')")] string name)
+    {
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        return playerSearch.FindMostPopularMatchingPlayer(settings?.Players ?? [], name);
+    }
 
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Look up a single FPL manager entry by id.")]
