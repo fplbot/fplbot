@@ -738,6 +738,8 @@ public class McpEndpointsTests(AppFixture fixture)
                 cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.True(result.IsError);
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains($"No league found with id {leagueId}", text);
         }
         finally
         {
