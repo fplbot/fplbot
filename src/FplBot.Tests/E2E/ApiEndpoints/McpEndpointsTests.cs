@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
@@ -380,6 +381,7 @@ public class McpEndpointsTests(AppFixture fixture)
             Assert.Contains("Gameweek 4", text);
             Assert.Contains("Gameweek 5", text);
             Assert.Contains("Gameweek 6", text);
+            Assert.DoesNotContain("\"requested\"", text);
         }
         finally
         {
@@ -397,8 +399,21 @@ public class McpEndpointsTests(AppFixture fixture)
             Gameweeks = [new() { Id = 1, Name = "Gameweek 1", IsFinished = true }]
         });
 
+        var expectedKickOff = new DateTime(2026, 1, 15, 18, 0, 0, DateTimeKind.Utc);
         var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
-        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns([]);
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(1)).Returns(
+        [
+            new Fixture
+            {
+                Id = 999,
+                HomeTeamId = 11,
+                AwayTeamId = 22,
+                KickOffTime = expectedKickOff,
+                Finished = true,
+                HomeTeamDifficulty = 3,
+                AwayTeamDifficulty = 4
+            }
+        ]);
 
         try
         {
@@ -415,6 +430,17 @@ public class McpEndpointsTests(AppFixture fixture)
             Assert.DoesNotContain("\"previous\"", text);
             Assert.DoesNotContain("\"current\"", text);
             Assert.DoesNotContain("\"next\"", text);
+
+            var requestedFixture = JsonDocument.Parse(text).RootElement
+                .GetProperty("requested")
+                .GetProperty("fixtures")[0];
+            Assert.Equal(999, requestedFixture.GetProperty("id").GetInt32());
+            Assert.Equal(11, requestedFixture.GetProperty("homeTeamId").GetInt32());
+            Assert.Equal(22, requestedFixture.GetProperty("awayTeamId").GetInt32());
+            Assert.Equal(3, requestedFixture.GetProperty("homeTeamDifficulty").GetInt32());
+            Assert.Equal(4, requestedFixture.GetProperty("awayTeamDifficulty").GetInt32());
+            Assert.True(requestedFixture.GetProperty("finished").GetBoolean());
+            Assert.Equal(expectedKickOff, requestedFixture.GetProperty("kickOffTime").GetDateTime());
         }
         finally
         {
