@@ -271,7 +271,7 @@ public class FplMcpTools(
             return new GameweekFixtures(gwId, difficulties);
         });
 
-        return new TeamFixtureDifficulty(team.Id, team.Name ?? "", matchedPlayer, gameweeks);
+        return new TeamFixtureDifficulty(team.Id, team.Name ?? "", team.ShortName ?? "", matchedPlayer, gameweeks);
     }
 
     [McpServerTool(Name = "find_players", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
@@ -424,12 +424,21 @@ public class FplMcpTools(
             if (picks != null)
             {
                 var playersById = (settings?.Players ?? []).ToDictionary(p => p.Id);
-                SquadPick ToSquadPick(Pick pick) => new(
-                    pick.PlayerId,
-                    playersById.GetValueOrDefault(pick.PlayerId)?.WebName ?? "",
-                    playersById.GetValueOrDefault(pick.PlayerId)?.Position ?? FplPlayerPosition.NotSet,
-                    pick.IsCaptain,
-                    pick.IsViceCaptain);
+                var teamsById = (settings?.Teams ?? []).ToDictionary(t => t.Id);
+                SquadPick ToSquadPick(Pick pick)
+                {
+                    var player = playersById.GetValueOrDefault(pick.PlayerId);
+                    return new SquadPick(
+                        pick.PlayerId,
+                        player?.WebName ?? "",
+                        player != null ? teamsById.GetValueOrDefault(player.TeamId)?.ShortName ?? "" : "",
+                        player?.Position ?? FplPlayerPosition.NotSet,
+                        (player?.NowCost ?? 0) / 10.0,
+                        player?.Form ?? 0,
+                        player?.EpNext,
+                        pick.IsCaptain,
+                        pick.IsViceCaptain);
+                }
 
                 var ordered = picks.Picks.OrderBy(p => p.TeamPosition).ToArray();
                 startingXi = [.. ordered.Where(p => p.TeamPosition <= 11).Select(ToSquadPick)];
@@ -560,7 +569,7 @@ public record FixtureSummary(
     int HomeTeamDifficulty,
     int AwayTeamDifficulty);
 
-public record TeamFixtureDifficulty(int TeamId, string TeamName, Player? MatchedPlayer, IEnumerable<GameweekFixtures> Gameweeks);
+public record TeamFixtureDifficulty(int TeamId, string TeamName, string TeamShortName, Player? MatchedPlayer, IEnumerable<GameweekFixtures> Gameweeks);
 
 public record GameweekFixtures(int GameweekId, IEnumerable<FixtureDifficulty> Fixtures);
 
@@ -617,7 +626,7 @@ public record EntryProfile(
     IEnumerable<SquadPick>? StartingXi,
     IEnumerable<SquadPick>? Bench);
 
-public record SquadPick(int PlayerId, string WebName, FplPlayerPosition Position, bool IsCaptain, bool IsViceCaptain);
+public record SquadPick(int PlayerId, string WebName, string TeamShortName, FplPlayerPosition Position, double Price, double Form, double? EpNext, bool IsCaptain, bool IsViceCaptain);
 
 public record TransferWithNames(
     int EntryId,

@@ -17,9 +17,8 @@ public class FplDomainResource
         - **Entry**: a single manager's FPL team.
         - **Classic league**: a group of entries ranked by total points.
         - **Deadline**: the transfer cutoff for a gameweek - this is the `deadline`
-          timestamp `get_gameweek` returns for that gameweek. Transfers are locked from
-          that point until the gameweek ends. After the deadline, an entry's picks for
-          that gameweek become publicly readable (see `get_entry`).
+          timestamp `get_gameweek` returns for that gameweek. After the deadline, that
+          gameweek's picks are locked and become publicly readable (see `get_entry`).
         - **Chip**: a boost played for a single gameweek. Codes from the FPL API:
           `{FplConstants.ChipNames.Wildcard}` (unlimited free transfers for one gameweek,
           with no transfer-cost penalty - the transfers made are permanent, not reverted),
