@@ -428,7 +428,12 @@ public class McpEndpointsTests(AppFixture fixture)
         var original = await globalSettingsClient.GetGlobalSettings();
         A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
         {
-            Gameweeks = [new() { Id = 1, Name = "Gameweek 1", IsFinished = true }]
+            Gameweeks = [new() { Id = 1, Name = "Gameweek 1", IsFinished = true }],
+            Teams =
+            [
+                new Team { Id = 11, ShortName = "ARS" },
+                new Team { Id = 22, ShortName = "CHE" }
+            ]
         });
 
         var expectedKickOff = new DateTime(2026, 1, 15, 18, 0, 0, DateTimeKind.Utc);
@@ -473,6 +478,44 @@ public class McpEndpointsTests(AppFixture fixture)
             Assert.Equal(4, requestedFixture.GetProperty("awayTeamDifficulty").GetInt32());
             Assert.True(requestedFixture.GetProperty("finished").GetBoolean());
             Assert.Equal(expectedKickOff, requestedFixture.GetProperty("kickOffTime").GetDateTime());
+            Assert.Equal("ARS", requestedFixture.GetProperty("homeTeamShortName").GetString());
+            Assert.Equal("CHE", requestedFixture.GetProperty("awayTeamShortName").GetString());
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetGameweek_NoId_ReturnsPreviousCurrentAndNext_ToleratesMissingTeams()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 5, Name = "Gameweek 5", IsCurrent = true }]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixturesByGameweek(5)).Returns(
+        [
+            new Fixture { Id = 1, HomeTeamId = 999, AwayTeamId = 998 }
+        ]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getGameweek = tools.First(t => t.Name == "get_gameweek");
+
+            var result = await getGameweek.CallAsync(new Dictionary<string, object?>(), cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.False(result.IsError ?? false);
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var fixture0 = doc.RootElement.GetProperty("current").GetProperty("fixtures")[0];
+            Assert.Equal("", fixture0.GetProperty("homeTeamShortName").GetString());
         }
         finally
         {

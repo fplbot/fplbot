@@ -102,29 +102,30 @@ public class FplMcpTools(
         await transfersByGameWeek.GetTransfersByGameweek(await ResolveGameweek(gameweek), leagueId);
 
     [McpServerTool(Name = "get_gameweek", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Gameweek info (id, name, deadline UTC, fixtures) for the previous/current/next gameweek, or a specific gameweek by id.")]
+    [Description("Gameweek info (id, name, deadline UTC, time until deadline, fixtures) for the previous/current/next gameweek, or a specific gameweek by id. Fixtures include short team codes (e.g. WHU-CHE) - use those, not full names, to match fplbot's Slack/Discord bot conventions.")]
     public async Task<GameweekResponse> GetGameweek(
         [Description("Specific gameweek id to look up; if omitted, returns previous/current/next instead")] int? gameweekId = null)
     {
         var settings = await globalSettingsClient.GetGlobalSettings();
         var gameweeks = settings?.Gameweeks ?? [];
+        var teamsById = (settings?.Teams ?? []).ToDictionary(t => t.Id);
 
         if (gameweekId is { } requestedId)
         {
             var requested = gameweeks.SingleOrDefault(g => g.Id == requestedId)
                 ?? throw new McpException($"No gameweek found with id {requestedId}.");
-            return new GameweekResponse(null, null, null, await ToGameweekWithFixtures(requested));
+            return new GameweekResponse(null, null, null, await ToGameweekWithFixtures(requested, teamsById));
         }
 
-        var previousTask = ToGameweekWithFixtures(gameweeks.GetPreviousGameweek());
-        var currentTask = ToGameweekWithFixtures(gameweeks.GetCurrentGameweek());
-        var nextTask = ToGameweekWithFixtures(gameweeks.GetNextGameweek());
+        var previousTask = ToGameweekWithFixtures(gameweeks.GetPreviousGameweek(), teamsById);
+        var currentTask = ToGameweekWithFixtures(gameweeks.GetCurrentGameweek(), teamsById);
+        var nextTask = ToGameweekWithFixtures(gameweeks.GetNextGameweek(), teamsById);
         await Task.WhenAll(previousTask, currentTask, nextTask);
 
         return new GameweekResponse(await previousTask, await currentTask, await nextTask, null);
     }
 
-    private async Task<GameweekWithFixtures?> ToGameweekWithFixtures(Gameweek? gameweek)
+    private async Task<GameweekWithFixtures?> ToGameweekWithFixtures(Gameweek? gameweek, IReadOnlyDictionary<int, Team> teamsById)
     {
         if (gameweek == null) return null;
 
@@ -134,7 +135,16 @@ public class FplMcpTools(
             gameweek.Name,
             gameweek.Deadline,
             gameweek.IsFinished,
-            fixtures.Select(f => new FixtureSummary(f.Id, f.HomeTeamId, f.AwayTeamId, f.KickOffTime, f.Finished, f.HomeTeamDifficulty, f.AwayTeamDifficulty)));
+            fixtures.Select(f => new FixtureSummary(
+                f.Id,
+                f.HomeTeamId,
+                f.AwayTeamId,
+                teamsById.GetValueOrDefault(f.HomeTeamId)?.ShortName ?? "",
+                teamsById.GetValueOrDefault(f.AwayTeamId)?.ShortName ?? "",
+                f.KickOffTime,
+                f.Finished,
+                f.HomeTeamDifficulty,
+                f.AwayTeamDifficulty)));
     }
 
     [McpServerTool(Name = "get_fixture_difficulty", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
@@ -320,6 +330,8 @@ public record FixtureSummary(
     int Id,
     int HomeTeamId,
     int AwayTeamId,
+    string HomeTeamShortName,
+    string AwayTeamShortName,
     DateTime? KickOffTime,
     bool Finished,
     int HomeTeamDifficulty,
