@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using FakeItEasy;
 using Fpl.Client.Abstractions;
@@ -266,7 +267,6 @@ public class McpEndpointsTests(AppFixture fixture)
         var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
         var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
 
-        // Setup league with one entry
         A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
             .Returns(new ClassicLeague
             {
@@ -276,7 +276,6 @@ public class McpEndpointsTests(AppFixture fixture)
                 }
             });
 
-        // Setup entry picks for gameweek 5
         A.CallTo(() => entryClient.GetPicks(1, 5)).Returns(new EntryPicks
         {
             ActiveChip = null,
@@ -284,7 +283,6 @@ public class McpEndpointsTests(AppFixture fixture)
             EventEntryHistory = new EventEntryHistory { Bank = 0, Value = 1000 }
         });
 
-        // Setup global settings with players and current gameweek
         var original = await globalSettingsClient.GetGlobalSettings();
         A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
         {
@@ -323,7 +321,6 @@ public class McpEndpointsTests(AppFixture fixture)
         var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
         var transfersClient = fixture.Services.GetRequiredService<ITransfersClient>();
 
-        // Setup league with one entry
         A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
             .Returns(new ClassicLeague
             {
@@ -333,7 +330,6 @@ public class McpEndpointsTests(AppFixture fixture)
                 }
             });
 
-        // Setup transfers for the entry
         A.CallTo(() => transfersClient.GetTransfers(1)).Returns(
         [
             new Transfer { Entry = 1, Event = gameweek, ElementIn = 10, ElementOut = 20 }
@@ -457,7 +453,7 @@ public class McpEndpointsTests(AppFixture fixture)
         var original = await globalSettingsClient.GetGlobalSettings();
         A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
         {
-            Gameweeks = [new() { Id = 10, IsCurrent = true }],
+            Gameweeks = [new() { Id = 10, IsCurrent = true }, new() { Id = 11 }],
             Teams =
             [
                 new Team { Id = 1, Name = "Arsenal", ShortName = "ARS" },
@@ -599,6 +595,149 @@ public class McpEndpointsTests(AppFixture fixture)
                 .Select(t => t.GetProperty("shortName").GetString()).ToArray();
             Assert.Empty(gw10.GetProperty("blankTeams").EnumerateArray());
             Assert.Equal(["ARS", "CHE"], doubleTeamNames.OrderBy(n => n));
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetDoubleAndBlankGameweeks_ClampsRangeToLastGameweekAndReportsRealBlank()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 36, IsCurrent = true }, new() { Id = 37 }],
+            Teams =
+            [
+                new Team { Id = 1, Name = "Arsenal", ShortName = "ARS" },
+                new Team { Id = 2, Name = "Chelsea", ShortName = "CHE" },
+                new Team { Id = 3, Name = "Man Utd", ShortName = "MUN" },
+                new Team { Id = 4, Name = "Spurs", ShortName = "TOT" }
+            ]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixtures()).Returns(
+        [
+            new Fixture { Id = 1, Event = 36, HomeTeamId = 1, AwayTeamId = 2, HomeTeamDifficulty = 3, AwayTeamDifficulty = 3 },
+            new Fixture { Id = 2, Event = 36, HomeTeamId = 3, AwayTeamId = 4, HomeTeamDifficulty = 3, AwayTeamDifficulty = 3 },
+            new Fixture { Id = 3, Event = 37, HomeTeamId = 1, AwayTeamId = 2, HomeTeamDifficulty = 3, AwayTeamDifficulty = 3 }
+        ]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getDoubleAndBlank = tools.First(t => t.Name == "get_double_and_blank_gameweeks");
+
+            var result = await getDoubleAndBlank.CallAsync(
+                new Dictionary<string, object?> { ["gameweeksAhead"] = 5 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var gameweeks = doc.RootElement.GetProperty("gameweeks").EnumerateArray().ToArray();
+            Assert.Equal(2, gameweeks.Length);
+
+            var gw36 = gameweeks.Single(g => g.GetProperty("gameweekId").GetInt32() == 36);
+            Assert.Empty(gw36.GetProperty("blankTeams").EnumerateArray());
+
+            var gw37 = gameweeks.Single(g => g.GetProperty("gameweekId").GetInt32() == 37);
+            var gw37BlankTeams = gw37.GetProperty("blankTeams").EnumerateArray()
+                .Select(t => t.GetProperty("shortName").GetString()).ToArray();
+            Assert.Equal(["MUN", "TOT"], gw37BlankTeams.OrderBy(n => n));
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetDoubleAndBlankGameweeks_RejectsNonPositiveGameweeksAhead()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 10, IsCurrent = true }]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getDoubleAndBlank = tools.First(t => t.Name == "get_double_and_blank_gameweeks");
+
+            var result = await getDoubleAndBlank.CallAsync(
+                new Dictionary<string, object?> { ["gameweeksAhead"] = 0 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsError);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetGameweek_UnknownId_ReturnsError()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 1, Name = "Gameweek 1" }]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getGameweek = tools.First(t => t.Name == "get_gameweek");
+
+            var result = await getGameweek.CallAsync(
+                new Dictionary<string, object?> { ["gameweekId"] = 999 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsError);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetCaptains_UnknownLeague_ReturnsError()
+    {
+        const int leagueId = 702;
+        var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
+            .Throws(new HttpRequestException("Not Found", null, HttpStatusCode.NotFound));
+
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 5, IsCurrent = true }]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getCaptains = tools.First(t => t.Name == "get_captains");
+
+            var result = await getCaptains.CallAsync(
+                new Dictionary<string, object?> { ["leagueId"] = leagueId },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsError);
         }
         finally
         {

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Net;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
 using Fpl.EventPublishers.Models.Mappers;
@@ -81,8 +82,17 @@ public class FplMcpTools(
     [Description("Captain and vice-captain picks for every entry in a classic league for a given gameweek (defaults to the current gameweek).")]
     public async Task<IEnumerable<EntryCaptainPick>> GetCaptains(
         [Description("The classic league's FPL id")] int leagueId,
-        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null) =>
-        await captainsByGameWeek.GetEntryCaptainPicks(await ResolveGameweek(gameweek), leagueId);
+        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null)
+    {
+        try
+        {
+            return await captainsByGameWeek.GetEntryCaptainPicks(await ResolveGameweek(gameweek), leagueId);
+        }
+        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new McpException($"No league found with id {leagueId}.");
+        }
+    }
 
     [McpServerTool(Name = "get_transfers", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Transfers made by every entry in a classic league for a given gameweek (defaults to the current gameweek).")]
@@ -101,7 +111,8 @@ public class FplMcpTools(
 
         if (gameweekId is { } requestedId)
         {
-            var requested = gameweeks.SingleOrDefault(g => g.Id == requestedId);
+            var requested = gameweeks.SingleOrDefault(g => g.Id == requestedId)
+                ?? throw new McpException($"No gameweek found with id {requestedId}.");
             return new GameweekResponse(null, null, null, await ToGameweekWithFixtures(requested));
         }
 
@@ -165,9 +176,9 @@ public class FplMcpTools(
                 ?? throw new McpException($"Matched player {matchedPlayer.WebName}, but could not resolve their team.");
         }
 
-        var (startGameweekId, fixtures) = await GetUpcomingFixtures(gameweeksAhead);
+        var (startGameweekId, gameweekCount, fixtures) = await GetUpcomingFixtures(gameweeksAhead);
 
-        var gameweeks = Enumerable.Range(startGameweekId, gameweeksAhead).Select(gwId =>
+        var gameweeks = Enumerable.Range(startGameweekId, gameweekCount).Select(gwId =>
         {
             var teamFixtures = fixtures.Where(f => f.Event == gwId && (f.HomeTeamId == team.Id || f.AwayTeamId == team.Id));
             var difficulties = teamFixtures.Select(f =>
@@ -195,9 +206,9 @@ public class FplMcpTools(
         var settings = await globalSettingsClient.GetGlobalSettings();
         var teams = settings?.Teams ?? [];
 
-        var (startGameweekId, fixtures) = await GetUpcomingFixtures(gameweeksAhead);
+        var (startGameweekId, gameweekCount, fixtures) = await GetUpcomingFixtures(gameweeksAhead);
 
-        var gameweeks = Enumerable.Range(startGameweekId, gameweeksAhead).Select(gwId =>
+        var gameweeks = Enumerable.Range(startGameweekId, gameweekCount).Select(gwId =>
         {
             var fixturesThisGameweek = fixtures.Where(f => f.Event == gwId).ToArray();
             var fixtureCountByTeam = teams.ToDictionary(
@@ -251,17 +262,25 @@ public class FplMcpTools(
         return current?.Id ?? throw new McpException("No current gameweek — the season may be between gameweeks.");
     }
 
-    private async Task<(int StartGameweekId, ICollection<Fixture> Fixtures)> GetUpcomingFixtures(int gameweeksAhead)
+    private async Task<(int StartGameweekId, int GameweekCount, ICollection<Fixture> Fixtures)> GetUpcomingFixtures(int gameweeksAhead)
     {
+        if (gameweeksAhead < 1)
+        {
+            throw new McpException("gameweeksAhead must be at least 1.");
+        }
+
         var settings = await globalSettingsClient.GetGlobalSettings();
         var startGameweek = settings?.Gameweeks.GetCurrentGameweek() ?? settings?.Gameweeks.GetNextGameweek()
             ?? throw new McpException("No current or next gameweek — the season may be over.");
 
-        var endGameweekId = startGameweek.Id + gameweeksAhead - 1;
+        var lastGameweekId = settings!.Gameweeks.Max(g => g.Id);
+        var endGameweekId = Math.Min(startGameweek.Id + gameweeksAhead - 1, lastGameweekId);
+        var gameweekCount = endGameweekId - startGameweek.Id + 1;
+
         var allFixtures = await fixtureClient.GetFixtures() ?? [];
         var upcoming = allFixtures.Where(f => f.Event is { } gw && gw >= startGameweek.Id && gw <= endGameweekId).ToArray();
 
-        return (startGameweek.Id, upcoming);
+        return (startGameweek.Id, gameweekCount, upcoming);
     }
 
     private SearchMetaData BuildMetaData() => new()
