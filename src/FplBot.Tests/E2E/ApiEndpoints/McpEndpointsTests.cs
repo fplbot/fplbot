@@ -35,6 +35,8 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("get_captains", names);
         Assert.Contains("get_transfers", names);
         Assert.Contains("get_gameweek", names);
+        Assert.Contains("get_fixture_difficulty", names);
+        Assert.Contains("get_double_and_blank_gameweeks", names);
     }
 
     [Fact]
@@ -441,6 +443,161 @@ public class McpEndpointsTests(AppFixture fixture)
             Assert.Equal(4, requestedFixture.GetProperty("awayTeamDifficulty").GetInt32());
             Assert.True(requestedFixture.GetProperty("finished").GetBoolean());
             Assert.Equal(expectedKickOff, requestedFixture.GetProperty("kickOffTime").GetDateTime());
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetFixtureDifficulty_DetectsBlankAndDoubleGameweeks()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 10, IsCurrent = true }],
+            Teams =
+            [
+                new Team { Id = 1, Name = "Arsenal", ShortName = "ARS" },
+                new Team { Id = 2, Name = "Chelsea", ShortName = "CHE" },
+                new Team { Id = 3, Name = "Man Utd", ShortName = "MUN" }
+            ]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixtures()).Returns(
+        [
+            new Fixture { Id = 1, Event = 10, HomeTeamId = 2, AwayTeamId = 3, HomeTeamDifficulty = 3, AwayTeamDifficulty = 2 },
+            new Fixture { Id = 2, Event = 11, HomeTeamId = 1, AwayTeamId = 2, HomeTeamDifficulty = 4, AwayTeamDifficulty = 3 },
+            new Fixture { Id = 3, Event = 11, HomeTeamId = 3, AwayTeamId = 1, HomeTeamDifficulty = 2, AwayTeamDifficulty = 5 }
+        ]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getFixtureDifficulty = tools.First(t => t.Name == "get_fixture_difficulty");
+
+            var result = await getFixtureDifficulty.CallAsync(
+                new Dictionary<string, object?> { ["teamId"] = 1, ["gameweeksAhead"] = 2 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var gameweeks = doc.RootElement.GetProperty("gameweeks").EnumerateArray().ToArray();
+            Assert.Equal(2, gameweeks.Length);
+            Assert.Empty(gameweeks[0].GetProperty("fixtures").EnumerateArray());
+            Assert.Equal(2, gameweeks[1].GetProperty("fixtures").GetArrayLength());
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetFixtureDifficulty_ResolvesByTeamNameOrPlayerName()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 10, IsCurrent = true }],
+            Teams = [new Team { Id = 1, Code = 3, Name = "Brighton", ShortName = "BHA" }],
+            Players = [new Player { Id = 99, WebName = "Mitoma", FirstName = "Kaoru", SecondName = "Mitoma", TeamCode = 3, OwnershipPercentage = 10 }]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixtures()).Returns(
+        [
+            new Fixture { Id = 1, Event = 10, HomeTeamId = 1, AwayTeamId = 1, HomeTeamDifficulty = 2, AwayTeamDifficulty = 2 }
+        ]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getFixtureDifficulty = tools.First(t => t.Name == "get_fixture_difficulty");
+
+            var byName = await getFixtureDifficulty.CallAsync(
+                new Dictionary<string, object?> { ["teamName"] = "Brighton", ["gameweeksAhead"] = 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var byNameText = Assert.IsType<TextContentBlock>(Assert.Single(byName.Content)).Text;
+            Assert.Contains("\"teamId\":1", byNameText);
+
+            var byPlayer = await getFixtureDifficulty.CallAsync(
+                new Dictionary<string, object?> { ["playerName"] = "Mitoma", ["gameweeksAhead"] = 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var byPlayerText = Assert.IsType<TextContentBlock>(Assert.Single(byPlayer.Content)).Text;
+            using var doc = JsonDocument.Parse(byPlayerText);
+            Assert.Equal(1, doc.RootElement.GetProperty("teamId").GetInt32());
+            Assert.Equal("Mitoma", doc.RootElement.GetProperty("matchedPlayer").GetProperty("web_name").GetString());
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetFixtureDifficulty_RequiresExactlyOneIdentifier()
+    {
+        await using var client = await fixture.ConnectMcpClient();
+        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var getFixtureDifficulty = tools.First(t => t.Name == "get_fixture_difficulty");
+
+        var noneGiven = await getFixtureDifficulty.CallAsync(
+            new Dictionary<string, object?>(),
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.True(noneGiven.IsError);
+
+        var bothGiven = await getFixtureDifficulty.CallAsync(
+            new Dictionary<string, object?> { ["teamId"] = 1, ["teamName"] = "Brighton" },
+            cancellationToken: TestContext.Current.CancellationToken);
+        Assert.True(bothGiven.IsError);
+    }
+
+    [Fact]
+    public async Task GetDoubleAndBlankGameweeks_ListsAffectedTeams()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 10, IsCurrent = true }],
+            Teams =
+            [
+                new Team { Id = 1, Name = "Arsenal", ShortName = "ARS" },
+                new Team { Id = 2, Name = "Chelsea", ShortName = "CHE" }
+            ]
+        });
+
+        var fixtureClient = fixture.Services.GetRequiredService<IFixtureClient>();
+        A.CallTo(() => fixtureClient.GetFixtures()).Returns(
+        [
+            new Fixture { Id = 1, Event = 10, HomeTeamId = 1, AwayTeamId = 2, HomeTeamDifficulty = 3, AwayTeamDifficulty = 3 },
+            new Fixture { Id = 2, Event = 10, HomeTeamId = 2, AwayTeamId = 1, HomeTeamDifficulty = 3, AwayTeamDifficulty = 3 }
+        ]);
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getDoubleAndBlank = tools.First(t => t.Name == "get_double_and_blank_gameweeks");
+
+            var result = await getDoubleAndBlank.CallAsync(
+                new Dictionary<string, object?> { ["gameweeksAhead"] = 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var gw10 = doc.RootElement.GetProperty("gameweeks").EnumerateArray().Single();
+            var doubleTeamNames = gw10.GetProperty("doubleTeams").EnumerateArray()
+                .Select(t => t.GetProperty("shortName").GetString()).ToArray();
+            Assert.Empty(gw10.GetProperty("blankTeams").EnumerateArray());
+            Assert.Equal(["ARS", "CHE"], doubleTeamNames.OrderBy(n => n));
         }
         finally
         {

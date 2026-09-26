@@ -126,6 +126,93 @@ public class FplMcpTools(
             fixtures.Select(f => new FixtureSummary(f.Id, f.HomeTeamId, f.AwayTeamId, f.KickOffTime, f.Finished, f.HomeTeamDifficulty, f.AwayTeamDifficulty)));
     }
 
+    [McpServerTool(Name = "get_fixture_difficulty", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("A team's fixtures and difficulty ratings for the next N gameweeks (default 5), identified by team id, team name, or a player on it. An empty fixtures list for a gameweek means a blank gameweek for this team; two or more means a double gameweek.")]
+    public async Task<TeamFixtureDifficulty> GetFixtureDifficulty(
+        [Description("The team's FPL id")] int? teamId = null,
+        [Description("The team's name or short name, e.g. \"Brighton\" or \"BHA\"")] string? teamName = null,
+        [Description("A player's name - resolves to their team")] string? playerName = null,
+        [Description("How many gameweeks ahead to include, starting from the current gameweek")] int gameweeksAhead = 5)
+    {
+        var identifierCount = new[] { teamId.HasValue, !string.IsNullOrWhiteSpace(teamName), !string.IsNullOrWhiteSpace(playerName) }.Count(x => x);
+        if (identifierCount != 1)
+        {
+            throw new McpException("Provide exactly one of teamId, teamName, or playerName.");
+        }
+
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var teams = settings?.Teams ?? [];
+        Player? matchedPlayer = null;
+        Team team;
+
+        if (teamId.HasValue)
+        {
+            team = teams.SingleOrDefault(t => t.Id == teamId.Value)
+                ?? throw new McpException($"No team found with id {teamId.Value}.");
+        }
+        else if (!string.IsNullOrWhiteSpace(teamName))
+        {
+            team = teams.SingleOrDefault(t =>
+                    string.Equals(t.Name, teamName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(t.ShortName, teamName, StringComparison.OrdinalIgnoreCase))
+                ?? throw new McpException($"No team found matching \"{teamName}\".");
+        }
+        else
+        {
+            matchedPlayer = playerSearch.FindMostPopularMatchingPlayer(settings?.Players ?? [], playerName!)
+                ?? throw new McpException($"No player found matching \"{playerName}\".");
+            team = teams.SingleOrDefault(t => t.Code == matchedPlayer.TeamCode)
+                ?? throw new McpException($"Matched player {matchedPlayer.WebName}, but could not resolve their team.");
+        }
+
+        var (startGameweekId, fixtures) = await GetUpcomingFixtures(gameweeksAhead);
+
+        var gameweeks = Enumerable.Range(startGameweekId, gameweeksAhead).Select(gwId =>
+        {
+            var teamFixtures = fixtures.Where(f => f.Event == gwId && (f.HomeTeamId == team.Id || f.AwayTeamId == team.Id));
+            var difficulties = teamFixtures.Select(f =>
+            {
+                var isHome = f.HomeTeamId == team.Id;
+                var opponentId = isHome ? f.AwayTeamId : f.HomeTeamId;
+                var opponent = teams.SingleOrDefault(t => t.Id == opponentId);
+                return new FixtureDifficulty(
+                    opponentId,
+                    opponent?.ShortName ?? "",
+                    isHome,
+                    isHome ? f.HomeTeamDifficulty : f.AwayTeamDifficulty);
+            });
+            return new GameweekFixtures(gwId, difficulties);
+        });
+
+        return new TeamFixtureDifficulty(team.Id, team.Name ?? "", matchedPlayer, gameweeks);
+    }
+
+    [McpServerTool(Name = "get_double_and_blank_gameweeks", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Which teams have a blank (no fixture) or double (2+ fixtures) gameweek in the next N gameweeks (default 5).")]
+    public async Task<DoubleAndBlankGameweeksResponse> GetDoubleAndBlankGameweeks(
+        [Description("How many gameweeks ahead to include, starting from the current gameweek")] int gameweeksAhead = 5)
+    {
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var teams = settings?.Teams ?? [];
+
+        var (startGameweekId, fixtures) = await GetUpcomingFixtures(gameweeksAhead);
+
+        var gameweeks = Enumerable.Range(startGameweekId, gameweeksAhead).Select(gwId =>
+        {
+            var fixturesThisGameweek = fixtures.Where(f => f.Event == gwId).ToArray();
+            var fixtureCountByTeam = teams.ToDictionary(
+                t => t.Id,
+                t => fixturesThisGameweek.Count(f => f.HomeTeamId == t.Id || f.AwayTeamId == t.Id));
+
+            var blankTeams = teams.Where(t => fixtureCountByTeam[t.Id] == 0).Select(t => new TeamRef(t.Id, t.ShortName ?? ""));
+            var doubleTeams = teams.Where(t => fixtureCountByTeam[t.Id] >= 2).Select(t => new TeamRef(t.Id, t.ShortName ?? ""));
+
+            return new GameweekTeamCounts(gwId, blankTeams, doubleTeams);
+        });
+
+        return new DoubleAndBlankGameweeksResponse(gameweeks);
+    }
+
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Look up a single FPL manager entry by id.")]
     public Task<EntryItem?> GetEntry(
@@ -162,6 +249,19 @@ public class FplMcpTools(
         var settings = await globalSettingsClient.GetGlobalSettings();
         var current = settings?.Gameweeks.GetCurrentGameweek();
         return current?.Id ?? throw new McpException("No current gameweek — the season may be between gameweeks.");
+    }
+
+    private async Task<(int StartGameweekId, ICollection<Fixture> Fixtures)> GetUpcomingFixtures(int gameweeksAhead)
+    {
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var startGameweek = settings?.Gameweeks.GetCurrentGameweek() ?? settings?.Gameweeks.GetNextGameweek()
+            ?? throw new McpException("No current or next gameweek — the season may be over.");
+
+        var endGameweekId = startGameweek.Id + gameweeksAhead - 1;
+        var allFixtures = await fixtureClient.GetFixtures() ?? [];
+        var upcoming = allFixtures.Where(f => f.Event is { } gw && gw >= startGameweek.Id && gw <= endGameweekId).ToArray();
+
+        return (startGameweek.Id, upcoming);
     }
 
     private SearchMetaData BuildMetaData() => new()
@@ -205,3 +305,15 @@ public record FixtureSummary(
     bool Finished,
     int HomeTeamDifficulty,
     int AwayTeamDifficulty);
+
+public record TeamFixtureDifficulty(int TeamId, string TeamName, Player? MatchedPlayer, IEnumerable<GameweekFixtures> Gameweeks);
+
+public record GameweekFixtures(int GameweekId, IEnumerable<FixtureDifficulty> Fixtures);
+
+public record FixtureDifficulty(int OpponentTeamId, string OpponentShortName, bool IsHome, int Difficulty);
+
+public record DoubleAndBlankGameweeksResponse(IEnumerable<GameweekTeamCounts> Gameweeks);
+
+public record GameweekTeamCounts(int GameweekId, IEnumerable<TeamRef> BlankTeams, IEnumerable<TeamRef> DoubleTeams);
+
+public record TeamRef(int TeamId, string ShortName);
