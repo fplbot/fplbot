@@ -526,6 +526,7 @@ public class McpEndpointsTests(AppFixture fixture)
                 cancellationToken: TestContext.Current.CancellationToken);
             var byNameText = Assert.IsType<TextContentBlock>(Assert.Single(byName.Content)).Text;
             Assert.Contains("\"teamId\":1", byNameText);
+            Assert.DoesNotContain("\"matchedPlayer\"", byNameText);
 
             var byPlayer = await getFixtureDifficulty.CallAsync(
                 new Dictionary<string, object?> { ["playerName"] = "Mitoma", ["gameweeksAhead"] = 1 },
