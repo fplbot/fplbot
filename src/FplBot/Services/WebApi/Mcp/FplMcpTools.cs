@@ -118,7 +118,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_league_trends", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Aggregated trends across a classic league for a gameweek: most-captained player and most-transferred-in/out players, ranked by how many entries did each (top 10 each). Covers the league's first standings page only (up to 50 entries) - for a large league like 314, this is the top-ranked slice, not the whole league. Use this instead of tallying get_captains/get_transfers yourself. League id 314 is FPL's built-in global \"Overall\" league - a de facto top-managers-worldwide leaderboard - so get_league_trends(314) shows what the world's best managers are doing.")]
+    [Description("Aggregated trends across a classic league for a gameweek: most-captained player and most-transferred-in/out players, ranked by how many entries did each (top 10 each). Covers the league's first standings page only (up to 50 entries) - for a large league like 314, this is the top-ranked slice, not the whole league. Use this instead of tallying get_captains/get_transfers yourself. League id 314 is FPL's built-in global \"Overall\" league - a de facto top-managers-worldwide leaderboard - so get_league_trends(314) shows what the world's best managers are doing. Players are shown by webName (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
     public async Task<LeagueTrendsResponse> GetLeagueTrends(
         [Description("The classic league's FPL id")] int leagueId,
         [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null)
@@ -166,7 +166,7 @@ public class FplMcpTools(
             .Select(g => new PlayerTrendCount(g.Key, playersById.GetValueOrDefault(g.Key)?.WebName ?? "", g.Count(), null));
 
     [McpServerTool(Name = "get_gameweek", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Gameweek info (id, name, deadline UTC, time remaining until deadline as untilDeadline, fixtures) for the previous/current/next gameweek, or a specific gameweek by id. untilDeadline is omitted once the deadline has passed. Fixtures include short team codes (e.g. WHU-CHE) - use those, not full names, to match fplbot's Slack/Discord bot conventions.")]
+    [Description("Gameweek info (id, name, deadline UTC, time remaining until deadline as untilDeadline, fixtures) for the previous/current/next gameweek, or a specific gameweek by id. untilDeadline is omitted once the deadline has passed (format: [d.]hh:mm:ss, the day part is only present when >= 1 day away). Fixtures include short team codes (e.g. WHU-CHE) - use those, not full names, to match fplbot's Slack/Discord bot conventions.")]
     public async Task<GameweekResponse> GetGameweek(
         [Description("Specific gameweek id to look up; if omitted, returns previous/current/next instead")] int? gameweekId = null)
     {
@@ -214,7 +214,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_fixture_difficulty", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("A team's fixtures and difficulty ratings for the next N gameweeks (default 5), identified by team id, team name, or a player on it. An empty fixtures list for a gameweek means a blank gameweek for this team; two or more means a double gameweek. Opponent is shown by short code (e.g. BHA), matching fplbot's Slack/Discord bot conventions.")]
+    [Description("A team's fixtures and difficulty ratings for the next N gameweeks (default 5), identified by team id, team name, or a player on it. An empty fixtures list for a gameweek means a blank gameweek for this team; two or more means a double gameweek. Both the queried team and each opponent are given as short codes (teamShortName, opponentShortName, e.g. BHA-ARS), matching fplbot's Slack/Discord bot conventions.")]
     public async Task<TeamFixtureDifficulty> GetFixtureDifficulty(
         [Description("The team's FPL id")] int? teamId = null,
         [Description("The team's name or short name, e.g. \"Brighton\" or \"BHA\"")] string? teamName = null,
@@ -275,7 +275,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "find_players", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Discover and rank players by form, expected points, value, ownership, or upcoming fixture ease - use this instead of guessing a name when the question is 'who should I get' rather than 'tell me about X'. Filter by position and/or team and/or price. Results use webName (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
+    [Description("Discover and rank players by form, expected points, value, ownership, or upcoming fixture ease - use this instead of guessing a name when the question is 'who should I get' rather than 'tell me about X'. Filter by position and/or team and/or price. Results use webName (e.g. Haaland), matching fplbot's Slack/Discord bot conventions. fixtureEaseNext3 is average FPL fixture difficulty over the next 3 gameweeks - lower is easier. Value sorts by total points per £m.")]
     public async Task<PlayerRankingResult> FindPlayers(
         [Description("Filter to one position")] FplPlayerPosition? position = null,
         [Description("The team's FPL id")] int? teamId = null,
@@ -393,7 +393,7 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Look up an FPL manager entry by id: profile plus current squad (starting XI, bench, captain/vice-captain, active chip, squad value, bank). Squad reflects the gameweek whose deadline has most recently passed - picks for a gameweek aren't public before its deadline. Players are shown by webName (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
+    [Description("Look up an FPL manager entry by id: profile plus current squad: starting XI and bench (each pick with teamShortName, price, form and epNext), captain/vice-captain, active chip, squadValue and bank. squadValue is total team value including bank - don't add bank to it. Squad reflects the gameweek whose deadline has most recently passed - picks for a gameweek aren't public before its deadline. Players are shown by webName, matching fplbot's Slack/Discord bot conventions.")]
     public async Task<EntryProfile> GetEntry(
         [Description("The FPL manager entry id")] int id)
     {

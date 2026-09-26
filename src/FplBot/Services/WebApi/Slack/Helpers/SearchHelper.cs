@@ -68,7 +68,7 @@ internal static class SearchHelper
         return new SearchResult<T>(currentWinner, lowestDistance);
     }
 
-    internal static string Fold(string s)
+    private static string Fold(string s)
     {
         var lowered = s.ToLowerInvariant().Replace("ß", "ss");
         var decomposed = lowered.Normalize(NormalizationForm.FormD);

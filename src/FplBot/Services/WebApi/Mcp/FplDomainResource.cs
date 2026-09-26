@@ -54,6 +54,7 @@ public class FplDomainResource
           The field holding it is called `web_name` on `get_player`'s output and on any
           nested player object (e.g. `get_captains`'s captain/viceCaptain), and `webName`
           on every other tool's synthesized results (`find_players`, `get_entry`'s squad,
-          `get_league_trends`).
+          `get_league_trends`) - and `get_transfers` uses `playerInName`/`playerOutName`
+          for the same short names.
         """;
 }
