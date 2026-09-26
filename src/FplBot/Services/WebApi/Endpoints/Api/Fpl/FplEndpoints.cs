@@ -38,27 +38,41 @@ public static class FplEndpoints
         return TypedResults.NotFound();
     }
 
-    private static async Task<IResult> GetLeague(int leagueId, ILeagueClient leagueClient, ILogger<Program> logger)
+    private static async Task<IResult> GetLeague(int leagueId, ILeagueClient leagueClient, ILogger<Program> logger) =>
+        await GetLeagueData(leagueId, leagueClient, logger) is { } data ? TypedResults.Ok(data) : TypedResults.NotFound();
+
+    internal static async Task<object?> GetLeagueData(int leagueId, ILeagueClient leagueClient, ILogger<Program> logger)
     {
         try
         {
             var league = await leagueClient.GetClassicLeague(leagueId);
-            if (league == null) return TypedResults.NotFound();
-            return TypedResults.Ok(new
+            if (league == null) return null;
+            return new
             {
                 LeagueName = league.Properties?.Name,
                 LeagueAdmin = league.Standings?.Entries.FirstOrDefault(e => e.Entry == league.Properties?.AdminEntry)?.PlayerName
-            });
+            };
         }
         catch (HttpRequestException e)
         {
             logger.LogWarning(e.ToString());
+            return null;
         }
-
-        return TypedResults.NotFound();
     }
 
     private static async Task<IResult> GetLeagueDetails(
+        int leagueId,
+        ILeagueClient leagueClient,
+        IEntryClient entryClient,
+        ITransfersClient transfersClient,
+        IEntryHistoryClient entryHistoryClient,
+        IGlobalSettingsClient globalSettingsClient,
+        ILogger<Program> logger) =>
+        await GetLeagueDetailsData(leagueId, leagueClient, entryClient, transfersClient, entryHistoryClient, globalSettingsClient, logger) is { } data
+            ? TypedResults.Ok(data)
+            : TypedResults.NotFound();
+
+    internal static async Task<object?> GetLeagueDetailsData(
         int leagueId,
         ILeagueClient leagueClient,
         IEntryClient entryClient,
@@ -70,7 +84,7 @@ public static class FplEndpoints
         try
         {
             var league = await leagueClient.GetClassicLeague(leagueId);
-            if (league?.Standings == null) return TypedResults.NotFound();
+            if (league?.Standings == null) return null;
 
             var settings = await globalSettingsClient.GetGlobalSettings();
             var currentGw = settings?.Gameweeks.GetCurrentGameweek();
@@ -114,7 +128,7 @@ public static class FplEndpoints
                 }
             }
 
-            return TypedResults.Ok(new
+            return new
             {
                 leagueName = league.Properties?.Name,
                 leagueAdmin = league.Standings.Entries.FirstOrDefault(e => e.Entry == league.Properties?.AdminEntry)?.PlayerName,
@@ -130,13 +144,12 @@ public static class FplEndpoints
                     eventTotal = e.EventTotal
                 }),
                 summaries
-            });
+            };
         }
         catch (HttpRequestException e)
         {
             logger.LogWarning(e.ToString());
+            return null;
         }
-
-        return TypedResults.NotFound();
     }
 }

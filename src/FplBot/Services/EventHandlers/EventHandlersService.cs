@@ -26,6 +26,9 @@ public class EventHandlersService : WorkerFplBotService
         services.AddSlackServices(config, env);
         services.AddSingleton<ICaptainsByGameWeek, CaptainsByGameWeek>();
         services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
+        services.AddSingleton<IPlayerSearch, PlayerSearch>();
+        services.AddSingleton<IInjuredPlayersFinder, InjuredPlayersFinder>();
+        services.AddSingleton<IPriceChangedPlayersFinder, PriceChangedPlayersFinder>();
         services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddSingleton<IGameweekHelper, GameweekHelper>();

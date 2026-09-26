@@ -4,5 +4,6 @@ public enum QueryClient
 {
     Slack,
     Web,
-    Console
+    Console,
+    Mcp
 }

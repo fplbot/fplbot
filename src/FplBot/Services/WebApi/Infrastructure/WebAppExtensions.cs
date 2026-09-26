@@ -96,6 +96,9 @@ public static class WebAppExtensions
         AdminErrorEndpoints.Map(admin);
         AdminWebPushEndpoints.Map(admin);
 
+        app.MapMcp("/mcp");
+        app.MapMcp("/").RequireHost("mcp.fplbot.app");
+
         // A plain MapFallbackToFile("index.html") would serve the SPA shell for *any*
         // unmatched request, including a typo'd /api/**, /debug/**, or webhook path —
         // which would then hand a 200 HTML response to what should be a 404 from the
@@ -104,7 +107,7 @@ public static class WebAppExtensions
         // a real endpoint gets a genuine 404 (ProblemDetails, via UseStatusCodePages
         // above) instead; everything else falls through to the SPA, whose own Vue Router
         // catch-all renders the actual not-found page.
-        var reservedBackendPrefixes = new[] { "/api", "/debug", "/oauth", "/slack", "/discord" };
+        var reservedBackendPrefixes = new[] { "/api", "/debug", "/oauth", "/slack", "/discord", "/mcp" };
         app.MapFallback(async context =>
         {
             var path = context.Request.Path;
