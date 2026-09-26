@@ -95,11 +95,74 @@ public class FplMcpTools(
     }
 
     [McpServerTool(Name = "get_transfers", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Transfers made by every entry in a classic league for a given gameweek (defaults to the current gameweek).")]
-    public async Task<IEnumerable<TransfersByGameWeek.Transfer>> GetTransfers(
+    [Description("Transfers made by every entry on a classic league's first standings page (up to 50 entries, not the whole league for leagues bigger than that) for a given gameweek (defaults to the current gameweek). playerInName/playerOutName give each transfer's short display name (e.g. Haaland), matching fplbot's Slack/Discord bot conventions.")]
+    public async Task<IEnumerable<TransferWithNames>> GetTransfers(
         [Description("The classic league's FPL id")] int leagueId,
-        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null) =>
-        await transfersByGameWeek.GetTransfersByGameweek(await ResolveGameweek(gameweek), leagueId);
+        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null)
+    {
+        var gw = await ResolveGameweek(gameweek);
+        var transfersTask = transfersByGameWeek.GetTransfersByGameweek(gw, leagueId);
+        var settingsTask = globalSettingsClient.GetGlobalSettings();
+        await Task.WhenAll(transfersTask, settingsTask);
+
+        var playersById = ((await settingsTask)?.Players ?? []).ToDictionary(p => p.Id);
+        return (await transfersTask).Select(t => new TransferWithNames(
+            t.EntryId,
+            t.EntryName,
+            t.EntryRealName,
+            t.PlayerTransferredIn,
+            t.PlayerTransferredOut,
+            playersById.GetValueOrDefault(t.PlayerTransferredIn)?.WebName ?? "",
+            playersById.GetValueOrDefault(t.PlayerTransferredOut)?.WebName ?? ""));
+    }
+
+    [McpServerTool(Name = "get_league_trends", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Aggregated trends across a classic league for a gameweek: most-captained player and most-transferred-in/out players, ranked by how many entries did each (top 10 each). Covers the league's first standings page only (up to 50 entries) - for a large league like 314, this is the top-ranked slice, not the whole league. Use this instead of tallying get_captains/get_transfers yourself. League id 314 is FPL's built-in global \"Overall\" league - a de facto top-managers-worldwide leaderboard - so get_league_trends(314) shows what the world's best managers are doing.")]
+    public async Task<LeagueTrendsResponse> GetLeagueTrends(
+        [Description("The classic league's FPL id")] int leagueId,
+        [Description("Gameweek number; defaults to the current gameweek if omitted")] int? gameweek = null)
+    {
+        var gw = await ResolveGameweek(gameweek);
+
+        try
+        {
+            var captainsTask = captainsByGameWeek.GetEntryCaptainPicks(gw, leagueId);
+            var transfersTask = transfersByGameWeek.GetTransfersByGameweek(gw, leagueId);
+            var settingsTask = globalSettingsClient.GetGlobalSettings();
+            await Task.WhenAll(captainsTask, transfersTask, settingsTask);
+
+            var captains = (await captainsTask).Where(c => c.Captain != null).ToArray();
+            var transfers = await transfersTask;
+            var playersById = ((await settingsTask)?.Players ?? []).ToDictionary(p => p.Id);
+
+            var mostCaptained = captains
+                .GroupBy(c => c.Captain.Id)
+                .OrderByDescending(g => g.Count())
+                .Take(10)
+                .Select(g => new PlayerTrendCount(g.Key, g.First().Captain.WebName ?? "", g.Count(),
+                    (double?)(captains.Length == 0 ? 0 : Math.Round(100.0 * g.Count() / captains.Length, 1))))
+                .ToArray();
+
+            var mostIn = BuildTransferTrend(transfers, t => t.PlayerTransferredIn, playersById);
+            var mostOut = BuildTransferTrend(transfers, t => t.PlayerTransferredOut, playersById);
+
+            return new LeagueTrendsResponse(gw, mostCaptained, mostIn, mostOut);
+        }
+        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new McpException($"No league found with id {leagueId}.");
+        }
+    }
+
+    private static IEnumerable<PlayerTrendCount> BuildTransferTrend(
+        IEnumerable<TransfersByGameWeek.Transfer> transfers,
+        Func<TransfersByGameWeek.Transfer, int> playerIdSelector,
+        Dictionary<int, Player> playersById) =>
+        transfers
+            .GroupBy(playerIdSelector)
+            .OrderByDescending(g => g.Count())
+            .Take(10)
+            .Select(g => new PlayerTrendCount(g.Key, playersById.GetValueOrDefault(g.Key)?.WebName ?? "", g.Count(), null));
 
     [McpServerTool(Name = "get_gameweek", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Gameweek info (id, name, deadline UTC, time remaining until deadline as untilDeadline, fixtures) for the previous/current/next gameweek, or a specific gameweek by id. untilDeadline is omitted once the deadline has passed. Fixtures include short team codes (e.g. WHU-CHE) - use those, not full names, to match fplbot's Slack/Discord bot conventions.")]
@@ -554,3 +617,20 @@ public record EntryProfile(
     IEnumerable<SquadPick>? Bench);
 
 public record SquadPick(int PlayerId, string WebName, FplPlayerPosition Position, bool IsCaptain, bool IsViceCaptain);
+
+public record TransferWithNames(
+    int EntryId,
+    string EntryName,
+    string EntryRealName,
+    int PlayerTransferredIn,
+    int PlayerTransferredOut,
+    string PlayerInName,
+    string PlayerOutName);
+
+public record LeagueTrendsResponse(
+    int Gameweek,
+    IEnumerable<PlayerTrendCount> MostCaptained,
+    IEnumerable<PlayerTrendCount> MostTransferredIn,
+    IEnumerable<PlayerTrendCount> MostTransferredOut);
+
+public record PlayerTrendCount(int PlayerId, string WebName, int Count, double? PercentageOfLeague);

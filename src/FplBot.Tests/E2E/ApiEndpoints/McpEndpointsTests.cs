@@ -452,6 +452,7 @@ public class McpEndpointsTests(AppFixture fixture)
         const int gameweek = 6;
         var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
         var transfersClient = fixture.Services.GetRequiredService<ITransfersClient>();
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
 
         A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
             .Returns(new ClassicLeague
@@ -467,16 +468,144 @@ public class McpEndpointsTests(AppFixture fixture)
             new Transfer { Entry = 1, Event = gameweek, ElementIn = 10, ElementOut = 20 }
         ]);
 
-        await using var client = await fixture.ConnectMcpClient();
-        var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
-        var getTransfers = tools.First(t => t.Name == "get_transfers");
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = gameweek, IsCurrent = true }],
+            Players = [new Player { Id = 10, WebName = "Palmer" }, new Player { Id = 20, WebName = "OldGuy" }]
+        });
 
-        var result = await getTransfers.CallAsync(
-            new Dictionary<string, object?> { ["leagueId"] = leagueId, ["gameweek"] = gameweek },
-            cancellationToken: TestContext.Current.CancellationToken);
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getTransfers = tools.First(t => t.Name == "get_transfers");
 
-        var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
-        Assert.Contains("Transfer FC", text);
+            var result = await getTransfers.CallAsync(
+                new Dictionary<string, object?> { ["leagueId"] = leagueId, ["gameweek"] = gameweek },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains("Transfer FC", text);
+            Assert.Contains("Palmer", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetLeagueTrends_ReturnsMostCaptainedAndTransferred()
+    {
+        const int leagueId = 800;
+        var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
+        var entryClient = fixture.Services.GetRequiredService<IEntryClient>();
+        var transfersClient = fixture.Services.GetRequiredService<ITransfersClient>();
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+
+        A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
+            .Returns(new ClassicLeague
+            {
+                Standings = new ClassicLeagueStandings
+                {
+                    Entries =
+                    [
+                        new ClassicLeagueEntry { Entry = 8001, EntryName = "Team One", PlayerName = "Player One" },
+                        new ClassicLeagueEntry { Entry = 8002, EntryName = "Team Two", PlayerName = "Player Two" }
+                    ]
+                }
+            });
+
+        A.CallTo(() => entryClient.GetPicks(8001, 5, A<bool>._)).Returns(new EntryPicks
+        {
+            Picks = [new Pick { PlayerId = 10, IsCaptain = true }, new Pick { PlayerId = 20, IsViceCaptain = true }],
+            EventEntryHistory = new EventEntryHistory()
+        });
+        A.CallTo(() => entryClient.GetPicks(8002, 5, A<bool>._)).Returns(new EntryPicks
+        {
+            Picks = [new Pick { PlayerId = 10, IsCaptain = true }, new Pick { PlayerId = 20, IsViceCaptain = true }],
+            EventEntryHistory = new EventEntryHistory()
+        });
+
+        A.CallTo(() => transfersClient.GetTransfers(8001)).Returns([new Transfer { Entry = 8001, Event = 5, ElementIn = 30, ElementOut = 40 }]);
+        A.CallTo(() => transfersClient.GetTransfers(8002)).Returns([new Transfer { Entry = 8002, Event = 5, ElementIn = 30, ElementOut = 50 }]);
+
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 5, IsCurrent = true }],
+            Players =
+            [
+                new Player { Id = 10, WebName = "Haaland" },
+                new Player { Id = 20, WebName = "Salah" },
+                new Player { Id = 30, WebName = "Palmer" },
+                new Player { Id = 40, WebName = "OldGuy" },
+                new Player { Id = 50, WebName = "OtherGuy" }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getLeagueTrends = tools.First(t => t.Name == "get_league_trends");
+
+            var result = await getLeagueTrends.CallAsync(
+                new Dictionary<string, object?> { ["leagueId"] = leagueId },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            using var doc = JsonDocument.Parse(text);
+            var mostCaptained = doc.RootElement.GetProperty("mostCaptained").EnumerateArray().First();
+            Assert.Equal("Haaland", mostCaptained.GetProperty("webName").GetString());
+            Assert.Equal(2, mostCaptained.GetProperty("count").GetInt32());
+            Assert.Equal(100.0, mostCaptained.GetProperty("percentageOfLeague").GetDouble());
+
+            var mostIn = doc.RootElement.GetProperty("mostTransferredIn").EnumerateArray().First();
+            Assert.Equal("Palmer", mostIn.GetProperty("webName").GetString());
+            Assert.Equal(2, mostIn.GetProperty("count").GetInt32());
+            Assert.False(mostIn.TryGetProperty("percentageOfLeague", out _));
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetLeagueTrends_UnknownLeague_ReturnsError()
+    {
+        const int leagueId = 801;
+        var leagueClient = fixture.Services.GetRequiredService<ILeagueClient>();
+        A.CallTo(() => leagueClient.GetClassicLeague(leagueId, A<int>._, A<bool>._, A<int?>._))
+            .Throws(new HttpRequestException("Not Found", null, HttpStatusCode.NotFound));
+
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Gameweeks = [new() { Id = 5, IsCurrent = true }]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getLeagueTrends = tools.First(t => t.Name == "get_league_trends");
+
+            var result = await getLeagueTrends.CallAsync(
+                new Dictionary<string, object?> { ["leagueId"] = leagueId },
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsError);
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains($"No league found with id {leagueId}", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
     }
 
     [Fact]
