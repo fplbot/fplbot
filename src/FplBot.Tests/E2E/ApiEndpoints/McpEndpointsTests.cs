@@ -28,6 +28,7 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("search_any", names);
         Assert.Contains("get_player", names);
         Assert.Contains("get_injuries", names);
+        Assert.Contains("get_price_changes", names);
     }
 
     [Fact]
@@ -127,6 +128,46 @@ public class McpEndpointsTests(AppFixture fixture)
             Assert.Contains("Injured Star", text);
             Assert.DoesNotContain("Healthy Star", text);
             Assert.DoesNotContain("Injured Nobody", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
+    }
+
+    [Fact]
+    public async Task GetPriceChanges_ReturnsAlreadyChangedAndLikelyToChange()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Teams = [new Team { Id = 1, Code = 100, ShortName = "ARS" }],
+            Players =
+            [
+                new Player
+                {
+                    Id = 1, WebName = "Already Risen", OwnershipPercentage = 20, CostChangeEvent = 1, NowCost = 81, TeamCode = 100
+                },
+                new Player
+                {
+                    Id = 2, WebName = "About To Rise", OwnershipPercentage = 20, CostChangeEvent = 0, NowCost = 80, TeamCode = 100,
+                    PriceChangeProjections = [new PriceChangeProjection { Offset = 0, Likelihood = 5, ProjectedPercent = "100" }]
+                }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getPriceChanges = tools.First(t => t.Name == "get_price_changes");
+
+            var result = await getPriceChanges.CallAsync(new Dictionary<string, object?>(), cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains("Already Risen", text);
+            Assert.Contains("About To Rise", text);
         }
         finally
         {

@@ -1,9 +1,11 @@
 using System.ComponentModel;
 using Fpl.Client.Abstractions;
 using Fpl.Client.Models;
+using Fpl.EventPublishers.Models.Mappers;
 using Fpl.Search.Models;
 using Fpl.Search.Searching;
 using FplBot.Formatting.Helpers;
+using FplBot.Messaging.Contracts.Events.v1;
 using FplBot.WebApi.Endpoints.Api.Fpl;
 using ModelContextProtocol.Server;
 
@@ -18,6 +20,7 @@ public class FplMcpTools(
     IGlobalSettingsClient globalSettingsClient,
     IPlayerSearch playerSearch,
     IInjuredPlayersFinder injuredPlayersFinder,
+    IPriceChangedPlayersFinder priceChangedPlayersFinder,
     ISearchService searchService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<Program> logger)
@@ -53,6 +56,20 @@ public class FplMcpTools(
         var injured = injuredPlayersFinder.FindInjuredPlayers(settings?.Players ?? []);
         return injured.Select(p => new InjuredPlayerSummary(
             p.Id, p.WebName ?? "", p.Status, p.News, p.ChanceOfPlayingNextRound, p.OwnershipPercentage, p.TeamId));
+    }
+
+    [McpServerTool(Name = "get_price_changes", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("Players (over 7% ownership) whose price already changed today, plus players very likely to change price soon.")]
+    public async Task<PriceChangesResponse> GetPriceChanges()
+    {
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var players = settings?.Players ?? [];
+        var teams = settings?.Teams ?? [];
+
+        var alreadyChanged = priceChangedPlayersFinder.FindPriceChangedPlayers(players, teams);
+        var likelyToChange = PlayerChangesEventsExtractor.GetLikelyPriceChanges(players, teams);
+
+        return new PriceChangesResponse(alreadyChanged, likelyToChange);
     }
 
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
@@ -99,3 +116,7 @@ public record InjuredPlayerSummary(
     int? ChanceOfPlayingNextRound,
     double OwnershipPercentage,
     int TeamId);
+
+public record PriceChangesResponse(
+    IEnumerable<PlayerWithPriceChange> AlreadyChanged,
+    IEnumerable<PlayerLikelyPriceChange> LikelyToChange);

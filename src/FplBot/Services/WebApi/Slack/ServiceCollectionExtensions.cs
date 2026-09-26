@@ -33,6 +33,7 @@ public static class ServiceCollectionFplBotSlackWebExtensions
         services.AddSingleton<ITransfersByGameWeek, TransfersByGameWeek>();
         services.AddSingleton<IPlayerSearch, PlayerSearch>();
         services.AddSingleton<IInjuredPlayersFinder, InjuredPlayersFinder>();
+        services.AddSingleton<IPriceChangedPlayersFinder, PriceChangedPlayersFinder>();
         services.AddSingleton<IEntryForGameweek, EntryForGameweek>();
         services.AddSingleton<ILeagueEntriesByGameweek, LeagueEntriesByGameweek>();
         services.AddScoped<AdminUninstallSlackWorkspace>();
