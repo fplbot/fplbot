@@ -27,6 +27,7 @@ public class McpEndpointsTests(AppFixture fixture)
         Assert.Contains("search_leagues", names);
         Assert.Contains("search_any", names);
         Assert.Contains("get_player", names);
+        Assert.Contains("get_injuries", names);
     }
 
     [Fact]
@@ -97,6 +98,40 @@ public class McpEndpointsTests(AppFixture fixture)
 
         var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
         Assert.Contains("Virgil van Dijk", text);
+    }
+
+    [Fact]
+    public async Task GetInjuries_ReturnsOnlyInjuredOverOwnershipThreshold()
+    {
+        var globalSettingsClient = fixture.Services.GetRequiredService<IGlobalSettingsClient>();
+        var original = await globalSettingsClient.GetGlobalSettings();
+        A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(new GlobalSettings
+        {
+            Players =
+            [
+                new Player { Id = 1, WebName = "Injured Star", OwnershipPercentage = 20, ChanceOfPlayingNextRound = 25 },
+                new Player { Id = 2, WebName = "Healthy Star", OwnershipPercentage = 20, ChanceOfPlayingNextRound = 100 },
+                new Player { Id = 3, WebName = "Injured Nobody", OwnershipPercentage = 1, ChanceOfPlayingNextRound = 0 }
+            ]
+        });
+
+        try
+        {
+            await using var client = await fixture.ConnectMcpClient();
+            var tools = await client.ListToolsAsync(cancellationToken: TestContext.Current.CancellationToken);
+            var getInjuries = tools.First(t => t.Name == "get_injuries");
+
+            var result = await getInjuries.CallAsync(new Dictionary<string, object?>(), cancellationToken: TestContext.Current.CancellationToken);
+
+            var text = Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
+            Assert.Contains("Injured Star", text);
+            Assert.DoesNotContain("Healthy Star", text);
+            Assert.DoesNotContain("Injured Nobody", text);
+        }
+        finally
+        {
+            A.CallTo(() => globalSettingsClient.GetGlobalSettings()).Returns(original);
+        }
     }
 
     [Fact]

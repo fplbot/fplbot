@@ -17,6 +17,7 @@ public class FplMcpTools(
     IEntryHistoryClient entryHistoryClient,
     IGlobalSettingsClient globalSettingsClient,
     IPlayerSearch playerSearch,
+    IInjuredPlayersFinder injuredPlayersFinder,
     ISearchService searchService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<Program> logger)
@@ -42,6 +43,16 @@ public class FplMcpTools(
     {
         var settings = await globalSettingsClient.GetGlobalSettings();
         return playerSearch.FindMostPopularMatchingPlayer(settings?.Players ?? [], name);
+    }
+
+    [McpServerTool(Name = "get_injuries", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
+    [Description("List currently injured or doubtful players with over 5% ownership, ranked by ownership.")]
+    public async Task<IEnumerable<InjuredPlayerSummary>> GetInjuries()
+    {
+        var settings = await globalSettingsClient.GetGlobalSettings();
+        var injured = injuredPlayersFinder.FindInjuredPlayers(settings?.Players ?? []);
+        return injured.Select(p => new InjuredPlayerSummary(
+            p.Id, p.WebName ?? "", p.Status, p.News, p.ChanceOfPlayingNextRound, p.OwnershipPercentage, p.TeamId));
     }
 
     [McpServerTool(Name = "get_entry", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false)]
@@ -79,3 +90,12 @@ public class FplMcpTools(
         Actor = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString()
     };
 }
+
+public record InjuredPlayerSummary(
+    int Id,
+    string WebName,
+    string? Status,
+    string? News,
+    int? ChanceOfPlayingNextRound,
+    double OwnershipPercentage,
+    int TeamId);
